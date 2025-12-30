@@ -1,0 +1,22 @@
+{
+  "name": "warm",
+  "font": "Manrope",
+  "colors": {
+    "primary": "#E8916A",
+    "background": "#FFF6EE",
+    "card": "#FFFFFF",
+    "text": "#3B2E2A",
+    "muted": "#8D7B74",
+    "accent": "#F1B86A",
+    "success": "#9ACCAA",
+    "warning": "#F1B86A",
+    "danger": "#E98C7C"
+  },
+  "radii": {
+    "card": 20,
+    "button": 18
+  },
+  "layout": {
+    "home": ["capture", "latest", "summary", "next"]
+  }
+}

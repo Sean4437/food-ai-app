@@ -1,0 +1,29 @@
+﻿name: food_ai_app
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+  exif: ^3.3.0
+  google_fonts: ^6.2.1
+  http: ^1.2.1
+  image_picker: ^1.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/themes/theme_clean.json
+    - assets/themes/theme_warm.json

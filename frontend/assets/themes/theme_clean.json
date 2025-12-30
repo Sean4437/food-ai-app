@@ -1,0 +1,22 @@
+{
+  "name": "clean",
+  "font": "Manrope",
+  "colors": {
+    "primary": "#5B7CFA",
+    "background": "#F3F5FB",
+    "card": "#FFFFFF",
+    "text": "#1B1D21",
+    "muted": "#6B7280",
+    "accent": "#F4C95D",
+    "success": "#8AD7A4",
+    "warning": "#F4C95D",
+    "danger": "#F08A7C"
+  },
+  "radii": {
+    "card": 18,
+    "button": 16
+  },
+  "layout": {
+    "home": ["capture", "latest", "next", "summary"]
+  }
+}
