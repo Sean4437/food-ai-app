@@ -34,6 +34,38 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Widget _apiRow(String title, String value, {VoidCallback? onTap}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    value,
+                    style: const TextStyle(color: Colors.black54),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _editText(
     BuildContext context, {
     required String title,
@@ -315,7 +347,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 _sectionTitle(t.apiSection),
-                _row(
+                _apiRow(
                   t.apiBaseUrlLabel,
                   profile.apiBaseUrl,
                   onTap: () => _editApiUrl(context, app),
