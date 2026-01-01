@@ -128,6 +128,10 @@ class MealDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (entry.result != null) ...[
+                        Text('${prefix}${entry.result!.foodName}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                      ],
                       Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
                       Text('${prefix}${entry.result?.suggestion ?? t.detailAiEmpty}', style: const TextStyle(color: Colors.black54)),
@@ -161,6 +165,10 @@ class MealDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (entry.result != null) ...[
+                        Text('${prefix}${entry.result!.foodName}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                      ],
                       Text(t.nextMealTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
                       Text(t.nextMealHint, style: const TextStyle(color: Colors.black54)),

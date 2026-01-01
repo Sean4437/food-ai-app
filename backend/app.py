@@ -73,14 +73,14 @@ _fake_foods = {
 
 _fake_suggestions = {
     "zh-TW": [
-        "下一餐：多補蔬菜與水分，份量維持適中即可。",
-        "明天：以均衡餐盤為主，晚間避免加餐。",
-        "若稍後還想吃，優先選水果或優格。",
+        "下一餐建議：燙青菜＋雞胸/豆腐，主食半碗即可。",
+        "下一餐建議：清湯＋蔬菜＋蛋白質（茶葉蛋/無糖豆漿）。",
+        "下一餐建議：水果或無糖優格，搭配一份蔬菜沙拉。",
     ],
     "en": [
-        "Next meal: add more vegetables and water, keep portions moderate.",
-        "Tomorrow: aim for a balanced plate and avoid late-night snacks.",
-        "If still hungry later, choose fruit or yogurt instead of sweets.",
+        "Next meal: vegetables + lean protein (e.g., chicken/tofu), smaller carbs.",
+        "Next meal: clear soup + veggies + protein (egg, yogurt, or soy milk).",
+        "Next meal: fruit or plain yogurt with a side salad.",
     ],
 }
 

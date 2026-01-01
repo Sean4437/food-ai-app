@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import '../state/app_state.dart';
 
 class NextMealScreen extends StatelessWidget {
   const NextMealScreen({super.key});
@@ -54,6 +55,9 @@ class NextMealScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    final entry = app.latestEntryAny;
+    final prefix = entry?.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -66,6 +70,34 @@ class NextMealScreen extends StatelessWidget {
                 Text(t.nextMealTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
                 Text(t.nextMealHint, style: const TextStyle(fontSize: 14, color: Colors.black54)),
+                if (entry?.result != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${prefix}${entry!.result!.suggestion}',
+                          style: const TextStyle(color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 _optionCard(
                   icon: Icons.store_mall_directory,

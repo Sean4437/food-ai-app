@@ -149,6 +149,8 @@ class AnalysisScreen extends StatelessWidget {
                         else if (entry.error != null)
                           Text(entry.error!, style: const TextStyle(color: Colors.red))
                         else if (entry.result != null) ...[
+                          Text('${prefix}${entry.result!.foodName}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
                           Row(
                             children: [
                               Text(t.overallLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
