@@ -31,9 +31,10 @@ class _PetalData {
 }
 
 class _PetalPainter extends CustomPainter {
-  _PetalPainter(this.petals);
+  _PetalPainter(this.petals, this.textStyle);
 
   final List<_PetalData> petals;
+  final TextStyle textStyle;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -47,6 +48,7 @@ class _PetalPainter extends CustomPainter {
       final angle = (2 * pi * i / petals.length) - pi / 2;
       _drawPetal(canvas, center, angle, baseRadius, maxLen, width, petals[i].color.withOpacity(0.18), 1.0);
       _drawPetal(canvas, center, angle, baseRadius, maxLen, width, petals[i].color.withOpacity(0.65), petals[i].ratio);
+      _drawPetalText(canvas, center, angle, baseRadius, maxLen, width, petals[i].label);
     }
   }
 
@@ -84,6 +86,29 @@ class _PetalPainter extends CustomPainter {
       ..strokeWidth = 1
       ..color = color.withOpacity(0.55);
     canvas.drawPath(path, outline);
+  }
+
+  void _drawPetalText(
+    Canvas canvas,
+    Offset center,
+    double angle,
+    double baseRadius,
+    double maxLen,
+    double width,
+    String label,
+  ) {
+    final dir = Offset(cos(angle), sin(angle));
+    final len = baseRadius + (maxLen - baseRadius) * 0.65;
+    final textPainter = TextPainter(
+      text: TextSpan(text: label, style: textStyle),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+      maxLines: 2,
+      ellipsis: '…',
+    )..layout(maxWidth: width * 0.9);
+    final textCenter = center + dir * len;
+    final offset = textCenter - Offset(textPainter.width / 2, textPainter.height / 2);
+    textPainter.paint(canvas, offset);
   }
 
   @override
@@ -154,6 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   double _ratioFromValue(String value, AppLocalizations t) {
     final v = value.toLowerCase();
+    if (v.trim().isEmpty) return 0.35;
     if (v.contains(t.levelHigh.toLowerCase()) || v.contains('high')) return 0.85;
     if (v.contains(t.levelLow.toLowerCase()) || v.contains('low')) return 0.35;
     return 0.6;
@@ -161,6 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _levelLabelFromValue(String value, AppLocalizations t) {
     final v = value.toLowerCase();
+    if (v.trim().isEmpty) return '--';
     if (v.contains(t.levelHigh.toLowerCase()) || v.contains('high')) return t.levelHigh;
     if (v.contains(t.levelLow.toLowerCase()) || v.contains('low')) return t.levelLow;
     return t.levelMedium;
@@ -168,51 +195,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<_PetalData> _buildPetals(MealEntry entry, AppLocalizations t) {
     final result = entry.result;
-    if (result == null) return [];
-    final map = <String, String?>{
-      t.protein: result.macros['protein'],
-      t.carbs: result.macros['carbs'],
-      t.fat: result.macros['fat'],
-      t.sodium: result.macros['sodium'],
-    };
-    final colors = <String, Color>{
-      t.protein: const Color(0xFF8AD7A4),
-      t.carbs: const Color(0xFFF4C95D),
-      t.fat: const Color(0xFFF08A7C),
-      t.sodium: const Color(0xFF8AB4F8),
-    };
-    final petals = <_PetalData>[];
-    map.forEach((label, value) {
-      if (value == null || value.isEmpty) return;
-      petals.add(_PetalData(
-        label: '$label ${_levelLabelFromValue(value, t)}',
-        ratio: _ratioFromValue(value, t),
-        color: colors[label] ?? const Color(0xFF8AB4F8),
-      ));
-    });
-    return petals;
-  }
+    final protein = result?.macros['protein'] ?? '';
+    final carbs = result?.macros['carbs'] ?? '';
+    final fat = result?.macros['fat'] ?? '';
+    final sodium = result?.macros['sodium'] ?? '';
 
-  List<Widget> _petalLabels(List<_PetalData> petals, double size) {
-    if (petals.isEmpty) return [];
-    final center = size / 2;
-    final radius = size * 0.42;
+    final calorieLabel = (result?.calorieRange ?? '--').replaceFirst(' ', '\n');
+
     return [
-      for (int i = 0; i < petals.length; i++)
-        Positioned(
-          left: center + cos((2 * pi * i / petals.length) - pi / 2) * radius - 50,
-          top: center + sin((2 * pi * i / petals.length) - pi / 2) * radius - 14,
-          child: SizedBox(
-            width: 100,
-            child: Text(
-              petals[i].label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
+      _PetalData(
+        label: '${t.protein}\n${_levelLabelFromValue(protein, t)}',
+        ratio: _ratioFromValue(protein, t),
+        color: const Color(0xFF8AD7A4),
+      ),
+      _PetalData(
+        label: '${t.carbs}\n${_levelLabelFromValue(carbs, t)}',
+        ratio: _ratioFromValue(carbs, t),
+        color: const Color(0xFFF4C95D),
+      ),
+      _PetalData(
+        label: '${t.fat}\n${_levelLabelFromValue(fat, t)}',
+        ratio: _ratioFromValue(fat, t),
+        color: const Color(0xFFF08A7C),
+      ),
+      _PetalData(
+        label: '${t.sodium}\n${_levelLabelFromValue(sodium, t)}',
+        ratio: _ratioFromValue(sodium, t),
+        color: const Color(0xFF8AB4F8),
+      ),
+      _PetalData(
+        label: '${t.calories}\n$calorieLabel',
+        ratio: 0.6,
+        color: const Color(0xFFB9C4F8),
+      ),
     ];
   }
 
@@ -231,8 +246,13 @@ class _HomeScreenState extends State<HomeScreen> {
             clipBehavior: Clip.none,
             children: [
               if (petals.isNotEmpty)
-                CustomPaint(size: Size(size, size), painter: _PetalPainter(petals)),
-              ..._petalLabels(petals, size),
+                CustomPaint(
+                  size: Size(size, size),
+                  painter: _PetalPainter(
+                    petals,
+                    const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600),
+                  ),
+                ),
               Container(
                 width: 120,
                 height: 120,
