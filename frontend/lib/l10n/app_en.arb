@@ -141,5 +141,6 @@
   "usageTotalLabel": "Total spent",
   "usageViewLog": "View history",
   "usageEmpty": "No cost records yet",
-  "usageLoading": "Loading..."
+  "usageLoading": "Loading...",
+  "mockPrefix": "Mock"
 }

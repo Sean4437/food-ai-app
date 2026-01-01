@@ -11,6 +11,7 @@ class LogScreen extends StatelessWidget {
 
   Widget _mealRow(BuildContext context, AppState app, MealEntry entry) {
     final t = AppLocalizations.of(context)!;
+    final prefix = _mockPrefix(entry, t);
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: Container(
@@ -40,7 +41,10 @@ class LogScreen extends StatelessWidget {
                 children: [
                   Text(_mealLabel(entry.type, t), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text('${t.timeLabel}：${_timeLabel(entry.time, t)} · ${entry.result?.calorieRange ?? t.calorieUnknown}', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                  Text(
+                    '${t.timeLabel}：${_timeLabel(entry.time, t)} · ${prefix}${entry.result?.calorieRange ?? t.calorieUnknown}',
+                    style: const TextStyle(color: Colors.black54, fontSize: 12),
+                  ),
                   const SizedBox(height: 4),
                   if (entry.result != null)
                     Text(_tagLine(entry, t), style: const TextStyle(fontSize: 12, color: Colors.black54)),
@@ -86,7 +90,11 @@ class LogScreen extends StatelessWidget {
     if (fat.contains(t.levelHigh) || fat.toLowerCase().contains('high')) tags.add(t.tagOily);
     if (protein.contains(t.levelHigh) || protein.toLowerCase().contains('high')) tags.add(t.tagProteinOk);
     if (tags.isEmpty) tags.add(t.tagOk);
-    return tags.join(' · ');
+    return '${_mockPrefix(entry, t)}${tags.join(' · ')}';
+  }
+
+  String _mockPrefix(MealEntry entry, AppLocalizations t) {
+    return entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
   }
 
   Widget _mealSection(

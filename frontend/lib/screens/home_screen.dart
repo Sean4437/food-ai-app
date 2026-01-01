@@ -65,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (entry.result == null) return [];
     final result = entry.result!;
     final tags = <String>[];
+    if (result.source == 'mock') tags.add(t.mockPrefix);
     final fat = result.macros['fat'] ?? '';
     final protein = result.macros['protein'] ?? '';
     final carbs = result.macros['carbs'] ?? '';

@@ -908,6 +908,12 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'載入中...'**
   String get usageLoading;
+
+    /// No description provided for @mockPrefix.
+    ///
+    /// In zh_TW, this message translates to:
+    /// **'虛假'**
+    String get mockPrefix;
 }
 
 class _AppLocalizationsDelegate

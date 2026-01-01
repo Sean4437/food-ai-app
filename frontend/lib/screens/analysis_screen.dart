@@ -10,8 +10,8 @@ class AnalysisScreen extends StatelessWidget {
 
   MacroLevel _levelFromValue(String value) {
     final v = value.toLowerCase();
-    if (v.contains('高') || v.contains('high')) return MacroLevel.high;
-    if (v.contains('低') || v.contains('low')) return MacroLevel.low;
+    if (v.contains('\u9ad8') || v.contains('high')) return MacroLevel.high;
+    if (v.contains('\u4f4e') || v.contains('low')) return MacroLevel.low;
     return MacroLevel.medium;
   }
 
@@ -99,6 +99,8 @@ class AnalysisScreen extends StatelessWidget {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final entry = app.latestEntryAny;
+    final prefix = entry?.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
+
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -195,7 +197,7 @@ class AnalysisScreen extends StatelessWidget {
                                 const Icon(Icons.local_fire_department, color: Color(0xFFF4C95D)),
                                 const SizedBox(width: 8),
                                 Text(
-                                  '${t.calorieLabel}：${entry.result!.calorieRange}',
+                                  '${t.calorieLabel}：${prefix}${entry.result!.calorieRange}',
                                   style: const TextStyle(fontSize: 13),
                                 ),
                               ],
@@ -214,7 +216,7 @@ class AnalysisScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          Text(entry.result!.suggestion, style: const TextStyle(color: Colors.black54)),
+                          Text('${prefix}${entry.result!.suggestion}', style: const TextStyle(color: Colors.black54)),
                           const SizedBox(height: 6),
                           Text('source: ${entry.result!.source}', style: const TextStyle(fontSize: 11, color: Colors.black45)),
                         ],

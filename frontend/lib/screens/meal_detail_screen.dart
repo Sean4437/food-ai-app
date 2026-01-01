@@ -49,8 +49,8 @@ class MealDetailScreen extends StatelessWidget {
 
   double _ratioFromValue(String value) {
     final v = value.toLowerCase();
-    if (v.contains('高') || v.contains('high')) return 0.8;
-    if (v.contains('低') || v.contains('low')) return 0.3;
+    if (v.contains('\u9ad8') || v.contains('high')) return 0.8;
+    if (v.contains('\u4f4e') || v.contains('low')) return 0.3;
     return 0.55;
   }
 
@@ -77,6 +77,8 @@ class MealDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final formatter = DateFormat('yyyy/MM/dd HH:mm', Localizations.localeOf(context).toLanguageTag());
+    final prefix = entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(t.detailTitle),
@@ -128,7 +130,7 @@ class MealDetailScreen extends StatelessWidget {
                     children: [
                       Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
-                      Text(entry.result?.suggestion ?? t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
+                      Text('${prefix}${entry.result?.suggestion ?? t.detailAiEmpty}', style: const TextStyle(color: Colors.black54)),
                       if (entry.result != null) ...[
                         const SizedBox(height: 6),
                         Text('source: ${entry.result!.source}', style: const TextStyle(fontSize: 11, color: Colors.black45)),
@@ -143,7 +145,7 @@ class MealDetailScreen extends StatelessWidget {
                         const SizedBox(height: 10),
                         _ratioBar(t.fat, _ratioFromValue(entry.result!.macros['fat'] ?? ''), const Color(0xFFF08A7C)),
                         const SizedBox(height: 10),
-                        Text('${t.calorieLabel}：${entry.result!.calorieRange}', style: const TextStyle(color: Colors.black54)),
+                        Text('${t.calorieLabel}：${prefix}${entry.result!.calorieRange}', style: const TextStyle(color: Colors.black54)),
                       ] else
                         Text(t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
                     ],

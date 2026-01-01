@@ -414,6 +414,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get usageLoading => '載入中...';
+
+  @override
+  String get mockPrefix => '虛假';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -826,4 +829,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get usageLoading => '載入中...';
+
+  @override
+  String get mockPrefix => '虛假';
 }

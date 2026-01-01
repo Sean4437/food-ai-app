@@ -141,5 +141,6 @@
   "usageTotalLabel": "累計花費",
   "usageViewLog": "查看紀錄",
   "usageEmpty": "尚無花費紀錄",
-  "usageLoading": "載入中..."
+  "usageLoading": "載入中...",
+  "mockPrefix": "虛假"
 }
