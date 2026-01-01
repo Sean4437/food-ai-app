@@ -8,16 +8,23 @@ import 'screens/suggestions_screen.dart';
 import 'screens/settings_screen.dart';
 import 'state/app_state.dart';
 import 'design/theme_controller.dart';
+import 'state/tab_state.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final themeController = ThemeController();
+  final tabState = TabState();
+  final appState = AppState();
+  await appState.init();
   themeController.loadFromAsset('assets/themes/theme_clean.json');
   runApp(ThemeScope(
     notifier: themeController,
-    child: AppStateScope(
-      notifier: AppState(),
-      child: const FoodAiApp(),
+    child: TabScope(
+      notifier: tabState,
+      child: AppStateScope(
+        notifier: appState,
+        child: const FoodAiApp(),
+      ),
     ),
   ));
 }
@@ -40,6 +47,16 @@ class FoodAiApp extends StatelessWidget {
         Locale('en'),
       ],
       theme: ThemeScope.of(context).theme,
+      locale: AppStateScope.of(context).profile.language == 'en'
+          ? const Locale('en')
+          : const Locale('zh', 'TW'),
+      builder: (context, child) {
+        final data = MediaQuery.of(context);
+        return MediaQuery(
+          data: data.copyWith(textScaler: const TextScaler.linear(1.0)),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: const MainShell(),
     );
   }
@@ -53,11 +70,10 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _index = 0;
-
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final tabState = TabScope.of(context);
     final screens = const [
       HomeScreen(),
       LogScreen(),
@@ -66,12 +82,12 @@ class _MainShellState extends State<MainShell> {
     ];
 
     return Scaffold(
-      body: screens[_index],
+      body: screens[tabState.index],
       bottomNavigationBar: CupertinoTabBar(
-        currentIndex: _index,
+        currentIndex: tabState.index,
         activeColor: const Color(0xFF5B7CFA),
         inactiveColor: Colors.black54,
-        onTap: (value) => setState(() => _index = value),
+        onTap: (value) => tabState.setIndex(value),
         items: [
           BottomNavigationBarItem(icon: const Icon(Icons.home_filled), label: t.tabHome),
           BottomNavigationBarItem(icon: const Icon(Icons.receipt_long), label: t.tabLog),

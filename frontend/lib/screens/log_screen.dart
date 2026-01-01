@@ -8,7 +8,7 @@ import '../widgets/record_sheet.dart';
 class LogScreen extends StatelessWidget {
   const LogScreen({super.key});
 
-  Widget _mealRow(BuildContext context, MealEntry entry) {
+  Widget _mealRow(BuildContext context, AppState app, MealEntry entry) {
     final t = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
@@ -30,7 +30,7 @@ class LogScreen extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.file(entry.image, width: 72, height: 72, fit: BoxFit.cover),
+              child: Image.memory(entry.imageBytes, width: 72, height: 72, fit: BoxFit.cover),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -45,6 +45,11 @@ class LogScreen extends StatelessWidget {
                     Text(_tagLine(entry, t), style: const TextStyle(fontSize: 12, color: Colors.black54)),
                 ],
               ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.black45),
+              onPressed: () => _confirmDelete(context, app, entry),
+              tooltip: t.delete,
             ),
             const Icon(Icons.chevron_right, color: Colors.black38),
           ],
@@ -123,12 +128,30 @@ class LogScreen extends StatelessWidget {
           if (entries.isNotEmpty)
             Column(
               children: [
-                for (final entry in entries) _mealRow(context, entry),
+                for (final entry in entries) _mealRow(context, app, entry),
               ],
             ),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, AppState app, MealEntry entry) async {
+    final t = AppLocalizations.of(context)!;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.delete),
+        content: Text(t.deleteConfirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.delete)),
+        ],
+      ),
+    );
+    if (result == true) {
+      app.removeEntry(entry);
+    }
   }
 
   @override

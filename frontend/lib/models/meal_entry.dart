@@ -1,17 +1,21 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'analysis_result.dart';
 
 enum MealType { breakfast, lunch, dinner, lateSnack, other }
 
 class MealEntry {
   MealEntry({
-    required this.image,
+    required this.id,
+    required this.imageBytes,
+    required this.filename,
     required this.time,
     required this.type,
     this.note,
   });
 
-  final File image;
+  final String id;
+  final Uint8List imageBytes;
+  final String filename;
   DateTime time;
   MealType type;
   String? note;

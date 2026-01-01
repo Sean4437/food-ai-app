@@ -361,6 +361,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeWarm => 'Warm Orange';
 
   @override
+  String get apiSection => 'API';
+
+  @override
+  String get apiBaseUrlLabel => 'API base URL';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get deleteConfirm => 'Delete this record?';
+
+  @override
+  String get logSuccess => 'Meal logged';
+
+  @override
+  String get viewLog => 'View log';
+
+  @override
   String get calories => 'Calories';
 
   @override
@@ -380,4 +398,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analyzeFailed => 'Analyze failed';
+
+  @override
+  String get costEstimateLabel => 'Estimated cost';
+
+  @override
+  String get usageSection => 'AI cost';
+
+  @override
+  String get usageTotalLabel => 'Total spent';
+
+  @override
+  String get usageViewLog => 'View history';
+
+  @override
+  String get usageEmpty => 'No cost records yet';
+
+  @override
+  String get usageLoading => 'Loading...';
 }

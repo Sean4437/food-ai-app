@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
+import '../state/tab_state.dart';
 import '../models/meal_entry.dart';
 
 class SummaryScreen extends StatelessWidget {
@@ -11,9 +12,12 @@ class SummaryScreen extends StatelessWidget {
     final fat = entry.result!.macros['fat'] ?? '';
     final protein = entry.result!.macros['protein'] ?? '';
     final carbs = entry.result!.macros['carbs'] ?? '';
-    final oily = fat.contains('高') || fat.toLowerCase().contains('high');
-    final proteinOk = protein.contains('中') || protein.contains('高') || protein.toLowerCase().contains('medium') || protein.toLowerCase().contains('high');
-    final carbHigh = carbs.contains('高') || carbs.toLowerCase().contains('high');
+    final oily = fat.contains(t.levelHigh) || fat.toLowerCase().contains('high');
+    final proteinOk = protein.contains(t.levelMedium) ||
+        protein.contains(t.levelHigh) ||
+        protein.toLowerCase().contains('medium') ||
+        protein.toLowerCase().contains('high');
+    final carbHigh = carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high');
 
     if (oily && carbHigh) return t.summaryOilyCarb;
     if (oily) return t.summaryOily;
@@ -72,7 +76,22 @@ class SummaryScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(t.summaryTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          TabScope.of(context).setIndex(0);
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 4),
+                    Text(t.summaryTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(14),

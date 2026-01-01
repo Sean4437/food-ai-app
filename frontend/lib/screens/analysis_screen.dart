@@ -15,6 +15,7 @@ class AnalysisScreen extends StatelessWidget {
     return MacroLevel.medium;
   }
 
+
   Color _levelColor(MacroLevel level) {
     switch (level) {
       case MacroLevel.low:
@@ -139,7 +140,7 @@ class AnalysisScreen extends StatelessWidget {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(14),
-                          child: Image.file(entry.image, height: 200, width: double.infinity, fit: BoxFit.cover),
+                          child: Image.memory(entry.imageBytes, height: 200, width: double.infinity, fit: BoxFit.cover),
                         ),
                         const SizedBox(height: 12),
                         if (entry.loading)
@@ -215,6 +216,8 @@ class AnalysisScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(entry.result!.suggestion, style: const TextStyle(color: Colors.black54)),
+                          const SizedBox(height: 6),
+                          Text('source: ${entry.result!.source}', style: const TextStyle(fontSize: 11, color: Colors.black45)),
                         ],
                       ],
                     ),

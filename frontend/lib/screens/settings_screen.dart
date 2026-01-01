@@ -13,7 +13,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(String title, String value, {VoidCallback? onTap}) {
+  Widget _row(String title, String value, {VoidCallback? onTap, bool showChevron = true}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -26,7 +26,8 @@ class SettingsScreen extends StatelessWidget {
           children: [
             Expanded(child: Text(title)),
             Text(value, style: const TextStyle(color: Colors.black54)),
-            const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
+            if (showChevron)
+              const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
           ],
         ),
       ),
@@ -59,6 +60,30 @@ class SettingsScreen extends StatelessWidget {
     );
     if (result != null && result.isNotEmpty) {
       onSave(result);
+    }
+  }
+
+  Future<void> _editApiUrl(BuildContext context, AppState app) async {
+    final t = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: app.profile.apiBaseUrl);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.apiBaseUrlLabel),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(hintText: 'http://127.0.0.1:8000'),
+          keyboardType: TextInputType.url,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: Text(t.save)),
+        ],
+      ),
+    );
+    if (result != null && result.isNotEmpty) {
+      app.updateField((p) => p.apiBaseUrl = result);
+      app.updateApiBaseUrl(result);
     }
   }
 
@@ -143,6 +168,7 @@ class SettingsScreen extends StatelessWidget {
     final result = await showTimePicker(context: context, initialTime: initial);
     if (result != null) onSave(result);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -286,6 +312,13 @@ class SettingsScreen extends StatelessWidget {
                     options: [t.langZh, t.langEn],
                     onSave: (value) => app.updateField((p) => p.language = value == t.langZh ? 'zh-TW' : 'en'),
                   ),
+                ),
+                const SizedBox(height: 8),
+                _sectionTitle(t.apiSection),
+                _row(
+                  t.apiBaseUrlLabel,
+                  profile.apiBaseUrl,
+                  onTap: () => _editApiUrl(context, app),
                 ),
                 const SizedBox(height: 8),
                 _sectionTitle(t.layoutThemeLabel),

@@ -1,19 +1,32 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:exif/exif.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import 'dart:math';
 import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
 import '../services/api_service.dart';
+import '../storage/meal_store.dart';
 
 class AppState extends ChangeNotifier {
-  AppState() : _api = ApiService(baseUrl: _resolveBaseUrl());
+  AppState()
+      : _api = ApiService(baseUrl: _resolveBaseUrl()),
+        _store = createMealStore();
 
-  final ApiService _api;
+  ApiService _api;
+  final MealStore _store;
   final List<MealEntry> entries = [];
   final UserProfile profile = UserProfile.initial();
+
+  Future<void> init() async {
+    await _store.init();
+    final loaded = await _store.loadAll();
+    entries
+      ..clear()
+      ..addAll(loaded);
+    notifyListeners();
+  }
 
   MealEntry? get latestEntry => entries.isNotEmpty ? entries.first : null;
 
@@ -65,8 +78,13 @@ class AppState extends ChangeNotifier {
 
   static String _resolveBaseUrl() {
     if (kIsWeb) return 'http://127.0.0.1:8000';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8000';
+    if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:8000';
     return 'http://127.0.0.1:8000';
+  }
+
+  void updateApiBaseUrl(String url) {
+    _api = ApiService(baseUrl: url);
+    notifyListeners();
   }
 
   MealType resolveMealType(DateTime time) {
@@ -85,14 +103,19 @@ class AppState extends ChangeNotifier {
     MealType? fixedType,
   }) async {
     final time = await _resolveImageTime(xfile);
+    final bytes = await xfile.readAsBytes();
+    final filename = xfile.name.isNotEmpty ? xfile.name : 'upload.jpg';
     final entry = MealEntry(
-      image: File(xfile.path),
+      id: _newId(),
+      imageBytes: bytes,
+      filename: filename,
       time: time,
       type: fixedType ?? resolveMealType(time),
       note: note,
     );
     entries.insert(0, entry);
     notifyListeners();
+    await _store.upsert(entry);
     await _analyzeEntry(entry, locale);
     return entry;
   }
@@ -101,6 +124,13 @@ class AppState extends ChangeNotifier {
     entry.time = time;
     entry.type = resolveMealType(time);
     notifyListeners();
+    _store.upsert(entry);
+  }
+
+  void removeEntry(MealEntry entry) {
+    entries.remove(entry);
+    notifyListeners();
+    _store.delete(entry.id);
   }
 
   void updateProfile(UserProfile updated) {
@@ -115,7 +145,8 @@ class AppState extends ChangeNotifier {
       ..dinnerReminderEnabled = updated.dinnerReminderEnabled
       ..lunchReminderTime = updated.lunchReminderTime
       ..dinnerReminderTime = updated.dinnerReminderTime
-      ..language = updated.language;
+      ..language = updated.language
+      ..apiBaseUrl = updated.apiBaseUrl;
     notifyListeners();
   }
 
@@ -131,13 +162,14 @@ class AppState extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final AnalysisResult res = await _api.analyzeImage(entry.image, lang: locale);
+      final AnalysisResult res = await _api.analyzeImage(entry.imageBytes, entry.filename, lang: locale);
       entry.result = res;
     } catch (e) {
       entry.error = e.toString();
     } finally {
       entry.loading = false;
       notifyListeners();
+      await _store.upsert(entry);
     }
   }
 
@@ -174,7 +206,7 @@ class AppState extends ChangeNotifier {
   }
 
   DateTime? _parseExifDate(String value) {
-    final match = RegExp(r'(\\d{4}):(\\d{2}):(\\d{2})\\s+(\\d{2}):(\\d{2}):(\\d{2})').firstMatch(value);
+    final match = RegExp(r'(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})').firstMatch(value);
     if (match == null) return null;
     final year = int.tryParse(match.group(1)!);
     final month = int.tryParse(match.group(2)!);
@@ -188,12 +220,18 @@ class AppState extends ChangeNotifier {
 
   List<int>? _parseCalorieRange(String? value) {
     if (value == null) return null;
-    final match = RegExp(r'(\\d+)\\s*-\\s*(\\d+)').firstMatch(value);
+    final match = RegExp(r'(\d+)\s*-\s*(\d+)').firstMatch(value);
     if (match == null) return null;
     final minVal = int.tryParse(match.group(1)!);
     final maxVal = int.tryParse(match.group(2)!);
     if (minVal == null || maxVal == null) return null;
     return [minVal, maxVal];
+  }
+
+  String _newId() {
+    final seed = DateTime.now().microsecondsSinceEpoch;
+    final rand = Random().nextInt(1 << 32);
+    return '$seed-$rand';
   }
 }
 
@@ -210,6 +248,7 @@ class UserProfile {
     required this.lunchReminderTime,
     required this.dinnerReminderTime,
     required this.language,
+    required this.apiBaseUrl,
   });
 
   String name;
@@ -223,6 +262,7 @@ class UserProfile {
   TimeOfDay lunchReminderTime;
   TimeOfDay dinnerReminderTime;
   String language;
+  String apiBaseUrl;
 
   factory UserProfile.initial() {
     return UserProfile(
@@ -237,6 +277,7 @@ class UserProfile {
       lunchReminderTime: const TimeOfDay(hour: 12, minute: 15),
       dinnerReminderTime: const TimeOfDay(hour: 18, minute: 45),
       language: 'zh-TW',
+      apiBaseUrl: 'http://127.0.0.1:8000',
     );
   }
 }

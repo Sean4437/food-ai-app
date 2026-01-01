@@ -6,6 +6,7 @@ import '../state/app_state.dart';
 import '../screens/meal_detail_screen.dart';
 import '../screens/suggestions_screen.dart';
 import '../screens/log_screen.dart';
+import '../screens/summary_screen.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
 
@@ -200,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 8),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(14),
-                            child: Image.file(latest.image, height: 160, width: double.infinity, fit: BoxFit.cover),
+                            child: Image.memory(latest.imageBytes, height: 160, width: double.infinity, fit: BoxFit.cover),
                           ),
                           const SizedBox(height: 8),
                           Text(formatter.format(latest.time), style: const TextStyle(color: Colors.black54, fontSize: 12)),
@@ -264,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 GestureDetector(
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LogScreen())),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SummaryScreen())),
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(

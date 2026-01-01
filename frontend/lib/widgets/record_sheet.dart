@@ -4,7 +4,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 
-Future<void> showRecordSheet(
+Future<MealEntry?> showRecordSheet(
   BuildContext context,
   AppState app, {
   MealType? fixedType,
@@ -45,10 +45,10 @@ Future<void> showRecordSheet(
     },
   );
 
-  if (source == null) return;
+  if (source == null) return null;
   final picker = ImagePicker();
   final xfile = await picker.pickImage(source: source);
-  if (xfile == null) return;
+  if (xfile == null) return null;
   final locale = Localizations.localeOf(context).toLanguageTag();
-  await app.addEntry(xfile, locale, fixedType: fixedType);
+  return app.addEntry(xfile, locale, fixedType: fixedType);
 }

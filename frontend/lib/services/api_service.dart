@@ -1,17 +1,21 @@
-﻿import 'dart:io';
-import 'package:http/http.dart' as http;
+﻿import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:typed_data';
 import '../models/analysis_result.dart';
 
 class ApiService {
   final String baseUrl;
   ApiService({required this.baseUrl});
 
-  Future<AnalysisResult> analyzeImage(File imageFile, {String? lang}) async {
+  Future<AnalysisResult> analyzeImage(
+    Uint8List imageBytes,
+    String filename, {
+    String? lang,
+  }) async {
     final query = lang == null ? '' : '?lang=$lang';
     final uri = Uri.parse('$baseUrl/analyze$query');
     final request = http.MultipartRequest('POST', uri);
-    request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+    request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
 
     final response = await request.send();
     final body = await response.stream.bytesToString();
@@ -23,4 +27,5 @@ class ApiService {
     final jsonMap = json.decode(body) as Map<String, dynamic>;
     return AnalysisResult.fromJson(jsonMap);
   }
+
 }

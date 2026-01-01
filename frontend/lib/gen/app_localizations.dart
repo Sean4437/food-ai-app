@@ -795,6 +795,42 @@ abstract class AppLocalizations {
   /// **'暖橘'**
   String get themeWarm;
 
+  /// No description provided for @apiSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'API 連線'**
+  String get apiSection;
+
+  /// No description provided for @apiBaseUrlLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'API 位址'**
+  String get apiBaseUrlLabel;
+
+  /// No description provided for @delete.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刪除'**
+  String get delete;
+
+  /// No description provided for @deleteConfirm.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'確定要刪除此紀錄嗎？'**
+  String get deleteConfirm;
+
+  /// No description provided for @logSuccess.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已記錄這餐'**
+  String get logSuccess;
+
+  /// No description provided for @viewLog.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'查看紀錄'**
+  String get viewLog;
+
   /// No description provided for @calories.
   ///
   /// In zh_TW, this message translates to:
@@ -836,6 +872,42 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'分析失敗'**
   String get analyzeFailed;
+
+  /// No description provided for @costEstimateLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'估算花費'**
+  String get costEstimateLabel;
+
+  /// No description provided for @usageSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'AI 花費'**
+  String get usageSection;
+
+  /// No description provided for @usageTotalLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'累計花費'**
+  String get usageTotalLabel;
+
+  /// No description provided for @usageViewLog.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'查看紀錄'**
+  String get usageViewLog;
+
+  /// No description provided for @usageEmpty.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'尚無花費紀錄'**
+  String get usageEmpty;
+
+  /// No description provided for @usageLoading.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'載入中...'**
+  String get usageLoading;
 }
 
 class _AppLocalizationsDelegate

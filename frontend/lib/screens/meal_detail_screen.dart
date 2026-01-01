@@ -27,6 +27,26 @@ class MealDetailScreen extends StatelessWidget {
     app.updateEntryTime(entry, updated);
   }
 
+  Future<void> _confirmDelete(BuildContext context) async {
+    final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.delete),
+        content: Text(t.deleteConfirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.delete)),
+        ],
+      ),
+    );
+    if (result == true) {
+      app.removeEntry(entry);
+      if (context.mounted) Navigator.of(context).pop();
+    }
+  }
+
   double _ratioFromValue(String value) {
     final v = value.toLowerCase();
     if (v.contains('高') || v.contains('high')) return 0.8;
@@ -68,6 +88,11 @@ class MealDetailScreen extends StatelessWidget {
             icon: const Icon(Icons.edit),
             tooltip: t.editTime,
           ),
+          IconButton(
+            onPressed: () => _confirmDelete(context),
+            icon: const Icon(Icons.delete_outline),
+            tooltip: t.delete,
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -80,7 +105,7 @@ class MealDetailScreen extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(18),
-                  child: Image.file(entry.image, height: 220, fit: BoxFit.cover),
+                  child: Image.memory(entry.imageBytes, height: 220, fit: BoxFit.cover),
                 ),
                 const SizedBox(height: 12),
                 Text(formatter.format(entry.time), style: const TextStyle(color: Colors.black54)),
@@ -104,6 +129,10 @@ class MealDetailScreen extends StatelessWidget {
                       Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
                       Text(entry.result?.suggestion ?? t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
+                      if (entry.result != null) ...[
+                        const SizedBox(height: 6),
+                        Text('source: ${entry.result!.source}', style: const TextStyle(fontSize: 11, color: Colors.black45)),
+                      ],
                       const SizedBox(height: 12),
                       Text(t.detailWhyLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),

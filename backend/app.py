@@ -2,15 +2,23 @@
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Optional
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
+from pathlib import Path
 from openai import OpenAI
+import logging
 import asyncio
 import base64
 import json
 import os
 import random
+import uuid
+from datetime import datetime, timezone
 
-load_dotenv()
+_base_dir = Path(__file__).resolve().parent
+_env_path = _base_dir / ".env.runtime"
+if not _env_path.exists():
+    _env_path = _base_dir / ".env"
+load_dotenv(dotenv_path=_env_path, override=True)
 
 app = FastAPI(title="Food AI MVP")
 
@@ -28,14 +36,23 @@ class AnalysisResult(BaseModel):
     macros: Dict[str, str]
     suggestion: str
     tier: str
+    source: str
+    cost_estimate_usd: Optional[float] = None
 
 FREE_DAILY_LIMIT = int(os.getenv("FREE_DAILY_LIMIT", "1"))
 CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
 DEFAULT_LANG = os.getenv("DEFAULT_LANG", "zh-TW")
 API_KEY = os.getenv("API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+PRICE_INPUT_PER_M = float(os.getenv("PRICE_INPUT_PER_M", "0.15"))
+PRICE_OUTPUT_PER_M = float(os.getenv("PRICE_OUTPUT_PER_M", "0.60"))
 
 _client = OpenAI(api_key=API_KEY) if API_KEY else None
+logging.basicConfig(level=logging.INFO)
+
+_usage_dir = _base_dir / "data"
+_usage_dir.mkdir(exist_ok=True)
+_usage_log_path = _usage_dir / "usage.jsonl"
 
 _fake_foods = {
     "zh-TW": [
@@ -111,26 +128,37 @@ def _build_prompt(lang: str) -> str:
     )
 
 
+def _estimate_cost_usd(input_tokens: int, output_tokens: int) -> float:
+    return round((input_tokens * PRICE_INPUT_PER_M + output_tokens * PRICE_OUTPUT_PER_M) / 1_000_000, 6)
+
+
+def _append_usage(record: dict) -> None:
+    line = json.dumps(record, ensure_ascii=True)
+    with _usage_log_path.open("a", encoding="utf-8") as handle:
+        handle.write(line + "\n")
+
+
 def _analyze_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
     if _client is None:
         return None
 
     prompt = _build_prompt(lang)
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
-    response = _client.responses.create(
+    response = _client.chat.completions.create(
         model=OPENAI_MODEL,
-        input=[
+        messages=[
             {
                 "role": "user",
                 "content": [
-                    {"type": "input_text", "text": prompt},
-                    {"type": "input_image", "image_url": f"data:image/jpeg;base64,{image_b64}"},
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}},
                 ],
             }
         ],
+        temperature=0.2,
     )
 
-    text = response.output_text or ""
+    text = response.choices[0].message.content or ""
     data = _parse_json(text)
     if not isinstance(data, dict):
         return None
@@ -139,7 +167,15 @@ def _analyze_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
     if not required.issubset(set(data.keys())):
         return None
 
-    return data
+    usage = response.usage
+    usage_data = None
+    if usage is not None:
+        usage_data = {
+            "input_tokens": usage.prompt_tokens,
+            "output_tokens": usage.completion_tokens,
+            "total_tokens": usage.total_tokens,
+        }
+    return {"result": data, "usage": usage_data}
 
 
 @app.post("/analyze", response_model=AnalysisResult)
@@ -159,17 +195,40 @@ async def analyze_image(
 
     if CALL_REAL_AI and _client is not None:
         try:
-            data = await asyncio.to_thread(_analyze_with_openai, image_bytes, use_lang)
-            if data:
-                return AnalysisResult(
-                    food_name=data["food_name"],
-                    calorie_range=data["calorie_range"],
-                    macros=data["macros"],
-                    suggestion=data["suggestion"],
-                    tier=tier,
+            payload = await asyncio.to_thread(_analyze_with_openai, image_bytes, use_lang)
+            if payload and payload.get("result"):
+                usage_data = payload.get("usage") or {}
+                input_tokens = int(usage_data.get("input_tokens") or 0)
+                output_tokens = int(usage_data.get("output_tokens") or 0)
+                cost_estimate = _estimate_cost_usd(input_tokens, output_tokens) if usage_data else None
+                _append_usage(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "model": OPENAI_MODEL,
+                        "lang": use_lang,
+                        "source": "ai",
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                        "total_tokens": int(usage_data.get("total_tokens") or 0),
+                        "cost_estimate_usd": cost_estimate,
+                        "image_bytes": len(image_bytes),
+                    }
                 )
-        except Exception:
-            pass
+                return AnalysisResult(
+                    food_name=payload["result"]["food_name"],
+                    calorie_range=payload["result"]["calorie_range"],
+                    macros=payload["result"]["macros"],
+                    suggestion=payload["result"]["suggestion"],
+                    tier=tier,
+                    source="ai",
+                    cost_estimate_usd=cost_estimate,
+                )
+        except Exception as exc:
+            logging.exception("AI analyze failed: %s", exc)
+
+    if CALL_REAL_AI and _client is None:
+        logging.warning("CALL_REAL_AI is true but API_KEY is missing.")
 
     food_name = random.choice(_fake_foods[use_lang])
     calorie_range = random.choice(["350-450 kcal", "450-600 kcal", "600-800 kcal"])
@@ -186,4 +245,70 @@ async def analyze_image(
         macros=macros,
         suggestion=suggestion,
         tier=tier,
+        source="mock",
     )
+
+
+@app.get("/health")
+def health():
+    file_env = dotenv_values(_env_path)
+    return {
+        "call_real_ai": CALL_REAL_AI,
+        "api_key_set": bool(API_KEY),
+        "model": OPENAI_MODEL,
+        "env_path": str(_env_path),
+        "file_call_real_ai": file_env.get("CALL_REAL_AI"),
+        "env_call_real_ai": os.getenv("CALL_REAL_AI"),
+    }
+
+
+def _read_usage_records(limit: int) -> list[dict]:
+    if not _usage_log_path.exists():
+        return []
+    with _usage_log_path.open("r", encoding="utf-8") as handle:
+        lines = handle.readlines()
+    records = []
+    for line in reversed(lines):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            records.append(json.loads(line))
+        except Exception:
+            continue
+        if len(records) >= limit:
+            break
+    return records
+
+
+@app.get("/usage")
+def usage(limit: int = 50):
+    return {"records": _read_usage_records(limit)}
+
+
+@app.get("/usage/summary")
+def usage_summary():
+    total_cost = 0.0
+    total_input = 0
+    total_output = 0
+    count = 0
+    if _usage_log_path.exists():
+        with _usage_log_path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    record = json.loads(line)
+                except Exception:
+                    continue
+                count += 1
+                total_cost += float(record.get("cost_estimate_usd") or 0)
+                total_input += int(record.get("input_tokens") or 0)
+                total_output += int(record.get("output_tokens") or 0)
+    return {
+        "count": count,
+        "total_cost_usd": round(total_cost, 6),
+        "total_input_tokens": total_input,
+        "total_output_tokens": total_output,
+    }

@@ -359,6 +359,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeWarm => '暖橘';
 
   @override
+  String get apiSection => 'API 連線';
+
+  @override
+  String get apiBaseUrlLabel => 'API 位址';
+
+  @override
+  String get delete => '刪除';
+
+  @override
+  String get deleteConfirm => '確定要刪除此紀錄嗎？';
+
+  @override
+  String get logSuccess => '已記錄這餐';
+
+  @override
+  String get viewLog => '查看紀錄';
+
+  @override
   String get calories => '熱量';
 
   @override
@@ -378,6 +396,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get analyzeFailed => '分析失敗';
+
+  @override
+  String get costEstimateLabel => '估算花費';
+
+  @override
+  String get usageSection => 'AI 花費';
+
+  @override
+  String get usageTotalLabel => '累計花費';
+
+  @override
+  String get usageViewLog => '查看紀錄';
+
+  @override
+  String get usageEmpty => '尚無花費紀錄';
+
+  @override
+  String get usageLoading => '載入中...';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -735,6 +771,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get themeWarm => '暖橘';
 
   @override
+  String get apiSection => 'API 連線';
+
+  @override
+  String get apiBaseUrlLabel => 'API 位址';
+
+  @override
+  String get delete => '刪除';
+
+  @override
+  String get deleteConfirm => '確定要刪除此紀錄嗎？';
+
+  @override
+  String get logSuccess => '已記錄這餐';
+
+  @override
+  String get viewLog => '查看紀錄';
+
+  @override
   String get calories => '熱量';
 
   @override
@@ -754,4 +808,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get analyzeFailed => '分析失敗';
+
+  @override
+  String get costEstimateLabel => '估算花費';
+
+  @override
+  String get usageSection => 'AI 花費';
+
+  @override
+  String get usageTotalLabel => '累計花費';
+
+  @override
+  String get usageViewLog => '查看紀錄';
+
+  @override
+  String get usageEmpty => '尚無花費紀錄';
+
+  @override
+  String get usageLoading => '載入中...';
 }
