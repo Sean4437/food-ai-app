@@ -271,7 +271,7 @@ class AppState extends ChangeNotifier {
 
   String _newId() {
     final seed = DateTime.now().microsecondsSinceEpoch;
-    final rand = Random().nextInt(1 << 32);
+    final rand = Random().nextInt(1 << 31);
     return '$seed-$rand';
   }
 }
