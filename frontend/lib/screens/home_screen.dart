@@ -79,6 +79,11 @@ class _PetalPainter extends CustomPainter {
         colors: [color.withOpacity(0.9), color.withOpacity(0.2)],
       ).createShader(Rect.fromPoints(base, tip));
     canvas.drawPath(path, paint);
+    final outline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = color.withOpacity(0.55);
+    canvas.drawPath(path, outline);
   }
 
   @override
