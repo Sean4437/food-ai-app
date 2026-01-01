@@ -42,8 +42,8 @@ class _PetalPainter extends CustomPainter {
     if (petals.isEmpty) return;
     final center = Offset(size.width / 2, size.height / 2);
     final baseRadius = size.width * 0.12;
-    final maxLen = size.width * 0.42;
-    final width = size.width * 0.18;
+    final maxLen = size.width * 0.42 * 3;
+    final width = size.width * 0.2;
 
     for (int i = 0; i < petals.length; i++) {
       final angle = (2 * pi * i / petals.length) - pi / 2;
