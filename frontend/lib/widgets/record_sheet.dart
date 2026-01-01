@@ -47,7 +47,12 @@ Future<MealEntry?> showRecordSheet(
 
   if (source == null) return null;
   final picker = ImagePicker();
-  final xfile = await picker.pickImage(source: source);
+  final xfile = await picker.pickImage(
+    source: source,
+    imageQuality: 70,
+    maxWidth: 1024,
+    maxHeight: 1024,
+  );
   if (xfile == null) return null;
   final locale = Localizations.localeOf(context).toLanguageTag();
   return app.addEntry(xfile, locale, fixedType: fixedType);
