@@ -191,18 +191,20 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Widget> _petalLabels(List<_PetalData> petals, double size) {
     if (petals.isEmpty) return [];
     final center = size / 2;
-    final radius = size * 0.46;
+    final radius = size * 0.42;
     return [
       for (int i = 0; i < petals.length; i++)
         Positioned(
-          left: center + cos((2 * pi * i / petals.length) - pi / 2) * radius - 38,
-          top: center + sin((2 * pi * i / petals.length) - pi / 2) * radius - 12,
+          left: center + cos((2 * pi * i / petals.length) - pi / 2) * radius - 50,
+          top: center + sin((2 * pi * i / petals.length) - pi / 2) * radius - 14,
           child: SizedBox(
-            width: 76,
+            width: 100,
             child: Text(
               petals[i].label,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -221,6 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
           height: size,
           child: Stack(
             alignment: Alignment.center,
+            clipBehavior: Clip.none,
             children: [
               if (petals.isNotEmpty)
                 CustomPaint(size: Size(size, size), painter: _PetalPainter(petals)),
