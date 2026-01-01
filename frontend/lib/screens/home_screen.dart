@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -102,9 +103,9 @@ class _PetalPainter extends CustomPainter {
     final textPainter = TextPainter(
       text: TextSpan(text: label, style: textStyle),
       textAlign: TextAlign.center,
-      textDirection: TextDirection.ltr,
+      textDirection: ui.TextDirection.ltr,
       maxLines: 2,
-      ellipsis: '…',
+      ellipsis: '...',
     )..layout(maxWidth: width * 0.9);
     final textCenter = center + dir * len;
     final offset = textCenter - Offset(textPainter.width / 2, textPainter.height / 2);
