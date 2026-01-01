@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import 'package:intl/intl.dart';
 import '../state/app_state.dart';
 import '../state/tab_state.dart';
 import '../models/meal_entry.dart';
@@ -60,12 +61,15 @@ class SummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    final entry = app.latestEntry;
-    final totalMeals = app.entries.length;
-    final breakfast = app.entries.where((e) => e.type == MealType.breakfast).length;
-    final lunch = app.entries.where((e) => e.type == MealType.lunch).length;
-    final dinner = app.entries.where((e) => e.type == MealType.dinner).length;
-    final lateSnack = app.entries.where((e) => e.type == MealType.lateSnack).length;
+    final entry = app.latestEntryForSelectedDate;
+    final entries = app.entriesForSelectedDate;
+    final totalMeals = entries.length;
+    final breakfast = entries.where((e) => e.type == MealType.breakfast).length;
+    final lunch = entries.where((e) => e.type == MealType.lunch).length;
+    final dinner = entries.where((e) => e.type == MealType.dinner).length;
+    final lateSnack = entries.where((e) => e.type == MealType.lateSnack).length;
+    final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
+    final selectedDate = app.selectedDate;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -90,6 +94,26 @@ class SummaryScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(t.summaryTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: () => app.shiftSelectedDate(-1),
+                    ),
+                    Expanded(
+                      child: Text(
+                        dateFormatter.format(selectedDate),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: () => app.shiftSelectedDate(1),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),

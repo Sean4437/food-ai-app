@@ -17,6 +17,7 @@ class AppState extends ChangeNotifier {
   ApiService _api;
   final MealStore _store;
   final List<MealEntry> entries = [];
+  DateTime _selectedDate = _dateOnly(DateTime.now());
   final UserProfile profile = UserProfile.initial();
 
   Future<void> init() async {
@@ -28,13 +29,44 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  MealEntry? get latestEntry => entries.isNotEmpty ? entries.first : null;
+  MealEntry? get latestEntryAny => entries.isNotEmpty ? entries.first : null;
+
+  DateTime get selectedDate => _selectedDate;
+
+  List<MealEntry> entriesForDate(DateTime date) {
+    final target = _dateOnly(date);
+    return entries.where((entry) => _isSameDate(entry.time, target)).toList();
+  }
+
+  List<MealEntry> get entriesForSelectedDate => entriesForDate(_selectedDate);
+
+  MealEntry? get latestEntryForSelectedDate {
+    final list = entriesForSelectedDate;
+    return list.isNotEmpty ? list.first : null;
+  }
+
+  void setSelectedDate(DateTime date) {
+    _selectedDate = _dateOnly(date);
+    notifyListeners();
+  }
+
+  void shiftSelectedDate(int days) {
+    setSelectedDate(_selectedDate.add(Duration(days: days)));
+  }
 
   String dailyCalorieRangeLabel(AppLocalizations t) {
+    return _dailyCalorieRangeLabel(entriesForSelectedDate, t);
+  }
+
+  String dailyCalorieRangeLabelForDate(DateTime date, AppLocalizations t) {
+    return _dailyCalorieRangeLabel(entriesForDate(date), t);
+  }
+
+  String _dailyCalorieRangeLabel(List<MealEntry> source, AppLocalizations t) {
     int minSum = 0;
     int maxSum = 0;
     bool hasRange = false;
-    for (final entry in entries) {
+    for (final entry in source) {
       final range = _parseCalorieRange(entry.result?.calorieRange);
       if (range == null) continue;
       minSum += range[0];
@@ -45,7 +77,7 @@ class AppState extends ChangeNotifier {
   }
 
   String todayStatusLabel(AppLocalizations t) {
-    final entry = latestEntry;
+    final entry = latestEntryForSelectedDate;
     if (entry == null || entry.result == null) return t.suggestTodayHint;
     final fat = entry.result!.macros['fat'] ?? '';
     final carbs = entry.result!.macros['carbs'] ?? '';
@@ -58,7 +90,7 @@ class AppState extends ChangeNotifier {
   }
 
   String todaySummary(AppLocalizations t) {
-    final entry = latestEntry;
+    final entry = latestEntryForSelectedDate;
     if (entry == null || entry.result == null) return t.summaryEmpty;
     final fat = entry.result!.macros['fat'] ?? '';
     final protein = entry.result!.macros['protein'] ?? '';
@@ -114,6 +146,7 @@ class AppState extends ChangeNotifier {
       note: note,
     );
     entries.insert(0, entry);
+    _selectedDate = _dateOnly(entry.time);
     notifyListeners();
     await _store.upsert(entry);
     await _analyzeEntry(entry, locale);
@@ -216,6 +249,14 @@ class AppState extends ChangeNotifier {
     final second = int.tryParse(match.group(6)!);
     if ([year, month, day, hour, minute, second].any((v) => v == null)) return null;
     return DateTime(year!, month!, day!, hour!, minute!, second!);
+  }
+
+  static DateTime _dateOnly(DateTime time) {
+    return DateTime(time.year, time.month, time.day);
+  }
+
+  bool _isSameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   List<int>? _parseCalorieRange(String? value) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import 'package:intl/intl.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import 'meal_detail_screen.dart';
@@ -159,11 +160,13 @@ class LogScreen extends StatelessWidget {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final entries = app.entries;
-    final breakfast = entries.where((e) => e.type == MealType.breakfast).toList();
-    final lunch = entries.where((e) => e.type == MealType.lunch).toList();
-    final dinner = entries.where((e) => e.type == MealType.dinner).toList();
-    final lateSnack = entries.where((e) => e.type == MealType.lateSnack).toList();
-    final other = entries.where((e) => e.type == MealType.other).toList();
+    final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
+    final dates = entries
+        .map((e) => DateTime(e.time.year, e.time.month, e.time.day))
+        .toSet()
+        .toList();
+    dates.sort((a, b) => b.compareTo(a));
+    final displayDates = dates.isEmpty ? [DateTime.now()] : dates;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -175,28 +178,64 @@ class LogScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(t.logTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+                const SizedBox(height: 12),
+                for (final date in displayDates) ...[
+                  Text(
+                    dateFormatter.format(date),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.dailyCalorieRange, style: const TextStyle(color: Colors.black54)),
-                      const SizedBox(height: 6),
-                      Text(app.dailyCalorieRangeLabel(t), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                    ],
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t.dailyCalorieRange, style: const TextStyle(color: Colors.black54)),
+                        const SizedBox(height: 6),
+                        Text(
+                          app.dailyCalorieRangeLabelForDate(date, t),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                _mealSection(context, app, MealType.breakfast, breakfast),
-                _mealSection(context, app, MealType.lunch, lunch),
-                _mealSection(context, app, MealType.dinner, dinner),
-                _mealSection(context, app, MealType.lateSnack, lateSnack),
-                _mealSection(context, app, MealType.other, other),
+                  const SizedBox(height: 12),
+                  _mealSection(
+                    context,
+                    app,
+                    MealType.breakfast,
+                    app.entriesForDate(date).where((e) => e.type == MealType.breakfast).toList(),
+                  ),
+                  _mealSection(
+                    context,
+                    app,
+                    MealType.lunch,
+                    app.entriesForDate(date).where((e) => e.type == MealType.lunch).toList(),
+                  ),
+                  _mealSection(
+                    context,
+                    app,
+                    MealType.dinner,
+                    app.entriesForDate(date).where((e) => e.type == MealType.dinner).toList(),
+                  ),
+                  _mealSection(
+                    context,
+                    app,
+                    MealType.lateSnack,
+                    app.entriesForDate(date).where((e) => e.type == MealType.lateSnack).toList(),
+                  ),
+                  _mealSection(
+                    context,
+                    app,
+                    MealType.other,
+                    app.entriesForDate(date).where((e) => e.type == MealType.other).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ],
             ),
           ),

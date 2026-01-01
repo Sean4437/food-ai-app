@@ -15,7 +15,6 @@ class AnalysisScreen extends StatelessWidget {
     return MacroLevel.medium;
   }
 
-
   Color _levelColor(MacroLevel level) {
     switch (level) {
       case MacroLevel.low:
@@ -99,7 +98,7 @@ class AnalysisScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    final entry = app.latestEntry;
+    final entry = app.latestEntryAny;
 
     return SafeArea(
       child: SingleChildScrollView(

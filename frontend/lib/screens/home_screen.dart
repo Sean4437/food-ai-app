@@ -80,8 +80,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    final latest = app.latestEntry;
+    final latest = app.latestEntryForSelectedDate;
     final formatter = DateFormat('MM/dd HH:mm', Localizations.localeOf(context).toLanguageTag());
+    final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
+    final selectedDate = app.selectedDate;
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
 
@@ -110,6 +112,26 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 14),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: () => app.shiftSelectedDate(-1),
+                    ),
+                    Expanded(
+                      child: Text(
+                        dateFormatter.format(selectedDate),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: () => app.shiftSelectedDate(1),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
