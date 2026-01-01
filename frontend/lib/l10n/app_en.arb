@@ -134,6 +134,7 @@
   "protein": "Protein",
   "carbs": "Carbs",
   "fat": "Fat",
+  "sodium": "Sodium",
   "tier": "Tier",
   "analyzeFailed": "Analyze failed",
   "costEstimateLabel": "Estimated cost",

@@ -134,6 +134,7 @@
   "protein": "蛋白質",
   "carbs": "碳水",
   "fat": "脂肪",
+  "sodium": "鈉含量",
   "tier": "層級",
   "analyzeFailed": "分析失敗",
   "costEstimateLabel": "估算花費",

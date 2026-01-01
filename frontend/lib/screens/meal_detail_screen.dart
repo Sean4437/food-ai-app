@@ -149,6 +149,10 @@ class MealDetailScreen extends StatelessWidget {
                         const SizedBox(height: 10),
                         _ratioBar(t.fat, _ratioFromValue(entry.result!.macros['fat'] ?? ''), const Color(0xFFF08A7C)),
                         const SizedBox(height: 10),
+                        if ((entry.result!.macros['sodium'] ?? '').isNotEmpty) ...[
+                          _ratioBar(t.sodium, _ratioFromValue(entry.result!.macros['sodium'] ?? ''), const Color(0xFF8AB4F8)),
+                          const SizedBox(height: 10),
+                        ],
                         Text('${t.calorieLabel}：${prefix}${entry.result!.calorieRange}', style: const TextStyle(color: Colors.black54)),
                       ] else
                         Text(t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),

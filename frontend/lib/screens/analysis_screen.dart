@@ -94,6 +94,22 @@ class AnalysisScreen extends StatelessWidget {
     );
   }
 
+  List<Widget> _macroChips(AnalysisResult result, AppLocalizations t) {
+    final items = <MapEntry<String, String>>[
+      MapEntry(t.protein, result.macros['protein'] ?? ''),
+      MapEntry(t.carbs, result.macros['carbs'] ?? ''),
+      MapEntry(t.fat, result.macros['fat'] ?? ''),
+    ];
+    final sodium = result.macros['sodium'];
+    if (sodium != null && sodium.isNotEmpty) {
+      items.add(MapEntry(t.sodium, sodium));
+    }
+    return [
+      for (final item in items)
+        _macroChip(item.key, _levelFromValue(item.value), t),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
@@ -211,11 +227,7 @@ class AnalysisScreen extends StatelessWidget {
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: [
-                              _macroChip(t.protein, _levelFromValue(entry.result!.macros['protein'] ?? ''), t),
-                              _macroChip(t.carbs, _levelFromValue(entry.result!.macros['carbs'] ?? ''), t),
-                              _macroChip(t.fat, _levelFromValue(entry.result!.macros['fat'] ?? ''), t),
-                            ],
+                            children: _macroChips(entry.result!, t),
                           ),
                           const SizedBox(height: 12),
                           Text('${prefix}${entry.result!.suggestion}', style: const TextStyle(color: Colors.black54)),

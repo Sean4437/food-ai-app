@@ -392,6 +392,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fat => '脂肪';
 
   @override
+  String get sodium => '鈉含量';
+
+  @override
   String get tier => '層級';
 
   @override
@@ -805,6 +808,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get fat => '脂肪';
+
+  @override
+  String get sodium => '鈉含量';
 
   @override
   String get tier => '層級';

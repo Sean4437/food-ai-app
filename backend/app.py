@@ -114,8 +114,8 @@ def _build_prompt(lang: str) -> str:
             "- 僅回傳 JSON（不要多餘文字）\n"
             "- food_name: 中文餐點名稱\n"
             "- calorie_range: 例如 '450-600 kcal'\n"
-            "- macros: protein/carbs/fat 的值只能是 低/中/高\n"
-            "- suggestion: 溫和、非醫療的下一餐建議\n"
+            "- macros: protein/carbs/fat/sodium 的值只能是 低/中/高\n"
+            "- suggestion: 溫和、非醫療的下一餐建議，請給出具體食物類型\n"
         )
     return (
         "You are a nutrition assistant. Analyze the meal image and return JSON.\n"
@@ -123,8 +123,8 @@ def _build_prompt(lang: str) -> str:
         "- Return JSON only (no extra text)\n"
         "- food_name: English name\n"
         "- calorie_range: e.g. '450-600 kcal'\n"
-        "- macros: protein/carbs/fat values must be low/medium/high\n"
-        "- suggestion: gentle next-meal advice (non-medical)\n"
+        "- macros: protein/carbs/fat/sodium values must be low/medium/high\n"
+        "- suggestion: gentle next-meal advice (non-medical), include concrete food types\n"
     )
 
 
@@ -166,6 +166,8 @@ def _analyze_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
     required = {"food_name", "calorie_range", "macros", "suggestion"}
     if not required.issubset(set(data.keys())):
         return None
+    if isinstance(data.get("macros"), dict):
+        data["macros"].setdefault("sodium", "中" if lang == "zh-TW" else "medium")
 
     usage = response.usage
     usage_data = None
@@ -236,6 +238,7 @@ async def analyze_image(
         "protein": random.choice(_fake_macros[use_lang]),
         "carbs": random.choice(_fake_macros[use_lang]),
         "fat": random.choice(_fake_macros[use_lang]),
+        "sodium": random.choice(_fake_macros[use_lang]),
     }
     suggestion = random.choice(_fake_suggestions[use_lang])
 

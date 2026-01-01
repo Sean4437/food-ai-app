@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +16,75 @@ class HomeScreen extends StatefulWidget {
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _PetalData {
+  _PetalData({
+    required this.label,
+    required this.ratio,
+    required this.color,
+  });
+
+  final String label;
+  final double ratio;
+  final Color color;
+}
+
+class _PetalPainter extends CustomPainter {
+  _PetalPainter(this.petals);
+
+  final List<_PetalData> petals;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (petals.isEmpty) return;
+    final center = Offset(size.width / 2, size.height / 2);
+    final baseRadius = size.width * 0.12;
+    final maxLen = size.width * 0.42;
+    final width = size.width * 0.18;
+
+    for (int i = 0; i < petals.length; i++) {
+      final angle = (2 * pi * i / petals.length) - pi / 2;
+      _drawPetal(canvas, center, angle, baseRadius, maxLen, width, petals[i].color.withOpacity(0.18), 1.0);
+      _drawPetal(canvas, center, angle, baseRadius, maxLen, width, petals[i].color.withOpacity(0.65), petals[i].ratio);
+    }
+  }
+
+  void _drawPetal(
+    Canvas canvas,
+    Offset center,
+    double angle,
+    double baseRadius,
+    double maxLen,
+    double width,
+    Color color,
+    double ratio,
+  ) {
+    final dir = Offset(cos(angle), sin(angle));
+    final perp = Offset(-dir.dy, dir.dx);
+    final len = baseRadius + (maxLen - baseRadius) * ratio.clamp(0.1, 1.0);
+    final base = center + dir * baseRadius;
+    final tip = center + dir * len;
+    final left = base + perp * (width / 2);
+    final right = base - perp * (width / 2);
+    final path = Path()
+      ..moveTo(left.dx, left.dy)
+      ..quadraticBezierTo(tip.dx, tip.dy, right.dx, right.dy)
+      ..quadraticBezierTo(base.dx, base.dy, left.dx, left.dy)
+      ..close();
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.center,
+        end: Alignment.topCenter,
+        colors: [color.withOpacity(0.9), color.withOpacity(0.2)],
+      ).createShader(Rect.fromPoints(base, tip));
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PetalPainter oldDelegate) {
+    return oldDelegate.petals != petals;
+  }
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -75,6 +145,121 @@ class _HomeScreenState extends State<HomeScreen> {
     if (carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high')) tags.add(t.tagCarbHigh);
     if (tags.isEmpty) tags.add(t.tagOk);
     return tags.take(3).toList();
+  }
+
+  double _ratioFromValue(String value, AppLocalizations t) {
+    final v = value.toLowerCase();
+    if (v.contains(t.levelHigh.toLowerCase()) || v.contains('high')) return 0.85;
+    if (v.contains(t.levelLow.toLowerCase()) || v.contains('low')) return 0.35;
+    return 0.6;
+  }
+
+  String _levelLabelFromValue(String value, AppLocalizations t) {
+    final v = value.toLowerCase();
+    if (v.contains(t.levelHigh.toLowerCase()) || v.contains('high')) return t.levelHigh;
+    if (v.contains(t.levelLow.toLowerCase()) || v.contains('low')) return t.levelLow;
+    return t.levelMedium;
+  }
+
+  List<_PetalData> _buildPetals(MealEntry entry, AppLocalizations t) {
+    final result = entry.result;
+    if (result == null) return [];
+    final map = <String, String?>{
+      t.protein: result.macros['protein'],
+      t.carbs: result.macros['carbs'],
+      t.fat: result.macros['fat'],
+      t.sodium: result.macros['sodium'],
+    };
+    final colors = <String, Color>{
+      t.protein: const Color(0xFF8AD7A4),
+      t.carbs: const Color(0xFFF4C95D),
+      t.fat: const Color(0xFFF08A7C),
+      t.sodium: const Color(0xFF8AB4F8),
+    };
+    final petals = <_PetalData>[];
+    map.forEach((label, value) {
+      if (value == null || value.isEmpty) return;
+      petals.add(_PetalData(
+        label: '$label ${_levelLabelFromValue(value, t)}',
+        ratio: _ratioFromValue(value, t),
+        color: colors[label] ?? const Color(0xFF8AB4F8),
+      ));
+    });
+    return petals;
+  }
+
+  List<Widget> _petalLabels(List<_PetalData> petals, double size) {
+    if (petals.isEmpty) return [];
+    final center = size / 2;
+    final radius = size * 0.46;
+    return [
+      for (int i = 0; i < petals.length; i++)
+        Positioned(
+          left: center + cos((2 * pi * i / petals.length) - pi / 2) * radius - 38,
+          top: center + sin((2 * pi * i / petals.length) - pi / 2) * radius - 12,
+          child: SizedBox(
+            width: 76,
+            child: Text(
+              petals[i].label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+    ];
+  }
+
+  Widget _flowerSummary(MealEntry entry, AppLocalizations t) {
+    final result = entry.result;
+    final petals = _buildPetals(entry, t);
+    final size = 250.0;
+    final prefix = result?.source == 'mock' ? t.mockPrefix : null;
+    return Column(
+      children: [
+        SizedBox(
+          width: size,
+          height: size,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (petals.isNotEmpty)
+                CustomPaint(size: Size(size, size), painter: _PetalPainter(petals)),
+              ..._petalLabels(petals, size),
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, 8)),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ClipOval(
+                      child: Image.memory(entry.imageBytes, width: 72, height: 72, fit: BoxFit.cover),
+                    ),
+                    const SizedBox(height: 6),
+                    if (prefix != null)
+                      Text(prefix, style: const TextStyle(fontSize: 10, color: Colors.black54)),
+                    Text(
+                      result?.calorieRange ?? '--',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (result != null) ...[
+          const SizedBox(height: 8),
+          Text(result.foodName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        ],
+      ],
+    );
   }
 
   @override
@@ -222,10 +407,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Text(t.latestMealTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.memory(latest.imageBytes, height: 160, width: double.infinity, fit: BoxFit.cover),
-                          ),
+                          _flowerSummary(latest, t),
                           const SizedBox(height: 8),
                           Text(formatter.format(latest.time), style: const TextStyle(color: Colors.black54, fontSize: 12)),
                           const SizedBox(height: 8),

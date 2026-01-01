@@ -861,6 +861,12 @@ abstract class AppLocalizations {
   /// **'脂肪'**
   String get fat;
 
+  /// No description provided for @sodium.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'鈉含量'**
+  String get sodium;
+
   /// No description provided for @tier.
   ///
   /// In zh_TW, this message translates to:

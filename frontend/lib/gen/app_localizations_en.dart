@@ -394,6 +394,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fat => 'Fat';
 
   @override
+  String get sodium => 'Sodium';
+
+  @override
   String get tier => 'Tier';
 
   @override
