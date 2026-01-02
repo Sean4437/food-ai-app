@@ -3,6 +3,7 @@ import 'package:exif/exif.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'dart:math';
+import 'package:image/image.dart' as img;
 import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
 import '../services/api_service.dart';
@@ -133,8 +134,9 @@ class AppState extends ChangeNotifier {
     String? note,
     MealType? fixedType,
   }) async {
-    final time = await _resolveImageTime(xfile);
-    final bytes = await xfile.readAsBytes();
+    final originalBytes = await xfile.readAsBytes();
+    final time = await _resolveImageTime(xfile, originalBytes);
+    final bytes = _compressImageBytes(originalBytes);
     final filename = xfile.name.isNotEmpty ? xfile.name : 'upload.jpg';
     final entry = MealEntry(
       id: _newId(),
@@ -212,9 +214,11 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<DateTime> _resolveImageTime(XFile xfile) async {
-    final exifTime = await _extractExifTime(xfile);
+  Future<DateTime> _resolveImageTime(XFile xfile, List<int> bytes) async {
+    final exifTime = await _extractExifTime(bytes);
     if (exifTime != null) return exifTime;
+    final filenameTime = _parseFilenameDate(xfile.name);
+    if (filenameTime != null) return filenameTime;
     try {
       final lastModified = await xfile.lastModified();
       return lastModified;
@@ -223,9 +227,8 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<DateTime?> _extractExifTime(XFile xfile) async {
+  Future<DateTime?> _extractExifTime(List<int> bytes) async {
     try {
-      final bytes = await xfile.readAsBytes();
       final data = await readExifFromBytes(bytes);
       final candidates = [
         'EXIF DateTimeOriginal',
@@ -242,6 +245,28 @@ class AppState extends ChangeNotifier {
       // Ignore EXIF errors and fallback to file time.
     }
     return null;
+  }
+
+  DateTime? _parseFilenameDate(String filename) {
+    final match = RegExp(r'(20\\d{2})[-_]?([01]\\d)[-_]?([0-3]\\d)').firstMatch(filename);
+    if (match == null) return null;
+    final year = int.tryParse(match.group(1)!);
+    final month = int.tryParse(match.group(2)!);
+    final day = int.tryParse(match.group(3)!);
+    if ([year, month, day].any((v) => v == null)) return null;
+    return DateTime(year!, month!, day!);
+  }
+
+  Uint8List _compressImageBytes(List<int> bytes) {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return Uint8List.fromList(bytes);
+    final maxDim = decoded.width > decoded.height ? decoded.width : decoded.height;
+    final scale = maxDim > 1024 ? 1024 / maxDim : 1.0;
+    final targetWidth = (decoded.width * scale).round();
+    final targetHeight = (decoded.height * scale).round();
+    final resized = scale < 1.0 ? img.copyResize(decoded, width: targetWidth, height: targetHeight) : decoded;
+    final jpg = img.encodeJpg(resized, quality: 70);
+    return Uint8List.fromList(jpg);
   }
 
   DateTime? _parseExifDate(String value) {

@@ -16,7 +16,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _picker = ImagePicker();
   final _noteController = TextEditingController();
   final Map<String, TextEditingController> _noteControllers = {};
   final PageController _pageController = PageController(viewportFraction: 0.92);
@@ -37,23 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
       entry.id,
       () => TextEditingController(text: entry.note ?? ''),
     );
-  }
-
-  Future<void> _pickAndAdd(ImageSource source) async {
-    final xfile = await _picker.pickImage(
-      source: source,
-      imageQuality: 70,
-      maxWidth: 1024,
-      maxHeight: 1024,
-    );
-    if (xfile == null) return;
-    final app = AppStateScope.of(context);
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    final note = _noteController.text.trim();
-    await app.addEntry(xfile, locale, note: note.isEmpty ? null : note);
-    if (mounted) {
-      _noteController.clear();
-    }
   }
 
   Future<void> _openRecordSheet(AppState app) async {
