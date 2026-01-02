@@ -255,6 +255,20 @@ abstract class AppLocalizations {
   /// **'重新分析'**
   String get reanalyzeLabel;
 
+  String get unknownFood;
+
+  String get dietitianPrefix;
+
+  String get dietitianBalanced;
+
+  String get dietitianProteinLow;
+
+  String get dietitianFatHigh;
+
+  String get dietitianCarbHigh;
+
+  String get dietitianSodiumHigh;
+
   /// No description provided for @overallLabel.
   ///
   /// In zh_TW, this message translates to:

@@ -89,6 +89,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reanalyzeLabel => 'Reanalyze';
 
   @override
+  String get unknownFood => 'Unnamed meal';
+
+  @override
+  String get dietitianPrefix => 'Dietitian: ';
+
+  @override
+  String get dietitianBalanced => 'Overall balanced. Keep it up.';
+
+  @override
+  String get dietitianProteinLow => 'Protein is low. Add lean protein.';
+
+  @override
+  String get dietitianFatHigh => 'Fat is high. Go lighter next meal.';
+
+  @override
+  String get dietitianCarbHigh => 'Carbs are high. Reduce starch.';
+
+  @override
+  String get dietitianSodiumHigh => 'Sodium is high. Cut broth and processed foods.';
+
+  @override
   String get overallLabel => 'Overall';
 
   @override

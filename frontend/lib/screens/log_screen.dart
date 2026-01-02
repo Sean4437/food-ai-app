@@ -12,6 +12,7 @@ class LogScreen extends StatelessWidget {
   Widget _mealRow(BuildContext context, AppState app, MealEntry entry) {
     final t = AppLocalizations.of(context)!;
     final prefix = _mockPrefix(entry, t);
+    final foodName = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: Container(
@@ -39,7 +40,7 @@ class LogScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_mealLabel(entry.type, t), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text('${prefix}${foodName}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   Text(
                     '${t.timeLabel}：${_timeLabel(entry.time, t)} · ${prefix}${entry.result?.calorieRange ?? t.calorieUnknown}',
@@ -47,7 +48,7 @@ class LogScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   if (entry.result != null)
-                    Text(_tagLine(entry, t), style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                    Text(_dietitianLine(entry, t), style: const TextStyle(fontSize: 12, color: Colors.black54)),
                 ],
               ),
             ),
@@ -83,14 +84,26 @@ class LogScreen extends StatelessWidget {
     }
   }
 
-  String _tagLine(MealEntry entry, AppLocalizations t) {
+  String _dietitianLine(MealEntry entry, AppLocalizations t) {
     final fat = entry.result?.macros['fat'] ?? '';
     final protein = entry.result?.macros['protein'] ?? '';
-    final tags = <String>[];
-    if (fat.contains(t.levelHigh) || fat.toLowerCase().contains('high')) tags.add(t.tagOily);
-    if (protein.contains(t.levelHigh) || protein.toLowerCase().contains('high')) tags.add(t.tagProteinOk);
-    if (tags.isEmpty) tags.add(t.tagOk);
-    return '${_mockPrefix(entry, t)}${tags.join(' · ')}';
+    final carbs = entry.result?.macros['carbs'] ?? '';
+    final sodium = entry.result?.macros['sodium'] ?? '';
+    final advice = <String>[];
+    if (protein.contains(t.levelLow) || protein.toLowerCase().contains('low')) {
+      advice.add(t.dietitianProteinLow);
+    }
+    if (fat.contains(t.levelHigh) || fat.toLowerCase().contains('high')) {
+      advice.add(t.dietitianFatHigh);
+    }
+    if (carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high')) {
+      advice.add(t.dietitianCarbHigh);
+    }
+    if (sodium.contains(t.levelHigh) || sodium.toLowerCase().contains('high')) {
+      advice.add(t.dietitianSodiumHigh);
+    }
+    final line = advice.isEmpty ? t.dietitianBalanced : advice.take(2).join('；');
+    return '${t.dietitianPrefix}$line';
   }
 
   String _mockPrefix(MealEntry entry, AppLocalizations t) {

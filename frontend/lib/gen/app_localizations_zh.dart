@@ -89,6 +89,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reanalyzeLabel => '重新分析';
 
   @override
+  String get unknownFood => '未命名餐點';
+
+  @override
+  String get dietitianPrefix => '營養師建議：';
+
+  @override
+  String get dietitianBalanced => '整體均衡，維持即可。';
+
+  @override
+  String get dietitianProteinLow => '蛋白質偏低，建議補豆魚蛋肉。';
+
+  @override
+  String get dietitianFatHigh => '油脂偏高，下一餐清淡少油。';
+
+  @override
+  String get dietitianCarbHigh => '碳水偏多，主食減量。';
+
+  @override
+  String get dietitianSodiumHigh => '鈉含量偏高，減少湯底與加工品。';
+
+  @override
   String get overallLabel => '整體判斷';
 
   @override
@@ -526,6 +547,27 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get reanalyzeLabel => '重新分析';
+
+  @override
+  String get unknownFood => '未命名餐點';
+
+  @override
+  String get dietitianPrefix => '營養師建議：';
+
+  @override
+  String get dietitianBalanced => '整體均衡，維持即可。';
+
+  @override
+  String get dietitianProteinLow => '蛋白質偏低，建議補豆魚蛋肉。';
+
+  @override
+  String get dietitianFatHigh => '油脂偏高，下一餐清淡少油。';
+
+  @override
+  String get dietitianCarbHigh => '碳水偏多，主食減量。';
+
+  @override
+  String get dietitianSodiumHigh => '鈉含量偏高，減少湯底與加工品。';
 
   @override
   String get overallLabel => '整體判斷';
