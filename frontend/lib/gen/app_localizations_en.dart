@@ -92,7 +92,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unknownFood => 'Unnamed meal';
 
   @override
-  String get dietitianPrefix => 'Dietitian: ';
+  String get dietitianPrefix => 'Advice: ';
 
   @override
   String get dietitianBalanced => 'Overall balanced. Keep it up.';

@@ -92,7 +92,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unknownFood => '未命名餐點';
 
   @override
-  String get dietitianPrefix => '營養師建議：';
+  String get dietitianPrefix => '建議：';
 
   @override
   String get dietitianBalanced => '整體均衡，維持即可。';
@@ -552,7 +552,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get unknownFood => '未命名餐點';
 
   @override
-  String get dietitianPrefix => '營養師建議：';
+  String get dietitianPrefix => '建議：';
 
   @override
   String get dietitianBalanced => '整體均衡，維持即可。';

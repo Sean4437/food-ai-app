@@ -34,7 +34,7 @@
   "editFoodName": "Edit food name",
   "reanalyzeLabel": "Reanalyze",
   "unknownFood": "Unnamed meal",
-  "dietitianPrefix": "Dietitian: ",
+  "dietitianPrefix": "Advice: ",
   "dietitianBalanced": "Overall balanced. Keep it up.",
   "dietitianProteinLow": "Protein is low. Add lean protein.",
   "dietitianFatHigh": "Fat is high. Go lighter next meal.",
