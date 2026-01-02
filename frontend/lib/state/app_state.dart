@@ -259,7 +259,7 @@ class AppState extends ChangeNotifier {
   }
 
   Uint8List _compressImageBytes(List<int> bytes) {
-    final decoded = img.decodeImage(bytes);
+    final decoded = img.decodeImage(Uint8List.fromList(bytes));
     if (decoded == null) return Uint8List.fromList(bytes);
     final maxDim = decoded.width > decoded.height ? decoded.width : decoded.height;
     final scale = maxDim > 1024 ? 1024 / maxDim : 1.0;
