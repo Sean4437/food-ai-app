@@ -122,7 +122,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tagOk => 'OK';
 
   @override
-  String get nextMealTitle => '下一餐怎麼補比較好';
+  String get nextMealTitle => '下一餐建議怎麼吃';
 
   @override
   String get nextMealHint => '選一個最方便的方式就好';
@@ -552,7 +552,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tagOk => 'OK';
 
   @override
-  String get nextMealTitle => '下一餐怎麼補比較好';
+  String get nextMealTitle => '下一餐建議怎麼吃';
 
   @override
   String get nextMealHint => '選一個最方便的方式就好';

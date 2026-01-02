@@ -180,7 +180,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabAnalysis => 'Analysis';
 
   @override
-  String get tabNext => 'Next meal';
+  String get tabNext => 'Next meal suggestions';
 
   @override
   String get tabSummary => 'Summary';

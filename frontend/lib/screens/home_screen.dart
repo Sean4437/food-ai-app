@@ -6,6 +6,7 @@ import '../state/app_state.dart';
 import '../screens/meal_detail_screen.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
+import '../widgets/record_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,14 +18,25 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _picker = ImagePicker();
   final _noteController = TextEditingController();
+  final Map<String, TextEditingController> _noteControllers = {};
   final PageController _pageController = PageController(viewportFraction: 0.92);
   int _pageIndex = 0;
 
   @override
   void dispose() {
     _noteController.dispose();
+    for (final controller in _noteControllers.values) {
+      controller.dispose();
+    }
     _pageController.dispose();
     super.dispose();
+  }
+
+  TextEditingController _controllerFor(MealEntry entry) {
+    return _noteControllers.putIfAbsent(
+      entry.id,
+      () => TextEditingController(text: entry.note ?? ''),
+    );
   }
 
   Future<void> _pickAndAdd(ImageSource source) async {
@@ -42,6 +54,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) {
       _noteController.clear();
     }
+  }
+
+  Future<void> _openRecordSheet(AppState app) async {
+    await showRecordSheet(context, app);
   }
 
   Widget _statusPill(String label, Color color) {
@@ -90,6 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ) {
     final formatter = DateFormat('MM/dd HH:mm', Localizations.localeOf(context).toLanguageTag());
     final prefix = entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
+    final noteController = _controllerFor(entry);
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: Container(
@@ -129,6 +146,34 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 12),
+            Text(t.optionalNoteLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 6),
+            TextField(
+              controller: noteController,
+              decoration: InputDecoration(
+                hintText: t.notePlaceholder,
+                filled: true,
+                fillColor: const Color(0xFFF7F8FC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () {
+                  final app = AppStateScope.of(context);
+                  final locale = Localizations.localeOf(context).toLanguageTag();
+                  app.updateEntryNote(entry, noteController.text.trim(), locale);
+                },
+                icon: const Icon(Icons.refresh, size: 16),
+                label: Text(t.analysisTitle),
+              ),
+            ),
+            const SizedBox(height: 6),
             Divider(color: Colors.black.withOpacity(0.08)),
             const SizedBox(height: 6),
             Text(t.nextMealTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
@@ -154,6 +199,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final selectedDate = app.selectedDate;
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
+
+    final ids = entries.map((e) => e.id).toSet();
+    final remove = _noteControllers.keys.where((key) => !ids.contains(key)).toList();
+    for (final key in remove) {
+      _noteControllers[key]?.dispose();
+      _noteControllers.remove(key);
+    }
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -216,74 +268,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(t.captureTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text(t.captureHint, style: const TextStyle(color: Colors.black54)),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _pickAndAdd(ImageSource.camera),
-                              icon: const Icon(Icons.camera_alt),
-                              label: Text(t.takePhoto),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: theme.colorScheme.primary,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusButton)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () => _pickAndAdd(ImageSource.gallery),
-                              icon: const Icon(Icons.photo_library),
-                              label: Text(t.uploadPhoto),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: theme.colorScheme.primary,
-                                side: BorderSide(color: theme.colorScheme.primary),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(appTheme.radiusButton)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _noteController,
-                        decoration: InputDecoration(
-                          labelText: t.optionalNoteLabel,
-                          hintText: t.notePlaceholder,
-                          prefixIcon: const Icon(Icons.edit_note),
-                          filled: true,
-                          fillColor: const Color(0xFFF7F8FC),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(appTheme.radiusButton),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: appTheme.card,
-                    borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
                       Text(t.summaryTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
                       Text(app.todaySummary(t), style: const TextStyle(color: Colors.black54)),
@@ -305,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        height: 360,
+                        height: 420,
                         child: PageView.builder(
                           controller: _pageController,
                           onPageChanged: (index) => setState(() => _pageIndex = index),
@@ -331,6 +315,33 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
+                const SizedBox(height: 18),
+                Align(
+                  alignment: Alignment.center,
+                  child: GestureDetector(
+                    onTap: () => _openRecordSheet(app),
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 28),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Center(
+                  child: Text(t.captureTitle, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                ),
               ],
             ),
           ),

@@ -152,6 +152,13 @@ class AppState extends ChangeNotifier {
     return entry;
   }
 
+  Future<void> updateEntryNote(MealEntry entry, String note, String locale) async {
+    entry.note = note.trim().isEmpty ? null : note.trim();
+    notifyListeners();
+    await _store.upsert(entry);
+    await _analyzeEntry(entry, locale);
+  }
+
   void updateEntryTime(MealEntry entry, DateTime time) {
     entry.time = time;
     entry.type = resolveMealType(time);
