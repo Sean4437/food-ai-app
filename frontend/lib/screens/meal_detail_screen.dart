@@ -47,6 +47,30 @@ class MealDetailScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _editFoodName(BuildContext context) async {
+    final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    final controller = TextEditingController(text: entry.overrideFoodName ?? entry.result?.foodName ?? '');
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.editFoodName),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(hintText: t.foodNameLabel),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: Text(t.save)),
+        ],
+      ),
+    );
+    if (result != null) {
+      final locale = Localizations.localeOf(context).toLanguageTag();
+      await app.updateEntryFoodName(entry, result, locale);
+    }
+  }
+
   double _ratioFromValue(String value) {
     final v = value.toLowerCase();
     if (v.contains('\u9ad8') || v.contains('high')) return 0.8;
@@ -129,8 +153,21 @@ class MealDetailScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (entry.result != null) ...[
-                        Text('${prefix}${entry.result!.foodName}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${prefix}${entry.overrideFoodName ?? entry.result!.foodName}',
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _editFoodName(context),
+                              icon: const Icon(Icons.edit, size: 18),
+                              tooltip: t.editFoodName,
+                            ),
+                          ],
+                        ),
                       ],
                       Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),

@@ -237,6 +237,24 @@ abstract class AppLocalizations {
   /// **'還沒有餐點分析，先拍一張吧'**
   String get analysisEmpty;
 
+  /// No description provided for @foodNameLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'食物名稱'**
+  String get foodNameLabel;
+
+  /// No description provided for @editFoodName.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'修改食物名稱'**
+  String get editFoodName;
+
+  /// No description provided for @reanalyzeLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重新分析'**
+  String get reanalyzeLabel;
+
   /// No description provided for @overallLabel.
   ///
   /// In zh_TW, this message translates to:

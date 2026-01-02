@@ -11,11 +11,15 @@ class ApiService {
     Uint8List imageBytes,
     String filename, {
     String? lang,
+    String? foodName,
   }) async {
     final query = lang == null ? '' : '?lang=$lang';
     final uri = Uri.parse('$baseUrl/analyze$query');
     final request = http.MultipartRequest('POST', uri);
     request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
+    if (foodName != null && foodName.trim().isNotEmpty) {
+      request.fields['food_name'] = foodName.trim();
+    }
 
     final response = await request.send();
     final body = await response.stream.bytesToString();

@@ -80,6 +80,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analysisEmpty => 'No analysis yet. Take a photo to start.';
 
   @override
+  String get foodNameLabel => 'Food name';
+
+  @override
+  String get editFoodName => 'Edit food name';
+
+  @override
+  String get reanalyzeLabel => 'Reanalyze';
+
+  @override
   String get overallLabel => 'Overall';
 
   @override

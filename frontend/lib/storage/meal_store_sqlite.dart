@@ -18,7 +18,7 @@ class MealStoreImpl implements MealStore {
     final dbPath = p.join(dir.path, _dbName);
     _db = await openDatabase(
       dbPath,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table(
@@ -27,11 +27,17 @@ class MealStoreImpl implements MealStore {
             type TEXT NOT NULL,
             filename TEXT NOT NULL,
             note TEXT,
+            override_food_name TEXT,
             image_bytes BLOB NOT NULL,
             result_json TEXT,
             error TEXT
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE $_table ADD COLUMN override_food_name TEXT');
+        }
       },
     );
   }
@@ -74,6 +80,7 @@ class MealStoreImpl implements MealStore {
       time: DateTime.fromMillisecondsSinceEpoch(row['time'] as int),
       type: type,
       note: row['note'] as String?,
+      overrideFoodName: row['override_food_name'] as String?,
     );
     entry.result = result;
     entry.error = row['error'] as String?;
@@ -88,6 +95,7 @@ class MealStoreImpl implements MealStore {
       'type': entry.type.name,
       'filename': entry.filename,
       'note': entry.note,
+      'override_food_name': entry.overrideFoodName,
       'image_bytes': entry.imageBytes,
       'result_json': entry.result == null ? null : json.encode(entry.result!.toJson()),
       'error': entry.error,

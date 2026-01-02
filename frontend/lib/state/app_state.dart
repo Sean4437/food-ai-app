@@ -169,6 +169,13 @@ class AppState extends ChangeNotifier {
     _store.upsert(entry);
   }
 
+  Future<void> updateEntryFoodName(MealEntry entry, String foodName, String locale) async {
+    entry.overrideFoodName = foodName.trim().isEmpty ? null : foodName.trim();
+    notifyListeners();
+    await _store.upsert(entry);
+    await _analyzeEntry(entry, locale);
+  }
+
   void removeEntry(MealEntry entry) {
     entries.remove(entry);
     notifyListeners();
@@ -204,7 +211,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final AnalysisResult res = await _api.analyzeImage(entry.imageBytes, entry.filename, lang: locale);
+      final AnalysisResult res = await _api.analyzeImage(
+        entry.imageBytes,
+        entry.filename,
+        lang: locale,
+        foodName: entry.overrideFoodName,
+      );
       entry.result = res;
     } catch (e) {
       entry.error = e.toString();

@@ -80,6 +80,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get analysisEmpty => '還沒有餐點分析，先拍一張吧';
 
   @override
+  String get foodNameLabel => '食物名稱';
+
+  @override
+  String get editFoodName => '修改食物名稱';
+
+  @override
+  String get reanalyzeLabel => '重新分析';
+
+  @override
   String get overallLabel => '整體判斷';
 
   @override
@@ -508,6 +517,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get analysisEmpty => '還沒有餐點分析，先拍一張吧';
+
+  @override
+  String get foodNameLabel => '食物名稱';
+
+  @override
+  String get editFoodName => '修改食物名稱';
+
+  @override
+  String get reanalyzeLabel => '重新分析';
 
   @override
   String get overallLabel => '整體判斷';

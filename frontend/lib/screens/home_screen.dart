@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(formatter.format(entry.time), style: const TextStyle(color: Colors.black54, fontSize: 12)),
             const SizedBox(height: 6),
             Text(
-              '${prefix}${entry.result?.foodName ?? t.latestMealTitle}',
+              '${prefix}${entry.overrideFoodName ?? entry.result?.foodName ?? t.latestMealTitle}',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
@@ -152,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   app.updateEntryNote(entry, noteController.text.trim(), locale);
                 },
                 icon: const Icon(Icons.refresh, size: 16),
-                label: Text(t.analysisTitle),
+                label: Text(t.reanalyzeLabel),
               ),
             ),
             const SizedBox(height: 6),

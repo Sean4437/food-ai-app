@@ -11,6 +11,7 @@ class MealEntry {
     required this.time,
     required this.type,
     this.note,
+    this.overrideFoodName,
   });
 
   final String id;
@@ -19,6 +20,7 @@ class MealEntry {
   DateTime time;
   MealType type;
   String? note;
+  String? overrideFoodName;
   AnalysisResult? result;
   bool loading = false;
   String? error;

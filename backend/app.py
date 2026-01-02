@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI, UploadFile, File, Query
+﻿from fastapi import FastAPI, UploadFile, File, Query, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Optional
@@ -138,11 +138,14 @@ def _append_usage(record: dict) -> None:
         handle.write(line + "\n")
 
 
-def _analyze_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
+def _analyze_with_openai(image_bytes: bytes, lang: str, food_name: str | None) -> Optional[dict]:
     if _client is None:
         return None
 
     prompt = _build_prompt(lang)
+    if food_name:
+        prompt += f"\nUser provided food name: {food_name}. Use this as the primary dish name."
+
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
     response = _client.chat.completions.create(
         model=OPENAI_MODEL,
@@ -184,6 +187,7 @@ def _analyze_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
 async def analyze_image(
     image: UploadFile = File(...),
     lang: str = Query(default=None, description="Language code, e.g. zh-TW, en"),
+    food_name: str = Form(default=None),
 ):
     image_bytes = await image.read()
 
@@ -197,7 +201,7 @@ async def analyze_image(
 
     if CALL_REAL_AI and _client is not None:
         try:
-            payload = await asyncio.to_thread(_analyze_with_openai, image_bytes, use_lang)
+            payload = await asyncio.to_thread(_analyze_with_openai, image_bytes, use_lang, food_name)
             if payload and payload.get("result"):
                 usage_data = payload.get("usage") or {}
                 input_tokens = int(usage_data.get("input_tokens") or 0)
@@ -217,8 +221,9 @@ async def analyze_image(
                         "image_bytes": len(image_bytes),
                     }
                 )
+                final_name = food_name or payload["result"]["food_name"]
                 return AnalysisResult(
-                    food_name=payload["result"]["food_name"],
+                    food_name=final_name,
                     calorie_range=payload["result"]["calorie_range"],
                     macros=payload["result"]["macros"],
                     suggestion=payload["result"]["suggestion"],
@@ -232,7 +237,7 @@ async def analyze_image(
     if CALL_REAL_AI and _client is None:
         logging.warning("CALL_REAL_AI is true but API_KEY is missing.")
 
-    food_name = random.choice(_fake_foods[use_lang])
+    chosen_name = food_name or random.choice(_fake_foods[use_lang])
     calorie_range = random.choice(["350-450 kcal", "450-600 kcal", "600-800 kcal"])
     macros = {
         "protein": random.choice(_fake_macros[use_lang]),
@@ -243,7 +248,7 @@ async def analyze_image(
     suggestion = random.choice(_fake_suggestions[use_lang])
 
     return AnalysisResult(
-        food_name=food_name,
+        food_name=chosen_name,
         calorie_range=calorie_range,
         macros=macros,
         suggestion=suggestion,
