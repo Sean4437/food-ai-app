@@ -47,6 +47,21 @@ class MealDetailScreen extends StatelessWidget {
     }
   }
 
+  String _aiSummary(MealEntry entry, AppLocalizations t) {
+    final fat = entry.result?.macros['fat'] ?? '';
+    final protein = entry.result?.macros['protein'] ?? '';
+    final carbs = entry.result?.macros['carbs'] ?? '';
+    final sodium = entry.result?.macros['sodium'] ?? '';
+    final parts = <String>[];
+    if (fat.contains(t.levelHigh) || fat.toLowerCase().contains('high')) parts.add(t.tagOily);
+    if (protein.contains(t.levelHigh) || protein.toLowerCase().contains('high')) parts.add(t.tagProteinOk);
+    if (protein.contains(t.levelLow) || protein.toLowerCase().contains('low')) parts.add(t.tagProteinLow);
+    if (carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high')) parts.add(t.tagCarbHigh);
+    if (sodium.contains(t.levelHigh) || sodium.toLowerCase().contains('high')) parts.add(t.dietitianSodiumHigh);
+    if (parts.isEmpty) return t.dietitianBalanced;
+    return parts.take(3).join('、');
+  }
+
   Future<void> _editFoodName(BuildContext context) async {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
@@ -174,7 +189,7 @@ class MealDetailScreen extends StatelessWidget {
                       if (entry.error != null)
                         Text(entry.error!, style: const TextStyle(color: Colors.red))
                       else
-                        Text('${prefix}${entry.result?.suggestion ?? t.detailAiEmpty}', style: const TextStyle(color: Colors.black54)),
+                        Text(_aiSummary(entry, t), style: const TextStyle(color: Colors.black54)),
                       if (entry.result != null) ...[
                         const SizedBox(height: 6),
                         Text('source: ${entry.result!.source}', style: const TextStyle(fontSize: 11, color: Colors.black45)),
@@ -215,7 +230,7 @@ class MealDetailScreen extends StatelessWidget {
                       ],
                       Text(t.nextMealTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
-                      Text(t.nextMealHint, style: const TextStyle(color: Colors.black54)),
+                      Text('${prefix}${entry.result?.suggestion ?? t.nextMealHint}', style: const TextStyle(color: Colors.black54)),
                     ],
                   ),
                 ),
