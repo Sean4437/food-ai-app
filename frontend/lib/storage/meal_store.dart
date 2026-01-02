@@ -1,5 +1,6 @@
 import '../models/meal_entry.dart';
 import 'meal_store_stub.dart'
+    if (dart.library.html) 'meal_store_web.dart'
     if (dart.library.io) 'meal_store_sqlite.dart';
 
 abstract class MealStore {
