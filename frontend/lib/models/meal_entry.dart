@@ -12,6 +12,9 @@ class MealEntry {
     required this.type,
     this.note,
     this.overrideFoodName,
+    this.imageHash,
+    this.lastAnalyzedNote,
+    this.lastAnalyzedFoodName,
   });
 
   final String id;
@@ -21,6 +24,9 @@ class MealEntry {
   MealType type;
   String? note;
   String? overrideFoodName;
+  String? imageHash;
+  String? lastAnalyzedNote;
+  String? lastAnalyzedFoodName;
   AnalysisResult? result;
   bool loading = false;
   String? error;

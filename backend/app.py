@@ -53,6 +53,7 @@ logging.basicConfig(level=logging.INFO)
 _usage_dir = _base_dir / "data"
 _usage_dir.mkdir(exist_ok=True)
 _usage_log_path = _usage_dir / "usage.jsonl"
+_daily_count_path = _usage_dir / "daily_counts.json"
 
 _fake_foods = {
     "zh-TW": [
@@ -138,6 +139,36 @@ def _append_usage(record: dict) -> None:
         handle.write(line + "\n")
 
 
+def _load_daily_counts() -> dict:
+    if not _daily_count_path.exists():
+        return {}
+    try:
+        return json.loads(_daily_count_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _save_daily_counts(data: dict) -> None:
+    _daily_count_path.write_text(json.dumps(data, ensure_ascii=True), encoding="utf-8")
+
+
+def _should_use_ai() -> bool:
+    if not CALL_REAL_AI:
+        return False
+    if FREE_DAILY_LIMIT <= 0:
+        return True
+    counts = _load_daily_counts()
+    today = datetime.now(timezone.utc).date().isoformat()
+    return int(counts.get(today, 0)) < FREE_DAILY_LIMIT
+
+
+def _increment_daily_count() -> None:
+    counts = _load_daily_counts()
+    today = datetime.now(timezone.utc).date().isoformat()
+    counts[today] = int(counts.get(today, 0)) + 1
+    _save_daily_counts(counts)
+
+
 def _analyze_with_openai(image_bytes: bytes, lang: str, food_name: str | None) -> Optional[dict]:
     if _client is None:
         return None
@@ -195,11 +226,10 @@ async def analyze_image(
     if use_lang not in _fake_foods:
         use_lang = "zh-TW"
 
-    # MVP 假邏輯：免費額度內回傳 full。
-    # 未來：可依使用者每日次數降級為 lite。
-    tier = "full" if FREE_DAILY_LIMIT > 0 else "lite"
+    tier = "full"
 
-    if CALL_REAL_AI and _client is not None:
+    use_ai = _should_use_ai()
+    if use_ai and _client is not None:
         try:
             payload = await asyncio.to_thread(_analyze_with_openai, image_bytes, use_lang, food_name)
             if payload and payload.get("result"):
@@ -222,6 +252,7 @@ async def analyze_image(
                     }
                 )
                 final_name = food_name or payload["result"]["food_name"]
+                _increment_daily_count()
                 return AnalysisResult(
                     food_name=final_name,
                     calorie_range=payload["result"]["calorie_range"],
@@ -236,6 +267,9 @@ async def analyze_image(
 
     if CALL_REAL_AI and _client is None:
         logging.warning("CALL_REAL_AI is true but API_KEY is missing.")
+
+    if CALL_REAL_AI and not use_ai:
+        tier = "lite"
 
     chosen_name = food_name or random.choice(_fake_foods[use_lang])
     calorie_range = random.choice(["350-450 kcal", "450-600 kcal", "600-800 kcal"])

@@ -18,7 +18,7 @@ class MealStoreImpl implements MealStore {
     final dbPath = p.join(dir.path, _dbName);
     _db = await openDatabase(
       dbPath,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table(
@@ -37,6 +37,11 @@ class MealStoreImpl implements MealStore {
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           await db.execute('ALTER TABLE $_table ADD COLUMN override_food_name TEXT');
+        }
+        if (oldVersion < 3) {
+          await db.execute('ALTER TABLE $_table ADD COLUMN image_hash TEXT');
+          await db.execute('ALTER TABLE $_table ADD COLUMN last_analyzed_note TEXT');
+          await db.execute('ALTER TABLE $_table ADD COLUMN last_analyzed_food_name TEXT');
         }
       },
     );
@@ -96,6 +101,9 @@ class MealStoreImpl implements MealStore {
       type: type,
       note: row['note'] as String?,
       overrideFoodName: row['override_food_name'] as String?,
+      imageHash: row['image_hash'] as String?,
+      lastAnalyzedNote: row['last_analyzed_note'] as String?,
+      lastAnalyzedFoodName: row['last_analyzed_food_name'] as String?,
     );
     entry.result = result;
     entry.error = row['error'] as String?;
@@ -111,6 +119,9 @@ class MealStoreImpl implements MealStore {
       'filename': entry.filename,
       'note': entry.note,
       'override_food_name': entry.overrideFoodName,
+      'image_hash': entry.imageHash,
+      'last_analyzed_note': entry.lastAnalyzedNote,
+      'last_analyzed_food_name': entry.lastAnalyzedFoodName,
       'image_bytes': entry.imageBytes,
       'result_json': entry.result == null ? null : json.encode(entry.result!.toJson()),
       'error': entry.error,

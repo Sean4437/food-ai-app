@@ -80,6 +80,9 @@ class MealStoreImpl implements MealStore {
       type: type,
       note: row['note'] as String?,
       overrideFoodName: row['override_food_name'] as String?,
+      imageHash: row['image_hash'] as String?,
+      lastAnalyzedNote: row['last_analyzed_note'] as String?,
+      lastAnalyzedFoodName: row['last_analyzed_food_name'] as String?,
     );
     entry.result = result;
     entry.error = row['error'] as String?;
@@ -95,6 +98,9 @@ class MealStoreImpl implements MealStore {
       'filename': entry.filename,
       'note': entry.note,
       'override_food_name': entry.overrideFoodName,
+      'image_hash': entry.imageHash,
+      'last_analyzed_note': entry.lastAnalyzedNote,
+      'last_analyzed_food_name': entry.lastAnalyzedFoodName,
       'image_base64': base64Encode(entry.imageBytes),
       'result_json': entry.result == null ? null : json.encode(entry.result!.toJson()),
       'error': entry.error,

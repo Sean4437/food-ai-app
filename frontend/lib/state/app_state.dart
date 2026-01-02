@@ -5,6 +5,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
+import 'package:crypto/crypto.dart';
 import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
 import '../services/api_service.dart';
@@ -139,6 +140,7 @@ class AppState extends ChangeNotifier {
     final time = await _resolveImageTime(xfile, originalBytes);
     final bytes = _compressImageBytes(originalBytes);
     final filename = xfile.name.isNotEmpty ? xfile.name : 'upload.jpg';
+    final imageHash = _hashBytes(originalBytes);
     final entry = MealEntry(
       id: _newId(),
       imageBytes: bytes,
@@ -146,11 +148,22 @@ class AppState extends ChangeNotifier {
       time: time,
       type: fixedType ?? resolveMealType(time),
       note: note,
+      imageHash: imageHash,
     );
     entries.insert(0, entry);
     _selectedDate = _dateOnly(entry.time);
     notifyListeners();
     await _store.upsert(entry);
+    final anchor = _findMealAnchor(entry);
+    if (anchor != null && anchor.result != null) {
+      entry.result = anchor.result;
+      entry.error = null;
+      entry.lastAnalyzedNote = anchor.lastAnalyzedNote;
+      entry.lastAnalyzedFoodName = anchor.lastAnalyzedFoodName;
+      await _store.upsert(entry);
+      notifyListeners();
+      return entry;
+    }
     await _analyzeEntry(entry, locale);
     return entry;
   }
@@ -215,6 +228,13 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _analyzeEntry(MealEntry entry, String locale) async {
+    final noteKey = entry.note ?? '';
+    final nameKey = entry.overrideFoodName ?? '';
+    if (entry.result != null &&
+        entry.lastAnalyzedNote == noteKey &&
+        entry.lastAnalyzedFoodName == nameKey) {
+      return;
+    }
     entry.loading = true;
     entry.error = null;
     entry.result = null;
@@ -228,6 +248,8 @@ class AppState extends ChangeNotifier {
         foodName: entry.overrideFoodName,
       );
       entry.result = res;
+      entry.lastAnalyzedNote = noteKey;
+      entry.lastAnalyzedFoodName = nameKey;
     } catch (e) {
       entry.error = e.toString();
     } finally {
@@ -290,6 +312,26 @@ class AppState extends ChangeNotifier {
     final resized = scale < 1.0 ? img.copyResize(decoded, width: targetWidth, height: targetHeight) : decoded;
     final jpg = img.encodeJpg(resized, quality: 70);
     return Uint8List.fromList(jpg);
+  }
+
+  String _hashBytes(List<int> bytes) {
+    return sha1.convert(bytes).toString();
+  }
+
+  MealEntry? _findMealAnchor(MealEntry entry) {
+    for (final existing in entries) {
+      if (existing.id == entry.id) continue;
+      if (!_isSameDate(existing.time, entry.time)) continue;
+      if (existing.type != entry.type) continue;
+      final diff = existing.time.difference(entry.time).abs();
+      if (diff.inMinutes <= 120 && existing.result != null) {
+        return existing;
+      }
+      if (existing.imageHash != null && existing.imageHash == entry.imageHash && existing.result != null) {
+        return existing;
+      }
+    }
+    return null;
   }
 
   DateTime? _parseExifDate(String value) {
