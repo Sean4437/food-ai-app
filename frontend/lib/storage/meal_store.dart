@@ -8,6 +8,8 @@ abstract class MealStore {
   Future<List<MealEntry>> loadAll();
   Future<void> upsert(MealEntry entry);
   Future<void> delete(String id);
+  Future<String> exportJson();
+  Future<void> clearAll();
 }
 
 MealStore createMealStore() => MealStoreImpl();

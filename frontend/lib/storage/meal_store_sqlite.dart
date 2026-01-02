@@ -64,6 +64,21 @@ class MealStoreImpl implements MealStore {
     await db.delete(_table, where: 'id = ?', whereArgs: [id]);
   }
 
+  @override
+  Future<String> exportJson() async {
+    final db = _db;
+    if (db == null) return '[]';
+    final rows = await db.query(_table, orderBy: 'time DESC');
+    return json.encode(rows);
+  }
+
+  @override
+  Future<void> clearAll() async {
+    final db = _db;
+    if (db == null) return;
+    await db.delete(_table);
+  }
+
   MealEntry _rowToEntry(Map<String, Object?> row) {
     final type = _mealTypeFromString(row['type'] as String? ?? 'other');
     final resultJson = row['result_json'] as String?;

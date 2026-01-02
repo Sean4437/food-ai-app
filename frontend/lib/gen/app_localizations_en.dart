@@ -464,4 +464,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get versionUnavailable => 'Version info unavailable';
+
+  @override
+  String get dataSection => 'Data';
+
+  @override
+  String get exportData => 'Export data';
+
+  @override
+  String get clearData => 'Clear data';
+
+  @override
+  String get clearDataConfirm => 'Clear all data?';
+
+  @override
+  String get exportDone => 'Exported';
+
+  @override
+  String get clearDone => 'Cleared';
 }

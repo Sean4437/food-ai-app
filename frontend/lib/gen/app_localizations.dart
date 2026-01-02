@@ -960,6 +960,18 @@ abstract class AppLocalizations {
   String get versionCommit;
 
   String get versionUnavailable;
+
+  String get dataSection;
+
+  String get exportData;
+
+  String get clearData;
+
+  String get clearDataConfirm;
+
+  String get exportDone;
+
+  String get clearDone;
 }
 
 class _AppLocalizationsDelegate

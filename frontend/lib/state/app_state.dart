@@ -169,6 +169,16 @@ class AppState extends ChangeNotifier {
     _store.upsert(entry);
   }
 
+  Future<String> exportData() async {
+    return _store.exportJson();
+  }
+
+  Future<void> clearAll() async {
+    entries.clear();
+    notifyListeners();
+    await _store.clearAll();
+  }
+
   Future<void> updateEntryFoodName(MealEntry entry, String foodName, String locale) async {
     entry.overrideFoodName = foodName.trim().isEmpty ? null : foodName.trim();
     notifyListeners();

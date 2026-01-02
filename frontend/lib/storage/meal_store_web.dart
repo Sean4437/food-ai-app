@@ -43,6 +43,24 @@ class MealStoreImpl implements MealStore {
     await _store.record(id).delete(db);
   }
 
+  @override
+  Future<String> exportJson() async {
+    final db = _db;
+    if (db == null) return '[]';
+    final records = await _store.find(
+      db,
+      finder: Finder(sortOrders: [SortOrder('time', false)]),
+    );
+    return json.encode(records.map((record) => record.value).toList());
+  }
+
+  @override
+  Future<void> clearAll() async {
+    final db = _db;
+    if (db == null) return;
+    await _store.delete(db);
+  }
+
   MealEntry _rowToEntry(Map<String, Object?> row) {
     final type = _mealTypeFromString(row['type'] as String? ?? 'other');
     final resultJson = row['result_json'] as String?;

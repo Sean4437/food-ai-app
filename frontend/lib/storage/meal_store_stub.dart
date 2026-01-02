@@ -24,4 +24,14 @@ class MealStoreImpl implements MealStore {
   Future<void> delete(String id) async {
     _entries.removeWhere((entry) => entry.id == id);
   }
+
+  @override
+  Future<String> exportJson() async {
+    return '[]';
+  }
+
+  @override
+  Future<void> clearAll() async {
+    _entries.clear();
+  }
 }

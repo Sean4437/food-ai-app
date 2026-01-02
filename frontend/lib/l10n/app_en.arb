@@ -157,5 +157,11 @@
   "versionSection": "Version info",
   "versionBuild": "Build time",
   "versionCommit": "Commit",
-  "versionUnavailable": "Version info unavailable"
+  "versionUnavailable": "Version info unavailable",
+  "dataSection": "Data",
+  "exportData": "Export data",
+  "clearData": "Clear data",
+  "clearDataConfirm": "Clear all data?",
+  "exportDone": "Exported",
+  "clearDone": "Cleared"
 }

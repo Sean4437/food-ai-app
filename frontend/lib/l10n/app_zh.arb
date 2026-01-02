@@ -157,5 +157,11 @@
   "versionSection": "版本資訊",
   "versionBuild": "更新時間",
   "versionCommit": "版本代碼",
-  "versionUnavailable": "無法取得版本資訊"
+  "versionUnavailable": "無法取得版本資訊",
+  "dataSection": "資料管理",
+  "exportData": "匯出資料",
+  "clearData": "清除資料",
+  "clearDataConfirm": "確定要清除所有資料嗎？",
+  "exportDone": "已匯出",
+  "clearDone": "已清除"
 }

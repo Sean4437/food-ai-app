@@ -462,6 +462,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get versionUnavailable => '無法取得版本資訊';
+
+  @override
+  String get dataSection => '資料管理';
+
+  @override
+  String get exportData => '匯出資料';
+
+  @override
+  String get clearData => '清除資料';
+
+  @override
+  String get clearDataConfirm => '確定要清除所有資料嗎？';
+
+  @override
+  String get exportDone => '已匯出';
+
+  @override
+  String get clearDone => '已清除';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -922,4 +940,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get versionUnavailable => '無法取得版本資訊';
+
+  @override
+  String get dataSection => '資料管理';
+
+  @override
+  String get exportData => '匯出資料';
+
+  @override
+  String get clearData => '清除資料';
+
+  @override
+  String get clearDataConfirm => '確定要清除所有資料嗎？';
+
+  @override
+  String get exportDone => '已匯出';
+
+  @override
+  String get clearDone => '已清除';
 }

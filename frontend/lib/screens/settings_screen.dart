@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:http/http.dart' as http;
+import '../utils/data_exporter.dart';
 import '../design/theme_controller.dart';
 import '../state/app_state.dart';
 
@@ -222,6 +223,37 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _exportData(BuildContext context, AppState app) async {
+    final t = AppLocalizations.of(context)!;
+    final data = await app.exportData();
+    final exporter = createDataExporter();
+    await exporter.saveJson('food-ai-export.json', data);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.exportDone)));
+    }
+  }
+
+  Future<void> _clearData(BuildContext context, AppState app) async {
+    final t = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.clearData),
+        content: Text(t.clearDataConfirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.clearData)),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await app.clearAll();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.clearDone)));
+      }
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -414,6 +446,21 @@ class SettingsScreen extends StatelessWidget {
                       ],
                     );
                   },
+                ),
+                const SizedBox(height: 8),
+                _sectionTitle(t.dataSection),
+                _row(
+                  t.exportData,
+                  '',
+                  showChevron: false,
+                  onTap: () => _exportData(context, app),
+                ),
+                const SizedBox(height: 8),
+                _row(
+                  t.clearData,
+                  '',
+                  showChevron: false,
+                  onTap: () => _clearData(context, app),
                 ),
               ],
             ),
