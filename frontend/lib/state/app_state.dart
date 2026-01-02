@@ -321,12 +321,6 @@ class AppState extends ChangeNotifier {
   MealEntry? _findMealAnchor(MealEntry entry) {
     for (final existing in entries) {
       if (existing.id == entry.id) continue;
-      if (!_isSameDate(existing.time, entry.time)) continue;
-      if (existing.type != entry.type) continue;
-      final diff = existing.time.difference(entry.time).abs();
-      if (diff.inMinutes <= 120 && existing.result != null) {
-        return existing;
-      }
       if (existing.imageHash != null && existing.imageHash == entry.imageHash && existing.result != null) {
         return existing;
       }
