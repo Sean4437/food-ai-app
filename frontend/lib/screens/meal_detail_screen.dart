@@ -134,7 +134,10 @@ class MealDetailScreen extends StatelessWidget {
                       ],
                       Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
-                      Text('${prefix}${entry.result?.suggestion ?? t.detailAiEmpty}', style: const TextStyle(color: Colors.black54)),
+                      if (entry.error != null)
+                        Text(entry.error!, style: const TextStyle(color: Colors.red))
+                      else
+                        Text('${prefix}${entry.result?.suggestion ?? t.detailAiEmpty}', style: const TextStyle(color: Colors.black54)),
                       if (entry.result != null) ...[
                         const SizedBox(height: 6),
                         Text('source: ${entry.result!.source}', style: const TextStyle(fontSize: 11, color: Colors.black45)),
