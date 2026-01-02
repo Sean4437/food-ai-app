@@ -1,5 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:exif/exif.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -8,6 +7,8 @@ import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
 import '../services/api_service.dart';
 import '../storage/meal_store.dart';
+
+const String kDefaultApiBaseUrl = 'https://sussex-oscar-southern-scanning.trycloudflare.com';
 
 class AppState extends ChangeNotifier {
   AppState()
@@ -109,9 +110,7 @@ class AppState extends ChangeNotifier {
   }
 
   static String _resolveBaseUrl() {
-    if (kIsWeb) return 'http://127.0.0.1:8000';
-    if (defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:8000';
-    return 'http://127.0.0.1:8000';
+    return kDefaultApiBaseUrl;
   }
 
   void updateApiBaseUrl(String url) {
@@ -318,7 +317,7 @@ class UserProfile {
       lunchReminderTime: const TimeOfDay(hour: 12, minute: 15),
       dinnerReminderTime: const TimeOfDay(hour: 18, minute: 45),
       language: 'zh-TW',
-      apiBaseUrl: 'http://127.0.0.1:8000',
+      apiBaseUrl: kDefaultApiBaseUrl,
     );
   }
 }

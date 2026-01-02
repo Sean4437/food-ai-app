@@ -1,14 +1,9 @@
-import 'dart:math';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../screens/meal_detail_screen.dart';
-import '../screens/suggestions_screen.dart';
-import '../screens/log_screen.dart';
-import '../screens/summary_screen.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
 
@@ -19,112 +14,16 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _PetalData {
-  _PetalData({
-    required this.label,
-    required this.ratio,
-    required this.color,
-  });
-
-  final String label;
-  final double ratio;
-  final Color color;
-}
-
-class _PetalPainter extends CustomPainter {
-  _PetalPainter(this.petals, this.textStyle);
-
-  final List<_PetalData> petals;
-  final TextStyle textStyle;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (petals.isEmpty) return;
-    final center = Offset(size.width / 2, size.height / 2);
-    final baseRadius = size.width * 0.12;
-    final maxLen = size.width * 0.42 * 2;
-    final width = size.width * 0.26;
-
-    for (int i = 0; i < petals.length; i++) {
-      final angle = (2 * pi * i / petals.length) - pi / 2;
-      _drawPetal(canvas, center, angle, baseRadius, maxLen, width, petals[i].color.withOpacity(0.18), 1.0);
-      _drawPetal(canvas, center, angle, baseRadius, maxLen, width, petals[i].color.withOpacity(0.65), petals[i].ratio);
-      _drawPetalText(canvas, center, angle, baseRadius, maxLen, width, petals[i].label);
-    }
-  }
-
-  void _drawPetal(
-    Canvas canvas,
-    Offset center,
-    double angle,
-    double baseRadius,
-    double maxLen,
-    double width,
-    Color color,
-    double ratio,
-  ) {
-    final dir = Offset(cos(angle), sin(angle));
-    final perp = Offset(-dir.dy, dir.dx);
-    final len = baseRadius + (maxLen - baseRadius) * ratio.clamp(0.1, 1.0);
-    final base = center + dir * baseRadius;
-    final tip = center + dir * len;
-    final left = base + perp * (width / 2);
-    final right = base - perp * (width / 2);
-    final path = Path()
-      ..moveTo(left.dx, left.dy)
-      ..quadraticBezierTo(tip.dx, tip.dy, right.dx, right.dy)
-      ..quadraticBezierTo(base.dx, base.dy, left.dx, left.dy)
-      ..close();
-    final paint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.center,
-        end: Alignment.topCenter,
-        colors: [color.withOpacity(0.9), color.withOpacity(0.2)],
-      ).createShader(Rect.fromPoints(base, tip));
-    canvas.drawPath(path, paint);
-    final outline = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..color = color.withOpacity(0.55);
-    canvas.drawPath(path, outline);
-  }
-
-  void _drawPetalText(
-    Canvas canvas,
-    Offset center,
-    double angle,
-    double baseRadius,
-    double maxLen,
-    double width,
-    String label,
-  ) {
-    final dir = Offset(cos(angle), sin(angle));
-    final len = baseRadius + (maxLen - baseRadius) * 0.65;
-    final textPainter = TextPainter(
-      text: TextSpan(text: label, style: textStyle),
-      textAlign: TextAlign.center,
-      textDirection: ui.TextDirection.ltr,
-      maxLines: 2,
-      ellipsis: '...',
-    )..layout(maxWidth: width * 0.9);
-    final textCenter = center + dir * len;
-    final offset = textCenter - Offset(textPainter.width / 2, textPainter.height / 2);
-    textPainter.paint(canvas, offset);
-  }
-
-  @override
-  bool shouldRepaint(covariant _PetalPainter oldDelegate) {
-    return oldDelegate.petals != petals;
-  }
-}
-
 class _HomeScreenState extends State<HomeScreen> {
   final _picker = ImagePicker();
   final _noteController = TextEditingController();
+  final PageController _pageController = PageController(viewportFraction: 0.92);
+  int _pageIndex = 0;
 
   @override
   void dispose() {
     _noteController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -183,116 +82,66 @@ class _HomeScreenState extends State<HomeScreen> {
     return tags.take(3).toList();
   }
 
-  double _ratioFromValue(String value, AppLocalizations t) {
-    final v = value.toLowerCase();
-    if (v.trim().isEmpty) return 0.35;
-    if (v.contains(t.levelHigh.toLowerCase()) || v.contains('high')) return 0.85;
-    if (v.contains(t.levelLow.toLowerCase()) || v.contains('low')) return 0.35;
-    return 0.6;
-  }
-
-  String _levelLabelFromValue(String value, AppLocalizations t) {
-    final v = value.toLowerCase();
-    if (v.trim().isEmpty) return '--';
-    if (v.contains(t.levelHigh.toLowerCase()) || v.contains('high')) return t.levelHigh;
-    if (v.contains(t.levelLow.toLowerCase()) || v.contains('low')) return t.levelLow;
-    return t.levelMedium;
-  }
-
-  List<_PetalData> _buildPetals(MealEntry entry, AppLocalizations t) {
-    final result = entry.result;
-    final protein = result?.macros['protein'] ?? '';
-    final carbs = result?.macros['carbs'] ?? '';
-    final fat = result?.macros['fat'] ?? '';
-    final sodium = result?.macros['sodium'] ?? '';
-
-    final calorieLabel = (result?.calorieRange ?? '--').replaceFirst(' ', '\n');
-
-    return [
-      _PetalData(
-        label: '${t.protein}\n${_levelLabelFromValue(protein, t)}',
-        ratio: _ratioFromValue(protein, t),
-        color: const Color(0xFF8AD7A4),
-      ),
-      _PetalData(
-        label: '${t.carbs}\n${_levelLabelFromValue(carbs, t)}',
-        ratio: _ratioFromValue(carbs, t),
-        color: const Color(0xFFF4C95D),
-      ),
-      _PetalData(
-        label: '${t.fat}\n${_levelLabelFromValue(fat, t)}',
-        ratio: _ratioFromValue(fat, t),
-        color: const Color(0xFFF08A7C),
-      ),
-      _PetalData(
-        label: '${t.sodium}\n${_levelLabelFromValue(sodium, t)}',
-        ratio: _ratioFromValue(sodium, t),
-        color: const Color(0xFF8AB4F8),
-      ),
-      _PetalData(
-        label: '${t.calories}\n$calorieLabel',
-        ratio: 0.6,
-        color: const Color(0xFFB9C4F8),
-      ),
-    ];
-  }
-
-  Widget _flowerSummary(MealEntry entry, AppLocalizations t) {
-    final result = entry.result;
-    final petals = _buildPetals(entry, t);
-    final size = 250.0;
-    final prefix = result?.source == 'mock' ? t.mockPrefix : null;
-    return Column(
-      children: [
-        SizedBox(
-          width: size,
-          height: size,
-          child: Stack(
-            alignment: Alignment.center,
-            clipBehavior: Clip.none,
-            children: [
-              if (petals.isNotEmpty)
-                CustomPaint(
-                  size: Size(size, size),
-                  painter: _PetalPainter(
-                    petals,
-                    const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, 8)),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ClipOval(
-                      child: Image.memory(entry.imageBytes, width: 72, height: 72, fit: BoxFit.cover),
-                    ),
-                    const SizedBox(height: 6),
-                    if (prefix != null)
-                      Text(prefix, style: const TextStyle(fontSize: 10, color: Colors.black54)),
-                    Text(
-                      result?.calorieRange ?? '--',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+  Widget _mealAdviceCard(
+    MealEntry entry,
+    AppLocalizations t,
+    ThemeData theme,
+    AppTheme appTheme,
+  ) {
+    final formatter = DateFormat('MM/dd HH:mm', Localizations.localeOf(context).toLanguageTag());
+    final prefix = entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: appTheme.card,
+          borderRadius: BorderRadius.circular(appTheme.radiusCard),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        if (result != null) ...[
-          const SizedBox(height: 8),
-          Text(result.foodName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        ],
-      ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.memory(entry.imageBytes, height: 150, width: double.infinity, fit: BoxFit.cover),
+            ),
+            const SizedBox(height: 10),
+            Text(formatter.format(entry.time), style: const TextStyle(color: Colors.black54, fontSize: 12)),
+            const SizedBox(height: 6),
+            Text(
+              '${prefix}${entry.result?.foodName ?? t.latestMealTitle}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final tag in _overallTags(entry, t)) _mealTag(tag, theme.colorScheme.primary),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Divider(color: Colors.black.withOpacity(0.08)),
+            const SizedBox(height: 6),
+            Text(t.nextMealTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(
+              entry.error != null
+                  ? entry.error!
+                  : '${prefix}${entry.result?.suggestion ?? t.nextMealHint}',
+              style: TextStyle(color: entry.error != null ? Colors.red : Colors.black54),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -300,8 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    final latest = app.latestEntryForSelectedDate;
-    final formatter = DateFormat('MM/dd HH:mm', Localizations.localeOf(context).toLanguageTag());
+    final entries = app.entriesForSelectedDate;
     final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
     final selectedDate = app.selectedDate;
     final theme = Theme.of(context);
@@ -419,45 +267,31 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                if (latest != null)
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: latest))),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: appTheme.card,
-                        borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: appTheme.card,
+                    borderRadius: BorderRadius.circular(appTheme.radiusCard),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(t.latestMealTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 8),
-                          _flowerSummary(latest, t),
-                          const SizedBox(height: 8),
-                          Text(formatter.format(latest.time), style: const TextStyle(color: Colors.black54, fontSize: 12)),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (final tag in _overallTags(latest, t))
-                                _mealTag(tag, theme.colorScheme.primary),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
-                if (latest == null)
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(t.summaryTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      Text(app.todaySummary(t), style: const TextStyle(color: Colors.black54)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                if (entries.isEmpty)
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -465,69 +299,38 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(appTheme.radiusCard),
                     ),
                     child: Text(t.latestMealEmpty, style: const TextStyle(color: Colors.black54)),
-                  ),
-                const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SuggestionsScreen())),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: appTheme.card,
-                      borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        height: 360,
+                        child: PageView.builder(
+                          controller: _pageController,
+                          onPageChanged: (index) => setState(() => _pageIndex = index),
+                          itemCount: entries.length,
+                          itemBuilder: (context, index) => _mealAdviceCard(entries[index], t, theme, appTheme),
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.nextMealTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(child: _mealTag(t.optionConvenienceTitle, const Color(0xFFF4C95D))),
-                            const SizedBox(width: 8),
-                            Expanded(child: _mealTag(t.optionBentoTitle, const Color(0xFF8AD7A4))),
-                            const SizedBox(width: 8),
-                            Expanded(child: _mealTag(t.optionLightTitle, theme.colorScheme.primary)),
-                          ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          entries.length,
+                          (index) => Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: _pageIndex == index ? 8 : 6,
+                            height: _pageIndex == index ? 8 : 6,
+                            decoration: BoxDecoration(
+                              color: _pageIndex == index ? theme.colorScheme.primary : Colors.black26,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(t.homeNextMealHint, style: const TextStyle(color: Colors.black54)),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SummaryScreen())),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: appTheme.card,
-                      borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.summaryTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        Text(app.todaySummary(t), style: const TextStyle(color: Colors.black54)),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
