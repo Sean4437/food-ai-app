@@ -27,6 +27,10 @@ jobs:
       - name: Install Dependencies
         working-directory: frontend
         run: flutter pub get
+      - name: Generate version file
+        run: |
+          BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "{\"commit\":\"${GITHUB_SHA}\",\"build_time\":\"${BUILD_TIME}\"}" > frontend/web/version.json
       - name: Build Web
         working-directory: frontend
         run: flutter build web --release --base-href /food-ai-app/

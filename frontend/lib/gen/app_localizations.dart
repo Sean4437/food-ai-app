@@ -919,7 +919,15 @@ abstract class AppLocalizations {
     ///
     /// In zh_TW, this message translates to:
     /// **'虛假'**
-    String get mockPrefix;
+  String get mockPrefix;
+
+  String get versionSection;
+
+  String get versionBuild;
+
+  String get versionCommit;
+
+  String get versionUnavailable;
 }
 
 class _AppLocalizationsDelegate

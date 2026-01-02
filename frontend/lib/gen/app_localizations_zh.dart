@@ -420,6 +420,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mockPrefix => '虛假';
+
+  @override
+  String get versionSection => '版本資訊';
+
+  @override
+  String get versionBuild => '更新時間';
+
+  @override
+  String get versionCommit => '版本代碼';
+
+  @override
+  String get versionUnavailable => '無法取得版本資訊';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -838,4 +850,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get mockPrefix => '虛假';
+
+  @override
+  String get versionSection => '版本資訊';
+
+  @override
+  String get versionBuild => '更新時間';
+
+  @override
+  String get versionCommit => '版本代碼';
+
+  @override
+  String get versionUnavailable => '無法取得版本資訊';
 }

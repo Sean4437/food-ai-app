@@ -143,5 +143,9 @@
   "usageViewLog": "View history",
   "usageEmpty": "No cost records yet",
   "usageLoading": "Loading...",
-  "mockPrefix": "Mock"
+  "mockPrefix": "Mock",
+  "versionSection": "Version info",
+  "versionBuild": "Build time",
+  "versionCommit": "Commit",
+  "versionUnavailable": "Version info unavailable"
 }

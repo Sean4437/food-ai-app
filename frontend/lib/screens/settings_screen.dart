@@ -1,5 +1,8 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import 'package:http/http.dart' as http;
 import '../design/theme_controller.dart';
 import '../state/app_state.dart';
 
@@ -201,6 +204,24 @@ class SettingsScreen extends StatelessWidget {
     if (result != null) onSave(result);
   }
 
+  Future<Map<String, String>?> _loadVersionInfo() async {
+    if (!kIsWeb) return null;
+    try {
+      final uri = Uri.base.resolve('version.json');
+      final response = await http.get(uri);
+      if (response.statusCode != 200) return null;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final commit = (data['commit'] as String?) ?? '';
+      final build = (data['build_time'] as String?) ?? '';
+      return {
+        'commit': commit,
+        'build_time': build,
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -370,6 +391,29 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                _sectionTitle(t.versionSection),
+                FutureBuilder<Map<String, String>?>(
+                  future: _loadVersionInfo(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return _row(t.versionBuild, t.usageLoading, showChevron: false);
+                    }
+                    final info = snapshot.data;
+                    if (info == null) {
+                      return _row(t.versionBuild, t.versionUnavailable, showChevron: false);
+                    }
+                    final commit = info['commit'] ?? '';
+                    final shortCommit = commit.length > 7 ? commit.substring(0, 7) : commit;
+                    return Column(
+                      children: [
+                        _row(t.versionBuild, info['build_time'] ?? '--', showChevron: false),
+                        const SizedBox(height: 6),
+                        _row(t.versionCommit, shortCommit.isEmpty ? '--' : shortCommit, showChevron: false),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

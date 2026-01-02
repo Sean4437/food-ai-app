@@ -422,4 +422,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mockPrefix => 'Mock';
+
+  @override
+  String get versionSection => 'Version info';
+
+  @override
+  String get versionBuild => 'Build time';
+
+  @override
+  String get versionCommit => 'Commit';
+
+  @override
+  String get versionUnavailable => 'Version info unavailable';
 }
