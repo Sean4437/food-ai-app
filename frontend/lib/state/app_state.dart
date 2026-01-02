@@ -3,6 +3,7 @@ import 'package:exif/exif.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
