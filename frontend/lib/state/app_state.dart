@@ -379,7 +379,7 @@ class AppState extends ChangeNotifier {
       );
       final dx = (index % grid) * cellSize;
       final dy = (index ~/ grid) * cellSize;
-      img.copyInto(canvas, resized, dstX: dx, dstY: dy);
+      img.compositeImage(canvas, resized, dstX: dx, dstY: dy);
     }
 
     final jpg = img.encodeJpg(canvas, quality: 70);
