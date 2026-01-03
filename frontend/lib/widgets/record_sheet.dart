@@ -47,6 +47,13 @@ Future<MealEntry?> showRecordSheet(
 
   if (source == null) return null;
   final picker = ImagePicker();
+  if (source == ImageSource.gallery) {
+    final files = await picker.pickMultiImage();
+    if (files.isEmpty) return null;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    return app.addEntryFromFiles(files, locale, fixedType: fixedType);
+  }
+
   final xfile = await picker.pickImage(source: source);
   if (xfile == null) return null;
   final locale = Localizations.localeOf(context).toLanguageTag();

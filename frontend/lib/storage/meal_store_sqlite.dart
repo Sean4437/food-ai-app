@@ -28,6 +28,9 @@ class MealStoreImpl implements MealStore {
             filename TEXT NOT NULL,
             note TEXT,
             override_food_name TEXT,
+            image_hash TEXT,
+            last_analyzed_note TEXT,
+            last_analyzed_food_name TEXT,
             image_bytes BLOB NOT NULL,
             result_json TEXT,
             error TEXT

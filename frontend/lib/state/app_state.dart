@@ -130,6 +130,41 @@ class AppState extends ChangeNotifier {
     return MealType.other;
   }
 
+  Future<MealEntry?> addEntryFromFiles(
+    List<XFile> files,
+    String locale, {
+    String? note,
+    MealType? fixedType,
+  }) async {
+    if (files.isEmpty) return null;
+    if (files.length == 1) {
+      return addEntry(files.first, locale, note: note, fixedType: fixedType);
+    }
+    final originals = <Uint8List>[];
+    final sourceFiles = files.length > 4 ? files.sublist(0, 4) : files;
+    for (final file in sourceFiles) {
+      originals.add(await file.readAsBytes());
+    }
+    final time = await _resolveImageTime(sourceFiles.first, originals.first);
+    final collageBytes = _buildCollageBytes(originals);
+    if (collageBytes.isEmpty) return null;
+    final entry = MealEntry(
+      id: _newId(),
+      imageBytes: collageBytes,
+      filename: 'collage.jpg',
+      time: time,
+      type: fixedType ?? resolveMealType(time),
+      note: note,
+      imageHash: _hashBytes(collageBytes),
+    );
+    entries.insert(0, entry);
+    _selectedDate = _dateOnly(entry.time);
+    notifyListeners();
+    await _store.upsert(entry);
+    await _analyzeEntry(entry, locale);
+    return entry;
+  }
+
   Future<MealEntry?> addEntry(
     XFile xfile,
     String locale, {
@@ -311,6 +346,43 @@ class AppState extends ChangeNotifier {
     final targetHeight = (decoded.height * scale).round();
     final resized = scale < 1.0 ? img.copyResize(decoded, width: targetWidth, height: targetHeight) : decoded;
     final jpg = img.encodeJpg(resized, quality: 70);
+    return Uint8List.fromList(jpg);
+  }
+
+  Uint8List _buildCollageBytes(List<Uint8List> originals) {
+    if (originals.isEmpty) return Uint8List(0);
+    final decoded = <img.Image>[];
+    for (final bytes in originals) {
+      final image = img.decodeImage(bytes);
+      if (image != null) {
+        decoded.add(image);
+      }
+      if (decoded.length >= 4) break;
+    }
+    if (decoded.isEmpty) {
+      return _compressImageBytes(originals.first);
+    }
+
+    const int canvasSize = 1024;
+    const int grid = 2;
+    final int cellSize = canvasSize ~/ grid;
+    final canvas = img.Image(width: canvasSize, height: canvasSize);
+    img.fill(canvas, color: img.ColorRgb8(255, 255, 255));
+
+    for (var index = 0; index < decoded.length; index++) {
+      final image = decoded[index];
+      final resized = img.copyResize(
+        image,
+        width: cellSize,
+        height: cellSize,
+        interpolation: img.Interpolation.average,
+      );
+      final dx = (index % grid) * cellSize;
+      final dy = (index ~/ grid) * cellSize;
+      img.copyInto(canvas, resized, dstX: dx, dstY: dy);
+    }
+
+    final jpg = img.encodeJpg(canvas, quality: 70);
     return Uint8List.fromList(jpg);
   }
 
