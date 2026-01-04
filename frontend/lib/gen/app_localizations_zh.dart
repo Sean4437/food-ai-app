@@ -46,6 +46,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mealTotal => '本餐估計熱量';
+  @override
+  String get mealSummaryTitle => '本餐摘要';
 
   @override
   String get todayMeals => '今日餐點';
@@ -252,6 +254,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get calorieUnknown => '尚未估計';
+  @override
+  String get portionLabel => '份量';
+
+  @override
+  String get portionFull => '全吃';
+
+  @override
+  String get portionHalf => '吃一半';
+
+  @override
+  String get portionBite => '只吃幾口';
 
   @override
   String get detailTitle => '詳細紀錄';
@@ -524,6 +537,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get mealTotal => '本餐估計熱量';
+  @override
+  String get mealSummaryTitle => '本餐摘要';
 
   @override
   String get todayMeals => '今日餐點';
@@ -730,6 +745,17 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get calorieUnknown => '尚未估計';
+  @override
+  String get portionLabel => '份量';
+
+  @override
+  String get portionFull => '全吃';
+
+  @override
+  String get portionHalf => '吃一半';
+
+  @override
+  String get portionBite => '只吃幾口';
 
   @override
   String get detailTitle => '詳細紀錄';

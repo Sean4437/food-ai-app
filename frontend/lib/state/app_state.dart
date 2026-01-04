@@ -30,6 +30,18 @@ class AppState extends ChangeNotifier {
     entries
       ..clear()
       ..addAll(loaded);
+    bool changed = false;
+    for (final entry in entries) {
+      if (entry.mealId == null || entry.mealId!.isEmpty) {
+        entry.mealId = entry.id;
+        changed = true;
+      }
+    }
+    if (changed) {
+      for (final entry in entries) {
+        await _store.upsert(entry);
+      }
+    }
     notifyListeners();
   }
 
@@ -130,6 +142,83 @@ class AppState extends ChangeNotifier {
     return MealType.other;
   }
 
+  String _assignMealId(DateTime time, MealType type) {
+    final targetDate = _dateOnly(time);
+    Duration? bestDiff;
+    String? bestId;
+    for (final entry in entries) {
+      if (entry.type != type) continue;
+      if (!_isSameDate(entry.time, targetDate)) continue;
+      final diff = (entry.time.difference(time)).abs();
+      if (diff > const Duration(hours: 2)) continue;
+      if (bestDiff == null || diff < bestDiff) {
+        bestDiff = diff;
+        bestId = entry.mealId;
+      }
+    }
+    return bestId ?? _newId();
+  }
+
+  List<List<MealEntry>> mealGroupsForDate(DateTime date, MealType type) {
+    final target = _dateOnly(date);
+    final groups = <String, List<MealEntry>>{};
+    for (final entry in entries) {
+      if (entry.type != type) continue;
+      if (!_isSameDate(entry.time, target)) continue;
+      final key = entry.mealId ?? entry.id;
+      groups.putIfAbsent(key, () => []).add(entry);
+    }
+    final result = groups.values.toList();
+    for (final group in result) {
+      group.sort((a, b) => b.time.compareTo(a.time));
+    }
+    result.sort((a, b) => a.first.time.compareTo(b.first.time));
+    return result.reversed.toList();
+  }
+
+  List<MealEntry> entriesForMeal(MealEntry entry) {
+    final key = entry.mealId ?? entry.id;
+    return entries.where((e) => (e.mealId ?? e.id) == key).toList()
+      ..sort((a, b) => b.time.compareTo(a.time));
+  }
+
+  MealSummary? buildMealSummary(List<MealEntry> group, AppLocalizations t) {
+    double totalWeight = 0;
+    double minSum = 0;
+    double maxSum = 0;
+    double proteinScore = 0;
+    double carbScore = 0;
+    double fatScore = 0;
+    double sodiumScore = 0;
+
+    for (final entry in group) {
+      final result = entry.result;
+      if (result == null) continue;
+      final weight = _portionWeight(entry.portion);
+      totalWeight += weight;
+      final range = _parseCalorieRange(result.calorieRange);
+      if (range != null) {
+        minSum += range[0] * weight;
+        maxSum += range[1] * weight;
+      }
+      proteinScore += _levelScore(result.macros['protein'] ?? '', t) * weight;
+      carbScore += _levelScore(result.macros['carbs'] ?? '', t) * weight;
+      fatScore += _levelScore(result.macros['fat'] ?? '', t) * weight;
+      sodiumScore += _levelScore(result.macros['sodium'] ?? '', t) * weight;
+    }
+
+    if (totalWeight == 0) return null;
+    final macros = <String, String>{
+      'protein': _scoreToLevel(proteinScore / totalWeight, t),
+      'carbs': _scoreToLevel(carbScore / totalWeight, t),
+      'fat': _scoreToLevel(fatScore / totalWeight, t),
+      'sodium': _scoreToLevel(sodiumScore / totalWeight, t),
+    };
+    final advice = _buildMealAdvice(macros, t);
+    final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
+    return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
+  }
+
   Future<MealEntry?> addEntryFromFiles(
     List<XFile> files,
     String locale, {
@@ -140,29 +229,39 @@ class AppState extends ChangeNotifier {
     if (files.length == 1) {
       return addEntry(files.first, locale, note: note, fixedType: fixedType);
     }
-    final originals = <Uint8List>[];
-    final sourceFiles = files.length > 4 ? files.sublist(0, 4) : files;
-    for (final file in sourceFiles) {
-      originals.add(await file.readAsBytes());
+    final List<MealEntry> created = [];
+    DateTime? anchorTime;
+    final mealId = _newId();
+    for (final file in files) {
+      final originalBytes = await file.readAsBytes();
+      final time = await _resolveImageTime(file, originalBytes);
+      anchorTime ??= time;
+      final bytes = _compressImageBytes(originalBytes);
+      final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
+      final mealType = fixedType ?? resolveMealType(anchorTime);
+      final entry = MealEntry(
+        id: _newId(),
+        imageBytes: bytes,
+        filename: filename,
+        time: time,
+        type: mealType,
+        portion: MealPortion.full,
+        mealId: mealId,
+        note: note,
+        imageHash: _hashBytes(originalBytes),
+      );
+      created.add(entry);
+      entries.insert(0, entry);
     }
-    final time = await _resolveImageTime(sourceFiles.first, originals.first);
-    final collageBytes = _buildCollageBytes(originals);
-    if (collageBytes.isEmpty) return null;
-    final entry = MealEntry(
-      id: _newId(),
-      imageBytes: collageBytes,
-      filename: 'collage.jpg',
-      time: time,
-      type: fixedType ?? resolveMealType(time),
-      note: note,
-      imageHash: _hashBytes(collageBytes),
-    );
-    entries.insert(0, entry);
-    _selectedDate = _dateOnly(entry.time);
+    if (anchorTime != null) {
+      _selectedDate = _dateOnly(anchorTime);
+    }
     notifyListeners();
-    await _store.upsert(entry);
-    await _analyzeEntry(entry, locale);
-    return entry;
+    for (final entry in created) {
+      await _store.upsert(entry);
+      await _analyzeEntry(entry, locale);
+    }
+    return created.isNotEmpty ? created.first : null;
   }
 
   Future<MealEntry?> addEntry(
@@ -176,12 +275,16 @@ class AppState extends ChangeNotifier {
     final bytes = _compressImageBytes(originalBytes);
     final filename = xfile.name.isNotEmpty ? xfile.name : 'upload.jpg';
     final imageHash = _hashBytes(originalBytes);
+    final mealType = fixedType ?? resolveMealType(time);
+    final mealId = _assignMealId(time, mealType);
     final entry = MealEntry(
       id: _newId(),
       imageBytes: bytes,
       filename: filename,
       time: time,
-      type: fixedType ?? resolveMealType(time),
+      type: mealType,
+      portion: MealPortion.full,
+      mealId: mealId,
       note: note,
       imageHash: imageHash,
     );
@@ -213,6 +316,12 @@ class AppState extends ChangeNotifier {
   void updateEntryTime(MealEntry entry, DateTime time) {
     entry.time = time;
     entry.type = resolveMealType(time);
+    notifyListeners();
+    _store.upsert(entry);
+  }
+
+  void updateEntryPortion(MealEntry entry, MealPortion portion) {
+    entry.portion = portion;
     notifyListeners();
     _store.upsert(entry);
   }
@@ -431,11 +540,61 @@ class AppState extends ChangeNotifier {
     return [minVal, maxVal];
   }
 
+  double _portionWeight(MealPortion portion) {
+    switch (portion) {
+      case MealPortion.full:
+        return 1.0;
+      case MealPortion.half:
+        return 0.5;
+      case MealPortion.bite:
+        return 0.25;
+    }
+  }
+
+  double _levelScore(String value, AppLocalizations t) {
+    final lower = value.toLowerCase();
+    if (lower.contains(t.levelHigh) || lower.contains('high')) return 3.0;
+    if (lower.contains(t.levelLow) || lower.contains('low')) return 1.0;
+    return 2.0;
+  }
+
+  String _scoreToLevel(double score, AppLocalizations t) {
+    if (score <= 1.6) return t.levelLow;
+    if (score >= 2.4) return t.levelHigh;
+    return t.levelMedium;
+  }
+
+  String _buildMealAdvice(Map<String, String> macros, AppLocalizations t) {
+    final advice = <String>[];
+    final protein = macros['protein'] ?? '';
+    final fat = macros['fat'] ?? '';
+    final carbs = macros['carbs'] ?? '';
+    final sodium = macros['sodium'] ?? '';
+    if (protein.contains(t.levelLow) || protein.toLowerCase().contains('low')) advice.add(t.dietitianProteinLow);
+    if (fat.contains(t.levelHigh) || fat.toLowerCase().contains('high')) advice.add(t.dietitianFatHigh);
+    if (carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high')) advice.add(t.dietitianCarbHigh);
+    if (sodium.contains(t.levelHigh) || sodium.toLowerCase().contains('high')) advice.add(t.dietitianSodiumHigh);
+    final line = advice.isEmpty ? t.dietitianBalanced : advice.take(2).join('、');
+    return '${t.dietitianPrefix}$line';
+  }
+
   String _newId() {
     final seed = DateTime.now().microsecondsSinceEpoch;
     final rand = Random().nextInt(1 << 31);
     return '$seed-$rand';
   }
+}
+
+class MealSummary {
+  MealSummary({
+    required this.calorieRange,
+    required this.macros,
+    required this.advice,
+  });
+
+  final String calorieRange;
+  final Map<String, String> macros;
+  final String advice;
 }
 
 class UserProfile {

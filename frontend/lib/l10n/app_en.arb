@@ -13,6 +13,7 @@
   "editTime": "Edit Time",
   "noEntries": "No entries yet",
   "mealTotal": "Meal total (est.)",
+  "mealSummaryTitle": "Meal summary",
   "todayMeals": "Today Meals",
   "itemsCount": "{count} items",
   "@itemsCount": {
@@ -88,6 +89,10 @@
   "logTitle": "Log",
   "dailyCalorieRange": "Today calorie range",
   "calorieUnknown": "Not estimated",
+  "portionLabel": "Portion",
+  "portionFull": "Full",
+  "portionHalf": "Half",
+  "portionBite": "A few bites",
   "detailTitle": "Meal detail",
   "detailAiLabel": "AI explanation",
   "detailAiEmpty": "No analysis yet",

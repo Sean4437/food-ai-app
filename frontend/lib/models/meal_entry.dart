@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'analysis_result.dart';
 
 enum MealType { breakfast, lunch, dinner, lateSnack, other }
+enum MealPortion { full, half, bite }
 
 class MealEntry {
   MealEntry({
@@ -10,9 +11,11 @@ class MealEntry {
     required this.filename,
     required this.time,
     required this.type,
+    required this.portion,
     this.note,
     this.overrideFoodName,
     this.imageHash,
+    this.mealId,
     this.lastAnalyzedNote,
     this.lastAnalyzedFoodName,
   });
@@ -22,6 +25,8 @@ class MealEntry {
   final String filename;
   DateTime time;
   MealType type;
+  MealPortion portion;
+  String? mealId;
   String? note;
   String? overrideFoodName;
   String? imageHash;

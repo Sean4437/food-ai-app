@@ -78,6 +78,8 @@ class MealStoreImpl implements MealStore {
       filename: row['filename'] as String,
       time: DateTime.fromMillisecondsSinceEpoch(row['time'] as int),
       type: type,
+      portion: _portionFromString(row['portion'] as String?),
+      mealId: row['meal_id'] as String?,
       note: row['note'] as String?,
       overrideFoodName: row['override_food_name'] as String?,
       imageHash: row['image_hash'] as String?,
@@ -95,6 +97,8 @@ class MealStoreImpl implements MealStore {
       'id': entry.id,
       'time': entry.time.millisecondsSinceEpoch,
       'type': entry.type.name,
+      'portion': entry.portion.name,
+      'meal_id': entry.mealId,
       'filename': entry.filename,
       'note': entry.note,
       'override_food_name': entry.overrideFoodName,
@@ -112,5 +116,12 @@ class MealStoreImpl implements MealStore {
       if (type.name == value) return type;
     }
     return MealType.other;
+  }
+
+  MealPortion _portionFromString(String? value) {
+    for (final portion in MealPortion.values) {
+      if (portion.name == value) return portion;
+    }
+    return MealPortion.full;
   }
 }

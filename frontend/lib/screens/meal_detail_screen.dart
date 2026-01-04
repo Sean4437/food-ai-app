@@ -112,9 +112,41 @@ class MealDetailScreen extends StatelessWidget {
     );
   }
 
+  String _portionLabel(MealPortion portion, AppLocalizations t) {
+    switch (portion) {
+      case MealPortion.full:
+        return t.portionFull;
+      case MealPortion.half:
+        return t.portionHalf;
+      case MealPortion.bite:
+        return t.portionBite;
+    }
+  }
+
+  Widget _portionSelector(BuildContext context, AppState app, AppLocalizations t) {
+    return DropdownButton<MealPortion>(
+      value: entry.portion,
+      items: MealPortion.values
+          .map(
+            (portion) => DropdownMenuItem(
+              value: portion,
+              child: Text(_portionLabel(portion, t)),
+            ),
+          )
+          .toList(),
+      onChanged: (value) {
+        if (value == null) return;
+        app.updateEntryPortion(entry, value);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    final mealGroup = app.entriesForMeal(entry);
+    final mealSummary = app.buildMealSummary(mealGroup, t);
     final formatter = DateFormat('yyyy/MM/dd HH:mm', Localizations.localeOf(context).toLanguageTag());
     final prefix = entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
 
@@ -150,6 +182,44 @@ class MealDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(formatter.format(entry.time), style: const TextStyle(color: Colors.black54)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text('${t.portionLabel}: ', style: const TextStyle(color: Colors.black54)),
+                    _portionSelector(context, app, t),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(t.mealSummaryTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      Text(
+                        mealSummary?.advice ?? t.detailAiEmpty,
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${t.mealTotal}: ${mealSummary?.calorieRange ?? t.calorieUnknown}',
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -208,7 +278,7 @@ class MealDetailScreen extends StatelessWidget {
                           _ratioBar(t.sodium, _ratioFromValue(entry.result!.macros['sodium'] ?? ''), const Color(0xFF8AB4F8)),
                           const SizedBox(height: 10),
                         ],
-                        Text('${t.calorieLabel}：${prefix}${entry.result!.calorieRange}', style: const TextStyle(color: Colors.black54)),
+                        Text('${t.calorieLabel}: ${prefix}${entry.result!.calorieRange}', style: const TextStyle(color: Colors.black54)),
                       ] else
                         Text(t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
                     ],

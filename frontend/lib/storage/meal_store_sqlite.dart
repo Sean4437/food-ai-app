@@ -18,13 +18,15 @@ class MealStoreImpl implements MealStore {
     final dbPath = p.join(dir.path, _dbName);
     _db = await openDatabase(
       dbPath,
-      version: 3,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table(
             id TEXT PRIMARY KEY,
             time INTEGER NOT NULL,
             type TEXT NOT NULL,
+            portion TEXT NOT NULL,
+            meal_id TEXT,
             filename TEXT NOT NULL,
             note TEXT,
             override_food_name TEXT,
@@ -45,6 +47,10 @@ class MealStoreImpl implements MealStore {
           await db.execute('ALTER TABLE $_table ADD COLUMN image_hash TEXT');
           await db.execute('ALTER TABLE $_table ADD COLUMN last_analyzed_note TEXT');
           await db.execute('ALTER TABLE $_table ADD COLUMN last_analyzed_food_name TEXT');
+        }
+        if (oldVersion < 4) {
+          await db.execute('ALTER TABLE $_table ADD COLUMN portion TEXT');
+          await db.execute('ALTER TABLE $_table ADD COLUMN meal_id TEXT');
         }
       },
     );
@@ -102,6 +108,8 @@ class MealStoreImpl implements MealStore {
       filename: row['filename'] as String,
       time: DateTime.fromMillisecondsSinceEpoch(row['time'] as int),
       type: type,
+      portion: _portionFromString(row['portion'] as String?),
+      mealId: row['meal_id'] as String?,
       note: row['note'] as String?,
       overrideFoodName: row['override_food_name'] as String?,
       imageHash: row['image_hash'] as String?,
@@ -119,6 +127,8 @@ class MealStoreImpl implements MealStore {
       'id': entry.id,
       'time': entry.time.millisecondsSinceEpoch,
       'type': entry.type.name,
+      'portion': entry.portion.name,
+      'meal_id': entry.mealId,
       'filename': entry.filename,
       'note': entry.note,
       'override_food_name': entry.overrideFoodName,
@@ -136,5 +146,12 @@ class MealStoreImpl implements MealStore {
       if (type.name == value) return type;
     }
     return MealType.other;
+  }
+
+  MealPortion _portionFromString(String? value) {
+    for (final portion in MealPortion.values) {
+      if (portion.name == value) return portion;
+    }
+    return MealPortion.full;
   }
 }

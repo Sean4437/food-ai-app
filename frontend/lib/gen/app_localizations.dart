@@ -177,6 +177,8 @@ abstract class AppLocalizations {
   /// **'本餐估計熱量'**
   String get mealTotal;
 
+  String get mealSummaryTitle;
+
   /// No description provided for @todayMeals.
   ///
   /// In zh_TW, this message translates to:
@@ -556,6 +558,14 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'尚未估計'**
   String get calorieUnknown;
+
+  String get portionLabel;
+
+  String get portionFull;
+
+  String get portionHalf;
+
+  String get portionBite;
 
   /// No description provided for @detailTitle.
   ///

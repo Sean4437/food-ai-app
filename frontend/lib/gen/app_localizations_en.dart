@@ -47,6 +47,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get mealTotal => 'Meal total (est.)';
 
+  String get mealSummaryTitle => 'Meal summary';
+
   @override
   String get todayMeals => 'Today Meals';
 
@@ -254,6 +256,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get calorieUnknown => 'Not estimated';
+
+  String get portionLabel => 'Portion';
+
+  String get portionFull => 'Full';
+
+  String get portionHalf => 'Half';
+
+  String get portionBite => 'A few bites';
 
   @override
   String get detailTitle => 'Meal detail';

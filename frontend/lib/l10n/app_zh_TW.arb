@@ -13,6 +13,7 @@
   "editTime": "修改時間",
   "noEntries": "尚無紀錄",
   "mealTotal": "本餐估計熱量",
+  "mealSummaryTitle": "本餐摘要",
   "todayMeals": "今日餐點",
   "itemsCount": "{count} 筆",
   "@itemsCount": {
@@ -88,6 +89,10 @@
   "logTitle": "紀錄",
   "dailyCalorieRange": "今日熱量攝取",
   "calorieUnknown": "尚未估計",
+  "portionLabel": "份量",
+  "portionFull": "全吃",
+  "portionHalf": "吃一半",
+  "portionBite": "只吃幾口",
   "detailTitle": "詳細紀錄",
   "detailAiLabel": "AI 判斷說明",
   "detailAiEmpty": "尚無分析資料",

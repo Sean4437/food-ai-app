@@ -9,10 +9,55 @@ import '../widgets/record_sheet.dart';
 class LogScreen extends StatelessWidget {
   const LogScreen({super.key});
 
+  String _timeLabel(DateTime time) {
+    return '${time.month}/${time.day} ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _mealLabel(MealType type, AppLocalizations t) {
+    switch (type) {
+      case MealType.breakfast:
+        return t.breakfast;
+      case MealType.lunch:
+        return t.lunch;
+      case MealType.dinner:
+        return t.dinner;
+      case MealType.lateSnack:
+        return t.lateSnack;
+      case MealType.other:
+        return t.other;
+    }
+  }
+
+  String _portionLabel(MealPortion portion, AppLocalizations t) {
+    switch (portion) {
+      case MealPortion.full:
+        return t.portionFull;
+      case MealPortion.half:
+        return t.portionHalf;
+      case MealPortion.bite:
+        return t.portionBite;
+    }
+  }
+
+  String _groupTimeLabel(List<MealEntry> group) {
+    final times = group.map((e) => e.time).toList()..sort();
+    final start = times.first;
+    final end = times.last;
+    if (start == end) {
+      return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
+    }
+    return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _mockPrefix(MealEntry entry, AppLocalizations t) {
+    return entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
+  }
+
   Widget _mealRow(BuildContext context, AppState app, MealEntry entry) {
     final t = AppLocalizations.of(context)!;
     final prefix = _mockPrefix(entry, t);
     final foodName = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
+    final portion = _portionLabel(entry.portion, t);
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: Container(
@@ -43,7 +88,7 @@ class LogScreen extends StatelessWidget {
                   Text('${prefix}${foodName}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   Text(
-                    '${t.timeLabel}：${_timeLabel(entry.time, t)} · ${prefix}${entry.result?.calorieRange ?? t.calorieUnknown}',
+                    '${t.timeLabel}: ${_timeLabel(entry.time)} · ${portion} · ${prefix}${entry.result?.calorieRange ?? t.calorieUnknown}',
                     style: const TextStyle(color: Colors.black54, fontSize: 12),
                   ),
                 ],
@@ -61,61 +106,39 @@ class LogScreen extends StatelessWidget {
     );
   }
 
-  String _timeLabel(DateTime time, AppLocalizations t) {
-    final locale = t.localeName;
-    return '${time.month}/${time.day} ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
-
-  String _mealLabel(MealType type, AppLocalizations t) {
-    switch (type) {
-      case MealType.breakfast:
-        return t.breakfast;
-      case MealType.lunch:
-        return t.lunch;
-      case MealType.dinner:
-        return t.dinner;
-      case MealType.lateSnack:
-        return t.lateSnack;
-      case MealType.other:
-        return t.other;
-    }
-  }
-
-  String _mealAdviceLine(List<MealEntry> entries, AppLocalizations t) {
-    int proteinLow = 0;
-    int fatHigh = 0;
-    int carbHigh = 0;
-    int sodiumHigh = 0;
-    for (final entry in entries) {
-      final result = entry.result;
-      if (result == null) continue;
-      final fat = result.macros['fat'] ?? '';
-      final protein = result.macros['protein'] ?? '';
-      final carbs = result.macros['carbs'] ?? '';
-      final sodium = result.macros['sodium'] ?? '';
-      if (protein.contains(t.levelLow) || protein.toLowerCase().contains('low')) proteinLow++;
-      if (fat.contains(t.levelHigh) || fat.toLowerCase().contains('high')) fatHigh++;
-      if (carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high')) carbHigh++;
-      if (sodium.contains(t.levelHigh) || sodium.toLowerCase().contains('high')) sodiumHigh++;
-    }
-    final advice = <String>[];
-    if (proteinLow > 0) advice.add(t.dietitianProteinLow);
-    if (fatHigh > 0) advice.add(t.dietitianFatHigh);
-    if (carbHigh > 0) advice.add(t.dietitianCarbHigh);
-    if (sodiumHigh > 0) advice.add(t.dietitianSodiumHigh);
-    final line = advice.isEmpty ? t.dietitianBalanced : advice.take(2).join('；');
-    return '${t.dietitianPrefix}$line';
-  }
-
-  String _mockPrefix(MealEntry entry, AppLocalizations t) {
-    return entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
+  Widget _mealGroupCard(BuildContext context, AppState app, List<MealEntry> group) {
+    final t = AppLocalizations.of(context)!;
+    final summary = app.buildMealSummary(group, t);
+    final title = '${t.mealSummaryTitle} · ${_groupTimeLabel(group)}';
+    final calorie = summary?.calorieRange ?? t.calorieUnknown;
+    final advice = summary?.advice ?? t.detailAiEmpty;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8FC),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text('${t.mealTotal}: $calorie', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+          const SizedBox(height: 4),
+          Text(advice, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+          const SizedBox(height: 10),
+          Column(children: [for (final entry in group) _mealRow(context, app, entry)]),
+        ],
+      ),
+    );
   }
 
   Widget _mealSection(
     BuildContext context,
     AppState app,
     MealType type,
-    List<MealEntry> entries,
+    List<List<MealEntry>> groups,
   ) {
     final t = AppLocalizations.of(context)!;
     final title = _mealLabel(type, t);
@@ -146,15 +169,13 @@ class LogScreen extends StatelessWidget {
               ),
             ],
           ),
-          if (entries.isEmpty)
+          if (groups.isEmpty)
             Text(t.noMealPrompt, style: const TextStyle(color: Colors.black54)),
-          if (entries.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(_mealAdviceLine(entries, t), style: const TextStyle(color: Colors.black54)),
+          if (groups.isNotEmpty) ...[
             const SizedBox(height: 8),
             Column(
               children: [
-                for (final entry in entries) _mealRow(context, app, entry),
+                for (final group in groups) _mealGroupCard(context, app, group),
               ],
             ),
           ],
@@ -230,36 +251,11 @@ class LogScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _mealSection(
-                    context,
-                    app,
-                    MealType.breakfast,
-                    app.entriesForDate(date).where((e) => e.type == MealType.breakfast).toList(),
-                  ),
-                  _mealSection(
-                    context,
-                    app,
-                    MealType.lunch,
-                    app.entriesForDate(date).where((e) => e.type == MealType.lunch).toList(),
-                  ),
-                  _mealSection(
-                    context,
-                    app,
-                    MealType.dinner,
-                    app.entriesForDate(date).where((e) => e.type == MealType.dinner).toList(),
-                  ),
-                  _mealSection(
-                    context,
-                    app,
-                    MealType.lateSnack,
-                    app.entriesForDate(date).where((e) => e.type == MealType.lateSnack).toList(),
-                  ),
-                  _mealSection(
-                    context,
-                    app,
-                    MealType.other,
-                    app.entriesForDate(date).where((e) => e.type == MealType.other).toList(),
-                  ),
+                  _mealSection(context, app, MealType.breakfast, app.mealGroupsForDate(date, MealType.breakfast)),
+                  _mealSection(context, app, MealType.lunch, app.mealGroupsForDate(date, MealType.lunch)),
+                  _mealSection(context, app, MealType.dinner, app.mealGroupsForDate(date, MealType.dinner)),
+                  _mealSection(context, app, MealType.lateSnack, app.mealGroupsForDate(date, MealType.lateSnack)),
+                  _mealSection(context, app, MealType.other, app.mealGroupsForDate(date, MealType.other)),
                   const SizedBox(height: 16),
                 ],
               ],
