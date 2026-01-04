@@ -28,17 +28,6 @@ class LogScreen extends StatelessWidget {
     }
   }
 
-  String _portionLabel(MealPortion portion, AppLocalizations t) {
-    switch (portion) {
-      case MealPortion.full:
-        return t.portionFull;
-      case MealPortion.half:
-        return t.portionHalf;
-      case MealPortion.bite:
-        return t.portionBite;
-    }
-  }
-
   String _groupTimeLabel(List<MealEntry> group) {
     final times = group.map((e) => e.time).toList()..sort();
     final start = times.first;
@@ -57,7 +46,7 @@ class LogScreen extends StatelessWidget {
     final t = AppLocalizations.of(context)!;
     final prefix = _mockPrefix(entry, t);
     final foodName = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
-    final portion = _portionLabel(entry.portion, t);
+    final portion = '${t.portionLabel} ${entry.portionPercent}%';
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: Container(

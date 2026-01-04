@@ -36,6 +36,10 @@ class AppState extends ChangeNotifier {
         entry.mealId = entry.id;
         changed = true;
       }
+      if (entry.portionPercent <= 0) {
+        entry.portionPercent = 100;
+        changed = true;
+      }
     }
     if (changed) {
       for (final entry in entries) {
@@ -194,7 +198,7 @@ class AppState extends ChangeNotifier {
     for (final entry in group) {
       final result = entry.result;
       if (result == null) continue;
-      final weight = _portionWeight(entry.portion);
+      final weight = _portionWeight(entry.portionPercent);
       totalWeight += weight;
       final range = _parseCalorieRange(result.calorieRange);
       if (range != null) {
@@ -245,7 +249,7 @@ class AppState extends ChangeNotifier {
         filename: filename,
         time: time,
         type: mealType,
-        portion: MealPortion.full,
+        portionPercent: 100,
         mealId: mealId,
         note: note,
         imageHash: _hashBytes(originalBytes),
@@ -283,7 +287,7 @@ class AppState extends ChangeNotifier {
       filename: filename,
       time: time,
       type: mealType,
-      portion: MealPortion.full,
+      portionPercent: 100,
       mealId: mealId,
       note: note,
       imageHash: imageHash,
@@ -320,8 +324,8 @@ class AppState extends ChangeNotifier {
     _store.upsert(entry);
   }
 
-  void updateEntryPortion(MealEntry entry, MealPortion portion) {
-    entry.portion = portion;
+  void updateEntryPortionPercent(MealEntry entry, int percent) {
+    entry.portionPercent = percent.clamp(10, 100);
     notifyListeners();
     _store.upsert(entry);
   }
@@ -540,15 +544,9 @@ class AppState extends ChangeNotifier {
     return [minVal, maxVal];
   }
 
-  double _portionWeight(MealPortion portion) {
-    switch (portion) {
-      case MealPortion.full:
-        return 1.0;
-      case MealPortion.half:
-        return 0.5;
-      case MealPortion.bite:
-        return 0.25;
-    }
+  double _portionWeight(int percent) {
+    final safe = percent.clamp(10, 100);
+    return safe / 100.0;
   }
 
   double _levelScore(String value, AppLocalizations t) {

@@ -112,32 +112,22 @@ class MealDetailScreen extends StatelessWidget {
     );
   }
 
-  String _portionLabel(MealPortion portion, AppLocalizations t) {
-    switch (portion) {
-      case MealPortion.full:
-        return t.portionFull;
-      case MealPortion.half:
-        return t.portionHalf;
-      case MealPortion.bite:
-        return t.portionBite;
-    }
-  }
-
   Widget _portionSelector(BuildContext context, AppState app, AppLocalizations t) {
-    return DropdownButton<MealPortion>(
-      value: entry.portion,
-      items: MealPortion.values
-          .map(
-            (portion) => DropdownMenuItem(
-              value: portion,
-              child: Text(_portionLabel(portion, t)),
-            ),
-          )
-          .toList(),
-      onChanged: (value) {
-        if (value == null) return;
-        app.updateEntryPortion(entry, value);
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('${entry.portionPercent}%', style: const TextStyle(fontWeight: FontWeight.w600)),
+        Slider(
+          value: entry.portionPercent.toDouble(),
+          min: 10,
+          max: 100,
+          divisions: 9,
+          label: '${entry.portionPercent}%',
+          onChanged: (value) {
+            app.updateEntryPortionPercent(entry, value.round());
+          },
+        ),
+      ],
     );
   }
 
@@ -183,12 +173,9 @@ class MealDetailScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(formatter.format(entry.time), style: const TextStyle(color: Colors.black54)),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text('${t.portionLabel}: ', style: const TextStyle(color: Colors.black54)),
-                    _portionSelector(context, app, t),
-                  ],
-                ),
+                Text(t.portionLabel, style: const TextStyle(color: Colors.black54)),
+                const SizedBox(height: 6),
+                _portionSelector(context, app, t),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(14),

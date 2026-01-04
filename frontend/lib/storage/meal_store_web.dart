@@ -78,7 +78,7 @@ class MealStoreImpl implements MealStore {
       filename: row['filename'] as String,
       time: DateTime.fromMillisecondsSinceEpoch(row['time'] as int),
       type: type,
-      portion: _portionFromString(row['portion'] as String?),
+      portionPercent: _portionPercentFromRow(row),
       mealId: row['meal_id'] as String?,
       note: row['note'] as String?,
       overrideFoodName: row['override_food_name'] as String?,
@@ -97,7 +97,8 @@ class MealStoreImpl implements MealStore {
       'id': entry.id,
       'time': entry.time.millisecondsSinceEpoch,
       'type': entry.type.name,
-      'portion': entry.portion.name,
+      'portion': _portionStringFromPercent(entry.portionPercent),
+      'portion_percent': entry.portionPercent,
       'meal_id': entry.mealId,
       'filename': entry.filename,
       'note': entry.note,
@@ -118,10 +119,28 @@ class MealStoreImpl implements MealStore {
     return MealType.other;
   }
 
-  MealPortion _portionFromString(String? value) {
-    for (final portion in MealPortion.values) {
-      if (portion.name == value) return portion;
+  int _portionPercentFromRow(Map<String, Object?> row) {
+    final percent = row['portion_percent'];
+    if (percent is int) return percent;
+    if (percent is num) return percent.round();
+    return _portionPercentFromString(row['portion'] as String?);
+  }
+
+  int _portionPercentFromString(String? value) {
+    switch (value) {
+      case 'full':
+        return 100;
+      case 'half':
+        return 50;
+      case 'bite':
+        return 25;
     }
-    return MealPortion.full;
+    return 100;
+  }
+
+  String _portionStringFromPercent(int percent) {
+    if (percent >= 90) return 'full';
+    if (percent >= 45) return 'half';
+    return 'bite';
   }
 }
