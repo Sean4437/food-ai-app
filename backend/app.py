@@ -12,6 +12,7 @@ import json
 import os
 import random
 import uuid
+import hashlib
 from datetime import datetime, timezone
 
 _base_dir = Path(__file__).resolve().parent
@@ -54,6 +55,7 @@ _usage_dir = _base_dir / "data"
 _usage_dir.mkdir(exist_ok=True)
 _usage_log_path = _usage_dir / "usage.jsonl"
 _daily_count_path = _usage_dir / "daily_counts.json"
+_analysis_cache_path = _usage_dir / "analysis_cache.json"
 
 _fake_foods = {
     "zh-TW": [
@@ -152,6 +154,23 @@ def _save_daily_counts(data: dict) -> None:
     _daily_count_path.write_text(json.dumps(data, ensure_ascii=True), encoding="utf-8")
 
 
+def _load_analysis_cache() -> dict:
+    if not _analysis_cache_path.exists():
+        return {}
+    try:
+        return json.loads(_analysis_cache_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _save_analysis_cache(data: dict) -> None:
+    _analysis_cache_path.write_text(json.dumps(data, ensure_ascii=True), encoding="utf-8")
+
+
+def _hash_image(image_bytes: bytes) -> str:
+    return hashlib.sha1(image_bytes).hexdigest()
+
+
 def _should_use_ai() -> bool:
     if not CALL_REAL_AI:
         return False
@@ -221,12 +240,27 @@ async def analyze_image(
     food_name: str = Form(default=None),
 ):
     image_bytes = await image.read()
+    image_hash = _hash_image(image_bytes)
 
     use_lang = lang or DEFAULT_LANG
     if use_lang not in _fake_foods:
         use_lang = "zh-TW"
 
     tier = "full"
+    if food_name is None:
+        cache = _load_analysis_cache()
+        cached = cache.get(image_hash)
+        if isinstance(cached, dict) and isinstance(cached.get("result"), dict):
+            cached_result = cached["result"]
+            return AnalysisResult(
+                food_name=cached_result.get("food_name", ""),
+                calorie_range=cached_result.get("calorie_range", ""),
+                macros=cached_result.get("macros", {}),
+                suggestion=cached_result.get("suggestion", ""),
+                tier="cached",
+                source="cache",
+                cost_estimate_usd=None,
+            )
 
     use_ai = _should_use_ai()
     if use_ai and _client is not None:
@@ -253,6 +287,17 @@ async def analyze_image(
                 )
                 final_name = food_name or payload["result"]["food_name"]
                 _increment_daily_count()
+                cache = _load_analysis_cache()
+                cache[image_hash] = {
+                    "saved_at": datetime.now(timezone.utc).isoformat(),
+                    "result": {
+                        "food_name": final_name,
+                        "calorie_range": payload["result"]["calorie_range"],
+                        "macros": payload["result"]["macros"],
+                        "suggestion": payload["result"]["suggestion"],
+                    },
+                }
+                _save_analysis_cache(cache)
                 return AnalysisResult(
                     food_name=final_name,
                     calorie_range=payload["result"]["calorie_range"],
