@@ -27,7 +27,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   Widget _itemCard(BuildContext context, MealEntry entry, String plateAsset) {
     final t = AppLocalizations.of(context)!;
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
+      onTap: () => _showImagePreview(context, entry),
+      onLongPress: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: SizedBox(
         height: 360,
         child: Column(
@@ -48,6 +49,27 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
             const SizedBox(height: 6),
             Text('${t.portionLabel} ${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
           ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showImagePreview(BuildContext context, MealEntry entry) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.black.withOpacity(0.85),
+        insetPadding: const EdgeInsets.all(16),
+        child: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: InteractiveViewer(
+            minScale: 0.8,
+            maxScale: 3,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.memory(entry.imageBytes, fit: BoxFit.contain),
+            ),
+          ),
         ),
       ),
     );

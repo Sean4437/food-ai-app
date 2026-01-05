@@ -6,6 +6,7 @@ import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
 import '../widgets/record_sheet.dart';
 import '../widgets/plate_photo.dart';
+import '../widgets/plate_polygon_stack.dart';
 import 'day_meals_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.9);
   int _pageIndex = 0;
+  final Map<DateTime, int> _dateSelectedMeal = {};
 
   @override
   void dispose() {
@@ -40,58 +42,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _plateStackForGroups(List<List<MealEntry>> groups) {
+  Widget _plateStackForGroups(DateTime date, List<List<MealEntry>> groups) {
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final count = groups.length;
-        if (count == 0) return const SizedBox.shrink();
-        const maxPlate = 300.0;
-        const minPlate = 220.0;
-        const minSpacing = 36.0;
-        const desiredSpacing = 110.0;
-        const offsetY = 10.0;
-        final maxWidth = constraints.maxWidth;
-        var plateSize = maxPlate;
-        var offsetX = desiredSpacing;
-        if (count > 1) {
-          final needed = plateSize + (count - 1) * offsetX;
-          if (needed > maxWidth) {
-            offsetX = ((maxWidth - plateSize) / (count - 1)).clamp(minSpacing, desiredSpacing);
-            if (plateSize + (count - 1) * offsetX > maxWidth) {
-              plateSize = (maxWidth - (count - 1) * minSpacing).clamp(minPlate, maxPlate);
-              offsetX = ((maxWidth - plateSize) / (count - 1)).clamp(minSpacing, desiredSpacing);
-            }
-          }
-        } else {
-          offsetX = 0;
-        }
-        final imageSize = plateSize * 0.7;
-        final stackHeight = plateSize + (count - 1) * offsetY;
-        final stackWidth = plateSize + (count - 1) * offsetX;
-        return SizedBox(
-          height: stackHeight,
-          width: stackWidth,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              for (var i = 0; i < count; i++)
-                Positioned(
-                  left: i * offsetX,
-                  top: i * offsetY,
-                  child: PlatePhoto(
-                    imageBytes: groups[i].first.imageBytes,
-                    plateAsset: plateAsset,
-                    plateSize: plateSize,
-                    imageSize: imageSize,
-                    tilt: -0.08,
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
+    final key = DateTime(date.year, date.month, date.day);
+    final selectedIndex = (_dateSelectedMeal[key] ?? 0).clamp(0, groups.length - 1);
+    return PlatePolygonStack(
+      images: groups.map((group) => group.first.imageBytes).toList(),
+      plateAsset: plateAsset,
+      selectedIndex: selectedIndex,
+      onSelect: (index) => setState(() => _dateSelectedMeal[key] = index),
+      maxPlateSize: 300,
+      minPlateSize: 220,
     );
   }
 
@@ -115,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return _plateStackForGroups(groups);
+    return _plateStackForGroups(date, groups);
   }
 
   Widget _dateInfoCard(

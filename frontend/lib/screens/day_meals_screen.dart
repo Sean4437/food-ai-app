@@ -5,6 +5,7 @@ import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
 import '../widgets/plate_photo.dart';
+import '../widgets/plate_polygon_stack.dart';
 import 'meal_items_screen.dart';
 
 class DayMealsScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class DayMealsScreen extends StatefulWidget {
 class _DayMealsScreenState extends State<DayMealsScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.86);
   int _pageIndex = 0;
+  final Map<int, int> _groupSelectedIndex = {};
 
   @override
   void dispose() {
@@ -41,62 +43,21 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     }
   }
 
-  Widget _photoStack(List<MealEntry> group) {
+  Widget _photoStack(List<MealEntry> group, int groupIndex) {
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final count = group.length;
-        if (count == 0) return const SizedBox.shrink();
-        const maxPlate = 280.0;
-        const minPlate = 200.0;
-        const minSpacing = 30.0;
-        const desiredSpacing = 90.0;
-        const offsetY = 8.0;
-        final maxWidth = constraints.maxWidth;
-        var plateSize = maxPlate;
-        var offsetX = desiredSpacing;
-        if (count > 1) {
-          final needed = plateSize + (count - 1) * offsetX;
-          if (needed > maxWidth) {
-            offsetX = ((maxWidth - plateSize) / (count - 1)).clamp(minSpacing, desiredSpacing);
-            if (plateSize + (count - 1) * offsetX > maxWidth) {
-              plateSize = (maxWidth - (count - 1) * minSpacing).clamp(minPlate, maxPlate);
-              offsetX = ((maxWidth - plateSize) / (count - 1)).clamp(minSpacing, desiredSpacing);
-            }
-          }
-        } else {
-          offsetX = 0;
-        }
-        final imageSize = plateSize * 0.7;
-        final stackHeight = plateSize + (count - 1) * offsetY;
-        final stackWidth = plateSize + (count - 1) * offsetX;
-        return SizedBox(
-          height: stackHeight,
-          width: stackWidth,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              for (var i = 0; i < count; i++)
-                Positioned(
-                  left: i * offsetX,
-                  top: i * offsetY,
-                  child: PlatePhoto(
-                    imageBytes: group[i].imageBytes,
-                    plateAsset: plateAsset,
-                    plateSize: plateSize,
-                    imageSize: imageSize,
-                    tilt: -0.08,
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
+    final selectedIndex = (_groupSelectedIndex[groupIndex] ?? 0).clamp(0, group.length - 1);
+    return PlatePolygonStack(
+      images: group.map((entry) => entry.imageBytes).toList(),
+      plateAsset: plateAsset,
+      selectedIndex: selectedIndex,
+      onSelect: (index) => setState(() => _groupSelectedIndex[groupIndex] = index),
+      maxPlateSize: 280,
+      minPlateSize: 200,
     );
   }
 
-  Widget _mealPreviewCard(BuildContext context, List<MealEntry> group) {
+  Widget _mealPreviewCard(BuildContext context, List<MealEntry> group, int groupIndex) {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
@@ -106,7 +67,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
       ),
       child: SizedBox(
         height: 300,
-        child: Center(child: _photoStack(group)),
+        child: Center(child: _photoStack(group, groupIndex)),
       ),
     );
   }
@@ -169,7 +130,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                   controller: _pageController,
                   onPageChanged: (index) => setState(() => _pageIndex = index),
                   itemCount: groups.length,
-                  itemBuilder: (context, index) => _mealPreviewCard(context, groups[index]),
+                  itemBuilder: (context, index) => _mealPreviewCard(context, groups[index], index),
                 ),
               ),
               const SizedBox(height: 16),
