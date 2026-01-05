@@ -42,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _photoStack(List<MealEntry> group) {
     final main = group.first;
-    final extra = group.length - 1;
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     return Center(
@@ -52,7 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
         plateSize: 300,
         imageSize: 210,
         tilt: -0.08,
-        badgeCount: extra > 0 ? extra : null,
       ),
     );
   }
@@ -90,34 +88,25 @@ class _HomeScreenState extends State<HomeScreen> {
   ) {
     final mealTypeLabel = _mealTypeLabel(group.first.type, t);
     return SizedBox(
-      height: 340,
+      height: 320,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           SizedBox(height: 300, child: _photoStack(group)),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.black.withOpacity(0.08)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Text(
-              '$mealTypeLabel • ${_groupTimeLabel(group)}',
-              style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
-            ),
+          Text(
+            '$mealTypeLabel • ${_groupTimeLabel(group)}',
+            style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
       ),
     );
+  }
+
+  double _stackOffsetX(int count) {
+    if (count >= 6) return 70;
+    if (count >= 4) return 90;
+    return 110;
   }
 
   Widget _mealStackForDate(
@@ -140,19 +129,20 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    const cardHeight = 340.0;
+    const plateSize = 300.0;
     const offsetY = 12.0;
-    const offsetX = 120.0;
-    final stackHeight = cardHeight + (groups.length - 1) * offsetY;
+    final offsetX = _stackOffsetX(groups.length);
+    final stackHeight = plateSize + (groups.length - 1) * offsetY;
+    final stackWidth = plateSize + (groups.length - 1) * offsetX;
     return SizedBox(
       height: stackHeight,
+      width: stackWidth,
       child: Stack(
         children: [
           for (var i = groups.length - 1; i >= 0; i--)
             Positioned(
               top: i * offsetY,
               left: i * offsetX,
-              right: i * offsetX,
               child: _mealPreviewCard(groups[i], t, theme, appTheme),
             ),
         ],

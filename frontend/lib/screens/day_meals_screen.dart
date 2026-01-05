@@ -53,7 +53,6 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
 
   Widget _photoStack(List<MealEntry> group) {
     final main = group.first;
-    final extra = group.length - 1;
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     return Center(
@@ -63,7 +62,6 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
         plateSize: 300,
         imageSize: 210,
         tilt: -0.08,
-        badgeCount: extra > 0 ? extra : null,
       ),
     );
   }
@@ -84,24 +82,9 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
           children: [
             SizedBox(height: 300, child: _photoStack(group)),
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.black.withOpacity(0.08)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Text(
-                '$mealTypeLabel • ${_groupTimeLabel(group)}',
-                style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
-              ),
+            Text(
+              '$mealTypeLabel • ${_groupTimeLabel(group)}',
+              style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ],
         ),
