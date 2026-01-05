@@ -175,10 +175,10 @@ class MealDetailScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: const RadialGradient(
-                          center: Alignment(-0.35, -0.4),
-                          radius: 0.9,
-                          colors: [Color(0xFFFFFFFF), Color(0xFFF2F5FA)],
-                          stops: [0.45, 1.0],
+                          center: Alignment(-0.25, -0.35),
+                          radius: 0.95,
+                          colors: [Color(0xFFFFFFFF), Color(0xFFF1F4FA)],
+                          stops: [0.5, 1.0],
                         ),
                         border: Border.all(color: Colors.black.withOpacity(0.1), width: 3),
                         boxShadow: [
@@ -191,6 +191,33 @@ class MealDetailScreen extends StatelessWidget {
                       ),
                       child: Stack(
                         children: [
+                          Positioned.fill(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: const RadialGradient(
+                                    center: Alignment(0.0, 0.2),
+                                    radius: 0.85,
+                                    colors: [Color(0xFFF7F9FC), Color(0xFFE6EBF3)],
+                                    stops: [0.35, 1.0],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: Padding(
+                              padding: const EdgeInsets.all(10),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white.withOpacity(0.7), width: 3),
+                                ),
+                              ),
+                            ),
+                          ),
                           Positioned(
                             left: 22,
                             top: 16,
