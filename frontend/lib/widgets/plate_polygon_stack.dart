@@ -31,7 +31,7 @@ class PlatePolygonStack extends StatelessWidget {
         final count = images.length;
         if (count == 0) return const SizedBox.shrink();
         var plateSize = maxPlateSize;
-        var radius = plateSize * 0.6;
+        var radius = plateSize * 0.62;
         var size = plateSize + radius * 2;
         if (size > constraints.maxWidth) {
           final scale = constraints.maxWidth / size;
@@ -46,6 +46,9 @@ class PlatePolygonStack extends StatelessWidget {
         final positions = <Offset>[];
         if (count == 1) {
           positions.add(center);
+        } else if (count == 2) {
+          positions.add(center + Offset(-radius, 0));
+          positions.add(center + Offset(radius, 0));
         } else {
           final outerStep = 2 * math.pi / outerCount;
           final startAngle = -math.pi / 2;
@@ -83,10 +86,19 @@ class PlatePolygonStack extends StatelessWidget {
                   child: GestureDetector(
                     onTap: onOpen == null ? null : () => onOpen!(index),
                     onLongPress: onSelect == null ? null : () => onSelect!(index),
-                    child: Opacity(
-                      opacity: index == safeSelected ? 1 : 0.6,
-                      child: Transform.scale(
-                        scale: index == safeSelected ? 1.08 : 0.9,
+                    child: Transform.scale(
+                      scale: index == safeSelected ? 1.08 : 0.92,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(index == safeSelected ? 0.18 : 0.08),
+                              blurRadius: index == safeSelected ? 26 : 16,
+                              offset: Offset(0, index == safeSelected ? 16 : 10),
+                            ),
+                          ],
+                        ),
                         child: PlatePhoto(
                           imageBytes: images[index],
                           plateAsset: plateAsset,

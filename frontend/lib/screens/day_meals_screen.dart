@@ -123,15 +123,18 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
               )
             else ...[
               SizedBox(
-                height: 360,
+                height: 400,
                 child: PageView.builder(
                   controller: _pageController,
                   onPageChanged: (index) => setState(() => _pageIndex = index),
                   itemCount: groups.length,
                   itemBuilder: (context, index) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: _mealPreviewCard(context, groups[index], index),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: _mealPreviewCard(context, groups[index], index),
+                      ),
                     ),
                   ),
                 ),

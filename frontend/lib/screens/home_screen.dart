@@ -183,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        height: 420,
+                        height: 460,
                         child: PageView.builder(
                           controller: _pageController,
                           onPageChanged: (index) {
@@ -192,9 +192,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           itemCount: displayDates.length,
                           itemBuilder: (context, index) => Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 10),
-                              child: _mealStackForDate(displayDates[index], t, theme, appTheme, app),
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: _mealStackForDate(displayDates[index], t, theme, appTheme, app),
+                              ),
                             ),
                           ),
                         ),
