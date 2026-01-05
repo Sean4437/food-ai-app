@@ -447,6 +447,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get plateDefaultLabel => '預設瓷盤';
 
   @override
+  String get plateWarmLabel => '暖色陶瓷盤';
+
+  @override
   String get apiSection => 'API ???';
 
   @override
@@ -981,6 +984,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get plateDefaultLabel => '預設瓷盤';
+
+  @override
+  String get plateWarmLabel => '暖色陶瓷盤';
 
   @override
   String get apiSection => 'API ???';

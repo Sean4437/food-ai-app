@@ -446,6 +446,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get plateDefaultLabel => 'Default plate';
 
   @override
+  String get plateWarmLabel => 'Warm ceramic plate';
+
+  @override
   String get apiSection => 'API';
 
   @override

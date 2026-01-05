@@ -153,6 +153,7 @@
   "plateSection": "盤子樣式",
   "plateStyleLabel": "盤子款式",
   "plateDefaultLabel": "預設瓷盤",
+  "plateWarmLabel": "暖色陶瓷盤",
   "apiSection": "API 連線",
   "apiBaseUrlLabel": "API 位址",
   "delete": "刪除",

@@ -862,6 +862,9 @@ abstract class AppLocalizations {
   /// No description provided for @plateDefaultLabel.
   String get plateDefaultLabel;
 
+  /// No description provided for @plateWarmLabel.
+  String get plateWarmLabel;
+
   /// No description provided for @apiSection.
   ///
   /// In zh_TW, this message translates to:

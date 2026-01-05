@@ -35,3 +35,4 @@ flutter:
     - assets/themes/theme_clean.json
     - assets/themes/theme_warm.json
     - assets/plates/plate_default.png
+    - assets/plates/plate_warm.png

@@ -153,6 +153,7 @@
   "plateSection": "Plate style",
   "plateStyleLabel": "Plate design",
   "plateDefaultLabel": "Default plate",
+  "plateWarmLabel": "Warm ceramic plate",
   "apiSection": "API",
   "apiBaseUrlLabel": "API base URL",
   "delete": "Delete",

@@ -281,6 +281,7 @@ class SettingsScreen extends StatelessWidget {
     final profile = app.profile;
     final plateOptions = <String, String>{
       t.plateDefaultLabel: kDefaultPlateAsset,
+      t.plateWarmLabel: 'assets/plates/plate_warm.png',
     };
     final currentPlateLabel = plateOptions.entries
         .firstWhere(
