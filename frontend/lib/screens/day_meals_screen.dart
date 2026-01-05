@@ -53,13 +53,13 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
   Widget _photoStack(List<MealEntry> group) {
     final main = group.first;
     final extra = group.length - 1;
-    const double plateSize = 180;
-    const double imageSize = 138;
+    const double plateSize = 210;
+    const double imageSize = 156;
     return Stack(
       children: [
         Center(
           child: Transform.rotate(
-            angle: -0.06,
+            angle: -0.12,
             child: Container(
               width: plateSize,
               height: plateSize,
@@ -71,17 +71,29 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                   colors: [Color(0xFFFFFFFF), Color(0xFFF2F5FA)],
                   stops: [0.45, 1.0],
                 ),
-                border: Border.all(color: Colors.black.withOpacity(0.08), width: 2),
+                border: Border.all(color: Colors.black.withOpacity(0.1), width: 3),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.12),
-                    blurRadius: 18,
-                    offset: const Offset(0, 10),
+                    blurRadius: 20,
+                    offset: const Offset(0, 12),
                   ),
                 ],
               ),
               child: Stack(
                 children: [
+                  Positioned(
+                    left: 18,
+                    top: 12,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                    ),
+                  ),
                   Center(
                     child: ClipOval(
                       child: Image.memory(
@@ -89,18 +101,6 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                         width: imageSize,
                         height: imageSize,
                         fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 20,
-                    top: 16,
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.65),
                       ),
                     ),
                   ),

@@ -166,9 +166,57 @@ class MealDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: Image.memory(entry.imageBytes, height: 220, fit: BoxFit.cover),
+                Center(
+                  child: Transform.rotate(
+                    angle: -0.12,
+                    child: Container(
+                      width: 240,
+                      height: 240,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const RadialGradient(
+                          center: Alignment(-0.35, -0.4),
+                          radius: 0.9,
+                          colors: [Color(0xFFFFFFFF), Color(0xFFF2F5FA)],
+                          stops: [0.45, 1.0],
+                        ),
+                        border: Border.all(color: Colors.black.withOpacity(0.1), width: 3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 20,
+                            offset: const Offset(0, 12),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 22,
+                            top: 16,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                            ),
+                          ),
+                          Center(
+                            child: ClipOval(
+                              child: Image.memory(
+                                entry.imageBytes,
+                                width: 176,
+                                height: 176,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(formatter.format(entry.time), style: const TextStyle(color: Colors.black54)),

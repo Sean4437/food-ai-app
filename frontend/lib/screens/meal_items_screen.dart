@@ -25,11 +25,13 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
 
   Widget _itemCard(BuildContext context, MealEntry entry) {
     final t = AppLocalizations.of(context)!;
+    const double plateSize = 220;
+    const double imageSize = 160;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: Container(
-        height: _cardHeight,
-        padding: const EdgeInsets.all(14),
+        height: 320,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
@@ -44,11 +46,59 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.memory(entry.imageBytes, height: 140, width: double.infinity, fit: BoxFit.cover),
+            Center(
+              child: Transform.rotate(
+                angle: -0.12,
+                child: Container(
+                  width: plateSize,
+                  height: plateSize,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const RadialGradient(
+                      center: Alignment(-0.35, -0.4),
+                      radius: 0.9,
+                      colors: [Color(0xFFFFFFFF), Color(0xFFF2F5FA)],
+                      stops: [0.45, 1.0],
+                    ),
+                    border: Border.all(color: Colors.black.withOpacity(0.1), width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 20,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 20,
+                        top: 14,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: ClipOval(
+                          child: Image.memory(
+                            entry.imageBytes,
+                            width: imageSize,
+                            height: imageSize,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
@@ -71,7 +121,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
       ),
       body: Center(
         child: SizedBox(
-          height: 320,
+          height: 380,
           child: PageView.builder(
             controller: _pageController,
             itemCount: sorted.length,

@@ -42,13 +42,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _photoStack(List<MealEntry> group) {
     final main = group.first;
     final extra = group.length - 1;
-    const double plateSize = 190;
-    const double imageSize = 148;
+    const double plateSize = 230;
+    const double imageSize = 170;
     return Stack(
       children: [
         Center(
           child: Transform.rotate(
-            angle: -0.06,
+            angle: -0.12,
             child: Container(
               width: plateSize,
               height: plateSize,
@@ -60,17 +60,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   colors: [Color(0xFFFFFFFF), Color(0xFFF2F5FA)],
                   stops: [0.45, 1.0],
                 ),
-                border: Border.all(color: Colors.black.withOpacity(0.08), width: 2),
+                border: Border.all(color: Colors.black.withOpacity(0.1), width: 3),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.12),
-                    blurRadius: 18,
-                    offset: const Offset(0, 10),
+                    blurRadius: 20,
+                    offset: const Offset(0, 12),
                   ),
                 ],
               ),
               child: Stack(
                 children: [
+                  Positioned(
+                    left: 18,
+                    top: 12,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                    ),
+                  ),
                   Center(
                     child: ClipOval(
                       child: Image.memory(
@@ -78,18 +90,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         width: imageSize,
                         height: imageSize,
                         fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: 22,
-                    top: 18,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.65),
                       ),
                     ),
                   ),
@@ -205,8 +205,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     const cardHeight = 230.0;
-    const offsetY = 26.0;
-    const offsetX = 14.0;
+    const offsetY = 8.0;
+    const offsetX = 28.0;
     final stackHeight = cardHeight + (groups.length - 1) * offsetY;
     return SizedBox(
       height: stackHeight,
