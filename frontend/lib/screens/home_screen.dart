@@ -42,8 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _photoStack(List<MealEntry> group) {
     final main = group.first;
     final extra = group.length - 1;
-    const double plateSize = 230;
-    const double imageSize = 170;
+    const double plateSize = 320;
+    const double imageSize = 220;
     return Stack(
       children: [
         Center(
@@ -204,9 +204,9 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    const cardHeight = 230.0;
+    const cardHeight = 320.0;
     const offsetY = 8.0;
-    const offsetX = 28.0;
+    const offsetX = 140.0;
     final stackHeight = cardHeight + (groups.length - 1) * offsetY;
     return SizedBox(
       height: stackHeight,

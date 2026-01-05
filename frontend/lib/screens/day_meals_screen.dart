@@ -53,8 +53,8 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
   Widget _photoStack(List<MealEntry> group) {
     final main = group.first;
     final extra = group.length - 1;
-    const double plateSize = 210;
-    const double imageSize = 156;
+    const double plateSize = 300;
+    const double imageSize = 210;
     return Stack(
       children: [
         Center(

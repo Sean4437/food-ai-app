@@ -25,12 +25,12 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
 
   Widget _itemCard(BuildContext context, MealEntry entry) {
     final t = AppLocalizations.of(context)!;
-    const double plateSize = 220;
-    const double imageSize = 160;
+    const double plateSize = 320;
+    const double imageSize = 220;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: Container(
-        height: 320,
+        height: 420,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -121,7 +121,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
       ),
       body: Center(
         child: SizedBox(
-          height: 380,
+          height: 460,
           child: PageView.builder(
             controller: _pageController,
             itemCount: sorted.length,

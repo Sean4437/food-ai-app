@@ -170,8 +170,8 @@ class MealDetailScreen extends StatelessWidget {
                   child: Transform.rotate(
                     angle: -0.12,
                     child: Container(
-                      width: 240,
-                      height: 240,
+                      width: 340,
+                      height: 340,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: const RadialGradient(
@@ -207,8 +207,8 @@ class MealDetailScreen extends StatelessWidget {
                             child: ClipOval(
                               child: Image.memory(
                                 entry.imageBytes,
-                                width: 176,
-                                height: 176,
+                                width: 240,
+                                height: 240,
                                 fit: BoxFit.cover,
                               ),
                             ),
