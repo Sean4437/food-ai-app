@@ -44,8 +44,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final extra = group.length - 1;
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
-    const double plateSize = 420;
-    const double imageSize = 280;
+    const double plateSize = 300;
+    const double imageSize = 210;
     return Stack(
       children: [
         Center(
@@ -191,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    const cardHeight = 320.0;
+    const cardHeight = 300.0;
     const offsetY = 8.0;
     const offsetX = 140.0;
     final stackHeight = cardHeight + (groups.length - 1) * offsetY;
@@ -311,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        height: 520,
+                        height: 420,
                         child: PageView.builder(
                           controller: _pageController,
                           onPageChanged: (index) {

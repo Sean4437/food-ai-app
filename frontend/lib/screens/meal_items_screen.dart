@@ -15,6 +15,7 @@ class MealItemsScreen extends StatefulWidget {
 
 class _MealItemsScreenState extends State<MealItemsScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.86);
+  int _pageIndex = 0;
 
   @override
   void dispose() {
@@ -94,26 +95,149 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
   }
 
+  double _ratioFromValue(String value) {
+    final v = value.toLowerCase();
+    if (v.contains('高') || v.contains('high')) return 0.8;
+    if (v.contains('低') || v.contains('low')) return 0.3;
+    return 0.55;
+  }
+
+  Widget _ratioBar(String label, double ratio, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: LinearProgressIndicator(
+            value: ratio,
+            minHeight: 10,
+            backgroundColor: color.withOpacity(0.15),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _portionSelector(BuildContext context, AppState app, MealEntry entry) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('${entry.portionPercent}%', style: const TextStyle(fontWeight: FontWeight.w600)),
+        Slider(
+          value: entry.portionPercent.toDouble(),
+          min: 10,
+          max: 100,
+          divisions: 9,
+          label: '${entry.portionPercent}%',
+          onChanged: (value) {
+            app.updateEntryPortionPercent(entry, value.round());
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final sorted = List<MealEntry>.from(widget.group)..sort((a, b) => b.time.compareTo(a.time));
+    if (_pageIndex >= sorted.length) {
+      _pageIndex = 0;
+    }
+    final currentEntry = sorted.isEmpty ? null : sorted[_pageIndex];
+    final mealSummary = sorted.isEmpty ? null : app.buildMealSummary(sorted, t);
     return Scaffold(
       appBar: AppBar(
         title: Text(t.mealItemsTitle),
         backgroundColor: const Color(0xFFF3F5FB),
         elevation: 0,
       ),
-      body: Center(
-        child: SizedBox(
-          height: 460,
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: sorted.length,
-            itemBuilder: (context, index) => _itemCard(context, sorted[index], plateAsset),
-          ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: 460,
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) => setState(() => _pageIndex = index),
+                itemCount: sorted.length,
+                itemBuilder: (context, index) => _itemCard(context, sorted[index], plateAsset),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (currentEntry != null) ...[
+              Text(t.portionLabel, style: const TextStyle(color: Colors.black54)),
+              const SizedBox(height: 6),
+              _portionSelector(context, app, currentEntry),
+              const SizedBox(height: 12),
+            ],
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.mealSummaryTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Text(mealSummary?.advice ?? t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
+                  const SizedBox(height: 6),
+                  Text('${t.mealTotal}: ${mealSummary?.calorieRange ?? t.calorieUnknown}',
+                      style: const TextStyle(color: Colors.black54)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (currentEntry?.result != null)
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t.detailWhyLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    _ratioBar(t.protein, _ratioFromValue(currentEntry!.result!.macros['protein'] ?? ''), const Color(0xFF8AD7A4)),
+                    const SizedBox(height: 10),
+                    _ratioBar(t.carbs, _ratioFromValue(currentEntry.result!.macros['carbs'] ?? ''), const Color(0xFFF4C95D)),
+                    const SizedBox(height: 10),
+                    _ratioBar(t.fat, _ratioFromValue(currentEntry.result!.macros['fat'] ?? ''), const Color(0xFFF08A7C)),
+                    const SizedBox(height: 10),
+                    if ((currentEntry.result!.macros['sodium'] ?? '').isNotEmpty) ...[
+                      _ratioBar(t.sodium, _ratioFromValue(currentEntry.result!.macros['sodium'] ?? ''), const Color(0xFF8AB4F8)),
+                      const SizedBox(height: 10),
+                    ],
+                    Text('${t.calorieLabel}: ${currentEntry.result!.calorieRange}', style: const TextStyle(color: Colors.black54)),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
     );
