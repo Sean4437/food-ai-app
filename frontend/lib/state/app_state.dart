@@ -75,19 +75,28 @@ class AppState extends ChangeNotifier {
   }
 
   String dailyCalorieRangeLabel(AppLocalizations t) {
-    return _dailyCalorieRangeLabel(entriesForSelectedDate, t);
+    return dailyCalorieRangeLabelForDate(_selectedDate, t);
   }
 
   String dailyCalorieRangeLabelForDate(DateTime date, AppLocalizations t) {
-    return _dailyCalorieRangeLabel(entriesForDate(date), t);
+    return _dailyCalorieRangeLabelForDate(date, t);
   }
 
-  String _dailyCalorieRangeLabel(List<MealEntry> source, AppLocalizations t) {
+  String _dailyCalorieRangeLabelForDate(DateTime date, AppLocalizations t) {
     int minSum = 0;
     int maxSum = 0;
     bool hasRange = false;
-    for (final entry in source) {
-      final range = _parseCalorieRange(entry.result?.calorieRange);
+    final groups = <List<MealEntry>>[
+      ...mealGroupsForDate(date, MealType.breakfast),
+      ...mealGroupsForDate(date, MealType.lunch),
+      ...mealGroupsForDate(date, MealType.dinner),
+      ...mealGroupsForDate(date, MealType.lateSnack),
+      ...mealGroupsForDate(date, MealType.other),
+    ];
+    for (final group in groups) {
+      final summary = buildMealSummary(group, t);
+      if (summary == null) continue;
+      final range = _parseCalorieRange(summary.calorieRange);
       if (range == null) continue;
       minSum += range[0];
       maxSum += range[1];
@@ -168,6 +177,22 @@ class AppState extends ChangeNotifier {
     final groups = <String, List<MealEntry>>{};
     for (final entry in entries) {
       if (entry.type != type) continue;
+      if (!_isSameDate(entry.time, target)) continue;
+      final key = entry.mealId ?? entry.id;
+      groups.putIfAbsent(key, () => []).add(entry);
+    }
+    final result = groups.values.toList();
+    for (final group in result) {
+      group.sort((a, b) => b.time.compareTo(a.time));
+    }
+    result.sort((a, b) => a.first.time.compareTo(b.first.time));
+    return result.reversed.toList();
+  }
+
+  List<List<MealEntry>> mealGroupsForDateAll(DateTime date) {
+    final target = _dateOnly(date);
+    final groups = <String, List<MealEntry>>{};
+    for (final entry in entries) {
       if (!_isSameDate(entry.time, target)) continue;
       final key = entry.mealId ?? entry.id;
       groups.putIfAbsent(key, () => []).add(entry);
@@ -359,6 +384,7 @@ class AppState extends ChangeNotifier {
       ..email = updated.email
       ..heightCm = updated.heightCm
       ..weightKg = updated.weightKg
+      ..age = updated.age
       ..goal = updated.goal
       ..planSpeed = updated.planSpeed
       ..lunchReminderEnabled = updated.lunchReminderEnabled
@@ -573,7 +599,12 @@ class AppState extends ChangeNotifier {
     if (carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high')) advice.add(t.dietitianCarbHigh);
     if (sodium.contains(t.levelHigh) || sodium.toLowerCase().contains('high')) advice.add(t.dietitianSodiumHigh);
     final line = advice.isEmpty ? t.dietitianBalanced : advice.take(2).join('、');
-    return '${t.dietitianPrefix}$line';
+    final goalLower = profile.goal.toLowerCase();
+    final loseFat = profile.goal == t.goalLoseFat ||
+        goalLower.contains('減脂') ||
+        goalLower.contains('lose');
+    final goalHint = loseFat ? t.goalAdviceLoseFat : t.goalAdviceMaintain;
+    return '${t.dietitianPrefix}$line ${goalHint}';
   }
 
   String _newId() {
@@ -601,6 +632,7 @@ class UserProfile {
     required this.email,
     required this.heightCm,
     required this.weightKg,
+    required this.age,
     required this.goal,
     required this.planSpeed,
     required this.lunchReminderEnabled,
@@ -615,6 +647,7 @@ class UserProfile {
   String email;
   int heightCm;
   int weightKg;
+  int age;
   String goal;
   String planSpeed;
   bool lunchReminderEnabled;
@@ -630,6 +663,7 @@ class UserProfile {
       email: 'xiaoming123@gmail.com',
       heightCm: 170,
       weightKg: 72,
+      age: 30,
       goal: '減脂',
       planSpeed: '穩定',
       lunchReminderEnabled: true,

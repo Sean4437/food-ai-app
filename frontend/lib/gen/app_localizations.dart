@@ -270,6 +270,8 @@ abstract class AppLocalizations {
   String get dietitianCarbHigh;
 
   String get dietitianSodiumHigh;
+  String get goalAdviceLoseFat;
+  String get goalAdviceMaintain;
 
   /// No description provided for @overallLabel.
   ///
@@ -366,6 +368,8 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'選一個最方便的方式就好'**
   String get nextMealHint;
+
+  String get mealItemsTitle;
 
   /// No description provided for @optionConvenienceTitle.
   ///
@@ -680,6 +684,12 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'體重'**
   String get weightLabel;
+  String get ageLabel;
+  String get bmiLabel;
+  String get bmiUnderweight;
+  String get bmiNormal;
+  String get bmiOverweight;
+  String get bmiObese;
 
   /// No description provided for @goalLabel.
   ///

@@ -112,6 +112,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dietitianSodiumHigh => 'Sodium is high. Cut broth and processed foods.';
 
   @override
+  String get goalAdviceLoseFat => 'For fat loss, prioritize protein and vegetables next meal.';
+
+  @override
+  String get goalAdviceMaintain => 'For maintenance, keep portions and balance in check.';
+
+  @override
   String get overallLabel => 'Overall';
 
   @override
@@ -158,6 +164,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nextMealHint => 'Pick the easiest option for you';
+
+  @override
+  String get mealItemsTitle => 'Meal items';
 
   @override
   String get optionConvenienceTitle => 'Convenience store';
@@ -321,6 +330,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weightLabel => 'Weight';
+
+  @override
+  String get ageLabel => 'Age';
+
+  @override
+  String get bmiLabel => 'BMI';
+
+  @override
+  String get bmiUnderweight => 'Low';
+
+  @override
+  String get bmiNormal => 'Normal';
+
+  @override
+  String get bmiOverweight => 'High';
+
+  @override
+  String get bmiObese => 'Very high';
 
   @override
   String get goalLabel => 'Goal';

@@ -112,6 +112,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dietitianSodiumHigh => '鈉含量偏高，減少湯底與加工品。';
 
   @override
+  String get goalAdviceLoseFat => '以減脂為目標，下一餐以蛋白質與蔬菜為主。';
+
+  @override
+  String get goalAdviceMaintain => '以維持為主，注意份量與均衡。';
+
+  @override
   String get overallLabel => '整體判斷';
 
   @override
@@ -158,6 +164,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nextMealHint => '選一個最方便的方式就好';
+
+  @override
+  String get mealItemsTitle => '本餐菜色';
 
   @override
   String get optionConvenienceTitle => '便利商店';
@@ -322,6 +331,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get weightLabel => '體重';
+
+  @override
+  String get ageLabel => '年齡';
+
+  @override
+  String get bmiLabel => 'BMI';
+
+  @override
+  String get bmiUnderweight => '偏低';
+
+  @override
+  String get bmiNormal => '正常';
+
+  @override
+  String get bmiOverweight => '偏高';
+
+  @override
+  String get bmiObese => '過高';
 
   @override
   String get goalLabel => '目標';
@@ -603,6 +630,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dietitianSodiumHigh => '鈉含量偏高，減少湯底與加工品。';
 
   @override
+  String get goalAdviceLoseFat => '以減脂為目標，下一餐以蛋白質與蔬菜為主。';
+
+  @override
+  String get goalAdviceMaintain => '以維持為主，注意份量與均衡。';
+
+  @override
   String get overallLabel => '整體判斷';
 
   @override
@@ -649,6 +682,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get nextMealHint => '選一個最方便的方式就好';
+
+  @override
+  String get mealItemsTitle => '本餐菜色';
 
   @override
   String get optionConvenienceTitle => '便利商店';
@@ -813,6 +849,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get weightLabel => '體重';
+
+  @override
+  String get ageLabel => '年齡';
+
+  @override
+  String get bmiLabel => 'BMI';
+
+  @override
+  String get bmiUnderweight => '偏低';
+
+  @override
+  String get bmiNormal => '正常';
+
+  @override
+  String get bmiOverweight => '偏高';
+
+  @override
+  String get bmiObese => '過高';
 
   @override
   String get goalLabel => '目標';
