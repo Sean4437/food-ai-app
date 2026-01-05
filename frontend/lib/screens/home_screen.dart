@@ -42,8 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _photoStack(List<MealEntry> group) {
     final main = group.first;
     final extra = group.length - 1;
-    const double plateSize = 380;
-    const double imageSize = 260;
+    const double plateSize = 420;
+    const double imageSize = 280;
     return Stack(
       children: [
         Center(
@@ -55,17 +55,17 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const RadialGradient(
-                  center: Alignment(-0.25, -0.35),
-                  radius: 0.95,
-                  colors: [Color(0xFFFFFFFF), Color(0xFFF1F4FA)],
-                  stops: [0.5, 1.0],
+                  center: Alignment(-0.25, -0.45),
+                  radius: 1.0,
+                  colors: [Color(0xFFFFFFFF), Color(0xFFE9EEF5)],
+                  stops: [0.6, 1.0],
                 ),
-                border: Border.all(color: Colors.black.withOpacity(0.1), width: 3),
+                border: Border.all(color: Colors.black.withOpacity(0.1), width: 4),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.12),
-                    blurRadius: 20,
-                    offset: const Offset(0, 12),
+                    blurRadius: 24,
+                    offset: const Offset(0, 14),
                   ),
                 ],
               ),
@@ -73,15 +73,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Positioned.fill(
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(8),
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: const RadialGradient(
-                            center: Alignment(0.0, 0.2),
-                            radius: 0.85,
-                            colors: [Color(0xFFF7F9FC), Color(0xFFE6EBF3)],
-                            stops: [0.35, 1.0],
+                            center: Alignment(-0.2, -0.4),
+                            radius: 0.95,
+                            colors: [Color(0xFFFFFFFF), Color(0xFFF0F3F9)],
+                            stops: [0.55, 1.0],
                           ),
                         ),
                       ),
@@ -89,24 +89,48 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   Positioned.fill(
                     child: Padding(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(22),
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.7), width: 3),
+                          gradient: const RadialGradient(
+                            center: Alignment(0.0, 0.3),
+                            radius: 0.9,
+                            colors: [Color(0xFFF8FAFD), Color(0xFFDDE4EE)],
+                            stops: [0.4, 1.0],
+                          ),
+                          border: Border.all(color: const Color(0xFFE2E8F1), width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 10,
+                              spreadRadius: -4,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.75), width: 4),
                         ),
                       ),
                     ),
                   ),
                   Positioned(
-                    left: 18,
-                    top: 12,
+                    left: 22,
+                    top: 16,
                     child: Container(
-                      width: 44,
-                      height: 44,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withOpacity(0.55),
                       ),
                     ),
                   ),

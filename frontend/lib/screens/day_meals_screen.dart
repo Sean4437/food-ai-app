@@ -66,17 +66,17 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const RadialGradient(
-                  center: Alignment(-0.25, -0.35),
-                  radius: 0.95,
-                  colors: [Color(0xFFFFFFFF), Color(0xFFF1F4FA)],
-                  stops: [0.5, 1.0],
+                  center: Alignment(-0.25, -0.45),
+                  radius: 1.0,
+                  colors: [Color(0xFFFFFFFF), Color(0xFFE9EEF5)],
+                  stops: [0.6, 1.0],
                 ),
-                border: Border.all(color: Colors.black.withOpacity(0.1), width: 3),
+                border: Border.all(color: Colors.black.withOpacity(0.1), width: 4),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.12),
-                    blurRadius: 20,
-                    offset: const Offset(0, 12),
+                    blurRadius: 24,
+                    offset: const Offset(0, 14),
                   ),
                 ],
               ),
@@ -84,15 +84,15 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                 children: [
                   Positioned.fill(
                     child: Padding(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(8),
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: const RadialGradient(
-                            center: Alignment(0.0, 0.2),
-                            radius: 0.85,
-                            colors: [Color(0xFFF7F9FC), Color(0xFFE6EBF3)],
-                            stops: [0.35, 1.0],
+                            center: Alignment(-0.2, -0.4),
+                            radius: 0.95,
+                            colors: [Color(0xFFFFFFFF), Color(0xFFF0F3F9)],
+                            stops: [0.55, 1.0],
                           ),
                         ),
                       ),
@@ -100,24 +100,48 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                   ),
                   Positioned.fill(
                     child: Padding(
-                      padding: const EdgeInsets.all(9),
+                      padding: const EdgeInsets.all(20),
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.7), width: 3),
+                          gradient: const RadialGradient(
+                            center: Alignment(0.0, 0.3),
+                            radius: 0.9,
+                            colors: [Color(0xFFF8FAFD), Color(0xFFDDE4EE)],
+                            stops: [0.4, 1.0],
+                          ),
+                          border: Border.all(color: const Color(0xFFE2E8F1), width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 10,
+                              spreadRadius: -4,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.75), width: 4),
                         ),
                       ),
                     ),
                   ),
                   Positioned(
-                    left: 18,
-                    top: 12,
+                    left: 20,
+                    top: 14,
                     child: Container(
-                      width: 40,
-                      height: 40,
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withOpacity(0.55),
                       ),
                     ),
                   ),
