@@ -54,41 +54,65 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     final main = group.first;
     final extra = group.length - 1;
     const double plateSize = 180;
-    const double imageSize = 140;
+    const double imageSize = 138;
     return Stack(
       children: [
         Center(
-          child: Container(
-            width: plateSize,
-            height: plateSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-              border: Border.all(color: Colors.black.withOpacity(0.08), width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
+          child: Transform.rotate(
+            angle: -0.06,
+            child: Container(
+              width: plateSize,
+              height: plateSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const RadialGradient(
+                  center: Alignment(-0.35, -0.4),
+                  radius: 0.9,
+                  colors: [Color(0xFFFFFFFF), Color(0xFFF2F5FA)],
+                  stops: [0.45, 1.0],
                 ),
-              ],
-            ),
-            child: Center(
-              child: ClipOval(
-                child: Image.memory(
-                  main.imageBytes,
-                  width: imageSize,
-                  height: imageSize,
-                  fit: BoxFit.cover,
-                ),
+                border: Border.all(color: Colors.black.withOpacity(0.08), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 18,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: ClipOval(
+                      child: Image.memory(
+                        main.imageBytes,
+                        width: imageSize,
+                        height: imageSize,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 20,
+                    top: 16,
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.65),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
         if (extra > 0)
           Positioned(
-            right: 18,
-            bottom: 8,
+            right: 16,
+            bottom: 12,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
@@ -112,42 +136,37 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => MealItemsScreen(group: group)),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: appTheme.card,
-          borderRadius: BorderRadius.circular(appTheme.radiusCard),
-          border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: SizedBox(
+        height: 230,
+        child: Stack(
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(mealTypeLabel, style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
-                ),
-                const Spacer(),
-                Text(
-                  '${formatter.format(group.first.time)} • ${_groupTimeLabel(group)}',
-                  style: const TextStyle(color: Colors.black54, fontSize: 12),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
             _photoStack(group),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.black.withOpacity(0.08)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 10,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '$mealTypeLabel • ${_groupTimeLabel(group)}',
+                    style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
