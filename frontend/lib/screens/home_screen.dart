@@ -42,16 +42,42 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _photoStack(List<MealEntry> group) {
     final main = group.first;
     final extra = group.length - 1;
+    const double plateSize = 190;
+    const double imageSize = 150;
     return Stack(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Image.memory(main.imageBytes, height: 160, width: double.infinity, fit: BoxFit.cover),
+        Center(
+          child: Container(
+            width: plateSize,
+            height: plateSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              border: Border.all(color: Colors.black.withOpacity(0.08), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Center(
+              child: ClipOval(
+                child: Image.memory(
+                  main.imageBytes,
+                  width: imageSize,
+                  height: imageSize,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
         ),
         if (extra > 0)
           Positioned(
-            right: 10,
-            bottom: 10,
+            right: 18,
+            bottom: 8,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
