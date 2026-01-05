@@ -1,4 +1,4 @@
-// ignore: unused_import
+﻿// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -9,526 +9,535 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => '飲食 AI MVP';
+  String get appTitle => '憌脤? AI MVP';
 
   @override
-  String get takePhoto => '拍照紀錄';
+  String get takePhoto => '?蝝??;
 
   @override
-  String get uploadPhoto => '上傳照片';
+  String get uploadPhoto => '銝?抒?';
 
   @override
-  String get quickAdd => '快速新增（自動分餐）';
+  String get quickAdd => '敹恍憓??芸???嚗?;
 
   @override
-  String get breakfast => '早餐';
+  String get breakfast => '?拚?';
 
   @override
-  String get lunch => '中餐';
+  String get lunch => '銝剝?';
 
   @override
-  String get dinner => '晚餐';
+  String get dinner => '??';
 
   @override
-  String get lateSnack => '消夜';
+  String get lateSnack => '瘨?';
 
   @override
-  String get other => '其他';
+  String get other => '?嗡?';
 
   @override
-  String get timeLabel => '時間';
+  String get timeLabel => '??';
 
   @override
-  String get editTime => '修改時間';
+  String get editTime => '靽格??';
 
   @override
-  String get noEntries => '尚無紀錄';
+  String get noEntries => '撠蝝??;
 
   @override
-  String get mealTotal => '本餐估計熱量';
+  String get mealTotal => '?祇?隡啗??梢?';
   @override
-  String get mealSummaryTitle => '本餐摘要';
+  String get mealSummaryTitle => '?祇???';
 
   @override
-  String get todayMeals => '今日餐點';
+  String get todayMeals => '隞擗?';
 
   @override
   String itemsCount(int count) {
-    return '$count 筆';
+    return '$count 蝑?;
   }
 
   @override
-  String get captureTitle => '拍照紀錄';
+  String get captureTitle => '?蝝??;
 
   @override
-  String get captureHint => '拍下你正在吃的餐點即可';
+  String get captureHint => '??雿迤?典???暺??;
 
   @override
-  String get optionalNoteLabel => '補充說明（可選）';
+  String get optionalNoteLabel => '鋆?隤芣?嚗?賂?';
 
   @override
-  String get notePlaceholder => '例如：只吃一半、打包帶走';
+  String get notePlaceholder => '靘?嚗?????葆韏?;
 
   @override
-  String get recentPhotos => '最近照片';
+  String get recentPhotos => '?餈??;
 
   @override
-  String get noPhotos => '尚未新增照片';
+  String get noPhotos => '撠?啣??抒?';
 
   @override
-  String get analysisTitle => '餐點分析';
+  String get analysisTitle => '擗???';
 
   @override
-  String get analysisEmpty => '還沒有餐點分析，先拍一張吧';
+  String get analysisEmpty => '????暺?????銝撘萄';
 
   @override
-  String get foodNameLabel => '食物名稱';
+  String get foodNameLabel => '憌?迂';
 
   @override
-  String get editFoodName => '修改食物名稱';
+  String get editFoodName => '靽格憌?迂';
 
   @override
-  String get reanalyzeLabel => '重新分析';
+  String get reanalyzeLabel => '???';
 
   @override
-  String get unknownFood => '未命名餐點';
+  String get unknownFood => '?芸??暺?;
 
   @override
-  String get dietitianPrefix => '建議：';
+  String get dietitianPrefix => '撱箄降嚗?;
 
   @override
-  String get dietitianBalanced => '整體均衡，維持即可。';
+  String get dietitianBalanced => '?湧??﹛嚗雁??胯?;
 
   @override
-  String get dietitianProteinLow => '蛋白質偏低，建議補豆魚蛋肉。';
+  String get dietitianProteinLow => '?鞈芸?雿?撱箄降鋆?擳???;
 
   @override
-  String get dietitianFatHigh => '油脂偏高，下一餐清淡少油。';
+  String get dietitianFatHigh => '瘝寡???嚗?銝擗?瘛∪?瘝嫘?;
 
   @override
-  String get dietitianCarbHigh => '碳水偏多，主食減量。';
+  String get dietitianCarbHigh => '蝣單偌??嚗蜓憌???;
 
   @override
-  String get dietitianSodiumHigh => '鈉含量偏高，減少湯底與加工品。';
+  String get dietitianSodiumHigh => '???擃?皜?皝臬???撌亙???;
 
   @override
-  String get goalAdviceLoseFat => '以減脂為目標，下一餐以蛋白質與蔬菜為主。';
+  String get goalAdviceLoseFat => '隞交???格?嚗?銝擗誑?鞈芾??祈??箔蜓??;
 
   @override
-  String get goalAdviceMaintain => '以維持為主，注意份量與均衡。';
+  String get goalAdviceMaintain => '隞亦雁?銝鳴?瘜冽?隞賡???銵～?;
 
   @override
-  String get overallLabel => '整體判斷';
+  String get overallLabel => '?湧??斗';
 
   @override
-  String get calorieLabel => '熱量區間';
+  String get calorieLabel => '?梢????;
 
   @override
-  String get macroLabel => '三大營養';
+  String get macroLabel => '銝之??';
 
   @override
-  String get levelLow => '低';
+  String get levelLow => '雿?;
 
   @override
-  String get levelMedium => '中';
+  String get levelMedium => '銝?;
 
   @override
-  String get levelHigh => '高';
+  String get levelHigh => '擃?;
 
   @override
   String get statusOk => 'OK';
 
   @override
-  String get statusWarn => '偏多';
+  String get statusWarn => '??';
 
   @override
-  String get statusOver => '爆';
+  String get statusOver => '??;
 
   @override
-  String get tagOily => '偏油';
+  String get tagOily => '?硃';
 
   @override
-  String get tagProteinOk => '蛋白質足';
+  String get tagProteinOk => '?鞈芾雲';
 
   @override
-  String get tagProteinLow => '蛋白質不足';
+  String get tagProteinLow => '?鞈芯?頞?;
 
   @override
-  String get tagCarbHigh => '碳水偏多';
+  String get tagCarbHigh => '蝣單偌??';
 
   @override
   String get tagOk => 'OK';
 
   @override
-  String get nextMealTitle => '下一餐建議怎麼吃';
+  String get nextMealTitle => '銝?擗遣霅唳獐??;
 
   @override
-  String get nextMealHint => '選一個最方便的方式就好';
+  String get nextMealHint => '?訾????嫣噶?撘停憟?;
 
   @override
-  String get mealItemsTitle => '本餐菜色';
+  String get mealItemsTitle => '?祇??';
 
   @override
-  String get optionConvenienceTitle => '便利商店';
+  String get optionConvenienceTitle => '靘踹??';
 
   @override
-  String get optionConvenienceDesc => '選茶葉蛋/無糖豆漿/沙拉，少炸物';
+  String get optionConvenienceDesc => '?貉??/?∠?鞊撚/瘝?嚗??貊';
 
   @override
-  String get optionBentoTitle => '便當店';
+  String get optionBentoTitle => '靘輻摨?;
 
   @override
-  String get optionBentoDesc => '半飯、多蔬菜、優先選烤或滷';
+  String get optionBentoDesc => '?ㄞ???祈????斗?皛?;
 
   @override
-  String get optionLightTitle => '清淡選擇';
+  String get optionLightTitle => '皜楚?豢?';
 
   @override
-  String get optionLightDesc => '清湯、蒸煮、少醬料';
+  String get optionLightDesc => '皜僖??柴??祆?';
 
   @override
-  String get summaryTitle => '今日摘要';
+  String get summaryTitle => '隞??';
 
   @override
-  String get summaryEmpty => '今天尚未記錄餐點';
+  String get summaryEmpty => '隞予撠閮?擗?';
 
   @override
-  String get summaryOilyCarb => '今天外食偏油、碳水偏多';
+  String get summaryOilyCarb => '隞予憭??硃?４瘞游?憭?;
 
   @override
-  String get summaryOily => '今天外食偏油';
+  String get summaryOily => '隞予憭??硃';
 
   @override
-  String get summaryCarb => '今天碳水偏多';
+  String get summaryCarb => '隞予蝣單偌??';
 
   @override
-  String get summaryProteinOk => '蛋白質尚可，記得補蔬菜';
+  String get summaryProteinOk => '?鞈芸??荔?閮?鋆??;
 
   @override
-  String get summaryNeutral => '今天整體還不錯，維持即可';
+  String get summaryNeutral => '隞予?湧????荔?蝬剜??喳';
 
   @override
-  String get mealsCountLabel => '已記錄';
+  String get mealsCountLabel => '撌脰???;
 
   @override
-  String get mealsLabel => '餐';
+  String get mealsLabel => '擗?;
 
   @override
-  String get tabCapture => '拍照';
+  String get tabCapture => '?';
 
   @override
-  String get tabAnalysis => '分析';
+  String get tabAnalysis => '??';
 
   @override
-  String get tabNext => '下一餐';
+  String get tabNext => '銝?擗?;
 
   @override
-  String get tabSummary => '摘要';
+  String get tabSummary => '??';
 
   @override
-  String get tabHome => '首頁';
+  String get tabHome => '擐?';
 
   @override
-  String get tabLog => '紀錄';
+  String get tabLog => '蝝??;
 
   @override
-  String get tabSuggest => '建議';
+  String get tabSuggest => '撱箄降';
 
   @override
-  String get tabSettings => '設定';
+  String get tabSettings => '閮剖?';
 
   @override
-  String get greetingTitle => 'Hi，小明';
+  String get greetingTitle => 'Hi嚗???;
 
   @override
-  String get streakLabel => '一週連續挑戰 第 3 天';
+  String get streakLabel => '銝?梢??? 蝚?3 憭?;
 
   @override
-  String get aiSuggest => 'AI 飲食建議';
+  String get aiSuggest => 'AI 憌脤?撱箄降';
 
   @override
-  String get latestMealTitle => '剛剛吃的餐點';
+  String get latestMealTitle => '????擗?';
 
   @override
-  String get latestMealEmpty => '尚未有餐點紀錄';
+  String get latestMealEmpty => '撠??暺???;
 
   @override
-  String get homeNextMealHint => '點進建議頁，選一個最方便的方案';
+  String get homeNextMealHint => '暺脣遣霅圈?嚗銝???嫣噶?獢?;
 
   @override
-  String get logTitle => '紀錄';
+  String get logTitle => '蝝??;
 
   @override
-  String get dailyCalorieRange => '今日熱量攝取';
+  String get dailyCalorieRange => '隞?梢???';
 
   @override
-  String get dayCardTitle => '每日摘要';
+  String get dayCardTitle => '瘥??';
 
   @override
-  String get dayMealsTitle => '本日餐次';
+  String get dayMealsTitle => '?祆擗活';
 
   @override
-  String get tomorrowAdviceTitle => '明天建議';
+  String get tomorrowAdviceTitle => '?予撱箄降';
 
   @override
-  String get calorieUnknown => '尚未估計';
+  String get calorieUnknown => '撠隡啗?';
   @override
-  String get portionLabel => '份量';
+  String get portionLabel => '隞賡?';
 
   @override
-  String get portionFull => '全吃';
+  String get portionFull => '?典?';
 
   @override
-  String get portionHalf => '吃一半';
+  String get portionHalf => '????;
 
   @override
-  String get portionBite => '只吃幾口';
+  String get portionBite => '?芸?撟曉';
 
   @override
-  String get detailTitle => '詳細紀錄';
+  String get detailTitle => '閰喟敦蝝??;
 
   @override
-  String get detailAiLabel => 'AI 判斷說明';
+  String get detailAiLabel => 'AI ?斗隤芣?';
 
   @override
-  String get detailAiEmpty => '尚無分析資料';
+  String get detailAiEmpty => '撠??鞈?';
 
   @override
-  String get detailWhyLabel => '為什麼這樣判斷';
+  String get detailWhyLabel => '?箔?暻潮見?斗';
 
   @override
-  String get suggestTitle => '外食建議';
+  String get suggestTitle => '憭?撱箄降';
 
   @override
-  String get suggestTodayLabel => '今日整體判斷';
+  String get suggestTodayLabel => '隞?湧??斗';
 
   @override
-  String get suggestTodayHint => '今天油脂偏高，建議下一餐清淡一點';
+  String get suggestTodayHint => '隞予瘝寡???嚗遣霅唬?銝擗?瘛∩?暺?;
 
   @override
-  String get suggestTodayOilyCarb => '今天偏油、碳水也偏多';
+  String get suggestTodayOilyCarb => '隞予?硃?４瘞港???';
 
   @override
-  String get suggestTodayOily => '今天偏油，下一餐清淡一點';
+  String get suggestTodayOily => '隞予?硃嚗?銝擗?瘛∩?暺?;
 
   @override
-  String get suggestTodayCarb => '今天碳水偏多，下一餐少澱粉';
+  String get suggestTodayCarb => '隞予蝣單偌??嚗?銝擗?瞉梁?';
 
   @override
-  String get suggestTodayOk => '今天狀態 OK，保持就好';
+  String get suggestTodayOk => '隞予???OK嚗??停憟?;
 
   @override
-  String get logThisMeal => '記錄這餐';
+  String get logThisMeal => '閮???';
 
   @override
-  String get settingsTitle => '設定';
+  String get settingsTitle => '閮剖?';
 
   @override
-  String get profileName => '小明';
+  String get profileName => '撠?';
 
   @override
   String get profileEmail => 'xiaoming123@gmail.com';
 
   @override
-  String get editProfile => '編輯個人資料';
+  String get editProfile => '蝺刻摩?犖鞈?';
 
   @override
-  String get planSection => '計畫設定';
+  String get planSection => '閮閮剖?';
 
   @override
-  String get heightLabel => '身高';
+  String get heightLabel => '頨恍?';
 
   @override
-  String get weightLabel => '體重';
+  String get weightLabel => '擃?';
 
   @override
-  String get ageLabel => '年齡';
+  String get ageLabel => '撟湧翩';
 
   @override
   String get bmiLabel => 'BMI';
 
   @override
-  String get bmiUnderweight => '偏低';
+  String get bmiUnderweight => '??';
 
   @override
-  String get bmiNormal => '正常';
+  String get bmiNormal => '甇?虜';
 
   @override
-  String get bmiOverweight => '偏高';
+  String get bmiOverweight => '??';
 
   @override
-  String get bmiObese => '過高';
+  String get bmiObese => '??';
 
   @override
-  String get goalLabel => '目標';
+  String get goalLabel => '?格?';
 
   @override
-  String get goalLoseFat => '減脂降體脂';
+  String get goalLoseFat => '皜?????;
 
   @override
-  String get reminderSection => '提醒設定';
+  String get reminderSection => '??閮剖?';
 
   @override
-  String get reminderLunch => '提醒拍攝午餐';
+  String get reminderLunch => '??????';
 
   @override
-  String get reminderDinner => '提醒拍攝晚餐';
+  String get reminderDinner => '??????';
 
   @override
-  String get subscriptionSection => '訂閱與其他';
+  String get subscriptionSection => '閮?隞?;
 
   @override
-  String get subscriptionPlan => '目前方案';
+  String get subscriptionPlan => '?桀??寞?';
 
   @override
-  String get planMonthly => '減脂周數 \$199/月';
+  String get planMonthly => '皜??冽 \$199/??;
 
   @override
-  String get languageLabel => '更換語言';
+  String get languageLabel => '?湔?隤?';
 
   @override
-  String get langZh => '繁體中文';
+  String get langZh => '蝜?銝剜?';
 
   @override
   String get langEn => 'English';
 
   @override
-  String get cancel => '取消';
+  String get cancel => '??';
 
   @override
-  String get save => '儲存';
+  String get save => '?脣?';
 
   @override
-  String get goalMaintain => '維持體重';
+  String get goalMaintain => '蝬剜?擃?';
 
   @override
-  String get planSpeedLabel => '減脂速度';
+  String get planSpeedLabel => '皜??漲';
 
   @override
-  String get planSpeedStable => '穩定';
+  String get planSpeedStable => '蝛拙?';
 
   @override
-  String get planSpeedGentle => '保守';
+  String get planSpeedGentle => '靽?';
 
   @override
-  String get reminderLunchTime => '午餐提醒時間';
+  String get reminderLunchTime => '??????';
 
   @override
-  String get reminderDinnerTime => '晚餐提醒時間';
+  String get reminderDinnerTime => '??????';
 
   @override
-  String get pickFromCamera => '拍照';
+  String get pickFromCamera => '?';
 
   @override
-  String get pickFromGallery => '從相簿選擇';
+  String get pickFromGallery => '敺蝪輸??;
 
   @override
-  String get addMeal => '新增';
+  String get addMeal => '?啣?';
 
   @override
-  String get noMealPrompt => '尚未紀錄，拍一張也可以';
+  String get noMealPrompt => '撠蝝????撘萎??臭誑';
 
   @override
-  String get layoutThemeLabel => '主題與版面';
+  String get layoutThemeLabel => '銝駁?????;
 
   @override
-  String get themeClean => '清爽藍';
+  String get themeClean => '皜??;
 
   @override
-  String get themeWarm => '暖橘';
+  String get themeWarm => '??';
 
   @override
-  String get apiSection => 'API 連線';
+  String get plateSection => '盤子樣式';
 
   @override
-  String get apiBaseUrlLabel => 'API 位址';
+  String get plateStyleLabel => '盤子款式';
 
   @override
-  String get delete => '刪除';
+  String get plateDefaultLabel => '預設瓷盤';
 
   @override
-  String get deleteConfirm => '確定要刪除此紀錄嗎？';
+  String get apiSection => 'API ???';
 
   @override
-  String get logSuccess => '已記錄這餐';
+  String get apiBaseUrlLabel => 'API 雿?';
 
   @override
-  String get viewLog => '查看紀錄';
+  String get delete => '?芷';
 
   @override
-  String get calories => '熱量';
+  String get deleteConfirm => '蝣箏?閬?斗迨蝝??嚗?;
 
   @override
-  String get estimated => '估計';
+  String get logSuccess => '撌脰???';
 
   @override
-  String get protein => '蛋白質';
+  String get viewLog => '?亦?蝝??;
 
   @override
-  String get carbs => '碳水';
+  String get calories => '?梢?';
 
   @override
-  String get fat => '脂肪';
+  String get estimated => '隡啗?';
 
   @override
-  String get sodium => '鈉含量';
+  String get protein => '?鞈?;
 
   @override
-  String get tier => '層級';
+  String get carbs => '蝣單偌';
 
   @override
-  String get analyzeFailed => '分析失敗';
+  String get fat => '?';
 
   @override
-  String get costEstimateLabel => '估算花費';
+  String get sodium => '???;
 
   @override
-  String get usageSection => 'AI 花費';
+  String get tier => '撅斤?';
 
   @override
-  String get usageTotalLabel => '累計花費';
+  String get analyzeFailed => '??憭望?';
 
   @override
-  String get usageViewLog => '查看紀錄';
+  String get costEstimateLabel => '隡啁??梯祥';
 
   @override
-  String get usageEmpty => '尚無花費紀錄';
+  String get usageSection => 'AI ?梯祥';
 
   @override
-  String get usageLoading => '載入中...';
+  String get usageTotalLabel => '蝝航??梯祥';
 
   @override
-  String get mockPrefix => '虛假';
+  String get usageViewLog => '?亦?蝝??;
 
   @override
-  String get versionSection => '版本資訊';
+  String get usageEmpty => '撠?梯祥蝝??;
 
   @override
-  String get versionBuild => '更新時間';
+  String get usageLoading => '頛銝?..';
 
   @override
-  String get versionCommit => '版本代碼';
+  String get mockPrefix => '??';
 
   @override
-  String get versionUnavailable => '無法取得版本資訊';
+  String get versionSection => '?鞈?';
 
   @override
-  String get dataSection => '資料管理';
+  String get versionBuild => '?湔??';
 
   @override
-  String get exportData => '匯出資料';
+  String get versionCommit => '?隞?Ⅳ';
 
   @override
-  String get clearData => '清除資料';
+  String get versionUnavailable => '?⊥????鞈?';
 
   @override
-  String get clearDataConfirm => '確定要清除所有資料嗎？';
+  String get dataSection => '鞈?蝞∠?';
 
   @override
-  String get exportDone => '已匯出';
+  String get exportData => '?臬鞈?';
 
   @override
-  String get clearDone => '已清除';
+  String get clearData => '皜鞈?';
+
+  @override
+  String get clearDataConfirm => '蝣箏?閬??斗?????嚗?;
+
+  @override
+  String get exportDone => '撌脣??;
+
+  @override
+  String get clearDone => '撌脫???;
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -536,524 +545,535 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
 
   @override
-  String get appTitle => '飲食 AI MVP';
+  String get appTitle => '憌脤? AI MVP';
 
   @override
-  String get takePhoto => '拍照紀錄';
+  String get takePhoto => '?蝝??;
 
   @override
-  String get uploadPhoto => '上傳照片';
+  String get uploadPhoto => '銝?抒?';
 
   @override
-  String get quickAdd => '快速新增（自動分餐）';
+  String get quickAdd => '敹恍憓??芸???嚗?;
 
   @override
-  String get breakfast => '早餐';
+  String get breakfast => '?拚?';
 
   @override
-  String get lunch => '中餐';
+  String get lunch => '銝剝?';
 
   @override
-  String get dinner => '晚餐';
+  String get dinner => '??';
 
   @override
-  String get lateSnack => '消夜';
+  String get lateSnack => '瘨?';
 
   @override
-  String get other => '其他';
+  String get other => '?嗡?';
 
   @override
-  String get timeLabel => '時間';
+  String get timeLabel => '??';
 
   @override
-  String get editTime => '修改時間';
+  String get editTime => '靽格??';
 
   @override
-  String get noEntries => '尚無紀錄';
+  String get noEntries => '撠蝝??;
 
   @override
-  String get mealTotal => '本餐估計熱量';
+  String get mealTotal => '?祇?隡啗??梢?';
   @override
-  String get mealSummaryTitle => '本餐摘要';
+  String get mealSummaryTitle => '?祇???';
 
   @override
-  String get todayMeals => '今日餐點';
+  String get todayMeals => '隞擗?';
 
   @override
   String itemsCount(int count) {
-    return '$count 筆';
+    return '$count 蝑?;
   }
 
   @override
-  String get captureTitle => '拍照紀錄';
+  String get captureTitle => '?蝝??;
 
   @override
-  String get captureHint => '拍下你正在吃的餐點即可';
+  String get captureHint => '??雿迤?典???暺??;
 
   @override
-  String get optionalNoteLabel => '補充說明（可選）';
+  String get optionalNoteLabel => '鋆?隤芣?嚗?賂?';
 
   @override
-  String get notePlaceholder => '例如：只吃一半、打包帶走';
+  String get notePlaceholder => '靘?嚗?????葆韏?;
 
   @override
-  String get recentPhotos => '最近照片';
+  String get recentPhotos => '?餈??;
 
   @override
-  String get noPhotos => '尚未新增照片';
+  String get noPhotos => '撠?啣??抒?';
 
   @override
-  String get analysisTitle => '餐點分析';
+  String get analysisTitle => '擗???';
 
   @override
-  String get analysisEmpty => '還沒有餐點分析，先拍一張吧';
+  String get analysisEmpty => '????暺?????銝撘萄';
 
   @override
-  String get foodNameLabel => '食物名稱';
+  String get foodNameLabel => '憌?迂';
 
   @override
-  String get editFoodName => '修改食物名稱';
+  String get editFoodName => '靽格憌?迂';
 
   @override
-  String get reanalyzeLabel => '重新分析';
+  String get reanalyzeLabel => '???';
 
   @override
-  String get unknownFood => '未命名餐點';
+  String get unknownFood => '?芸??暺?;
 
   @override
-  String get dietitianPrefix => '建議：';
+  String get dietitianPrefix => '撱箄降嚗?;
 
   @override
-  String get dietitianBalanced => '整體均衡，維持即可。';
+  String get dietitianBalanced => '?湧??﹛嚗雁??胯?;
 
   @override
-  String get dietitianProteinLow => '蛋白質偏低，建議補豆魚蛋肉。';
+  String get dietitianProteinLow => '?鞈芸?雿?撱箄降鋆?擳???;
 
   @override
-  String get dietitianFatHigh => '油脂偏高，下一餐清淡少油。';
+  String get dietitianFatHigh => '瘝寡???嚗?銝擗?瘛∪?瘝嫘?;
 
   @override
-  String get dietitianCarbHigh => '碳水偏多，主食減量。';
+  String get dietitianCarbHigh => '蝣單偌??嚗蜓憌???;
 
   @override
-  String get dietitianSodiumHigh => '鈉含量偏高，減少湯底與加工品。';
+  String get dietitianSodiumHigh => '???擃?皜?皝臬???撌亙???;
 
   @override
-  String get goalAdviceLoseFat => '以減脂為目標，下一餐以蛋白質與蔬菜為主。';
+  String get goalAdviceLoseFat => '隞交???格?嚗?銝擗誑?鞈芾??祈??箔蜓??;
 
   @override
-  String get goalAdviceMaintain => '以維持為主，注意份量與均衡。';
+  String get goalAdviceMaintain => '隞亦雁?銝鳴?瘜冽?隞賡???銵～?;
 
   @override
-  String get overallLabel => '整體判斷';
+  String get overallLabel => '?湧??斗';
 
   @override
-  String get calorieLabel => '熱量區間';
+  String get calorieLabel => '?梢????;
 
   @override
-  String get macroLabel => '三大營養';
+  String get macroLabel => '銝之??';
 
   @override
-  String get levelLow => '低';
+  String get levelLow => '雿?;
 
   @override
-  String get levelMedium => '中';
+  String get levelMedium => '銝?;
 
   @override
-  String get levelHigh => '高';
+  String get levelHigh => '擃?;
 
   @override
   String get statusOk => 'OK';
 
   @override
-  String get statusWarn => '偏多';
+  String get statusWarn => '??';
 
   @override
-  String get statusOver => '爆';
+  String get statusOver => '??;
 
   @override
-  String get tagOily => '偏油';
+  String get tagOily => '?硃';
 
   @override
-  String get tagProteinOk => '蛋白質足';
+  String get tagProteinOk => '?鞈芾雲';
 
   @override
-  String get tagProteinLow => '蛋白質不足';
+  String get tagProteinLow => '?鞈芯?頞?;
 
   @override
-  String get tagCarbHigh => '碳水偏多';
+  String get tagCarbHigh => '蝣單偌??';
 
   @override
   String get tagOk => 'OK';
 
   @override
-  String get nextMealTitle => '下一餐建議怎麼吃';
+  String get nextMealTitle => '銝?擗遣霅唳獐??;
 
   @override
-  String get nextMealHint => '選一個最方便的方式就好';
+  String get nextMealHint => '?訾????嫣噶?撘停憟?;
 
   @override
-  String get mealItemsTitle => '本餐菜色';
+  String get mealItemsTitle => '?祇??';
 
   @override
-  String get optionConvenienceTitle => '便利商店';
+  String get optionConvenienceTitle => '靘踹??';
 
   @override
-  String get optionConvenienceDesc => '選茶葉蛋/無糖豆漿/沙拉，少炸物';
+  String get optionConvenienceDesc => '?貉??/?∠?鞊撚/瘝?嚗??貊';
 
   @override
-  String get optionBentoTitle => '便當店';
+  String get optionBentoTitle => '靘輻摨?;
 
   @override
-  String get optionBentoDesc => '半飯、多蔬菜、優先選烤或滷';
+  String get optionBentoDesc => '?ㄞ???祈????斗?皛?;
 
   @override
-  String get optionLightTitle => '清淡選擇';
+  String get optionLightTitle => '皜楚?豢?';
 
   @override
-  String get optionLightDesc => '清湯、蒸煮、少醬料';
+  String get optionLightDesc => '皜僖??柴??祆?';
 
   @override
-  String get summaryTitle => '今日摘要';
+  String get summaryTitle => '隞??';
 
   @override
-  String get summaryEmpty => '今天尚未記錄餐點';
+  String get summaryEmpty => '隞予撠閮?擗?';
 
   @override
-  String get summaryOilyCarb => '今天外食偏油、碳水偏多';
+  String get summaryOilyCarb => '隞予憭??硃?４瘞游?憭?;
 
   @override
-  String get summaryOily => '今天外食偏油';
+  String get summaryOily => '隞予憭??硃';
 
   @override
-  String get summaryCarb => '今天碳水偏多';
+  String get summaryCarb => '隞予蝣單偌??';
 
   @override
-  String get summaryProteinOk => '蛋白質尚可，記得補蔬菜';
+  String get summaryProteinOk => '?鞈芸??荔?閮?鋆??;
 
   @override
-  String get summaryNeutral => '今天整體還不錯，維持即可';
+  String get summaryNeutral => '隞予?湧????荔?蝬剜??喳';
 
   @override
-  String get mealsCountLabel => '已記錄';
+  String get mealsCountLabel => '撌脰???;
 
   @override
-  String get mealsLabel => '餐';
+  String get mealsLabel => '擗?;
 
   @override
-  String get tabCapture => '拍照';
+  String get tabCapture => '?';
 
   @override
-  String get tabAnalysis => '分析';
+  String get tabAnalysis => '??';
 
   @override
-  String get tabNext => '下一餐';
+  String get tabNext => '銝?擗?;
 
   @override
-  String get tabSummary => '摘要';
+  String get tabSummary => '??';
 
   @override
-  String get tabHome => '首頁';
+  String get tabHome => '擐?';
 
   @override
-  String get tabLog => '紀錄';
+  String get tabLog => '蝝??;
 
   @override
-  String get tabSuggest => '建議';
+  String get tabSuggest => '撱箄降';
 
   @override
-  String get tabSettings => '設定';
+  String get tabSettings => '閮剖?';
 
   @override
-  String get greetingTitle => 'Hi，小明';
+  String get greetingTitle => 'Hi嚗???;
 
   @override
-  String get streakLabel => '一週連續挑戰 第 3 天';
+  String get streakLabel => '銝?梢??? 蝚?3 憭?;
 
   @override
-  String get aiSuggest => 'AI 飲食建議';
+  String get aiSuggest => 'AI 憌脤?撱箄降';
 
   @override
-  String get latestMealTitle => '剛剛吃的餐點';
+  String get latestMealTitle => '????擗?';
 
   @override
-  String get latestMealEmpty => '尚未有餐點紀錄';
+  String get latestMealEmpty => '撠??暺???;
 
   @override
-  String get homeNextMealHint => '點進建議頁，選一個最方便的方案';
+  String get homeNextMealHint => '暺脣遣霅圈?嚗銝???嫣噶?獢?;
 
   @override
-  String get logTitle => '紀錄';
+  String get logTitle => '蝝??;
 
   @override
-  String get dailyCalorieRange => '今日熱量攝取';
+  String get dailyCalorieRange => '隞?梢???';
 
   @override
-  String get dayCardTitle => '每日摘要';
+  String get dayCardTitle => '瘥??';
 
   @override
-  String get dayMealsTitle => '本日餐次';
+  String get dayMealsTitle => '?祆擗活';
 
   @override
-  String get tomorrowAdviceTitle => '明天建議';
+  String get tomorrowAdviceTitle => '?予撱箄降';
 
   @override
-  String get calorieUnknown => '尚未估計';
+  String get calorieUnknown => '撠隡啗?';
   @override
-  String get portionLabel => '份量';
+  String get portionLabel => '隞賡?';
 
   @override
-  String get portionFull => '全吃';
+  String get portionFull => '?典?';
 
   @override
-  String get portionHalf => '吃一半';
+  String get portionHalf => '????;
 
   @override
-  String get portionBite => '只吃幾口';
+  String get portionBite => '?芸?撟曉';
 
   @override
-  String get detailTitle => '詳細紀錄';
+  String get detailTitle => '閰喟敦蝝??;
 
   @override
-  String get detailAiLabel => 'AI 判斷說明';
+  String get detailAiLabel => 'AI ?斗隤芣?';
 
   @override
-  String get detailAiEmpty => '尚無分析資料';
+  String get detailAiEmpty => '撠??鞈?';
 
   @override
-  String get detailWhyLabel => '為什麼這樣判斷';
+  String get detailWhyLabel => '?箔?暻潮見?斗';
 
   @override
-  String get suggestTitle => '外食建議';
+  String get suggestTitle => '憭?撱箄降';
 
   @override
-  String get suggestTodayLabel => '今日整體判斷';
+  String get suggestTodayLabel => '隞?湧??斗';
 
   @override
-  String get suggestTodayHint => '今天油脂偏高，建議下一餐清淡一點';
+  String get suggestTodayHint => '隞予瘝寡???嚗遣霅唬?銝擗?瘛∩?暺?;
 
   @override
-  String get suggestTodayOilyCarb => '今天偏油、碳水也偏多';
+  String get suggestTodayOilyCarb => '隞予?硃?４瘞港???';
 
   @override
-  String get suggestTodayOily => '今天偏油，下一餐清淡一點';
+  String get suggestTodayOily => '隞予?硃嚗?銝擗?瘛∩?暺?;
 
   @override
-  String get suggestTodayCarb => '今天碳水偏多，下一餐少澱粉';
+  String get suggestTodayCarb => '隞予蝣單偌??嚗?銝擗?瞉梁?';
 
   @override
-  String get suggestTodayOk => '今天狀態 OK，保持就好';
+  String get suggestTodayOk => '隞予???OK嚗??停憟?;
 
   @override
-  String get logThisMeal => '記錄這餐';
+  String get logThisMeal => '閮???';
 
   @override
-  String get settingsTitle => '設定';
+  String get settingsTitle => '閮剖?';
 
   @override
-  String get profileName => '小明';
+  String get profileName => '撠?';
 
   @override
   String get profileEmail => 'xiaoming123@gmail.com';
 
   @override
-  String get editProfile => '編輯個人資料';
+  String get editProfile => '蝺刻摩?犖鞈?';
 
   @override
-  String get planSection => '計畫設定';
+  String get planSection => '閮閮剖?';
 
   @override
-  String get heightLabel => '身高';
+  String get heightLabel => '頨恍?';
 
   @override
-  String get weightLabel => '體重';
+  String get weightLabel => '擃?';
 
   @override
-  String get ageLabel => '年齡';
+  String get ageLabel => '撟湧翩';
 
   @override
   String get bmiLabel => 'BMI';
 
   @override
-  String get bmiUnderweight => '偏低';
+  String get bmiUnderweight => '??';
 
   @override
-  String get bmiNormal => '正常';
+  String get bmiNormal => '甇?虜';
 
   @override
-  String get bmiOverweight => '偏高';
+  String get bmiOverweight => '??';
 
   @override
-  String get bmiObese => '過高';
+  String get bmiObese => '??';
 
   @override
-  String get goalLabel => '目標';
+  String get goalLabel => '?格?';
 
   @override
-  String get goalLoseFat => '減脂降體脂';
+  String get goalLoseFat => '皜?????;
 
   @override
-  String get reminderSection => '提醒設定';
+  String get reminderSection => '??閮剖?';
 
   @override
-  String get reminderLunch => '提醒拍攝午餐';
+  String get reminderLunch => '??????';
 
   @override
-  String get reminderDinner => '提醒拍攝晚餐';
+  String get reminderDinner => '??????';
 
   @override
-  String get subscriptionSection => '訂閱與其他';
+  String get subscriptionSection => '閮?隞?;
 
   @override
-  String get subscriptionPlan => '目前方案';
+  String get subscriptionPlan => '?桀??寞?';
 
   @override
-  String get planMonthly => '減脂周數 \$199/月';
+  String get planMonthly => '皜??冽 \$199/??;
 
   @override
-  String get languageLabel => '更換語言';
+  String get languageLabel => '?湔?隤?';
 
   @override
-  String get langZh => '繁體中文';
+  String get langZh => '蝜?銝剜?';
 
   @override
   String get langEn => 'English';
 
   @override
-  String get cancel => '取消';
+  String get cancel => '??';
 
   @override
-  String get save => '儲存';
+  String get save => '?脣?';
 
   @override
-  String get goalMaintain => '維持體重';
+  String get goalMaintain => '蝬剜?擃?';
 
   @override
-  String get planSpeedLabel => '減脂速度';
+  String get planSpeedLabel => '皜??漲';
 
   @override
-  String get planSpeedStable => '穩定';
+  String get planSpeedStable => '蝛拙?';
 
   @override
-  String get planSpeedGentle => '保守';
+  String get planSpeedGentle => '靽?';
 
   @override
-  String get reminderLunchTime => '午餐提醒時間';
+  String get reminderLunchTime => '??????';
 
   @override
-  String get reminderDinnerTime => '晚餐提醒時間';
+  String get reminderDinnerTime => '??????';
 
   @override
-  String get pickFromCamera => '拍照';
+  String get pickFromCamera => '?';
 
   @override
-  String get pickFromGallery => '從相簿選擇';
+  String get pickFromGallery => '敺蝪輸??;
 
   @override
-  String get addMeal => '新增';
+  String get addMeal => '?啣?';
 
   @override
-  String get noMealPrompt => '尚未紀錄，拍一張也可以';
+  String get noMealPrompt => '撠蝝????撘萎??臭誑';
 
   @override
-  String get layoutThemeLabel => '主題與版面';
+  String get layoutThemeLabel => '銝駁?????;
 
   @override
-  String get themeClean => '清爽藍';
+  String get themeClean => '皜??;
 
   @override
-  String get themeWarm => '暖橘';
+  String get themeWarm => '??';
 
   @override
-  String get apiSection => 'API 連線';
+  String get plateSection => '盤子樣式';
 
   @override
-  String get apiBaseUrlLabel => 'API 位址';
+  String get plateStyleLabel => '盤子款式';
 
   @override
-  String get delete => '刪除';
+  String get plateDefaultLabel => '預設瓷盤';
 
   @override
-  String get deleteConfirm => '確定要刪除此紀錄嗎？';
+  String get apiSection => 'API ???';
 
   @override
-  String get logSuccess => '已記錄這餐';
+  String get apiBaseUrlLabel => 'API 雿?';
 
   @override
-  String get viewLog => '查看紀錄';
+  String get delete => '?芷';
 
   @override
-  String get calories => '熱量';
+  String get deleteConfirm => '蝣箏?閬?斗迨蝝??嚗?;
 
   @override
-  String get estimated => '估計';
+  String get logSuccess => '撌脰???';
 
   @override
-  String get protein => '蛋白質';
+  String get viewLog => '?亦?蝝??;
 
   @override
-  String get carbs => '碳水';
+  String get calories => '?梢?';
 
   @override
-  String get fat => '脂肪';
+  String get estimated => '隡啗?';
 
   @override
-  String get sodium => '鈉含量';
+  String get protein => '?鞈?;
 
   @override
-  String get tier => '層級';
+  String get carbs => '蝣單偌';
 
   @override
-  String get analyzeFailed => '分析失敗';
+  String get fat => '?';
 
   @override
-  String get costEstimateLabel => '估算花費';
+  String get sodium => '???;
 
   @override
-  String get usageSection => 'AI 花費';
+  String get tier => '撅斤?';
 
   @override
-  String get usageTotalLabel => '累計花費';
+  String get analyzeFailed => '??憭望?';
 
   @override
-  String get usageViewLog => '查看紀錄';
+  String get costEstimateLabel => '隡啁??梯祥';
 
   @override
-  String get usageEmpty => '尚無花費紀錄';
+  String get usageSection => 'AI ?梯祥';
 
   @override
-  String get usageLoading => '載入中...';
+  String get usageTotalLabel => '蝝航??梯祥';
 
   @override
-  String get mockPrefix => '虛假';
+  String get usageViewLog => '?亦?蝝??;
 
   @override
-  String get versionSection => '版本資訊';
+  String get usageEmpty => '撠?梯祥蝝??;
 
   @override
-  String get versionBuild => '更新時間';
+  String get usageLoading => '頛銝?..';
 
   @override
-  String get versionCommit => '版本代碼';
+  String get mockPrefix => '??';
 
   @override
-  String get versionUnavailable => '無法取得版本資訊';
+  String get versionSection => '?鞈?';
 
   @override
-  String get dataSection => '資料管理';
+  String get versionBuild => '?湔??';
 
   @override
-  String get exportData => '匯出資料';
+  String get versionCommit => '?隞?Ⅳ';
 
   @override
-  String get clearData => '清除資料';
+  String get versionUnavailable => '?⊥????鞈?';
 
   @override
-  String get clearDataConfirm => '確定要清除所有資料嗎？';
+  String get dataSection => '鞈?蝞∠?';
 
   @override
-  String get exportDone => '已匯出';
+  String get exportData => '?臬鞈?';
 
   @override
-  String get clearDone => '已清除';
+  String get clearData => '皜鞈?';
+
+  @override
+  String get clearDataConfirm => '蝣箏?閬??斗?????嚗?;
+
+  @override
+  String get exportDone => '撌脣??;
+
+  @override
+  String get clearDone => '撌脫???;
 }
+
+

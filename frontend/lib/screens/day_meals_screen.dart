@@ -53,6 +53,8 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
   Widget _photoStack(List<MealEntry> group) {
     final main = group.first;
     final extra = group.length - 1;
+    final app = AppStateScope.of(context);
+    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     const double plateSize = 300;
     const double imageSize = 210;
     return Stack(
@@ -77,7 +79,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                 children: [
                   Positioned.fill(
                     child: ClipOval(
-                      child: Image.asset('assets/plates/plate_default.png', fit: BoxFit.cover),
+                      child: Image.asset(plateAsset, fit: BoxFit.cover),
                     ),
                   ),
                   Center(

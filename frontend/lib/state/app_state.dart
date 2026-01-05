@@ -10,22 +10,32 @@ import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
 import '../services/api_service.dart';
 import '../storage/meal_store.dart';
+import '../storage/settings_store.dart';
 
 const String kDefaultApiBaseUrl = 'https://sussex-oscar-southern-scanning.trycloudflare.com';
+const String kDefaultPlateAsset = 'assets/plates/plate_default.png';
 
 class AppState extends ChangeNotifier {
   AppState()
       : _api = ApiService(baseUrl: _resolveBaseUrl()),
-        _store = createMealStore();
+        _store = createMealStore(),
+        _settings = createSettingsStore();
 
   ApiService _api;
   final MealStore _store;
+  final SettingsStore _settings;
   final List<MealEntry> entries = [];
   DateTime _selectedDate = _dateOnly(DateTime.now());
   final UserProfile profile = UserProfile.initial();
 
   Future<void> init() async {
     await _store.init();
+    await _settings.init();
+    final profileMap = await _settings.loadProfile();
+    if (profileMap != null) {
+      _applyProfile(profileMap);
+    }
+    _api = ApiService(baseUrl: profile.apiBaseUrl.isEmpty ? kDefaultApiBaseUrl : profile.apiBaseUrl);
     final loaded = await _store.loadAll();
     entries
       ..clear()
@@ -435,13 +445,18 @@ class AppState extends ChangeNotifier {
       ..lunchReminderTime = updated.lunchReminderTime
       ..dinnerReminderTime = updated.dinnerReminderTime
       ..language = updated.language
-      ..apiBaseUrl = updated.apiBaseUrl;
+      ..apiBaseUrl = updated.apiBaseUrl
+      ..plateAsset = updated.plateAsset;
     notifyListeners();
+    // ignore: unawaited_futures
+    _saveProfile();
   }
 
   void updateField(void Function(UserProfile profile) updater) {
     updater(profile);
     notifyListeners();
+    // ignore: unawaited_futures
+    _saveProfile();
   }
 
   Future<void> _analyzeEntry(MealEntry entry, String locale) async {
@@ -655,6 +670,68 @@ class AppState extends ChangeNotifier {
     final rand = Random().nextInt(1 << 31);
     return '$seed-$rand';
   }
+
+  Future<void> _saveProfile() async {
+    await _settings.saveProfile(_profileToMap());
+  }
+
+  Map<String, dynamic> _profileToMap() {
+    return {
+      'name': profile.name,
+      'email': profile.email,
+      'height_cm': profile.heightCm,
+      'weight_kg': profile.weightKg,
+      'age': profile.age,
+      'goal': profile.goal,
+      'plan_speed': profile.planSpeed,
+      'lunch_reminder_enabled': profile.lunchReminderEnabled,
+      'dinner_reminder_enabled': profile.dinnerReminderEnabled,
+      'lunch_reminder_time': _timeToString(profile.lunchReminderTime),
+      'dinner_reminder_time': _timeToString(profile.dinnerReminderTime),
+      'language': profile.language,
+      'api_base_url': profile.apiBaseUrl,
+      'plate_asset': profile.plateAsset,
+    };
+  }
+
+  void _applyProfile(Map<String, dynamic> data) {
+    profile
+      ..name = (data['name'] as String?) ?? profile.name
+      ..email = (data['email'] as String?) ?? profile.email
+      ..heightCm = _parseInt(data['height_cm'], profile.heightCm)
+      ..weightKg = _parseInt(data['weight_kg'], profile.weightKg)
+      ..age = _parseInt(data['age'], profile.age)
+      ..goal = (data['goal'] as String?) ?? profile.goal
+      ..planSpeed = (data['plan_speed'] as String?) ?? profile.planSpeed
+      ..lunchReminderEnabled = (data['lunch_reminder_enabled'] as bool?) ?? profile.lunchReminderEnabled
+      ..dinnerReminderEnabled = (data['dinner_reminder_enabled'] as bool?) ?? profile.dinnerReminderEnabled
+      ..lunchReminderTime = _parseTime(data['lunch_reminder_time'] as String?, profile.lunchReminderTime)
+      ..dinnerReminderTime = _parseTime(data['dinner_reminder_time'] as String?, profile.dinnerReminderTime)
+      ..language = (data['language'] as String?) ?? profile.language
+      ..apiBaseUrl = (data['api_base_url'] as String?) ?? profile.apiBaseUrl
+      ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset;
+  }
+
+  int _parseInt(dynamic value, int fallback) {
+    if (value is int) return value;
+    if (value is num) return value.round();
+    return fallback;
+  }
+
+  String _timeToString(TimeOfDay time) {
+    final h = time.hour.toString().padLeft(2, '0');
+    final m = time.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  TimeOfDay _parseTime(String? value, TimeOfDay fallback) {
+    if (value == null || !value.contains(':')) return fallback;
+    final parts = value.split(':');
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts.length > 1 ? parts[1] : '');
+    if (hour == null || minute == null) return fallback;
+    return TimeOfDay(hour: hour, minute: minute);
+  }
 }
 
 class MealSummary {
@@ -684,6 +761,7 @@ class UserProfile {
     required this.dinnerReminderTime,
     required this.language,
     required this.apiBaseUrl,
+    required this.plateAsset,
   });
 
   String name;
@@ -699,6 +777,7 @@ class UserProfile {
   TimeOfDay dinnerReminderTime;
   String language;
   String apiBaseUrl;
+  String plateAsset;
 
   factory UserProfile.initial() {
     return UserProfile(
@@ -715,6 +794,7 @@ class UserProfile {
       dinnerReminderTime: const TimeOfDay(hour: 18, minute: 45),
       language: 'zh-TW',
       apiBaseUrl: kDefaultApiBaseUrl,
+      plateAsset: kDefaultPlateAsset,
     );
   }
 }

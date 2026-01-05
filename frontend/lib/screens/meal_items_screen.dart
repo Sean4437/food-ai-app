@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
+import '../state/app_state.dart';
 import 'meal_detail_screen.dart';
 
 class MealItemsScreen extends StatefulWidget {
@@ -21,7 +22,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     super.dispose();
   }
 
-  Widget _itemCard(BuildContext context, MealEntry entry) {
+  Widget _itemCard(BuildContext context, MealEntry entry, String plateAsset) {
     final t = AppLocalizations.of(context)!;
     const double plateSize = 320;
     const double imageSize = 220;
@@ -64,7 +65,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                     children: [
                       Positioned.fill(
                         child: ClipOval(
-                          child: Image.asset('assets/plates/plate_default.png', fit: BoxFit.cover),
+                          child: Image.asset(plateAsset, fit: BoxFit.cover),
                         ),
                       ),
                       Center(
@@ -96,6 +97,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final sorted = List<MealEntry>.from(widget.group)..sort((a, b) => b.time.compareTo(a.time));
     return Scaffold(
       appBar: AppBar(
@@ -109,7 +112,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
           child: PageView.builder(
             controller: _pageController,
             itemCount: sorted.length,
-            itemBuilder: (context, index) => _itemCard(context, sorted[index]),
+            itemBuilder: (context, index) => _itemCard(context, sorted[index], plateAsset),
           ),
         ),
       ),

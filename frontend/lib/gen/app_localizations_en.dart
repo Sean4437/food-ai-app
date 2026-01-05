@@ -1,4 +1,4 @@
-// ignore: unused_import
+﻿// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -437,6 +437,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeWarm => 'Warm Orange';
 
   @override
+  String get plateSection => 'Plate style';
+
+  @override
+  String get plateStyleLabel => 'Plate design';
+
+  @override
+  String get plateDefaultLabel => 'Default plate';
+
+  @override
   String get apiSection => 'API';
 
   @override
@@ -529,3 +538,4 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clearDone => 'Cleared';
 }
+

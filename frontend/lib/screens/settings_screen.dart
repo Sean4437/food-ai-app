@@ -279,6 +279,15 @@ class SettingsScreen extends StatelessWidget {
     final themeController = ThemeScope.of(context);
     final app = AppStateScope.of(context);
     final profile = app.profile;
+    final plateOptions = <String, String>{
+      t.plateDefaultLabel: kDefaultPlateAsset,
+    };
+    final currentPlateLabel = plateOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.plateAsset,
+          orElse: () => MapEntry(t.plateDefaultLabel, kDefaultPlateAsset),
+        )
+        .key;
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -459,6 +468,19 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                _sectionTitle(t.plateSection),
+                _row(
+                  t.plateStyleLabel,
+                  currentPlateLabel,
+                  onTap: () => _selectOption(
+                    context,
+                    title: t.plateStyleLabel,
+                    current: currentPlateLabel,
+                    options: plateOptions.keys.toList(),
+                    onSave: (value) => app.updateField((p) => p.plateAsset = plateOptions[value] ?? kDefaultPlateAsset),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 _sectionTitle(t.versionSection),

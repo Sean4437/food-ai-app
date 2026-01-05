@@ -135,6 +135,7 @@ class MealDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
+    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final mealGroup = app.entriesForMeal(entry);
     final mealSummary = app.buildMealSummary(mealGroup, t);
     final formatter = DateFormat('yyyy/MM/dd HH:mm', Localizations.localeOf(context).toLanguageTag());
@@ -186,7 +187,7 @@ class MealDetailScreen extends StatelessWidget {
                         children: [
                           Positioned.fill(
                             child: ClipOval(
-                              child: Image.asset('assets/plates/plate_default.png', fit: BoxFit.cover),
+                              child: Image.asset(plateAsset, fit: BoxFit.cover),
                             ),
                           ),
                           Center(
