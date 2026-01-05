@@ -11,6 +11,7 @@ class PlatePolygonStack extends StatelessWidget {
     required this.plateAsset,
     this.selectedIndex = 0,
     this.onSelect,
+    this.onOpen,
     this.maxPlateSize = 300,
     this.minPlateSize = 220,
   });
@@ -19,6 +20,7 @@ class PlatePolygonStack extends StatelessWidget {
   final String plateAsset;
   final int selectedIndex;
   final ValueChanged<int>? onSelect;
+  final ValueChanged<int>? onOpen;
   final double maxPlateSize;
   final double minPlateSize;
 
@@ -29,7 +31,7 @@ class PlatePolygonStack extends StatelessWidget {
         final count = images.length;
         if (count == 0) return const SizedBox.shrink();
         var plateSize = maxPlateSize;
-        var radius = plateSize * 0.45;
+        var radius = plateSize * 0.6;
         var size = plateSize + radius * 2;
         if (size > constraints.maxWidth) {
           final scale = constraints.maxWidth / size;
@@ -79,11 +81,12 @@ class PlatePolygonStack extends StatelessWidget {
                   left: positions[index].dx - plateSize / 2,
                   top: positions[index].dy - plateSize / 2,
                   child: GestureDetector(
-                    onTap: onSelect == null ? null : () => onSelect!(index),
+                    onTap: onOpen == null ? null : () => onOpen!(index),
+                    onLongPress: onSelect == null ? null : () => onSelect!(index),
                     child: Opacity(
-                      opacity: index == safeSelected ? 1 : 0.75,
+                      opacity: index == safeSelected ? 1 : 0.6,
                       child: Transform.scale(
-                        scale: index == safeSelected ? 1 : 0.92,
+                        scale: index == safeSelected ? 1.08 : 0.9,
                         child: PlatePhoto(
                           imageBytes: images[index],
                           plateAsset: plateAsset,

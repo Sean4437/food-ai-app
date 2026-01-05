@@ -52,6 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
       plateAsset: plateAsset,
       selectedIndex: selectedIndex,
       onSelect: (index) => setState(() => _dateSelectedMeal[key] = index),
+      onOpen: (_) => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => DayMealsScreen(date: date)),
+      ),
       maxPlateSize: 300,
       minPlateSize: 220,
     );
@@ -180,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        height: 360,
+                        height: 420,
                         child: PageView.builder(
                           controller: _pageController,
                           onPageChanged: (index) {
@@ -188,11 +191,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             app.setSelectedDate(displayDates[index]);
                           },
                           itemCount: displayDates.length,
-                          itemBuilder: (context, index) => GestureDetector(
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => DayMealsScreen(date: displayDates[index])),
+                          itemBuilder: (context, index) => Center(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: _mealStackForDate(displayDates[index], t, theme, appTheme, app),
                             ),
-                            child: _mealStackForDate(displayDates[index], t, theme, appTheme, app),
                           ),
                         ),
                       ),

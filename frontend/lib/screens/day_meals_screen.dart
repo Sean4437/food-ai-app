@@ -52,6 +52,9 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
       plateAsset: plateAsset,
       selectedIndex: selectedIndex,
       onSelect: (index) => setState(() => _groupSelectedIndex[groupIndex] = index),
+      onOpen: (_) => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => MealItemsScreen(group: group)),
+      ),
       maxPlateSize: 280,
       minPlateSize: 200,
     );
@@ -61,14 +64,9 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => MealItemsScreen(group: group)),
-      ),
-      child: SizedBox(
-        height: 300,
-        child: Center(child: _photoStack(group, groupIndex)),
-      ),
+    return SizedBox(
+      height: 300,
+      child: Center(child: _photoStack(group, groupIndex)),
     );
   }
 
@@ -125,12 +123,17 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
               )
             else ...[
               SizedBox(
-                height: 340,
+                height: 360,
                 child: PageView.builder(
                   controller: _pageController,
                   onPageChanged: (index) => setState(() => _pageIndex = index),
                   itemCount: groups.length,
-                  itemBuilder: (context, index) => _mealPreviewCard(context, groups[index], index),
+                  itemBuilder: (context, index) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: _mealPreviewCard(context, groups[index], index),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
