@@ -173,7 +173,6 @@ class _HomeScreenState extends State<HomeScreen> {
     ThemeData theme,
     AppTheme appTheme,
   ) {
-    final formatter = DateFormat('MM/dd', Localizations.localeOf(context).toLanguageTag());
     final mealTypeLabel = _mealTypeLabel(group.first.type, t);
     return SizedBox(
       height: 230,
@@ -351,7 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        height: 430,
+                        height: 520,
                         child: PageView.builder(
                           controller: _pageController,
                           onPageChanged: (index) {

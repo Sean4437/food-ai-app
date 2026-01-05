@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
@@ -88,8 +88,8 @@ class MealDetailScreen extends StatelessWidget {
 
   double _ratioFromValue(String value) {
     final v = value.toLowerCase();
-    if (v.contains('\u9ad8') || v.contains('high')) return 0.8;
-    if (v.contains('\u4f4e') || v.contains('low')) return 0.3;
+    if (v.contains('高') || v.contains('high')) return 0.8;
+    if (v.contains('低') || v.contains('low')) return 0.3;
     return 0.55;
   }
 

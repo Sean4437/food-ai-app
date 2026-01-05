@@ -157,7 +157,6 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
-    final formatter = DateFormat('MM/dd', Localizations.localeOf(context).toLanguageTag());
     final mealTypeLabel = _mealTypeLabel(group.first.type, t);
     return GestureDetector(
       onTap: () => Navigator.of(context).push(

@@ -21,8 +21,6 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     super.dispose();
   }
 
-  double get _cardHeight => 240;
-
   Widget _itemCard(BuildContext context, MealEntry entry) {
     final t = AppLocalizations.of(context)!;
     const double plateSize = 320;
