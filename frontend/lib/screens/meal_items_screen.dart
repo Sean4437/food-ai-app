@@ -28,20 +28,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final t = AppLocalizations.of(context)!;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
-      child: Container(
-        height: 420,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
+      child: SizedBox(
+        height: 360,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -133,7 +121,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
-              height: 460,
+              height: 390,
               child: PageView.builder(
                 controller: _pageController,
                 onPageChanged: (index) => setState(() => _pageIndex = index),

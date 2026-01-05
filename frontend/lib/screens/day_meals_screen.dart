@@ -41,28 +41,58 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     }
   }
 
-  String _groupTimeLabel(List<MealEntry> group) {
-    final times = group.map((e) => e.time).toList()..sort();
-    final start = times.first;
-    final end = times.last;
-    if (start == end) {
-      return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
-    }
-    return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
-  }
-
   Widget _photoStack(List<MealEntry> group) {
-    final main = group.first;
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
-    return Center(
-      child: PlatePhoto(
-        imageBytes: main.imageBytes,
-        plateAsset: plateAsset,
-        plateSize: 300,
-        imageSize: 210,
-        tilt: -0.08,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final count = group.length;
+        if (count == 0) return const SizedBox.shrink();
+        const maxPlate = 280.0;
+        const minPlate = 200.0;
+        const minSpacing = 30.0;
+        const desiredSpacing = 90.0;
+        const offsetY = 8.0;
+        final maxWidth = constraints.maxWidth;
+        var plateSize = maxPlate;
+        var offsetX = desiredSpacing;
+        if (count > 1) {
+          final needed = plateSize + (count - 1) * offsetX;
+          if (needed > maxWidth) {
+            offsetX = ((maxWidth - plateSize) / (count - 1)).clamp(minSpacing, desiredSpacing);
+            if (plateSize + (count - 1) * offsetX > maxWidth) {
+              plateSize = (maxWidth - (count - 1) * minSpacing).clamp(minPlate, maxPlate);
+              offsetX = ((maxWidth - plateSize) / (count - 1)).clamp(minSpacing, desiredSpacing);
+            }
+          }
+        } else {
+          offsetX = 0;
+        }
+        final imageSize = plateSize * 0.7;
+        final stackHeight = plateSize + (count - 1) * offsetY;
+        final stackWidth = plateSize + (count - 1) * offsetX;
+        return SizedBox(
+          height: stackHeight,
+          width: stackWidth,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              for (var i = 0; i < count; i++)
+                Positioned(
+                  left: i * offsetX,
+                  top: i * offsetY,
+                  child: PlatePhoto(
+                    imageBytes: group[i].imageBytes,
+                    plateAsset: plateAsset,
+                    plateSize: plateSize,
+                    imageSize: imageSize,
+                    tilt: -0.08,
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -70,24 +100,13 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
-    final mealTypeLabel = _mealTypeLabel(group.first.type, t);
     return GestureDetector(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => MealItemsScreen(group: group)),
       ),
       child: SizedBox(
-        height: 340,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            SizedBox(height: 300, child: _photoStack(group)),
-            const SizedBox(height: 8),
-            Text(
-              '$mealTypeLabel • ${_groupTimeLabel(group)}',
-              style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
+        height: 300,
+        child: Center(child: _photoStack(group)),
       ),
     );
   }
@@ -145,7 +164,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
               )
             else ...[
               SizedBox(
-                height: 380,
+                height: 340,
                 child: PageView.builder(
                   controller: _pageController,
                   onPageChanged: (index) => setState(() => _pageIndex = index),

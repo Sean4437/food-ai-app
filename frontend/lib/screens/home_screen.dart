@@ -40,73 +40,59 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _photoStack(List<MealEntry> group) {
-    final main = group.first;
+  Widget _plateStackForGroups(List<List<MealEntry>> groups) {
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
-    return Center(
-      child: PlatePhoto(
-        imageBytes: main.imageBytes,
-        plateAsset: plateAsset,
-        plateSize: 300,
-        imageSize: 210,
-        tilt: -0.08,
-      ),
-    );
-  }
-
-  String _groupTimeLabel(List<MealEntry> group) {
-    final times = group.map((e) => e.time).toList()..sort();
-    final start = times.first;
-    final end = times.last;
-    if (start == end) {
-      return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
-    }
-    return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
-  }
-
-  String _mealTypeLabel(MealType type, AppLocalizations t) {
-    switch (type) {
-      case MealType.breakfast:
-        return t.breakfast;
-      case MealType.lunch:
-        return t.lunch;
-      case MealType.dinner:
-        return t.dinner;
-      case MealType.lateSnack:
-        return t.lateSnack;
-      case MealType.other:
-        return t.other;
-    }
-  }
-
-  Widget _mealPreviewCard(
-    List<MealEntry> group,
-    AppLocalizations t,
-    ThemeData theme,
-    AppTheme appTheme,
-  ) {
-    final mealTypeLabel = _mealTypeLabel(group.first.type, t);
-    return SizedBox(
-      height: 320,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          SizedBox(height: 300, child: _photoStack(group)),
-          const SizedBox(height: 8),
-          Text(
-            '$mealTypeLabel • ${_groupTimeLabel(group)}',
-            style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final count = groups.length;
+        if (count == 0) return const SizedBox.shrink();
+        const maxPlate = 300.0;
+        const minPlate = 220.0;
+        const minSpacing = 36.0;
+        const desiredSpacing = 110.0;
+        const offsetY = 10.0;
+        final maxWidth = constraints.maxWidth;
+        var plateSize = maxPlate;
+        var offsetX = desiredSpacing;
+        if (count > 1) {
+          final needed = plateSize + (count - 1) * offsetX;
+          if (needed > maxWidth) {
+            offsetX = ((maxWidth - plateSize) / (count - 1)).clamp(minSpacing, desiredSpacing);
+            if (plateSize + (count - 1) * offsetX > maxWidth) {
+              plateSize = (maxWidth - (count - 1) * minSpacing).clamp(minPlate, maxPlate);
+              offsetX = ((maxWidth - plateSize) / (count - 1)).clamp(minSpacing, desiredSpacing);
+            }
+          }
+        } else {
+          offsetX = 0;
+        }
+        final imageSize = plateSize * 0.7;
+        final stackHeight = plateSize + (count - 1) * offsetY;
+        final stackWidth = plateSize + (count - 1) * offsetX;
+        return SizedBox(
+          height: stackHeight,
+          width: stackWidth,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              for (var i = 0; i < count; i++)
+                Positioned(
+                  left: i * offsetX,
+                  top: i * offsetY,
+                  child: PlatePhoto(
+                    imageBytes: groups[i].first.imageBytes,
+                    plateAsset: plateAsset,
+                    plateSize: plateSize,
+                    imageSize: imageSize,
+                    tilt: -0.08,
+                  ),
+                ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
-  }
-
-  double _stackOffsetX(int count) {
-    if (count >= 6) return 70;
-    if (count >= 4) return 90;
-    return 110;
   }
 
   Widget _mealStackForDate(
@@ -129,25 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    const plateSize = 300.0;
-    const offsetY = 12.0;
-    final offsetX = _stackOffsetX(groups.length);
-    final stackHeight = plateSize + (groups.length - 1) * offsetY;
-    final stackWidth = plateSize + (groups.length - 1) * offsetX;
-    return SizedBox(
-      height: stackHeight,
-      width: stackWidth,
-      child: Stack(
-        children: [
-          for (var i = groups.length - 1; i >= 0; i--)
-            Positioned(
-              top: i * offsetY,
-              left: i * offsetX,
-              child: _mealPreviewCard(groups[i], t, theme, appTheme),
-            ),
-        ],
-      ),
-    );
+    return _plateStackForGroups(groups);
   }
 
   Widget _dateInfoCard(
@@ -250,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        height: 420,
+                        height: 360,
                         child: PageView.builder(
                           controller: _pageController,
                           onPageChanged: (index) {
