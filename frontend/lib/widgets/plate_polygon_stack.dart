@@ -30,13 +30,13 @@ class PlatePolygonStack extends StatelessWidget {
       builder: (context, constraints) {
         final count = images.length;
         if (count == 0) return const SizedBox.shrink();
-        var plateSize = maxPlateSize * 0.94;
+        var plateSize = maxPlateSize * 0.85;
         final maxWidth = constraints.maxWidth;
         if (maxWidth > 0) {
           final maxAllowed = maxWidth * 0.9;
           plateSize = plateSize.clamp(minPlateSize, maxAllowed);
         }
-        var radius = plateSize * 0.62;
+        var radius = plateSize * 0.7;
         if (maxWidth > 0) {
           radius = math.min(radius, (maxWidth - plateSize) / 2);
         }
@@ -88,8 +88,8 @@ class PlatePolygonStack extends StatelessWidget {
                   child: GestureDetector(
                     onTap: onOpen == null ? null : () => onOpen!(index),
                     onLongPress: onSelect == null ? null : () => onSelect!(index),
-                    child: Transform.scale(
-                      scale: index == safeSelected ? 1.08 : 0.92,
+                      child: Transform.scale(
+                        scale: index == safeSelected ? 1.08 : 0.85,
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
