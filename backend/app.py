@@ -119,6 +119,7 @@ def _build_prompt(lang: str) -> str:
             "- calorie_range: 例如 '450-600 kcal'\n"
             "- macros: protein/carbs/fat/sodium 的值只能是 低/中/高\n"
             "- suggestion: 溫和、非醫療的下一餐建議，請給出具體食物類型\n"
+            "- 若畫面中有硬幣或信用卡，請將其視為參考物估計份量；無則使用一般估計\n"
         )
     return (
         "You are a nutrition assistant. Analyze the meal image and return JSON.\n"
@@ -128,6 +129,7 @@ def _build_prompt(lang: str) -> str:
         "- calorie_range: e.g. '450-600 kcal'\n"
         "- macros: protein/carbs/fat/sodium values must be low/medium/high\n"
         "- suggestion: gentle next-meal advice (non-medical), include concrete food types\n"
+        "- If a coin or credit card is visible, treat it as a size reference; otherwise estimate normally\n"
     )
 
 
