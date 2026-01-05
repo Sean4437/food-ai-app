@@ -70,47 +70,30 @@ class _HomeScreenState extends State<HomeScreen> {
     return tags.take(3).toList();
   }
 
-  List<Widget> _fanCards(List<MealEntry> group) {
-    const double width = 180;
-    const double height = 140;
-    final shown = group.take(5).toList();
-    final count = shown.length;
-    final center = (count - 1) / 2.0;
-    final widgets = <Widget>[];
-    for (var i = 0; i < count; i++) {
-      final entry = shown[i];
-      final angle = (i - center) * 0.18;
-      final offset = (i - center) * 16;
-      widgets.add(
-        Transform.translate(
-          offset: Offset(offset, 0),
-          child: Transform.rotate(
-            angle: angle,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.memory(entry.imageBytes, width: width, height: height, fit: BoxFit.cover),
+  Widget _photoStack(List<MealEntry> group) {
+    final main = group.first;
+    final extra = group.length - 1;
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.memory(main.imageBytes, height: 180, width: double.infinity, fit: BoxFit.cover),
+        ),
+        if (extra > 0)
+          Positioned(
+            right: 10,
+            bottom: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.65),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text('+$extra', style: const TextStyle(color: Colors.white, fontSize: 12)),
             ),
           ),
-        ),
-      );
-    }
-    if (group.length > shown.length) {
-      widgets.add(
-        Positioned(
-          right: 8,
-          bottom: 8,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text('+${group.length - shown.length}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-          ),
-        ),
-      );
-    }
-    return widgets;
+      ],
+    );
   }
 
   String _groupTimeLabel(List<MealEntry> group) {
@@ -121,6 +104,21 @@ class _HomeScreenState extends State<HomeScreen> {
       return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
     }
     return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _mealTypeLabel(MealType type, AppLocalizations t) {
+    switch (type) {
+      case MealType.breakfast:
+        return t.breakfast;
+      case MealType.lunch:
+        return t.lunch;
+      case MealType.dinner:
+        return t.dinner;
+      case MealType.lateSnack:
+        return t.lateSnack;
+      case MealType.other:
+        return t.other;
+    }
   }
 
   Future<void> _openMealGroupSheet(BuildContext context, List<MealEntry> group) async {
@@ -172,6 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final formatter = DateFormat('MM/dd', Localizations.localeOf(context).toLanguageTag());
     final summary = AppStateScope.of(context).buildMealSummary(group, t);
     final tags = _overallTagsFromSummary(summary, t);
+    final mealTypeLabel = _mealTypeLabel(group.first.type, t);
     return GestureDetector(
       onTap: () => _openMealGroupSheet(context, group),
       child: Container(
@@ -180,6 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: appTheme.card,
           borderRadius: BorderRadius.circular(appTheme.radiusCard),
+          border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -191,21 +191,26 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: 160,
-              child: Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: _fanCards(group),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(mealTypeLabel, style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
                 ),
-              ),
+                const Spacer(),
+                Text(
+                  '${formatter.format(group.first.time)} · ${_groupTimeLabel(group)}',
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
-            Text(
-              '${formatter.format(group.first.time)} · ${_groupTimeLabel(group)}',
-              style: const TextStyle(color: Colors.black54, fontSize: 12),
-            ),
-            const SizedBox(height: 6),
+            _photoStack(group),
+            const SizedBox(height: 10),
             Text(
               summary == null ? t.latestMealTitle : t.mealSummaryTitle,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -219,6 +224,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 12),
+            Text(
+              '${t.mealTotal}: ${summary?.calorieRange ?? t.calorieUnknown}',
+              style: const TextStyle(color: Colors.black54),
+            ),
+            const SizedBox(height: 10),
             Divider(color: Colors.black.withOpacity(0.08)),
             const SizedBox(height: 8),
             Text(t.nextMealTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
@@ -325,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        height: 420,
+                        height: 480,
                         child: PageView.builder(
                           controller: _pageController,
                           onPageChanged: (index) => setState(() => _pageIndex = index),
