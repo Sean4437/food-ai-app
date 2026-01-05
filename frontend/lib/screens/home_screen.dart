@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
-import '../screens/meal_detail_screen.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
 import '../widgets/record_sheet.dart';
@@ -16,7 +15,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final PageController _pageController = PageController(viewportFraction: 0.88);
+  final PageController _pageController = PageController(viewportFraction: 0.9);
   int _pageIndex = 0;
 
   @override
@@ -40,31 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _mealTag(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
-    );
-  }
-
-  List<String> _overallTagsFromSummary(MealSummary? summary, AppLocalizations t) {
-    if (summary == null) return [];
-    final tags = <String>[];
-    final fat = summary.macros['fat'] ?? '';
-    final protein = summary.macros['protein'] ?? '';
-    final carbs = summary.macros['carbs'] ?? '';
-    if (fat.contains(t.levelHigh) || fat.toLowerCase().contains('high')) tags.add(t.tagOily);
-    if (protein.contains(t.levelHigh) || protein.toLowerCase().contains('high')) tags.add(t.tagProteinOk);
-    if (protein.contains(t.levelLow) || protein.toLowerCase().contains('low')) tags.add(t.tagProteinLow);
-    if (carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high')) tags.add(t.tagCarbHigh);
-    if (tags.isEmpty) tags.add(t.tagOk);
-    return tags.take(3).toList();
-  }
-
   Widget _photoStack(List<MealEntry> group) {
     final main = group.first;
     final extra = group.length - 1;
@@ -72,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: Image.memory(main.imageBytes, height: 180, width: double.infinity, fit: BoxFit.cover),
+          child: Image.memory(main.imageBytes, height: 160, width: double.infinity, fit: BoxFit.cover),
         ),
         if (extra > 0)
           Positioned(
@@ -116,266 +90,134 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _openMealGroupSheet(BuildContext context, List<MealEntry> group) async {
-    final t = AppLocalizations.of(context)!;
-    await showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8))),
-            const SizedBox(height: 12),
-            Text(t.mealItemsTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  for (final entry in group)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.memory(entry.imageBytes, width: 56, height: 56, fit: BoxFit.cover),
-                      ),
-                      title: Text(entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood),
-                      subtitle: Text('${t.portionLabel} ${entry.portionPercent}%'),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _mealAdviceCard(
+  Widget _mealPreviewCard(
     List<MealEntry> group,
     AppLocalizations t,
     ThemeData theme,
     AppTheme appTheme,
   ) {
     final formatter = DateFormat('MM/dd', Localizations.localeOf(context).toLanguageTag());
-    final summary = AppStateScope.of(context).buildMealSummary(group, t);
-    final tags = _overallTagsFromSummary(summary, t);
     final mealTypeLabel = _mealTypeLabel(group.first.type, t);
-    return GestureDetector(
-      onTap: () => _openMealGroupSheet(context, group),
-      child: SizedBox(
-        height: 380,
-        child: Stack(
-          children: [
-            Positioned(
-              left: 18,
-              right: 0,
-              top: 10,
-              bottom: 0,
-              child: Container(
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: appTheme.card,
+        borderRadius: BorderRadius.circular(appTheme.radiusCard),
+        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: appTheme.card.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                  border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
+                  color: theme.colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
                 ),
+                child: Text(mealTypeLabel, style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
               ),
-            ),
-            Positioned(
-              left: 10,
-              right: 8,
-              top: 6,
-              bottom: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: appTheme.card.withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                  border: Border.all(color: Colors.black.withOpacity(0.07), width: 1),
-                ),
+              const Spacer(),
+              Text(
+                '${formatter.format(group.first.time)} • ${_groupTimeLabel(group)}',
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
               ),
-            ),
-            Positioned.fill(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: appTheme.card,
-                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                  border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 18,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(mealTypeLabel, style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${formatter.format(group.first.time)} · ${_groupTimeLabel(group)}',
-                          style: const TextStyle(color: Colors.black54, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    _photoStack(group),
-                    const SizedBox(height: 10),
-                    Text(
-                      summary == null ? t.latestMealTitle : t.mealSummaryTitle,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final tag in tags) _mealTag(tag, theme.colorScheme.primary),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${t.mealTotal}: ${summary?.calorieRange ?? t.calorieUnknown}',
-                      style: const TextStyle(color: Colors.black54),
-                    ),
-                    const SizedBox(height: 10),
-                    Divider(color: Colors.black.withOpacity(0.08)),
-                    const SizedBox(height: 8),
-                    Text(t.nextMealTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text(
-                      summary?.advice ?? t.nextMealHint,
-                      style: const TextStyle(color: Colors.black54),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _photoStack(group),
+        ],
       ),
     );
   }
 
-  Widget _dateCard(
+  Widget _mealStackForDate(
     DateTime date,
     AppLocalizations t,
     ThemeData theme,
     AppTheme appTheme,
     AppState app,
   ) {
-    final formatter = DateFormat('MM/dd', Localizations.localeOf(context).toLanguageTag());
-    final summary = app.buildDaySummary(date, t);
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => DayMealsScreen(date: date),
-          ),
-        );
-      },
-      child: SizedBox(
-        height: 380,
-        child: Stack(
-          children: [
-            Positioned(
-              left: 22,
-              right: 0,
-              top: 14,
-              bottom: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: appTheme.card.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                  border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 12,
-              right: 8,
-              top: 8,
-              bottom: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: appTheme.card.withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                  border: Border.all(color: Colors.black.withOpacity(0.07), width: 1),
-                ),
-              ),
-            ),
-            Positioned.fill(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: appTheme.card,
-                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                  border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 18,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(t.dayCardTitle, style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
-                        ),
-                        const Spacer(),
-                        Text(
-                          formatter.format(date),
-                          style: const TextStyle(color: Colors.black54, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(t.dailyCalorieRange, style: const TextStyle(color: Colors.black54)),
-                    const SizedBox(height: 6),
-                    Text(
-                      summary?.calorieRange ?? t.calorieUnknown,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(t.tomorrowAdviceTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 6),
-                    Text(
-                      summary?.advice ?? t.nextMealHint,
-                      style: const TextStyle(color: Colors.black54),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+    final groups = app.mealGroupsForDateAll(date);
+    if (groups.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: appTheme.card,
+          borderRadius: BorderRadius.circular(appTheme.radiusCard),
+          border: Border.all(color: Colors.black.withOpacity(0.08)),
         ),
+        child: Text(t.latestMealEmpty, style: const TextStyle(color: Colors.black54)),
+      );
+    }
+
+    const cardHeight = 250.0;
+    const offsetY = 18.0;
+    const offsetX = 10.0;
+    final stackHeight = cardHeight + (groups.length - 1) * offsetY;
+    return SizedBox(
+      height: stackHeight,
+      child: Stack(
+        children: [
+          for (var i = groups.length - 1; i >= 0; i--)
+            Positioned(
+              top: i * offsetY,
+              left: i * offsetX,
+              right: i * offsetX,
+              child: _mealPreviewCard(groups[i], t, theme, appTheme),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dateInfoCard(
+    DateTime date,
+    AppLocalizations t,
+    ThemeData theme,
+    AppTheme appTheme,
+    AppState app,
+  ) {
+    final summary = app.buildDaySummary(date, t);
+    final formatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: appTheme.card,
+        borderRadius: BorderRadius.circular(appTheme.radiusCard),
+        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(formatter.format(date), style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
+          Text(t.dailyCalorieRange, style: const TextStyle(color: Colors.black54)),
+          const SizedBox(height: 4),
+          Text(
+            summary?.calorieRange ?? t.calorieUnknown,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 14),
+          Text(t.tomorrowAdviceTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(summary?.advice ?? t.nextMealHint, style: const TextStyle(color: Colors.black54)),
+        ],
       ),
     );
   }
@@ -385,8 +227,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final entries = app.entries;
-    final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
-    final selectedDate = app.selectedDate;
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
     final dates = entries
@@ -395,6 +235,10 @@ class _HomeScreenState extends State<HomeScreen> {
         .toList();
     dates.sort((a, b) => b.compareTo(a));
     final displayDates = dates.isEmpty ? [DateTime.now()] : dates;
+    if (_pageIndex >= displayDates.length) {
+      _pageIndex = 0;
+    }
+    final activeDate = displayDates.isEmpty ? DateTime.now() : displayDates[_pageIndex];
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -435,12 +279,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        height: 420,
+                        height: 430,
                         child: PageView.builder(
                           controller: _pageController,
-                          onPageChanged: (index) => setState(() => _pageIndex = index),
+                          onPageChanged: (index) {
+                            setState(() => _pageIndex = index);
+                            app.setSelectedDate(displayDates[index]);
+                          },
                           itemCount: displayDates.length,
-                          itemBuilder: (context, index) => _dateCard(displayDates[index], t, theme, appTheme, app),
+                          itemBuilder: (context, index) => GestureDetector(
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => DayMealsScreen(date: displayDates[index])),
+                            ),
+                            child: _mealStackForDate(displayDates[index], t, theme, appTheme, app),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -459,6 +311,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 14),
+                      _dateInfoCard(activeDate, t, theme, appTheme, app),
                     ],
                   ),
                 const SizedBox(height: 18),

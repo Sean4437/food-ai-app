@@ -1,14 +1,27 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
 import 'meal_detail_screen.dart';
 
-class MealItemsScreen extends StatelessWidget {
+class MealItemsScreen extends StatefulWidget {
   const MealItemsScreen({super.key, required this.group});
 
   final List<MealEntry> group;
 
-  double get _cardHeight => 220;
+  @override
+  State<MealItemsScreen> createState() => _MealItemsScreenState();
+}
+
+class _MealItemsScreenState extends State<MealItemsScreen> {
+  final PageController _pageController = PageController(viewportFraction: 0.86);
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  double get _cardHeight => 240;
 
   Widget _itemCard(BuildContext context, MealEntry entry) {
     final t = AppLocalizations.of(context)!;
@@ -33,9 +46,9 @@ class MealItemsScreen extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: Image.memory(entry.imageBytes, height: 120, width: double.infinity, fit: BoxFit.cover),
+              child: Image.memory(entry.imageBytes, height: 140, width: double.infinity, fit: BoxFit.cover),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
@@ -49,29 +62,20 @@ class MealItemsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
-    final sorted = List<MealEntry>.from(group)..sort((a, b) => b.time.compareTo(a.time));
-    final offset = 24.0;
-    final totalHeight = _cardHeight + (sorted.length - 1) * offset;
+    final sorted = List<MealEntry>.from(widget.group)..sort((a, b) => b.time.compareTo(a.time));
     return Scaffold(
       appBar: AppBar(
         title: Text(t.mealItemsTitle),
         backgroundColor: const Color(0xFFF3F5FB),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: Center(
         child: SizedBox(
-          height: totalHeight,
-          child: Stack(
-            children: [
-              for (var i = 0; i < sorted.length; i++)
-                Positioned(
-                  top: i * offset,
-                  left: 0,
-                  right: 0,
-                  child: _itemCard(context, sorted[i]),
-                ),
-            ],
+          height: 320,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: sorted.length,
+            itemBuilder: (context, index) => _itemCard(context, sorted[index]),
           ),
         ),
       ),
