@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
 import '../state/app_state.dart';
+import '../widgets/plate_photo.dart';
 
 class MealDetailScreen extends StatelessWidget {
   const MealDetailScreen({super.key, required this.entry});
@@ -168,41 +169,12 @@ class MealDetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
-                  child: Transform.rotate(
-                    angle: -0.12,
-                    child: Container(
-                      width: 340,
-                      height: 340,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
-                            blurRadius: 24,
-                            offset: const Offset(0, 14),
-                          ),
-                        ],
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: ClipOval(
-                              child: Image.asset(plateAsset, fit: BoxFit.cover),
-                            ),
-                          ),
-                          Center(
-                            child: ClipOval(
-                              child: Image.memory(
-                                entry.imageBytes,
-                                width: 240,
-                                height: 240,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  child: PlatePhoto(
+                    imageBytes: entry.imageBytes,
+                    plateAsset: plateAsset,
+                    plateSize: 340,
+                    imageSize: 240,
+                    tilt: -0.08,
                   ),
                 ),
                 const SizedBox(height: 12),

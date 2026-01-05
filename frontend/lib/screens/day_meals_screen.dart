@@ -4,6 +4,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
+import '../widgets/plate_photo.dart';
 import 'meal_items_screen.dart';
 
 class DayMealsScreen extends StatefulWidget {
@@ -55,62 +56,15 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     final extra = group.length - 1;
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
-    const double plateSize = 300;
-    const double imageSize = 210;
-    return Stack(
-      children: [
-        Center(
-          child: Transform.rotate(
-            angle: -0.12,
-            child: Container(
-              width: plateSize,
-              height: plateSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
-                    blurRadius: 24,
-                    offset: const Offset(0, 14),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: ClipOval(
-                      child: Image.asset(plateAsset, fit: BoxFit.cover),
-                    ),
-                  ),
-                  Center(
-                    child: ClipOval(
-                      child: Image.memory(
-                        main.imageBytes,
-                        width: imageSize,
-                        height: imageSize,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        if (extra > 0)
-          Positioned(
-            right: 16,
-            bottom: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.65),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text('+$extra', style: const TextStyle(color: Colors.white, fontSize: 12)),
-            ),
-          ),
-      ],
+    return Center(
+      child: PlatePhoto(
+        imageBytes: main.imageBytes,
+        plateAsset: plateAsset,
+        plateSize: 300,
+        imageSize: 210,
+        tilt: -0.08,
+        badgeCount: extra > 0 ? extra : null,
+      ),
     );
   }
 
@@ -124,34 +78,29 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
         MaterialPageRoute(builder: (_) => MealItemsScreen(group: group)),
       ),
       child: SizedBox(
-        height: 230,
-        child: Stack(
+        height: 340,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            _photoStack(group),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.black.withOpacity(0.08)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 10,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
+            SizedBox(height: 300, child: _photoStack(group)),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.black.withOpacity(0.08)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 6),
                   ),
-                  child: Text(
-                    '$mealTypeLabel • ${_groupTimeLabel(group)}',
-                    style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                ),
+                ],
+              ),
+              child: Text(
+                '$mealTypeLabel • ${_groupTimeLabel(group)}',
+                style: TextStyle(color: theme.colorScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -213,7 +162,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
               )
             else ...[
               SizedBox(
-                height: 360,
+                height: 380,
                 child: PageView.builder(
                   controller: _pageController,
                   onPageChanged: (index) => setState(() => _pageIndex = index),

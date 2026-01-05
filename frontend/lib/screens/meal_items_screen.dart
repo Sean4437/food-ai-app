@@ -3,6 +3,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
 import '../state/app_state.dart';
 import 'meal_detail_screen.dart';
+import '../widgets/plate_photo.dart';
 
 class MealItemsScreen extends StatefulWidget {
   const MealItemsScreen({super.key, required this.group});
@@ -25,8 +26,6 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
 
   Widget _itemCard(BuildContext context, MealEntry entry, String plateAsset) {
     final t = AppLocalizations.of(context)!;
-    const double plateSize = 320;
-    const double imageSize = 220;
     return GestureDetector(
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: Container(
@@ -47,41 +46,12 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: Transform.rotate(
-                angle: -0.12,
-                child: Container(
-                  width: plateSize,
-                  height: plateSize,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
-                        blurRadius: 24,
-                        offset: const Offset(0, 14),
-                      ),
-                    ],
-                  ),
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: ClipOval(
-                          child: Image.asset(plateAsset, fit: BoxFit.cover),
-                        ),
-                      ),
-                      Center(
-                        child: ClipOval(
-                          child: Image.memory(
-                            entry.imageBytes,
-                            width: imageSize,
-                            height: imageSize,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              child: PlatePhoto(
+                imageBytes: entry.imageBytes,
+                plateAsset: plateAsset,
+                plateSize: 320,
+                imageSize: 220,
+                tilt: -0.08,
               ),
             ),
             const SizedBox(height: 12),
