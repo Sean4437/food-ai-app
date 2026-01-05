@@ -254,6 +254,24 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  String _bmiText(UserProfile profile, AppLocalizations t) {
+    if (profile.heightCm <= 0) return '--';
+    final heightM = profile.heightCm / 100.0;
+    final bmi = profile.weightKg / (heightM * heightM);
+    final value = bmi.toStringAsFixed(1);
+    String status;
+    if (bmi < 18.5) {
+      status = t.bmiUnderweight;
+    } else if (bmi < 24) {
+      status = t.bmiNormal;
+    } else if (bmi < 27) {
+      status = t.bmiOverweight;
+    } else {
+      status = t.bmiObese;
+    }
+    return '$value ($status)';
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -327,6 +345,24 @@ class SettingsScreen extends StatelessWidget {
                     keyboardType: TextInputType.number,
                     onSave: (value) => app.updateField((p) => p.weightKg = int.tryParse(value) ?? p.weightKg),
                   ),
+                ),
+                const SizedBox(height: 8),
+                _row(
+                  t.ageLabel,
+                  '${profile.age}',
+                  onTap: () => _editText(
+                    context,
+                    title: t.ageLabel,
+                    initial: profile.age.toString(),
+                    keyboardType: TextInputType.number,
+                    onSave: (value) => app.updateField((p) => p.age = int.tryParse(value) ?? p.age),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _row(
+                  t.bmiLabel,
+                  _bmiText(profile, t),
+                  showChevron: false,
                 ),
                 const SizedBox(height: 8),
                 _row(
