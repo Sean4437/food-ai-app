@@ -6,6 +6,7 @@ import '../screens/meal_detail_screen.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
 import '../widgets/record_sheet.dart';
+import 'day_meals_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,17 +16,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _noteController = TextEditingController();
-  final Map<String, TextEditingController> _noteControllers = {};
-  final PageController _pageController = PageController(viewportFraction: 0.92);
+  final PageController _pageController = PageController(viewportFraction: 0.88);
   int _pageIndex = 0;
 
   @override
   void dispose() {
-    _noteController.dispose();
-    for (final controller in _noteControllers.values) {
-      controller.dispose();
-    }
     _pageController.dispose();
     super.dispose();
   }
@@ -278,15 +273,128 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _dateCard(
+    DateTime date,
+    AppLocalizations t,
+    ThemeData theme,
+    AppTheme appTheme,
+    AppState app,
+  ) {
+    final formatter = DateFormat('MM/dd', Localizations.localeOf(context).toLanguageTag());
+    final summary = app.buildDaySummary(date, t);
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DayMealsScreen(date: date),
+          ),
+        );
+      },
+      child: SizedBox(
+        height: 380,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 22,
+              right: 0,
+              top: 14,
+              bottom: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: appTheme.card.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
+                  border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 12,
+              right: 8,
+              top: 8,
+              bottom: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: appTheme.card.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
+                  border: Border.all(color: Colors.black.withOpacity(0.07), width: 1),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: appTheme.card,
+                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
+                  border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(t.dayCardTitle, style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                        ),
+                        const Spacer(),
+                        Text(
+                          formatter.format(date),
+                          style: const TextStyle(color: Colors.black54, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(t.dailyCalorieRange, style: const TextStyle(color: Colors.black54)),
+                    const SizedBox(height: 6),
+                    Text(
+                      summary?.calorieRange ?? t.calorieUnknown,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(t.tomorrowAdviceTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    Text(
+                      summary?.advice ?? t.nextMealHint,
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    final groups = app.mealGroupsForDateAll(app.selectedDate);
+    final entries = app.entries;
     final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
     final selectedDate = app.selectedDate;
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
+    final dates = entries
+        .map((e) => DateTime(e.time.year, e.time.month, e.time.day))
+        .toSet()
+        .toList();
+    dates.sort((a, b) => b.compareTo(a));
+    final displayDates = dates.isEmpty ? [DateTime.now()] : dates;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -313,50 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: () => app.shiftSelectedDate(-1),
-                    ),
-                    Expanded(
-                      child: Text(
-                        dateFormatter.format(selectedDate),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: () => app.shiftSelectedDate(1),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: appTheme.card,
-                    borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.summaryTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text(app.todaySummary(t), style: const TextStyle(color: Colors.black54)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                if (groups.isEmpty)
+                if (displayDates.isEmpty)
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -370,19 +435,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        height: 480,
+                        height: 420,
                         child: PageView.builder(
                           controller: _pageController,
                           onPageChanged: (index) => setState(() => _pageIndex = index),
-                          itemCount: groups.length,
-                          itemBuilder: (context, index) => _mealAdviceCard(groups[index], t, theme, appTheme),
+                          itemCount: displayDates.length,
+                          itemBuilder: (context, index) => _dateCard(displayDates[index], t, theme, appTheme, app),
                         ),
                       ),
                       const SizedBox(height: 6),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(
-                          groups.length,
+                          displayDates.length,
                           (index) => Container(
                             margin: const EdgeInsets.symmetric(horizontal: 4),
                             width: _pageIndex == index ? 8 : 6,

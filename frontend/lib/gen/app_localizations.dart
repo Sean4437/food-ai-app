@@ -557,6 +557,12 @@ abstract class AppLocalizations {
   /// **'今日熱量攝取'**
   String get dailyCalorieRange;
 
+  String get dayCardTitle;
+
+  String get dayMealsTitle;
+
+  String get tomorrowAdviceTitle;
+
   /// No description provided for @calorieUnknown.
   ///
   /// In zh_TW, this message translates to:

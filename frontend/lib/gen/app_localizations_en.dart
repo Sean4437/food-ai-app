@@ -264,6 +264,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dailyCalorieRange => 'Today calorie range';
 
   @override
+  String get dayCardTitle => 'Daily summary';
+
+  @override
+  String get dayMealsTitle => 'Meals';
+
+  @override
+  String get tomorrowAdviceTitle => 'Tomorrow advice';
+
+  @override
   String get calorieUnknown => 'Not estimated';
 
   String get portionLabel => 'Portion';

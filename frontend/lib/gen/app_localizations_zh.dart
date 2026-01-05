@@ -262,6 +262,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dailyCalorieRange => '今日熱量攝取';
 
   @override
+  String get dayCardTitle => '每日摘要';
+
+  @override
+  String get dayMealsTitle => '本日餐次';
+
+  @override
+  String get tomorrowAdviceTitle => '明天建議';
+
+  @override
   String get calorieUnknown => '尚未估計';
   @override
   String get portionLabel => '份量';
@@ -778,6 +787,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dailyCalorieRange => '今日熱量攝取';
+
+  @override
+  String get dayCardTitle => '每日摘要';
+
+  @override
+  String get dayMealsTitle => '本日餐次';
+
+  @override
+  String get tomorrowAdviceTitle => '明天建議';
 
   @override
   String get calorieUnknown => '尚未估計';

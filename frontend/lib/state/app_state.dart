@@ -83,6 +83,10 @@ class AppState extends ChangeNotifier {
   }
 
   String _dailyCalorieRangeLabelForDate(DateTime date, AppLocalizations t) {
+    final summary = buildDaySummary(date, t);
+    if (summary != null && summary.calorieRange != t.calorieUnknown) {
+      return summary.calorieRange;
+    }
     int minSum = 0;
     int maxSum = 0;
     bool hasRange = false;
@@ -221,6 +225,45 @@ class AppState extends ChangeNotifier {
     double sodiumScore = 0;
 
     for (final entry in group) {
+      final result = entry.result;
+      if (result == null) continue;
+      final weight = _portionWeight(entry.portionPercent);
+      totalWeight += weight;
+      final range = _parseCalorieRange(result.calorieRange);
+      if (range != null) {
+        minSum += range[0] * weight;
+        maxSum += range[1] * weight;
+      }
+      proteinScore += _levelScore(result.macros['protein'] ?? '', t) * weight;
+      carbScore += _levelScore(result.macros['carbs'] ?? '', t) * weight;
+      fatScore += _levelScore(result.macros['fat'] ?? '', t) * weight;
+      sodiumScore += _levelScore(result.macros['sodium'] ?? '', t) * weight;
+    }
+
+    if (totalWeight == 0) return null;
+    final macros = <String, String>{
+      'protein': _scoreToLevel(proteinScore / totalWeight, t),
+      'carbs': _scoreToLevel(carbScore / totalWeight, t),
+      'fat': _scoreToLevel(fatScore / totalWeight, t),
+      'sodium': _scoreToLevel(sodiumScore / totalWeight, t),
+    };
+    final advice = _buildMealAdvice(macros, t);
+    final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
+    return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
+  }
+
+  MealSummary? buildDaySummary(DateTime date, AppLocalizations t) {
+    final dayEntries = entriesForDate(date);
+    if (dayEntries.isEmpty) return null;
+    double totalWeight = 0;
+    double minSum = 0;
+    double maxSum = 0;
+    double proteinScore = 0;
+    double carbScore = 0;
+    double fatScore = 0;
+    double sodiumScore = 0;
+
+    for (final entry in dayEntries) {
       final result = entry.result;
       if (result == null) continue;
       final weight = _portionWeight(entry.portionPercent);
