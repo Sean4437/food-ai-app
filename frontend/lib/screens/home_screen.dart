@@ -173,69 +173,104 @@ class _HomeScreenState extends State<HomeScreen> {
     final mealTypeLabel = _mealTypeLabel(group.first.type, t);
     return GestureDetector(
       onTap: () => _openMealGroupSheet(context, group),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: appTheme.card,
-          borderRadius: BorderRadius.circular(appTheme.radiusCard),
-          border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: SizedBox(
+        height: 380,
+        child: Stack(
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(mealTypeLabel, style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+            Positioned(
+              left: 18,
+              right: 0,
+              top: 10,
+              bottom: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: appTheme.card.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
+                  border: Border.all(color: Colors.black.withOpacity(0.05), width: 1),
                 ),
-                const Spacer(),
-                Text(
-                  '${formatter.format(group.first.time)} · ${_groupTimeLabel(group)}',
-                  style: const TextStyle(color: Colors.black54, fontSize: 12),
+              ),
+            ),
+            Positioned(
+              left: 10,
+              right: 8,
+              top: 6,
+              bottom: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: appTheme.card.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
+                  border: Border.all(color: Colors.black.withOpacity(0.07), width: 1),
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 10),
-            _photoStack(group),
-            const SizedBox(height: 10),
-            Text(
-              summary == null ? t.latestMealTitle : t.mealSummaryTitle,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final tag in tags) _mealTag(tag, theme.colorScheme.primary),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '${t.mealTotal}: ${summary?.calorieRange ?? t.calorieUnknown}',
-              style: const TextStyle(color: Colors.black54),
-            ),
-            const SizedBox(height: 10),
-            Divider(color: Colors.black.withOpacity(0.08)),
-            const SizedBox(height: 8),
-            Text(t.nextMealTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(
-              summary?.advice ?? t.nextMealHint,
-              style: const TextStyle(color: Colors.black54),
+            Positioned.fill(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: appTheme.card,
+                  borderRadius: BorderRadius.circular(appTheme.radiusCard),
+                  border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(mealTypeLabel, style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${formatter.format(group.first.time)} · ${_groupTimeLabel(group)}',
+                          style: const TextStyle(color: Colors.black54, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _photoStack(group),
+                    const SizedBox(height: 10),
+                    Text(
+                      summary == null ? t.latestMealTitle : t.mealSummaryTitle,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final tag in tags) _mealTag(tag, theme.colorScheme.primary),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '${t.mealTotal}: ${summary?.calorieRange ?? t.calorieUnknown}',
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 10),
+                    Divider(color: Colors.black.withOpacity(0.08)),
+                    const SizedBox(height: 8),
+                    Text(t.nextMealTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(
+                      summary?.advice ?? t.nextMealHint,
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
