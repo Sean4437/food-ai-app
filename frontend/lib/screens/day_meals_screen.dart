@@ -9,9 +9,14 @@ import '../widgets/plate_polygon_stack.dart';
 import 'meal_items_screen.dart';
 
 class DayMealsScreen extends StatefulWidget {
-  const DayMealsScreen({super.key, required this.date});
+  const DayMealsScreen({
+    super.key,
+    required this.date,
+    this.initialMealId,
+  });
 
   final DateTime date;
+  final String? initialMealId;
 
   @override
   State<DayMealsScreen> createState() => _DayMealsScreenState();
@@ -21,6 +26,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.86);
   int _pageIndex = 0;
   final Map<int, int> _groupSelectedIndex = {};
+  bool _didApplyInitial = false;
 
   Widget _adviceRow(String label, String value) {
     return Row(
@@ -160,6 +166,21 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final groups = app.mealGroupsForDateAll(widget.date);
+    if (widget.initialMealId != null && !_didApplyInitial && groups.isNotEmpty) {
+      final initialIndex = groups.indexWhere(
+        (group) => (group.first.mealId ?? group.first.id) == widget.initialMealId,
+      );
+      if (initialIndex >= 0) {
+        _pageIndex = initialIndex;
+        _didApplyInitial = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          if (_pageController.hasClients) {
+            _pageController.jumpToPage(initialIndex);
+          }
+        });
+      }
+    }
     if (_pageIndex >= groups.length) {
       _pageIndex = 0;
     }

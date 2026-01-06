@@ -4,7 +4,25 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 
-Future<MealEntry?> showRecordSheet(
+class RecordResult {
+  const RecordResult({
+    required this.entry,
+    required this.mealId,
+    required this.mealType,
+    required this.date,
+    required this.mealCount,
+    required this.isMulti,
+  });
+
+  final MealEntry entry;
+  final String mealId;
+  final MealType mealType;
+  final DateTime date;
+  final int mealCount;
+  final bool isMulti;
+}
+
+Future<RecordResult?> showRecordSheet(
   BuildContext context,
   AppState app, {
   MealType? fixedType,
@@ -47,15 +65,41 @@ Future<MealEntry?> showRecordSheet(
 
   if (source == null) return null;
   final picker = ImagePicker();
+  bool isMulti = false;
   if (source == ImageSource.gallery) {
     final files = await picker.pickMultiImage();
     if (files.isEmpty) return null;
+    isMulti = files.length > 1;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    return app.addEntryFromFiles(files, locale, fixedType: fixedType);
+    final entry = await app.addEntryFromFiles(files, locale, fixedType: fixedType);
+    if (entry == null) return null;
+    final mealId = entry.mealId ?? entry.id;
+    final date = DateTime(entry.time.year, entry.time.month, entry.time.day);
+    final count = app.entriesForMealId(mealId).length;
+    return RecordResult(
+      entry: entry,
+      mealId: mealId,
+      mealType: entry.type,
+      date: date,
+      mealCount: count,
+      isMulti: isMulti,
+    );
   }
 
   final xfile = await picker.pickImage(source: source);
   if (xfile == null) return null;
   final locale = Localizations.localeOf(context).toLanguageTag();
-  return app.addEntry(xfile, locale, fixedType: fixedType);
+  final entry = await app.addEntry(xfile, locale, fixedType: fixedType);
+  if (entry == null) return null;
+  final mealId = entry.mealId ?? entry.id;
+  final date = DateTime(entry.time.year, entry.time.month, entry.time.day);
+  final count = app.entriesForMealId(mealId).length;
+  return RecordResult(
+    entry: entry,
+    mealId: mealId,
+    mealType: entry.type,
+    date: date,
+    mealCount: count,
+    isMulti: isMulti,
+  );
 }

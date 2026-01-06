@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:convert';
 import 'analysis_result.dart';
 
 enum MealType { breakfast, lunch, dinner, lateSnack, other }
@@ -34,4 +35,76 @@ class MealEntry {
   AnalysisResult? result;
   bool loading = false;
   String? error;
+
+  static String _mealTypeToString(MealType type) {
+    switch (type) {
+      case MealType.breakfast:
+        return 'breakfast';
+      case MealType.lunch:
+        return 'lunch';
+      case MealType.dinner:
+        return 'dinner';
+      case MealType.lateSnack:
+        return 'late_snack';
+      case MealType.other:
+        return 'other';
+    }
+  }
+
+  static MealType _mealTypeFromString(String value) {
+    switch (value) {
+      case 'breakfast':
+        return MealType.breakfast;
+      case 'lunch':
+        return MealType.lunch;
+      case 'dinner':
+        return MealType.dinner;
+      case 'late_snack':
+        return MealType.lateSnack;
+      case 'other':
+      default:
+        return MealType.other;
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'image_bytes': base64Encode(imageBytes),
+      'filename': filename,
+      'time': time.toIso8601String(),
+      'type': _mealTypeToString(type),
+      'portion_percent': portionPercent,
+      'meal_id': mealId,
+      'note': note,
+      'override_food_name': overrideFoodName,
+      'image_hash': imageHash,
+      'last_analyzed_note': lastAnalyzedNote,
+      'last_analyzed_food_name': lastAnalyzedFoodName,
+      'result': result?.toJson(),
+    };
+  }
+
+  static MealEntry fromJson(Map<String, dynamic> json) {
+    final bytes = base64Decode(json['image_bytes'] as String);
+    final entry = MealEntry(
+      id: json['id'] as String,
+      imageBytes: Uint8List.fromList(bytes),
+      filename: (json['filename'] as String?) ?? 'photo.jpg',
+      time: DateTime.parse(json['time'] as String),
+      type: _mealTypeFromString((json['type'] as String?) ?? 'other'),
+      portionPercent: (json['portion_percent'] as num?)?.toInt() ?? 100,
+      note: json['note'] as String?,
+      overrideFoodName: json['override_food_name'] as String?,
+      imageHash: json['image_hash'] as String?,
+      mealId: json['meal_id'] as String?,
+      lastAnalyzedNote: json['last_analyzed_note'] as String?,
+      lastAnalyzedFoodName: json['last_analyzed_food_name'] as String?,
+    );
+    final resultJson = json['result'];
+    if (resultJson is Map<String, dynamic>) {
+      entry.result = AnalysisResult.fromJson(resultJson);
+    }
+    return entry;
+  }
 }

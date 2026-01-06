@@ -109,7 +109,7 @@ def _parse_json(text: str) -> Optional[dict]:
         return None
 
 
-def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: int | None) -> str:
+def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: int | None, meal_type: str | None) -> str:
     profile_text = ""
     if profile:
         profile_text = (
@@ -121,6 +121,16 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
         note_text += f"User note (do not quote directly): {note}\n"
     if portion_percent:
         note_text += f"Portion eaten: {portion_percent}% (use to scale calorie range)\n"
+    meal_text = ""
+    if meal_type:
+        if lang == "zh-TW":
+            meal_text = f"餐次：{meal_type}\n"
+            if meal_type in ("dinner", "late_snack"):
+                meal_text += "若為晚餐或消夜，建議提醒避免夜間加餐。\n"
+        else:
+            meal_text = f"Meal type: {meal_type}\n"
+            if meal_type in ("dinner", "late_snack"):
+                meal_text += "If this is dinner or a late-night snack, suggest avoiding additional late-night eating.\n"
     if lang == "zh-TW":
         return (
             "你是營養分析助理。請根據照片判斷餐點內容，回傳 JSON。\n"
@@ -131,7 +141,7 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
             "- macros: protein/carbs/fat/sodium 的值只能是 低/中/高\n"
             "- suggestion: 溫和、非醫療的下一餐建議，請給出具體食物類型\n"
             "- 若畫面中有硬幣或信用卡，請將其視為參考物估計份量；無則使用一般估計\n"
-        ) + profile_text + note_text
+        ) + profile_text + note_text + meal_text
     return (
         "You are a nutrition assistant. Analyze the meal image and return JSON.\n"
         "Requirements:\n"
@@ -141,7 +151,7 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
         "- macros: protein/carbs/fat/sodium values must be low/medium/high\n"
         "- suggestion: gentle next-meal advice (non-medical), include concrete food types\n"
         "- If a coin or credit card is visible, treat it as a size reference; otherwise estimate normally\n"
-    ) + profile_text + note_text
+    ) + profile_text + note_text + meal_text
 
 
 def _estimate_cost_usd(input_tokens: int, output_tokens: int) -> float:
@@ -208,11 +218,12 @@ def _analyze_with_openai(
     profile: dict,
     note: str | None,
     portion_percent: int | None,
+    meal_type: str | None,
 ) -> Optional[dict]:
     if _client is None:
         return None
 
-    prompt = _build_prompt(lang, profile, note, portion_percent)
+    prompt = _build_prompt(lang, profile, note, portion_percent, meal_type)
     if food_name:
         prompt += f"\nUser provided food name: {food_name}. Use this as the primary dish name."
 
@@ -265,6 +276,7 @@ async def analyze_image(
     age: Optional[int] = Form(default=None),
     goal: Optional[str] = Form(default=None),
     plan_speed: Optional[str] = Form(default=None),
+    meal_type: Optional[str] = Form(default=None),
 ):
     image_bytes = await image.read()
     image_hash = _hash_image(image_bytes)
@@ -302,7 +314,7 @@ async def analyze_image(
     if use_ai and _client is not None:
         try:
             payload = await asyncio.to_thread(
-                _analyze_with_openai, image_bytes, use_lang, food_name, profile, note, portion_percent
+                _analyze_with_openai, image_bytes, use_lang, food_name, profile, note, portion_percent, meal_type
             )
             if payload and payload.get("result"):
                 usage_data = payload.get("usage") or {}

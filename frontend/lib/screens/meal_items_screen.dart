@@ -1,14 +1,25 @@
 ﻿import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
 import '../state/app_state.dart';
 import 'meal_detail_screen.dart';
+import 'day_meals_screen.dart';
 import '../widgets/plate_photo.dart';
 
 class MealItemsScreen extends StatefulWidget {
-  const MealItemsScreen({super.key, required this.group});
+  const MealItemsScreen({
+    super.key,
+    required this.group,
+    this.autoReturnToDayMeals = false,
+    this.autoReturnDate,
+    this.autoReturnMealId,
+  });
 
   final List<MealEntry> group;
+  final bool autoReturnToDayMeals;
+  final DateTime? autoReturnDate;
+  final String? autoReturnMealId;
 
   @override
   State<MealItemsScreen> createState() => _MealItemsScreenState();
@@ -17,11 +28,37 @@ class MealItemsScreen extends StatefulWidget {
 class _MealItemsScreenState extends State<MealItemsScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.86);
   int _pageIndex = 0;
+  Timer? _autoTimer;
+  bool _autoTimerStarted = false;
 
   @override
   void dispose() {
+    _autoTimer?.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!widget.autoReturnToDayMeals || _autoTimerStarted) return;
+    final mealId = widget.autoReturnMealId;
+    final date = widget.autoReturnDate;
+    if (mealId == null || date == null) return;
+    _autoTimerStarted = true;
+    final app = AppStateScope.of(context);
+    _autoTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      final last = app.mealInteractionAt(mealId);
+      if (last == null) return;
+      if (DateTime.now().difference(last) < const Duration(minutes: 1)) return;
+      timer.cancel();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => DayMealsScreen(date: date, initialMealId: mealId),
+        ),
+      );
+    });
   }
 
   Widget _itemCard(BuildContext context, MealEntry entry, String plateAsset) {

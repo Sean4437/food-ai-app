@@ -8,6 +8,7 @@ import '../widgets/record_sheet.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/plate_polygon_stack.dart';
 import 'day_meals_screen.dart';
+import 'meal_items_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,7 +29,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openRecordSheet(AppState app) async {
-    await showRecordSheet(context, app);
+    final result = await showRecordSheet(context, app);
+    if (!mounted || result == null) return;
+    final mealId = result.mealId;
+    if (result.mealCount >= 2) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => DayMealsScreen(date: result.date, initialMealId: mealId),
+        ),
+      );
+      return;
+    }
+    final group = app.entriesForMealId(mealId);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MealItemsScreen(
+          group: group,
+          autoReturnToDayMeals: true,
+          autoReturnDate: result.date,
+          autoReturnMealId: mealId,
+        ),
+      ),
+    );
   }
 
   Future<void> _editDaySummary(AppState app, DateTime date, AppLocalizations t) async {

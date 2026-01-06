@@ -32,6 +32,7 @@ class AppState extends ChangeNotifier {
   final Map<String, Map<String, String>> _mealOverrides = {};
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
+  final Map<String, DateTime> _mealInteractionAt = {};
 
   Future<void> init() async {
     await _store.init();
@@ -251,6 +252,7 @@ class AppState extends ChangeNotifier {
       'bento': advice.bento.trim(),
       'other': advice.other.trim(),
     };
+    markMealInteraction(mealId);
     notifyListeners();
     await _saveOverrides();
     final locale = profile.language;
@@ -275,6 +277,27 @@ class AppState extends ChangeNotifier {
     if (hour >= 17 && hour <= 20) return MealType.dinner;
     if (hour >= 21 || hour <= 2) return MealType.lateSnack;
     return MealType.other;
+  }
+
+  void markMealInteraction(String mealId) {
+    _mealInteractionAt[mealId] = DateTime.now();
+  }
+
+  DateTime? mealInteractionAt(String mealId) => _mealInteractionAt[mealId];
+
+  String _mealTypeKey(MealType type) {
+    switch (type) {
+      case MealType.breakfast:
+        return 'breakfast';
+      case MealType.lunch:
+        return 'lunch';
+      case MealType.dinner:
+        return 'dinner';
+      case MealType.lateSnack:
+        return 'late_snack';
+      case MealType.other:
+        return 'other';
+    }
   }
 
   String _mealTypeLabel(MealType type, AppLocalizations t) {
@@ -463,6 +486,7 @@ class AppState extends ChangeNotifier {
       );
       created.add(entry);
       entries.insert(0, entry);
+      markMealInteraction(entry.mealId ?? entry.id);
     }
     if (anchorTime != null) {
       _selectedDate = _dateOnly(anchorTime);
@@ -500,6 +524,7 @@ class AppState extends ChangeNotifier {
       imageHash: imageHash,
     );
     entries.insert(0, entry);
+    markMealInteraction(entry.mealId ?? entry.id);
     _selectedDate = _dateOnly(entry.time);
     notifyListeners();
     await _store.upsert(entry);
@@ -519,6 +544,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> updateEntryNote(MealEntry entry, String note, String locale) async {
     entry.note = note.trim().isEmpty ? null : note.trim();
+    markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     await _store.upsert(entry);
     _scheduleAnalyze(entry, locale);
@@ -528,12 +554,14 @@ class AppState extends ChangeNotifier {
     entry.time = time;
     entry.type = resolveMealType(time);
     entry.mealId = _assignMealId(time, entry.type);
+    markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     _store.upsert(entry);
   }
 
   void updateEntryPortionPercent(MealEntry entry, int percent) {
     entry.portionPercent = percent.clamp(10, 100);
+    markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     _store.upsert(entry);
     _scheduleAnalyze(entry, profile.language, force: true);
@@ -551,6 +579,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> updateEntryFoodName(MealEntry entry, String foodName, String locale) async {
     entry.overrideFoodName = foodName.trim().isEmpty ? null : foodName.trim();
+    markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     await _store.upsert(entry);
     _scheduleAnalyze(entry, locale);

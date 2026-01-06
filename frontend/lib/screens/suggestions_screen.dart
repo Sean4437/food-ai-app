@@ -73,8 +73,8 @@ class SuggestionsScreen extends StatelessWidget {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     Future<void> recordAndNotify() async {
-      final entry = await showRecordSheet(context, app);
-      if (entry == null) return;
+      final result = await showRecordSheet(context, app);
+      if (result == null) return;
       if (!context.mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       messenger.hideCurrentSnackBar();

@@ -19,6 +19,7 @@ class ApiService {
     int? age,
     String? goal,
     String? planSpeed,
+    String? mealType,
   }) async {
     final query = lang == null ? '' : '?lang=$lang';
     final uri = Uri.parse('$baseUrl/analyze$query');
@@ -47,6 +48,9 @@ class ApiService {
     }
     if (planSpeed != null && planSpeed.trim().isNotEmpty) {
       request.fields['plan_speed'] = planSpeed.trim();
+    }
+    if (mealType != null && mealType.trim().isNotEmpty) {
+      request.fields['meal_type'] = mealType.trim();
     }
 
     final response = await request.send();
