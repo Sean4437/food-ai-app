@@ -10,24 +10,6 @@ class MealDetailScreen extends StatelessWidget {
 
   final MealEntry entry;
 
-  Future<void> _editTime(BuildContext context) async {
-    final app = AppStateScope.of(context);
-    final date = await showDatePicker(
-      context: context,
-      initialDate: entry.time,
-      firstDate: DateTime(2020, 1, 1),
-      lastDate: DateTime(2100, 12, 31),
-    );
-    if (date == null) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(entry.time),
-    );
-    if (time == null) return;
-    final updated = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-    app.updateEntryTime(entry, updated);
-  }
-
   Future<void> _confirmDelete(BuildContext context) async {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
@@ -61,30 +43,6 @@ class MealDetailScreen extends StatelessWidget {
     if (sodium.contains(t.levelHigh) || sodium.toLowerCase().contains('high')) parts.add(t.dietitianSodiumHigh);
     if (parts.isEmpty) return t.dietitianBalanced;
     return parts.take(3).join('、');
-  }
-
-  Future<void> _editFoodName(BuildContext context) async {
-    final t = AppLocalizations.of(context)!;
-    final app = AppStateScope.of(context);
-    final controller = TextEditingController(text: entry.overrideFoodName ?? entry.result?.foodName ?? '');
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.editFoodName),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(hintText: t.foodNameLabel),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: Text(t.save)),
-        ],
-      ),
-    );
-    if (result != null) {
-      final locale = Localizations.localeOf(context).toLanguageTag();
-      await app.updateEntryFoodName(entry, result, locale);
-    }
   }
 
   double _ratioFromValue(String value) {
@@ -148,11 +106,6 @@ class MealDetailScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFF3F5FB),
         elevation: 0,
         actions: [
-          IconButton(
-            onPressed: () => _editTime(context),
-            icon: const Icon(Icons.edit),
-            tooltip: t.editTime,
-          ),
           IconButton(
             onPressed: () => _confirmDelete(context),
             icon: const Icon(Icons.delete_outline),
@@ -239,11 +192,6 @@ class MealDetailScreen extends StatelessWidget {
                                 '${prefix}${entry.overrideFoodName ?? entry.result!.foodName}',
                                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () => _editFoodName(context),
-                              icon: const Icon(Icons.edit, size: 18),
-                              tooltip: t.editFoodName,
                             ),
                           ],
                         ),
