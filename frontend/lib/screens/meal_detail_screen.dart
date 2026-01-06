@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
 import '../state/app_state.dart';
@@ -30,21 +30,6 @@ class MealDetailScreen extends StatelessWidget {
     }
   }
 
-  String _aiSummary(MealEntry entry, AppLocalizations t) {
-    final fat = entry.result?.macros['fat'] ?? '';
-    final protein = entry.result?.macros['protein'] ?? '';
-    final carbs = entry.result?.macros['carbs'] ?? '';
-    final sodium = entry.result?.macros['sodium'] ?? '';
-    final parts = <String>[];
-    if (fat.contains(t.levelHigh) || fat.toLowerCase().contains('high')) parts.add(t.tagOily);
-    if (protein.contains(t.levelHigh) || protein.toLowerCase().contains('high')) parts.add(t.tagProteinOk);
-    if (protein.contains(t.levelLow) || protein.toLowerCase().contains('low')) parts.add(t.tagProteinLow);
-    if (carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high')) parts.add(t.tagCarbHigh);
-    if (sodium.contains(t.levelHigh) || sodium.toLowerCase().contains('high')) parts.add(t.dietitianSodiumHigh);
-    if (parts.isEmpty) return t.dietitianBalanced;
-    return parts.take(3).join('、');
-  }
-
   double _ratioFromValue(String value) {
     final v = value.toLowerCase();
     if (v.contains('高') || v.contains('high')) return 0.8;
@@ -52,19 +37,66 @@ class MealDetailScreen extends StatelessWidget {
     return 0.55;
   }
 
-  Widget _ratioBar(String label, double ratio, Color color) {
+  Widget _nutrientValue(String label, String value, IconData icon, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Text(
+          '$label $value',
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
+  Widget _radarChart(MealEntry entry, AppLocalizations t) {
+    final protein = entry.result?.macros['protein'] ?? t.levelMedium;
+    final carbs = entry.result?.macros['carbs'] ?? t.levelMedium;
+    final fat = entry.result?.macros['fat'] ?? t.levelMedium;
+    final sodium = entry.result?.macros['sodium'] ?? t.levelMedium;
+    final values = [
+      _ratioFromValue(protein),
+      _ratioFromValue(carbs),
+      _ratioFromValue(fat),
+      _ratioFromValue(sodium),
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(
-            value: ratio,
-            minHeight: 10,
-            backgroundColor: color.withOpacity(0.15),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
+        SizedBox(
+          height: 160,
+          child: CustomPaint(
+            painter: _RadarPainter(values),
+            child: Center(
+              child: SizedBox(
+                width: 130,
+                height: 130,
+                child: Stack(
+                  children: [
+                    Align(
+                      alignment: const Alignment(0, -1.05),
+                      child: _nutrientValue(t.protein, protein, Icons.eco, const Color(0xFF7FCB99)),
+                    ),
+                    Align(
+                      alignment: const Alignment(1.05, 0.1),
+                      child: _nutrientValue(t.carbs, carbs, Icons.grass, const Color(0xFFF1BE4B)),
+                    ),
+                    Align(
+                      alignment: const Alignment(0, 1.05),
+                      child: _nutrientValue(t.fat, fat, Icons.local_pizza, const Color(0xFFF08A7C)),
+                    ),
+                    Align(
+                      alignment: const Alignment(-1.05, 0.1),
+                      child: _nutrientValue(t.sodium, sodium, Icons.opacity, const Color(0xFF8AB4F8)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -97,7 +129,6 @@ class MealDetailScreen extends StatelessWidget {
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final mealGroup = app.entriesForMeal(entry);
     final mealSummary = app.buildMealSummary(mealGroup, t);
-    final formatter = DateFormat('yyyy/MM/dd HH:mm', Localizations.localeOf(context).toLanguageTag());
     final prefix = entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
 
     return Scaffold(
@@ -131,43 +162,6 @@ class MealDetailScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(formatter.format(entry.time), style: const TextStyle(color: Colors.black54)),
-                const SizedBox(height: 8),
-                Text(t.portionLabel, style: const TextStyle(color: Colors.black54)),
-                const SizedBox(height: 6),
-                _portionSelector(context, app, t),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.mealSummaryTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text(
-                        mealSummary?.advice ?? t.detailAiEmpty,
-                        style: const TextStyle(color: Colors.black54),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${t.mealTotal}: ${mealSummary?.calorieRange ?? t.calorieUnknown}',
-                        style: const TextStyle(color: Colors.black54),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -185,48 +179,20 @@ class MealDetailScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (entry.result != null) ...[
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${prefix}${entry.overrideFoodName ?? entry.result!.foodName}',
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          '${prefix}${entry.overrideFoodName ?? entry.result!.foodName}',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                         ),
                         if ((entry.result!.dishSummary ?? '').trim().isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(entry.result!.dishSummary!, style: const TextStyle(color: Colors.black54)),
                         ],
-                      ],
-                      Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      if (entry.error != null)
-                        Text(entry.error!, style: const TextStyle(color: Colors.red))
-                      else
-                        Text(_aiSummary(entry, t), style: const TextStyle(color: Colors.black54)),
-                      if (entry.result != null) ...[
-                        const SizedBox(height: 6),
-                        Text('source: ${entry.result!.source}', style: const TextStyle(fontSize: 11, color: Colors.black45)),
-                      ],
-                      const SizedBox(height: 12),
-                      Text(t.detailWhyLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 8),
-                      if (entry.result != null) ...[
-                        _ratioBar(t.protein, _ratioFromValue(entry.result!.macros['protein'] ?? ''), const Color(0xFF8AD7A4)),
-                        const SizedBox(height: 10),
-                        _ratioBar(t.carbs, _ratioFromValue(entry.result!.macros['carbs'] ?? ''), const Color(0xFFF4C95D)),
-                        const SizedBox(height: 10),
-                        _ratioBar(t.fat, _ratioFromValue(entry.result!.macros['fat'] ?? ''), const Color(0xFFF08A7C)),
-                        const SizedBox(height: 10),
-                        if ((entry.result!.macros['sodium'] ?? '').isNotEmpty) ...[
-                          _ratioBar(t.sodium, _ratioFromValue(entry.result!.macros['sodium'] ?? ''), const Color(0xFF8AB4F8)),
-                          const SizedBox(height: 10),
-                        ],
-                        Text('${t.calorieLabel}: ${prefix}${entry.result!.calorieRange}', style: const TextStyle(color: Colors.black54)),
                       ] else
-                        Text(t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
+                        Text(t.unknownFood, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 10),
+                      Text('${t.portionLabel} ${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
+                      const SizedBox(height: 6),
+                      _portionSelector(context, app, t),
                     ],
                   ),
                 ),
@@ -240,13 +206,68 @@ class MealDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (entry.result != null) ...[
-                        Text('${prefix}${entry.result!.foodName}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
-                      ],
-                      Text(t.nextMealTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text('${prefix}${entry.result?.suggestion ?? t.nextMealHint}', style: const TextStyle(color: Colors.black54)),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(t.mealSummaryTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 6),
+                                Text(
+                                  mealSummary?.advice ?? t.detailAiEmpty,
+                                  style: const TextStyle(color: Colors.black54),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF3FF),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              mealSummary?.calorieRange ?? t.calorieUnknown,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(t.detailWhyLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      if (entry.error != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(entry.error!, style: const TextStyle(color: Colors.red)),
+                        )
+                      else if (entry.result != null)
+                        _radarChart(entry, t)
+                      else
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
+                        ),
                     ],
                   ),
                 ),
@@ -256,5 +277,71 @@ class MealDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _RadarPainter extends CustomPainter {
+  _RadarPainter(this.values);
+
+  final List<double> values;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) * 0.32;
+    final axes = values.length;
+    final gridPaint = Paint()
+      ..color = const Color(0xFFE6E9F2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final shapePaint = Paint()
+      ..color = const Color(0xFFB5D8C6).withOpacity(0.6)
+      ..style = PaintingStyle.fill;
+    final linePaint = Paint()
+      ..color = const Color(0xFFB5D8C6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    for (int i = 1; i <= 3; i++) {
+      final r = radius * (i / 3);
+      final path = Path();
+      for (int j = 0; j < axes; j++) {
+        final angle = (2 * math.pi / axes) * j - math.pi / 2;
+        final point = Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
+        if (j == 0) {
+          path.moveTo(point.dx, point.dy);
+        } else {
+          path.lineTo(point.dx, point.dy);
+        }
+      }
+      path.close();
+      canvas.drawPath(path, gridPaint);
+    }
+
+    final dataPath = Path();
+    for (int j = 0; j < axes; j++) {
+      final angle = (2 * math.pi / axes) * j - math.pi / 2;
+      final point = Offset(
+        center.dx + radius * values[j] * math.cos(angle),
+        center.dy + radius * values[j] * math.sin(angle),
+      );
+      if (j == 0) {
+        dataPath.moveTo(point.dx, point.dy);
+      } else {
+        dataPath.lineTo(point.dx, point.dy);
+      }
+    }
+    dataPath.close();
+    canvas.drawPath(dataPath, shapePaint);
+    canvas.drawPath(dataPath, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RadarPainter oldDelegate) {
+    if (oldDelegate.values.length != values.length) return true;
+    for (int i = 0; i < values.length; i++) {
+      if (oldDelegate.values[i] != values[i]) return true;
+    }
+    return false;
   }
 }
