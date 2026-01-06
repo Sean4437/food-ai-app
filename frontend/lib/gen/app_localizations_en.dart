@@ -163,7 +163,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nextMealTitle => 'How to balance your next meal';
 
   @override
+  String get nextMealSectionTitle => 'How to balance your next meal';
+
+  @override
   String get nextMealHint => 'Pick the easiest option for you';
+
+  @override
+  String get nextSelfCookLabel => 'Home-cook';
+
+  @override
+  String get nextConvenienceLabel => 'Convenience';
+
+  @override
+  String get nextBentoLabel => 'Bento';
+
+  @override
+  String get nextOtherLabel => 'Other';
+
+  @override
+  String get nextSelfCookHint => 'Steam/boil + veggies, light oil and sauce';
+
+  @override
+  String get nextConvenienceHint => 'Eggs, unsweetened soy milk, salad. Skip fried foods.';
+
+  @override
+  String get nextBentoHint => 'Half rice, more veggies, grilled or braised.';
+
+  @override
+  String get nextOtherHint => 'Fruit / unsweetened yogurt / clear soup';
 
   @override
   String get mealItemsTitle => 'Meal items';
@@ -271,6 +298,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tomorrowAdviceTitle => 'Tomorrow advice';
+
+  @override
+  String get dayCardDateLabel => 'Date:';
+
+  @override
+  String get dayCardCalorieLabel => 'Today calorie range';
+
+  @override
+  String get dayCardMealsLabel => 'Meals analyzed:';
+
+  @override
+  String get dayCardSummaryLabel => 'Today summary';
+
+  @override
+  String get dayCardTomorrowLabel => 'Tomorrow advice';
+
+  @override
+  String get mealCountEmpty => 'No meals analyzed';
 
   @override
   String get calorieUnknown => 'Not estimated';
@@ -396,6 +441,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get save => 'Save';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get editDaySummaryTitle => 'Edit daily summary';
+
+  @override
+  String get editMealAdviceTitle => 'Edit next-meal advice';
 
   @override
   String get goalMaintain => 'Maintain weight';

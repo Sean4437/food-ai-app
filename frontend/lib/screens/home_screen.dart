@@ -31,6 +31,41 @@ class _HomeScreenState extends State<HomeScreen> {
     await showRecordSheet(context, app);
   }
 
+  Future<void> _editDaySummary(AppState app, DateTime date, AppLocalizations t) async {
+    final summaryController = TextEditingController(text: app.daySummaryText(date, t));
+    final adviceController = TextEditingController(text: app.dayTomorrowAdvice(date, t));
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.editDaySummaryTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: summaryController,
+              decoration: InputDecoration(labelText: t.dayCardSummaryLabel),
+            ),
+            TextField(
+              controller: adviceController,
+              decoration: InputDecoration(labelText: t.dayCardTomorrowLabel),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.save)),
+        ],
+      ),
+    );
+    if (result == true) {
+      await app.updateDayOverride(
+        date,
+        summary: summaryController.text,
+        tomorrowAdvice: adviceController.text,
+      );
+    }
+  }
+
   Widget _statusPill(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -90,8 +125,10 @@ class _HomeScreenState extends State<HomeScreen> {
     AppTheme appTheme,
     AppState app,
   ) {
-    final summary = app.buildDaySummary(date, t);
     final formatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
+    final summaryText = app.daySummaryText(date, t);
+    final tomorrowAdvice = app.dayTomorrowAdvice(date, t);
+    final mealLabels = app.dayMealLabels(date, t);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -109,18 +146,33 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(formatter.format(date), style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 10),
-          Text(t.dailyCalorieRange, style: const TextStyle(color: Colors.black54)),
+          Row(
+            children: [
+              Text('${t.dayCardDateLabel} ${formatter.format(date)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+              const Spacer(),
+              TextButton(
+                onPressed: () => _editDaySummary(app, date, t),
+                child: Text(t.edit),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(t.dayCardCalorieLabel, style: const TextStyle(color: Colors.black54)),
           const SizedBox(height: 4),
           Text(
-            summary?.calorieRange ?? t.calorieUnknown,
+            app.dailyCalorieRangeLabelForDate(date, t),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 14),
-          Text(t.tomorrowAdviceTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
+          Text('${t.dayCardMealsLabel} $mealLabels', style: const TextStyle(color: Colors.black54)),
+          const SizedBox(height: 12),
+          Text(t.dayCardSummaryLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
-          Text(summary?.advice ?? t.nextMealHint, style: const TextStyle(color: Colors.black54)),
+          Text(summaryText, style: const TextStyle(color: Colors.black54)),
+          const SizedBox(height: 12),
+          Text(t.dayCardTomorrowLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(tomorrowAdvice, style: const TextStyle(color: Colors.black54)),
         ],
       ),
     );

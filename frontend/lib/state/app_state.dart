@@ -2,6 +2,7 @@
 import 'package:exif/exif.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
@@ -27,6 +28,9 @@ class AppState extends ChangeNotifier {
   final List<MealEntry> entries = [];
   DateTime _selectedDate = _dateOnly(DateTime.now());
   final UserProfile profile = UserProfile.initial();
+  final Map<String, Map<String, String>> _dayOverrides = {};
+  final Map<String, Map<String, String>> _mealOverrides = {};
+  final Map<String, Timer> _analysisTimers = {};
 
   Future<void> init() async {
     await _store.init();
@@ -34,6 +38,10 @@ class AppState extends ChangeNotifier {
     final profileMap = await _settings.loadProfile();
     if (profileMap != null) {
       _applyProfile(profileMap);
+    }
+    final overrides = await _settings.loadOverrides();
+    if (overrides != null) {
+      _loadOverrides(overrides);
     }
     _api = ApiService(baseUrl: profile.apiBaseUrl.isEmpty ? kDefaultApiBaseUrl : profile.apiBaseUrl);
     final loaded = await _store.loadAll();
@@ -151,6 +159,99 @@ class AppState extends ChangeNotifier {
     return t.summaryNeutral;
   }
 
+  String daySummaryText(DateTime date, AppLocalizations t) {
+    final override = _dayOverrides[_dayKey(date)];
+    final manual = override?['summary'];
+    if (manual != null && manual.trim().isNotEmpty) return manual;
+    final dayEntries = entriesForDate(date);
+    if (dayEntries.isEmpty) return t.summaryEmpty;
+    final fatScore = _aggregateMacroScore(dayEntries, 'fat', t);
+    final carbScore = _aggregateMacroScore(dayEntries, 'carbs', t);
+    final proteinScore = _aggregateMacroScore(dayEntries, 'protein', t);
+    final oily = fatScore >= 2.4;
+    final carbHigh = carbScore >= 2.4;
+    final proteinOk = proteinScore >= 2.0;
+    if (oily && carbHigh) return t.summaryOilyCarb;
+    if (oily) return t.summaryOily;
+    if (carbHigh) return t.summaryCarb;
+    if (proteinOk) return t.summaryProteinOk;
+    return t.summaryNeutral;
+  }
+
+  String dayTomorrowAdvice(DateTime date, AppLocalizations t) {
+    final override = _dayOverrides[_dayKey(date)];
+    final manual = override?['tomorrow_advice'];
+    if (manual != null && manual.trim().isNotEmpty) return manual;
+    final summary = buildDaySummary(date, t);
+    return summary?.advice ?? t.nextMealHint;
+  }
+
+  String dayMealLabels(DateTime date, AppLocalizations t) {
+    final dayEntries = entriesForDate(date);
+    if (dayEntries.isEmpty) return t.mealCountEmpty;
+    final types = <MealType>{};
+    for (final entry in dayEntries) {
+      types.add(entry.type);
+    }
+    final labels = <String>[];
+    for (final type in MealType.values) {
+      if (!types.contains(type)) continue;
+      labels.add(_mealTypeLabel(type, t));
+    }
+    return labels.join('、');
+  }
+
+  MealAdvice mealAdviceForGroup(List<MealEntry> group, AppLocalizations t) {
+    if (group.isEmpty) return MealAdvice.defaults(t);
+    final key = _mealKey(group.first.mealId ?? group.first.id);
+    final override = _mealOverrides[key];
+    if (override == null) return MealAdvice.defaults(t);
+    return MealAdvice(
+      selfCook: override['self_cook'] ?? t.nextSelfCookHint,
+      convenience: override['convenience'] ?? t.nextConvenienceHint,
+      bento: override['bento'] ?? t.nextBentoHint,
+      other: override['other'] ?? t.nextOtherHint,
+    );
+  }
+
+  Future<void> updateDayOverride(DateTime date, {String? summary, String? tomorrowAdvice}) async {
+    final key = _dayKey(date);
+    _dayOverrides.putIfAbsent(key, () => {});
+    if (summary != null) {
+      final value = summary.trim();
+      if (value.isEmpty) {
+        _dayOverrides[key]!.remove('summary');
+      } else {
+        _dayOverrides[key]!['summary'] = value;
+      }
+    }
+    if (tomorrowAdvice != null) {
+      final value = tomorrowAdvice.trim();
+      if (value.isEmpty) {
+        _dayOverrides[key]!.remove('tomorrow_advice');
+      } else {
+        _dayOverrides[key]!['tomorrow_advice'] = value;
+      }
+    }
+    if (_dayOverrides[key]!.isEmpty) {
+      _dayOverrides.remove(key);
+    }
+    notifyListeners();
+    await _saveOverrides();
+  }
+
+  Future<void> updateMealAdvice(String mealId, MealAdvice advice) async {
+    final key = _mealKey(mealId);
+    _mealOverrides[key] = {
+      'self_cook': advice.selfCook.trim(),
+      'convenience': advice.convenience.trim(),
+      'bento': advice.bento.trim(),
+      'other': advice.other.trim(),
+    };
+    notifyListeners();
+    await _saveOverrides();
+  }
+
   static String _resolveBaseUrl() {
     return kDefaultApiBaseUrl;
   }
@@ -167,6 +268,21 @@ class AppState extends ChangeNotifier {
     if (hour >= 17 && hour <= 20) return MealType.dinner;
     if (hour >= 21 || hour <= 2) return MealType.lateSnack;
     return MealType.other;
+  }
+
+  String _mealTypeLabel(MealType type, AppLocalizations t) {
+    switch (type) {
+      case MealType.breakfast:
+        return t.breakfast;
+      case MealType.lunch:
+        return t.lunch;
+      case MealType.dinner:
+        return t.dinner;
+      case MealType.lateSnack:
+        return t.lateSnack;
+      case MealType.other:
+        return t.other;
+    }
   }
 
   String _assignMealId(DateTime time, MealType type) {
@@ -320,7 +436,7 @@ class AppState extends ChangeNotifier {
       anchorTime ??= time;
       final bytes = _compressImageBytes(originalBytes);
       final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
-      final mealType = fixedType ?? resolveMealType(anchorTime);
+      final mealType = fixedType ?? resolveMealType(time);
       final entry = MealEntry(
         id: _newId(),
         imageBytes: bytes,
@@ -392,7 +508,7 @@ class AppState extends ChangeNotifier {
     entry.note = note.trim().isEmpty ? null : note.trim();
     notifyListeners();
     await _store.upsert(entry);
-    await _analyzeEntry(entry, locale);
+    _scheduleAnalyze(entry, locale);
   }
 
   void updateEntryTime(MealEntry entry, DateTime time) {
@@ -422,7 +538,7 @@ class AppState extends ChangeNotifier {
     entry.overrideFoodName = foodName.trim().isEmpty ? null : foodName.trim();
     notifyListeners();
     await _store.upsert(entry);
-    await _analyzeEntry(entry, locale);
+    _scheduleAnalyze(entry, locale);
   }
 
   void removeEntry(MealEntry entry) {
@@ -546,6 +662,15 @@ class AppState extends ChangeNotifier {
     return Uint8List.fromList(jpg);
   }
 
+  void _scheduleAnalyze(MealEntry entry, String locale) {
+    _analysisTimers[entry.id]?.cancel();
+    _analysisTimers[entry.id] = Timer(const Duration(minutes: 1), () {
+      _analysisTimers.remove(entry.id);
+      // ignore: discarded_futures
+      _analyzeEntry(entry, locale);
+    });
+  }
+
   Uint8List _buildCollageBytes(List<Uint8List> originals) {
     if (originals.isEmpty) return Uint8List(0);
     final decoded = <img.Image>[];
@@ -585,6 +710,20 @@ class AppState extends ChangeNotifier {
 
   String _hashBytes(List<int> bytes) {
     return sha1.convert(bytes).toString();
+  }
+
+  double _aggregateMacroScore(List<MealEntry> dayEntries, String key, AppLocalizations t) {
+    double totalWeight = 0;
+    double score = 0;
+    for (final entry in dayEntries) {
+      final result = entry.result;
+      if (result == null) continue;
+      final weight = _portionWeight(entry.portionPercent);
+      totalWeight += weight;
+      score += _levelScore(result.macros[key] ?? '', t) * weight;
+    }
+    if (totalWeight == 0) return 0;
+    return score / totalWeight;
   }
 
   MealEntry? _findMealAnchor(MealEntry entry) {
@@ -671,6 +810,39 @@ class AppState extends ChangeNotifier {
     return '$seed-$rand';
   }
 
+  String _dayKey(DateTime date) {
+    final d = _dateOnly(date);
+    return 'day:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  String _mealKey(String mealId) => 'meal:$mealId';
+
+  void _loadOverrides(Map<String, dynamic> overrides) {
+    final day = overrides['day'] as Map<String, dynamic>?;
+    final meal = overrides['meal'] as Map<String, dynamic>?;
+    if (day != null) {
+      day.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          _dayOverrides[key] = value.map((k, v) => MapEntry(k, v.toString()));
+        }
+      });
+    }
+    if (meal != null) {
+      meal.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          _mealOverrides[key] = value.map((k, v) => MapEntry(k, v.toString()));
+        }
+      });
+    }
+  }
+
+  Future<void> _saveOverrides() async {
+    await _settings.saveOverrides({
+      'day': _dayOverrides,
+      'meal': _mealOverrides,
+    });
+  }
+
   Future<void> _saveProfile() async {
     await _settings.saveProfile(_profileToMap());
   }
@@ -744,6 +916,29 @@ class MealSummary {
   final String calorieRange;
   final Map<String, String> macros;
   final String advice;
+}
+
+class MealAdvice {
+  MealAdvice({
+    required this.selfCook,
+    required this.convenience,
+    required this.bento,
+    required this.other,
+  });
+
+  final String selfCook;
+  final String convenience;
+  final String bento;
+  final String other;
+
+  static MealAdvice defaults(AppLocalizations t) {
+    return MealAdvice(
+      selfCook: t.nextSelfCookHint,
+      convenience: t.nextConvenienceHint,
+      bento: t.nextBentoHint,
+      other: t.nextOtherHint,
+    );
+  }
 }
 
 class UserProfile {

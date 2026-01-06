@@ -163,7 +163,61 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nextMealTitle => '銝?擗遣霅唳獐??;
 
   @override
+  String get nextMealSectionTitle => '下一餐建議怎麼吃';
+
+  @override
+  String get nextMealSectionTitle => '下一餐建議怎麼吃';
+
+  @override
   String get nextMealHint => '?訾????嫣噶?撘停憟?;
+
+  @override
+  String get nextSelfCookLabel => '自煮';
+
+  @override
+  String get nextConvenienceLabel => '便利店';
+
+  @override
+  String get nextBentoLabel => '便當';
+
+  @override
+  String get nextOtherLabel => '其他';
+
+  @override
+  String get nextSelfCookHint => '清蒸/水煮＋蔬菜，少油少醬';
+
+  @override
+  String get nextConvenienceHint => '茶葉蛋/無糖豆漿/沙拉，少炸物';
+
+  @override
+  String get nextBentoHint => '半飯、多菜、優先烤或滷';
+
+  @override
+  String get nextOtherHint => '水果/無糖優格/清湯';
+
+  @override
+  String get nextSelfCookLabel => '自煮';
+
+  @override
+  String get nextConvenienceLabel => '便利店';
+
+  @override
+  String get nextBentoLabel => '便當';
+
+  @override
+  String get nextOtherLabel => '其他';
+
+  @override
+  String get nextSelfCookHint => '清蒸/水煮＋蔬菜，少油少醬';
+
+  @override
+  String get nextConvenienceHint => '茶葉蛋/無糖豆漿/沙拉，少炸物';
+
+  @override
+  String get nextBentoHint => '半飯、多菜、優先烤或滷';
+
+  @override
+  String get nextOtherHint => '水果/無糖優格/清湯';
 
   @override
   String get mealItemsTitle => '?祇??';
@@ -269,6 +323,42 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tomorrowAdviceTitle => '?予撱箄降';
+
+  @override
+  String get dayCardDateLabel => '日期：';
+
+  @override
+  String get dayCardCalorieLabel => '今日熱量攝取';
+
+  @override
+  String get dayCardMealsLabel => '分析餐數：';
+
+  @override
+  String get dayCardSummaryLabel => '今天飲食總結';
+
+  @override
+  String get dayCardTomorrowLabel => '明天建議';
+
+  @override
+  String get mealCountEmpty => '尚未分析餐次';
+
+  @override
+  String get dayCardDateLabel => '日期：';
+
+  @override
+  String get dayCardCalorieLabel => '今日熱量攝取';
+
+  @override
+  String get dayCardMealsLabel => '分析餐數：';
+
+  @override
+  String get dayCardSummaryLabel => '今天飲食總結';
+
+  @override
+  String get dayCardTomorrowLabel => '明天建議';
+
+  @override
+  String get mealCountEmpty => '尚未分析餐次';
 
   @override
   String get calorieUnknown => '撠隡啗?';
@@ -397,6 +487,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get save => '?脣?';
+
+  @override
+  String get edit => '編輯';
+
+  @override
+  String get editDaySummaryTitle => '編輯今日摘要';
+
+  @override
+  String get editMealAdviceTitle => '編輯下一餐建議';
+
+  @override
+  String get edit => '編輯';
+
+  @override
+  String get editDaySummaryTitle => '編輯今日摘要';
+
+  @override
+  String get editMealAdviceTitle => '編輯下一餐建議';
 
   @override
   String get goalMaintain => '蝬剜?擃?';

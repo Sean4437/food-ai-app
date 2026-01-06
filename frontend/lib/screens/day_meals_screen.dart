@@ -22,6 +22,72 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
   int _pageIndex = 0;
   final Map<int, int> _groupSelectedIndex = {};
 
+  Widget _adviceRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 64,
+          child: Text(label, style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w600)),
+        ),
+        const SizedBox(width: 6),
+        Expanded(child: Text(value, style: const TextStyle(color: Colors.black54))),
+      ],
+    );
+  }
+
+  String _groupTimeLabel(List<MealEntry> group) {
+    final times = group.map((e) => e.time).toList()..sort();
+    final start = times.first;
+    final end = times.last;
+    if (start == end) {
+      return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
+    }
+    return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _editMealAdvice(BuildContext context, AppState app, List<MealEntry> group) async {
+    if (group.isEmpty) return;
+    final t = AppLocalizations.of(context)!;
+    final current = app.mealAdviceForGroup(group, t);
+    final selfCook = TextEditingController(text: current.selfCook);
+    final convenience = TextEditingController(text: current.convenience);
+    final bento = TextEditingController(text: current.bento);
+    final other = TextEditingController(text: current.other);
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.editMealAdviceTitle),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: selfCook, decoration: InputDecoration(labelText: t.nextSelfCookLabel)),
+              TextField(controller: convenience, decoration: InputDecoration(labelText: t.nextConvenienceLabel)),
+              TextField(controller: bento, decoration: InputDecoration(labelText: t.nextBentoLabel)),
+              TextField(controller: other, decoration: InputDecoration(labelText: t.nextOtherLabel)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.save)),
+        ],
+      ),
+    );
+    if (result == true) {
+      await app.updateMealAdvice(
+        group.first.mealId ?? group.first.id,
+        MealAdvice(
+          selfCook: selfCook.text,
+          convenience: convenience.text,
+          bento: bento.text,
+          other: other.text,
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -99,6 +165,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     }
     final currentGroup = groups.isNotEmpty ? groups[_pageIndex] : null;
     final summary = currentGroup == null ? null : app.buildMealSummary(currentGroup, t);
+    final advice = currentGroup == null ? null : app.mealAdviceForGroup(currentGroup, t);
     final formatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
 
     return Scaffold(
@@ -157,9 +224,18 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (currentGroup != null)
-                      Text(
-                        _mealTypeLabel(currentGroup.first.type, t),
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                      Row(
+                        children: [
+                          Text(
+                            _mealTypeLabel(currentGroup.first.type, t),
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _groupTimeLabel(currentGroup),
+                            style: const TextStyle(color: Colors.black45, fontSize: 12),
+                          ),
+                        ],
                       ),
                     const SizedBox(height: 8),
                     Text('${t.mealTotal}: ${summary?.calorieRange ?? t.calorieUnknown}', style: const TextStyle(color: Colors.black54)),
@@ -168,9 +244,25 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                       _thumbnailRow(currentGroup),
                     ],
                     const SizedBox(height: 12),
-                    Text(t.nextMealTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text(summary?.advice ?? t.nextMealHint, style: const TextStyle(color: Colors.black54)),
+                    Row(
+                      children: [
+                        Text(t.nextMealSectionTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        const Spacer(),
+                        if (currentGroup != null)
+                          IconButton(
+                            onPressed: () => _editMealAdvice(context, app, currentGroup),
+                            icon: const Icon(Icons.edit, size: 18),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    _adviceRow(t.nextSelfCookLabel, advice?.selfCook ?? t.nextSelfCookHint),
+                    const SizedBox(height: 6),
+                    _adviceRow(t.nextConvenienceLabel, advice?.convenience ?? t.nextConvenienceHint),
+                    const SizedBox(height: 6),
+                    _adviceRow(t.nextBentoLabel, advice?.bento ?? t.nextBentoHint),
+                    const SizedBox(height: 6),
+                    _adviceRow(t.nextOtherLabel, advice?.other ?? t.nextOtherHint),
                   ],
                 ),
               ),

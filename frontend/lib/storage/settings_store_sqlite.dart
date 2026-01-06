@@ -8,6 +8,7 @@ class SettingsStoreImpl implements SettingsStore {
   static const _dbName = 'food_ai.db';
   static const _table = 'app_settings';
   static const _profileKey = 'profile';
+  static const _overrideKey = 'overrides';
   Database? _db;
 
   @override
@@ -44,6 +45,28 @@ class SettingsStoreImpl implements SettingsStore {
     await db.insert(
       _table,
       {'key': _profileKey, 'value': json.encode(profile)},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>?> loadOverrides() async {
+    final db = _db;
+    if (db == null) return null;
+    final rows = await db.query(_table, where: 'key = ?', whereArgs: [_overrideKey], limit: 1);
+    if (rows.isEmpty) return null;
+    final value = rows.first['value'] as String?;
+    if (value == null || value.isEmpty) return null;
+    return json.decode(value) as Map<String, dynamic>;
+  }
+
+  @override
+  Future<void> saveOverrides(Map<String, dynamic> overrides) async {
+    final db = _db;
+    if (db == null) return;
+    await db.insert(
+      _table,
+      {'key': _overrideKey, 'value': json.encode(overrides)},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }

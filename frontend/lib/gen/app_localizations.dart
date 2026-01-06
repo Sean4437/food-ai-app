@@ -363,11 +363,65 @@ abstract class AppLocalizations {
   /// **'銝?擗獐鋆?頛末'**
   String get nextMealTitle;
 
+  /// No description provided for @nextMealSectionTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'下一餐建議怎麼吃'**
+  String get nextMealSectionTitle;
+
   /// No description provided for @nextMealHint.
   ///
   /// In zh_TW, this message translates to:
   /// **'?訾????嫣噶?撘停憟?**
   String get nextMealHint;
+
+  /// No description provided for @nextSelfCookLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'自煮'**
+  String get nextSelfCookLabel;
+
+  /// No description provided for @nextConvenienceLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'便利店'**
+  String get nextConvenienceLabel;
+
+  /// No description provided for @nextBentoLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'便當'**
+  String get nextBentoLabel;
+
+  /// No description provided for @nextOtherLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'其他'**
+  String get nextOtherLabel;
+
+  /// No description provided for @nextSelfCookHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'清蒸/水煮＋蔬菜，少油少醬'**
+  String get nextSelfCookHint;
+
+  /// No description provided for @nextConvenienceHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'茶葉蛋/無糖豆漿/沙拉，少炸物'**
+  String get nextConvenienceHint;
+
+  /// No description provided for @nextBentoHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'半飯、多菜、優先烤或滷'**
+  String get nextBentoHint;
+
+  /// No description provided for @nextOtherHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'水果/無糖優格/清湯'**
+  String get nextOtherHint;
 
   String get mealItemsTitle;
 
@@ -562,6 +616,42 @@ abstract class AppLocalizations {
   String get dayMealsTitle;
 
   String get tomorrowAdviceTitle;
+
+  /// No description provided for @dayCardDateLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'日期：'**
+  String get dayCardDateLabel;
+
+  /// No description provided for @dayCardCalorieLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'今日熱量攝取'**
+  String get dayCardCalorieLabel;
+
+  /// No description provided for @dayCardMealsLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'分析餐數：'**
+  String get dayCardMealsLabel;
+
+  /// No description provided for @dayCardSummaryLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'今天飲食總結'**
+  String get dayCardSummaryLabel;
+
+  /// No description provided for @dayCardTomorrowLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'明天建議'**
+  String get dayCardTomorrowLabel;
+
+  /// No description provided for @mealCountEmpty.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'尚未分析餐次'**
+  String get mealCountEmpty;
 
   /// No description provided for @calorieUnknown.
   ///
@@ -774,6 +864,24 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'?脣?'**
   String get save;
+
+  /// No description provided for @edit.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'編輯'**
+  String get edit;
+
+  /// No description provided for @editDaySummaryTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'編輯今日摘要'**
+  String get editDaySummaryTitle;
+
+  /// No description provided for @editMealAdviceTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'編輯下一餐建議'**
+  String get editMealAdviceTitle;
 
   /// No description provided for @goalMaintain.
   ///
