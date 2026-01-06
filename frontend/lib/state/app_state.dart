@@ -250,6 +250,10 @@ class AppState extends ChangeNotifier {
     };
     notifyListeners();
     await _saveOverrides();
+    final locale = profile.language;
+    for (final entry in entriesForMealId(mealId)) {
+      _scheduleAnalyze(entry, locale);
+    }
   }
 
   static String _resolveBaseUrl() {
@@ -338,6 +342,11 @@ class AppState extends ChangeNotifier {
   List<MealEntry> entriesForMeal(MealEntry entry) {
     final key = entry.mealId ?? entry.id;
     return entries.where((e) => (e.mealId ?? e.id) == key).toList()
+      ..sort((a, b) => b.time.compareTo(a.time));
+  }
+
+  List<MealEntry> entriesForMealId(String mealId) {
+    return entries.where((e) => (e.mealId ?? e.id) == mealId).toList()
       ..sort((a, b) => b.time.compareTo(a.time));
   }
 
@@ -522,6 +531,7 @@ class AppState extends ChangeNotifier {
     entry.portionPercent = percent.clamp(10, 100);
     notifyListeners();
     _store.upsert(entry);
+    _scheduleAnalyze(entry, profile.language);
   }
 
   Future<String> exportData() async {
@@ -594,6 +604,11 @@ class AppState extends ChangeNotifier {
         entry.filename,
         lang: locale,
         foodName: entry.overrideFoodName,
+        heightCm: profile.heightCm,
+        weightKg: profile.weightKg,
+        age: profile.age,
+        goal: profile.goal,
+        planSpeed: profile.planSpeed,
       );
       entry.result = res;
       entry.lastAnalyzedNote = noteKey;
