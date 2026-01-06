@@ -464,7 +464,7 @@ async def analyze_image(
         use_lang = "zh-TW"
 
     tier = "full"
-    if food_name is None and note is None and context is None and portion_percent is None and advice_mode is None:
+    if advice_mode != "current_meal" and food_name is None and note is None and context is None and portion_percent is None and advice_mode is None:
         cache = _load_analysis_cache()
         cached = cache.get(image_hash)
         if isinstance(cached, dict) and isinstance(cached.get("result"), dict):

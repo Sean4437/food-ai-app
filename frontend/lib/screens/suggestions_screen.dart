@@ -85,14 +85,24 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
         .where((e) => e.isNotEmpty);
     for (final line in lines) {
       if (line.startsWith('可以吃') || line.toLowerCase().startsWith('can eat')) {
-        sections['can'] = line.split('：').last.trim();
+        sections['can'] = _splitAdviceValue(line);
       } else if (line.startsWith('不建議吃') || line.toLowerCase().startsWith('avoid')) {
-        sections['avoid'] = line.split('：').last.trim();
+        sections['avoid'] = _splitAdviceValue(line);
       } else if (line.startsWith('份量上限') || line.toLowerCase().startsWith('portion')) {
-        sections['limit'] = line.split('：').last.trim();
+        sections['limit'] = _splitAdviceValue(line);
       }
     }
     return sections;
+  }
+
+  String _splitAdviceValue(String line) {
+    if (line.contains('：')) {
+      return line.split('：').last.trim();
+    }
+    if (line.contains(':')) {
+      return line.split(':').last.trim();
+    }
+    return line.trim();
   }
 
   Widget _buildAdviceCard(AppLocalizations t) {

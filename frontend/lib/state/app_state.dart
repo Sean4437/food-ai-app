@@ -30,9 +30,11 @@ class AppState extends ChangeNotifier {
   final UserProfile profile = UserProfile.initial();
   final Map<String, Map<String, String>> _dayOverrides = {};
   final Map<String, Map<String, String>> _mealOverrides = {};
+  final Map<String, String> _meta = {};
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
   final Map<String, DateTime> _mealInteractionAt = {};
+  Timer? _autoFinalizeTimer;
 
   String buildAiContext() {
     final now = DateTime.now();
@@ -149,6 +151,7 @@ class AppState extends ChangeNotifier {
         await _store.upsert(entry);
       }
     }
+    _scheduleAutoFinalize();
     notifyListeners();
   }
 
@@ -319,6 +322,20 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       // Keep existing summary if summarize fails
     }
+  }
+
+  Future<void> autoFinalizeToday() async {
+    final locale = _localeFromProfile();
+    final t = lookupAppLocalizations(locale);
+    final todayKey = _dayKey(DateTime.now());
+    if (_meta['last_auto_finalize'] == todayKey) {
+      _scheduleAutoFinalize();
+      return;
+    }
+    await finalizeDay(DateTime.now(), locale.toLanguageTag(), t);
+    _meta['last_auto_finalize'] = todayKey;
+    await _saveOverrides();
+    _scheduleAutoFinalize();
   }
 
   String dayMealLabels(DateTime date, AppLocalizations t) {
@@ -541,7 +558,8 @@ class AppState extends ChangeNotifier {
       'fat': _scoreToLevel(fatScore / totalWeight, t),
       'sodium': _scoreToLevel(sodiumScore / totalWeight, t),
     };
-    final advice = _buildMealAdvice(macros, t);
+    final dishSummary = _buildMealDishSummary(group);
+    final advice = dishSummary.isNotEmpty ? dishSummary : _buildMealAdvice(macros, t);
     final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
     return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
   }
@@ -597,12 +615,13 @@ class AppState extends ChangeNotifier {
     }
     final List<MealEntry> created = [];
     DateTime? anchorTime;
-    final mealId = _newId();
+    final List<Uint8List> collageBytes = [];
     for (final file in files) {
       final originalBytes = await file.readAsBytes();
       final time = await _resolveImageTime(file, originalBytes);
       anchorTime ??= time;
       final bytes = _compressImageBytes(originalBytes);
+      collageBytes.add(bytes);
       final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
       final mealType = fixedType ?? resolveMealType(time);
       final mealId = fixedType != null ? _assignMealId(time, fixedType) : _assignMealId(time, mealType);
@@ -627,7 +646,9 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     for (final entry in created) {
       await _store.upsert(entry);
-      await _analyzeEntry(entry, locale);
+    }
+    if (created.isNotEmpty) {
+      await _analyzeMealGroup(created.first.mealId ?? created.first.id, locale, imagesOverride: collageBytes);
     }
     return created.isNotEmpty ? created.first : null;
   }
@@ -853,16 +874,85 @@ class AppState extends ChangeNotifier {
   }
 
   void _scheduleAnalyze(MealEntry entry, String locale, {bool force = false}) {
-    _analysisTimers[entry.id]?.cancel();
+    final key = entry.mealId ?? entry.id;
+    _analysisTimers[key]?.cancel();
     if (force) {
-      _analysisTimerForce[entry.id] = true;
+      _analysisTimerForce[key] = true;
     }
-    _analysisTimers[entry.id] = Timer(const Duration(minutes: 1), () {
-      final doForce = _analysisTimerForce.remove(entry.id) ?? false;
-      _analysisTimers.remove(entry.id);
+    _analysisTimers[key] = Timer(const Duration(minutes: 1), () {
+      final doForce = _analysisTimerForce.remove(key) ?? false;
+      _analysisTimers.remove(key);
       // ignore: discarded_futures
-      _analyzeEntry(entry, locale, force: doForce);
+      _analyzeMealGroup(key, locale, force: doForce);
     });
+  }
+
+  Future<void> _analyzeMealGroup(
+    String mealId,
+    String locale, {
+    List<Uint8List>? imagesOverride,
+    bool force = false,
+  }) async {
+    final group = entriesForMealId(mealId);
+    if (group.isEmpty) return;
+    final mealTypeKey = _mealTypeKey(group.first.type);
+    final mealPhotoCount = group.length;
+    final bytesList = imagesOverride ?? group.map((e) => e.imageBytes).toList();
+    final collageBytes = _buildCollageBytes(bytesList);
+    final filename = 'meal-collage.jpg';
+    final notes = group.map((e) => e.note).whereType<String>().map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final note = notes.isEmpty ? null : notes.join(' / ');
+    final overrides = group.map((e) => e.overrideFoodName).whereType<String>().map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
+    final foodName = overrides.length == 1 ? overrides.first : null;
+    final portion = (group.map((e) => e.portionPercent).reduce((a, b) => a + b) / group.length).round();
+
+    for (final entry in group) {
+      final noteKey = entry.note ?? '';
+      final nameKey = entry.overrideFoodName ?? '';
+      if (!force &&
+          entry.result != null &&
+          entry.lastAnalyzedNote == noteKey &&
+          entry.lastAnalyzedFoodName == nameKey) {
+        continue;
+      }
+      entry.loading = true;
+      entry.error = null;
+    }
+    notifyListeners();
+
+    try {
+      final AnalysisResult res = await _api.analyzeImage(
+        collageBytes,
+        filename,
+        lang: locale,
+        foodName: foodName,
+        note: note,
+        portionPercent: portion,
+        heightCm: profile.heightCm,
+        weightKg: profile.weightKg,
+        age: profile.age,
+        goal: profile.goal,
+        planSpeed: profile.planSpeed,
+        mealType: mealTypeKey,
+        mealPhotoCount: mealPhotoCount,
+      );
+      for (final entry in group) {
+        entry.result = res;
+        entry.lastAnalyzedNote = entry.note ?? '';
+        entry.lastAnalyzedFoodName = entry.overrideFoodName ?? '';
+        entry.loading = false;
+        entry.error = null;
+        await _store.upsert(entry);
+      }
+    } catch (e) {
+      for (final entry in group) {
+        entry.loading = false;
+        entry.error = e.toString();
+        await _store.upsert(entry);
+      }
+    } finally {
+      notifyListeners();
+    }
   }
 
   Uint8List _buildCollageBytes(List<Uint8List> originals) {
@@ -1025,6 +1115,17 @@ class AppState extends ChangeNotifier {
     return '${t.dietitianPrefix}$line ${goalHint}';
   }
 
+  String _buildMealDishSummary(List<MealEntry> group) {
+    final summaries = <String>{};
+    for (final entry in group) {
+      final text = entry.result?.dishSummary?.trim();
+      if (text == null || text.isEmpty) continue;
+      summaries.add(text);
+    }
+    if (summaries.isEmpty) return '';
+    return summaries.take(2).join('、');
+  }
+
   String _newId() {
     final seed = DateTime.now().microsecondsSinceEpoch;
     final rand = Random().nextInt(1 << 31);
@@ -1041,6 +1142,7 @@ class AppState extends ChangeNotifier {
   void _loadOverrides(Map<String, dynamic> overrides) {
     final day = overrides['day'] as Map<String, dynamic>?;
     final meal = overrides['meal'] as Map<String, dynamic>?;
+    final meta = overrides['meta'] as Map<String, dynamic>?;
     if (day != null) {
       day.forEach((key, value) {
         if (value is Map<String, dynamic>) {
@@ -1055,12 +1157,34 @@ class AppState extends ChangeNotifier {
         }
       });
     }
+    if (meta != null) {
+      meta.forEach((key, value) {
+        _meta[key] = value.toString();
+      });
+    }
   }
 
   Future<void> _saveOverrides() async {
     await _settings.saveOverrides({
       'day': _dayOverrides,
       'meal': _mealOverrides,
+      'meta': _meta,
+    });
+  }
+
+  Locale _localeFromProfile() {
+    return profile.language == 'en' ? const Locale('en') : const Locale('zh', 'TW');
+  }
+
+  void _scheduleAutoFinalize() {
+    _autoFinalizeTimer?.cancel();
+    final now = DateTime.now();
+    final target = DateTime(now.year, now.month, now.day, 21, 0);
+    final next = now.isAfter(target) ? target.add(const Duration(days: 1)) : target;
+    final delay = next.difference(now);
+    _autoFinalizeTimer = Timer(delay, () {
+      // ignore: discarded_futures
+      autoFinalizeToday();
     });
   }
 
