@@ -16,7 +16,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
   QuickCaptureAnalysis? _analysis;
   bool _loading = false;
   String? _error;
-  bool _savePrompted = false;
+  bool _showSaveActions = false;
 
   @override
   void initState() {
@@ -30,7 +30,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
       _loading = false;
       _error = null;
       _analysis = null;
-      _savePrompted = false;
+      _showSaveActions = false;
     });
     final file = await _picker.pickImage(source: ImageSource.camera);
     if (!mounted) return;
@@ -53,7 +53,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
         _analysis = analysis;
         _loading = false;
       });
-      await _promptSaveIfNeeded();
+      setState(() {
+        _showSaveActions = true;
+      });
     } catch (err) {
       if (!mounted) return;
       setState(() {
@@ -63,30 +65,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
     }
   }
 
-  Future<void> _promptSaveIfNeeded() async {
-    if (_analysis == null || _savePrompted) return;
-    _savePrompted = true;
-    final t = AppLocalizations.of(context)!;
-    final shouldSave = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.suggestInstantSavePrompt),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(t.suggestInstantSkipSave),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(t.suggestInstantSave),
-          ),
-        ],
-      ),
-    );
-    if (shouldSave != true || !mounted || _analysis == null) return;
+  Future<void> _saveIfNeeded() async {
+    if (_analysis == null) return;
     final app = AppStateScope.of(context);
     await app.saveQuickCapture(_analysis!);
     if (!mounted) return;
+    setState(() {
+      _showSaveActions = false;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(t.logSuccess)),
     );
@@ -233,6 +219,30 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                           Text(t.suggestInstantAdviceTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
                           _buildAdviceCard(t),
+                          if (_showSaveActions) ...[
+                            const SizedBox(height: 14),
+                            Text(t.suggestInstantSavePrompt, style: const TextStyle(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      setState(() => _showSaveActions = false);
+                                    },
+                                    child: Text(t.suggestInstantSkipSave),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: _saveIfNeeded,
+                                    child: Text(t.suggestInstantSave),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           Text(t.suggestInstantRecentHint, style: const TextStyle(color: Colors.black45, fontSize: 12)),
                         ],
