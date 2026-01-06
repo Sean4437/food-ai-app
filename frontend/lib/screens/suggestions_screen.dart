@@ -52,8 +52,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
       setState(() {
         _analysis = analysis;
         _loading = false;
-      });
-      setState(() {
         _showSaveActions = true;
       });
     } catch (err) {
@@ -67,6 +65,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
 
   Future<void> _saveIfNeeded() async {
     if (_analysis == null) return;
+    final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     await app.saveQuickCapture(_analysis!);
     if (!mounted) return;
@@ -80,7 +79,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
 
   Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
-    final lines = suggestion.split(RegExp(r'[\\r\\n]+')).map((e) => e.trim()).where((e) => e.isNotEmpty);
+    final lines = suggestion
+        .split(RegExp(r'[\\r\\n]+'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty);
     for (final line in lines) {
       if (line.startsWith('可以吃') || line.toLowerCase().startsWith('can eat')) {
         sections['can'] = line.split('：').last.trim();
