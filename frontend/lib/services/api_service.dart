@@ -13,6 +13,7 @@ class ApiService {
     String? lang,
     String? foodName,
     String? note,
+    String? context,
     int? portionPercent,
     int? heightCm,
     int? weightKg,
@@ -21,6 +22,7 @@ class ApiService {
     String? planSpeed,
     String? mealType,
     int? mealPhotoCount,
+    String? adviceMode,
   }) async {
     final query = lang == null ? '' : '?lang=$lang';
     final uri = Uri.parse('$baseUrl/analyze$query');
@@ -31,6 +33,9 @@ class ApiService {
     }
     if (note != null && note.trim().isNotEmpty) {
       request.fields['note'] = note.trim();
+    }
+    if (context != null && context.trim().isNotEmpty) {
+      request.fields['context'] = context.trim();
     }
     if (portionPercent != null && portionPercent > 0) {
       request.fields['portion_percent'] = portionPercent.toString();
@@ -55,6 +60,9 @@ class ApiService {
     }
     if (mealPhotoCount != null && mealPhotoCount > 0) {
       request.fields['meal_photo_count'] = mealPhotoCount.toString();
+    }
+    if (adviceMode != null && adviceMode.trim().isNotEmpty) {
+      request.fields['advice_mode'] = adviceMode.trim();
     }
 
     final response = await request.send();

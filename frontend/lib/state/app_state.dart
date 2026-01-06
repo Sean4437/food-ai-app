@@ -34,6 +34,89 @@ class AppState extends ChangeNotifier {
   final Map<String, bool> _analysisTimerForce = {};
   final Map<String, DateTime> _mealInteractionAt = {};
 
+  String buildAiContext() {
+    final now = DateTime.now();
+    final cutoff = now.subtract(const Duration(days: 7));
+    final recent = entries.where((entry) => entry.time.isAfter(cutoff)).toList();
+    if (recent.isEmpty) return '';
+    recent.sort((a, b) => b.time.compareTo(a.time));
+    final last = recent.first;
+    final lastName = last.overrideFoodName ?? last.result?.foodName ?? last.filename;
+    final lastSummary = last.result?.dishSummary ?? '';
+    final protein = _scoreToLevelPlain(_aggregateMacroScorePlain(recent, 'protein'));
+    final carbs = _scoreToLevelPlain(_aggregateMacroScorePlain(recent, 'carbs'));
+    final fat = _scoreToLevelPlain(_aggregateMacroScorePlain(recent, 'fat'));
+    final sodium = _scoreToLevelPlain(_aggregateMacroScorePlain(recent, 'sodium'));
+    return [
+      'last_meal_type=${_mealTypeKey(last.type)}',
+      'last_meal_name=$lastName',
+      if (lastSummary.trim().isNotEmpty) 'last_meal_summary=$lastSummary',
+      'recent_7d_macros=protein:$protein, carbs:$carbs, fat:$fat, sodium:$sodium',
+      'recent_7d_meal_count=${recent.length}',
+    ].join('\n');
+  }
+
+  Future<QuickCaptureAnalysis?> analyzeQuickCapture(
+    XFile file,
+    String locale, {
+    String? historyContext,
+  }) async {
+    final originalBytes = await file.readAsBytes();
+    final time = await _resolveImageTime(file, originalBytes);
+    final mealType = resolveMealType(time);
+    final bytes = _compressImageBytes(originalBytes);
+    final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
+    final result = await _api.analyzeImage(
+      bytes,
+      filename,
+      lang: locale,
+      context: historyContext,
+      mealType: _mealTypeKey(mealType),
+      mealPhotoCount: 1,
+      heightCm: profile.heightCm,
+      weightKg: profile.weightKg,
+      age: profile.age,
+      goal: profile.goal,
+      planSpeed: profile.planSpeed,
+      adviceMode: 'current_meal',
+    );
+    return QuickCaptureAnalysis(
+      file: file,
+      originalBytes: originalBytes,
+      imageBytes: bytes,
+      time: time,
+      mealType: mealType,
+      result: result,
+    );
+  }
+
+  Future<MealEntry?> saveQuickCapture(
+    QuickCaptureAnalysis analysis, {
+    String? note,
+  }) async {
+    final mealId = _assignMealId(analysis.time, analysis.mealType);
+    final entry = MealEntry(
+      id: _newId(),
+      imageBytes: analysis.imageBytes,
+      filename: analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg',
+      time: analysis.time,
+      type: analysis.mealType,
+      portionPercent: 100,
+      mealId: mealId,
+      note: note,
+      imageHash: _hashBytes(analysis.originalBytes),
+    );
+    entry.result = analysis.result;
+    entry.lastAnalyzedNote = (note ?? '').trim();
+    entry.lastAnalyzedFoodName = entry.overrideFoodName ?? '';
+    entries.insert(0, entry);
+    markMealInteraction(entry.mealId ?? entry.id);
+    _selectedDate = _dateOnly(entry.time);
+    notifyListeners();
+    await _store.upsert(entry);
+    return entry;
+  }
+
   Future<void> init() async {
     await _store.init();
     await _settings.init();
@@ -684,6 +767,9 @@ class AppState extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final mealTypeKey = _mealTypeKey(entry.type);
+      final mealId = entry.mealId ?? entry.id;
+      final mealPhotoCount = entriesForMealId(mealId).length;
       final AnalysisResult res = await _api.analyzeImage(
         entry.imageBytes,
         entry.filename,
@@ -696,6 +782,8 @@ class AppState extends ChangeNotifier {
         age: profile.age,
         goal: profile.goal,
         planSpeed: profile.planSpeed,
+        mealType: mealTypeKey,
+        mealPhotoCount: mealPhotoCount,
       );
       entry.result = res;
       entry.lastAnalyzedNote = noteKey;
@@ -832,6 +920,20 @@ class AppState extends ChangeNotifier {
     return score / totalWeight;
   }
 
+  double _aggregateMacroScorePlain(List<MealEntry> dayEntries, String key) {
+    double totalWeight = 0;
+    double score = 0;
+    for (final entry in dayEntries) {
+      final result = entry.result;
+      if (result == null) continue;
+      final weight = _portionWeight(entry.portionPercent);
+      totalWeight += weight;
+      score += _levelScorePlain(result.macros[key] ?? '') * weight;
+    }
+    if (totalWeight == 0) return 0;
+    return score / totalWeight;
+  }
+
   MealEntry? _findMealAnchor(MealEntry entry) {
     for (final existing in entries) {
       if (existing.id == entry.id) continue;
@@ -885,10 +987,23 @@ class AppState extends ChangeNotifier {
     return 2.0;
   }
 
+  double _levelScorePlain(String value) {
+    final lower = value.toLowerCase();
+    if (value.contains('高') || lower.contains('high')) return 3.0;
+    if (value.contains('低') || lower.contains('low')) return 1.0;
+    return 2.0;
+  }
+
   String _scoreToLevel(double score, AppLocalizations t) {
     if (score <= 1.6) return t.levelLow;
     if (score >= 2.4) return t.levelHigh;
     return t.levelMedium;
+  }
+
+  String _scoreToLevelPlain(double score) {
+    if (score <= 1.6) return 'low';
+    if (score >= 2.4) return 'high';
+    return 'medium';
   }
 
   String _buildMealAdvice(Map<String, String> macros, AppLocalizations t) {
@@ -1045,6 +1160,24 @@ class MealAdvice {
       other: t.nextOtherHint,
     );
   }
+}
+
+class QuickCaptureAnalysis {
+  QuickCaptureAnalysis({
+    required this.file,
+    required this.originalBytes,
+    required this.imageBytes,
+    required this.time,
+    required this.mealType,
+    required this.result,
+  });
+
+  final XFile file;
+  final List<int> originalBytes;
+  final Uint8List imageBytes;
+  final DateTime time;
+  final MealType mealType;
+  final AnalysisResult result;
 }
 
 class UserProfile {

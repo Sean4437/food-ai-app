@@ -265,7 +265,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabLog => 'Log';
 
   @override
-  String get tabSuggest => 'Suggest';
+  String get tabSuggest => 'Instant';
 
   @override
   String get tabSettings => 'Settings';
@@ -352,7 +352,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get detailWhyLabel => 'Why this result';
 
   @override
-  String get suggestTitle => 'Suggestions';
+  String get suggestTitle => 'Instant Advice';
+
+  @override
+  String get suggestInstantHint => 'Snap a photo for immediate guidance.';
+
+  @override
+  String get suggestInstantStart => 'Take photo';
+
+  @override
+  String get suggestInstantRetake => 'Retake photo';
+
+  @override
+  String get suggestInstantSavePrompt => 'Save this meal?';
+
+  @override
+  String get suggestInstantSave => 'Save';
+
+  @override
+  String get suggestInstantSkipSave => 'Not now';
+
+  @override
+  String get suggestInstantAdviceTitle => 'How to eat this meal';
+
+  @override
+  String get suggestInstantCanEat => 'Good choices';
+
+  @override
+  String get suggestInstantAvoid => 'Avoid';
+
+  @override
+  String get suggestInstantLimit => 'Portion limit';
+
+  @override
+  String get suggestInstantMissing => 'No analysis yet';
+
+  @override
+  String get suggestInstantRecentHint =>
+      'Advice uses the last 7 days and the previous meal';
 
   @override
   String get suggestTodayLabel => 'Today\'s status';

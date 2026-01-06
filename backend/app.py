@@ -135,7 +135,16 @@ def _parse_json(text: str) -> Optional[dict]:
         return None
 
 
-def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: int | None, meal_type: str | None, meal_photo_count: int | None) -> str:
+def _build_prompt(
+    lang: str,
+    profile: dict,
+    note: str | None,
+    portion_percent: int | None,
+    meal_type: str | None,
+    meal_photo_count: int | None,
+    context: str | None,
+    advice_mode: str | None,
+) -> str:
     profile_text = ""
     if profile:
         profile_text = (
@@ -147,6 +156,9 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
         note_text += f"User note (do not quote directly): {note}\n"
     if portion_percent:
         note_text += f"Portion eaten: {portion_percent}% (use to scale calorie range)\n"
+    context_text = ""
+    if context:
+        context_text = f"Recent context (use for suggestions): {context}\n"
     meal_text = ""
     if meal_type:
         if lang == "zh-TW":
@@ -163,6 +175,20 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
         else:
             meal_text += f"This meal has {meal_photo_count} photos; summarize at the whole-meal level.\n"
     if lang == "zh-TW":
+        suggestion_rule = (
+            "- suggestion: 溫和、非醫療的下一餐建議，請給出具體食物類型，並包含份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
+        )
+        suggestion_example = (
+            "  \"suggestion\": \"下一餐以清淡蛋白質與蔬菜為主，主食半碗即可。\",\n"
+        )
+        if advice_mode == "current_meal":
+            suggestion_rule = (
+                "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：可以吃 / 不建議吃 / 份量上限\n"
+                "- 需要參考 recent context 並用一句話提到上一餐\n"
+            )
+            suggestion_example = (
+                "  \"suggestion\": \"可以吃：蔬菜多一點、保留瘦肉\\n不建議吃：湯底與加工配料\\n份量上限：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
+            )
         return (
             "你是營養分析助理。請根據照片判斷餐點內容，回傳 JSON。\n"
             "要求：\n"
@@ -171,7 +197,7 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
             "- calorie_range: 例如 '450-600 kcal'\n"
             "- macros: protein/carbs/fat/sodium 的值只能是 低/中/高\n"
             "- dish_summary: 單一道菜的摘要（20 字內，描述重點/口味/負擔）\n"
-            "- suggestion: 溫和、非醫療的下一餐建議，請給出具體食物類型，並包含份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
+            f"{suggestion_rule}"
             "- confidence: 0 到 1 的信心分數\n"
             "- is_beverage: 是否為飲料（true/false）\n"
             "- 飲料規則：若為飲料，protein/fat 必為 低，熱量偏低；含糖可提升 carbs\n"
@@ -184,11 +210,23 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
             "  \"calorie_range\": \"650-850 kcal\",\n"
             "  \"macros\": {\"protein\": \"中\", \"carbs\": \"中\", \"fat\": \"高\", \"sodium\": \"高\"},\n"
             "  \"dish_summary\": \"油脂偏多、蛋白足夠\",\n"
-            "  \"suggestion\": \"下一餐以清淡蛋白質與蔬菜為主，主食半碗即可。\",\n"
+            f"{suggestion_example}"
             "  \"confidence\": 0.72,\n"
             "  \"is_beverage\": false\n"
             "}\n"
-        ) + profile_text + note_text + meal_text
+        ) + profile_text + note_text + context_text + meal_text
+    suggestion_rule = (
+        "- suggestion: gentle next-meal advice (non-medical), include concrete food types and portion guidance (e.g. half bowl carbs, palm-sized protein, one bowl veggies)\n"
+    )
+    suggestion_example = "  \"suggestion\": \"Next meal: lean protein + veggies, smaller carbs.\",\n"
+    if advice_mode == "current_meal":
+        suggestion_rule = (
+            "- suggestion: guidance for how to eat this meal, formatted as three lines: Can eat / Avoid / Portion limit\n"
+            "- Reference the recent context and briefly mention the previous meal in the suggestion\n"
+        )
+        suggestion_example = (
+            "  \"suggestion\": \"Can eat: more veggies, keep lean protein\\nAvoid: broth and processed sides\\nPortion limit: half bowl carbs, palm-sized protein (previous meal was heavier, so keep it light)\",\n"
+        )
     return (
         "You are a nutrition assistant. Analyze the meal image and return JSON.\n"
         "Requirements:\n"
@@ -197,7 +235,7 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
         "- calorie_range: e.g. '450-600 kcal'\n"
         "- macros: protein/carbs/fat/sodium values must be low/medium/high\n"
         "- dish_summary: single-dish summary (<= 20 words)\n"
-        "- suggestion: gentle next-meal advice (non-medical), include concrete food types and portion guidance (e.g. half bowl carbs, palm-sized protein, one bowl veggies)\n"
+        f"{suggestion_rule}"
         "- confidence: 0 to 1 confidence score\n"
         "- is_beverage: true/false\n"
         "- Beverage rule: if beverage, protein/fat must be low; calories should be low; sugary drinks may increase carbs\n"
@@ -210,11 +248,11 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
         "  \"calorie_range\": \"650-850 kcal\",\n"
         "  \"macros\": {\"protein\": \"medium\", \"carbs\": \"medium\", \"fat\": \"high\", \"sodium\": \"high\"},\n"
         "  \"dish_summary\": \"Heavier oil, decent protein\",\n"
-        "  \"suggestion\": \"Next meal: lean protein + veggies, smaller carbs.\",\n"
+        f"{suggestion_example}"
         "  \"confidence\": 0.72,\n"
         "  \"is_beverage\": false\n"
         "}\n"
-    ) + profile_text + note_text + meal_text
+    ) + profile_text + note_text + context_text + meal_text
 
 
 def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryInput]) -> str:
@@ -351,11 +389,13 @@ def _analyze_with_openai(
     portion_percent: int | None,
     meal_type: str | None,
     meal_photo_count: int | None,
+    context: str | None,
+    advice_mode: str | None,
 ) -> Optional[dict]:
     if _client is None:
         return None
 
-    prompt = _build_prompt(lang, profile, note, portion_percent, meal_type, meal_photo_count)
+    prompt = _build_prompt(lang, profile, note, portion_percent, meal_type, meal_photo_count, context, advice_mode)
     if food_name:
         prompt += f"\nUser provided food name: {food_name}. Use this as the primary dish name."
 
@@ -405,6 +445,7 @@ async def analyze_image(
     lang: str = Query(default=None, description="Language code, e.g. zh-TW, en"),
     food_name: str = Form(default=None),
     note: Optional[str] = Form(default=None),
+    context: Optional[str] = Form(default=None),
     portion_percent: Optional[int] = Form(default=None),
     height_cm: Optional[int] = Form(default=None),
     weight_kg: Optional[int] = Form(default=None),
@@ -413,6 +454,7 @@ async def analyze_image(
     plan_speed: Optional[str] = Form(default=None),
     meal_type: Optional[str] = Form(default=None),
     meal_photo_count: Optional[int] = Form(default=None),
+    advice_mode: Optional[str] = Form(default=None),
 ):
     image_bytes = await image.read()
     image_hash = _hash_image(image_bytes)
@@ -422,7 +464,7 @@ async def analyze_image(
         use_lang = "zh-TW"
 
     tier = "full"
-    if food_name is None and note is None and portion_percent is None:
+    if food_name is None and note is None and context is None and portion_percent is None and advice_mode is None:
         cache = _load_analysis_cache()
         cached = cache.get(image_hash)
         if isinstance(cached, dict) and isinstance(cached.get("result"), dict):
@@ -460,6 +502,8 @@ async def analyze_image(
                 portion_percent,
                 meal_type,
                 meal_photo_count,
+                context,
+                advice_mode,
             )
             if payload and payload.get("result"):
                 usage_data = payload.get("usage") or {}
@@ -527,6 +571,19 @@ async def analyze_image(
         "sodium": random.choice(_fake_macros[use_lang]),
     }
     suggestion = random.choice(_fake_suggestions[use_lang])
+    if advice_mode == "current_meal":
+        if use_lang == "zh-TW":
+            suggestion = (
+                "可以吃：保留蔬菜與瘦肉\n"
+                "不建議吃：湯底與加工配料\n"
+                "份量上限：主食半碗、蛋白質一掌"
+            )
+        else:
+            suggestion = (
+                "Can eat: keep veggies and lean protein\n"
+                "Avoid: broth and processed sides\n"
+                "Portion limit: half bowl carbs, palm-sized protein"
+            )
 
     debug_reason = None
     if CALL_REAL_AI and RETURN_AI_ERROR:

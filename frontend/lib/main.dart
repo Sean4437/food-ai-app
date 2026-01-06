@@ -75,9 +75,9 @@ class _MainShellState extends State<MainShell> {
     final t = AppLocalizations.of(context)!;
     final tabState = TabScope.of(context);
     final screens = const [
+      SuggestionsScreen(),
       HomeScreen(),
       LogScreen(),
-      SuggestionsScreen(),
       SettingsScreen(),
     ];
 
@@ -89,9 +89,9 @@ class _MainShellState extends State<MainShell> {
         inactiveColor: Colors.black54,
         onTap: (value) => tabState.setIndex(value),
         items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.camera_alt), label: t.tabSuggest),
           BottomNavigationBarItem(icon: const Icon(Icons.home_filled), label: t.tabHome),
           BottomNavigationBarItem(icon: const Icon(Icons.receipt_long), label: t.tabLog),
-          BottomNavigationBarItem(icon: const Icon(Icons.lightbulb), label: t.tabSuggest),
           BottomNavigationBarItem(icon: const Icon(Icons.settings), label: t.tabSettings),
         ],
       ),

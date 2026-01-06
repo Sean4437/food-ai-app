@@ -260,7 +260,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tabLog => '紀錄';
 
   @override
-  String get tabSuggest => '建議';
+  String get tabSuggest => '即拍建議';
 
   @override
   String get tabSettings => '設定';
@@ -346,7 +346,43 @@ class AppLocalizationsZh extends AppLocalizations {
   String get detailWhyLabel => '為什麼這樣判斷';
 
   @override
-  String get suggestTitle => '外食建議';
+  String get suggestTitle => '即拍建議';
+
+  @override
+  String get suggestInstantHint => '拍完立即分析，給你這餐怎麼吃';
+
+  @override
+  String get suggestInstantStart => '開始拍照';
+
+  @override
+  String get suggestInstantRetake => '重新拍照';
+
+  @override
+  String get suggestInstantSavePrompt => '要儲存這餐嗎？';
+
+  @override
+  String get suggestInstantSave => '儲存';
+
+  @override
+  String get suggestInstantSkipSave => '先不儲存';
+
+  @override
+  String get suggestInstantAdviceTitle => '這道菜怎麼吃比較好';
+
+  @override
+  String get suggestInstantCanEat => '可以吃';
+
+  @override
+  String get suggestInstantAvoid => '不建議吃';
+
+  @override
+  String get suggestInstantLimit => '建議份量上限';
+
+  @override
+  String get suggestInstantMissing => '尚未有分析結果';
+
+  @override
+  String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';
 
   @override
   String get suggestTodayLabel => '今日整體判斷';
@@ -857,7 +893,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tabLog => '紀錄';
 
   @override
-  String get tabSuggest => '建議';
+  String get tabSuggest => '即拍建議';
 
   @override
   String get tabSettings => '設定';
@@ -943,7 +979,43 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get detailWhyLabel => '為什麼這樣判斷';
 
   @override
-  String get suggestTitle => '外食建議';
+  String get suggestTitle => '即拍建議';
+
+  @override
+  String get suggestInstantHint => '拍完立即分析，給你這餐怎麼吃';
+
+  @override
+  String get suggestInstantStart => '開始拍照';
+
+  @override
+  String get suggestInstantRetake => '重新拍照';
+
+  @override
+  String get suggestInstantSavePrompt => '要儲存這餐嗎？';
+
+  @override
+  String get suggestInstantSave => '儲存';
+
+  @override
+  String get suggestInstantSkipSave => '先不儲存';
+
+  @override
+  String get suggestInstantAdviceTitle => '這道菜怎麼吃比較好';
+
+  @override
+  String get suggestInstantCanEat => '可以吃';
+
+  @override
+  String get suggestInstantAvoid => '不建議吃';
+
+  @override
+  String get suggestInstantLimit => '建議份量上限';
+
+  @override
+  String get suggestInstantMissing => '尚未有分析結果';
+
+  @override
+  String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';
 
   @override
   String get suggestTodayLabel => '今日整體判斷';

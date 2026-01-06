@@ -1,70 +1,143 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
-import '../widgets/record_sheet.dart';
+import '../widgets/plate_photo.dart';
 
-class SuggestionsScreen extends StatelessWidget {
+class SuggestionsScreen extends StatefulWidget {
   const SuggestionsScreen({super.key});
 
-  Widget _decisionCard({
-    required IconData icon,
-    required String title,
-    required String desc,
-    required Color tint,
-    required String actionLabel,
-    required Future<void> Function() onAction,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+  @override
+  State<SuggestionsScreen> createState() => _SuggestionsScreenState();
+}
+
+class _SuggestionsScreenState extends State<SuggestionsScreen> {
+  final ImagePicker _picker = ImagePicker();
+  QuickCaptureAnalysis? _analysis;
+  bool _loading = false;
+  String? _error;
+  bool _savePrompted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startCapture());
+  }
+
+  Future<void> _startCapture() async {
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _error = null;
+      _analysis = null;
+      _savePrompted = false;
+    });
+    final file = await _picker.pickImage(source: ImageSource.camera);
+    if (!mounted) return;
+    if (file == null) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final app = AppStateScope.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final historyContext = app.buildAiContext();
+    try {
+      final analysis = await app.analyzeQuickCapture(
+        file,
+        locale,
+        historyContext: historyContext.isEmpty ? null : historyContext,
+      );
+      if (!mounted) return;
+      setState(() {
+        _analysis = analysis;
+        _loading = false;
+      });
+      await _promptSaveIfNeeded();
+    } catch (err) {
+      if (!mounted) return;
+      setState(() {
+        _error = err.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _promptSaveIfNeeded() async {
+    if (_analysis == null || _savePrompted) return;
+    _savePrompted = true;
+    final t = AppLocalizations.of(context)!;
+    final shouldSave = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.suggestInstantSavePrompt),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(t.suggestInstantSkipSave),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(t.suggestInstantSave),
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: tint.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: tint),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(fontSize: 12, color: Colors.black54)),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: OutlinedButton(
-                    onPressed: () => onAction(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: tint,
-                      side: BorderSide(color: tint),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: Text(actionLabel),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    );
+    if (shouldSave != true || !mounted || _analysis == null) return;
+    final app = AppStateScope.of(context);
+    await app.saveQuickCapture(_analysis!);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(t.logSuccess)),
+    );
+  }
+
+  Map<String, String> _parseAdviceSections(String suggestion) {
+    final sections = <String, String>{};
+    final lines = suggestion.split(RegExp(r'[\\r\\n]+')).map((e) => e.trim()).where((e) => e.isNotEmpty);
+    for (final line in lines) {
+      if (line.startsWith('可以吃') || line.toLowerCase().startsWith('can eat')) {
+        sections['can'] = line.split('：').last.trim();
+      } else if (line.startsWith('不建議吃') || line.toLowerCase().startsWith('avoid')) {
+        sections['avoid'] = line.split('：').last.trim();
+      } else if (line.startsWith('份量上限') || line.toLowerCase().startsWith('portion')) {
+        sections['limit'] = line.split('：').last.trim();
+      }
+    }
+    return sections;
+  }
+
+  Widget _buildAdviceCard(AppLocalizations t) {
+    if (_analysis == null) {
+      return Text(t.suggestInstantMissing, style: const TextStyle(color: Colors.black54));
+    }
+    final suggestion = _analysis!.result.suggestion;
+    final sections = _parseAdviceSections(suggestion);
+    if (sections.isEmpty) {
+      return Text(suggestion, style: const TextStyle(color: Colors.black87, height: 1.4));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _adviceRow(t.suggestInstantCanEat, sections['can']),
+        const SizedBox(height: 8),
+        _adviceRow(t.suggestInstantAvoid, sections['avoid']),
+        const SizedBox(height: 8),
+        _adviceRow(t.suggestInstantLimit, sections['limit']),
+      ],
+    );
+  }
+
+  Widget _adviceRow(String title, String? value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(value ?? '-', style: const TextStyle(color: Colors.black87, height: 1.4)),
+        ),
+      ],
     );
   }
 
@@ -72,23 +145,11 @@ class SuggestionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    Future<void> recordAndNotify() async {
-      final result = await showRecordSheet(context, app);
-      if (result == null) return;
-      if (!context.mounted) return;
-      final messenger = ScaffoldMessenger.of(context);
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(t.logSuccess),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
+    final analysis = _analysis?.result;
     return Scaffold(
       appBar: AppBar(
         title: Text(t.suggestTitle),
-        leading: Navigator.of(context).canPop() ? const BackButton() : null,
         backgroundColor: const Color(0xFFF3F5FB),
         elevation: 0,
       ),
@@ -103,48 +164,80 @@ class SuggestionsScreen extends StatelessWidget {
                 children: [
                   Text(t.suggestTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
+                  Text(t.suggestInstantHint, style: const TextStyle(color: Colors.black54)),
+                  const SizedBox(height: 18),
+                  if (_analysis != null)
+                    Center(
+                      child: PlatePhoto(
+                        imageBytes: _analysis!.imageBytes,
+                        plateAsset: plateAsset,
+                        plateSize: 260,
+                        imageSize: 185,
+                        tilt: 0,
+                      ),
+                    )
+                  else
+                    Center(
+                      child: Container(
+                        width: 180,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 20,
+                              offset: const Offset(0, 12),
+                            ),
+                          ],
+                        ),
+                        child: Icon(Icons.camera_alt, color: Colors.black.withOpacity(0.35), size: 48),
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.suggestTodayLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        Text(app.todayStatusLabel(t), style: const TextStyle(color: Colors.black54)),
-                      ],
+                  const SizedBox(height: 16),
+                  if (_loading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_error != null)
+                    Text(_error!, style: const TextStyle(color: Colors.redAccent))
+                  else
+                    Center(
+                      child: OutlinedButton.icon(
+                        onPressed: _startCapture,
+                        icon: const Icon(Icons.camera_alt),
+                        label: Text(_analysis == null ? t.suggestInstantStart : t.suggestInstantRetake),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  _decisionCard(
-                    icon: Icons.store_mall_directory,
-                    title: t.optionConvenienceTitle,
-                    desc: t.optionConvenienceDesc,
-                    tint: const Color(0xFF5B7CFA),
-                    actionLabel: t.logThisMeal,
-                    onAction: recordAndNotify,
-                  ),
-                  const SizedBox(height: 12),
-                  _decisionCard(
-                    icon: Icons.lunch_dining,
-                    title: t.optionBentoTitle,
-                    desc: t.optionBentoDesc,
-                    tint: const Color(0xFF8AD7A4),
-                    actionLabel: t.logThisMeal,
-                    onAction: recordAndNotify,
-                  ),
-                  const SizedBox(height: 12),
-                  _decisionCard(
-                    icon: Icons.restaurant,
-                    title: t.optionLightTitle,
-                    desc: t.optionLightDesc,
-                    tint: const Color(0xFFF4C95D),
-                    actionLabel: t.logThisMeal,
-                    onAction: recordAndNotify,
-                  ),
+                  const SizedBox(height: 16),
+                  if (analysis != null)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 14,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(analysis.foodName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 6),
+                          Text('${analysis.calorieRange} ${t.estimated}', style: const TextStyle(color: Colors.black54)),
+                          const SizedBox(height: 12),
+                          Text(t.suggestInstantAdviceTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          _buildAdviceCard(t),
+                          const SizedBox(height: 12),
+                          Text(t.suggestInstantRecentHint, style: const TextStyle(color: Colors.black45, fontSize: 12)),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),

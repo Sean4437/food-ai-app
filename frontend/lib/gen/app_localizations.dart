@@ -773,6 +773,19 @@ abstract class AppLocalizations {
   /// **'外食建議'**
   String get suggestTitle;
 
+  String get suggestInstantHint;
+  String get suggestInstantStart;
+  String get suggestInstantRetake;
+  String get suggestInstantSavePrompt;
+  String get suggestInstantSave;
+  String get suggestInstantSkipSave;
+  String get suggestInstantAdviceTitle;
+  String get suggestInstantCanEat;
+  String get suggestInstantAvoid;
+  String get suggestInstantLimit;
+  String get suggestInstantMissing;
+  String get suggestInstantRecentHint;
+
   /// No description provided for @suggestTodayLabel.
   ///
   /// In zh_TW, this message translates to:
