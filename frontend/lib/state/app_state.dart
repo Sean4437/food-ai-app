@@ -31,6 +31,7 @@ class AppState extends ChangeNotifier {
   final Map<String, Map<String, String>> _dayOverrides = {};
   final Map<String, Map<String, String>> _mealOverrides = {};
   final Map<String, Timer> _analysisTimers = {};
+  final Map<String, bool> _analysisTimerForce = {};
 
   Future<void> init() async {
     await _store.init();
@@ -187,11 +188,13 @@ class AppState extends ChangeNotifier {
   }
 
   String dayMealLabels(DateTime date, AppLocalizations t) {
-    final dayEntries = entriesForDate(date);
-    if (dayEntries.isEmpty) return t.mealCountEmpty;
+    final groups = mealGroupsForDateAll(date);
+    if (groups.isEmpty) return t.mealCountEmpty;
     final types = <MealType>{};
-    for (final entry in dayEntries) {
-      types.add(entry.type);
+    for (final group in groups) {
+      if (group.isNotEmpty) {
+        types.add(group.first.type);
+      }
     }
     final labels = <String>[];
     for (final type in MealType.values) {
@@ -252,7 +255,7 @@ class AppState extends ChangeNotifier {
     await _saveOverrides();
     final locale = profile.language;
     for (final entry in entriesForMealId(mealId)) {
-      _scheduleAnalyze(entry, locale);
+      _scheduleAnalyze(entry, locale, force: true);
     }
   }
 
@@ -446,6 +449,7 @@ class AppState extends ChangeNotifier {
       final bytes = _compressImageBytes(originalBytes);
       final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
       final mealType = fixedType ?? resolveMealType(time);
+      final mealId = fixedType != null ? _assignMealId(time, fixedType) : _assignMealId(time, mealType);
       final entry = MealEntry(
         id: _newId(),
         imageBytes: bytes,
@@ -523,6 +527,7 @@ class AppState extends ChangeNotifier {
   void updateEntryTime(MealEntry entry, DateTime time) {
     entry.time = time;
     entry.type = resolveMealType(time);
+    entry.mealId = _assignMealId(time, entry.type);
     notifyListeners();
     _store.upsert(entry);
   }
@@ -531,7 +536,7 @@ class AppState extends ChangeNotifier {
     entry.portionPercent = percent.clamp(10, 100);
     notifyListeners();
     _store.upsert(entry);
-    _scheduleAnalyze(entry, profile.language);
+    _scheduleAnalyze(entry, profile.language, force: true);
   }
 
   Future<String> exportData() async {
@@ -585,10 +590,11 @@ class AppState extends ChangeNotifier {
     _saveProfile();
   }
 
-  Future<void> _analyzeEntry(MealEntry entry, String locale) async {
+  Future<void> _analyzeEntry(MealEntry entry, String locale, {bool force = false}) async {
     final noteKey = entry.note ?? '';
     final nameKey = entry.overrideFoodName ?? '';
-    if (entry.result != null &&
+    if (!force &&
+        entry.result != null &&
         entry.lastAnalyzedNote == noteKey &&
         entry.lastAnalyzedFoodName == nameKey) {
       return;
@@ -604,6 +610,8 @@ class AppState extends ChangeNotifier {
         entry.filename,
         lang: locale,
         foodName: entry.overrideFoodName,
+        note: entry.note,
+        portionPercent: entry.portionPercent,
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
         age: profile.age,
@@ -677,12 +685,16 @@ class AppState extends ChangeNotifier {
     return Uint8List.fromList(jpg);
   }
 
-  void _scheduleAnalyze(MealEntry entry, String locale) {
+  void _scheduleAnalyze(MealEntry entry, String locale, {bool force = false}) {
     _analysisTimers[entry.id]?.cancel();
+    if (force) {
+      _analysisTimerForce[entry.id] = true;
+    }
     _analysisTimers[entry.id] = Timer(const Duration(minutes: 1), () {
+      final doForce = _analysisTimerForce.remove(entry.id) ?? false;
       _analysisTimers.remove(entry.id);
       // ignore: discarded_futures
-      _analyzeEntry(entry, locale);
+      _analyzeEntry(entry, locale, force: doForce);
     });
   }
 

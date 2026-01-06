@@ -12,6 +12,8 @@ class ApiService {
     String filename, {
     String? lang,
     String? foodName,
+    String? note,
+    int? portionPercent,
     int? heightCm,
     int? weightKg,
     int? age,
@@ -24,6 +26,12 @@ class ApiService {
     request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
     if (foodName != null && foodName.trim().isNotEmpty) {
       request.fields['food_name'] = foodName.trim();
+    }
+    if (note != null && note.trim().isNotEmpty) {
+      request.fields['note'] = note.trim();
+    }
+    if (portionPercent != null && portionPercent > 0) {
+      request.fields['portion_percent'] = portionPercent.toString();
     }
     if (heightCm != null && heightCm > 0) {
       request.fields['height_cm'] = heightCm.toString();
