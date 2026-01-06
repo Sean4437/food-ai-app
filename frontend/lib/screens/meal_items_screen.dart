@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
 import '../state/app_state.dart';
@@ -61,34 +62,70 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     });
   }
 
-  Widget _itemCard(BuildContext context, MealEntry entry, String plateAsset) {
+  Widget _itemCard(BuildContext context, AppState app, MealEntry entry, String plateAsset) {
     final t = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final dishSummary = entry.result?.dishSummary?.trim();
     return GestureDetector(
       onTap: () => _showImagePreview(context, entry),
       onLongPress: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: SizedBox(
-        height: 360,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        height: 420,
+        child: Stack(
+          alignment: Alignment.topCenter,
           children: [
-            Center(
-              child: PlatePhoto(
-                imageBytes: entry.imageBytes,
-                plateAsset: plateAsset,
-                plateSize: 320,
-                imageSize: 220,
-                tilt: -0.08,
+            Positioned(
+              top: 140,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 130, 16, 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood,
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _editFoodName(context, app, entry),
+                          icon: const Icon(Icons.edit, size: 18),
+                          tooltip: t.editFoodName,
+                        ),
+                      ],
+                    ),
+                    if (dishSummary != null && dishSummary.isNotEmpty)
+                      Text(dishSummary, style: const TextStyle(color: Colors.black54)),
+                    const SizedBox(height: 10),
+                    Text('${t.portionLabel} ${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
+                    const SizedBox(height: 6),
+                    _portionSelector(context, app, entry, theme),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            Text(entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
-            if (dishSummary != null && dishSummary.isNotEmpty)
-              Text(dishSummary, style: const TextStyle(color: Colors.black54)),
-            if (dishSummary != null && dishSummary.isNotEmpty) const SizedBox(height: 4),
-            Text('${t.portionLabel} ${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
+            PlatePhoto(
+              imageBytes: entry.imageBytes,
+              plateAsset: plateAsset,
+              plateSize: 320,
+              imageSize: 230,
+              tilt: -0.08,
+            ),
           ],
         ),
       ),
@@ -116,48 +153,135 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
   }
 
+  Future<void> _editFoodName(BuildContext context, AppState app, MealEntry entry) async {
+    final t = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: entry.overrideFoodName ?? entry.result?.foodName ?? '');
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.editFoodName),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(hintText: t.foodNameLabel),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(t.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: Text(t.save),
+          ),
+        ],
+      ),
+    );
+    if (result == null) return;
+    await app.updateEntryFoodName(entry, result, locale);
+  }
+
   double _ratioFromValue(String value) {
     final v = value.toLowerCase();
+    if (v.contains('偏高')) return 0.7;
+    if (v.contains('偏低')) return 0.4;
     if (v.contains('高') || v.contains('high')) return 0.8;
     if (v.contains('低') || v.contains('low')) return 0.3;
     return 0.55;
   }
 
-  Widget _ratioBar(String label, double ratio, Color color) {
+  String _displayValue(String rawValue, double ratio) {
+    final match = RegExp(r'\d+(\.\d+)?').firstMatch(rawValue);
+    if (match != null) {
+      return rawValue.trim();
+    }
+    return '${(ratio * 100).round()}%';
+  }
+
+  Widget _nutrientValue(String label, String value, double ratio, IconData icon, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Text(
+          '$label ${_displayValue(value, ratio)}',
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
+  Widget _portionSelector(BuildContext context, AppState app, MealEntry entry, ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(
-            value: ratio,
-            minHeight: 10,
-            backgroundColor: color.withOpacity(0.15),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
+        Text('${entry.portionPercent}%', style: const TextStyle(fontWeight: FontWeight.w600)),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 8,
+            activeTrackColor: theme.colorScheme.primary,
+            inactiveTrackColor: theme.colorScheme.primary.withOpacity(0.2),
+            thumbColor: theme.colorScheme.primary,
+            overlayColor: theme.colorScheme.primary.withOpacity(0.12),
+          ),
+          child: Slider(
+            value: entry.portionPercent.toDouble(),
+            min: 10,
+            max: 100,
+            divisions: 9,
+            label: '${entry.portionPercent}%',
+            onChanged: (value) {
+              app.updateEntryPortionPercent(entry, value.round());
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _portionSelector(BuildContext context, AppState app, MealEntry entry) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('${entry.portionPercent}%', style: const TextStyle(fontWeight: FontWeight.w600)),
-        Slider(
-          value: entry.portionPercent.toDouble(),
-          min: 10,
-          max: 100,
-          divisions: 9,
-          label: '${entry.portionPercent}%',
-          onChanged: (value) {
-            app.updateEntryPortionPercent(entry, value.round());
-          },
+  Widget _radarChart(MealEntry entry, AppLocalizations t) {
+    final protein = entry.result?.macros['protein'] ?? t.levelMedium;
+    final carbs = entry.result?.macros['carbs'] ?? t.levelMedium;
+    final fat = entry.result?.macros['fat'] ?? t.levelMedium;
+    final sodium = entry.result?.macros['sodium'] ?? t.levelMedium;
+    final proteinRatio = _ratioFromValue(protein);
+    final carbsRatio = _ratioFromValue(carbs);
+    final fatRatio = _ratioFromValue(fat);
+    final sodiumRatio = _ratioFromValue(sodium);
+    final values = [proteinRatio, carbsRatio, fatRatio, sodiumRatio];
+
+    return SizedBox(
+      height: 160,
+      child: CustomPaint(
+        painter: _RadarPainter(values),
+        child: Center(
+          child: SizedBox(
+            width: 130,
+            height: 130,
+            child: Stack(
+              children: [
+                Align(
+                  alignment: const Alignment(0, -1.05),
+                  child: _nutrientValue(t.protein, protein, proteinRatio, Icons.eco, const Color(0xFF7FCB99)),
+                ),
+                Align(
+                  alignment: const Alignment(1.05, 0.1),
+                  child: _nutrientValue(t.carbs, carbs, carbsRatio, Icons.grass, const Color(0xFFF1BE4B)),
+                ),
+                Align(
+                  alignment: const Alignment(0, 1.05),
+                  child: _nutrientValue(t.fat, fat, fatRatio, Icons.local_pizza, const Color(0xFFF08A7C)),
+                ),
+                Align(
+                  alignment: const Alignment(-1.05, 0.1),
+                  child: _nutrientValue(t.sodium, sodium, sodiumRatio, Icons.opacity, const Color(0xFF8AB4F8)),
+                ),
+              ],
+            ),
+          ),
         ),
-      ],
+      ),
     );
   }
 
@@ -165,6 +289,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
+    final theme = Theme.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final sorted = List<MealEntry>.from(widget.group)..sort((a, b) => b.time.compareTo(a.time));
     if (_pageIndex >= sorted.length) {
@@ -184,21 +309,15 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
-              height: 390,
+              height: 420,
               child: PageView.builder(
                 controller: _pageController,
                 onPageChanged: (index) => setState(() => _pageIndex = index),
                 itemCount: sorted.length,
-                itemBuilder: (context, index) => _itemCard(context, sorted[index], plateAsset),
+                itemBuilder: (context, index) => _itemCard(context, app, sorted[index], plateAsset),
               ),
             ),
             const SizedBox(height: 12),
-            if (currentEntry != null) ...[
-              Text(t.portionLabel, style: const TextStyle(color: Colors.black54)),
-              const SizedBox(height: 6),
-              _portionSelector(context, app, currentEntry),
-              const SizedBox(height: 12),
-            ],
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -215,12 +334,35 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(t.mealSummaryTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 6),
-                  Text(mealSummary?.advice ?? t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
-                  const SizedBox(height: 6),
-                  Text('${t.mealTotal}: ${mealSummary?.calorieRange ?? t.calorieUnknown}',
-                      style: const TextStyle(color: Colors.black54)),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(t.mealSummaryTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 6),
+                            Text(
+                              mealSummary?.advice ?? t.detailAiEmpty,
+                              style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.14),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          mealSummary?.calorieRange ?? t.calorieUnknown,
+                          style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -244,17 +386,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                   children: [
                     Text(t.detailWhyLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
-                    _ratioBar(t.protein, _ratioFromValue(currentEntry!.result!.macros['protein'] ?? ''), const Color(0xFF8AD7A4)),
-                    const SizedBox(height: 10),
-                    _ratioBar(t.carbs, _ratioFromValue(currentEntry.result!.macros['carbs'] ?? ''), const Color(0xFFF4C95D)),
-                    const SizedBox(height: 10),
-                    _ratioBar(t.fat, _ratioFromValue(currentEntry.result!.macros['fat'] ?? ''), const Color(0xFFF08A7C)),
-                    const SizedBox(height: 10),
-                    if ((currentEntry.result!.macros['sodium'] ?? '').isNotEmpty) ...[
-                      _ratioBar(t.sodium, _ratioFromValue(currentEntry.result!.macros['sodium'] ?? ''), const Color(0xFF8AB4F8)),
-                      const SizedBox(height: 10),
-                    ],
-                    Text('${t.calorieLabel}: ${currentEntry.result!.calorieRange}', style: const TextStyle(color: Colors.black54)),
+                    _radarChart(currentEntry!, t),
                   ],
                 ),
               ),
@@ -262,5 +394,71 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         ),
       ),
     );
+  }
+}
+
+class _RadarPainter extends CustomPainter {
+  _RadarPainter(this.values);
+
+  final List<double> values;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) * 0.32;
+    final axes = values.length;
+    final gridPaint = Paint()
+      ..color = const Color(0xFFE6E9F2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final shapePaint = Paint()
+      ..color = const Color(0xFFB5D8C6).withOpacity(0.6)
+      ..style = PaintingStyle.fill;
+    final linePaint = Paint()
+      ..color = const Color(0xFFB5D8C6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    for (int i = 1; i <= 5; i++) {
+      final r = radius * (i / 5);
+      final path = Path();
+      for (int j = 0; j < axes; j++) {
+        final angle = (2 * math.pi / axes) * j - math.pi / 2;
+        final point = Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
+        if (j == 0) {
+          path.moveTo(point.dx, point.dy);
+        } else {
+          path.lineTo(point.dx, point.dy);
+        }
+      }
+      path.close();
+      canvas.drawPath(path, gridPaint);
+    }
+
+    final dataPath = Path();
+    for (int j = 0; j < axes; j++) {
+      final angle = (2 * math.pi / axes) * j - math.pi / 2;
+      final point = Offset(
+        center.dx + radius * values[j] * math.cos(angle),
+        center.dy + radius * values[j] * math.sin(angle),
+      );
+      if (j == 0) {
+        dataPath.moveTo(point.dx, point.dy);
+      } else {
+        dataPath.lineTo(point.dx, point.dy);
+      }
+    }
+    dataPath.close();
+    canvas.drawPath(dataPath, shapePaint);
+    canvas.drawPath(dataPath, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RadarPainter oldDelegate) {
+    if (oldDelegate.values.length != values.length) return true;
+    for (int i = 0; i < values.length; i++) {
+      if (oldDelegate.values[i] != values[i]) return true;
+    }
+    return false;
   }
 }
