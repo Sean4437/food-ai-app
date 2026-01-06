@@ -20,6 +20,7 @@ class ApiService {
     String? goal,
     String? planSpeed,
     String? mealType,
+    int? mealPhotoCount,
   }) async {
     final query = lang == null ? '' : '?lang=$lang';
     final uri = Uri.parse('$baseUrl/analyze$query');
@@ -51,6 +52,9 @@ class ApiService {
     }
     if (mealType != null && mealType.trim().isNotEmpty) {
       request.fields['meal_type'] = mealType.trim();
+    }
+    if (mealPhotoCount != null && mealPhotoCount > 0) {
+      request.fields['meal_photo_count'] = mealPhotoCount.toString();
     }
 
     final response = await request.send();

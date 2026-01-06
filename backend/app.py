@@ -39,6 +39,9 @@ class AnalysisResult(BaseModel):
     tier: str
     source: str
     cost_estimate_usd: Optional[float] = None
+    confidence: Optional[float] = None
+    is_beverage: Optional[bool] = None
+    debug_reason: Optional[str] = None
 
 FREE_DAILY_LIMIT = int(os.getenv("FREE_DAILY_LIMIT", "1"))
 CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
@@ -47,9 +50,11 @@ API_KEY = os.getenv("API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 PRICE_INPUT_PER_M = float(os.getenv("PRICE_INPUT_PER_M", "0.15"))
 PRICE_OUTPUT_PER_M = float(os.getenv("PRICE_OUTPUT_PER_M", "0.60"))
+RETURN_AI_ERROR = os.getenv("RETURN_AI_ERROR", "false").lower() == "true"
 
 _client = OpenAI(api_key=API_KEY) if API_KEY else None
 logging.basicConfig(level=logging.INFO)
+_last_ai_error: Optional[str] = None
 
 _usage_dir = _base_dir / "data"
 _usage_dir.mkdir(exist_ok=True)
@@ -109,7 +114,7 @@ def _parse_json(text: str) -> Optional[dict]:
         return None
 
 
-def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: int | None, meal_type: str | None) -> str:
+def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: int | None, meal_type: str | None, meal_photo_count: int | None) -> str:
     profile_text = ""
     if profile:
         profile_text = (
@@ -219,11 +224,12 @@ def _analyze_with_openai(
     note: str | None,
     portion_percent: int | None,
     meal_type: str | None,
+    meal_photo_count: int | None,
 ) -> Optional[dict]:
     if _client is None:
         return None
 
-    prompt = _build_prompt(lang, profile, note, portion_percent, meal_type)
+    prompt = _build_prompt(lang, profile, note, portion_percent, meal_type, meal_photo_count)
     if food_name:
         prompt += f"\nUser provided food name: {food_name}. Use this as the primary dish name."
 
@@ -252,6 +258,8 @@ def _analyze_with_openai(
         return None
     if isinstance(data.get("macros"), dict):
         data["macros"].setdefault("sodium", "中" if lang == "zh-TW" else "medium")
+    data.setdefault("confidence", 0.6)
+    data.setdefault("is_beverage", False)
 
     usage = response.usage
     usage_data = None
@@ -277,6 +285,7 @@ async def analyze_image(
     goal: Optional[str] = Form(default=None),
     plan_speed: Optional[str] = Form(default=None),
     meal_type: Optional[str] = Form(default=None),
+    meal_photo_count: Optional[int] = Form(default=None),
 ):
     image_bytes = await image.read()
     image_hash = _hash_image(image_bytes)
@@ -314,7 +323,15 @@ async def analyze_image(
     if use_ai and _client is not None:
         try:
             payload = await asyncio.to_thread(
-                _analyze_with_openai, image_bytes, use_lang, food_name, profile, note, portion_percent, meal_type
+                _analyze_with_openai,
+                image_bytes,
+                use_lang,
+                food_name,
+                profile,
+                note,
+                portion_percent,
+                meal_type,
+                meal_photo_count,
             )
             if payload and payload.get("result"):
                 usage_data = payload.get("usage") or {}
@@ -356,8 +373,13 @@ async def analyze_image(
                     tier=tier,
                     source="ai",
                     cost_estimate_usd=cost_estimate,
+                    confidence=payload["result"].get("confidence"),
+                    is_beverage=payload["result"].get("is_beverage"),
+                    debug_reason=None,
                 )
         except Exception as exc:
+            global _last_ai_error
+            _last_ai_error = str(exc)
             logging.exception("AI analyze failed: %s", exc)
 
     if CALL_REAL_AI and _client is None:
@@ -376,6 +398,9 @@ async def analyze_image(
     }
     suggestion = random.choice(_fake_suggestions[use_lang])
 
+    debug_reason = None
+    if CALL_REAL_AI and RETURN_AI_ERROR:
+        debug_reason = _last_ai_error or "ai_failed_unknown"
     return AnalysisResult(
         food_name=chosen_name,
         calorie_range=calorie_range,
@@ -383,6 +408,10 @@ async def analyze_image(
         suggestion=suggestion,
         tier=tier,
         source="mock",
+        cost_estimate_usd=None,
+        confidence=0.35,
+        is_beverage=False,
+        debug_reason=debug_reason,
     )
 
 
@@ -396,6 +425,7 @@ def health():
         "env_path": str(_env_path),
         "file_call_real_ai": file_env.get("CALL_REAL_AI"),
         "env_call_real_ai": os.getenv("CALL_REAL_AI"),
+        "last_ai_error": _last_ai_error if RETURN_AI_ERROR else None,
     }
 
 

@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -47,6 +47,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get mealTotal => 'Meal total (est.)';
 
+  @override
   String get mealSummaryTitle => 'Meal summary';
 
   @override
@@ -109,13 +110,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dietitianCarbHigh => 'Carbs are high. Reduce starch.';
 
   @override
-  String get dietitianSodiumHigh => 'Sodium is high. Cut broth and processed foods.';
+  String get dietitianSodiumHigh =>
+      'Sodium is high. Cut broth and processed foods.';
 
   @override
-  String get goalAdviceLoseFat => 'For fat loss, prioritize protein and vegetables next meal.';
+  String get goalAdviceLoseFat =>
+      'For fat loss, prioritize protein and vegetables next meal.';
 
   @override
-  String get goalAdviceMaintain => 'For maintenance, keep portions and balance in check.';
+  String get goalAdviceMaintain =>
+      'For maintenance, keep portions and balance in check.';
 
   @override
   String get overallLabel => 'Overall';
@@ -184,7 +188,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nextSelfCookHint => 'Steam/boil + veggies, light oil and sauce';
 
   @override
-  String get nextConvenienceHint => 'Eggs, unsweetened soy milk, salad. Skip fried foods.';
+  String get nextConvenienceHint =>
+      'Eggs, unsweetened soy milk, salad. Skip fried foods.';
 
   @override
   String get nextBentoHint => 'Half rice, more veggies, grilled or braised.';
@@ -320,12 +325,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get calorieUnknown => 'Not estimated';
 
+  @override
   String get portionLabel => 'Portion';
 
+  @override
   String get portionFull => 'Full';
 
+  @override
   String get portionHalf => 'Half';
 
+  @override
   String get portionBite => 'A few bites';
 
   @override
@@ -595,4 +604,3 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clearDone => 'Cleared';
 }
-

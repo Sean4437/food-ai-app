@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -46,12 +46,12 @@ import 'app_localizations_zh.dart';
 ///
 /// iOS applications define key application metadata, including supported
 /// locales, in an Info.plist file that is built into the application bundle.
-/// To configure the locales supported by your app, you?l need to edit this
+/// To configure the locales supported by your app, you’ll need to edit this
 /// file.
 ///
-/// First, open your project? ios/Runner.xcworkspace Xcode workspace file.
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
 /// Then, in the Project Navigator, open the Info.plist file under the Runner
-/// project? Runner folder.
+/// project’s Runner folder.
 ///
 /// Next, select the Information Property List item, select Add Item from the
 /// Editor menu, then select Localizations from the pop-up menu.
@@ -102,211 +102,253 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'憌脤? AI MVP'**
+  /// **'飲食 AI MVP'**
   String get appTitle;
 
   /// No description provided for @takePhoto.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?蝝??**
+  /// **'拍照紀錄'**
   String get takePhoto;
 
   /// No description provided for @uploadPhoto.
   ///
   /// In zh_TW, this message translates to:
-  /// **'銝?抒?'**
+  /// **'上傳照片'**
   String get uploadPhoto;
 
   /// No description provided for @quickAdd.
   ///
   /// In zh_TW, this message translates to:
-  /// **'敹恍憓??芸???嚗?**
+  /// **'快速新增（自動分餐）'**
   String get quickAdd;
 
   /// No description provided for @breakfast.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?拚?'**
+  /// **'早餐'**
   String get breakfast;
 
   /// No description provided for @lunch.
   ///
   /// In zh_TW, this message translates to:
-  /// **'銝剝?'**
+  /// **'中餐'**
   String get lunch;
 
   /// No description provided for @dinner.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??'**
+  /// **'晚餐'**
   String get dinner;
 
   /// No description provided for @lateSnack.
   ///
   /// In zh_TW, this message translates to:
-  /// **'瘨?'**
+  /// **'消夜'**
   String get lateSnack;
 
   /// No description provided for @other.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?嗡?'**
+  /// **'其他'**
   String get other;
 
   /// No description provided for @timeLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??'**
+  /// **'時間'**
   String get timeLabel;
 
   /// No description provided for @editTime.
   ///
   /// In zh_TW, this message translates to:
-  /// **'靽格??'**
+  /// **'修改時間'**
   String get editTime;
 
   /// No description provided for @noEntries.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撠蝝??**
+  /// **'尚無紀錄'**
   String get noEntries;
 
   /// No description provided for @mealTotal.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?祇?隡啗??梢?'**
+  /// **'本餐估計熱量'**
   String get mealTotal;
 
+  /// No description provided for @mealSummaryTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'本餐摘要'**
   String get mealSummaryTitle;
 
   /// No description provided for @todayMeals.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞擗?'**
+  /// **'今日餐點'**
   String get todayMeals;
 
   /// No description provided for @itemsCount.
   ///
   /// In zh_TW, this message translates to:
-  /// **'{count} 蝑?**
+  /// **'{count} 筆'**
   String itemsCount(int count);
 
   /// No description provided for @captureTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?蝝??**
+  /// **'拍照紀錄'**
   String get captureTitle;
 
   /// No description provided for @captureHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??雿迤?典???暺??**
+  /// **'拍下你正在吃的餐點即可'**
   String get captureHint;
 
   /// No description provided for @optionalNoteLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'鋆?隤芣?嚗?賂?'**
+  /// **'補充說明（可選）'**
   String get optionalNoteLabel;
 
   /// No description provided for @notePlaceholder.
   ///
   /// In zh_TW, this message translates to:
-  /// **'靘?嚗?????葆韏?**
+  /// **'例如：只吃一半、打包帶走'**
   String get notePlaceholder;
 
   /// No description provided for @recentPhotos.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?餈??**
+  /// **'最近照片'**
   String get recentPhotos;
 
   /// No description provided for @noPhotos.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撠?啣??抒?'**
+  /// **'尚未新增照片'**
   String get noPhotos;
 
   /// No description provided for @analysisTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'擗???'**
+  /// **'餐點分析'**
   String get analysisTitle;
 
   /// No description provided for @analysisEmpty.
   ///
   /// In zh_TW, this message translates to:
-  /// **'????暺?????銝撘萄'**
+  /// **'還沒有餐點分析，先拍一張吧'**
   String get analysisEmpty;
 
   /// No description provided for @foodNameLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'憌?迂'**
+  /// **'食物名稱'**
   String get foodNameLabel;
 
   /// No description provided for @editFoodName.
   ///
   /// In zh_TW, this message translates to:
-  /// **'靽格憌?迂'**
+  /// **'修改食物名稱'**
   String get editFoodName;
 
   /// No description provided for @reanalyzeLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'???'**
+  /// **'重新分析'**
   String get reanalyzeLabel;
 
+  /// No description provided for @unknownFood.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'未命名餐點'**
   String get unknownFood;
 
+  /// No description provided for @dietitianPrefix.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'建議：'**
   String get dietitianPrefix;
 
+  /// No description provided for @dietitianBalanced.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'整體均衡，維持即可。'**
   String get dietitianBalanced;
 
+  /// No description provided for @dietitianProteinLow.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'蛋白質偏低，建議補豆魚蛋肉。'**
   String get dietitianProteinLow;
 
+  /// No description provided for @dietitianFatHigh.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'油脂偏高，下一餐清淡少油。'**
   String get dietitianFatHigh;
 
+  /// No description provided for @dietitianCarbHigh.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'碳水偏多，主食減量。'**
   String get dietitianCarbHigh;
 
+  /// No description provided for @dietitianSodiumHigh.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'鈉含量偏高，減少湯底與加工品。'**
   String get dietitianSodiumHigh;
+
+  /// No description provided for @goalAdviceLoseFat.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'以減脂為目標，下一餐以蛋白質與蔬菜為主。'**
   String get goalAdviceLoseFat;
+
+  /// No description provided for @goalAdviceMaintain.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'以維持為主，注意份量與均衡。'**
   String get goalAdviceMaintain;
 
   /// No description provided for @overallLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?湧??斗'**
+  /// **'整體判斷'**
   String get overallLabel;
 
   /// No description provided for @calorieLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?梢????**
+  /// **'熱量區間'**
   String get calorieLabel;
 
   /// No description provided for @macroLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'銝之??'**
+  /// **'三大營養'**
   String get macroLabel;
 
   /// No description provided for @levelLow.
   ///
   /// In zh_TW, this message translates to:
-  /// **'雿?**
+  /// **'低'**
   String get levelLow;
 
   /// No description provided for @levelMedium.
   ///
   /// In zh_TW, this message translates to:
-  /// **'銝?**
+  /// **'中'**
   String get levelMedium;
 
   /// No description provided for @levelHigh.
   ///
   /// In zh_TW, this message translates to:
-  /// **'擃?**
+  /// **'高'**
   String get levelHigh;
 
   /// No description provided for @statusOk.
@@ -318,37 +360,37 @@ abstract class AppLocalizations {
   /// No description provided for @statusWarn.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??'**
+  /// **'偏多'**
   String get statusWarn;
 
   /// No description provided for @statusOver.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??**
+  /// **'爆'**
   String get statusOver;
 
   /// No description provided for @tagOily.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?硃'**
+  /// **'偏油'**
   String get tagOily;
 
   /// No description provided for @tagProteinOk.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?鞈芾雲'**
+  /// **'蛋白質足'**
   String get tagProteinOk;
 
   /// No description provided for @tagProteinLow.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?鞈芯?頞?**
+  /// **'蛋白質不足'**
   String get tagProteinLow;
 
   /// No description provided for @tagCarbHigh.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蝣單偌??'**
+  /// **'碳水偏多'**
   String get tagCarbHigh;
 
   /// No description provided for @tagOk.
@@ -360,7 +402,7 @@ abstract class AppLocalizations {
   /// No description provided for @nextMealTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'銝?擗獐鋆?頛末'**
+  /// **'下一餐建議怎麼吃'**
   String get nextMealTitle;
 
   /// No description provided for @nextMealSectionTitle.
@@ -372,7 +414,7 @@ abstract class AppLocalizations {
   /// No description provided for @nextMealHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?訾????嫣噶?撘停憟?**
+  /// **'選一個最方便的方式就好'**
   String get nextMealHint;
 
   /// No description provided for @nextSelfCookLabel.
@@ -423,198 +465,214 @@ abstract class AppLocalizations {
   /// **'水果/無糖優格/清湯'**
   String get nextOtherHint;
 
+  /// No description provided for @mealItemsTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'本餐菜色'**
   String get mealItemsTitle;
 
   /// No description provided for @optionConvenienceTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'靘踹??'**
+  /// **'便利商店'**
   String get optionConvenienceTitle;
 
   /// No description provided for @optionConvenienceDesc.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?貉??/?∠?鞊撚/瘝?嚗??貊'**
+  /// **'選茶葉蛋/無糖豆漿/沙拉，少炸物'**
   String get optionConvenienceDesc;
 
   /// No description provided for @optionBentoTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'靘輻摨?**
+  /// **'便當店'**
   String get optionBentoTitle;
 
   /// No description provided for @optionBentoDesc.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?ㄞ???祈????斗?皛?**
+  /// **'半飯、多蔬菜、優先選烤或滷'**
   String get optionBentoDesc;
 
   /// No description provided for @optionLightTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'皜楚?豢?'**
+  /// **'清淡選擇'**
   String get optionLightTitle;
 
   /// No description provided for @optionLightDesc.
   ///
   /// In zh_TW, this message translates to:
-  /// **'皜僖??柴??祆?'**
+  /// **'清湯、蒸煮、少醬料'**
   String get optionLightDesc;
 
   /// No description provided for @summaryTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞??'**
+  /// **'今日摘要'**
   String get summaryTitle;
 
   /// No description provided for @summaryEmpty.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞予撠閮?擗?'**
+  /// **'今天尚未記錄餐點'**
   String get summaryEmpty;
 
   /// No description provided for @summaryOilyCarb.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞予憭??硃?４瘞游?憭?**
+  /// **'今天外食偏油、碳水偏多'**
   String get summaryOilyCarb;
 
   /// No description provided for @summaryOily.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞予憭??硃'**
+  /// **'今天外食偏油'**
   String get summaryOily;
 
   /// No description provided for @summaryCarb.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞予蝣單偌??'**
+  /// **'今天碳水偏多'**
   String get summaryCarb;
 
   /// No description provided for @summaryProteinOk.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?鞈芸??荔?閮?鋆??**
+  /// **'蛋白質尚可，記得補蔬菜'**
   String get summaryProteinOk;
 
   /// No description provided for @summaryNeutral.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞予?湧????荔?蝬剜??喳'**
+  /// **'今天整體還不錯，維持即可'**
   String get summaryNeutral;
 
   /// No description provided for @mealsCountLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撌脰???**
+  /// **'已記錄'**
   String get mealsCountLabel;
 
   /// No description provided for @mealsLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'擗?**
+  /// **'餐'**
   String get mealsLabel;
 
   /// No description provided for @tabCapture.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?'**
+  /// **'拍照'**
   String get tabCapture;
 
   /// No description provided for @tabAnalysis.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??'**
+  /// **'分析'**
   String get tabAnalysis;
 
   /// No description provided for @tabNext.
   ///
   /// In zh_TW, this message translates to:
-  /// **'銝?擗?**
+  /// **'下一餐'**
   String get tabNext;
 
   /// No description provided for @tabSummary.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??'**
+  /// **'摘要'**
   String get tabSummary;
 
   /// No description provided for @tabHome.
   ///
   /// In zh_TW, this message translates to:
-  /// **'擐?'**
+  /// **'首頁'**
   String get tabHome;
 
   /// No description provided for @tabLog.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蝝??**
+  /// **'紀錄'**
   String get tabLog;
 
   /// No description provided for @tabSuggest.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撱箄降'**
+  /// **'建議'**
   String get tabSuggest;
 
   /// No description provided for @tabSettings.
   ///
   /// In zh_TW, this message translates to:
-  /// **'閮剖?'**
+  /// **'設定'**
   String get tabSettings;
 
   /// No description provided for @greetingTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'Hi嚗???**
+  /// **'Hi，小明'**
   String get greetingTitle;
 
   /// No description provided for @streakLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'銝?梢??? 蝚?3 憭?**
+  /// **'一週連續挑戰 第 3 天'**
   String get streakLabel;
 
   /// No description provided for @aiSuggest.
   ///
   /// In zh_TW, this message translates to:
-  /// **'AI 憌脤?撱箄降'**
+  /// **'AI 飲食建議'**
   String get aiSuggest;
 
   /// No description provided for @latestMealTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'????擗?'**
+  /// **'剛剛吃的餐點'**
   String get latestMealTitle;
 
   /// No description provided for @latestMealEmpty.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撠??暺???**
+  /// **'尚未有餐點紀錄'**
   String get latestMealEmpty;
 
   /// No description provided for @homeNextMealHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'暺脣遣霅圈?嚗銝???嫣噶?獢?**
+  /// **'點進建議頁，選一個最方便的方案'**
   String get homeNextMealHint;
 
   /// No description provided for @logTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蝝??**
+  /// **'紀錄'**
   String get logTitle;
 
   /// No description provided for @dailyCalorieRange.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞?梢???'**
+  /// **'今日熱量攝取'**
   String get dailyCalorieRange;
 
+  /// No description provided for @dayCardTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'每日摘要'**
   String get dayCardTitle;
 
+  /// No description provided for @dayMealsTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'本日餐次'**
   String get dayMealsTitle;
 
+  /// No description provided for @tomorrowAdviceTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'明天建議'**
   String get tomorrowAdviceTitle;
 
   /// No description provided for @dayCardDateLabel.
@@ -656,99 +714,115 @@ abstract class AppLocalizations {
   /// No description provided for @calorieUnknown.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撠隡啗?'**
+  /// **'尚未估計'**
   String get calorieUnknown;
 
+  /// No description provided for @portionLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'份量'**
   String get portionLabel;
 
+  /// No description provided for @portionFull.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'全吃'**
   String get portionFull;
 
+  /// No description provided for @portionHalf.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'吃一半'**
   String get portionHalf;
 
+  /// No description provided for @portionBite.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'只吃幾口'**
   String get portionBite;
 
   /// No description provided for @detailTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'閰喟敦蝝??**
+  /// **'詳細紀錄'**
   String get detailTitle;
 
   /// No description provided for @detailAiLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'AI ?斗隤芣?'**
+  /// **'AI 判斷說明'**
   String get detailAiLabel;
 
   /// No description provided for @detailAiEmpty.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撠??鞈?'**
+  /// **'尚無分析資料'**
   String get detailAiEmpty;
 
   /// No description provided for @detailWhyLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?箔?暻潮見?斗'**
+  /// **'為什麼這樣判斷'**
   String get detailWhyLabel;
 
   /// No description provided for @suggestTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'憭?撱箄降'**
+  /// **'外食建議'**
   String get suggestTitle;
 
   /// No description provided for @suggestTodayLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞?湧??斗'**
+  /// **'今日整體判斷'**
   String get suggestTodayLabel;
 
   /// No description provided for @suggestTodayHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞予瘝寡???嚗遣霅唬?銝擗?瘛∩?暺?**
+  /// **'今天油脂偏高，建議下一餐清淡一點'**
   String get suggestTodayHint;
 
   /// No description provided for @suggestTodayOilyCarb.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞予?硃?４瘞港???'**
+  /// **'今天偏油、碳水也偏多'**
   String get suggestTodayOilyCarb;
 
   /// No description provided for @suggestTodayOily.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞予?硃嚗?銝擗?瘛∩?暺?**
+  /// **'今天偏油，下一餐清淡一點'**
   String get suggestTodayOily;
 
   /// No description provided for @suggestTodayCarb.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞予蝣單偌??嚗?銝擗?瞉梁?'**
+  /// **'今天碳水偏多，下一餐少澱粉'**
   String get suggestTodayCarb;
 
   /// No description provided for @suggestTodayOk.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隞予???OK嚗??停憟?**
+  /// **'今天狀態 OK，保持就好'**
   String get suggestTodayOk;
 
   /// No description provided for @logThisMeal.
   ///
   /// In zh_TW, this message translates to:
-  /// **'閮???'**
+  /// **'記錄這餐'**
   String get logThisMeal;
 
   /// No description provided for @settingsTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'閮剖?'**
+  /// **'設定'**
   String get settingsTitle;
 
   /// No description provided for @profileName.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撠?'**
+  /// **'小明'**
   String get profileName;
 
   /// No description provided for @profileEmail.
@@ -760,91 +834,121 @@ abstract class AppLocalizations {
   /// No description provided for @editProfile.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蝺刻摩?犖鞈?'**
+  /// **'編輯個人資料'**
   String get editProfile;
 
   /// No description provided for @planSection.
   ///
   /// In zh_TW, this message translates to:
-  /// **'閮閮剖?'**
+  /// **'計畫設定'**
   String get planSection;
 
   /// No description provided for @heightLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'頨恍?'**
+  /// **'身高'**
   String get heightLabel;
 
   /// No description provided for @weightLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'擃?'**
+  /// **'體重'**
   String get weightLabel;
+
+  /// No description provided for @ageLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'年齡'**
   String get ageLabel;
+
+  /// No description provided for @bmiLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'BMI'**
   String get bmiLabel;
+
+  /// No description provided for @bmiUnderweight.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'偏低'**
   String get bmiUnderweight;
+
+  /// No description provided for @bmiNormal.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'正常'**
   String get bmiNormal;
+
+  /// No description provided for @bmiOverweight.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'偏高'**
   String get bmiOverweight;
+
+  /// No description provided for @bmiObese.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'過高'**
   String get bmiObese;
 
   /// No description provided for @goalLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?格?'**
+  /// **'目標'**
   String get goalLabel;
 
   /// No description provided for @goalLoseFat.
   ///
   /// In zh_TW, this message translates to:
-  /// **'皜?????**
+  /// **'減脂降體脂'**
   String get goalLoseFat;
 
   /// No description provided for @reminderSection.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??閮剖?'**
+  /// **'提醒設定'**
   String get reminderSection;
 
   /// No description provided for @reminderLunch.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??????'**
+  /// **'提醒拍攝午餐'**
   String get reminderLunch;
 
   /// No description provided for @reminderDinner.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??????'**
+  /// **'提醒拍攝晚餐'**
   String get reminderDinner;
 
   /// No description provided for @subscriptionSection.
   ///
   /// In zh_TW, this message translates to:
-  /// **'閮?隞?**
+  /// **'訂閱與其他'**
   String get subscriptionSection;
 
   /// No description provided for @subscriptionPlan.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?桀??寞?'**
+  /// **'目前方案'**
   String get subscriptionPlan;
 
   /// No description provided for @planMonthly.
   ///
   /// In zh_TW, this message translates to:
-  /// **'皜??冽 \$199/??**
+  /// **'減脂周數 \$199/月'**
   String get planMonthly;
 
   /// No description provided for @languageLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?湔?隤?'**
+  /// **'更換語言'**
   String get languageLabel;
 
   /// No description provided for @langZh.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蝜?銝剜?'**
+  /// **'繁體中文'**
   String get langZh;
 
   /// No description provided for @langEn.
@@ -856,13 +960,13 @@ abstract class AppLocalizations {
   /// No description provided for @cancel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??'**
+  /// **'取消'**
   String get cancel;
 
   /// No description provided for @save.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?脣?'**
+  /// **'儲存'**
   String get save;
 
   /// No description provided for @edit.
@@ -886,237 +990,289 @@ abstract class AppLocalizations {
   /// No description provided for @goalMaintain.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蝬剜?擃?'**
+  /// **'維持體重'**
   String get goalMaintain;
 
   /// No description provided for @planSpeedLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'皜??漲'**
+  /// **'減脂速度'**
   String get planSpeedLabel;
 
   /// No description provided for @planSpeedStable.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蝛拙?'**
+  /// **'穩定'**
   String get planSpeedStable;
 
   /// No description provided for @planSpeedGentle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'靽?'**
+  /// **'保守'**
   String get planSpeedGentle;
 
   /// No description provided for @reminderLunchTime.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??????'**
+  /// **'午餐提醒時間'**
   String get reminderLunchTime;
 
   /// No description provided for @reminderDinnerTime.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??????'**
+  /// **'晚餐提醒時間'**
   String get reminderDinnerTime;
 
   /// No description provided for @pickFromCamera.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?'**
+  /// **'拍照'**
   String get pickFromCamera;
 
   /// No description provided for @pickFromGallery.
   ///
   /// In zh_TW, this message translates to:
-  /// **'敺蝪輸??**
+  /// **'從相簿選擇'**
   String get pickFromGallery;
 
   /// No description provided for @addMeal.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?啣?'**
+  /// **'新增'**
   String get addMeal;
 
   /// No description provided for @noMealPrompt.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撠蝝????撘萎??臭誑'**
+  /// **'尚未紀錄，拍一張也可以'**
   String get noMealPrompt;
 
   /// No description provided for @layoutThemeLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'銝駁?????**
+  /// **'主題與版面'**
   String get layoutThemeLabel;
 
   /// No description provided for @themeClean.
   ///
   /// In zh_TW, this message translates to:
-  /// **'皜??**
+  /// **'清爽藍'**
   String get themeClean;
 
   /// No description provided for @themeWarm.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??'**
+  /// **'暖橘'**
   String get themeWarm;
 
   /// No description provided for @plateSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'盤子樣式'**
   String get plateSection;
 
   /// No description provided for @plateStyleLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'盤子款式'**
   String get plateStyleLabel;
 
   /// No description provided for @plateDefaultLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'預設瓷盤'**
   String get plateDefaultLabel;
 
   /// No description provided for @plateWarmLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'暖色陶瓷盤'**
   String get plateWarmLabel;
 
   /// No description provided for @apiSection.
   ///
   /// In zh_TW, this message translates to:
-  /// **'API ???'**
+  /// **'API 連線'**
   String get apiSection;
 
   /// No description provided for @apiBaseUrlLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'API 雿?'**
+  /// **'API 位址'**
   String get apiBaseUrlLabel;
 
   /// No description provided for @delete.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?芷'**
+  /// **'刪除'**
   String get delete;
 
   /// No description provided for @deleteConfirm.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蝣箏?閬?斗迨蝝??嚗?**
+  /// **'確定要刪除此紀錄嗎？'**
   String get deleteConfirm;
 
   /// No description provided for @logSuccess.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撌脰???'**
+  /// **'已記錄這餐'**
   String get logSuccess;
 
   /// No description provided for @viewLog.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?亦?蝝??**
+  /// **'查看紀錄'**
   String get viewLog;
 
   /// No description provided for @calories.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?梢?'**
+  /// **'熱量'**
   String get calories;
 
   /// No description provided for @estimated.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隡啗?'**
+  /// **'估計'**
   String get estimated;
 
   /// No description provided for @protein.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?鞈?**
+  /// **'蛋白質'**
   String get protein;
 
   /// No description provided for @carbs.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蝣單偌'**
+  /// **'碳水'**
   String get carbs;
 
   /// No description provided for @fat.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?'**
+  /// **'脂肪'**
   String get fat;
 
   /// No description provided for @sodium.
   ///
   /// In zh_TW, this message translates to:
-  /// **'???**
+  /// **'鈉含量'**
   String get sodium;
 
   /// No description provided for @tier.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撅斤?'**
+  /// **'層級'**
   String get tier;
 
   /// No description provided for @analyzeFailed.
   ///
   /// In zh_TW, this message translates to:
-  /// **'??憭望?'**
+  /// **'分析失敗'**
   String get analyzeFailed;
 
   /// No description provided for @costEstimateLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'隡啁??梯祥'**
+  /// **'估算花費'**
   String get costEstimateLabel;
 
   /// No description provided for @usageSection.
   ///
   /// In zh_TW, this message translates to:
-  /// **'AI ?梯祥'**
+  /// **'AI 花費'**
   String get usageSection;
 
   /// No description provided for @usageTotalLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蝝航??梯祥'**
+  /// **'累計花費'**
   String get usageTotalLabel;
 
   /// No description provided for @usageViewLog.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?亦?蝝??**
+  /// **'查看紀錄'**
   String get usageViewLog;
 
   /// No description provided for @usageEmpty.
   ///
   /// In zh_TW, this message translates to:
-  /// **'撠?梯祥蝝??**
+  /// **'尚無花費紀錄'**
   String get usageEmpty;
 
   /// No description provided for @usageLoading.
   ///
   /// In zh_TW, this message translates to:
-  /// **'頛銝?..'**
+  /// **'載入中...'**
   String get usageLoading;
 
-    /// No description provided for @mockPrefix.
-    ///
-    /// In zh_TW, this message translates to:
-    /// **'??'**
+  /// No description provided for @mockPrefix.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'虛假'**
   String get mockPrefix;
 
+  /// No description provided for @versionSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'版本資訊'**
   String get versionSection;
 
+  /// No description provided for @versionBuild.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'更新時間'**
   String get versionBuild;
 
+  /// No description provided for @versionCommit.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'版本代碼'**
   String get versionCommit;
 
+  /// No description provided for @versionUnavailable.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'無法取得版本資訊'**
   String get versionUnavailable;
 
+  /// No description provided for @dataSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'資料管理'**
   String get dataSection;
 
+  /// No description provided for @exportData.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'匯出資料'**
   String get exportData;
 
+  /// No description provided for @clearData.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'清除資料'**
   String get clearData;
 
+  /// No description provided for @clearDataConfirm.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'確定要清除所有資料嗎？'**
   String get clearDataConfirm;
 
+  /// No description provided for @exportDone.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已匯出'**
   String get exportDone;
 
+  /// No description provided for @clearDone.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已清除'**
   String get clearDone;
 }
 
@@ -1164,4 +1320,3 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       'on GitHub with a reproducible sample app and the gen-l10n configuration '
       'that was used.');
 }
-

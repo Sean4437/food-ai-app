@@ -6,6 +6,8 @@
   final String tier;
   final String source;
   final double? costEstimateUsd;
+  final double? confidence;
+  final bool? isBeverage;
 
   AnalysisResult({
     required this.foodName,
@@ -15,6 +17,8 @@
     required this.tier,
     required this.source,
     this.costEstimateUsd,
+    this.confidence,
+    this.isBeverage,
   });
 
   factory AnalysisResult.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@
       tier: json['tier'] as String,
       source: (json['source'] as String?) ?? 'mock',
       costEstimateUsd: (json['cost_estimate_usd'] as num?)?.toDouble(),
+      confidence: (json['confidence'] as num?)?.toDouble(),
+      isBeverage: json['is_beverage'] as bool?,
     );
   }
 
@@ -38,6 +44,8 @@
       'tier': tier,
       'source': source,
       'cost_estimate_usd': costEstimateUsd,
+      'confidence': confidence,
+      'is_beverage': isBeverage,
     };
   }
 }
