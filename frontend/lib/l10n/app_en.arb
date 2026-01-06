@@ -108,6 +108,8 @@
   "dayCardMealsLabel": "Meals analyzed:",
   "dayCardSummaryLabel": "Today summary",
   "dayCardTomorrowLabel": "Tomorrow advice",
+  "finalizeDay": "Finalize day",
+  "dishSummaryLabel": "Dish summary",
   "mealCountEmpty": "No meals analyzed",
   "calorieUnknown": "Not estimated",
   "portionLabel": "Portion",

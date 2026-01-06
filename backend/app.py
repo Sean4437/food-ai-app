@@ -1,7 +1,7 @@
 ﻿from fastapi import FastAPI, UploadFile, File, Query, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from dotenv import load_dotenv, dotenv_values
 from pathlib import Path
 from openai import OpenAI
@@ -35,6 +35,7 @@ class AnalysisResult(BaseModel):
     food_name: str
     calorie_range: str
     macros: Dict[str, str]
+    dish_summary: Optional[str] = None
     suggestion: str
     tier: str
     source: str
@@ -42,6 +43,26 @@ class AnalysisResult(BaseModel):
     confidence: Optional[float] = None
     is_beverage: Optional[bool] = None
     debug_reason: Optional[str] = None
+
+
+class MealSummaryInput(BaseModel):
+    meal_type: str
+    calorie_range: str
+    dish_summaries: List[str]
+
+
+class DaySummaryRequest(BaseModel):
+    date: str
+    meals: List[MealSummaryInput]
+    lang: Optional[str] = None
+    profile: Optional[dict] = None
+
+
+class DaySummaryResponse(BaseModel):
+    day_summary: str
+    tomorrow_advice: str
+    source: str
+    confidence: Optional[float] = None
 
 FREE_DAILY_LIMIT = int(os.getenv("FREE_DAILY_LIMIT", "1"))
 CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
@@ -136,6 +157,11 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
             meal_text = f"Meal type: {meal_type}\n"
             if meal_type in ("dinner", "late_snack"):
                 meal_text += "If this is dinner or a late-night snack, suggest avoiding additional late-night eating.\n"
+    if meal_photo_count and meal_photo_count > 1:
+        if lang == "zh-TW":
+            meal_text += f"此餐共有 {meal_photo_count} 張照片，請以整餐為單位輸出結果。\n"
+        else:
+            meal_text += f"This meal has {meal_photo_count} photos; summarize at the whole-meal level.\n"
     if lang == "zh-TW":
         return (
             "你是營養分析助理。請根據照片判斷餐點內容，回傳 JSON。\n"
@@ -144,8 +170,24 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
             "- food_name: 中文餐點名稱\n"
             "- calorie_range: 例如 '450-600 kcal'\n"
             "- macros: protein/carbs/fat/sodium 的值只能是 低/中/高\n"
+            "- dish_summary: 單一道菜的摘要（20 字內，描述重點/口味/負擔）\n"
             "- suggestion: 溫和、非醫療的下一餐建議，請給出具體食物類型\n"
+            "- confidence: 0 到 1 的信心分數\n"
+            "- is_beverage: 是否為飲料（true/false）\n"
+            "- 飲料規則：若為飲料，protein/fat 必為 低，熱量偏低；含糖可提升 carbs\n"
+            "- 若使用者提供 food_name，必須優先採用\n"
+            "- 避免醫療或診斷字眼；避免精準數值或克數，維持區間與語意描述\n"
             "- 若畫面中有硬幣或信用卡，請將其視為參考物估計份量；無則使用一般估計\n"
+            "JSON 範例：\n"
+            "{\n"
+            "  \"food_name\": \"牛肉便當\",\n"
+            "  \"calorie_range\": \"650-850 kcal\",\n"
+            "  \"macros\": {\"protein\": \"中\", \"carbs\": \"中\", \"fat\": \"高\", \"sodium\": \"高\"},\n"
+            "  \"dish_summary\": \"油脂偏多、蛋白足夠\",\n"
+            "  \"suggestion\": \"下一餐以清淡蛋白質與蔬菜為主，主食半碗即可。\",\n"
+            "  \"confidence\": 0.72,\n"
+            "  \"is_beverage\": false\n"
+            "}\n"
         ) + profile_text + note_text + meal_text
     return (
         "You are a nutrition assistant. Analyze the meal image and return JSON.\n"
@@ -154,9 +196,93 @@ def _build_prompt(lang: str, profile: dict, note: str | None, portion_percent: i
         "- food_name: English name\n"
         "- calorie_range: e.g. '450-600 kcal'\n"
         "- macros: protein/carbs/fat/sodium values must be low/medium/high\n"
+        "- dish_summary: single-dish summary (<= 20 words)\n"
         "- suggestion: gentle next-meal advice (non-medical), include concrete food types\n"
+        "- confidence: 0 to 1 confidence score\n"
+        "- is_beverage: true/false\n"
+        "- Beverage rule: if beverage, protein/fat must be low; calories should be low; sugary drinks may increase carbs\n"
+        "- If user provides food_name, it must be used as the primary name\n"
+        "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
         "- If a coin or credit card is visible, treat it as a size reference; otherwise estimate normally\n"
+        "JSON example:\n"
+        "{\n"
+        "  \"food_name\": \"beef bento\",\n"
+        "  \"calorie_range\": \"650-850 kcal\",\n"
+        "  \"macros\": {\"protein\": \"medium\", \"carbs\": \"medium\", \"fat\": \"high\", \"sodium\": \"high\"},\n"
+        "  \"dish_summary\": \"Heavier oil, decent protein\",\n"
+        "  \"suggestion\": \"Next meal: lean protein + veggies, smaller carbs.\",\n"
+        "  \"confidence\": 0.72,\n"
+        "  \"is_beverage\": false\n"
+        "}\n"
     ) + profile_text + note_text + meal_text
+
+
+def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryInput]) -> str:
+    profile_text = ""
+    if profile:
+        profile_text = (
+            f"User profile (do not mention exact values): {json.dumps(profile, ensure_ascii=True)}\n"
+            "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
+        )
+    meal_lines = []
+    for meal in meals:
+        summaries = "; ".join(meal.dish_summaries) if meal.dish_summaries else "no dish summary"
+        meal_lines.append(f"- {meal.meal_type}: {meal.calorie_range} | {summaries}")
+    meal_block = "\n".join(meal_lines)
+    if lang == "zh-TW":
+        return (
+            "你是營養分析助理。請根據當日多餐摘要，輸出今日總結與明天建議，回傳 JSON。\n"
+            "要求：\n"
+            "- 僅回傳 JSON（不要多餘文字）\n"
+            "- day_summary: 一句話總結（30 字內）\n"
+            "- tomorrow_advice: 明天一餐的方向（一句話）\n"
+            "- confidence: 0 到 1 的信心分數\n"
+            "- 避免醫療或診斷字眼；避免精準數值或克數\n"
+            "JSON 範例：\n"
+            "{\n"
+            "  \"day_summary\": \"整體均衡，油脂略多\",\n"
+            "  \"tomorrow_advice\": \"明天以清淡蛋白質與蔬菜為主\",\n"
+            "  \"confidence\": 0.7\n"
+            "}\n"
+            f"餐次摘要：\n{meal_block}\n"
+        ) + profile_text
+    return (
+        "You are a nutrition assistant. Based on day meal summaries, return JSON.\n"
+        "Requirements:\n"
+        "- Return JSON only\n"
+        "- day_summary: one-sentence summary (<= 30 words)\n"
+        "- tomorrow_advice: one sentence guidance for tomorrow\n"
+        "- confidence: 0 to 1\n"
+        "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
+        "JSON example:\n"
+        "{\n"
+        "  \"day_summary\": \"Overall balanced, slightly higher fat\",\n"
+        "  \"tomorrow_advice\": \"Aim for lean protein and more vegetables\",\n"
+        "  \"confidence\": 0.7\n"
+        "}\n"
+        f"Meal summaries:\n{meal_block}\n"
+    ) + profile_text
+
+
+def _fallback_day_summary(lang: str, meals: List[MealSummaryInput]) -> dict:
+    dish_text = " ".join([item for meal in meals for item in (meal.dish_summaries or [])])
+    oily = any(word in dish_text for word in ["炸", "油", "酥", "奶油", "fried", "oily"])
+    salty = any(word in dish_text for word in ["鹹", "鈉", "鹽", "salty", "sodium"])
+    if lang == "zh-TW":
+        if oily and salty:
+            return {"day_summary": "油脂與鹽分偏高，注意清淡", "tomorrow_advice": "明天以清湯、蔬菜與瘦蛋白為主", "confidence": 0.5}
+        if oily:
+            return {"day_summary": "油脂偏高，整體尚可", "tomorrow_advice": "明天以清淡蛋白質與蔬菜為主", "confidence": 0.5}
+        if salty:
+            return {"day_summary": "鹽分略多，注意水分與清淡", "tomorrow_advice": "明天以清湯蔬菜搭配瘦蛋白", "confidence": 0.5}
+        return {"day_summary": "整體均衡，維持即可", "tomorrow_advice": "明天以蛋白質與蔬菜為主", "confidence": 0.5}
+    if oily and salty:
+        return {"day_summary": "Higher fat and sodium today", "tomorrow_advice": "Tomorrow: lean protein + veggies", "confidence": 0.5}
+    if oily:
+        return {"day_summary": "Fat intake a bit high", "tomorrow_advice": "Tomorrow: lighter protein and veggies", "confidence": 0.5}
+    if salty:
+        return {"day_summary": "Sodium a bit high", "tomorrow_advice": "Tomorrow: clear soup + veggies", "confidence": 0.5}
+    return {"day_summary": "Overall balanced", "tomorrow_advice": "Tomorrow: lean protein + veggies", "confidence": 0.5}
 
 
 def _estimate_cost_usd(input_tokens: int, output_tokens: int) -> float:
@@ -260,6 +386,7 @@ def _analyze_with_openai(
         data["macros"].setdefault("sodium", "中" if lang == "zh-TW" else "medium")
     data.setdefault("confidence", 0.6)
     data.setdefault("is_beverage", False)
+    data.setdefault("dish_summary", "")
 
     usage = response.usage
     usage_data = None
@@ -304,6 +431,7 @@ async def analyze_image(
                 food_name=cached_result.get("food_name", ""),
                 calorie_range=cached_result.get("calorie_range", ""),
                 macros=cached_result.get("macros", {}),
+                dish_summary=cached_result.get("dish_summary", ""),
                 suggestion=cached_result.get("suggestion", ""),
                 tier="cached",
                 source="cache",
@@ -361,6 +489,7 @@ async def analyze_image(
                         "food_name": final_name,
                         "calorie_range": payload["result"]["calorie_range"],
                         "macros": payload["result"]["macros"],
+                        "dish_summary": payload["result"].get("dish_summary", ""),
                         "suggestion": payload["result"]["suggestion"],
                     },
                 }
@@ -369,6 +498,7 @@ async def analyze_image(
                     food_name=final_name,
                     calorie_range=payload["result"]["calorie_range"],
                     macros=payload["result"]["macros"],
+                    dish_summary=payload["result"].get("dish_summary", ""),
                     suggestion=payload["result"]["suggestion"],
                     tier=tier,
                     source="ai",
@@ -405,6 +535,7 @@ async def analyze_image(
         food_name=chosen_name,
         calorie_range=calorie_range,
         macros=macros,
+        dish_summary="",
         suggestion=suggestion,
         tier=tier,
         source="mock",
@@ -412,6 +543,42 @@ async def analyze_image(
         confidence=0.35,
         is_beverage=False,
         debug_reason=debug_reason,
+    )
+
+
+@app.post("/summarize_day", response_model=DaySummaryResponse)
+async def summarize_day(payload: DaySummaryRequest):
+    use_lang = payload.lang or DEFAULT_LANG
+    if use_lang not in _fake_foods:
+        use_lang = "zh-TW"
+    use_ai = _should_use_ai()
+    if use_ai and _client is not None:
+        try:
+            prompt = _build_day_prompt(use_lang, payload.profile or {}, payload.meals)
+            response = _client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+            )
+            text = response.choices[0].message.content or ""
+            data = _parse_json(text)
+            if isinstance(data, dict) and "day_summary" in data and "tomorrow_advice" in data:
+                return DaySummaryResponse(
+                    day_summary=data.get("day_summary", ""),
+                    tomorrow_advice=data.get("tomorrow_advice", ""),
+                    source="ai",
+                    confidence=(data.get("confidence") or 0.6),
+                )
+        except Exception as exc:
+            global _last_ai_error
+            _last_ai_error = str(exc)
+            logging.exception("Day summary failed: %s", exc)
+    fallback = _fallback_day_summary(use_lang, payload.meals)
+    return DaySummaryResponse(
+        day_summary=fallback.get("day_summary", ""),
+        tomorrow_advice=fallback.get("tomorrow_advice", ""),
+        source="mock",
+        confidence=fallback.get("confidence", 0.5),
     )
 
 

@@ -2,6 +2,7 @@
   final String foodName;
   final String calorieRange;
   final Map<String, String> macros;
+  final String? dishSummary;
   final String suggestion;
   final String tier;
   final String source;
@@ -13,6 +14,7 @@
     required this.foodName,
     required this.calorieRange,
     required this.macros,
+    this.dishSummary,
     required this.suggestion,
     required this.tier,
     required this.source,
@@ -26,6 +28,7 @@
       foodName: json['food_name'] as String,
       calorieRange: json['calorie_range'] as String,
       macros: Map<String, String>.from(json['macros'] as Map),
+      dishSummary: json['dish_summary'] as String?,
       suggestion: json['suggestion'] as String,
       tier: json['tier'] as String,
       source: (json['source'] as String?) ?? 'mock',
@@ -40,6 +43,7 @@
       'food_name': foodName,
       'calorie_range': calorieRange,
       'macros': macros,
+      'dish_summary': dishSummary,
       'suggestion': suggestion,
       'tier': tier,
       'source': source,

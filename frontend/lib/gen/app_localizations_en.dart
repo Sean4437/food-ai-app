@@ -318,6 +318,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dayCardTomorrowLabel => 'Tomorrow advice';
+  String get finalizeDay => 'Finalize day';
+  String get dishSummaryLabel => 'Dish summary';
 
   @override
   String get mealCountEmpty => 'No meals analyzed';

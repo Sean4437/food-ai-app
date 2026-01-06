@@ -68,4 +68,19 @@ class ApiService {
     return AnalysisResult.fromJson(jsonMap);
   }
 
+  Future<Map<String, dynamic>> summarizeDay(
+    Map<String, dynamic> payload,
+  ) async {
+    final uri = Uri.parse('$baseUrl/summarize_day');
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(payload),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Summarize failed: ${response.statusCode}');
+    }
+    return json.decode(response.body) as Map<String, dynamic>;
+  }
+
 }

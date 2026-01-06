@@ -188,6 +188,56 @@ class AppState extends ChangeNotifier {
     return summary?.advice ?? t.nextMealHint;
   }
 
+  Future<void> finalizeDay(DateTime date, String locale, AppLocalizations t) async {
+    final groups = mealGroupsForDateAll(date);
+    if (groups.isEmpty) return;
+    final meals = <Map<String, dynamic>>[];
+    for (final group in groups) {
+      final summary = buildMealSummary(group, t);
+      final dishSummaries = <String>[];
+      for (final entry in group) {
+        final summaryText = entry.result?.dishSummary?.trim();
+        if (summaryText != null && summaryText.isNotEmpty) {
+          dishSummaries.add(summaryText);
+          continue;
+        }
+        final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? '';
+        if (fallback.isNotEmpty) {
+          dishSummaries.add(fallback);
+        }
+      }
+      meals.add({
+        'meal_type': _mealTypeKey(group.first.type),
+        'calorie_range': summary?.calorieRange ?? '',
+        'dish_summaries': dishSummaries,
+      });
+    }
+    final payload = {
+      'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+      'lang': locale,
+      'meals': meals,
+      'profile': {
+        'height_cm': profile.heightCm,
+        'weight_kg': profile.weightKg,
+        'age': profile.age,
+        'goal': profile.goal,
+        'plan_speed': profile.planSpeed,
+      },
+    };
+    try {
+      final response = await _api.summarizeDay(payload);
+      final summaryText = (response['day_summary'] as String?) ?? '';
+      final adviceText = (response['tomorrow_advice'] as String?) ?? '';
+      await updateDayOverride(
+        date,
+        summary: summaryText,
+        tomorrowAdvice: adviceText,
+      );
+    } catch (_) {
+      // Keep existing summary if summarize fails
+    }
+  }
+
   String dayMealLabels(DateTime date, AppLocalizations t) {
     final groups = mealGroupsForDateAll(date);
     if (groups.isEmpty) return t.mealCountEmpty;

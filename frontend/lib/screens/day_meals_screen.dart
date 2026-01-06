@@ -161,6 +161,32 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     );
   }
 
+  Widget _dishSummaryBlock(List<MealEntry> group, AppLocalizations t) {
+    final items = <String>[];
+    for (final entry in group) {
+      final summary = entry.result?.dishSummary?.trim();
+      if (summary != null && summary.isNotEmpty) {
+        items.add(summary);
+        continue;
+      }
+      final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
+      if (fallback.isNotEmpty) items.add(fallback);
+    }
+    if (items.isEmpty) {
+      return Text(t.detailAiEmpty, style: const TextStyle(color: Colors.black54));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final item in items)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text('• $item', style: const TextStyle(color: Colors.black54)),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
@@ -263,6 +289,12 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                     if (currentGroup != null) ...[
                       const SizedBox(height: 14),
                       _thumbnailRow(currentGroup),
+                    ],
+                    if (currentGroup != null) ...[
+                      const SizedBox(height: 14),
+                      Text(t.dishSummaryLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      _dishSummaryBlock(currentGroup, t),
                     ],
                     const SizedBox(height: 12),
                     Row(

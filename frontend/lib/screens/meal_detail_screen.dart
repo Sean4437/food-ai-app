@@ -247,6 +247,10 @@ class MealDetailScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if ((entry.result!.dishSummary ?? '').trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(entry.result!.dishSummary!, style: const TextStyle(color: Colors.black54)),
+                        ],
                       ],
                       Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),

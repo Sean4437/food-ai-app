@@ -173,6 +173,10 @@ class _HomeScreenState extends State<HomeScreen> {
               Text('${t.dayCardDateLabel} ${formatter.format(date)}', style: const TextStyle(fontWeight: FontWeight.w600)),
               const Spacer(),
               TextButton(
+                onPressed: () => app.finalizeDay(date, Localizations.localeOf(context).toLanguageTag(), t),
+                child: Text(t.finalizeDay),
+              ),
+              TextButton(
                 onPressed: () => _editDaySummary(app, date, t),
                 child: Text(t.edit),
               ),

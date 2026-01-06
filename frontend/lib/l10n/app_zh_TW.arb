@@ -108,6 +108,8 @@
   "dayCardMealsLabel": "分析餐數：",
   "dayCardSummaryLabel": "今天飲食總結",
   "dayCardTomorrowLabel": "明天建議",
+  "finalizeDay": "結算今天",
+  "dishSummaryLabel": "菜色摘要",
   "mealCountEmpty": "尚未分析餐次",
   "calorieUnknown": "尚未估計",
   "portionLabel": "份量",

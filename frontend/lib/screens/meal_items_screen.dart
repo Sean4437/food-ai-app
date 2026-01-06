@@ -63,6 +63,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
 
   Widget _itemCard(BuildContext context, MealEntry entry, String plateAsset) {
     final t = AppLocalizations.of(context)!;
+    final dishSummary = entry.result?.dishSummary?.trim();
     return GestureDetector(
       onTap: () => _showImagePreview(context, entry),
       onLongPress: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
@@ -84,6 +85,9 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
             Text(entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood,
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
+            if (dishSummary != null && dishSummary.isNotEmpty)
+              Text(dishSummary, style: const TextStyle(color: Colors.black54)),
+            if (dishSummary != null && dishSummary.isNotEmpty) const SizedBox(height: 4),
             Text('${t.portionLabel} ${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
           ],
         ),

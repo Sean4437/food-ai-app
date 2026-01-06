@@ -312,6 +312,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dayCardTomorrowLabel => '明天建議';
+  String get finalizeDay => '結算今天';
+  String get dishSummaryLabel => '菜色摘要';
 
   @override
   String get mealCountEmpty => '尚未分析餐次';
@@ -907,6 +909,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dayCardTomorrowLabel => '明天建議';
+  String get finalizeDay => '結算今天';
+  String get dishSummaryLabel => '菜色摘要';
 
   @override
   String get mealCountEmpty => '尚未分析餐次';

@@ -704,6 +704,8 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'明天建議'**
   String get dayCardTomorrowLabel;
+  String get finalizeDay;
+  String get dishSummaryLabel;
 
   /// No description provided for @mealCountEmpty.
   ///
