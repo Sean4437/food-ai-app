@@ -297,7 +297,6 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
       _pageIndex = 0;
     }
     final currentEntry = sorted.isEmpty ? null : sorted[_pageIndex];
-    final mealSummary = sorted.isEmpty ? null : app.buildMealSummary(sorted, t);
     final screenWidth = MediaQuery.of(context).size.width;
     final contentWidth = (screenWidth - 32) * 0.86;
     return Scaffold(
@@ -351,8 +350,14 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                mealSummary?.advice ?? t.detailAiEmpty,
-                                style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+                                (currentEntry?.result?.dishSummary?.trim().isNotEmpty == true)
+                                    ? currentEntry!.result!.dishSummary!.trim()
+                                    : t.detailAiEmpty,
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
@@ -365,7 +370,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
-                            mealSummary?.calorieRange ?? t.calorieUnknown,
+                            currentEntry?.result?.calorieRange ?? t.calorieUnknown,
                             style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
                           ),
                         ),
