@@ -1,6 +1,6 @@
-import 'dart:math' as math;
-import 'package:flutter/material.dart';
-import 'package:food_ai_app/gen/app_localizations.dart';
+import "dart:math" as math;
+import "package:flutter/material.dart";
+import "package:food_ai_app/gen/app_localizations.dart";
 
 enum NutritionChartStyle {
   radar,
@@ -16,7 +16,7 @@ class NutritionChart extends StatelessWidget {
     required this.t,
   });
 
-  final Map<String, String> macros;
+  final Map<String, double> macros;
   final NutritionChartStyle style;
   final AppLocalizations t;
 
@@ -27,29 +27,21 @@ class NutritionChart extends StatelessWidget {
     Color(0xFF8AB4F8), // sodium
   ];
 
-  double _ratioFromValue(String value) {
-    final v = value.toLowerCase();
-    if (v.contains('偏高') || v.contains('slightly high')) return 0.7;
-    if (v.contains('偏低') || v.contains('slightly low')) return 0.4;
-    if (v.contains('高') || v.contains('high')) return 0.8;
-    if (v.contains('低') || v.contains('low')) return 0.3;
-    if (v.contains('中') || v.contains('medium')) return 0.55;
-    return 0.55;
+  double _ratioFromValue(double value) {
+    if (value <= 1) return value;
+    return (value.clamp(0, 100)) / 100;
   }
 
-  String _displayValue(String rawValue, double ratio) {
-    final match = RegExp(r'\d+(\.\d+)?').firstMatch(rawValue);
-    if (match != null) {
-      return rawValue.trim();
-    }
-    return '${(ratio * 100).round()}%';
+  String _displayValue(double value) {
+    final normalized = value <= 1 ? (value * 100) : value;
+    return "${normalized.round()}%";
   }
 
   List<_MacroPoint> _macroPoints() {
-    final protein = macros['protein'] ?? t.levelMedium;
-    final carbs = macros['carbs'] ?? t.levelMedium;
-    final fat = macros['fat'] ?? t.levelMedium;
-    final sodium = macros['sodium'] ?? t.levelMedium;
+    final protein = macros["protein"] ?? 55;
+    final carbs = macros["carbs"] ?? 55;
+    final fat = macros["fat"] ?? 55;
+    final sodium = macros["sodium"] ?? 55;
     final proteinRatio = _ratioFromValue(protein);
     final carbsRatio = _ratioFromValue(carbs);
     final fatRatio = _ratioFromValue(fat);
@@ -81,7 +73,7 @@ class _MacroPoint {
   _MacroPoint(this.label, this.rawValue, this.ratio, this.color, this.icon);
 
   final String label;
-  final String rawValue;
+  final double rawValue;
   final double ratio;
   final Color color;
   final IconData icon;
@@ -94,7 +86,7 @@ class _RadarChart extends StatelessWidget {
   });
 
   final List<_MacroPoint> points;
-  final String Function(String, double) displayValue;
+  final String Function(double) displayValue;
 
   @override
   Widget build(BuildContext context) {
@@ -132,14 +124,14 @@ class _RadarChart extends StatelessWidget {
     );
   }
 
-  Widget _nutrientValue(_MacroPoint point, String Function(String, double) displayValue, TextAlign align) {
+  Widget _nutrientValue(_MacroPoint point, String Function(double) displayValue, TextAlign align) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(point.icon, size: 16, color: point.color),
         const SizedBox(width: 6),
         Text(
-          '${point.label} ${displayValue(point.rawValue, point.ratio)}',
+          "${point.label} ${displayValue(point.rawValue)}",
           style: const TextStyle(fontSize: 11, color: Colors.black54),
           textAlign: align,
         ),
@@ -147,14 +139,14 @@ class _RadarChart extends StatelessWidget {
     );
   }
 
-  Widget _nutrientStack(_MacroPoint point, String Function(String, double) displayValue, TextAlign align) {
+  Widget _nutrientStack(_MacroPoint point, String Function(double) displayValue, TextAlign align) {
     return Column(
       crossAxisAlignment: align == TextAlign.right ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         Icon(point.icon, size: 16, color: point.color),
         const SizedBox(height: 4),
         Text(
-          '${point.label} ${displayValue(point.rawValue, point.ratio)}',
+          "${point.label} ${displayValue(point.rawValue)}",
           style: const TextStyle(fontSize: 11, color: Colors.black54),
           textAlign: align,
         ),
@@ -259,7 +251,7 @@ class _BarsChart extends StatelessWidget {
   const _BarsChart({required this.points, required this.displayValue});
 
   final List<_MacroPoint> points;
-  final String Function(String, double) displayValue;
+  final String Function(double) displayValue;
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +275,7 @@ class _MacroBar extends StatelessWidget {
   });
 
   final _MacroPoint point;
-  final String Function(String, double) displayValue;
+  final String Function(double) displayValue;
 
   @override
   Widget build(BuildContext context) {
@@ -314,31 +306,31 @@ class _MacroBar extends StatelessWidget {
               Positioned.fill(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Row(
-                        children: [
-                          Icon(point.icon, size: 14, color: Colors.white),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              point.label,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                  child: Row(
+                    children: [
+                      Icon(point.icon, size: 14, color: Colors.white),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          point.label,
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
-                          Text(
-                            displayValue(point.rawValue, point.ratio),
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      Text(
+                        displayValue(point.rawValue),
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -353,7 +345,7 @@ class _DonutChart extends StatelessWidget {
   const _DonutChart({required this.points, required this.displayValue});
 
   final List<_MacroPoint> points;
-  final String Function(String, double) displayValue;
+  final String Function(double) displayValue;
 
   @override
   Widget build(BuildContext context) {
@@ -379,7 +371,7 @@ class _DonutChart extends StatelessWidget {
                         valueColor: AlwaysStoppedAnimation<Color>(point.color),
                       ),
                       Text(
-                        displayValue(point.rawValue, point.ratio),
+                        displayValue(point.rawValue),
                         style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                     ],

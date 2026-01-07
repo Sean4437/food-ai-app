@@ -1,7 +1,7 @@
 ﻿class AnalysisResult {
   final String foodName;
   final String calorieRange;
-  final Map<String, String> macros;
+  final Map<String, double> macros;
   final String? dishSummary;
   final String suggestion;
   final String tier;
@@ -24,10 +24,25 @@
   });
 
   factory AnalysisResult.fromJson(Map<String, dynamic> json) {
+    final rawMacros = (json['macros'] as Map?) ?? {};
+    final parsedMacros = <String, double>{};
+    rawMacros.forEach((key, value) {
+      if (value is num) {
+        parsedMacros[key.toString()] = value.toDouble();
+      } else if (value is String) {
+        final cleaned = value.replaceAll('%', '').trim();
+        final numeric = double.tryParse(cleaned);
+        if (numeric != null) {
+          parsedMacros[key.toString()] = numeric;
+        } else {
+          parsedMacros[key.toString()] = _macroLevelToPercent(cleaned);
+        }
+      }
+    });
     return AnalysisResult(
       foodName: json['food_name'] as String,
       calorieRange: json['calorie_range'] as String,
-      macros: Map<String, String>.from(json['macros'] as Map),
+      macros: parsedMacros,
       dishSummary: json['dish_summary'] as String?,
       suggestion: json['suggestion'] as String,
       tier: json['tier'] as String,
@@ -52,4 +67,11 @@
       'is_beverage': isBeverage,
     };
   }
+}
+
+double _macroLevelToPercent(String value) {
+  final lower = value.toLowerCase();
+  if (value.contains('低') || lower.contains('low')) return 30;
+  if (value.contains('高') || lower.contains('high')) return 80;
+  return 55;
 }

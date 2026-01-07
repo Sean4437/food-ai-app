@@ -45,10 +45,10 @@ class AppState extends ChangeNotifier {
     final last = recent.first;
     final lastName = last.overrideFoodName ?? last.result?.foodName ?? last.filename;
     final lastSummary = last.result?.dishSummary ?? '';
-    final protein = _scoreToLevelPlain(_aggregateMacroScorePlain(recent, 'protein'));
-    final carbs = _scoreToLevelPlain(_aggregateMacroScorePlain(recent, 'carbs'));
-    final fat = _scoreToLevelPlain(_aggregateMacroScorePlain(recent, 'fat'));
-    final sodium = _scoreToLevelPlain(_aggregateMacroScorePlain(recent, 'sodium'));
+    final protein = _aggregateMacroPercentPlain(recent, 'protein').round();
+    final carbs = _aggregateMacroPercentPlain(recent, 'carbs').round();
+    final fat = _aggregateMacroPercentPlain(recent, 'fat').round();
+    final sodium = _aggregateMacroPercentPlain(recent, 'sodium').round();
     return [
       'last_meal_type=${_mealTypeKey(last.type)}',
       'last_meal_name=$lastName',
@@ -250,10 +250,10 @@ class AppState extends ChangeNotifier {
   String todayStatusLabel(AppLocalizations t) {
     final entry = latestEntryForSelectedDate;
     if (entry == null || entry.result == null) return t.suggestTodayHint;
-    final fat = entry.result!.macros['fat'] ?? '';
-    final carbs = entry.result!.macros['carbs'] ?? '';
-    final oily = fat.contains(t.levelHigh) || fat.toLowerCase().contains('high');
-    final carbHigh = carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high');
+    final fat = entry.result!.macros['fat'] ?? 0;
+    final carbs = entry.result!.macros['carbs'] ?? 0;
+    final oily = _isHigh(fat);
+    final carbHigh = _isHigh(carbs);
     if (oily && carbHigh) return t.suggestTodayOilyCarb;
     if (oily) return t.suggestTodayOily;
     if (carbHigh) return t.suggestTodayCarb;
@@ -263,15 +263,12 @@ class AppState extends ChangeNotifier {
   String todaySummary(AppLocalizations t) {
     final entry = latestEntryForSelectedDate;
     if (entry == null || entry.result == null) return t.summaryEmpty;
-    final fat = entry.result!.macros['fat'] ?? '';
-    final protein = entry.result!.macros['protein'] ?? '';
-    final carbs = entry.result!.macros['carbs'] ?? '';
-    final oily = fat.contains(t.levelHigh) || fat.toLowerCase().contains('high');
-    final proteinOk = protein.contains(t.levelMedium) ||
-        protein.contains(t.levelHigh) ||
-        protein.toLowerCase().contains('medium') ||
-        protein.toLowerCase().contains('high');
-    final carbHigh = carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high');
+    final fat = entry.result!.macros['fat'] ?? 0;
+    final protein = entry.result!.macros['protein'] ?? 0;
+    final carbs = entry.result!.macros['carbs'] ?? 0;
+    final oily = _isHigh(fat);
+    final proteinOk = _isProteinOk(protein);
+    final carbHigh = _isHigh(carbs);
     if (oily && carbHigh) return t.summaryOilyCarb;
     if (oily) return t.summaryOily;
     if (carbHigh) return t.summaryCarb;
@@ -562,10 +559,10 @@ class AppState extends ChangeNotifier {
     double totalWeight = 0;
     double minSum = 0;
     double maxSum = 0;
-    double proteinScore = 0;
-    double carbScore = 0;
-    double fatScore = 0;
-    double sodiumScore = 0;
+    double proteinSum = 0;
+    double carbSum = 0;
+    double fatSum = 0;
+    double sodiumSum = 0;
 
     for (final entry in group) {
       final result = entry.result;
@@ -577,18 +574,18 @@ class AppState extends ChangeNotifier {
         minSum += range[0] * weight;
         maxSum += range[1] * weight;
       }
-      proteinScore += _levelScore(result.macros['protein'] ?? '', t) * weight;
-      carbScore += _levelScore(result.macros['carbs'] ?? '', t) * weight;
-      fatScore += _levelScore(result.macros['fat'] ?? '', t) * weight;
-      sodiumScore += _levelScore(result.macros['sodium'] ?? '', t) * weight;
+      proteinSum += (result.macros['protein'] ?? 0) * weight;
+      carbSum += (result.macros['carbs'] ?? 0) * weight;
+      fatSum += (result.macros['fat'] ?? 0) * weight;
+      sodiumSum += (result.macros['sodium'] ?? 0) * weight;
     }
 
     if (totalWeight == 0) return null;
-    final macros = <String, String>{
-      'protein': _scoreToLevel(proteinScore / totalWeight, t),
-      'carbs': _scoreToLevel(carbScore / totalWeight, t),
-      'fat': _scoreToLevel(fatScore / totalWeight, t),
-      'sodium': _scoreToLevel(sodiumScore / totalWeight, t),
+    final macros = <String, double>{
+      'protein': proteinSum / totalWeight,
+      'carbs': carbSum / totalWeight,
+      'fat': fatSum / totalWeight,
+      'sodium': sodiumSum / totalWeight,
     };
     final dishSummary = _buildMealDishSummary(group);
     final advice = dishSummary.isNotEmpty ? dishSummary : _buildMealAdvice(macros, t);
@@ -602,10 +599,10 @@ class AppState extends ChangeNotifier {
     double totalWeight = 0;
     double minSum = 0;
     double maxSum = 0;
-    double proteinScore = 0;
-    double carbScore = 0;
-    double fatScore = 0;
-    double sodiumScore = 0;
+    double proteinSum = 0;
+    double carbSum = 0;
+    double fatSum = 0;
+    double sodiumSum = 0;
 
     for (final entry in dayEntries) {
       final result = entry.result;
@@ -617,18 +614,18 @@ class AppState extends ChangeNotifier {
         minSum += range[0] * weight;
         maxSum += range[1] * weight;
       }
-      proteinScore += _levelScore(result.macros['protein'] ?? '', t) * weight;
-      carbScore += _levelScore(result.macros['carbs'] ?? '', t) * weight;
-      fatScore += _levelScore(result.macros['fat'] ?? '', t) * weight;
-      sodiumScore += _levelScore(result.macros['sodium'] ?? '', t) * weight;
+      proteinSum += (result.macros['protein'] ?? 0) * weight;
+      carbSum += (result.macros['carbs'] ?? 0) * weight;
+      fatSum += (result.macros['fat'] ?? 0) * weight;
+      sodiumSum += (result.macros['sodium'] ?? 0) * weight;
     }
 
     if (totalWeight == 0) return null;
-    final macros = <String, String>{
-      'protein': _scoreToLevel(proteinScore / totalWeight, t),
-      'carbs': _scoreToLevel(carbScore / totalWeight, t),
-      'fat': _scoreToLevel(fatScore / totalWeight, t),
-      'sodium': _scoreToLevel(sodiumScore / totalWeight, t),
+    final macros = <String, double>{
+      'protein': proteinSum / totalWeight,
+      'carbs': carbSum / totalWeight,
+      'fat': fatSum / totalWeight,
+      'sodium': sodiumSum / totalWeight,
     };
     final advice = _buildMealAdvice(macros, t);
     final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
@@ -1037,13 +1034,13 @@ class AppState extends ChangeNotifier {
       if (result == null) continue;
       final weight = _portionWeight(entry.portionPercent);
       totalWeight += weight;
-      score += _levelScore(result.macros[key] ?? '', t) * weight;
+      score += _levelScorePercent(result.macros[key] ?? 0) * weight;
     }
     if (totalWeight == 0) return 0;
     return score / totalWeight;
   }
 
-  double _aggregateMacroScorePlain(List<MealEntry> dayEntries, String key) {
+  double _aggregateMacroPercentPlain(List<MealEntry> dayEntries, String key) {
     double totalWeight = 0;
     double score = 0;
     for (final entry in dayEntries) {
@@ -1051,7 +1048,7 @@ class AppState extends ChangeNotifier {
       if (result == null) continue;
       final weight = _portionWeight(entry.portionPercent);
       totalWeight += weight;
-      score += _levelScorePlain(result.macros[key] ?? '') * weight;
+      score += (result.macros[key] ?? 0) * weight;
     }
     if (totalWeight == 0) return 0;
     return score / totalWeight;
@@ -1103,19 +1100,15 @@ class AppState extends ChangeNotifier {
     return safe / 100.0;
   }
 
-  double _levelScore(String value, AppLocalizations t) {
-    final lower = value.toLowerCase();
-    if (lower.contains(t.levelHigh) || lower.contains('high')) return 3.0;
-    if (lower.contains(t.levelLow) || lower.contains('low')) return 1.0;
+  double _levelScorePercent(double value) {
+    if (value >= 70) return 3.0;
+    if (value <= 35) return 1.0;
     return 2.0;
   }
 
-  double _levelScorePlain(String value) {
-    final lower = value.toLowerCase();
-    if (value.contains('高') || lower.contains('high')) return 3.0;
-    if (value.contains('低') || lower.contains('low')) return 1.0;
-    return 2.0;
-  }
+  bool _isHigh(double value) => value >= 70;
+  bool _isLow(double value) => value <= 35;
+  bool _isProteinOk(double value) => value >= 45;
 
   String _scoreToLevel(double score, AppLocalizations t) {
     if (score <= 1.6) return t.levelLow;
@@ -1123,22 +1116,16 @@ class AppState extends ChangeNotifier {
     return t.levelMedium;
   }
 
-  String _scoreToLevelPlain(double score) {
-    if (score <= 1.6) return 'low';
-    if (score >= 2.4) return 'high';
-    return 'medium';
-  }
-
-  String _buildMealAdvice(Map<String, String> macros, AppLocalizations t) {
+  String _buildMealAdvice(Map<String, double> macros, AppLocalizations t) {
     final advice = <String>[];
-    final protein = macros['protein'] ?? '';
-    final fat = macros['fat'] ?? '';
-    final carbs = macros['carbs'] ?? '';
-    final sodium = macros['sodium'] ?? '';
-    if (protein.contains(t.levelLow) || protein.toLowerCase().contains('low')) advice.add(t.dietitianProteinLow);
-    if (fat.contains(t.levelHigh) || fat.toLowerCase().contains('high')) advice.add(t.dietitianFatHigh);
-    if (carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high')) advice.add(t.dietitianCarbHigh);
-    if (sodium.contains(t.levelHigh) || sodium.toLowerCase().contains('high')) advice.add(t.dietitianSodiumHigh);
+    final protein = macros['protein'] ?? 0;
+    final fat = macros['fat'] ?? 0;
+    final carbs = macros['carbs'] ?? 0;
+    final sodium = macros['sodium'] ?? 0;
+    if (_isLow(protein)) advice.add(t.dietitianProteinLow);
+    if (_isHigh(fat)) advice.add(t.dietitianFatHigh);
+    if (_isHigh(carbs)) advice.add(t.dietitianCarbHigh);
+    if (_isHigh(sodium)) advice.add(t.dietitianSodiumHigh);
     final line = advice.isEmpty ? t.dietitianBalanced : advice.take(2).join('、');
     final goalLower = profile.goal.toLowerCase();
     final loseFat = profile.goal == t.goalLoseFat ||
@@ -1294,7 +1281,7 @@ class MealSummary {
   });
 
   final String calorieRange;
-  final Map<String, String> macros;
+  final Map<String, double> macros;
   final String advice;
 }
 

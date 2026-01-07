@@ -34,7 +34,7 @@ app.add_middleware(
 class AnalysisResult(BaseModel):
     food_name: str
     calorie_range: str
-    macros: Dict[str, str]
+    macros: Dict[str, float]
     dish_summary: Optional[str] = None
     suggestion: str
     tier: str
@@ -113,10 +113,52 @@ _fake_suggestions = {
     ],
 }
 
-_fake_macros = {
-    "zh-TW": ["低", "中", "高"],
-    "en": ["low", "medium", "high"],
-}
+_fake_macro_choices = [25, 40, 55, 70, 85]
+
+
+def _macro_level_to_percent(value: str) -> int:
+    lower = value.lower()
+    if value in ("低", "偏低") or "low" in lower:
+        return 30
+    if value in ("高", "偏高") or "high" in lower:
+        return 80
+    return 55
+
+
+def _normalize_macro_value(value) -> float:
+    if isinstance(value, (int, float)):
+        return float(max(0, min(100, value)))
+    if isinstance(value, str):
+        stripped = value.strip()
+        try:
+            num = float(stripped.replace("%", ""))
+            return float(max(0, min(100, num)))
+        except Exception:
+            return float(_macro_level_to_percent(stripped))
+    return 55.0
+
+
+def _normalize_macros(data: dict, lang: str) -> dict:
+    macros = data.get("macros") if isinstance(data, dict) else None
+    if not isinstance(macros, dict):
+        macros = {}
+    macros = {
+        "protein": _normalize_macro_value(macros.get("protein", 55)),
+        "carbs": _normalize_macro_value(macros.get("carbs", 55)),
+        "fat": _normalize_macro_value(macros.get("fat", 55)),
+        "sodium": _normalize_macro_value(macros.get("sodium", 55)),
+    }
+    is_beverage = False
+    if isinstance(data, dict):
+        raw_flag = data.get("is_beverage")
+        if isinstance(raw_flag, bool):
+            is_beverage = raw_flag
+        elif isinstance(raw_flag, str):
+            is_beverage = raw_flag.strip().lower() == "true"
+    if is_beverage:
+        macros["protein"] = min(macros["protein"], 15.0)
+        macros["fat"] = min(macros["fat"], 15.0)
+    return macros
 
 
 def _parse_json(text: str) -> Optional[dict]:
@@ -195,7 +237,7 @@ def _build_prompt(
             "- 僅回傳 JSON（不要多餘文字）\n"
             "- food_name: 中文餐點名稱\n"
             "- calorie_range: 例如 '450-600 kcal'\n"
-            "- macros: protein/carbs/fat/sodium 的值只能是 低/中/高\n"
+            "- macros: protein/carbs/fat/sodium 為 0-100 的百分比整數\n"
             "- dish_summary: 20 字內一句話摘要\n"
             "- 規則：自然口語，不要專業營養名詞，不要出現數字/熱量/克數，不責備不命令\n"
             "- 描述整體負擔、口味或營養重點，留空間給下一餐建議\n"
@@ -203,7 +245,7 @@ def _build_prompt(
             f"{suggestion_rule}"
             "- confidence: 0 到 1 的信心分數\n"
             "- is_beverage: 是否為飲料（true/false）\n"
-            "- 飲料規則：若為飲料，protein/fat 必為 低，熱量偏低；含糖可提升 carbs\n"
+            "- 飲料規則：若為飲料，protein/fat 建議 <= 15，熱量偏低；含糖可提升 carbs\n"
             "- 若使用者提供 food_name，必須優先採用\n"
             "- 避免醫療或診斷字眼；避免精準數值或克數，維持區間與語意描述\n"
             "- 若畫面中有硬幣或信用卡，請將其視為參考物估計份量；無則使用一般估計\n"
@@ -211,7 +253,7 @@ def _build_prompt(
             "{\n"
             "  \"food_name\": \"牛肉便當\",\n"
             "  \"calorie_range\": \"650-850 kcal\",\n"
-            "  \"macros\": {\"protein\": \"中\", \"carbs\": \"中\", \"fat\": \"高\", \"sodium\": \"高\"},\n"
+            "  \"macros\": {\"protein\": 45, \"carbs\": 55, \"fat\": 65, \"sodium\": 70},\n"
             "  \"dish_summary\": \"油脂偏多、蛋白足夠\",\n"
             f"{suggestion_example}"
             "  \"confidence\": 0.72,\n"
@@ -236,7 +278,7 @@ def _build_prompt(
         "- Return JSON only (no extra text)\n"
         "- food_name: English name\n"
         "- calorie_range: e.g. '450-600 kcal'\n"
-        "- macros: protein/carbs/fat/sodium values must be low/medium/high\n"
+        "- macros: protein/carbs/fat/sodium are integer percentages (0-100)\n"
         "- dish_summary: single-sentence summary (<= 20 words)\n"
         "- Rules: natural language, avoid technical nutrition terms, no numbers/calories/grams, no scolding or commands\n"
         "- Describe overall burden, taste, or a key nutrition cue, leaving room for next-meal advice\n"
@@ -244,7 +286,7 @@ def _build_prompt(
         f"{suggestion_rule}"
         "- confidence: 0 to 1 confidence score\n"
         "- is_beverage: true/false\n"
-        "- Beverage rule: if beverage, protein/fat must be low; calories should be low; sugary drinks may increase carbs\n"
+        "- Beverage rule: if beverage, protein/fat should be <= 15; calories should be low; sugary drinks may increase carbs\n"
         "- If user provides food_name, it must be used as the primary name\n"
         "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
         "- If a coin or credit card is visible, treat it as a size reference; otherwise estimate normally\n"
@@ -252,7 +294,7 @@ def _build_prompt(
         "{\n"
         "  \"food_name\": \"beef bento\",\n"
         "  \"calorie_range\": \"650-850 kcal\",\n"
-        "  \"macros\": {\"protein\": \"medium\", \"carbs\": \"medium\", \"fat\": \"high\", \"sodium\": \"high\"},\n"
+        "  \"macros\": {\"protein\": 45, \"carbs\": 55, \"fat\": 65, \"sodium\": 70},\n"
         "  \"dish_summary\": \"Heavier oil, decent protein\",\n"
         f"{suggestion_example}"
         "  \"confidence\": 0.72,\n"
@@ -428,8 +470,7 @@ def _analyze_with_openai(
     required = {"food_name", "calorie_range", "macros", "suggestion"}
     if not required.issubset(set(data.keys())):
         return None
-    if isinstance(data.get("macros"), dict):
-        data["macros"].setdefault("sodium", "中" if lang == "zh-TW" else "medium")
+    data["macros"] = _normalize_macros(data, lang)
     data.setdefault("confidence", 0.6)
     data.setdefault("is_beverage", False)
     data.setdefault("dish_summary", "")
@@ -478,7 +519,7 @@ async def analyze_image(
             return AnalysisResult(
                 food_name=cached_result.get("food_name", ""),
                 calorie_range=cached_result.get("calorie_range", ""),
-                macros=cached_result.get("macros", {}),
+                macros=_normalize_macros(cached_result, use_lang),
                 dish_summary=cached_result.get("dish_summary", ""),
                 suggestion=cached_result.get("suggestion", ""),
                 tier="cached",
@@ -533,12 +574,13 @@ async def analyze_image(
                 final_name = food_name or payload["result"]["food_name"]
                 _increment_daily_count()
                 cache = _load_analysis_cache()
+                normalized_macros = _normalize_macros(payload["result"], use_lang)
                 cache[image_hash] = {
                     "saved_at": datetime.now(timezone.utc).isoformat(),
                     "result": {
                         "food_name": final_name,
                         "calorie_range": payload["result"]["calorie_range"],
-                        "macros": payload["result"]["macros"],
+                        "macros": normalized_macros,
                         "dish_summary": payload["result"].get("dish_summary", ""),
                         "suggestion": payload["result"]["suggestion"],
                     },
@@ -547,7 +589,7 @@ async def analyze_image(
                 return AnalysisResult(
                     food_name=final_name,
                     calorie_range=payload["result"]["calorie_range"],
-                    macros=payload["result"]["macros"],
+                    macros=normalized_macros,
                     dish_summary=payload["result"].get("dish_summary", ""),
                     suggestion=payload["result"]["suggestion"],
                     tier=tier,
@@ -571,10 +613,10 @@ async def analyze_image(
     chosen_name = food_name or random.choice(_fake_foods[use_lang])
     calorie_range = random.choice(["350-450 kcal", "450-600 kcal", "600-800 kcal"])
     macros = {
-        "protein": random.choice(_fake_macros[use_lang]),
-        "carbs": random.choice(_fake_macros[use_lang]),
-        "fat": random.choice(_fake_macros[use_lang]),
-        "sodium": random.choice(_fake_macros[use_lang]),
+        "protein": float(random.choice(_fake_macro_choices)),
+        "carbs": float(random.choice(_fake_macro_choices)),
+        "fat": float(random.choice(_fake_macro_choices)),
+        "sodium": float(random.choice(_fake_macro_choices)),
     }
     suggestion = random.choice(_fake_suggestions[use_lang])
     if advice_mode == "current_meal":

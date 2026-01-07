@@ -8,10 +8,9 @@ enum MacroLevel { low, medium, high }
 class AnalysisScreen extends StatelessWidget {
   const AnalysisScreen({super.key});
 
-  MacroLevel _levelFromValue(String value) {
-    final v = value.toLowerCase();
-    if (v.contains('\u9ad8') || v.contains('high')) return MacroLevel.high;
-    if (v.contains('\u4f4e') || v.contains('low')) return MacroLevel.low;
+  MacroLevel _levelFromPercent(double value) {
+    if (value >= 70) return MacroLevel.high;
+    if (value <= 35) return MacroLevel.low;
     return MacroLevel.medium;
   }
 
@@ -39,9 +38,9 @@ class AnalysisScreen extends StatelessWidget {
 
   List<String> _overallTags(AnalysisResult result, AppLocalizations t) {
     final tags = <String>[];
-    final fat = _levelFromValue(result.macros['fat'] ?? '');
-    final protein = _levelFromValue(result.macros['protein'] ?? '');
-    final carbs = _levelFromValue(result.macros['carbs'] ?? '');
+    final fat = _levelFromPercent(result.macros['fat'] ?? 0);
+    final protein = _levelFromPercent(result.macros['protein'] ?? 0);
+    final carbs = _levelFromPercent(result.macros['carbs'] ?? 0);
 
     if (fat == MacroLevel.high) tags.add(t.tagOily);
     if (protein == MacroLevel.high) tags.add(t.tagProteinOk);
@@ -53,9 +52,9 @@ class AnalysisScreen extends StatelessWidget {
 
   String _statusLabel(AnalysisResult result, AppLocalizations t) {
     int score = 0;
-    final fat = _levelFromValue(result.macros['fat'] ?? '');
-    final protein = _levelFromValue(result.macros['protein'] ?? '');
-    final carbs = _levelFromValue(result.macros['carbs'] ?? '');
+    final fat = _levelFromPercent(result.macros['fat'] ?? 0);
+    final protein = _levelFromPercent(result.macros['protein'] ?? 0);
+    final carbs = _levelFromPercent(result.macros['carbs'] ?? 0);
     if (fat == MacroLevel.high) score += 1;
     if (carbs == MacroLevel.high) score += 1;
     if (protein == MacroLevel.low) score += 1;
@@ -95,18 +94,18 @@ class AnalysisScreen extends StatelessWidget {
   }
 
   List<Widget> _macroChips(AnalysisResult result, AppLocalizations t) {
-    final items = <MapEntry<String, String>>[
-      MapEntry(t.protein, result.macros['protein'] ?? ''),
-      MapEntry(t.carbs, result.macros['carbs'] ?? ''),
-      MapEntry(t.fat, result.macros['fat'] ?? ''),
+    final items = <MapEntry<String, double>>[
+      MapEntry(t.protein, result.macros['protein'] ?? 0),
+      MapEntry(t.carbs, result.macros['carbs'] ?? 0),
+      MapEntry(t.fat, result.macros['fat'] ?? 0),
     ];
     final sodium = result.macros['sodium'];
-    if (sodium != null && sodium.isNotEmpty) {
+    if (sodium != null) {
       items.add(MapEntry(t.sodium, sodium));
     }
     return [
       for (final item in items)
-        _macroChip(item.key, _levelFromValue(item.value), t),
+        _macroChip(item.key, _levelFromPercent(item.value), t),
     ];
   }
 

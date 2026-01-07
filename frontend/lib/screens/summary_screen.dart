@@ -10,15 +10,12 @@ class SummaryScreen extends StatelessWidget {
 
   String _summaryText(AppLocalizations t, MealEntry? entry) {
     if (entry == null || entry.result == null) return t.summaryEmpty;
-    final fat = entry.result!.macros['fat'] ?? '';
-    final protein = entry.result!.macros['protein'] ?? '';
-    final carbs = entry.result!.macros['carbs'] ?? '';
-    final oily = fat.contains(t.levelHigh) || fat.toLowerCase().contains('high');
-    final proteinOk = protein.contains(t.levelMedium) ||
-        protein.contains(t.levelHigh) ||
-        protein.toLowerCase().contains('medium') ||
-        protein.toLowerCase().contains('high');
-    final carbHigh = carbs.contains(t.levelHigh) || carbs.toLowerCase().contains('high');
+    final fat = entry.result!.macros['fat'] ?? 0;
+    final protein = entry.result!.macros['protein'] ?? 0;
+    final carbs = entry.result!.macros['carbs'] ?? 0;
+    final oily = fat >= 70;
+    final proteinOk = protein >= 45;
+    final carbHigh = carbs >= 70;
 
     if (oily && carbHigh) return t.summaryOilyCarb;
     if (oily) return t.summaryOily;

@@ -30,31 +30,21 @@ class MealDetailScreen extends StatelessWidget {
     }
   }
 
-  double _ratioFromValue(String value) {
-    final v = value.toLowerCase();
-    if (v.contains('偏高')) return 0.7;
-    if (v.contains('偏低')) return 0.4;
-    if (v.contains('高') || v.contains('high')) return 0.8;
-    if (v.contains('低') || v.contains('low')) return 0.3;
-    return 0.55;
+  double _ratioFromPercent(double value) {
+    final safe = value.clamp(0, 100).toDouble();
+    return safe / 100.0;
   }
 
-  String _displayValue(String rawValue, double ratio) {
-    final match = RegExp(r'\d+(\.\d+)?').firstMatch(rawValue);
-    if (match != null) {
-      return rawValue.trim();
-    }
-    return '${(ratio * 100).round()}%';
-  }
+  String _displayValue(double percent) => '${percent.round()}%';
 
-  Widget _nutrientValue(String label, String value, double ratio, IconData icon, Color color) {
+  Widget _nutrientValue(String label, double value, double ratio, IconData icon, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 6),
         Text(
-          '$label ${_displayValue(value, ratio)}',
+          '$label ${_displayValue(value)}',
           style: const TextStyle(fontSize: 12, color: Colors.black54),
         ),
       ],
@@ -62,14 +52,14 @@ class MealDetailScreen extends StatelessWidget {
   }
 
   Widget _radarChart(MealEntry entry, AppLocalizations t) {
-    final protein = entry.result?.macros['protein'] ?? t.levelMedium;
-    final carbs = entry.result?.macros['carbs'] ?? t.levelMedium;
-    final fat = entry.result?.macros['fat'] ?? t.levelMedium;
-    final sodium = entry.result?.macros['sodium'] ?? t.levelMedium;
-    final proteinRatio = _ratioFromValue(protein);
-    final carbsRatio = _ratioFromValue(carbs);
-    final fatRatio = _ratioFromValue(fat);
-    final sodiumRatio = _ratioFromValue(sodium);
+    final protein = entry.result?.macros['protein'] ?? 55;
+    final carbs = entry.result?.macros['carbs'] ?? 55;
+    final fat = entry.result?.macros['fat'] ?? 55;
+    final sodium = entry.result?.macros['sodium'] ?? 55;
+    final proteinRatio = _ratioFromPercent(protein);
+    final carbsRatio = _ratioFromPercent(carbs);
+    final fatRatio = _ratioFromPercent(fat);
+    final sodiumRatio = _ratioFromPercent(sodium);
     final values = [proteinRatio, carbsRatio, fatRatio, sodiumRatio];
 
     return Column(
