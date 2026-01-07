@@ -251,25 +251,13 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         backgroundColor: const Color(0xFFF3F5FB),
         elevation: 0,
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [
-              theme.colorScheme.primary.withOpacity(0.12),
-              theme.colorScheme.primary.withOpacity(0.04),
-              theme.scaffoldBackgroundColor,
-            ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                height: 420,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: 420,
               child: PageView.builder(
                 controller: _pageController,
                 onPageChanged: (index) => setState(() => _pageIndex = index),
@@ -332,44 +320,43 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              if (currentEntry?.result != null)
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: SizedBox(
-                    width: contentWidth,
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _nutritionTitle(context),
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 8),
-                          NutritionChart(
-                            macros: currentEntry!.result!.macros,
-                            style: _chartStyle(app.profile.nutritionChartStyle),
-                            t: t,
-                          ),
-                        ],
-                      ),
+            if (currentEntry?.result != null)
+              Align(
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: contentWidth,
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _nutritionTitle(context),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 8),
+                        NutritionChart(
+                          macros: currentEntry!.result!.macros,
+                          style: _chartStyle(app.profile.nutritionChartStyle),
+                          t: t,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
