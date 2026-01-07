@@ -241,23 +241,6 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
   }
 
-  Color _dominantColor(List<double> values) {
-    final maxValue = values.reduce((a, b) => a > b ? a : b);
-    final index = values.indexOf(maxValue);
-    switch (index) {
-      case 0:
-        return const Color(0xFF7FCB99);
-      case 1:
-        return const Color(0xFFF1BE4B);
-      case 2:
-        return const Color(0xFFF08A7C);
-      case 3:
-        return const Color(0xFF8AB4F8);
-      default:
-        return const Color(0xFF7FCB99);
-    }
-  }
-
   Widget _radarChart(MealEntry entry, AppLocalizations t) {
     final protein = entry.result?.macros['protein'] ?? t.levelMedium;
     final carbs = entry.result?.macros['carbs'] ?? t.levelMedium;
@@ -268,12 +251,11 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final fatRatio = _ratioFromValue(fat);
     final sodiumRatio = _ratioFromValue(sodium);
     final values = [proteinRatio, carbsRatio, fatRatio, sodiumRatio];
-    final dominantColor = _dominantColor(values);
 
     return SizedBox(
       height: 280,
       child: CustomPaint(
-        painter: _RadarPainter(values, dominantColor),
+        painter: _RadarPainter(values),
         child: Center(
           child: SizedBox(
             width: 220,
@@ -422,10 +404,9 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
 }
 
 class _RadarPainter extends CustomPainter {
-  _RadarPainter(this.values, this.dominantColor);
+  _RadarPainter(this.values);
 
   final List<double> values;
-  final Color dominantColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -436,16 +417,14 @@ class _RadarPainter extends CustomPainter {
       ..color = const Color(0xFFE6E9F2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
-    final shapePaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          dominantColor.withOpacity(0.65),
-          dominantColor.withOpacity(0.2),
-        ],
-      ).createShader(Rect.fromCircle(center: center, radius: radius))
-      ..style = PaintingStyle.fill;
+    final axisColors = [
+      const Color(0xFF7FCB99), // protein
+      const Color(0xFFF1BE4B), // carbs
+      const Color(0xFFF08A7C), // fat
+      const Color(0xFF8AB4F8), // sodium
+    ];
     final linePaint = Paint()
-      ..color = dominantColor.withOpacity(0.9)
+      ..color = const Color(0xFFB5D8C6)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
@@ -465,6 +444,41 @@ class _RadarPainter extends CustomPainter {
       canvas.drawPath(path, gridPaint);
     }
 
+    for (int j = 0; j < axes; j++) {
+      final angle = (2 * math.pi / axes) * j - math.pi / 2;
+      final prevAngle = (2 * math.pi / axes) * (j - 1) - math.pi / 2;
+      final nextAngle = (2 * math.pi / axes) * (j + 1) - math.pi / 2;
+      final value = values[j].clamp(0.1, 1.0);
+      final color = axisColors[j % axisColors.length];
+      final edge = Offset(
+        center.dx + radius * value * math.cos(angle),
+        center.dy + radius * value * math.sin(angle),
+      );
+      final left = Offset(
+        center.dx + radius * value * math.cos((angle + prevAngle) / 2),
+        center.dy + radius * value * math.sin((angle + prevAngle) / 2),
+      );
+      final right = Offset(
+        center.dx + radius * value * math.cos((angle + nextAngle) / 2),
+        center.dy + radius * value * math.sin((angle + nextAngle) / 2),
+      );
+      final wedge = Path()
+        ..moveTo(center.dx, center.dy)
+        ..lineTo(left.dx, left.dy)
+        ..lineTo(edge.dx, edge.dy)
+        ..lineTo(right.dx, right.dy)
+        ..close();
+      final fillPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            color.withOpacity(0.05),
+            color.withOpacity(0.25 + 0.45 * value),
+          ],
+        ).createShader(Rect.fromCircle(center: center, radius: radius))
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(wedge, fillPaint);
+    }
+
     final dataPath = Path();
     for (int j = 0; j < axes; j++) {
       final angle = (2 * math.pi / axes) * j - math.pi / 2;
@@ -479,7 +493,6 @@ class _RadarPainter extends CustomPainter {
       }
     }
     dataPath.close();
-    canvas.drawPath(dataPath, shapePaint);
     canvas.drawPath(dataPath, linePaint);
   }
 
