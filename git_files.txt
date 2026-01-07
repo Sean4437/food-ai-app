@@ -1,4 +1,5 @@
 frontend\lib\widgets\nutrition_chart.dart
+frontend\lib\screens\day_meals_screen.dart
 frontend\lib\screens\meal_items_screen.dart
 frontend\lib\screens\settings_screen.dart
 frontend\lib\state\app_state.dart
