@@ -237,7 +237,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final app = AppStateScope.of(context);
     final theme = Theme.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
-    final sorted = List<MealEntry>.from(widget.group)..sort((a, b) => b.time.compareTo(a.time));
+    final sorted = List<MealEntry>.from(widget.group)..sort((a, b) => a.time.compareTo(b.time));
     if (_pageIndex >= sorted.length) {
       _pageIndex = 0;
     }
@@ -251,82 +251,39 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         backgroundColor: const Color(0xFFF3F5FB),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: 420,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.12),
+              theme.colorScheme.primary.withOpacity(0.04),
+              theme.scaffoldBackgroundColor,
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 420,
               child: PageView.builder(
                 controller: _pageController,
                 onPageChanged: (index) => setState(() => _pageIndex = index),
                 itemCount: sorted.length,
                 itemBuilder: (context, index) => _itemCard(context, app, sorted[index], plateAsset),
               ),
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.topCenter,
-              child: SizedBox(
-                width: contentWidth,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t.mealSummaryTitle,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              mealSummary?.advice ?? t.detailAiEmpty,
-                              style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.14),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          mealSummary?.calorieRange ?? t.calorieUnknown,
-                          style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            if (currentEntry?.result != null)
+              const SizedBox(height: 12),
               Align(
                 alignment: Alignment.topCenter,
                 child: SizedBox(
                   width: contentWidth,
                   child: Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
@@ -338,25 +295,81 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                         ),
                       ],
                     ),
-                    child: Column(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _nutritionTitle(context),
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                t.mealSummaryTitle,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                mealSummary?.advice ?? t.detailAiEmpty,
+                                style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        NutritionChart(
-                          macros: currentEntry!.result!.macros,
-                          style: _chartStyle(app.profile.nutritionChartStyle),
-                          t: t,
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.14),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            mealSummary?.calorieRange ?? t.calorieUnknown,
+                            style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
               ),
-          ],
+              const SizedBox(height: 12),
+              if (currentEntry?.result != null)
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: contentWidth,
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _nutritionTitle(context),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          NutritionChart(
+                            macros: currentEntry!.result!.macros,
+                            style: _chartStyle(app.profile.nutritionChartStyle),
+                            t: t,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
