@@ -99,18 +99,19 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                           ),
                         ),
-                        IconButton(
-                          onPressed: () => _editFoodName(context, app, entry),
-                          icon: const Icon(Icons.edit, size: 20),
-                          tooltip: t.editFoodName,
-                          padding: const EdgeInsets.all(8),
-                          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: IconButton(
+                            onPressed: () => _editFoodName(context, app, entry),
+                            icon: const Icon(Icons.edit, size: 20),
+                            tooltip: t.editFoodName,
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Text('${t.portionLabel}${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
-                    const SizedBox(height: 6),
                     _portionSelector(context, app, entry, theme, t),
                   ],
                 ),
@@ -243,6 +244,36 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
   }
 
+  Widget _nutrientStackLeft(String label, String value, double ratio, IconData icon, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(height: 4),
+        Text(
+          '$label ${_displayValue(value, ratio)}',
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
+          textAlign: TextAlign.right,
+        ),
+      ],
+    );
+  }
+
+  Widget _nutrientStackRight(String label, String value, double ratio, IconData icon, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(height: 4),
+        Text(
+          '$label ${_displayValue(value, ratio)}',
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
+          textAlign: TextAlign.left,
+        ),
+      ],
+    );
+  }
+
   Widget _radarChart(MealEntry entry, AppLocalizations t) {
     final protein = entry.result?.macros['protein'] ?? t.levelMedium;
     final carbs = entry.result?.macros['carbs'] ?? t.levelMedium;
@@ -269,16 +300,16 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                   child: _nutrientValue(t.protein, protein, proteinRatio, Icons.eco, const Color(0xFF7FCB99)),
                 ),
                 Align(
-                  alignment: const Alignment(1.35, 0.1),
-                  child: _nutrientValue(t.carbs, carbs, carbsRatio, Icons.grass, const Color(0xFFF1BE4B)),
+                  alignment: const Alignment(1.45, 0.05),
+                  child: _nutrientStackRight(t.carbs, carbs, carbsRatio, Icons.grass, const Color(0xFFF1BE4B)),
                 ),
                 Align(
                   alignment: const Alignment(0, 1.35),
                   child: _nutrientValue(t.fat, fat, fatRatio, Icons.local_pizza, const Color(0xFFF08A7C)),
                 ),
                 Align(
-                  alignment: const Alignment(-1.35, 0.1),
-                  child: _nutrientValue(t.sodium, sodium, sodiumRatio, Icons.opacity, const Color(0xFF8AB4F8)),
+                  alignment: const Alignment(-1.45, 0.05),
+                  child: _nutrientStackLeft(t.sodium, sodium, sodiumRatio, Icons.opacity, const Color(0xFF8AB4F8)),
                 ),
               ],
             ),
@@ -448,27 +479,22 @@ class _RadarPainter extends CustomPainter {
 
     for (int j = 0; j < axes; j++) {
       final angle = (2 * math.pi / axes) * j - math.pi / 2;
-      final prevAngle = (2 * math.pi / axes) * (j - 1) - math.pi / 2;
       final nextAngle = (2 * math.pi / axes) * (j + 1) - math.pi / 2;
       final value = values[j].clamp(0.1, 1.0);
+      final nextValue = values[(j + 1) % axes].clamp(0.1, 1.0);
       final color = axisColors[j % axisColors.length];
       final edge = Offset(
         center.dx + radius * value * math.cos(angle),
         center.dy + radius * value * math.sin(angle),
       );
-      final left = Offset(
-        center.dx + radius * value * math.cos((angle + prevAngle) / 2),
-        center.dy + radius * value * math.sin((angle + prevAngle) / 2),
-      );
-      final right = Offset(
-        center.dx + radius * value * math.cos((angle + nextAngle) / 2),
-        center.dy + radius * value * math.sin((angle + nextAngle) / 2),
+      final nextEdge = Offset(
+        center.dx + radius * nextValue * math.cos(nextAngle),
+        center.dy + radius * nextValue * math.sin(nextAngle),
       );
       final wedge = Path()
         ..moveTo(center.dx, center.dy)
-        ..lineTo(left.dx, left.dy)
         ..lineTo(edge.dx, edge.dy)
-        ..lineTo(right.dx, right.dy)
+        ..lineTo(nextEdge.dx, nextEdge.dy)
         ..close();
       final fillPaint = Paint()
         ..shader = RadialGradient(
