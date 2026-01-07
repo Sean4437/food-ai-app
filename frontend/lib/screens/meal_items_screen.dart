@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
 import '../state/app_state.dart';
-import 'meal_detail_screen.dart';
 import 'day_meals_screen.dart';
 import '../widgets/plate_photo.dart';
 
@@ -65,10 +64,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   Widget _itemCard(BuildContext context, AppState app, MealEntry entry, String plateAsset) {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final dishSummary = entry.result?.dishSummary?.trim();
     return GestureDetector(
       onTap: () => _showImagePreview(context, entry),
-      onLongPress: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: SizedBox(
         height: 420,
         child: Stack(
@@ -109,12 +106,10 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                         ),
                       ],
                     ),
-                    if (dishSummary != null && dishSummary.isNotEmpty)
-                      Text(dishSummary, style: const TextStyle(color: Colors.black54)),
                     const SizedBox(height: 10),
-                    Text('${t.portionLabel} ${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
+                    Text('${t.portionLabel}${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
                     const SizedBox(height: 6),
-                    _portionSelector(context, app, entry, theme),
+                    _portionSelector(context, app, entry, theme, t),
                   ],
                 ),
               ),
@@ -212,11 +207,17 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
   }
 
-  Widget _portionSelector(BuildContext context, AppState app, MealEntry entry, ThemeData theme) {
+  Widget _portionSelector(
+    BuildContext context,
+    AppState app,
+    MealEntry entry,
+    ThemeData theme,
+    AppLocalizations t,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${entry.portionPercent}%', style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text('${t.portionLabel}${entry.portionPercent}%', style: const TextStyle(fontWeight: FontWeight.w600)),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: 8,
@@ -240,6 +241,23 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
   }
 
+  Color _dominantColor(List<double> values) {
+    final maxValue = values.reduce((a, b) => a > b ? a : b);
+    final index = values.indexOf(maxValue);
+    switch (index) {
+      case 0:
+        return const Color(0xFF7FCB99);
+      case 1:
+        return const Color(0xFFF1BE4B);
+      case 2:
+        return const Color(0xFFF08A7C);
+      case 3:
+        return const Color(0xFF8AB4F8);
+      default:
+        return const Color(0xFF7FCB99);
+    }
+  }
+
   Widget _radarChart(MealEntry entry, AppLocalizations t) {
     final protein = entry.result?.macros['protein'] ?? t.levelMedium;
     final carbs = entry.result?.macros['carbs'] ?? t.levelMedium;
@@ -250,31 +268,32 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final fatRatio = _ratioFromValue(fat);
     final sodiumRatio = _ratioFromValue(sodium);
     final values = [proteinRatio, carbsRatio, fatRatio, sodiumRatio];
+    final dominantColor = _dominantColor(values);
 
     return SizedBox(
-      height: 160,
+      height: 280,
       child: CustomPaint(
-        painter: _RadarPainter(values),
+        painter: _RadarPainter(values, dominantColor),
         child: Center(
           child: SizedBox(
-            width: 130,
-            height: 130,
+            width: 220,
+            height: 220,
             child: Stack(
               children: [
                 Align(
-                  alignment: const Alignment(0, -1.05),
+                  alignment: const Alignment(0, -1.2),
                   child: _nutrientValue(t.protein, protein, proteinRatio, Icons.eco, const Color(0xFF7FCB99)),
                 ),
                 Align(
-                  alignment: const Alignment(1.05, 0.1),
+                  alignment: const Alignment(1.2, 0.1),
                   child: _nutrientValue(t.carbs, carbs, carbsRatio, Icons.grass, const Color(0xFFF1BE4B)),
                 ),
                 Align(
-                  alignment: const Alignment(0, 1.05),
+                  alignment: const Alignment(0, 1.2),
                   child: _nutrientValue(t.fat, fat, fatRatio, Icons.local_pizza, const Color(0xFFF08A7C)),
                 ),
                 Align(
-                  alignment: const Alignment(-1.05, 0.1),
+                  alignment: const Alignment(-1.2, 0.1),
                   child: _nutrientValue(t.sodium, sodium, sodiumRatio, Icons.opacity, const Color(0xFF8AB4F8)),
                 ),
               ],
@@ -283,6 +302,11 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         ),
       ),
     );
+  }
+
+  String _nutritionTitle(BuildContext context) {
+    final code = Localizations.localeOf(context).languageCode.toLowerCase();
+    return code == 'en' ? 'Nutrition' : '營養成分';
   }
 
   @override
@@ -384,7 +408,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(t.detailWhyLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(_nutritionTitle(context), style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     _radarChart(currentEntry!, t),
                   ],
@@ -398,9 +422,10 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
 }
 
 class _RadarPainter extends CustomPainter {
-  _RadarPainter(this.values);
+  _RadarPainter(this.values, this.dominantColor);
 
   final List<double> values;
+  final Color dominantColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -412,10 +437,15 @@ class _RadarPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     final shapePaint = Paint()
-      ..color = const Color(0xFFB5D8C6).withOpacity(0.6)
+      ..shader = RadialGradient(
+        colors: [
+          dominantColor.withOpacity(0.65),
+          dominantColor.withOpacity(0.2),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
       ..style = PaintingStyle.fill;
     final linePaint = Paint()
-      ..color = const Color(0xFFB5D8C6)
+      ..color = dominantColor.withOpacity(0.9)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 

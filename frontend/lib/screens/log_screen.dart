@@ -3,7 +3,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
-import 'meal_detail_screen.dart';
+import 'meal_items_screen.dart';
 import '../widgets/record_sheet.dart';
 
 class LogScreen extends StatelessWidget {
@@ -42,13 +42,13 @@ class LogScreen extends StatelessWidget {
     return entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
   }
 
-  Widget _mealRow(BuildContext context, AppState app, MealEntry entry) {
+  Widget _mealRow(BuildContext context, AppState app, MealEntry entry, List<MealEntry> group) {
     final t = AppLocalizations.of(context)!;
     final prefix = _mockPrefix(entry, t);
     final foodName = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
     final portion = '${t.portionLabel} ${entry.portionPercent}%';
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealItemsScreen(group: group))),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
@@ -117,7 +117,7 @@ class LogScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(advice, style: const TextStyle(color: Colors.black54, fontSize: 12)),
           const SizedBox(height: 10),
-          Column(children: [for (final entry in group) _mealRow(context, app, entry)]),
+          Column(children: [for (final entry in group) _mealRow(context, app, entry, group)]),
         ],
       ),
     );
