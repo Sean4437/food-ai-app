@@ -53,40 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _editDaySummary(AppState app, DateTime date, AppLocalizations t) async {
-    final summaryController = TextEditingController(text: app.daySummaryText(date, t));
-    final adviceController = TextEditingController(text: app.dayTomorrowAdvice(date, t));
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.editDaySummaryTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: summaryController,
-              decoration: InputDecoration(labelText: t.dayCardSummaryLabel),
-            ),
-            TextField(
-              controller: adviceController,
-              decoration: InputDecoration(labelText: t.dayCardTomorrowLabel),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.save)),
-        ],
-      ),
-    );
-    if (result == true) {
-      await app.updateDayOverride(
-        date,
-        summary: summaryController.text,
-        tomorrowAdvice: adviceController.text,
-      );
-    }
-  }
 
   Widget _statusPill(String label, Color color) {
     return Container(
@@ -175,10 +141,6 @@ class _HomeScreenState extends State<HomeScreen> {
               TextButton(
                 onPressed: () => app.finalizeDay(date, Localizations.localeOf(context).toLanguageTag(), t),
                 child: Text(t.finalizeDay),
-              ),
-              TextButton(
-                onPressed: () => _editDaySummary(app, date, t),
-                child: Text(t.edit),
               ),
             ],
           ),

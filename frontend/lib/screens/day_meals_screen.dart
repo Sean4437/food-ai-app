@@ -52,47 +52,6 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
   }
 
-  Future<void> _editMealAdvice(BuildContext context, AppState app, List<MealEntry> group) async {
-    if (group.isEmpty) return;
-    final t = AppLocalizations.of(context)!;
-    final current = app.mealAdviceForGroup(group, t);
-    final selfCook = TextEditingController(text: current.selfCook);
-    final convenience = TextEditingController(text: current.convenience);
-    final bento = TextEditingController(text: current.bento);
-    final other = TextEditingController(text: current.other);
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.editMealAdviceTitle),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: selfCook, decoration: InputDecoration(labelText: t.nextSelfCookLabel)),
-              TextField(controller: convenience, decoration: InputDecoration(labelText: t.nextConvenienceLabel)),
-              TextField(controller: bento, decoration: InputDecoration(labelText: t.nextBentoLabel)),
-              TextField(controller: other, decoration: InputDecoration(labelText: t.nextOtherLabel)),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.save)),
-        ],
-      ),
-    );
-    if (result == true) {
-      await app.updateMealAdvice(
-        group.first.mealId ?? group.first.id,
-        MealAdvice(
-          selfCook: selfCook.text,
-          convenience: convenience.text,
-          bento: bento.text,
-          other: other.text,
-        ),
-      );
-    }
-  }
 
   @override
   void dispose() {
@@ -297,17 +256,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                       _dishSummaryBlock(currentGroup, t),
                     ],
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Text(t.nextMealSectionTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-                        const Spacer(),
-                        if (currentGroup != null)
-                          IconButton(
-                            onPressed: () => _editMealAdvice(context, app, currentGroup),
-                            icon: const Icon(Icons.edit, size: 18),
-                          ),
-                      ],
-                    ),
+                    Text(t.nextMealSectionTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
                     _adviceRow(t.nextSelfCookLabel, advice?.selfCook ?? t.nextSelfCookHint),
                     const SizedBox(height: 6),
