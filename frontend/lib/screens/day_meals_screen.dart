@@ -147,6 +147,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
+    final theme = Theme.of(context);
     final groups = app.mealGroupsForDateAll(widget.date);
     if (widget.initialMealId != null && !_didApplyInitial && groups.isNotEmpty) {
       final initialIndex = groups.indexWhere(
