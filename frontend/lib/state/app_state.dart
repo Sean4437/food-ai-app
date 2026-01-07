@@ -14,7 +14,7 @@ import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
 
 const String kDefaultApiBaseUrl = 'https://sussex-oscar-southern-scanning.trycloudflare.com';
-const String kDefaultPlateAsset = 'assets/plates/plate_default.png';
+const String kDefaultPlateAsset = 'assets/plates/plate_warm.png';
 
 class AppState extends ChangeNotifier {
   AppState()
@@ -1390,7 +1390,7 @@ class UserProfile {
       language: 'zh-TW',
       apiBaseUrl: kDefaultApiBaseUrl,
       plateAsset: kDefaultPlateAsset,
-      nutritionChartStyle: 'radar',
+      nutritionChartStyle: 'bars',
     );
   }
 }
