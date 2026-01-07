@@ -111,7 +111,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 2),
                     _portionSelector(context, app, entry, theme, t),
                   ],
                 ),
@@ -290,11 +290,14 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(t.mealSummaryTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 10),
+                            Text(
+                              t.mealSummaryTitle,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 8),
                             Text(
                               mealSummary?.advice ?? t.detailAiEmpty,
-                              style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w600),
+                              style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -338,7 +341,10 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_nutritionTitle(context), style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(
+                          _nutritionTitle(context),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
                         const SizedBox(height: 8),
                         NutritionChart(
                           macros: currentEntry!.result!.macros,

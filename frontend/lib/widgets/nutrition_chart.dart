@@ -314,31 +314,31 @@ class _MacroBar extends StatelessWidget {
               Positioned.fill(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Row(
-                    children: [
-                      Icon(point.icon, size: 14, color: Colors.white),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          point.label,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                      child: Row(
+                        children: [
+                          Icon(point.icon, size: 14, color: Colors.white),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              point.label,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          Text(
+                            displayValue(point.rawValue, point.ratio),
+                            style: const TextStyle(
+                              color: Colors.black87,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        displayValue(point.rawValue, point.ratio),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ],
