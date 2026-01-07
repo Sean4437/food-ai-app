@@ -48,7 +48,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mealTotal => '?????????';
 
   @override
-  String get mealSummaryTitle => '??????';
+  String get mealSummaryTitle => '本菜摘要';
 
   @override
   String get todayMeals => '??????';
@@ -313,7 +313,7 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get dayCardTomorrowLabel => '??????';
   String get finalizeDay => '??????';
-  String get dishSummaryLabel => '??????';
+  String get dishSummaryLabel => '本餐摘要';
 
   @override
   String get mealCountEmpty => '?????????';
@@ -692,7 +692,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get mealTotal => '?????????';
 
   @override
-  String get mealSummaryTitle => '??????';
+  String get mealSummaryTitle => '本菜摘要';
 
   @override
   String get todayMeals => '??????';
@@ -957,7 +957,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get dayCardTomorrowLabel => '??????';
   String get finalizeDay => '??????';
-  String get dishSummaryLabel => '??????';
+  String get dishSummaryLabel => '本餐摘要';
 
   @override
   String get mealCountEmpty => '?????????';

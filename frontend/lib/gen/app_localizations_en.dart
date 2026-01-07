@@ -48,7 +48,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mealTotal => 'Meal total (est.)';
 
   @override
-  String get mealSummaryTitle => 'Meal summary';
+  String get mealSummaryTitle => 'Dish summary';
 
   @override
   String get todayMeals => 'Today Meals';
@@ -319,7 +319,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dayCardTomorrowLabel => 'Tomorrow advice';
   String get finalizeDay => 'Finalize day';
-  String get dishSummaryLabel => 'Dish summary';
+  String get dishSummaryLabel => 'Meal summary';
 
   @override
   String get mealCountEmpty => 'No meals analyzed';

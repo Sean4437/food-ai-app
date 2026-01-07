@@ -13,7 +13,7 @@
   "editTime": "Edit Time",
   "noEntries": "No entries yet",
   "mealTotal": "Meal total (est.)",
-  "mealSummaryTitle": "Meal summary",
+  "mealSummaryTitle": "Dish summary",
   "todayMeals": "Today Meals",
   "itemsCount": "{count} items",
   "@itemsCount": {
@@ -109,7 +109,7 @@
   "dayCardSummaryLabel": "Today summary",
   "dayCardTomorrowLabel": "Tomorrow advice",
   "finalizeDay": "Finalize day",
-  "dishSummaryLabel": "Dish summary",
+  "dishSummaryLabel": "Meal summary",
   "mealCountEmpty": "No meals analyzed",
   "calorieUnknown": "Not estimated",
   "portionLabel": "Portion",

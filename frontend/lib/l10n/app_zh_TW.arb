@@ -13,7 +13,7 @@
   "editTime": "修改時間",
   "noEntries": "尚無紀錄",
   "mealTotal": "本餐估計熱量",
-  "mealSummaryTitle": "本餐摘要",
+  "mealSummaryTitle": "本菜摘要",
   "todayMeals": "今日餐點",
   "itemsCount": "{count} 筆",
   "@itemsCount": {
@@ -109,7 +109,7 @@
   "dayCardSummaryLabel": "今天飲食總結",
   "dayCardTomorrowLabel": "明天建議",
   "finalizeDay": "結算今天",
-  "dishSummaryLabel": "菜色摘要",
+  "dishSummaryLabel": "本餐摘要",
   "mealCountEmpty": "尚未分析餐次",
   "calorieUnknown": "尚未估計",
   "portionLabel": "份量",
