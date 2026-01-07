@@ -8,6 +8,7 @@ frontend\lib\screens\summary_screen.dart
 frontend\lib\screens\settings_screen.dart
 frontend\lib\models\analysis_result.dart
 frontend\lib\state\app_state.dart
+frontend\lib\services\api_service.dart
 frontend\lib\l10n\app_en.arb
 frontend\lib\l10n\app_zh.arb
 frontend\lib\l10n\app_zh_TW.arb

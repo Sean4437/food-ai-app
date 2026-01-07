@@ -23,6 +23,7 @@ class ApiService {
     String? mealType,
     int? mealPhotoCount,
     String? adviceMode,
+    bool forceReanalyze = false,
   }) async {
     final query = lang == null ? '' : '?lang=$lang';
     final uri = Uri.parse('$baseUrl/analyze$query');
@@ -63,6 +64,9 @@ class ApiService {
     }
     if (adviceMode != null && adviceMode.trim().isNotEmpty) {
       request.fields['advice_mode'] = adviceMode.trim();
+    }
+    if (forceReanalyze) {
+      request.fields['force_reanalyze'] = 'true';
     }
 
     final response = await request.send();

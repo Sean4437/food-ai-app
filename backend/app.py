@@ -502,6 +502,7 @@ async def analyze_image(
     meal_type: Optional[str] = Form(default=None),
     meal_photo_count: Optional[int] = Form(default=None),
     advice_mode: Optional[str] = Form(default=None),
+    force_reanalyze: Optional[str] = Form(default=None),
 ):
     image_bytes = await image.read()
     image_hash = _hash_image(image_bytes)
@@ -510,8 +511,20 @@ async def analyze_image(
     if use_lang not in _fake_foods:
         use_lang = "zh-TW"
 
+    force_reanalyze_flag = False
+    if isinstance(force_reanalyze, str):
+        force_reanalyze_flag = force_reanalyze.strip().lower() == "true"
+
     tier = "full"
-    if advice_mode != "current_meal" and food_name is None and note is None and context is None and portion_percent is None and advice_mode is None:
+    if (
+        not force_reanalyze_flag
+        and advice_mode != "current_meal"
+        and food_name is None
+        and note is None
+        and context is None
+        and portion_percent is None
+        and advice_mode is None
+    ):
         cache = _load_analysis_cache()
         cached = cache.get(image_hash)
         if isinstance(cached, dict) and isinstance(cached.get("result"), dict):

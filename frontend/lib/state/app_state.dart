@@ -831,6 +831,7 @@ class AppState extends ChangeNotifier {
         planSpeed: profile.planSpeed,
         mealType: mealTypeKey,
         mealPhotoCount: 1,
+        forceReanalyze: force,
       );
       entry.result = res;
       entry.lastAnalyzedNote = noteKey;
