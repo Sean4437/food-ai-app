@@ -186,27 +186,29 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     ThemeData theme,
     AppLocalizations t,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
         Text('${t.portionLabel}${entry.portionPercent}%', style: const TextStyle(fontWeight: FontWeight.w600)),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            trackHeight: 8,
-            activeTrackColor: theme.colorScheme.primary,
-            inactiveTrackColor: theme.colorScheme.primary.withOpacity(0.2),
-            thumbColor: theme.colorScheme.primary,
-            overlayColor: theme.colorScheme.primary.withOpacity(0.12),
-          ),
-          child: Slider(
-            value: entry.portionPercent.toDouble(),
-            min: 10,
-            max: 100,
-            divisions: 9,
-            label: '${entry.portionPercent}%',
-            onChanged: (value) {
-              app.updateEntryPortionPercent(entry, value.round());
-            },
+        const SizedBox(width: 12),
+        Expanded(
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 8,
+              activeTrackColor: theme.colorScheme.primary,
+              inactiveTrackColor: theme.colorScheme.primary.withOpacity(0.2),
+              thumbColor: theme.colorScheme.primary,
+              overlayColor: theme.colorScheme.primary.withOpacity(0.12),
+            ),
+            child: Slider(
+              value: entry.portionPercent.toDouble(),
+              min: 10,
+              max: 100,
+              divisions: 9,
+              label: '${entry.portionPercent}%',
+              onChanged: (value) {
+                app.updateEntryPortionPercent(entry, value.round());
+              },
+            ),
           ),
         ),
       ],
@@ -241,6 +243,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     }
     final currentEntry = sorted.isEmpty ? null : sorted[_pageIndex];
     final mealSummary = sorted.isEmpty ? null : app.buildMealSummary(sorted, t);
+    final contentWidth = MediaQuery.of(context).size.width * 0.86;
     return Scaffold(
       appBar: AppBar(
         title: Text(t.mealItemsTitle),
@@ -262,23 +265,24 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: contentWidth),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
@@ -286,7 +290,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(t.mealSummaryTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 10),
                             Text(
                               mealSummary?.advice ?? t.detailAiEmpty,
                               style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w600),
@@ -294,8 +298,9 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(width: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primary.withOpacity(0.14),
                           borderRadius: BorderRadius.circular(16),
@@ -307,35 +312,41 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
             const SizedBox(height: 12),
             if (currentEntry?.result != null)
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: contentWidth),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_nutritionTitle(context), style: const TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    NutritionChart(
-                      macros: currentEntry!.result!.macros,
-                      style: _chartStyle(app.profile.nutritionChartStyle),
-                      t: t,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_nutritionTitle(context), style: const TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        NutritionChart(
+                          macros: currentEntry!.result!.macros,
+                          style: _chartStyle(app.profile.nutritionChartStyle),
+                          t: t,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
           ],

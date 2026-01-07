@@ -270,8 +270,11 @@ class _BarsChart extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(
                 children: [
-                  Icon(point.icon, size: 16, color: point.color),
-                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 22,
+                    child: Icon(point.icon, size: 16, color: point.color),
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
@@ -283,10 +286,15 @@ class _BarsChart extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    '${point.label} ${displayValue(point.rawValue, point.ratio)}',
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  const SizedBox(width: 14),
+                  SizedBox(
+                    width: 96,
+                    child: Text(
+                      '${point.label} ${displayValue(point.rawValue, point.ratio)}',
+                      style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      textAlign: TextAlign.right,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
