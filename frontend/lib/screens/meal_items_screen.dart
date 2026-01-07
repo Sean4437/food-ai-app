@@ -76,7 +76,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 130, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 150, 16, 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -100,18 +100,18 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.only(left: 4),
                           child: IconButton(
                             onPressed: () => _editFoodName(context, app, entry),
                             icon: const Icon(Icons.edit, size: 20),
                             tooltip: t.editFoodName,
-                            padding: const EdgeInsets.all(8),
-                            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 6),
                     _portionSelector(context, app, entry, theme, t),
                   ],
                 ),
@@ -243,7 +243,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     }
     final currentEntry = sorted.isEmpty ? null : sorted[_pageIndex];
     final mealSummary = sorted.isEmpty ? null : app.buildMealSummary(sorted, t);
-    final contentWidth = MediaQuery.of(context).size.width * 0.86;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final contentWidth = (screenWidth - 32) * 0.86;
     return Scaffold(
       appBar: AppBar(
         title: Text(t.mealItemsTitle),
@@ -267,8 +268,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: contentWidth),
+              child: SizedBox(
+                width: contentWidth,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                   decoration: BoxDecoration(
@@ -319,8 +320,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
             if (currentEntry?.result != null)
               Align(
                 alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: contentWidth),
+                child: SizedBox(
+                  width: contentWidth,
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(

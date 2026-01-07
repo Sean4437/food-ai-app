@@ -268,39 +268,83 @@ class _BarsChart extends StatelessWidget {
           .map(
             (point) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 22,
-                    child: Icon(point.icon, size: 16, color: point.color),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: LinearProgressIndicator(
-                        value: point.ratio,
-                        minHeight: 12,
-                        backgroundColor: point.color.withOpacity(0.15),
-                        valueColor: AlwaysStoppedAnimation<Color>(point.color),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  SizedBox(
-                    width: 96,
-                    child: Text(
-                      '${point.label} ${displayValue(point.rawValue, point.ratio)}',
-                      style: const TextStyle(fontSize: 12, color: Colors.black54),
-                      textAlign: TextAlign.right,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
+              child: _MacroBar(point: point, displayValue: displayValue),
             ),
           )
           .toList(),
+    );
+  }
+}
+
+class _MacroBar extends StatelessWidget {
+  const _MacroBar({
+    required this.point,
+    required this.displayValue,
+  });
+
+  final _MacroPoint point;
+  final String Function(String, double) displayValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final barHeight = 20.0;
+        final radius = BorderRadius.circular(12);
+        final fillWidth = constraints.maxWidth * point.ratio;
+        return ClipRRect(
+          borderRadius: radius,
+          child: Stack(
+            children: [
+              Container(
+                height: barHeight,
+                decoration: BoxDecoration(
+                  color: point.color.withOpacity(0.18),
+                  borderRadius: radius,
+                ),
+              ),
+              Container(
+                height: barHeight,
+                width: fillWidth,
+                decoration: BoxDecoration(
+                  color: point.color,
+                  borderRadius: radius,
+                ),
+              ),
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    children: [
+                      Icon(point.icon, size: 14, color: Colors.white),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          point.label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        displayValue(point.rawValue, point.ratio),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
