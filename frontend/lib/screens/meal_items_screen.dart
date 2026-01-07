@@ -76,7 +76,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 150, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 150, 16, 1),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -111,7 +111,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     _portionSelector(context, app, entry, theme, t),
                   ],
                 ),
