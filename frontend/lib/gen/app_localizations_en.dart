@@ -624,6 +624,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get versionUnavailable => 'Version info unavailable';
+  @override
+  String get nutritionChartLabel => 'Nutrition chart';
+
+  @override
+  String get chartRadar => 'Radar';
+
+  @override
+  String get chartBars => 'Bars';
+
+  @override
+  String get chartDonut => 'Donut';
 
   @override
   String get dataSection => 'Data';
@@ -643,3 +654,4 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clearDone => 'Cleared';
 }
+

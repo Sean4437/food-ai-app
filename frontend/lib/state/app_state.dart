@@ -792,7 +792,8 @@ class AppState extends ChangeNotifier {
       ..dinnerReminderTime = updated.dinnerReminderTime
       ..language = updated.language
       ..apiBaseUrl = updated.apiBaseUrl
-      ..plateAsset = updated.plateAsset;
+      ..plateAsset = updated.plateAsset
+      ..nutritionChartStyle = updated.nutritionChartStyle;
     notifyListeners();
     // ignore: unawaited_futures
     _saveProfile();
@@ -1240,6 +1241,7 @@ class AppState extends ChangeNotifier {
       'language': profile.language,
       'api_base_url': profile.apiBaseUrl,
       'plate_asset': profile.plateAsset,
+      'nutrition_chart': profile.nutritionChartStyle,
     };
   }
 
@@ -1258,7 +1260,8 @@ class AppState extends ChangeNotifier {
       ..dinnerReminderTime = _parseTime(data['dinner_reminder_time'] as String?, profile.dinnerReminderTime)
       ..language = (data['language'] as String?) ?? profile.language
       ..apiBaseUrl = (data['api_base_url'] as String?) ?? profile.apiBaseUrl
-      ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset;
+      ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset
+      ..nutritionChartStyle = (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle;
   }
 
   int _parseInt(dynamic value, int fallback) {
@@ -1352,6 +1355,7 @@ class UserProfile {
     required this.language,
     required this.apiBaseUrl,
     required this.plateAsset,
+    required this.nutritionChartStyle,
   });
 
   String name;
@@ -1368,6 +1372,7 @@ class UserProfile {
   String language;
   String apiBaseUrl;
   String plateAsset;
+  String nutritionChartStyle;
 
   factory UserProfile.initial() {
     return UserProfile(
@@ -1385,6 +1390,7 @@ class UserProfile {
       language: 'zh-TW',
       apiBaseUrl: kDefaultApiBaseUrl,
       plateAsset: kDefaultPlateAsset,
+      nutritionChartStyle: 'radar',
     );
   }
 }

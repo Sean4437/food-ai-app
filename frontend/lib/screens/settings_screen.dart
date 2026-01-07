@@ -283,10 +283,21 @@ class SettingsScreen extends StatelessWidget {
       t.plateDefaultLabel: kDefaultPlateAsset,
       t.plateWarmLabel: 'assets/plates/plate_warm.png',
     };
+    final chartOptions = <String, String>{
+      t.chartRadar: 'radar',
+      t.chartBars: 'bars',
+      t.chartDonut: 'donut',
+    };
     final currentPlateLabel = plateOptions.entries
         .firstWhere(
           (entry) => entry.value == profile.plateAsset,
           orElse: () => MapEntry(t.plateDefaultLabel, kDefaultPlateAsset),
+        )
+        .key;
+    final currentChartLabel = chartOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.nutritionChartStyle,
+          orElse: () => MapEntry(t.chartRadar, 'radar'),
         )
         .key;
     return SafeArea(
@@ -481,6 +492,19 @@ class SettingsScreen extends StatelessWidget {
                     current: currentPlateLabel,
                     options: plateOptions.keys.toList(),
                     onSave: (value) => app.updateField((p) => p.plateAsset = plateOptions[value] ?? kDefaultPlateAsset),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _sectionTitle(t.nutritionChartLabel),
+                _row(
+                  t.nutritionChartLabel,
+                  currentChartLabel,
+                  onTap: () => _selectOption(
+                    context,
+                    title: t.nutritionChartLabel,
+                    current: currentChartLabel,
+                    options: chartOptions.keys.toList(),
+                    onSave: (value) => app.updateField((p) => p.nutritionChartStyle = chartOptions[value] ?? 'radar'),
                   ),
                 ),
                 const SizedBox(height: 8),

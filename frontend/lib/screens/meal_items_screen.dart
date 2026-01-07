@@ -1,11 +1,11 @@
 ﻿import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
 import '../state/app_state.dart';
 import 'day_meals_screen.dart';
 import '../widgets/plate_photo.dart';
+import '../widgets/nutrition_chart.dart';
 
 class MealItemsScreen extends StatefulWidget {
   const MealItemsScreen({
@@ -179,37 +179,6 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     await app.updateEntryFoodName(entry, result, locale);
   }
 
-  double _ratioFromValue(String value) {
-    final v = value.toLowerCase();
-    if (v.contains('偏高')) return 0.7;
-    if (v.contains('偏低')) return 0.4;
-    if (v.contains('高') || v.contains('high')) return 0.8;
-    if (v.contains('低') || v.contains('low')) return 0.3;
-    return 0.55;
-  }
-
-  String _displayValue(String rawValue, double ratio) {
-    final match = RegExp(r'\d+(\.\d+)?').firstMatch(rawValue);
-    if (match != null) {
-      return rawValue.trim();
-    }
-    return '${(ratio * 100).round()}%';
-  }
-
-  Widget _nutrientValue(String label, String value, double ratio, IconData icon, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 6),
-        Text(
-          '$label ${_displayValue(value, ratio)}',
-          style: const TextStyle(fontSize: 11, color: Colors.black54),
-        ),
-      ],
-    );
-  }
-
   Widget _portionSelector(
     BuildContext context,
     AppState app,
@@ -244,84 +213,20 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
   }
 
-  Widget _nutrientStackLeft(String label, String value, double ratio, IconData icon, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(height: 4),
-        Text(
-          '$label ${_displayValue(value, ratio)}',
-          style: const TextStyle(fontSize: 11, color: Colors.black54),
-          textAlign: TextAlign.right,
-        ),
-      ],
-    );
-  }
-
-  Widget _nutrientStackRight(String label, String value, double ratio, IconData icon, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(height: 4),
-        Text(
-          '$label ${_displayValue(value, ratio)}',
-          style: const TextStyle(fontSize: 11, color: Colors.black54),
-          textAlign: TextAlign.left,
-        ),
-      ],
-    );
-  }
-
-  Widget _radarChart(MealEntry entry, AppLocalizations t) {
-    final protein = entry.result?.macros['protein'] ?? t.levelMedium;
-    final carbs = entry.result?.macros['carbs'] ?? t.levelMedium;
-    final fat = entry.result?.macros['fat'] ?? t.levelMedium;
-    final sodium = entry.result?.macros['sodium'] ?? t.levelMedium;
-    final proteinRatio = _ratioFromValue(protein);
-    final carbsRatio = _ratioFromValue(carbs);
-    final fatRatio = _ratioFromValue(fat);
-    final sodiumRatio = _ratioFromValue(sodium);
-    final values = [proteinRatio, carbsRatio, fatRatio, sodiumRatio];
-
-    return SizedBox(
-      height: 320,
-      child: CustomPaint(
-        painter: _RadarPainter(values),
-        child: Center(
-          child: SizedBox(
-            width: 240,
-            height: 240,
-            child: Stack(
-              children: [
-                Align(
-                  alignment: const Alignment(0, -1.35),
-                  child: _nutrientValue(t.protein, protein, proteinRatio, Icons.eco, const Color(0xFF7FCB99)),
-                ),
-                Align(
-                  alignment: const Alignment(1.45, 0.05),
-                  child: _nutrientStackRight(t.carbs, carbs, carbsRatio, Icons.grass, const Color(0xFFF1BE4B)),
-                ),
-                Align(
-                  alignment: const Alignment(0, 1.35),
-                  child: _nutrientValue(t.fat, fat, fatRatio, Icons.local_pizza, const Color(0xFFF08A7C)),
-                ),
-                Align(
-                  alignment: const Alignment(-1.45, 0.05),
-                  child: _nutrientStackLeft(t.sodium, sodium, sodiumRatio, Icons.opacity, const Color(0xFF8AB4F8)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   String _nutritionTitle(BuildContext context) {
     final code = Localizations.localeOf(context).languageCode.toLowerCase();
     return code == 'en' ? 'Nutrition' : '營養成分';
+  }
+
+  NutritionChartStyle _chartStyle(String value) {
+    switch (value) {
+      case 'bars':
+        return NutritionChartStyle.bars;
+      case 'donut':
+        return NutritionChartStyle.donut;
+      default:
+        return NutritionChartStyle.radar;
+    }
   }
 
   @override
@@ -425,7 +330,11 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                   children: [
                     Text(_nutritionTitle(context), style: const TextStyle(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
-                    _radarChart(currentEntry!, t),
+                    NutritionChart(
+                      macros: currentEntry!.result!.macros,
+                      style: _chartStyle(app.profile.nutritionChartStyle),
+                      t: t,
+                    ),
                   ],
                 ),
               ),
@@ -433,103 +342,5 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         ),
       ),
     );
-  }
-}
-
-class _RadarPainter extends CustomPainter {
-  _RadarPainter(this.values);
-
-  final List<double> values;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) * 0.38;
-    final axes = values.length;
-    final gridPaint = Paint()
-      ..color = const Color(0xFFE6E9F2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    final axisColors = [
-      const Color(0xFF7FCB99), // protein
-      const Color(0xFFF1BE4B), // carbs
-      const Color(0xFFF08A7C), // fat
-      const Color(0xFF8AB4F8), // sodium
-    ];
-    final linePaint = Paint()
-      ..color = const Color(0xFFB5D8C6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    for (int i = 1; i <= 5; i++) {
-      final r = radius * (i / 5);
-      final path = Path();
-      for (int j = 0; j < axes; j++) {
-        final angle = (2 * math.pi / axes) * j - math.pi / 2;
-        final point = Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
-        if (j == 0) {
-          path.moveTo(point.dx, point.dy);
-        } else {
-          path.lineTo(point.dx, point.dy);
-        }
-      }
-      path.close();
-      canvas.drawPath(path, gridPaint);
-    }
-
-    for (int j = 0; j < axes; j++) {
-      final angle = (2 * math.pi / axes) * j - math.pi / 2;
-      final nextAngle = (2 * math.pi / axes) * (j + 1) - math.pi / 2;
-      final value = values[j].clamp(0.1, 1.0);
-      final nextValue = values[(j + 1) % axes].clamp(0.1, 1.0);
-      final color = axisColors[j % axisColors.length];
-      final edge = Offset(
-        center.dx + radius * value * math.cos(angle),
-        center.dy + radius * value * math.sin(angle),
-      );
-      final nextEdge = Offset(
-        center.dx + radius * nextValue * math.cos(nextAngle),
-        center.dy + radius * nextValue * math.sin(nextAngle),
-      );
-      final wedge = Path()
-        ..moveTo(center.dx, center.dy)
-        ..lineTo(edge.dx, edge.dy)
-        ..lineTo(nextEdge.dx, nextEdge.dy)
-        ..close();
-      final fillPaint = Paint()
-        ..shader = RadialGradient(
-          colors: [
-            color.withOpacity(0.05),
-            color.withOpacity(0.25 + 0.45 * value),
-          ],
-        ).createShader(Rect.fromCircle(center: center, radius: radius))
-        ..style = PaintingStyle.fill;
-      canvas.drawPath(wedge, fillPaint);
-    }
-
-    final dataPath = Path();
-    for (int j = 0; j < axes; j++) {
-      final angle = (2 * math.pi / axes) * j - math.pi / 2;
-      final point = Offset(
-        center.dx + radius * values[j] * math.cos(angle),
-        center.dy + radius * values[j] * math.sin(angle),
-      );
-      if (j == 0) {
-        dataPath.moveTo(point.dx, point.dy);
-      } else {
-        dataPath.lineTo(point.dx, point.dy);
-      }
-    }
-    dataPath.close();
-    canvas.drawPath(dataPath, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _RadarPainter oldDelegate) {
-    if (oldDelegate.values.length != values.length) return true;
-    for (int i = 0; i < values.length; i++) {
-      if (oldDelegate.values[i] != values[i]) return true;
-    }
-    return false;
   }
 }
