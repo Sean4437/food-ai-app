@@ -92,6 +92,38 @@ class AppState extends ChangeNotifier {
     );
   }
 
+  Future<QuickCaptureAnalysis> reanalyzeQuickCapture(
+    QuickCaptureAnalysis analysis,
+    String locale, {
+    String? historyContext,
+    String? foodName,
+  }) async {
+    final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
+    final result = await _api.analyzeImage(
+      analysis.imageBytes,
+      filename,
+      lang: locale,
+      context: historyContext,
+      foodName: foodName,
+      mealType: _mealTypeKey(analysis.mealType),
+      mealPhotoCount: 1,
+      heightCm: profile.heightCm,
+      weightKg: profile.weightKg,
+      age: profile.age,
+      goal: profile.goal,
+      planSpeed: profile.planSpeed,
+      adviceMode: 'current_meal',
+    );
+    return QuickCaptureAnalysis(
+      file: analysis.file,
+      originalBytes: analysis.originalBytes,
+      imageBytes: analysis.imageBytes,
+      time: analysis.time,
+      mealType: analysis.mealType,
+      result: result,
+    );
+  }
+
   Future<MealEntry?> saveQuickCapture(
     QuickCaptureAnalysis analysis, {
     String? note,

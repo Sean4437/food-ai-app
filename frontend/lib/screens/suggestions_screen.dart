@@ -77,6 +77,54 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
     );
   }
 
+  Future<void> _editFoodName() async {
+    if (_analysis == null) return;
+    final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final controller = TextEditingController(text: _analysis!.result.foodName);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.editFoodName),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(hintText: t.foodNameLabel),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: Text(t.save)),
+        ],
+      ),
+    );
+    if (result == null || result.trim().isEmpty) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final historyContext = app.buildAiContext();
+    try {
+      final updated = await app.reanalyzeQuickCapture(
+        _analysis!,
+        locale,
+        historyContext: historyContext.isEmpty ? null : historyContext,
+        foodName: result.trim(),
+      );
+      if (!mounted) return;
+      setState(() {
+        _analysis = updated;
+        _loading = false;
+        _showSaveActions = true;
+      });
+    } catch (err) {
+      if (!mounted) return;
+      setState(() {
+        _error = err.toString();
+        _loading = false;
+      });
+    }
+  }
+
   Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
     final lines = suggestion
@@ -224,7 +272,23 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(analysis.foodName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  analysis.foodName,
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: _editFoodName,
+                                icon: const Icon(Icons.edit, size: 18),
+                                tooltip: t.editFoodName,
+                                padding: const EdgeInsets.all(8),
+                                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 6),
                           Text('${analysis.calorieRange} ${t.estimated}', style: const TextStyle(color: Colors.black54)),
                           const SizedBox(height: 12),

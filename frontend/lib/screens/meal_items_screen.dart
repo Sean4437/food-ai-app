@@ -101,8 +101,10 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                         ),
                         IconButton(
                           onPressed: () => _editFoodName(context, app, entry),
-                          icon: const Icon(Icons.edit, size: 18),
+                          icon: const Icon(Icons.edit, size: 20),
                           tooltip: t.editFoodName,
+                          padding: const EdgeInsets.all(8),
+                          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                         ),
                       ],
                     ),
@@ -201,7 +203,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         const SizedBox(width: 6),
         Text(
           '$label ${_displayValue(value, ratio)}',
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
         ),
       ],
     );
@@ -253,29 +255,29 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final values = [proteinRatio, carbsRatio, fatRatio, sodiumRatio];
 
     return SizedBox(
-      height: 280,
+      height: 320,
       child: CustomPaint(
         painter: _RadarPainter(values),
         child: Center(
           child: SizedBox(
-            width: 220,
-            height: 220,
+            width: 240,
+            height: 240,
             child: Stack(
               children: [
                 Align(
-                  alignment: const Alignment(0, -1.2),
+                  alignment: const Alignment(0, -1.35),
                   child: _nutrientValue(t.protein, protein, proteinRatio, Icons.eco, const Color(0xFF7FCB99)),
                 ),
                 Align(
-                  alignment: const Alignment(1.2, 0.1),
+                  alignment: const Alignment(1.35, 0.1),
                   child: _nutrientValue(t.carbs, carbs, carbsRatio, Icons.grass, const Color(0xFFF1BE4B)),
                 ),
                 Align(
-                  alignment: const Alignment(0, 1.2),
+                  alignment: const Alignment(0, 1.35),
                   child: _nutrientValue(t.fat, fat, fatRatio, Icons.local_pizza, const Color(0xFFF08A7C)),
                 ),
                 Align(
-                  alignment: const Alignment(-1.2, 0.1),
+                  alignment: const Alignment(-1.35, 0.1),
                   child: _nutrientValue(t.sodium, sodium, sodiumRatio, Icons.opacity, const Color(0xFF8AB4F8)),
                 ),
               ],
@@ -411,7 +413,7 @@ class _RadarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) * 0.32;
+    final radius = math.min(size.width, size.height) * 0.38;
     final axes = values.length;
     final gridPaint = Paint()
       ..color = const Color(0xFFE6E9F2)
