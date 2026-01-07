@@ -644,13 +644,11 @@ class AppState extends ChangeNotifier {
     }
     final List<MealEntry> created = [];
     DateTime? anchorTime;
-    final List<Uint8List> collageBytes = [];
     for (final file in files) {
       final originalBytes = await file.readAsBytes();
       final time = await _resolveImageTime(file, originalBytes);
       anchorTime ??= time;
       final bytes = _compressImageBytes(originalBytes);
-      collageBytes.add(bytes);
       final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
       final mealType = fixedType ?? resolveMealType(time);
       final mealId = fixedType != null ? _assignMealId(time, fixedType) : _assignMealId(time, mealType);
@@ -676,8 +674,8 @@ class AppState extends ChangeNotifier {
     for (final entry in created) {
       await _store.upsert(entry);
     }
-    if (created.isNotEmpty) {
-      await _analyzeMealGroup(created.first.mealId ?? created.first.id, locale, imagesOverride: collageBytes);
+    for (final entry in created) {
+      await _analyzeEntry(entry, locale);
     }
     return created.isNotEmpty ? created.first : null;
   }
@@ -819,8 +817,6 @@ class AppState extends ChangeNotifier {
 
     try {
       final mealTypeKey = _mealTypeKey(entry.type);
-      final mealId = entry.mealId ?? entry.id;
-      final mealPhotoCount = entriesForMealId(mealId).length;
       final AnalysisResult res = await _api.analyzeImage(
         entry.imageBytes,
         entry.filename,
@@ -834,7 +830,7 @@ class AppState extends ChangeNotifier {
         goal: profile.goal,
         planSpeed: profile.planSpeed,
         mealType: mealTypeKey,
-        mealPhotoCount: mealPhotoCount,
+        mealPhotoCount: 1,
       );
       entry.result = res;
       entry.lastAnalyzedNote = noteKey;
@@ -904,7 +900,7 @@ class AppState extends ChangeNotifier {
   }
 
   void _scheduleAnalyze(MealEntry entry, String locale, {bool force = false}) {
-    final key = entry.mealId ?? entry.id;
+    final key = entry.id;
     _analysisTimers[key]?.cancel();
     if (force) {
       _analysisTimerForce[key] = true;
@@ -913,113 +909,12 @@ class AppState extends ChangeNotifier {
       final doForce = _analysisTimerForce.remove(key) ?? false;
       _analysisTimers.remove(key);
       // ignore: discarded_futures
-      _analyzeMealGroup(key, locale, force: doForce);
+      _analyzeEntry(entry, locale, force: doForce);
     });
   }
 
-  Future<void> _analyzeMealGroup(
-    String mealId,
-    String locale, {
-    List<Uint8List>? imagesOverride,
-    bool force = false,
-  }) async {
-    final group = entriesForMealId(mealId);
-    if (group.isEmpty) return;
-    final mealTypeKey = _mealTypeKey(group.first.type);
-    final mealPhotoCount = group.length;
-    final bytesList = imagesOverride ?? group.map((e) => e.imageBytes).toList();
-    final collageBytes = _buildCollageBytes(bytesList);
-    final filename = 'meal-collage.jpg';
-    final notes = group.map((e) => e.note).whereType<String>().map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-    final note = notes.isEmpty ? null : notes.join(' / ');
-    final overrides = group.map((e) => e.overrideFoodName).whereType<String>().map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
-    final foodName = overrides.length == 1 ? overrides.first : null;
-    final portion = (group.map((e) => e.portionPercent).reduce((a, b) => a + b) / group.length).round();
-
-    for (final entry in group) {
-      final noteKey = entry.note ?? '';
-      final nameKey = entry.overrideFoodName ?? '';
-      if (!force &&
-          entry.result != null &&
-          entry.lastAnalyzedNote == noteKey &&
-          entry.lastAnalyzedFoodName == nameKey) {
-        continue;
-      }
-      entry.loading = true;
-      entry.error = null;
-    }
-    notifyListeners();
-
-    try {
-      final AnalysisResult res = await _api.analyzeImage(
-        collageBytes,
-        filename,
-        lang: locale,
-        foodName: foodName,
-        note: note,
-        portionPercent: portion,
-        heightCm: profile.heightCm,
-        weightKg: profile.weightKg,
-        age: profile.age,
-        goal: profile.goal,
-        planSpeed: profile.planSpeed,
-        mealType: mealTypeKey,
-        mealPhotoCount: mealPhotoCount,
-      );
-      for (final entry in group) {
-        entry.result = res;
-        entry.lastAnalyzedNote = entry.note ?? '';
-        entry.lastAnalyzedFoodName = entry.overrideFoodName ?? '';
-        entry.loading = false;
-        entry.error = null;
-        await _store.upsert(entry);
-      }
-    } catch (e) {
-      for (final entry in group) {
-        entry.loading = false;
-        entry.error = e.toString();
-        await _store.upsert(entry);
-      }
-    } finally {
-      notifyListeners();
-    }
-  }
-
-  Uint8List _buildCollageBytes(List<Uint8List> originals) {
-    if (originals.isEmpty) return Uint8List(0);
-    final decoded = <img.Image>[];
-    for (final bytes in originals) {
-      final image = img.decodeImage(bytes);
-      if (image != null) {
-        decoded.add(image);
-      }
-      if (decoded.length >= 4) break;
-    }
-    if (decoded.isEmpty) {
-      return _compressImageBytes(originals.first);
-    }
-
-    const int canvasSize = 1024;
-    const int grid = 2;
-    final int cellSize = canvasSize ~/ grid;
-    final canvas = img.Image(width: canvasSize, height: canvasSize);
-    img.fill(canvas, color: img.ColorRgb8(255, 255, 255));
-
-    for (var index = 0; index < decoded.length; index++) {
-      final image = decoded[index];
-      final resized = img.copyResize(
-        image,
-        width: cellSize,
-        height: cellSize,
-        interpolation: img.Interpolation.average,
-      );
-      final dx = (index % grid) * cellSize;
-      final dy = (index ~/ grid) * cellSize;
-      img.compositeImage(canvas, resized, dstX: dx, dstY: dy);
-    }
-
-    final jpg = img.encodeJpg(canvas, quality: 70);
-    return Uint8List.fromList(jpg);
+  Future<void> reanalyzeEntry(MealEntry entry, String locale) async {
+    await _analyzeEntry(entry, locale, force: true);
   }
 
   String _hashBytes(List<int> bytes) {

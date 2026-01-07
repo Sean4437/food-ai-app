@@ -109,6 +109,16 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                           ),
                         ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: IconButton(
+                            onPressed: () => _reanalyzeEntry(context, app, entry),
+                            icon: const Icon(Icons.refresh, size: 20),
+                            tooltip: t.reanalyzeLabel,
+                            padding: const EdgeInsets.all(6),
+                            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 1),
@@ -177,6 +187,11 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
     if (result == null) return;
     await app.updateEntryFoodName(entry, result, locale);
+  }
+
+  Future<void> _reanalyzeEntry(BuildContext context, AppState app, MealEntry entry) async {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    await app.reanalyzeEntry(entry, locale);
   }
 
   Widget _portionSelector(
