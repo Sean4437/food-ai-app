@@ -106,17 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return _plateStackForGroups(date, groups);
   }
 
-  Widget _dateInfoCard(
-    DateTime date,
-    AppLocalizations t,
-    ThemeData theme,
-    AppTheme appTheme,
-    AppState app,
-  ) {
-    final formatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
-    final summaryText = app.daySummaryText(date, t);
-    final tomorrowAdvice = app.dayTomorrowAdvice(date, t);
-    final mealLabels = app.dayMealLabels(date, t);
+  Widget _homeInfoCard({required Widget child, required AppTheme appTheme}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -131,38 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text('${t.dayCardDateLabel} ${formatter.format(date)}', style: const TextStyle(fontWeight: FontWeight.w600)),
-              const Spacer(),
-              TextButton(
-                onPressed: () => app.finalizeDay(date, Localizations.localeOf(context).toLanguageTag(), t),
-                child: Text(t.finalizeDay),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(t.dayCardCalorieLabel, style: const TextStyle(color: Colors.black54)),
-          const SizedBox(height: 4),
-          Text(
-            app.dailyCalorieRangeLabelForDate(date, t),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 10),
-          Text('${t.dayCardMealsLabel} $mealLabels', style: const TextStyle(color: Colors.black54)),
-          const SizedBox(height: 12),
-          Text(t.dayCardSummaryLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Text(summaryText, style: const TextStyle(color: Colors.black54)),
-          const SizedBox(height: 12),
-          Text(t.dayCardTomorrowLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Text(tomorrowAdvice, style: const TextStyle(color: Colors.black54)),
-        ],
-      ),
+      child: child,
     );
   }
 
@@ -259,7 +218,86 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      _dateInfoCard(activeDate, t, theme, appTheme, app),
+                      _homeInfoCard(
+                        appTheme: appTheme,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today, size: 18, color: Colors.black54),
+                            const SizedBox(width: 8),
+                            Text(
+                              DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag()).format(activeDate),
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            ),
+                            const Spacer(),
+                            TextButton(
+                              onPressed: () => app.finalizeDay(activeDate, Localizations.localeOf(context).toLanguageTag(), t),
+                              child: Text(t.finalizeDay),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _homeInfoCard(
+                        appTheme: appTheme,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  t.dayCardCalorieLabel,
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary.withOpacity(0.14),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Text(
+                                    app.dailyCalorieRangeLabelForDate(activeDate, t),
+                                    style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${t.dayCardMealsLabel} ${app.dayMealLabels(activeDate, t)}',
+                              style: const TextStyle(fontSize: 14, color: Colors.black54),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _homeInfoCard(
+                        appTheme: appTheme,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t.dayCardSummaryLabel,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              app.daySummaryText(activeDate, t),
+                              style: const TextStyle(fontSize: 14, color: Colors.black54),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              t.dayCardTomorrowLabel,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              app.dayTomorrowAdvice(activeDate, t),
+                              style: const TextStyle(fontSize: 14, color: Colors.black54),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 const SizedBox(height: 18),
