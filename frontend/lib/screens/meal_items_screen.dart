@@ -254,12 +254,12 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
             colors: [
-              theme.colorScheme.primary.withOpacity(0.22),
               theme.colorScheme.primary.withOpacity(0.12),
               theme.colorScheme.primary.withOpacity(0.04),
+              theme.scaffoldBackgroundColor,
             ],
           ),
         ),
