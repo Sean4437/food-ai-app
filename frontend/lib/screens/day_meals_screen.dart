@@ -235,6 +235,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                       children: [
                         if (currentGroup != null)
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 _mealTypeLabel(currentGroup.first.type, t),
@@ -245,13 +246,20 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                                 _groupTimeLabel(currentGroup),
                                 style: const TextStyle(color: Colors.black45, fontSize: 12),
                               ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary.withOpacity(0.14),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  summary?.calorieRange ?? t.calorieUnknown,
+                                  style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+                                ),
+                              ),
                             ],
                           ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${t.mealTotal}: ${summary?.calorieRange ?? t.calorieUnknown}',
-                          style: const TextStyle(color: Colors.black54, fontSize: 14),
-                        ),
                         if (currentGroup != null) ...[
                           const SizedBox(height: 12),
                           _thumbnailRow(currentGroup),
