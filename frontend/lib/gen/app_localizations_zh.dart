@@ -89,7 +89,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editFoodName => '?????????';
 
   @override
-  String get reanalyzeLabel => '??????';
+  String get reanalyzeLabel => '重新分析';
+
+  @override
+  String get addLabel => '補充標示';
+
+  @override
+  String get labelInfoTitle => '標示資訊';
 
   @override
   String get unknownFood => '????????;
@@ -733,7 +739,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get editFoodName => '?????????';
 
   @override
-  String get reanalyzeLabel => '??????';
+  String get reanalyzeLabel => '重新分析';
+
+  @override
+  String get addLabel => '補充標示';
+
+  @override
+  String get labelInfoTitle => '標示資訊';
 
   @override
   String get unknownFood => '????????;

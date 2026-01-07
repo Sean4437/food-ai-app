@@ -9,6 +9,7 @@ import 'package:image/image.dart' as img;
 import 'package:crypto/crypto.dart';
 import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
+import '../models/label_result.dart';
 import '../services/api_service.dart';
 import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
@@ -748,6 +749,33 @@ class AppState extends ChangeNotifier {
     _scheduleAnalyze(entry, profile.language, force: true);
   }
 
+  Future<void> addLabelToEntry(MealEntry entry, XFile file, String locale) async {
+    entry.loading = true;
+    entry.error = null;
+    notifyListeners();
+    try {
+      final originalBytes = await file.readAsBytes();
+      final bytes = _compressImageBytes(originalBytes);
+      final filename = file.name.isNotEmpty ? file.name : 'label.jpg';
+      final labelResult = await _api.analyzeLabel(bytes, filename, lang: locale);
+      entry.labelImageBytes = bytes;
+      entry.labelFilename = filename;
+      entry.labelResult = labelResult;
+      if (entry.result != null) {
+        entry.result = _applyLabelOverride(entry.result!, labelResult);
+      }
+      await _store.upsert(entry);
+      notifyListeners();
+      await _analyzeEntry(entry, locale, force: true);
+    } catch (e) {
+      entry.error = e.toString();
+    } finally {
+      entry.loading = false;
+      notifyListeners();
+      await _store.upsert(entry);
+    }
+  }
+
   Future<String> exportData() async {
     return _store.exportJson();
   }
@@ -823,6 +851,7 @@ class AppState extends ChangeNotifier {
         lang: locale,
         foodName: entry.overrideFoodName,
         note: entry.note,
+        labelContext: _buildLabelContext(entry.labelResult),
         portionPercent: entry.portionPercent,
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
@@ -833,7 +862,7 @@ class AppState extends ChangeNotifier {
         mealPhotoCount: 1,
         forceReanalyze: force,
       );
-      entry.result = res;
+      entry.result = entry.labelResult == null ? res : _applyLabelOverride(res, entry.labelResult!);
       entry.lastAnalyzedNote = noteKey;
       entry.lastAnalyzedFoodName = nameKey;
     } catch (e) {
@@ -948,6 +977,44 @@ class AppState extends ChangeNotifier {
     }
     if (totalWeight == 0) return 0;
     return score / totalWeight;
+  }
+
+  String? _buildLabelContext(LabelResult? labelResult) {
+    if (labelResult == null) return null;
+    final calories = labelResult.calorieRange.trim();
+    final macros = labelResult.macros;
+    if (calories.isEmpty && macros.isEmpty) return null;
+    final parts = <String>[];
+    if (calories.isNotEmpty) {
+      parts.add('calorie_range=$calories');
+    }
+    if (macros.isNotEmpty) {
+      parts.add(
+        'macros=protein:${macros['protein']?.round() ?? 0}, carbs:${macros['carbs']?.round() ?? 0}, fat:${macros['fat']?.round() ?? 0}, sodium:${macros['sodium']?.round() ?? 0}',
+      );
+    }
+    if (labelResult.labelName != null && labelResult.labelName!.trim().isNotEmpty) {
+      parts.add('label_name=${labelResult.labelName!.trim()}');
+    }
+    return 'nutrition_label: ${parts.join(' | ')}';
+  }
+
+  AnalysisResult _applyLabelOverride(AnalysisResult base, LabelResult label) {
+    final calorieRange = label.calorieRange.trim().isNotEmpty ? label.calorieRange : base.calorieRange;
+    final macros = label.macros.isNotEmpty ? label.macros : base.macros;
+    final isBeverage = label.isBeverage ?? base.isBeverage;
+    return AnalysisResult(
+      foodName: base.foodName,
+      calorieRange: calorieRange,
+      macros: macros,
+      dishSummary: base.dishSummary,
+      suggestion: base.suggestion,
+      tier: base.tier,
+      source: base.source,
+      costEstimateUsd: base.costEstimateUsd,
+      confidence: base.confidence,
+      isBeverage: isBeverage,
+    );
   }
 
   MealEntry? _findMealAnchor(MealEntry entry) {

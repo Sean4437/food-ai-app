@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:convert';
 import 'analysis_result.dart';
+import 'label_result.dart';
 
 enum MealType { breakfast, lunch, dinner, lateSnack, other }
 
@@ -18,6 +19,9 @@ class MealEntry {
     this.mealId,
     this.lastAnalyzedNote,
     this.lastAnalyzedFoodName,
+    this.labelImageBytes,
+    this.labelFilename,
+    this.labelResult,
   }) : portionPercent = portionPercent ?? 100;
 
   final String id;
@@ -32,6 +36,9 @@ class MealEntry {
   String? imageHash;
   String? lastAnalyzedNote;
   String? lastAnalyzedFoodName;
+  Uint8List? labelImageBytes;
+  String? labelFilename;
+  LabelResult? labelResult;
   AnalysisResult? result;
   bool loading = false;
   String? error;
@@ -81,6 +88,9 @@ class MealEntry {
       'image_hash': imageHash,
       'last_analyzed_note': lastAnalyzedNote,
       'last_analyzed_food_name': lastAnalyzedFoodName,
+      'label_image_bytes': labelImageBytes == null ? null : base64Encode(labelImageBytes!),
+      'label_filename': labelFilename,
+      'label_result': labelResult?.toJson(),
       'result': result?.toJson(),
     };
   }
@@ -100,7 +110,15 @@ class MealEntry {
       mealId: json['meal_id'] as String?,
       lastAnalyzedNote: json['last_analyzed_note'] as String?,
       lastAnalyzedFoodName: json['last_analyzed_food_name'] as String?,
+      labelImageBytes: json['label_image_bytes'] == null
+          ? null
+          : Uint8List.fromList(base64Decode(json['label_image_bytes'] as String)),
+      labelFilename: json['label_filename'] as String?,
     );
+    final labelJson = json['label_result'];
+    if (labelJson is Map<String, dynamic>) {
+      entry.labelResult = LabelResult.fromJson(labelJson);
+    }
     final resultJson = json['result'];
     if (resultJson is Map<String, dynamic>) {
       entry.result = AnalysisResult.fromJson(resultJson);

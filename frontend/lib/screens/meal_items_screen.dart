@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/meal_entry.dart';
 import '../state/app_state.dart';
 import 'day_meals_screen.dart';
@@ -27,6 +28,7 @@ class MealItemsScreen extends StatefulWidget {
 
 class _MealItemsScreenState extends State<MealItemsScreen> {
   final PageController _pageController = PageController(viewportFraction: 0.86);
+  final ImagePicker _picker = ImagePicker();
   int _pageIndex = 0;
   Timer? _autoTimer;
   bool _autoTimerStarted = false;
@@ -123,6 +125,15 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                     ),
                     const SizedBox(height: 1),
                     _portionSelector(context, app, entry, theme, t),
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => _pickLabelImage(context, app, entry),
+                        icon: const Icon(Icons.receipt_long, size: 18),
+                        label: Text(t.addLabel),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -187,6 +198,35 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
     if (result == null) return;
     await app.updateEntryFoodName(entry, result, locale);
+  }
+
+  Future<void> _pickLabelImage(BuildContext context, AppState app, MealEntry entry) async {
+    final t = AppLocalizations.of(context)!;
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: Text(t.takePhoto),
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: Text(t.uploadPhoto),
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    final file = await _picker.pickImage(source: source);
+    if (file == null) return;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    await app.addLabelToEntry(entry, file, locale);
   }
 
   Future<void> _reanalyzeEntry(BuildContext context, AppState app, MealEntry entry) async {
@@ -365,6 +405,77 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                           macros: currentEntry!.result!.macros,
                           style: _chartStyle(app.profile.nutritionChartStyle),
                           t: t,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            if (currentEntry?.labelResult != null)
+              Align(
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: contentWidth,
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (currentEntry!.labelImageBytes != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              currentEntry!.labelImageBytes!,
+                              width: 64,
+                              height: 64,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        if (currentEntry!.labelImageBytes != null) const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                t.labelInfoTitle,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                              ),
+                              if ((currentEntry!.labelResult!.labelName ?? '').trim().isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  currentEntry!.labelResult!.labelName!.trim(),
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                              const SizedBox(height: 6),
+                              Text(
+                                '${t.calorieLabel}：${currentEntry!.labelResult!.calorieRange}',
+                                style: const TextStyle(fontSize: 13, color: Colors.black87),
+                              ),
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: [
+                                  Text('${t.protein} ${currentEntry!.labelResult!.macros['protein']?.round() ?? 0}%'),
+                                  Text('${t.carbs} ${currentEntry!.labelResult!.macros['carbs']?.round() ?? 0}%'),
+                                  Text('${t.fat} ${currentEntry!.labelResult!.macros['fat']?.round() ?? 0}%'),
+                                  Text('${t.sodium} ${currentEntry!.labelResult!.macros['sodium']?.round() ?? 0}%'),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

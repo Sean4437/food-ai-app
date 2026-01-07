@@ -45,6 +45,15 @@ class AnalysisResult(BaseModel):
     debug_reason: Optional[str] = None
 
 
+class LabelResult(BaseModel):
+    label_name: Optional[str] = None
+    calorie_range: str
+    macros: Dict[str, float]
+    confidence: Optional[float] = None
+    is_beverage: Optional[bool] = None
+    debug_reason: Optional[str] = None
+
+
 class MealSummaryInput(BaseModel):
     meal_type: str
     calorie_range: str
@@ -186,6 +195,7 @@ def _build_prompt(
     meal_photo_count: int | None,
     context: str | None,
     advice_mode: str | None,
+    label_context: str | None,
 ) -> str:
     profile_text = ""
     if profile:
@@ -201,6 +211,11 @@ def _build_prompt(
     context_text = ""
     if context:
         context_text = f"Recent context (use for suggestions): {context}\n"
+    label_text = ""
+    if label_context:
+        label_text = (
+            f"Nutrition label info (must override calorie_range and macros if provided): {label_context}\n"
+        )
     meal_text = ""
     if meal_type:
         if lang == "zh-TW":
@@ -247,6 +262,7 @@ def _build_prompt(
             "- is_beverage: 是否為飲料（true/false）\n"
             "- 飲料規則：若為飲料，protein/fat 建議 <= 15，熱量偏低；含糖可提升 carbs\n"
             "- 若使用者提供 food_name，必須優先採用\n"
+            "- 若提供 nutrition label info，必須使用其 calorie_range 與 macros\n"
             "- 避免醫療或診斷字眼；避免精準數值或克數，維持區間與語意描述\n"
             "- 若畫面中有硬幣或信用卡，請將其視為參考物估計份量；無則使用一般估計\n"
             "JSON 範例：\n"
@@ -259,7 +275,7 @@ def _build_prompt(
             "  \"confidence\": 0.72,\n"
             "  \"is_beverage\": false\n"
             "}\n"
-        ) + profile_text + note_text + context_text + meal_text
+        ) + profile_text + note_text + context_text + label_text + meal_text
     suggestion_rule = (
         "- suggestion: gentle next-meal advice (non-medical), include concrete food types and portion guidance (e.g. half bowl carbs, palm-sized protein, one bowl veggies)\n"
     )
@@ -288,6 +304,7 @@ def _build_prompt(
         "- is_beverage: true/false\n"
         "- Beverage rule: if beverage, protein/fat should be <= 15; calories should be low; sugary drinks may increase carbs\n"
         "- If user provides food_name, it must be used as the primary name\n"
+        "- If nutrition label info is provided, you must use its calorie_range and macros\n"
         "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
         "- If a coin or credit card is visible, treat it as a size reference; otherwise estimate normally\n"
         "JSON example:\n"
@@ -300,7 +317,7 @@ def _build_prompt(
         "  \"confidence\": 0.72,\n"
         "  \"is_beverage\": false\n"
         "}\n"
-    ) + profile_text + note_text + context_text + meal_text
+    ) + profile_text + note_text + context_text + label_text + meal_text
 
 
 def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryInput]) -> str:
@@ -348,6 +365,48 @@ def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryIn
         "}\n"
         f"Meal summaries:\n{meal_block}\n"
     ) + profile_text
+
+
+def _build_label_prompt(lang: str) -> str:
+    if lang == "zh-TW":
+        return (
+            "你是營養標示讀取助手。請根據包裝/營養標示圖片回傳 JSON。\n"
+            "要求：\n"
+            "- 僅回傳 JSON（不要多餘文字）\n"
+            "- label_name: 產品或品名（若看不到可留空）\n"
+            "- calorie_range: 若有熱量數字，請輸出區間或單一值（例：200 kcal 或 180-220 kcal）\n"
+            "- macros: protein/carbs/fat/sodium 為 0-100 的百分比整數\n"
+            "- confidence: 0 到 1 的信心分數\n"
+            "- is_beverage: 是否為飲料（true/false）\n"
+            "- 飲料規則：若為飲料，protein/fat 建議 <= 15\n"
+            "JSON 範例：\n"
+            "{\n"
+            "  \"label_name\": \"無糖茶\",\n"
+            "  \"calorie_range\": \"0-10 kcal\",\n"
+            "  \"macros\": {\"protein\": 5, \"carbs\": 8, \"fat\": 5, \"sodium\": 15},\n"
+            "  \"confidence\": 0.7,\n"
+            "  \"is_beverage\": true\n"
+            "}\n"
+        )
+    return (
+        "You are a nutrition label reader. Return JSON from the package label image.\n"
+        "Requirements:\n"
+        "- Return JSON only\n"
+        "- label_name: product name (empty if not visible)\n"
+        "- calorie_range: range or single value (e.g., 200 kcal or 180-220 kcal)\n"
+        "- macros: protein/carbs/fat/sodium as integer percentages (0-100)\n"
+        "- confidence: 0 to 1\n"
+        "- is_beverage: true/false\n"
+        "- Beverage rule: if beverage, protein/fat <= 15\n"
+        "JSON example:\n"
+        "{\n"
+        "  \"label_name\": \"unsweetened tea\",\n"
+        "  \"calorie_range\": \"0-10 kcal\",\n"
+        "  \"macros\": {\"protein\": 5, \"carbs\": 8, \"fat\": 5, \"sodium\": 15},\n"
+        "  \"confidence\": 0.7,\n"
+        "  \"is_beverage\": true\n"
+        "}\n"
+    )
 
 
 def _fallback_day_summary(lang: str, meals: List[MealSummaryInput]) -> dict:
@@ -439,11 +498,22 @@ def _analyze_with_openai(
     meal_photo_count: int | None,
     context: str | None,
     advice_mode: str | None,
+    label_context: str | None,
 ) -> Optional[dict]:
     if _client is None:
         return None
 
-    prompt = _build_prompt(lang, profile, note, portion_percent, meal_type, meal_photo_count, context, advice_mode)
+    prompt = _build_prompt(
+        lang,
+        profile,
+        note,
+        portion_percent,
+        meal_type,
+        meal_photo_count,
+        context,
+        advice_mode,
+        label_context,
+    )
     if food_name:
         prompt += f"\nUser provided food name: {food_name}. Use this as the primary dish name."
 
@@ -486,6 +556,57 @@ def _analyze_with_openai(
     return {"result": data, "usage": usage_data}
 
 
+def _normalize_calorie_range(value: str) -> str:
+    if not value:
+        return ""
+    match = [int(s) for s in value.replace(",", "").split() if s.isdigit()]
+    if len(match) >= 2:
+        return f"{match[0]}-{match[1]} kcal"
+    if len(match) == 1:
+        return f"{match[0]}-{match[0]} kcal"
+    return value
+
+
+def _analyze_label_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
+    if _client is None:
+        return None
+    prompt = _build_label_prompt(lang)
+    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+    response = _client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}},
+                ],
+            }
+        ],
+        temperature=0.2,
+    )
+    text = response.choices[0].message.content or ""
+    data = _parse_json(text)
+    if not isinstance(data, dict):
+        return None
+    required = {"calorie_range", "macros"}
+    if not required.issubset(set(data.keys())):
+        return None
+    data["macros"] = _normalize_macros(data, lang)
+    data["calorie_range"] = _normalize_calorie_range(data.get("calorie_range", ""))
+    data.setdefault("confidence", 0.6)
+    data.setdefault("is_beverage", False)
+    usage = response.usage
+    usage_data = None
+    if usage is not None:
+        usage_data = {
+            "input_tokens": usage.prompt_tokens,
+            "output_tokens": usage.completion_tokens,
+            "total_tokens": usage.total_tokens,
+        }
+    return {"result": data, "usage": usage_data}
+
+
 @app.post("/analyze", response_model=AnalysisResult)
 async def analyze_image(
     image: UploadFile = File(...),
@@ -503,6 +624,7 @@ async def analyze_image(
     meal_photo_count: Optional[int] = Form(default=None),
     advice_mode: Optional[str] = Form(default=None),
     force_reanalyze: Optional[str] = Form(default=None),
+    label_context: Optional[str] = Form(default=None),
 ):
     image_bytes = await image.read()
     image_hash = _hash_image(image_bytes)
@@ -524,6 +646,7 @@ async def analyze_image(
         and context is None
         and portion_percent is None
         and advice_mode is None
+        and label_context is None
     ):
         cache = _load_analysis_cache()
         cached = cache.get(image_hash)
@@ -564,6 +687,7 @@ async def analyze_image(
                 meal_photo_count,
                 context,
                 advice_mode,
+                label_context,
             )
             if payload and payload.get("result"):
                 usage_data = payload.get("usage") or {}
@@ -661,6 +785,72 @@ async def analyze_image(
         confidence=0.35,
         is_beverage=False,
         debug_reason=debug_reason,
+    )
+
+
+@app.post("/analyze_label", response_model=LabelResult)
+async def analyze_label(
+    image: UploadFile = File(...),
+    lang: str = Query(default=None, description="Language code, e.g. zh-TW, en"),
+):
+    image_bytes = await image.read()
+
+    use_lang = lang or DEFAULT_LANG
+    if use_lang not in _fake_foods:
+        use_lang = "zh-TW"
+
+    use_ai = _should_use_ai()
+    if use_ai and _client is not None:
+        try:
+            payload = await asyncio.to_thread(_analyze_label_with_openai, image_bytes, use_lang)
+            if payload and payload.get("result"):
+                usage_data = payload.get("usage") or {}
+                input_tokens = int(usage_data.get("input_tokens") or 0)
+                output_tokens = int(usage_data.get("output_tokens") or 0)
+                cost_estimate = _estimate_cost_usd(input_tokens, output_tokens) if usage_data else None
+                _append_usage(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "model": OPENAI_MODEL,
+                        "lang": use_lang,
+                        "source": "label",
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens,
+                        "total_tokens": int(usage_data.get("total_tokens") or 0),
+                        "cost_estimate_usd": cost_estimate,
+                        "image_bytes": len(image_bytes),
+                    }
+                )
+                _increment_daily_count()
+                return LabelResult(
+                    label_name=payload["result"].get("label_name"),
+                    calorie_range=payload["result"].get("calorie_range", ""),
+                    macros=_normalize_macros(payload["result"], use_lang),
+                    confidence=payload["result"].get("confidence"),
+                    is_beverage=payload["result"].get("is_beverage"),
+                )
+        except Exception as exc:
+            global _last_ai_error
+            _last_ai_error = str(exc)
+            logging.exception("Label analyze failed: %s", exc)
+
+    if CALL_REAL_AI and _client is None:
+        logging.warning("CALL_REAL_AI is true but API_KEY is missing.")
+
+    macros = {
+        "protein": float(random.choice(_fake_macro_choices)),
+        "carbs": float(random.choice(_fake_macro_choices)),
+        "fat": float(random.choice(_fake_macro_choices)),
+        "sodium": float(random.choice(_fake_macro_choices)),
+    }
+    return LabelResult(
+        label_name="",
+        calorie_range="",
+        macros=_normalize_macros({"macros": macros, "is_beverage": False}, use_lang),
+        confidence=0.2,
+        is_beverage=False,
+        debug_reason=_last_ai_error if RETURN_AI_ERROR else None,
     )
 
 

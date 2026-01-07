@@ -261,6 +261,18 @@ abstract class AppLocalizations {
   /// **'??????'**
   String get reanalyzeLabel;
 
+  /// No description provided for @addLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'??????'**
+  String get addLabel;
+
+  /// No description provided for @labelInfoTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'??????'**
+  String get labelInfoTitle;
+
   /// No description provided for @unknownFood.
   ///
   /// In zh_TW, this message translates to:

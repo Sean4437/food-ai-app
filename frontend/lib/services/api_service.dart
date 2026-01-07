@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import '../models/analysis_result.dart';
+import '../models/label_result.dart';
 
 class ApiService {
   final String baseUrl;
@@ -23,6 +24,7 @@ class ApiService {
     String? mealType,
     int? mealPhotoCount,
     String? adviceMode,
+    String? labelContext,
     bool forceReanalyze = false,
   }) async {
     final query = lang == null ? '' : '?lang=$lang';
@@ -65,6 +67,9 @@ class ApiService {
     if (adviceMode != null && adviceMode.trim().isNotEmpty) {
       request.fields['advice_mode'] = adviceMode.trim();
     }
+    if (labelContext != null && labelContext.trim().isNotEmpty) {
+      request.fields['label_context'] = labelContext.trim();
+    }
     if (forceReanalyze) {
       request.fields['force_reanalyze'] = 'true';
     }
@@ -95,4 +100,24 @@ class ApiService {
     return json.decode(response.body) as Map<String, dynamic>;
   }
 
+  Future<LabelResult> analyzeLabel(
+    Uint8List imageBytes,
+    String filename, {
+    String? lang,
+  }) async {
+    final query = lang == null ? '' : '?lang=$lang';
+    final uri = Uri.parse('$baseUrl/analyze_label$query');
+    final request = http.MultipartRequest('POST', uri);
+    request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
+
+    final response = await request.send();
+    final body = await response.stream.bytesToString();
+
+    if (response.statusCode != 200) {
+      throw Exception('Analyze label failed: ${response.statusCode}');
+    }
+
+    final jsonMap = json.decode(body) as Map<String, dynamic>;
+    return LabelResult.fromJson(jsonMap);
+  }
 }

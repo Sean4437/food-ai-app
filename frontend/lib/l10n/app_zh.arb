@@ -34,6 +34,8 @@
   "foodNameLabel": "食物名稱",
   "editFoodName": "修改食物名稱",
   "reanalyzeLabel": "重新分析",
+  "addLabel": "補充標示",
+  "labelInfoTitle": "标示資訊",
   "unknownFood": "未命名餐點",
   "dietitianPrefix": "建議：",
   "dietitianBalanced": "整體均衡，維持即可。",

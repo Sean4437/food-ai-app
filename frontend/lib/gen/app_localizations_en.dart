@@ -91,6 +91,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reanalyzeLabel => 'Reanalyze';
 
+  String get addLabel => 'Add label';
+
+  String get labelInfoTitle => 'Label info';
+
   @override
   String get unknownFood => 'Unnamed meal';
 
