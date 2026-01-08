@@ -366,6 +366,18 @@ class SettingsScreen extends StatelessWidget {
       t.weekdaySun: DateTime.sunday,
     };
     final currentWeekdayLabel = _weekdayLabel(profile.weeklySummaryWeekday, t);
+    final activityOptions = <String, String>{
+      t.activitySedentary: 'sedentary',
+      t.activityLight: 'light',
+      t.activityModerate: 'moderate',
+      t.activityHigh: 'high',
+    };
+    final currentActivityLabel = activityOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.activityLevel,
+          orElse: () => MapEntry(t.activityLight, 'light'),
+        )
+        .key;
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -485,6 +497,18 @@ class SettingsScreen extends StatelessWidget {
                     current: profile.planSpeed,
                     options: [t.planSpeedStable, t.planSpeedGentle],
                     onSave: (value) => app.updateField((p) => p.planSpeed = value),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _row(
+                  t.activityLevelLabel,
+                  currentActivityLabel,
+                  onTap: () => _selectOption(
+                    context,
+                    title: t.activityLevelLabel,
+                    current: currentActivityLabel,
+                    options: activityOptions.keys.toList(),
+                    onSave: (value) => app.updateField((p) => p.activityLevel = activityOptions[value] ?? 'light'),
                   ),
                 ),
                 _sectionTitle(t.adviceStyleSection),

@@ -1090,6 +1090,20 @@ abstract class AppLocalizations {
 
   String get personaSystem;
 
+  String get activityLevelLabel;
+
+  String get activityCardTitle;
+
+  String get targetCalorieUnknown;
+
+  String get activitySedentary;
+
+  String get activityLight;
+
+  String get activityModerate;
+
+  String get activityHigh;
+
   /// No description provided for @summarySettingsSection.
   ///
   /// In zh_TW, this message translates to:

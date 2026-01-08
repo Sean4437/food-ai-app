@@ -62,6 +62,72 @@ class AppState extends ChangeNotifier {
     ].join('\n');
   }
 
+  String dailyActivityLevel(DateTime date) {
+    final key = _activityKey(date);
+    return _meta[key] ?? profile.activityLevel;
+  }
+
+  Future<void> updateDailyActivity(DateTime date, String level) async {
+    final key = _activityKey(date);
+    if (level == profile.activityLevel) {
+      _meta.remove(key);
+    } else {
+      _meta[key] = level;
+    }
+    notifyListeners();
+    await _saveOverrides();
+  }
+
+  String activityLabel(String level, AppLocalizations t) {
+    switch (level) {
+      case 'sedentary':
+        return t.activitySedentary;
+      case 'light':
+        return t.activityLight;
+      case 'moderate':
+        return t.activityModerate;
+      case 'high':
+        return t.activityHigh;
+      default:
+        return t.activityLight;
+    }
+  }
+
+  String? targetCalorieRangeValue(DateTime date) {
+    final weight = profile.weightKg;
+    final height = profile.heightCm;
+    final age = profile.age;
+    if (weight <= 0 || height <= 0 || age <= 0) return null;
+    final gender = profile.gender;
+    double s;
+    if (gender == 'male') {
+      s = 5;
+    } else if (gender == 'female') {
+      s = -161;
+    } else {
+      s = -78;
+    }
+    final bmr = 10 * weight + 6.25 * height - 5 * age + s;
+    final activity = dailyActivityLevel(date);
+    final factor = _activityFactor(activity);
+    double target = bmr * factor;
+    final goal = profile.goal;
+    final plan = profile.planSpeed;
+    final isMaintain = goal.contains('維持') || goal.toLowerCase().contains('maintain');
+    if (!isMaintain) {
+      final isGentle = plan.contains('保守') || plan.toLowerCase().contains('gentle');
+      target -= isGentle ? 300 : 500;
+    }
+    final min = max(1200, (target - 150).round());
+    final maxCal = max(min, (target + 150).round());
+    return '${_roundTo50(min)}-${_roundTo50(maxCal)} kcal';
+  }
+
+  String targetCalorieRangeLabel(DateTime date, AppLocalizations t) {
+    final value = targetCalorieRangeValue(date);
+    return value ?? t.targetCalorieUnknown;
+  }
+
   Future<QuickCaptureAnalysis?> analyzeQuickCapture(
     XFile file,
     String locale, {
@@ -85,6 +151,8 @@ class AppState extends ChangeNotifier {
       gender: profile.gender,
       tone: profile.tone,
       persona: profile.persona,
+      activityLevel: dailyActivityLevel(time),
+      targetCalorieRange: targetCalorieRangeValue(time),
       goal: profile.goal,
       planSpeed: profile.planSpeed,
       adviceMode: 'current_meal',
@@ -120,6 +188,8 @@ class AppState extends ChangeNotifier {
       gender: profile.gender,
       tone: profile.tone,
       persona: profile.persona,
+      activityLevel: dailyActivityLevel(analysis.time),
+      targetCalorieRange: targetCalorieRangeValue(analysis.time),
       goal: profile.goal,
       planSpeed: profile.planSpeed,
       adviceMode: 'current_meal',
@@ -405,6 +475,8 @@ class AppState extends ChangeNotifier {
           'gender': profile.gender,
           'tone': profile.tone,
           'persona': profile.persona,
+          'activity_level': dailyActivityLevel(date),
+          'target_calorie_range': targetCalorieRangeValue(date),
           'goal': profile.goal,
           'plan_speed': profile.planSpeed,
         },
@@ -466,6 +538,8 @@ class AppState extends ChangeNotifier {
           'gender': profile.gender,
           'tone': profile.tone,
           'persona': profile.persona,
+          'activity_level': profile.activityLevel,
+          'target_calorie_range': targetCalorieRangeValue(weekStart),
           'goal': profile.goal,
           'plan_speed': profile.planSpeed,
         },
@@ -563,6 +637,8 @@ class AppState extends ChangeNotifier {
           'gender': profile.gender,
           'tone': profile.tone,
           'persona': profile.persona,
+          'activity_level': dailyActivityLevel(group.first.time),
+          'target_calorie_range': targetCalorieRangeValue(group.first.time),
           'goal': profile.goal,
           'plan_speed': profile.planSpeed,
         },
@@ -1019,6 +1095,7 @@ class AppState extends ChangeNotifier {
       ..gender = updated.gender
       ..tone = updated.tone
       ..persona = updated.persona
+      ..activityLevel = updated.activityLevel
       ..heightCm = updated.heightCm
       ..weightKg = updated.weightKg
       ..age = updated.age
@@ -1078,6 +1155,8 @@ class AppState extends ChangeNotifier {
         gender: profile.gender,
         tone: profile.tone,
         persona: profile.persona,
+        activityLevel: dailyActivityLevel(entry.time),
+        targetCalorieRange: targetCalorieRangeValue(entry.time),
         goal: profile.goal,
         planSpeed: profile.planSpeed,
         mealType: mealTypeKey,
@@ -1358,6 +1437,11 @@ class AppState extends ChangeNotifier {
     return 'day:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
+  String _activityKey(DateTime date) {
+    final d = _dateOnly(date);
+    return 'activity:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
   String _mealKey(String mealId) => 'meal:$mealId';
 
   void _loadOverrides(Map<String, dynamic> overrides) {
@@ -1449,6 +1533,7 @@ class AppState extends ChangeNotifier {
       'gender': profile.gender,
       'tone': profile.tone,
       'persona': profile.persona,
+      'activity_level': profile.activityLevel,
       'height_cm': profile.heightCm,
       'weight_kg': profile.weightKg,
       'age': profile.age,
@@ -1474,6 +1559,7 @@ class AppState extends ChangeNotifier {
       ..gender = (data['gender'] as String?) ?? profile.gender
       ..tone = (data['tone'] as String?) ?? profile.tone
       ..persona = (data['persona'] as String?) ?? profile.persona
+      ..activityLevel = (data['activity_level'] as String?) ?? profile.activityLevel
       ..heightCm = _parseInt(data['height_cm'], profile.heightCm)
       ..weightKg = _parseInt(data['weight_kg'], profile.weightKg)
       ..age = _parseInt(data['age'], profile.age)
@@ -1530,6 +1616,25 @@ class AppState extends ChangeNotifier {
 
   String _weekKey(DateTime weekStart) {
     return '${weekStart.year.toString().padLeft(4, '0')}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}';
+  }
+
+  double _activityFactor(String level) {
+    switch (level) {
+      case 'sedentary':
+        return 1.2;
+      case 'light':
+        return 1.375;
+      case 'moderate':
+        return 1.55;
+      case 'high':
+        return 1.725;
+      default:
+        return 1.375;
+    }
+  }
+
+  int _roundTo50(int value) {
+    return ((value / 50).round()) * 50;
   }
 
   TimeOfDay _parseTime(String? value, TimeOfDay fallback) {
@@ -1602,6 +1707,7 @@ class UserProfile {
     required this.gender,
     required this.tone,
     required this.persona,
+    required this.activityLevel,
     required this.heightCm,
     required this.weightKg,
     required this.age,
@@ -1624,6 +1730,7 @@ class UserProfile {
   String gender;
   String tone;
   String persona;
+  String activityLevel;
   int heightCm;
   int weightKg;
   int age;
@@ -1647,6 +1754,7 @@ class UserProfile {
       gender: 'unspecified',
       tone: 'gentle',
       persona: 'nutritionist',
+      activityLevel: 'light',
       heightCm: 170,
       weightKg: 72,
       age: 30,

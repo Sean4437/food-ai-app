@@ -638,6 +638,48 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planSpeedGentle => '???';
 
   @override
+  String get activityLevelLabel => '預設活動量';
+
+  @override
+  String get activityCardTitle => '今日活動量';
+
+  @override
+  String get targetCalorieUnknown => '尚未估計';
+
+  @override
+  String get activitySedentary => '久坐';
+
+  @override
+  String get activityLight => '輕量';
+
+  @override
+  String get activityModerate => '中度';
+
+  @override
+  String get activityHigh => '高';
+
+  @override
+  String get activityLevelLabel => '預設活動量';
+
+  @override
+  String get activityCardTitle => '今日活動量';
+
+  @override
+  String get targetCalorieUnknown => '尚未估計';
+
+  @override
+  String get activitySedentary => '久坐';
+
+  @override
+  String get activityLight => '輕量';
+
+  @override
+  String get activityModerate => '中度';
+
+  @override
+  String get activityHigh => '高';
+
+  @override
   String get reminderLunchTime => '?????????';
 
   @override

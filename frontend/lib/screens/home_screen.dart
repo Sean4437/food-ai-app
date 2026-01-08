@@ -125,6 +125,63 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _activityCard(
+    DateTime date,
+    AppLocalizations t,
+    AppTheme appTheme,
+    AppState app,
+    ThemeData theme,
+  ) {
+    final levels = ['sedentary', 'light', 'moderate', 'high'];
+    final current = app.dailyActivityLevel(date);
+    return _homeInfoCard(
+      appTheme: appTheme,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                t.activityCardTitle,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.14),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  app.targetCalorieRangeLabel(date, t),
+                  style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            children: levels.map((level) {
+              final label = app.activityLabel(level, t);
+              final selected = level == current;
+              return ChoiceChip(
+                label: Text(label),
+                selected: selected,
+                onSelected: (_) => app.updateDailyActivity(date, level),
+                selectedColor: theme.colorScheme.primary.withOpacity(0.18),
+                labelStyle: TextStyle(
+                  color: selected ? theme.colorScheme.primary : Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
@@ -236,6 +293,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      _activityCard(activeDate, t, appTheme, app, theme),
                       const SizedBox(height: 12),
                       _homeInfoCard(
                         appTheme: appTheme,

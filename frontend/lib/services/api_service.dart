@@ -22,6 +22,8 @@ class ApiService {
     String? gender,
     String? tone,
     String? persona,
+    String? activityLevel,
+    String? targetCalorieRange,
     String? goal,
     String? planSpeed,
     String? mealType,
@@ -63,6 +65,12 @@ class ApiService {
     }
     if (persona != null && persona.trim().isNotEmpty) {
       request.fields['persona'] = persona.trim();
+    }
+    if (activityLevel != null && activityLevel.trim().isNotEmpty) {
+      request.fields['activity_level'] = activityLevel.trim();
+    }
+    if (targetCalorieRange != null && targetCalorieRange.trim().isNotEmpty) {
+      request.fields['target_calorie_range'] = targetCalorieRange.trim();
     }
     if (goal != null && goal.trim().isNotEmpty) {
       request.fields['goal'] = goal.trim();

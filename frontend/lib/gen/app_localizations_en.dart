@@ -597,6 +597,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planSpeedGentle => 'Gentle';
+  @override
+  String get activityLevelLabel => 'Default activity';
+  @override
+  String get activityCardTitle => 'Today activity';
+  @override
+  String get targetCalorieUnknown => 'Not estimated';
+  @override
+  String get activitySedentary => 'Sedentary';
+  @override
+  String get activityLight => 'Light';
+  @override
+  String get activityModerate => 'Moderate';
+  @override
+  String get activityHigh => 'High';
 
   @override
   String get reminderLunchTime => 'Lunch reminder time';

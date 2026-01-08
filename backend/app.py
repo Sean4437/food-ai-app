@@ -815,6 +815,8 @@ async def analyze_image(
     gender: Optional[str] = Form(default=None),
     tone: Optional[str] = Form(default=None),
     persona: Optional[str] = Form(default=None),
+    activity_level: Optional[str] = Form(default=None),
+    target_calorie_range: Optional[str] = Form(default=None),
     goal: Optional[str] = Form(default=None),
     plan_speed: Optional[str] = Form(default=None),
     meal_type: Optional[str] = Form(default=None),
@@ -868,6 +870,8 @@ async def analyze_image(
         "gender": gender,
         "tone": tone,
         "persona": persona,
+        "activity_level": activity_level,
+        "target_calorie_range": target_calorie_range,
         "goal": goal,
         "plan_speed": plan_speed,
     }
