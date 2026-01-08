@@ -362,8 +362,13 @@ def _build_prompt(
 def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryInput]) -> str:
     profile_text = ""
     if profile:
+        tone = str(profile.get("tone") or "").strip()
+        persona = str(profile.get("persona") or "").strip()
+        tone_line = f"Tone: {tone}\n" if tone else ""
+        persona_line = f"Persona: {persona}\n" if persona else ""
         profile_text = (
             f"User profile (do not mention exact values): {json.dumps(profile, ensure_ascii=True)}\n"
+            f"{persona_line}{tone_line}"
             "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
         )
     meal_lines = []
@@ -409,8 +414,13 @@ def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryIn
 def _build_week_prompt(lang: str, profile: dict | None, days: List[WeekSummaryInput], week_start: str, week_end: str) -> str:
     profile_text = ""
     if profile:
+        tone = str(profile.get("tone") or "").strip()
+        persona = str(profile.get("persona") or "").strip()
+        tone_line = f"Tone: {tone}\n" if tone else ""
+        persona_line = f"Persona: {persona}\n" if persona else ""
         profile_text = (
             f"User profile (do not mention exact values): {json.dumps(profile, ensure_ascii=True)}\n"
+            f"{persona_line}{tone_line}"
             "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
         )
     day_lines = []
@@ -478,8 +488,13 @@ def _fallback_week_summary(lang: str, days: List[WeekSummaryInput]) -> dict:
 def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceRequest) -> str:
     profile_text = ""
     if profile:
+        tone = str(profile.get("tone") or "").strip()
+        persona = str(profile.get("persona") or "").strip()
+        tone_line = f"Tone: {tone}\n" if tone else ""
+        persona_line = f"Persona: {persona}\n" if persona else ""
         profile_text = (
             f"User profile (do not mention exact values): {json.dumps(profile, ensure_ascii=True)}\n"
+            f"{persona_line}{tone_line}"
             "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
         )
     summaries = "; ".join(meal.dish_summaries) if meal.dish_summaries else "no dish summary"
@@ -793,6 +808,8 @@ async def analyze_image(
     weight_kg: Optional[int] = Form(default=None),
     age: Optional[int] = Form(default=None),
     gender: Optional[str] = Form(default=None),
+    tone: Optional[str] = Form(default=None),
+    persona: Optional[str] = Form(default=None),
     goal: Optional[str] = Form(default=None),
     plan_speed: Optional[str] = Form(default=None),
     meal_type: Optional[str] = Form(default=None),
@@ -844,6 +861,8 @@ async def analyze_image(
         "weight_kg": weight_kg,
         "age": age,
         "gender": gender,
+        "tone": tone,
+        "persona": persona,
         "goal": goal,
         "plan_speed": plan_speed,
     }

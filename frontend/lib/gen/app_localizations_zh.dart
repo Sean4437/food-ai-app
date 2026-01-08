@@ -530,6 +530,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planSpeedLabel => '??????';
 
   @override
+  String get adviceStyleSection => '建議風格';
+
+  @override
+  String get toneLabel => '建議語氣';
+
+  @override
+  String get personaLabel => '角色視角';
+
+  @override
+  String get toneGentle => '溫和';
+
+  @override
+  String get toneDirect => '直接';
+
+  @override
+  String get toneEncouraging => '激勵';
+
+  @override
+  String get toneBullet => '清楚條列';
+
+  @override
+  String get personaNutritionist => '營養師';
+
+  @override
+  String get personaCoach => '外食教練';
+
+  @override
+  String get personaFriend => '朋友';
+
+  @override
+  String get personaSystem => '精簡系統';
+
+  @override
+  String get adviceStyleSection => '建議風格';
+
+  @override
+  String get toneLabel => '建議語氣';
+
+  @override
+  String get personaLabel => '角色視角';
+
+  @override
+  String get toneGentle => '溫和';
+
+  @override
+  String get toneDirect => '直接';
+
+  @override
+  String get toneEncouraging => '激勵';
+
+  @override
+  String get toneBullet => '清楚條列';
+
+  @override
+  String get personaNutritionist => '營養師';
+
+  @override
+  String get personaCoach => '外食教練';
+
+  @override
+  String get personaFriend => '朋友';
+
+  @override
+  String get personaSystem => '精簡系統';
+
+  @override
   String get summarySettingsSection => '總結設定';
 
   @override

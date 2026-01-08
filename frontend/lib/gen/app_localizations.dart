@@ -1068,6 +1068,28 @@ abstract class AppLocalizations {
   /// **'??????'**
   String get planSpeedLabel;
 
+  String get adviceStyleSection;
+
+  String get toneLabel;
+
+  String get personaLabel;
+
+  String get toneGentle;
+
+  String get toneDirect;
+
+  String get toneEncouraging;
+
+  String get toneBullet;
+
+  String get personaNutritionist;
+
+  String get personaCoach;
+
+  String get personaFriend;
+
+  String get personaSystem;
+
   /// No description provided for @summarySettingsSection.
   ///
   /// In zh_TW, this message translates to:

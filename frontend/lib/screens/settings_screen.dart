@@ -332,6 +332,30 @@ class SettingsScreen extends StatelessWidget {
           orElse: () => MapEntry(t.genderUnspecified, 'unspecified'),
         )
         .key;
+    final toneOptions = <String, String>{
+      t.toneGentle: 'gentle',
+      t.toneDirect: 'direct',
+      t.toneEncouraging: 'encouraging',
+      t.toneBullet: 'bullet',
+    };
+    final currentToneLabel = toneOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.tone,
+          orElse: () => MapEntry(t.toneGentle, 'gentle'),
+        )
+        .key;
+    final personaOptions = <String, String>{
+      t.personaNutritionist: 'nutritionist',
+      t.personaCoach: 'coach',
+      t.personaFriend: 'friend',
+      t.personaSystem: 'system',
+    };
+    final currentPersonaLabel = personaOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.persona,
+          orElse: () => MapEntry(t.personaNutritionist, 'nutritionist'),
+        )
+        .key;
     final weekdayOptions = <String, int>{
       t.weekdayMon: DateTime.monday,
       t.weekdayTue: DateTime.tuesday,
@@ -461,6 +485,30 @@ class SettingsScreen extends StatelessWidget {
                     current: profile.planSpeed,
                     options: [t.planSpeedStable, t.planSpeedGentle],
                     onSave: (value) => app.updateField((p) => p.planSpeed = value),
+                  ),
+                ),
+                _sectionTitle(t.adviceStyleSection),
+                _row(
+                  t.toneLabel,
+                  currentToneLabel,
+                  onTap: () => _selectOption(
+                    context,
+                    title: t.toneLabel,
+                    current: currentToneLabel,
+                    options: toneOptions.keys.toList(),
+                    onSave: (value) => app.updateField((p) => p.tone = toneOptions[value] ?? 'gentle'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _row(
+                  t.personaLabel,
+                  currentPersonaLabel,
+                  onTap: () => _selectOption(
+                    context,
+                    title: t.personaLabel,
+                    current: currentPersonaLabel,
+                    options: personaOptions.keys.toList(),
+                    onSave: (value) => app.updateField((p) => p.persona = personaOptions[value] ?? 'nutritionist'),
                   ),
                 ),
                 _sectionTitle(t.summarySettingsSection),

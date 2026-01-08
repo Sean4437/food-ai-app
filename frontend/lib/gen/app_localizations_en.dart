@@ -533,6 +533,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planSpeedLabel => 'Fat loss speed';
+  @override
+  String get adviceStyleSection => 'Advice style';
+  @override
+  String get toneLabel => 'Tone';
+  @override
+  String get personaLabel => 'Persona';
+  @override
+  String get toneGentle => 'Gentle';
+  @override
+  String get toneDirect => 'Direct';
+  @override
+  String get toneEncouraging => 'Encouraging';
+  @override
+  String get toneBullet => 'Clear bullets';
+  @override
+  String get personaNutritionist => 'Nutritionist';
+  @override
+  String get personaCoach => 'Dining coach';
+  @override
+  String get personaFriend => 'Friend';
+  @override
+  String get personaSystem => 'Concise system';
 
   @override
   String get summarySettingsSection => 'Summary settings';

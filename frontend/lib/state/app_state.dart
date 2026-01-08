@@ -83,6 +83,8 @@ class AppState extends ChangeNotifier {
       weightKg: profile.weightKg,
       age: profile.age,
       gender: profile.gender,
+      tone: profile.tone,
+      persona: profile.persona,
       goal: profile.goal,
       planSpeed: profile.planSpeed,
       adviceMode: 'current_meal',
@@ -116,6 +118,8 @@ class AppState extends ChangeNotifier {
       weightKg: profile.weightKg,
       age: profile.age,
       gender: profile.gender,
+      tone: profile.tone,
+      persona: profile.persona,
       goal: profile.goal,
       planSpeed: profile.planSpeed,
       adviceMode: 'current_meal',
@@ -399,6 +403,8 @@ class AppState extends ChangeNotifier {
           'weight_kg': profile.weightKg,
           'age': profile.age,
           'gender': profile.gender,
+          'tone': profile.tone,
+          'persona': profile.persona,
           'goal': profile.goal,
           'plan_speed': profile.planSpeed,
         },
@@ -448,20 +454,22 @@ class AppState extends ChangeNotifier {
       });
     }
     if (days.isEmpty) return;
-    final payload = {
-      'week_start': '${weekStart.year.toString().padLeft(4, '0')}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}',
-      'week_end': '${weekEnd.year.toString().padLeft(4, '0')}-${weekEnd.month.toString().padLeft(2, '0')}-${weekEnd.day.toString().padLeft(2, '0')}',
-      'lang': locale,
-      'days': days,
-      'profile': {
-        'height_cm': profile.heightCm,
-        'weight_kg': profile.weightKg,
-        'age': profile.age,
-        'gender': profile.gender,
-        'goal': profile.goal,
-        'plan_speed': profile.planSpeed,
-      },
-    };
+      final payload = {
+        'week_start': '${weekStart.year.toString().padLeft(4, '0')}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}',
+        'week_end': '${weekEnd.year.toString().padLeft(4, '0')}-${weekEnd.month.toString().padLeft(2, '0')}-${weekEnd.day.toString().padLeft(2, '0')}',
+        'lang': locale,
+        'days': days,
+        'profile': {
+          'height_cm': profile.heightCm,
+          'weight_kg': profile.weightKg,
+          'age': profile.age,
+          'gender': profile.gender,
+          'tone': profile.tone,
+          'persona': profile.persona,
+          'goal': profile.goal,
+          'plan_speed': profile.planSpeed,
+        },
+      };
     try {
       final response = await _api.summarizeWeek(payload);
       final summaryText = (response['week_summary'] as String?) ?? '';
@@ -553,6 +561,8 @@ class AppState extends ChangeNotifier {
           'weight_kg': profile.weightKg,
           'age': profile.age,
           'gender': profile.gender,
+          'tone': profile.tone,
+          'persona': profile.persona,
           'goal': profile.goal,
           'plan_speed': profile.planSpeed,
         },
@@ -1007,6 +1017,8 @@ class AppState extends ChangeNotifier {
       ..name = updated.name
       ..email = updated.email
       ..gender = updated.gender
+      ..tone = updated.tone
+      ..persona = updated.persona
       ..heightCm = updated.heightCm
       ..weightKg = updated.weightKg
       ..age = updated.age
@@ -1064,6 +1076,8 @@ class AppState extends ChangeNotifier {
         weightKg: profile.weightKg,
         age: profile.age,
         gender: profile.gender,
+        tone: profile.tone,
+        persona: profile.persona,
         goal: profile.goal,
         planSpeed: profile.planSpeed,
         mealType: mealTypeKey,
@@ -1433,6 +1447,8 @@ class AppState extends ChangeNotifier {
       'name': profile.name,
       'email': profile.email,
       'gender': profile.gender,
+      'tone': profile.tone,
+      'persona': profile.persona,
       'height_cm': profile.heightCm,
       'weight_kg': profile.weightKg,
       'age': profile.age,
@@ -1456,6 +1472,8 @@ class AppState extends ChangeNotifier {
       ..name = (data['name'] as String?) ?? profile.name
       ..email = (data['email'] as String?) ?? profile.email
       ..gender = (data['gender'] as String?) ?? profile.gender
+      ..tone = (data['tone'] as String?) ?? profile.tone
+      ..persona = (data['persona'] as String?) ?? profile.persona
       ..heightCm = _parseInt(data['height_cm'], profile.heightCm)
       ..weightKg = _parseInt(data['weight_kg'], profile.weightKg)
       ..age = _parseInt(data['age'], profile.age)
@@ -1582,6 +1600,8 @@ class UserProfile {
     required this.name,
     required this.email,
     required this.gender,
+    required this.tone,
+    required this.persona,
     required this.heightCm,
     required this.weightKg,
     required this.age,
@@ -1602,6 +1622,8 @@ class UserProfile {
   String name;
   String email;
   String gender;
+  String tone;
+  String persona;
   int heightCm;
   int weightKg;
   int age;
@@ -1623,6 +1645,8 @@ class UserProfile {
       name: '小明',
       email: 'xiaoming123@gmail.com',
       gender: 'unspecified',
+      tone: 'gentle',
+      persona: 'nutritionist',
       heightCm: 170,
       weightKg: 72,
       age: 30,
