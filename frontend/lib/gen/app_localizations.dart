@@ -888,6 +888,36 @@ abstract class AppLocalizations {
   /// **'???'**
   String get ageLabel;
 
+  /// No description provided for @genderLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'??'**
+  String get genderLabel;
+
+  /// No description provided for @genderUnspecified.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'???'**
+  String get genderUnspecified;
+
+  /// No description provided for @genderMale.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'?'**
+  String get genderMale;
+
+  /// No description provided for @genderFemale.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'?'**
+  String get genderFemale;
+
+  /// No description provided for @genderOther.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'??'**
+  String get genderOther;
+
   /// No description provided for @bmiLabel.
   ///
   /// In zh_TW, this message translates to:

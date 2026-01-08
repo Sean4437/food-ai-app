@@ -701,6 +701,7 @@ async def analyze_image(
     height_cm: Optional[int] = Form(default=None),
     weight_kg: Optional[int] = Form(default=None),
     age: Optional[int] = Form(default=None),
+    gender: Optional[str] = Form(default=None),
     goal: Optional[str] = Form(default=None),
     plan_speed: Optional[str] = Form(default=None),
     meal_type: Optional[str] = Form(default=None),
@@ -751,6 +752,7 @@ async def analyze_image(
         "height_cm": height_cm,
         "weight_kg": weight_kg,
         "age": age,
+        "gender": gender,
         "goal": goal,
         "plan_speed": plan_speed,
     }

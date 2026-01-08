@@ -441,6 +441,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ageLabel => 'Age';
 
   @override
+  String get genderLabel => 'Gender';
+
+  @override
+  String get genderUnspecified => 'Prefer not to say';
+
+  @override
+  String get genderMale => 'Male';
+
+  @override
+  String get genderFemale => 'Female';
+
+  @override
+  String get genderOther => 'Other';
+
+  @override
   String get bmiLabel => 'BMI';
 
   @override

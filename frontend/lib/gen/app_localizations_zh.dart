@@ -436,6 +436,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ageLabel => '???';
 
   @override
+  String get genderLabel => '??';
+
+  @override
+  String get genderUnspecified => '???';
+
+  @override
+  String get genderMale => '?';
+
+  @override
+  String get genderFemale => '?';
+
+  @override
+  String get genderOther => '??';
+
+  @override
   String get bmiLabel => 'BMI';
 
   @override
@@ -1084,6 +1099,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get ageLabel => '???';
+
+  @override
+  String get genderLabel => '??';
+
+  @override
+  String get genderUnspecified => '???';
+
+  @override
+  String get genderMale => '?';
+
+  @override
+  String get genderFemale => '?';
+
+  @override
+  String get genderOther => '??';
 
   @override
   String get bmiLabel => 'BMI';

@@ -300,6 +300,18 @@ class SettingsScreen extends StatelessWidget {
           orElse: () => MapEntry(t.chartRadar, 'radar'),
         )
         .key;
+    final genderOptions = <String, String>{
+      t.genderUnspecified: 'unspecified',
+      t.genderMale: 'male',
+      t.genderFemale: 'female',
+      t.genderOther: 'other',
+    };
+    final currentGenderLabel = genderOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.gender,
+          orElse: () => MapEntry(t.genderUnspecified, 'unspecified'),
+        )
+        .key;
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -377,6 +389,18 @@ class SettingsScreen extends StatelessWidget {
                     initial: profile.age.toString(),
                     keyboardType: TextInputType.number,
                     onSave: (value) => app.updateField((p) => p.age = int.tryParse(value) ?? p.age),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _row(
+                  t.genderLabel,
+                  currentGenderLabel,
+                  onTap: () => _selectOption(
+                    context,
+                    title: t.genderLabel,
+                    current: currentGenderLabel,
+                    options: genderOptions.keys.toList(),
+                    onSave: (value) => app.updateField((p) => p.gender = genderOptions[value] ?? 'unspecified'),
                   ),
                 ),
                 const SizedBox(height: 8),

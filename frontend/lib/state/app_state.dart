@@ -80,6 +80,7 @@ class AppState extends ChangeNotifier {
       heightCm: profile.heightCm,
       weightKg: profile.weightKg,
       age: profile.age,
+      gender: profile.gender,
       goal: profile.goal,
       planSpeed: profile.planSpeed,
       adviceMode: 'current_meal',
@@ -112,6 +113,7 @@ class AppState extends ChangeNotifier {
       heightCm: profile.heightCm,
       weightKg: profile.weightKg,
       age: profile.age,
+      gender: profile.gender,
       goal: profile.goal,
       planSpeed: profile.planSpeed,
       adviceMode: 'current_meal',
@@ -329,18 +331,19 @@ class AppState extends ChangeNotifier {
         'dish_summaries': dishSummaries,
       });
     }
-    final payload = {
-      'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-      'lang': locale,
-      'meals': meals,
-      'profile': {
-        'height_cm': profile.heightCm,
-        'weight_kg': profile.weightKg,
-        'age': profile.age,
-        'goal': profile.goal,
-        'plan_speed': profile.planSpeed,
-      },
-    };
+      final payload = {
+        'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+        'lang': locale,
+        'meals': meals,
+        'profile': {
+          'height_cm': profile.heightCm,
+          'weight_kg': profile.weightKg,
+          'age': profile.age,
+          'gender': profile.gender,
+          'goal': profile.goal,
+          'plan_speed': profile.planSpeed,
+        },
+      };
     try {
       final response = await _api.summarizeDay(payload);
       final summaryText = (response['day_summary'] as String?) ?? '';
@@ -431,6 +434,7 @@ class AppState extends ChangeNotifier {
           'height_cm': profile.heightCm,
           'weight_kg': profile.weightKg,
           'age': profile.age,
+          'gender': profile.gender,
           'goal': profile.goal,
           'plan_speed': profile.planSpeed,
         },
@@ -858,6 +862,7 @@ class AppState extends ChangeNotifier {
     profile
       ..name = updated.name
       ..email = updated.email
+      ..gender = updated.gender
       ..heightCm = updated.heightCm
       ..weightKg = updated.weightKg
       ..age = updated.age
@@ -910,6 +915,7 @@ class AppState extends ChangeNotifier {
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
         age: profile.age,
+        gender: profile.gender,
         goal: profile.goal,
         planSpeed: profile.planSpeed,
         mealType: mealTypeKey,
@@ -1249,6 +1255,7 @@ class AppState extends ChangeNotifier {
     return {
       'name': profile.name,
       'email': profile.email,
+      'gender': profile.gender,
       'height_cm': profile.heightCm,
       'weight_kg': profile.weightKg,
       'age': profile.age,
@@ -1269,6 +1276,7 @@ class AppState extends ChangeNotifier {
     profile
       ..name = (data['name'] as String?) ?? profile.name
       ..email = (data['email'] as String?) ?? profile.email
+      ..gender = (data['gender'] as String?) ?? profile.gender
       ..heightCm = _parseInt(data['height_cm'], profile.heightCm)
       ..weightKg = _parseInt(data['weight_kg'], profile.weightKg)
       ..age = _parseInt(data['age'], profile.age)
@@ -1363,6 +1371,7 @@ class UserProfile {
   UserProfile({
     required this.name,
     required this.email,
+    required this.gender,
     required this.heightCm,
     required this.weightKg,
     required this.age,
@@ -1380,6 +1389,7 @@ class UserProfile {
 
   String name;
   String email;
+  String gender;
   int heightCm;
   int weightKg;
   int age;
@@ -1398,6 +1408,7 @@ class UserProfile {
     return UserProfile(
       name: '小明',
       email: 'xiaoming123@gmail.com',
+      gender: 'unspecified',
       heightCm: 170,
       weightKg: 72,
       age: 30,

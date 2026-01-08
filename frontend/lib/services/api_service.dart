@@ -19,6 +19,7 @@ class ApiService {
     int? heightCm,
     int? weightKg,
     int? age,
+    String? gender,
     String? goal,
     String? planSpeed,
     String? mealType,
@@ -51,6 +52,9 @@ class ApiService {
     }
     if (age != null && age > 0) {
       request.fields['age'] = age.toString();
+    }
+    if (gender != null && gender.trim().isNotEmpty) {
+      request.fields['gender'] = gender.trim();
     }
     if (goal != null && goal.trim().isNotEmpty) {
       request.fields['goal'] = goal.trim();
