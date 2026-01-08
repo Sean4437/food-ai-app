@@ -1104,6 +1104,44 @@ abstract class AppLocalizations {
 
   String get activityHigh;
 
+  String get exerciseLabel;
+
+  String get exerciseMinutesLabel;
+
+  String get exerciseMinutesUnit;
+
+  String get exerciseMinutesHint;
+
+  String get exerciseCaloriesLabel;
+
+  String get exerciseNone;
+
+  String get exerciseWalking;
+
+  String get exerciseJogging;
+
+  String get exerciseCycling;
+
+  String get exerciseSwimming;
+
+  String get exerciseStrength;
+
+  String get exerciseYoga;
+
+  String get exerciseHiit;
+
+  String get exerciseBasketball;
+
+  String get exerciseHiking;
+
+  String get deltaUnknown;
+
+  String get deltaOk;
+
+  String deltaSurplus(int kcal);
+
+  String deltaDeficit(int kcal);
+
   /// No description provided for @summarySettingsSection.
   ///
   /// In zh_TW, this message translates to:

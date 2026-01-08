@@ -611,6 +611,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityModerate => 'Moderate';
   @override
   String get activityHigh => 'High';
+  @override
+  String get exerciseLabel => 'Exercise';
+  @override
+  String get exerciseMinutesLabel => 'Duration';
+  @override
+  String get exerciseMinutesUnit => 'min';
+  @override
+  String get exerciseMinutesHint => 'Enter minutes';
+  @override
+  String get exerciseCaloriesLabel => 'Exercise burn';
+  @override
+  String get exerciseNone => 'None';
+  @override
+  String get exerciseWalking => 'Brisk walk';
+  @override
+  String get exerciseJogging => 'Jogging';
+  @override
+  String get exerciseCycling => 'Cycling';
+  @override
+  String get exerciseSwimming => 'Swimming';
+  @override
+  String get exerciseStrength => 'Strength training';
+  @override
+  String get exerciseYoga => 'Yoga';
+  @override
+  String get exerciseHiit => 'HIIT';
+  @override
+  String get exerciseBasketball => 'Basketball';
+  @override
+  String get exerciseHiking => 'Hiking';
+  @override
+  String get deltaUnknown => 'Not estimated';
+  @override
+  String get deltaOk => 'Near target';
+  @override
+  String deltaSurplus(int kcal) {
+    return 'Surplus $kcal kcal';
+  }
+
+  @override
+  String deltaDeficit(int kcal) {
+    return 'Deficit $kcal kcal';
+  }
 
   @override
   String get reminderLunchTime => 'Lunch reminder time';

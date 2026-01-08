@@ -212,6 +212,39 @@
   "activityLight": "輕量",
   "activityModerate": "中度",
   "activityHigh": "高",
+  "exerciseLabel": "運動",
+  "exerciseMinutesLabel": "時間",
+  "exerciseMinutesUnit": "分鐘",
+  "exerciseMinutesHint": "輸入分鐘數",
+  "exerciseCaloriesLabel": "運動消耗",
+  "exerciseNone": "無",
+  "exerciseWalking": "快走",
+  "exerciseJogging": "慢跑",
+  "exerciseCycling": "單車",
+  "exerciseSwimming": "游泳",
+  "exerciseStrength": "重量訓練",
+  "exerciseYoga": "瑜伽",
+  "exerciseHiit": "間歇訓練",
+  "exerciseBasketball": "籃球",
+  "exerciseHiking": "登山",
+  "deltaUnknown": "尚未估計",
+  "deltaOk": "接近目標",
+  "deltaSurplus": "超出 {kcal} kcal",
+  "@deltaSurplus": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "deltaDeficit": "赤字 {kcal} kcal",
+  "@deltaDeficit": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
   "reminderLunchTime": "午餐提醒時間",
   "reminderDinnerTime": "晚餐提醒時間",
   "pickFromCamera": "拍照",

@@ -657,6 +657,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get activityHigh => '高';
+  @override
+  String get exerciseLabel => '運動';
+  @override
+  String get exerciseMinutesLabel => '時間';
+  @override
+  String get exerciseMinutesUnit => '分鐘';
+  @override
+  String get exerciseMinutesHint => '輸入分鐘數';
+  @override
+  String get exerciseCaloriesLabel => '運動消耗';
+  @override
+  String get exerciseNone => '無';
+  @override
+  String get exerciseWalking => '快走';
+  @override
+  String get exerciseJogging => '慢跑';
+  @override
+  String get exerciseCycling => '單車';
+  @override
+  String get exerciseSwimming => '游泳';
+  @override
+  String get exerciseStrength => '重量訓練';
+  @override
+  String get exerciseYoga => '瑜伽';
+  @override
+  String get exerciseHiit => '間歇訓練';
+  @override
+  String get exerciseBasketball => '籃球';
+  @override
+  String get exerciseHiking => '登山';
+  @override
+  String get deltaUnknown => '尚未估計';
+  @override
+  String get deltaOk => '接近目標';
+  @override
+  String deltaSurplus(int kcal) {
+    return '超出 ${kcal} kcal';
+  }
+
+  @override
+  String deltaDeficit(int kcal) {
+    return '赤字 ${kcal} kcal';
+  }
 
   @override
   String get activityLevelLabel => '預設活動量';
@@ -678,6 +721,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get activityHigh => '高';
+  @override
+  String get exerciseLabel => '運動';
+  @override
+  String get exerciseMinutesLabel => '時間';
+  @override
+  String get exerciseMinutesUnit => '分鐘';
+  @override
+  String get exerciseMinutesHint => '輸入分鐘數';
+  @override
+  String get exerciseCaloriesLabel => '運動消耗';
+  @override
+  String get exerciseNone => '無';
+  @override
+  String get exerciseWalking => '快走';
+  @override
+  String get exerciseJogging => '慢跑';
+  @override
+  String get exerciseCycling => '單車';
+  @override
+  String get exerciseSwimming => '游泳';
+  @override
+  String get exerciseStrength => '重量訓練';
+  @override
+  String get exerciseYoga => '瑜伽';
+  @override
+  String get exerciseHiit => '間歇訓練';
+  @override
+  String get exerciseBasketball => '籃球';
+  @override
+  String get exerciseHiking => '登山';
+  @override
+  String get deltaUnknown => '尚未估計';
+  @override
+  String get deltaOk => '接近目標';
+  @override
+  String deltaSurplus(int kcal) {
+    return '超出 ${kcal} kcal';
+  }
+
+  @override
+  String deltaDeficit(int kcal) {
+    return '赤字 ${kcal} kcal';
+  }
 
   @override
   String get reminderLunchTime => '?????????';

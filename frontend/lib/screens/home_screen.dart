@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openRecordSheet(AppState app) async {
     final result = await showRecordSheet(context, app);
     if (!mounted || result == null) return;
-    final mealId = result.mealId;
+                      final mealId = result.mealId;
     if (result.mealCount >= 2) {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -63,6 +63,86 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
     );
+  }
+
+  Future<void> _selectExerciseType(
+    BuildContext context,
+    AppState app,
+    DateTime date,
+    AppLocalizations t,
+  ) async {
+    final options = [
+      'none',
+      'walking',
+      'jogging',
+      'cycling',
+      'swimming',
+      'strength',
+      'yoga',
+      'hiit',
+      'basketball',
+      'hiking',
+    ];
+    final current = app.dailyExerciseType(date);
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8)),
+            ),
+            const SizedBox(height: 12),
+            Text(t.exerciseLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            for (final option in options)
+              ListTile(
+                title: Text(app.exerciseLabel(option, t)),
+                trailing: option == current ? const Icon(Icons.check) : null,
+                onTap: () => Navigator.of(context).pop(option),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (result != null) {
+      await app.updateDailyExerciseType(date, result);
+    }
+  }
+
+  Future<void> _editExerciseMinutes(
+    BuildContext context,
+    AppState app,
+    DateTime date,
+    AppLocalizations t,
+  ) async {
+    final controller = TextEditingController(text: app.dailyExerciseMinutes(date).toString());
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.exerciseMinutesLabel),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(hintText: t.exerciseMinutesHint),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: Text(t.save)),
+        ],
+      ),
+    );
+    if (result == null) return;
+    final value = int.tryParse(result) ?? app.dailyExerciseMinutes(date);
+    await app.updateDailyExerciseMinutes(date, value);
   }
 
   Widget _plateStackForGroups(DateTime date, List<List<MealEntry>> groups) {
@@ -134,6 +214,9 @@ class _HomeScreenState extends State<HomeScreen> {
   ) {
     final levels = ['sedentary', 'light', 'moderate', 'high'];
     final current = app.dailyActivityLevel(date);
+    final exerciseType = app.dailyExerciseType(date);
+    final exerciseMinutes = app.dailyExerciseMinutes(date);
+    final exerciseCalories = app.dailyExerciseCalories(date).round();
     return _homeInfoCard(
       appTheme: appTheme,
       child: Column(
@@ -176,6 +259,72 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             }).toList(),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => _selectExerciseType(context, app, date, t),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.black12),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(t.exerciseLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        const Spacer(),
+                        Text(app.exerciseLabel(exerciseType, t), style: const TextStyle(color: Colors.black54)),
+                        const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(t.exerciseMinutesLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => app.updateDailyExerciseMinutes(date, exerciseMinutes - 5),
+                        icon: const Icon(Icons.remove_circle_outline, size: 18),
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () => _editExerciseMinutes(context, app, date, t),
+                        child: Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                      const SizedBox(width: 6),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => app.updateDailyExerciseMinutes(date, exerciseMinutes + 5),
+                        icon: const Icon(Icons.add_circle_outline, size: 18),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${t.exerciseCaloriesLabel} ${exerciseCalories} kcal',
+            style: const TextStyle(color: Colors.black54),
           ),
         ],
       ),
@@ -320,6 +469,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.06),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  app.dailyCalorieDeltaLabel(activeDate, t),
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Text(

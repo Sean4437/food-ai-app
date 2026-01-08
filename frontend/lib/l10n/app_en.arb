@@ -212,6 +212,39 @@
   "activityLight": "Light",
   "activityModerate": "Moderate",
   "activityHigh": "High",
+  "exerciseLabel": "Exercise",
+  "exerciseMinutesLabel": "Duration",
+  "exerciseMinutesUnit": "min",
+  "exerciseMinutesHint": "Enter minutes",
+  "exerciseCaloriesLabel": "Exercise burn",
+  "exerciseNone": "None",
+  "exerciseWalking": "Brisk walk",
+  "exerciseJogging": "Jogging",
+  "exerciseCycling": "Cycling",
+  "exerciseSwimming": "Swimming",
+  "exerciseStrength": "Strength training",
+  "exerciseYoga": "Yoga",
+  "exerciseHiit": "HIIT",
+  "exerciseBasketball": "Basketball",
+  "exerciseHiking": "Hiking",
+  "deltaUnknown": "Not estimated",
+  "deltaOk": "Near target",
+  "deltaSurplus": "Surplus {kcal} kcal",
+  "@deltaSurplus": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "deltaDeficit": "Deficit {kcal} kcal",
+  "@deltaDeficit": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
   "reminderLunchTime": "Lunch reminder time",
   "reminderDinnerTime": "Dinner reminder time",
   "pickFromCamera": "Camera",

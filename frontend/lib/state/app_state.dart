@@ -67,6 +67,29 @@ class AppState extends ChangeNotifier {
     return _meta[key] ?? profile.activityLevel;
   }
 
+  String dailyExerciseType(DateTime date) {
+    final key = _exerciseTypeKey(date);
+    return _meta[key] ?? 'none';
+  }
+
+  int dailyExerciseMinutes(DateTime date) {
+    final key = _exerciseMinutesKey(date);
+    final raw = _meta[key];
+    final parsed = int.tryParse(raw ?? '');
+    return parsed == null || parsed < 0 ? 30 : parsed;
+  }
+
+  double dailyExerciseCalories(DateTime date) {
+    final type = dailyExerciseType(date);
+    if (type == 'none') return 0;
+    final weight = profile.weightKg;
+    if (weight <= 0) return 0;
+    final minutes = dailyExerciseMinutes(date);
+    if (minutes <= 0) return 0;
+    final hours = minutes / 60.0;
+    return _exerciseMet(type) * weight * hours;
+  }
+
   Future<void> updateDailyActivity(DateTime date, String level) async {
     final key = _activityKey(date);
     if (level == profile.activityLevel) {
@@ -76,6 +99,50 @@ class AppState extends ChangeNotifier {
     }
     notifyListeners();
     await _saveOverrides();
+  }
+
+  Future<void> updateDailyExerciseType(DateTime date, String type) async {
+    final key = _exerciseTypeKey(date);
+    if (type == 'none') {
+      _meta.remove(key);
+    } else {
+      _meta[key] = type;
+    }
+    notifyListeners();
+    await _saveOverrides();
+  }
+
+  Future<void> updateDailyExerciseMinutes(DateTime date, int minutes) async {
+    final key = _exerciseMinutesKey(date);
+    final value = minutes.clamp(0, 360);
+    _meta[key] = value.toString();
+    notifyListeners();
+    await _saveOverrides();
+  }
+
+  String exerciseLabel(String type, AppLocalizations t) {
+    switch (type) {
+      case 'walking':
+        return t.exerciseWalking;
+      case 'jogging':
+        return t.exerciseJogging;
+      case 'cycling':
+        return t.exerciseCycling;
+      case 'swimming':
+        return t.exerciseSwimming;
+      case 'strength':
+        return t.exerciseStrength;
+      case 'yoga':
+        return t.exerciseYoga;
+      case 'hiit':
+        return t.exerciseHiit;
+      case 'basketball':
+        return t.exerciseBasketball;
+      case 'hiking':
+        return t.exerciseHiking;
+      default:
+        return t.exerciseNone;
+    }
   }
 
   String activityLabel(String level, AppLocalizations t) {
@@ -118,6 +185,7 @@ class AppState extends ChangeNotifier {
       final isGentle = plan.contains('保守') || plan.toLowerCase().contains('gentle');
       target -= isGentle ? 300 : 500;
     }
+    target += dailyExerciseCalories(date);
     final min = max(1200, (target - 150).round());
     final maxCal = max(min, (target + 150).round());
     return '${_roundTo50(min)}-${_roundTo50(maxCal)} kcal';
@@ -126,6 +194,19 @@ class AppState extends ChangeNotifier {
   String targetCalorieRangeLabel(DateTime date, AppLocalizations t) {
     final value = targetCalorieRangeValue(date);
     return value ?? t.targetCalorieUnknown;
+  }
+
+  String dailyCalorieDeltaLabel(DateTime date, AppLocalizations t) {
+    final actualRange = _dailyCalorieRangeNumbers(date);
+    final targetRange = _parseCalorieRange(targetCalorieRangeValue(date) ?? '');
+    if (actualRange == null || targetRange == null) return t.deltaUnknown;
+    final actualMid = (actualRange[0] + actualRange[1]) / 2;
+    final targetMid = (targetRange[0] + targetRange[1]) / 2;
+    final delta = actualMid - targetMid;
+    final amount = delta.abs().round();
+    if (amount == 0) return t.deltaOk;
+    if (delta > 0) return t.deltaSurplus(amount);
+    return t.deltaDeficit(amount);
   }
 
   Future<QuickCaptureAnalysis?> analyzeQuickCapture(
@@ -306,6 +387,10 @@ class AppState extends ChangeNotifier {
     if (summary != null && summary.calorieRange != t.calorieUnknown) {
       return summary.calorieRange;
     }
+    final range = _dailyCalorieRangeNumbers(date);
+    if (range != null) {
+      return '${range[0]}-${range[1]} kcal';
+    }
     int minSum = 0;
     int maxSum = 0;
     bool hasRange = false;
@@ -326,6 +411,30 @@ class AppState extends ChangeNotifier {
       hasRange = true;
     }
     return hasRange ? '$minSum-$maxSum kcal' : t.calorieUnknown;
+  }
+
+  List<int>? _dailyCalorieRangeNumbers(DateTime date) {
+    int minSum = 0;
+    int maxSum = 0;
+    bool hasRange = false;
+    final groups = <List<MealEntry>>[
+      ...mealGroupsForDate(date, MealType.breakfast),
+      ...mealGroupsForDate(date, MealType.lunch),
+      ...mealGroupsForDate(date, MealType.dinner),
+      ...mealGroupsForDate(date, MealType.lateSnack),
+      ...mealGroupsForDate(date, MealType.other),
+    ];
+    for (final group in groups) {
+      final summary = buildMealSummary(group, lookupAppLocalizations(_localeFromProfile()));
+      if (summary == null) continue;
+      final range = _parseCalorieRange(summary.calorieRange);
+      if (range == null) continue;
+      minSum += range[0];
+      maxSum += range[1];
+      hasRange = true;
+    }
+    if (!hasRange) return null;
+    return [minSum, maxSum];
   }
 
   String todayStatusLabel(AppLocalizations t) {
@@ -1437,6 +1546,16 @@ class AppState extends ChangeNotifier {
     return 'day:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
+  String _exerciseTypeKey(DateTime date) {
+    final d = _dateOnly(date);
+    return 'exercise_type:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  String _exerciseMinutesKey(DateTime date) {
+    final d = _dateOnly(date);
+    return 'exercise_minutes:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
   String _activityKey(DateTime date) {
     final d = _dateOnly(date);
     return 'activity:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -1630,6 +1749,31 @@ class AppState extends ChangeNotifier {
         return 1.725;
       default:
         return 1.375;
+    }
+  }
+
+  double _exerciseMet(String type) {
+    switch (type) {
+      case 'walking':
+        return 3.3;
+      case 'jogging':
+        return 7.0;
+      case 'cycling':
+        return 6.8;
+      case 'swimming':
+        return 7.0;
+      case 'strength':
+        return 5.0;
+      case 'yoga':
+        return 3.0;
+      case 'hiit':
+        return 8.5;
+      case 'basketball':
+        return 6.5;
+      case 'hiking':
+        return 6.0;
+      default:
+        return 0.0;
     }
   }
 
