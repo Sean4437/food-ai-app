@@ -19,6 +19,8 @@ class MealEntry {
     this.mealId,
     this.lastAnalyzedNote,
     this.lastAnalyzedFoodName,
+    this.lastAnalyzedAt,
+    this.lastAnalyzeReason,
     this.labelImageBytes,
     this.labelFilename,
     this.labelResult,
@@ -36,6 +38,8 @@ class MealEntry {
   String? imageHash;
   String? lastAnalyzedNote;
   String? lastAnalyzedFoodName;
+  String? lastAnalyzedAt;
+  String? lastAnalyzeReason;
   Uint8List? labelImageBytes;
   String? labelFilename;
   LabelResult? labelResult;
@@ -88,6 +92,8 @@ class MealEntry {
       'image_hash': imageHash,
       'last_analyzed_note': lastAnalyzedNote,
       'last_analyzed_food_name': lastAnalyzedFoodName,
+      'last_analyzed_at': lastAnalyzedAt,
+      'last_analyze_reason': lastAnalyzeReason,
       'label_image_bytes': labelImageBytes == null ? null : base64Encode(labelImageBytes!),
       'label_filename': labelFilename,
       'label_result': labelResult?.toJson(),
@@ -110,6 +116,8 @@ class MealEntry {
       mealId: json['meal_id'] as String?,
       lastAnalyzedNote: json['last_analyzed_note'] as String?,
       lastAnalyzedFoodName: json['last_analyzed_food_name'] as String?,
+      lastAnalyzedAt: json['last_analyzed_at'] as String?,
+      lastAnalyzeReason: json['last_analyze_reason'] as String?,
       labelImageBytes: json['label_image_bytes'] == null
           ? null
           : Uint8List.fromList(base64Decode(json['label_image_bytes'] as String)),

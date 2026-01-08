@@ -35,6 +35,7 @@ class AppState extends ChangeNotifier {
   final Map<String, String> _meta = {};
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
+  final Map<String, String> _analysisTimerReason = {};
   final Map<String, DateTime> _mealInteractionAt = {};
   final Set<String> _mealAdviceLoading = {};
   Timer? _autoFinalizeTimer;
@@ -304,6 +305,8 @@ class AppState extends ChangeNotifier {
     entry.result = analysis.result;
     entry.lastAnalyzedNote = (note ?? '').trim();
     entry.lastAnalyzedFoodName = entry.overrideFoodName ?? '';
+    entry.lastAnalyzedAt = DateTime.now().toIso8601String();
+    entry.lastAnalyzeReason = 'quick_capture';
     entries.insert(0, entry);
     markMealInteraction(entry.mealId ?? entry.id);
     _selectedDate = _dateOnly(entry.time);
@@ -602,6 +605,15 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       // Keep existing summary if summarize fails
     }
+    _meta[_dayLockKey(date)] = 'true';
+    for (final entry in entriesForDate(date)) {
+      final key = entry.id;
+      _analysisTimers[key]?.cancel();
+      _analysisTimers.remove(key);
+      _analysisTimerForce.remove(key);
+      _analysisTimerReason.remove(key);
+    }
+    await _saveOverrides();
   }
 
   Future<void> autoFinalizeToday() async {
@@ -833,7 +845,7 @@ class AppState extends ChangeNotifier {
     if (reanalyzeEntries) {
       final locale = profile.language;
       for (final entry in entriesForMealId(mealId)) {
-        _scheduleAnalyze(entry, locale, force: true);
+        _scheduleAnalyze(entry, locale, force: true, reason: 'meal_advice_changed');
       }
     }
   }
@@ -1073,7 +1085,7 @@ class AppState extends ChangeNotifier {
       await _store.upsert(entry);
     }
     for (final entry in created) {
-      await _analyzeEntry(entry, locale);
+      await _analyzeEntry(entry, locale, reason: 'new_entry');
     }
     return created.isNotEmpty ? created.first : null;
   }
@@ -1113,11 +1125,13 @@ class AppState extends ChangeNotifier {
       entry.error = null;
       entry.lastAnalyzedNote = anchor.lastAnalyzedNote;
       entry.lastAnalyzedFoodName = anchor.lastAnalyzedFoodName;
+      entry.lastAnalyzedAt = anchor.lastAnalyzedAt;
+      entry.lastAnalyzeReason = anchor.lastAnalyzeReason;
       await _store.upsert(entry);
       notifyListeners();
       return entry;
     }
-    await _analyzeEntry(entry, locale);
+    await _analyzeEntry(entry, locale, reason: 'new_entry');
     return entry;
   }
 
@@ -1126,7 +1140,7 @@ class AppState extends ChangeNotifier {
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     await _store.upsert(entry);
-    _scheduleAnalyze(entry, locale);
+    _scheduleAnalyze(entry, locale, reason: 'note_changed');
   }
 
   void updateEntryTime(MealEntry entry, DateTime time) {
@@ -1143,7 +1157,7 @@ class AppState extends ChangeNotifier {
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     _store.upsert(entry);
-    _scheduleAnalyze(entry, profile.language, force: true);
+    _scheduleAnalyze(entry, profile.language, force: true, reason: 'portion_changed');
   }
 
   Future<void> addLabelToEntry(MealEntry entry, XFile file, String locale) async {
@@ -1163,7 +1177,7 @@ class AppState extends ChangeNotifier {
       }
       await _store.upsert(entry);
       notifyListeners();
-      await _analyzeEntry(entry, locale, force: true);
+      await _analyzeEntry(entry, locale, force: true, reason: 'label_added');
     } catch (e) {
       entry.error = e.toString();
     } finally {
@@ -1188,7 +1202,7 @@ class AppState extends ChangeNotifier {
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     await _store.upsert(entry);
-    _scheduleAnalyze(entry, locale);
+    _scheduleAnalyze(entry, locale, reason: 'name_changed');
   }
 
   void removeEntry(MealEntry entry) {
@@ -1234,13 +1248,21 @@ class AppState extends ChangeNotifier {
     _saveProfile();
   }
 
-  Future<void> _analyzeEntry(MealEntry entry, String locale, {bool force = false}) async {
+  Future<void> _analyzeEntry(
+    MealEntry entry,
+    String locale, {
+    bool force = false,
+    String reason = 'auto',
+  }) async {
     final noteKey = entry.note ?? '';
     final nameKey = entry.overrideFoodName ?? '';
     if (!force &&
         entry.result != null &&
         entry.lastAnalyzedNote == noteKey &&
         entry.lastAnalyzedFoodName == nameKey) {
+      return;
+    }
+    if (_isDayLocked(entry.time) && reason != 'manual') {
       return;
     }
     entry.loading = true;
@@ -1275,6 +1297,8 @@ class AppState extends ChangeNotifier {
       entry.result = entry.labelResult == null ? res : _applyLabelOverride(res, entry.labelResult!);
       entry.lastAnalyzedNote = noteKey;
       entry.lastAnalyzedFoodName = nameKey;
+      entry.lastAnalyzedAt = DateTime.now().toIso8601String();
+      entry.lastAnalyzeReason = reason;
     } catch (e) {
       entry.error = e.toString();
     } finally {
@@ -1355,22 +1379,29 @@ class AppState extends ChangeNotifier {
     return Uint8List.fromList(jpg);
   }
 
-  void _scheduleAnalyze(MealEntry entry, String locale, {bool force = false}) {
+  void _scheduleAnalyze(
+    MealEntry entry,
+    String locale, {
+    bool force = false,
+    String reason = 'auto',
+  }) {
     final key = entry.id;
     _analysisTimers[key]?.cancel();
     if (force) {
       _analysisTimerForce[key] = true;
     }
+    _analysisTimerReason[key] = reason;
     _analysisTimers[key] = Timer(const Duration(minutes: 1), () {
       final doForce = _analysisTimerForce.remove(key) ?? false;
+      final analyzeReason = _analysisTimerReason.remove(key) ?? reason;
       _analysisTimers.remove(key);
       // ignore: discarded_futures
-      _analyzeEntry(entry, locale, force: doForce);
+      _analyzeEntry(entry, locale, force: doForce, reason: analyzeReason);
     });
   }
 
   Future<void> reanalyzeEntry(MealEntry entry, String locale) async {
-    await _analyzeEntry(entry, locale, force: true);
+    await _analyzeEntry(entry, locale, force: true, reason: 'manual');
   }
 
   String _hashBytes(List<int> bytes) {
@@ -1544,6 +1575,15 @@ class AppState extends ChangeNotifier {
   String _dayKey(DateTime date) {
     final d = _dateOnly(date);
     return 'day:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  String _dayLockKey(DateTime date) {
+    final d = _dateOnly(date);
+    return 'day_finalized:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  bool _isDayLocked(DateTime date) {
+    return _meta.containsKey(_dayLockKey(date));
   }
 
   String _exerciseTypeKey(DateTime date) {
