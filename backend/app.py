@@ -824,6 +824,7 @@ async def analyze_image(
     advice_mode: Optional[str] = Form(default=None),
     force_reanalyze: Optional[str] = Form(default=None),
     label_context: Optional[str] = Form(default=None),
+    analyze_reason: Optional[str] = Form(default=None),
 ):
     image_bytes = await image.read()
     image_hash = _hash_image(image_bytes)
@@ -835,6 +836,15 @@ async def analyze_image(
     force_reanalyze_flag = False
     if isinstance(force_reanalyze, str):
         force_reanalyze_flag = force_reanalyze.strip().lower() == "true"
+
+    logging.info(
+        "Analyze request reason=%s meal_type=%s advice_mode=%s lang=%s force=%s",
+        analyze_reason,
+        meal_type,
+        advice_mode,
+        use_lang,
+        force_reanalyze_flag,
+    )
 
     tier = "full"
     if (
@@ -850,6 +860,7 @@ async def analyze_image(
         cache = _load_analysis_cache()
         cached = cache.get(image_hash)
         if isinstance(cached, dict) and isinstance(cached.get("result"), dict):
+            logging.info("Analyze cache hit reason=%s hash=%s", analyze_reason, image_hash[:8])
             cached_result = cached["result"]
             return AnalysisResult(
                 food_name=cached_result.get("food_name", ""),
@@ -977,6 +988,7 @@ async def analyze_image(
     debug_reason = None
     if CALL_REAL_AI and RETURN_AI_ERROR:
         debug_reason = _last_ai_error or "ai_failed_unknown"
+    logging.info("Analyze mock result reason=%s", analyze_reason)
     return AnalysisResult(
         food_name=chosen_name,
         calorie_range=calorie_range,
@@ -1012,6 +1024,12 @@ async def analyze_label(
                 input_tokens = int(usage_data.get("input_tokens") or 0)
                 output_tokens = int(usage_data.get("output_tokens") or 0)
                 cost_estimate = _estimate_cost_usd(input_tokens, output_tokens) if usage_data else None
+                logging.info(
+                    "Analyze ai result reason=%s tokens=%s cost=%s",
+                    analyze_reason,
+                    int(usage_data.get("total_tokens") or 0),
+                    cost_estimate,
+                )
                 _append_usage(
                     {
                         "id": str(uuid.uuid4()),

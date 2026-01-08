@@ -30,6 +30,7 @@ class ApiService {
     int? mealPhotoCount,
     String? adviceMode,
     String? labelContext,
+    String? analyzeReason,
     bool forceReanalyze = false,
   }) async {
     final query = lang == null ? '' : '?lang=$lang';
@@ -89,6 +90,9 @@ class ApiService {
     }
     if (labelContext != null && labelContext.trim().isNotEmpty) {
       request.fields['label_context'] = labelContext.trim();
+    }
+    if (analyzeReason != null && analyzeReason.trim().isNotEmpty) {
+      request.fields['analyze_reason'] = analyzeReason.trim();
     }
     if (forceReanalyze) {
       request.fields['force_reanalyze'] = 'true';
