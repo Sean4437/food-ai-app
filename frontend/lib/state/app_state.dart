@@ -1264,7 +1264,17 @@ class AppState extends ChangeNotifier {
         entry.lastAnalyzedFoodName == nameKey) {
       return;
     }
-    if (_isDayLocked(entry.time) && reason != 'manual') {
+    const allowedWhenLocked = {
+      'manual',
+      'portion_changed',
+      'name_changed',
+      'note_changed',
+      'label_added',
+      'new_entry',
+      'quick_capture',
+      'quick_capture_manual',
+    };
+    if (_isDayLocked(entry.time) && !allowedWhenLocked.contains(reason)) {
       return;
     }
     entry.loading = true;
