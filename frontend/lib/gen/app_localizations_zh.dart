@@ -200,7 +200,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nextOtherHint => '???/??????/???';
 
   @override
-  String get mealItemsTitle => '??????';
+  String get mealItemsTitle => '返回本餐';
 
   @override
   String get optionConvenienceTitle => '??????';
@@ -299,7 +299,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dayCardTitle => '??????';
 
   @override
-  String get dayMealsTitle => '??????';
+  String get dayMealsTitle => '返回本日餐次';
 
   @override
   String get tomorrowAdviceTitle => '??????';
@@ -850,7 +850,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get nextOtherHint => '???/??????/???';
 
   @override
-  String get mealItemsTitle => '??????';
+  String get mealItemsTitle => '返回本餐';
 
   @override
   String get optionConvenienceTitle => '??????';
@@ -949,7 +949,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dayCardTitle => '??????';
 
   @override
-  String get dayMealsTitle => '??????';
+  String get dayMealsTitle => '返回本日餐次';
 
   @override
   String get tomorrowAdviceTitle => '??????';

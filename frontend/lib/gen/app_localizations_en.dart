@@ -202,7 +202,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nextOtherHint => 'Fruit / unsweetened yogurt / clear soup';
 
   @override
-  String get mealItemsTitle => 'Meal items';
+  String get mealItemsTitle => 'Back to meal';
 
   @override
   String get optionConvenienceTitle => 'Convenience store';
@@ -303,7 +303,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayCardTitle => 'Daily summary';
 
   @override
-  String get dayMealsTitle => 'Meals';
+  String get dayMealsTitle => 'Back to meals';
 
   @override
   String get tomorrowAdviceTitle => 'Tomorrow advice';
