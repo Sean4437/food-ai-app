@@ -318,6 +318,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dayCardTomorrowLabel => '??????';
+
+  @override
+  String summaryPendingAt(String time) {
+    return '將於 $time 總結';
+  }
+
+  @override
+  String weekSummaryPendingAt(String day, String time) {
+    return '將於 $day $time 總結';
+  }
   String get finalizeDay => '??????';
   String get dishSummaryLabel => '本餐摘要';
 
@@ -518,6 +528,42 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planSpeedLabel => '??????';
+
+  @override
+  String get summarySettingsSection => '總結設定';
+
+  @override
+  String get summaryTimeLabel => '每日總結時間';
+
+  @override
+  String get weeklySummaryDayLabel => '每週總結日';
+
+  @override
+  String get weekSummaryTitle => '一週總結';
+
+  @override
+  String get nextWeekAdviceTitle => '下週建議';
+
+  @override
+  String get weekdayMon => '週一';
+
+  @override
+  String get weekdayTue => '週二';
+
+  @override
+  String get weekdayWed => '週三';
+
+  @override
+  String get weekdayThu => '週四';
+
+  @override
+  String get weekdayFri => '週五';
+
+  @override
+  String get weekdaySat => '週六';
+
+  @override
+  String get weekdaySun => '週日';
 
   @override
   String get planSpeedStable => '???';
@@ -983,6 +1029,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dayCardTomorrowLabel => '??????';
+
+  @override
+  String summaryPendingAt(String time) {
+    return '將於 $time 總結';
+  }
+
+  @override
+  String weekSummaryPendingAt(String day, String time) {
+    return '將於 $day $time 總結';
+  }
   String get finalizeDay => '??????';
   String get dishSummaryLabel => '本餐摘要';
 
@@ -1183,6 +1239,42 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get planSpeedLabel => '??????';
+
+  @override
+  String get summarySettingsSection => '總結設定';
+
+  @override
+  String get summaryTimeLabel => '每日總結時間';
+
+  @override
+  String get weeklySummaryDayLabel => '每週總結日';
+
+  @override
+  String get weekSummaryTitle => '一週總結';
+
+  @override
+  String get nextWeekAdviceTitle => '下週建議';
+
+  @override
+  String get weekdayMon => '週一';
+
+  @override
+  String get weekdayTue => '週二';
+
+  @override
+  String get weekdayWed => '週三';
+
+  @override
+  String get weekdayThu => '週四';
+
+  @override
+  String get weekdayFri => '週五';
+
+  @override
+  String get weekdaySat => '週六';
+
+  @override
+  String get weekdaySun => '週日';
 
   @override
   String get planSpeedStable => '???';

@@ -104,6 +104,21 @@ class ApiService {
     return json.decode(response.body) as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> summarizeWeek(
+    Map<String, dynamic> payload,
+  ) async {
+    final uri = Uri.parse('$baseUrl/summarize_week');
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(payload),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Summarize week failed: ${response.statusCode}');
+    }
+    return json.decode(response.body) as Map<String, dynamic>;
+  }
+
   Future<LabelResult> analyzeLabel(
     Uint8List imageBytes,
     String filename, {

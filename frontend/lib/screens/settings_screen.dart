@@ -70,6 +70,26 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  String _weekdayLabel(int weekday, AppLocalizations t) {
+    switch (weekday) {
+      case DateTime.monday:
+        return t.weekdayMon;
+      case DateTime.tuesday:
+        return t.weekdayTue;
+      case DateTime.wednesday:
+        return t.weekdayWed;
+      case DateTime.thursday:
+        return t.weekdayThu;
+      case DateTime.friday:
+        return t.weekdayFri;
+      case DateTime.saturday:
+        return t.weekdaySat;
+      case DateTime.sunday:
+      default:
+        return t.weekdaySun;
+    }
+  }
+
   Future<void> _editText(
     BuildContext context, {
     required String title,
@@ -312,6 +332,16 @@ class SettingsScreen extends StatelessWidget {
           orElse: () => MapEntry(t.genderUnspecified, 'unspecified'),
         )
         .key;
+    final weekdayOptions = <String, int>{
+      t.weekdayMon: DateTime.monday,
+      t.weekdayTue: DateTime.tuesday,
+      t.weekdayWed: DateTime.wednesday,
+      t.weekdayThu: DateTime.thursday,
+      t.weekdayFri: DateTime.friday,
+      t.weekdaySat: DateTime.saturday,
+      t.weekdaySun: DateTime.sunday,
+    };
+    final currentWeekdayLabel = _weekdayLabel(profile.weeklySummaryWeekday, t);
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -431,6 +461,28 @@ class SettingsScreen extends StatelessWidget {
                     current: profile.planSpeed,
                     options: [t.planSpeedStable, t.planSpeedGentle],
                     onSave: (value) => app.updateField((p) => p.planSpeed = value),
+                  ),
+                ),
+                _sectionTitle(t.summarySettingsSection),
+                _row(
+                  t.summaryTimeLabel,
+                  profile.dailySummaryTime.format(context),
+                  onTap: () => _pickTime(
+                    context,
+                    initial: profile.dailySummaryTime,
+                    onSave: (time) => app.updateField((p) => p.dailySummaryTime = time),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _row(
+                  t.weeklySummaryDayLabel,
+                  currentWeekdayLabel,
+                  onTap: () => _selectOption(
+                    context,
+                    title: t.weeklySummaryDayLabel,
+                    current: currentWeekdayLabel,
+                    options: weekdayOptions.keys.toList(),
+                    onSave: (value) => app.updateField((p) => p.weeklySummaryWeekday = weekdayOptions[value] ?? DateTime.sunday),
                   ),
                 ),
                 _sectionTitle(t.reminderSection),

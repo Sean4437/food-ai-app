@@ -322,6 +322,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dayCardTomorrowLabel => 'Tomorrow advice';
+
+  @override
+  String summaryPendingAt(String time) {
+    return 'Summary at $time';
+  }
+
+  @override
+  String weekSummaryPendingAt(String day, String time) {
+    return 'Summary at $day $time';
+  }
   String get finalizeDay => 'Finalize day';
   String get dishSummaryLabel => 'Meal summary';
 
@@ -523,6 +533,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planSpeedLabel => 'Fat loss speed';
+
+  @override
+  String get summarySettingsSection => 'Summary settings';
+
+  @override
+  String get summaryTimeLabel => 'Daily summary time';
+
+  @override
+  String get weeklySummaryDayLabel => 'Weekly summary day';
+
+  @override
+  String get weekSummaryTitle => 'Weekly summary';
+
+  @override
+  String get nextWeekAdviceTitle => 'Next week advice';
+
+  @override
+  String get weekdayMon => 'Mon';
+
+  @override
+  String get weekdayTue => 'Tue';
+
+  @override
+  String get weekdayWed => 'Wed';
+
+  @override
+  String get weekdayThu => 'Thu';
+
+  @override
+  String get weekdayFri => 'Fri';
+
+  @override
+  String get weekdaySat => 'Sat';
+
+  @override
+  String get weekdaySun => 'Sun';
 
   @override
   String get planSpeedStable => 'Steady';

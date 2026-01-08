@@ -74,6 +74,28 @@ class DaySummaryResponse(BaseModel):
     confidence: Optional[float] = None
 
 
+class WeekSummaryInput(BaseModel):
+    date: str
+    calorie_range: str
+    day_summary: str
+    meal_count: int
+
+
+class WeekSummaryRequest(BaseModel):
+    week_start: str
+    week_end: str
+    days: List[WeekSummaryInput]
+    lang: Optional[str] = None
+    profile: Optional[dict] = None
+
+
+class WeekSummaryResponse(BaseModel):
+    week_summary: str
+    next_week_advice: str
+    source: str
+    confidence: Optional[float] = None
+
+
 class MealAdviceRequest(BaseModel):
     meal_type: str
     calorie_range: str
@@ -383,6 +405,75 @@ def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryIn
         f"Meal summaries:\n{meal_block}\n"
     ) + profile_text
 
+
+def _build_week_prompt(lang: str, profile: dict | None, days: List[WeekSummaryInput], week_start: str, week_end: str) -> str:
+    profile_text = ""
+    if profile:
+        profile_text = (
+            f"User profile (do not mention exact values): {json.dumps(profile, ensure_ascii=True)}\n"
+            "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
+        )
+    day_lines = []
+    for day in days:
+        summary = day.day_summary or "no summary"
+        day_lines.append(f"- {day.date}: {day.calorie_range} | {summary} | meals={day.meal_count}")
+    day_block = "\n".join(day_lines)
+    if lang == "zh-TW":
+        return (
+            "你是營養分析助理。請根據一週摘要，輸出週總結與下週建議，回傳 JSON。\n"
+            "要求：\n"
+            "- 僅回傳 JSON（不要多餘文字）\n"
+            "- week_summary: 一句話總結（40 字內）\n"
+            "- next_week_advice: 下週方向（一句話）\n"
+            "- confidence: 0 到 1 的信心分數\n"
+            "- 避免醫療或診斷字眼；避免精準數值或克數\n"
+            "JSON 範例：\n"
+            "{\n"
+            "  \"week_summary\": \"整體均衡但油脂偏高，注意蔬菜比例\",\n"
+            "  \"next_week_advice\": \"下週以清淡蛋白質與蔬菜為主\",\n"
+            "  \"confidence\": 0.7\n"
+            "}\n"
+            f"週期：{week_start} ~ {week_end}\n"
+            f"每日摘要：\n{day_block}\n"
+        ) + profile_text
+    return (
+        "You are a nutrition assistant. Based on weekly summaries, return JSON.\n"
+        "Requirements:\n"
+        "- Return JSON only\n"
+        "- week_summary: one-sentence summary (<= 40 words)\n"
+        "- next_week_advice: one sentence guidance for next week\n"
+        "- confidence: 0 to 1\n"
+        "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
+        "JSON example:\n"
+        "{\n"
+        "  \"week_summary\": \"Overall balanced, but fat intake is slightly high\",\n"
+        "  \"next_week_advice\": \"Next week: more veggies and lean protein\",\n"
+        "  \"confidence\": 0.7\n"
+        "}\n"
+        f"Week: {week_start} ~ {week_end}\n"
+        f"Daily summaries:\n{day_block}\n"
+    ) + profile_text
+
+
+def _fallback_week_summary(lang: str, days: List[WeekSummaryInput]) -> dict:
+    text = " ".join([day.day_summary for day in days if day.day_summary])
+    oily = any(word in text for word in ["炸", "油", "酥", "奶油", "fried", "oily"])
+    salty = any(word in text for word in ["鹹", "鈉", "鹽", "salty", "sodium"])
+    if lang == "zh-TW":
+        if oily and salty:
+            return {"week_summary": "油脂與鹽分偏高，注意清淡", "next_week_advice": "下週以清湯、蔬菜與瘦蛋白為主", "confidence": 0.5}
+        if oily:
+            return {"week_summary": "油脂偏高，整體尚可", "next_week_advice": "下週以清淡蛋白質與蔬菜為主", "confidence": 0.5}
+        if salty:
+            return {"week_summary": "鹽分略多，注意水分與清淡", "next_week_advice": "下週以清湯蔬菜搭配瘦蛋白", "confidence": 0.5}
+        return {"week_summary": "整體均衡，維持即可", "next_week_advice": "下週以蛋白質與蔬菜為主", "confidence": 0.5}
+    if oily and salty:
+        return {"week_summary": "Higher fat and sodium this week", "next_week_advice": "Next week: lean protein + veggies", "confidence": 0.5}
+    if oily:
+        return {"week_summary": "Fat intake a bit high", "next_week_advice": "Next week: lighter protein and veggies", "confidence": 0.5}
+    if salty:
+        return {"week_summary": "Sodium a bit high", "next_week_advice": "Next week: clear soup + veggies", "confidence": 0.5}
+    return {"week_summary": "Overall balanced", "next_week_advice": "Next week: lean protein + veggies", "confidence": 0.5}
 
 def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceRequest) -> str:
     profile_text = ""
@@ -970,6 +1061,42 @@ async def summarize_day(payload: DaySummaryRequest):
     return DaySummaryResponse(
         day_summary=fallback.get("day_summary", ""),
         tomorrow_advice=fallback.get("tomorrow_advice", ""),
+        source="mock",
+        confidence=fallback.get("confidence", 0.5),
+    )
+
+
+@app.post("/summarize_week", response_model=WeekSummaryResponse)
+async def summarize_week(payload: WeekSummaryRequest):
+    use_lang = payload.lang or DEFAULT_LANG
+    if use_lang not in _fake_foods:
+        use_lang = "zh-TW"
+    use_ai = _should_use_ai()
+    if use_ai and _client is not None:
+        try:
+            prompt = _build_week_prompt(use_lang, payload.profile or {}, payload.days, payload.week_start, payload.week_end)
+            response = _client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+            )
+            text = response.choices[0].message.content or ""
+            data = _parse_json(text)
+            if isinstance(data, dict) and "week_summary" in data and "next_week_advice" in data:
+                return WeekSummaryResponse(
+                    week_summary=data.get("week_summary", ""),
+                    next_week_advice=data.get("next_week_advice", ""),
+                    source="ai",
+                    confidence=(data.get("confidence") or 0.6),
+                )
+        except Exception as exc:
+            global _last_ai_error
+            _last_ai_error = str(exc)
+            logging.exception("Week summary failed: %s", exc)
+    fallback = _fallback_week_summary(use_lang, payload.days)
+    return WeekSummaryResponse(
+        week_summary=fallback.get("week_summary", ""),
+        next_week_advice=fallback.get("next_week_advice", ""),
         source="mock",
         confidence=fallback.get("confidence", 0.5),
     )

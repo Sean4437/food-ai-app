@@ -716,6 +716,18 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'??????'**
   String get dayCardTomorrowLabel;
+
+  /// No description provided for @summaryPendingAt.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'將於 {time} 總結'**
+  String summaryPendingAt(String time);
+
+  /// No description provided for @weekSummaryPendingAt.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'將於 {day} {time} 總結'**
+  String weekSummaryPendingAt(String day, String time);
   String get finalizeDay;
   String get dishSummaryLabel;
 
@@ -1055,6 +1067,78 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'??????'**
   String get planSpeedLabel;
+
+  /// No description provided for @summarySettingsSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'總結設定'**
+  String get summarySettingsSection;
+
+  /// No description provided for @summaryTimeLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'每日總結時間'**
+  String get summaryTimeLabel;
+
+  /// No description provided for @weeklySummaryDayLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'每週總結日'**
+  String get weeklySummaryDayLabel;
+
+  /// No description provided for @weekSummaryTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'一週總結'**
+  String get weekSummaryTitle;
+
+  /// No description provided for @nextWeekAdviceTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'下週建議'**
+  String get nextWeekAdviceTitle;
+
+  /// No description provided for @weekdayMon.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'週一'**
+  String get weekdayMon;
+
+  /// No description provided for @weekdayTue.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'週二'**
+  String get weekdayTue;
+
+  /// No description provided for @weekdayWed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'週三'**
+  String get weekdayWed;
+
+  /// No description provided for @weekdayThu.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'週四'**
+  String get weekdayThu;
+
+  /// No description provided for @weekdayFri.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'週五'**
+  String get weekdayFri;
+
+  /// No description provided for @weekdaySat.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'週六'**
+  String get weekdaySat;
+
+  /// No description provided for @weekdaySun.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'週日'**
+  String get weekdaySun;
 
   /// No description provided for @planSpeedStable.
   ///

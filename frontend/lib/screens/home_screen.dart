@@ -298,6 +298,34 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      _homeInfoCard(
+                        appTheme: appTheme,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t.weekSummaryTitle,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              app.weekSummaryText(activeDate, t),
+                              style: const TextStyle(fontSize: 14, color: Colors.black54),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              t.nextWeekAdviceTitle,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              app.nextWeekAdviceText(activeDate, t),
+                              style: const TextStyle(fontSize: 14, color: Colors.black54),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 const SizedBox(height: 18),

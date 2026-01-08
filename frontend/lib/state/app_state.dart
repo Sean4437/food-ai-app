@@ -31,12 +31,14 @@ class AppState extends ChangeNotifier {
   final UserProfile profile = UserProfile.initial();
   final Map<String, Map<String, String>> _dayOverrides = {};
   final Map<String, Map<String, String>> _mealOverrides = {};
+  final Map<String, Map<String, String>> _weekOverrides = {};
   final Map<String, String> _meta = {};
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
   final Map<String, DateTime> _mealInteractionAt = {};
   final Set<String> _mealAdviceLoading = {};
   Timer? _autoFinalizeTimer;
+  Timer? _autoWeeklyTimer;
 
   String buildAiContext() {
     final now = DateTime.now();
@@ -188,6 +190,7 @@ class AppState extends ChangeNotifier {
       }
     }
     _scheduleAutoFinalize();
+    _scheduleAutoFinalizeWeek();
     notifyListeners();
   }
 
@@ -280,10 +283,47 @@ class AppState extends ChangeNotifier {
     return t.summaryNeutral;
   }
 
+  bool isDailySummaryReady(DateTime date) {
+    final key = _dayKey(date);
+    if (_dayOverrides.containsKey(key)) return true;
+    final today = _dateOnly(DateTime.now());
+    if (_isSameDate(date, today)) {
+      final now = TimeOfDay.now();
+      final target = profile.dailySummaryTime;
+      return (now.hour > target.hour) || (now.hour == target.hour && now.minute >= target.minute);
+    }
+    return date.isBefore(today);
+  }
+
+  bool isWeeklySummaryReady(DateTime date) {
+    final key = _weekKey(_weekStartFor(date));
+    if (_weekOverrides.containsKey(key)) return true;
+    final today = _dateOnly(DateTime.now());
+    if (date.isAfter(today)) return false;
+    final weekday = profile.weeklySummaryWeekday;
+    final target = _weekStartFor(today).add(Duration(days: weekday - 1));
+    if (_isSameDate(today, target)) {
+      final now = TimeOfDay.now();
+      final t = profile.dailySummaryTime;
+      return (now.hour > t.hour) || (now.hour == t.hour && now.minute >= t.minute);
+    }
+    return today.isAfter(target);
+  }
+
+  String dailySummaryPendingText(AppLocalizations t) {
+    return t.summaryPendingAt(_timeToString(profile.dailySummaryTime));
+  }
+
+  String weeklySummaryPendingText(AppLocalizations t) {
+    final weekdayLabel = _weekdayLabel(profile.weeklySummaryWeekday, t);
+    return t.weekSummaryPendingAt(weekdayLabel, _timeToString(profile.dailySummaryTime));
+  }
+
   String daySummaryText(DateTime date, AppLocalizations t) {
     final override = _dayOverrides[_dayKey(date)];
     final manual = override?['summary'];
     if (manual != null && manual.trim().isNotEmpty) return manual;
+    if (!isDailySummaryReady(date)) return dailySummaryPendingText(t);
     final dayEntries = entriesForDate(date);
     if (dayEntries.isEmpty) return t.summaryEmpty;
     final fatScore = _aggregateMacroScore(dayEntries, 'fat', t);
@@ -303,8 +343,27 @@ class AppState extends ChangeNotifier {
     final override = _dayOverrides[_dayKey(date)];
     final manual = override?['tomorrow_advice'];
     if (manual != null && manual.trim().isNotEmpty) return manual;
+    if (!isDailySummaryReady(date)) return dailySummaryPendingText(t);
     final summary = buildDaySummary(date, t);
     return summary?.advice ?? t.nextMealHint;
+  }
+
+  String weekSummaryText(DateTime date, AppLocalizations t) {
+    final key = _weekKey(_weekStartFor(date));
+    final override = _weekOverrides[key];
+    final manual = override?['week_summary'];
+    if (manual != null && manual.trim().isNotEmpty) return manual;
+    if (!isWeeklySummaryReady(date)) return weeklySummaryPendingText(t);
+    return t.summaryEmpty;
+  }
+
+  String nextWeekAdviceText(DateTime date, AppLocalizations t) {
+    final key = _weekKey(_weekStartFor(date));
+    final override = _weekOverrides[key];
+    final manual = override?['next_week_advice'];
+    if (manual != null && manual.trim().isNotEmpty) return manual;
+    if (!isWeeklySummaryReady(date)) return weeklySummaryPendingText(t);
+    return t.nextMealHint;
   }
 
   Future<void> finalizeDay(DateTime date, String locale, AppLocalizations t) async {
@@ -370,6 +429,65 @@ class AppState extends ChangeNotifier {
     _meta['last_auto_finalize'] = todayKey;
     await _saveOverrides();
     _scheduleAutoFinalize();
+  }
+
+  Future<void> finalizeWeek(DateTime date, String locale, AppLocalizations t) async {
+    final weekStart = _weekStartFor(date);
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    final days = <Map<String, dynamic>>[];
+    for (int i = 0; i < 7; i++) {
+      final day = weekStart.add(Duration(days: i));
+      final daySummary = buildDaySummary(day, t);
+      if (daySummary == null) continue;
+      final entriesFor = entriesForDate(day);
+      days.add({
+        'date': '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}',
+        'calorie_range': daySummary.calorieRange,
+        'day_summary': daySummary.advice,
+        'meal_count': entriesFor.length,
+      });
+    }
+    if (days.isEmpty) return;
+    final payload = {
+      'week_start': '${weekStart.year.toString().padLeft(4, '0')}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}',
+      'week_end': '${weekEnd.year.toString().padLeft(4, '0')}-${weekEnd.month.toString().padLeft(2, '0')}-${weekEnd.day.toString().padLeft(2, '0')}',
+      'lang': locale,
+      'days': days,
+      'profile': {
+        'height_cm': profile.heightCm,
+        'weight_kg': profile.weightKg,
+        'age': profile.age,
+        'gender': profile.gender,
+        'goal': profile.goal,
+        'plan_speed': profile.planSpeed,
+      },
+    };
+    try {
+      final response = await _api.summarizeWeek(payload);
+      final summaryText = (response['week_summary'] as String?) ?? '';
+      final adviceText = (response['next_week_advice'] as String?) ?? '';
+      await updateWeekOverride(
+        weekStart,
+        weekSummary: summaryText,
+        nextWeekAdvice: adviceText,
+      );
+    } catch (_) {
+      // Keep existing summary if summarize fails
+    }
+  }
+
+  Future<void> autoFinalizeWeek() async {
+    final locale = _localeFromProfile();
+    final t = lookupAppLocalizations(locale);
+    final weekKey = _weekKey(_weekStartFor(DateTime.now()));
+    if (_meta['last_auto_week'] == weekKey) {
+      _scheduleAutoFinalizeWeek();
+      return;
+    }
+    await finalizeWeek(DateTime.now(), locale.toLanguageTag(), t);
+    _meta['last_auto_week'] = weekKey;
+    await _saveOverrides();
+    _scheduleAutoFinalizeWeek();
   }
 
   String dayMealLabels(DateTime date, AppLocalizations t) {
@@ -475,6 +593,32 @@ class AppState extends ChangeNotifier {
     }
     if (_dayOverrides[key]!.isEmpty) {
       _dayOverrides.remove(key);
+    }
+    notifyListeners();
+    await _saveOverrides();
+  }
+
+  Future<void> updateWeekOverride(DateTime weekStart, {String? weekSummary, String? nextWeekAdvice}) async {
+    final key = _weekKey(weekStart);
+    _weekOverrides.putIfAbsent(key, () => {});
+    if (weekSummary != null) {
+      final value = weekSummary.trim();
+      if (value.isEmpty) {
+        _weekOverrides[key]!.remove('week_summary');
+      } else {
+        _weekOverrides[key]!['week_summary'] = value;
+      }
+    }
+    if (nextWeekAdvice != null) {
+      final value = nextWeekAdvice.trim();
+      if (value.isEmpty) {
+        _weekOverrides[key]!.remove('next_week_advice');
+      } else {
+        _weekOverrides[key]!['next_week_advice'] = value;
+      }
+    }
+    if (_weekOverrides[key]!.isEmpty) {
+      _weekOverrides.remove(key);
     }
     notifyListeners();
     await _saveOverrides();
@@ -868,6 +1012,8 @@ class AppState extends ChangeNotifier {
       ..age = updated.age
       ..goal = updated.goal
       ..planSpeed = updated.planSpeed
+      ..dailySummaryTime = updated.dailySummaryTime
+      ..weeklySummaryWeekday = updated.weeklySummaryWeekday
       ..lunchReminderEnabled = updated.lunchReminderEnabled
       ..dinnerReminderEnabled = updated.dinnerReminderEnabled
       ..lunchReminderTime = updated.lunchReminderTime
@@ -884,6 +1030,8 @@ class AppState extends ChangeNotifier {
   void updateField(void Function(UserProfile profile) updater) {
     updater(profile);
     notifyListeners();
+    _scheduleAutoFinalize();
+    _scheduleAutoFinalizeWeek();
     // ignore: unawaited_futures
     _saveProfile();
   }
@@ -1201,6 +1349,7 @@ class AppState extends ChangeNotifier {
   void _loadOverrides(Map<String, dynamic> overrides) {
     final day = overrides['day'] as Map<String, dynamic>?;
     final meal = overrides['meal'] as Map<String, dynamic>?;
+    final week = overrides['week'] as Map<String, dynamic>?;
     final meta = overrides['meta'] as Map<String, dynamic>?;
     if (day != null) {
       day.forEach((key, value) {
@@ -1216,6 +1365,13 @@ class AppState extends ChangeNotifier {
         }
       });
     }
+    if (week != null) {
+      week.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          _weekOverrides[key] = value.map((k, v) => MapEntry(k, v.toString()));
+        }
+      });
+    }
     if (meta != null) {
       meta.forEach((key, value) {
         _meta[key] = value.toString();
@@ -1227,6 +1383,7 @@ class AppState extends ChangeNotifier {
     await _settings.saveOverrides({
       'day': _dayOverrides,
       'meal': _mealOverrides,
+      'week': _weekOverrides,
       'meta': _meta,
     });
   }
@@ -1238,12 +1395,32 @@ class AppState extends ChangeNotifier {
   void _scheduleAutoFinalize() {
     _autoFinalizeTimer?.cancel();
     final now = DateTime.now();
-    final target = DateTime(now.year, now.month, now.day, 21, 0);
+    final target = DateTime(now.year, now.month, now.day, profile.dailySummaryTime.hour, profile.dailySummaryTime.minute);
     final next = now.isAfter(target) ? target.add(const Duration(days: 1)) : target;
     final delay = next.difference(now);
     _autoFinalizeTimer = Timer(delay, () {
       // ignore: discarded_futures
       autoFinalizeToday();
+    });
+  }
+
+  void _scheduleAutoFinalizeWeek() {
+    _autoWeeklyTimer?.cancel();
+    final now = DateTime.now();
+    final weekStart = _weekStartFor(now);
+    final targetDate = weekStart.add(Duration(days: profile.weeklySummaryWeekday - 1));
+    final target = DateTime(
+      targetDate.year,
+      targetDate.month,
+      targetDate.day,
+      profile.dailySummaryTime.hour,
+      profile.dailySummaryTime.minute,
+    );
+    final next = now.isAfter(target) ? target.add(const Duration(days: 7)) : target;
+    final delay = next.difference(now);
+    _autoWeeklyTimer = Timer(delay, () {
+      // ignore: discarded_futures
+      autoFinalizeWeek();
     });
   }
 
@@ -1261,6 +1438,8 @@ class AppState extends ChangeNotifier {
       'age': profile.age,
       'goal': profile.goal,
       'plan_speed': profile.planSpeed,
+      'daily_summary_time': _timeToString(profile.dailySummaryTime),
+      'weekly_summary_weekday': profile.weeklySummaryWeekday,
       'lunch_reminder_enabled': profile.lunchReminderEnabled,
       'dinner_reminder_enabled': profile.dinnerReminderEnabled,
       'lunch_reminder_time': _timeToString(profile.lunchReminderTime),
@@ -1282,6 +1461,8 @@ class AppState extends ChangeNotifier {
       ..age = _parseInt(data['age'], profile.age)
       ..goal = (data['goal'] as String?) ?? profile.goal
       ..planSpeed = (data['plan_speed'] as String?) ?? profile.planSpeed
+      ..dailySummaryTime = _parseTime(data['daily_summary_time'] as String?, profile.dailySummaryTime)
+      ..weeklySummaryWeekday = _parseInt(data['weekly_summary_weekday'], profile.weeklySummaryWeekday)
       ..lunchReminderEnabled = (data['lunch_reminder_enabled'] as bool?) ?? profile.lunchReminderEnabled
       ..dinnerReminderEnabled = (data['dinner_reminder_enabled'] as bool?) ?? profile.dinnerReminderEnabled
       ..lunchReminderTime = _parseTime(data['lunch_reminder_time'] as String?, profile.lunchReminderTime)
@@ -1302,6 +1483,35 @@ class AppState extends ChangeNotifier {
     final h = time.hour.toString().padLeft(2, '0');
     final m = time.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+
+  String _weekdayLabel(int weekday, AppLocalizations t) {
+    switch (weekday) {
+      case DateTime.monday:
+        return t.weekdayMon;
+      case DateTime.tuesday:
+        return t.weekdayTue;
+      case DateTime.wednesday:
+        return t.weekdayWed;
+      case DateTime.thursday:
+        return t.weekdayThu;
+      case DateTime.friday:
+        return t.weekdayFri;
+      case DateTime.saturday:
+        return t.weekdaySat;
+      case DateTime.sunday:
+      default:
+        return t.weekdaySun;
+    }
+  }
+
+  DateTime _weekStartFor(DateTime date) {
+    final start = date.subtract(Duration(days: date.weekday - 1));
+    return DateTime(start.year, start.month, start.day);
+  }
+
+  String _weekKey(DateTime weekStart) {
+    return '${weekStart.year.toString().padLeft(4, '0')}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}';
   }
 
   TimeOfDay _parseTime(String? value, TimeOfDay fallback) {
@@ -1377,6 +1587,8 @@ class UserProfile {
     required this.age,
     required this.goal,
     required this.planSpeed,
+    required this.dailySummaryTime,
+    required this.weeklySummaryWeekday,
     required this.lunchReminderEnabled,
     required this.dinnerReminderEnabled,
     required this.lunchReminderTime,
@@ -1395,6 +1607,8 @@ class UserProfile {
   int age;
   String goal;
   String planSpeed;
+  TimeOfDay dailySummaryTime;
+  int weeklySummaryWeekday;
   bool lunchReminderEnabled;
   bool dinnerReminderEnabled;
   TimeOfDay lunchReminderTime;
@@ -1414,6 +1628,8 @@ class UserProfile {
       age: 30,
       goal: '減脂',
       planSpeed: '穩定',
+      dailySummaryTime: const TimeOfDay(hour: 21, minute: 0),
+      weeklySummaryWeekday: DateTime.sunday,
       lunchReminderEnabled: true,
       dinnerReminderEnabled: true,
       lunchReminderTime: const TimeOfDay(hour: 12, minute: 15),
