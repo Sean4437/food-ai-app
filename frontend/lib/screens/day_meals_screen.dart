@@ -171,6 +171,13 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     final summary = currentGroup == null ? null : app.buildMealSummary(currentGroup, t);
     final advice = currentGroup == null ? null : app.mealAdviceForGroup(currentGroup, t);
     final formatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
+    if (currentGroup != null) {
+      final locale = Localizations.localeOf(context).toLanguageTag();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        app.ensureMealAdviceForGroup(currentGroup, t, locale);
+      });
+    }
 
     final screenWidth = MediaQuery.of(context).size.width;
     final contentWidth = (screenWidth - 32) * 0.86;

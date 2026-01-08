@@ -120,4 +120,19 @@ class ApiService {
     final jsonMap = json.decode(body) as Map<String, dynamic>;
     return LabelResult.fromJson(jsonMap);
   }
+
+  Future<Map<String, dynamic>> suggestMeal(
+    Map<String, dynamic> payload,
+  ) async {
+    final uri = Uri.parse('$baseUrl/suggest_meal');
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(payload),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Suggest meal failed: ${response.statusCode}');
+    }
+    return json.decode(response.body) as Map<String, dynamic>;
+  }
 }

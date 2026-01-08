@@ -73,6 +73,23 @@ class DaySummaryResponse(BaseModel):
     source: str
     confidence: Optional[float] = None
 
+
+class MealAdviceRequest(BaseModel):
+    meal_type: str
+    calorie_range: str
+    dish_summaries: List[str]
+    lang: Optional[str] = None
+    profile: Optional[dict] = None
+
+
+class MealAdviceResponse(BaseModel):
+    self_cook: str
+    convenience: str
+    bento: str
+    other: str
+    source: str
+    confidence: Optional[float] = None
+
 FREE_DAILY_LIMIT = int(os.getenv("FREE_DAILY_LIMIT", "1"))
 CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
 DEFAULT_LANG = os.getenv("DEFAULT_LANG", "zh-TW")
@@ -366,6 +383,72 @@ def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryIn
         f"Meal summaries:\n{meal_block}\n"
     ) + profile_text
 
+
+def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceRequest) -> str:
+    profile_text = ""
+    if profile:
+        profile_text = (
+            f"User profile (do not mention exact values): {json.dumps(profile, ensure_ascii=True)}\n"
+            "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
+        )
+    summaries = "; ".join(meal.dish_summaries) if meal.dish_summaries else "no dish summary"
+    if lang == "zh-TW":
+        return (
+            "你是營養分析助理。請根據本餐摘要，給出下一餐建議，回傳 JSON。\n"
+            "要求：\n"
+            "- 僅回傳 JSON（不要多餘文字）\n"
+            "- self_cook / convenience / bento / other：各 1 句建議\n"
+            "- 每句需包含具體食物方向 + 份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
+            "- 避免醫療或診斷字眼；避免精準數值或克數\n"
+            "- 需提到上一餐摘要的影響（例如偏油、偏鹹）\n"
+            "JSON 範例：\n"
+            "{\n"
+            "  \"self_cook\": \"清炒蔬菜＋蒸魚，主食半碗即可\",\n"
+            "  \"convenience\": \"沙拉＋無糖豆漿，主食半碗\",\n"
+            "  \"bento\": \"少飯、加青菜、選清淡蛋白\",\n"
+            "  \"other\": \"清湯＋蔬菜＋瘦肉，避免油炸\",\n"
+            "  \"confidence\": 0.7\n"
+            "}\n"
+            f"本餐：{meal.meal_type} | {meal.calorie_range}\n"
+            f"本餐摘要：{summaries}\n"
+        ) + profile_text
+    return (
+        "You are a nutrition assistant. Based on the meal summary, return JSON advice for the next meal.\n"
+        "Requirements:\n"
+        "- Return JSON only\n"
+        "- self_cook / convenience / bento / other: one sentence each\n"
+        "- Each sentence must include food direction + portion guidance (e.g., half bowl carbs, palm-sized protein, one bowl veggies)\n"
+        "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
+        "- Mention the influence of the previous meal summary\n"
+        "JSON example:\n"
+        "{\n"
+        "  \"self_cook\": \"Steamed fish + veggies, half bowl carbs\",\n"
+        "  \"convenience\": \"Salad + unsweetened soy milk, half bowl carbs\",\n"
+        "  \"bento\": \"Less rice, more veggies, lean protein\",\n"
+        "  \"other\": \"Clear soup + veggies + lean protein\",\n"
+        "  \"confidence\": 0.7\n"
+        "}\n"
+        f"Meal: {meal.meal_type} | {meal.calorie_range}\n"
+        f"Meal summary: {summaries}\n"
+    ) + profile_text
+
+
+def _fallback_meal_advice(lang: str) -> dict:
+    if lang == "zh-TW":
+        return {
+            "self_cook": "清炒蔬菜＋蒸魚，主食半碗即可",
+            "convenience": "沙拉＋無糖豆漿，主食半碗",
+            "bento": "少飯、加青菜、選清淡蛋白",
+            "other": "清湯＋蔬菜＋瘦肉，避免油炸",
+            "confidence": 0.5,
+        }
+    return {
+        "self_cook": "Steamed fish + veggies, half bowl carbs",
+        "convenience": "Salad + unsweetened soy milk, half bowl carbs",
+        "bento": "Less rice, more veggies, lean protein",
+        "other": "Clear soup + veggies + lean protein",
+        "confidence": 0.5,
+    }
 
 def _build_label_prompt(lang: str) -> str:
     if lang == "zh-TW":
@@ -887,6 +970,76 @@ async def summarize_day(payload: DaySummaryRequest):
         tomorrow_advice=fallback.get("tomorrow_advice", ""),
         source="mock",
         confidence=fallback.get("confidence", 0.5),
+    )
+
+
+@app.post("/suggest_meal", response_model=MealAdviceResponse)
+async def suggest_meal(payload: MealAdviceRequest):
+    use_lang = payload.lang or DEFAULT_LANG
+    if use_lang not in _fake_foods:
+        use_lang = "zh-TW"
+    profile = payload.profile or {}
+    if CALL_REAL_AI and _client is not None and _should_use_ai():
+        try:
+            prompt = _build_meal_advice_prompt(use_lang, profile, payload)
+            response = _client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+            )
+            text = response.choices[0].message.content or ""
+            data = _parse_json(text)
+            if isinstance(data, dict):
+                required = {"self_cook", "convenience", "bento", "other"}
+                if required.issubset(set(data.keys())):
+                    usage = response.usage
+                    usage_data = None
+                    if usage is not None:
+                        usage_data = {
+                            "input_tokens": usage.prompt_tokens,
+                            "output_tokens": usage.completion_tokens,
+                            "total_tokens": usage.total_tokens,
+                        }
+                    cost_estimate = None
+                    if usage_data is not None:
+                        cost_estimate = _estimate_cost_usd(
+                            int(usage_data.get("input_tokens") or 0),
+                            int(usage_data.get("output_tokens") or 0),
+                        )
+                    _append_usage(
+                        {
+                            "id": str(uuid.uuid4()),
+                            "created_at": datetime.now(timezone.utc).isoformat(),
+                            "model": OPENAI_MODEL,
+                            "lang": use_lang,
+                            "source": "ai",
+                            "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
+                            "output_tokens": int(usage_data.get("output_tokens") or 0) if usage_data else 0,
+                            "total_tokens": int(usage_data.get("total_tokens") or 0) if usage_data else 0,
+                            "cost_estimate_usd": cost_estimate,
+                        }
+                    )
+                    _increment_daily_count()
+                    return MealAdviceResponse(
+                        self_cook=str(data.get("self_cook", "")).strip(),
+                        convenience=str(data.get("convenience", "")).strip(),
+                        bento=str(data.get("bento", "")).strip(),
+                        other=str(data.get("other", "")).strip(),
+                        source="ai",
+                        confidence=data.get("confidence"),
+                    )
+        except Exception as exc:
+            global _last_ai_error
+            _last_ai_error = str(exc)
+            logging.exception("Meal advice failed: %s", exc)
+    fallback = _fallback_meal_advice(use_lang)
+    return MealAdviceResponse(
+        self_cook=fallback["self_cook"],
+        convenience=fallback["convenience"],
+        bento=fallback["bento"],
+        other=fallback["other"],
+        source="mock",
+        confidence=fallback.get("confidence"),
     )
 
 

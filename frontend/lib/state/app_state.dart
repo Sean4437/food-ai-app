@@ -35,6 +35,7 @@ class AppState extends ChangeNotifier {
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
   final Map<String, DateTime> _mealInteractionAt = {};
+  final Set<String> _mealAdviceLoading = {};
   Timer? _autoFinalizeTimer;
 
   String buildAiContext() {
@@ -398,6 +399,57 @@ class AppState extends ChangeNotifier {
     );
   }
 
+  Future<void> ensureMealAdviceForGroup(
+    List<MealEntry> group,
+    AppLocalizations t,
+    String locale,
+  ) async {
+    if (group.isEmpty) return;
+    final mealId = group.first.mealId ?? group.first.id;
+    final key = _mealKey(mealId);
+    if (_mealOverrides.containsKey(key)) return;
+    if (_mealAdviceLoading.contains(mealId)) return;
+    _mealAdviceLoading.add(mealId);
+    try {
+      final summary = buildMealSummary(group, t);
+      final dishSummaries = <String>[];
+      for (final entry in group) {
+        final summaryText = entry.result?.dishSummary?.trim();
+        if (summaryText != null && summaryText.isNotEmpty) {
+          dishSummaries.add(summaryText);
+          continue;
+        }
+        final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
+        if (fallback.isNotEmpty) dishSummaries.add(fallback);
+      }
+      final payload = {
+        'meal_type': _mealTypeKey(group.first.type),
+        'calorie_range': summary?.calorieRange ?? '',
+        'dish_summaries': dishSummaries,
+        'lang': locale,
+        'profile': {
+          'height_cm': profile.heightCm,
+          'weight_kg': profile.weightKg,
+          'age': profile.age,
+          'goal': profile.goal,
+          'plan_speed': profile.planSpeed,
+        },
+      };
+      final response = await _api.suggestMeal(payload);
+      final advice = MealAdvice(
+        selfCook: (response['self_cook'] as String?) ?? t.nextSelfCookHint,
+        convenience: (response['convenience'] as String?) ?? t.nextConvenienceHint,
+        bento: (response['bento'] as String?) ?? t.nextBentoHint,
+        other: (response['other'] as String?) ?? t.nextOtherHint,
+      );
+      await updateMealAdvice(mealId, advice, reanalyzeEntries: false);
+    } catch (_) {
+      // Keep defaults if suggestion fails.
+    } finally {
+      _mealAdviceLoading.remove(mealId);
+    }
+  }
+
   Future<void> updateDayOverride(DateTime date, {String? summary, String? tomorrowAdvice}) async {
     final key = _dayKey(date);
     _dayOverrides.putIfAbsent(key, () => {});
@@ -424,7 +476,7 @@ class AppState extends ChangeNotifier {
     await _saveOverrides();
   }
 
-  Future<void> updateMealAdvice(String mealId, MealAdvice advice) async {
+  Future<void> updateMealAdvice(String mealId, MealAdvice advice, {bool reanalyzeEntries = true}) async {
     final key = _mealKey(mealId);
     _mealOverrides[key] = {
       'self_cook': advice.selfCook.trim(),
@@ -435,9 +487,11 @@ class AppState extends ChangeNotifier {
     markMealInteraction(mealId);
     notifyListeners();
     await _saveOverrides();
-    final locale = profile.language;
-    for (final entry in entriesForMealId(mealId)) {
-      _scheduleAnalyze(entry, locale, force: true);
+    if (reanalyzeEntries) {
+      final locale = profile.language;
+      for (final entry in entriesForMealId(mealId)) {
+        _scheduleAnalyze(entry, locale, force: true);
+      }
     }
   }
 
@@ -871,7 +925,23 @@ class AppState extends ChangeNotifier {
       entry.loading = false;
       notifyListeners();
       await _store.upsert(entry);
+      if (force && entry.error == null) {
+        await _refreshMealAdviceForEntry(entry, locale);
+      }
     }
+  }
+
+  Future<void> _refreshMealAdviceForEntry(MealEntry entry, String locale) async {
+    final mealId = entry.mealId ?? entry.id;
+    final key = _mealKey(mealId);
+    if (_mealOverrides.containsKey(key)) {
+      _mealOverrides.remove(key);
+      await _saveOverrides();
+    }
+    final t = lookupAppLocalizations(Locale.fromSubtags(languageCode: locale.split('-').first));
+    final group = entriesForMealId(mealId);
+    if (group.isEmpty) return;
+    await ensureMealAdviceForGroup(group, t, locale);
   }
 
   Future<DateTime> _resolveImageTime(XFile xfile, List<int> bytes) async {
