@@ -91,8 +91,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reanalyzeLabel => 'Reanalyze';
 
+  @override
   String get addLabel => 'Add label';
 
+  @override
   String get labelInfoTitle => 'Label info';
 
   @override
@@ -324,15 +326,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayCardTomorrowLabel => 'Tomorrow advice';
 
   @override
-  String summaryPendingAt(String time) {
+  String summaryPendingAt(Object time) {
     return 'Summary at $time';
   }
 
   @override
-  String weekSummaryPendingAt(String day, String time) {
+  String weekSummaryPendingAt(Object day, Object time) {
     return 'Summary at $day $time';
   }
+
+  @override
   String get finalizeDay => 'Finalize day';
+
+  @override
   String get dishSummaryLabel => 'Meal summary';
 
   @override
@@ -533,26 +539,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planSpeedLabel => 'Fat loss speed';
+
   @override
   String get adviceStyleSection => 'Advice style';
+
   @override
   String get toneLabel => 'Tone';
+
   @override
   String get personaLabel => 'Persona';
+
   @override
   String get toneGentle => 'Gentle';
+
   @override
   String get toneDirect => 'Direct';
+
   @override
   String get toneEncouraging => 'Encouraging';
+
   @override
   String get toneBullet => 'Clear bullets';
+
   @override
   String get personaNutritionist => 'Nutritionist';
+
   @override
   String get personaCoach => 'Dining coach';
+
   @override
   String get personaFriend => 'Friend';
+
   @override
   String get personaSystem => 'Concise system';
 
@@ -597,54 +614,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planSpeedGentle => 'Gentle';
+
   @override
   String get activityLevelLabel => 'Default activity';
+
   @override
   String get activityCardTitle => 'Today activity';
+
   @override
   String get targetCalorieUnknown => 'Not estimated';
+
   @override
   String get activitySedentary => 'Sedentary';
+
   @override
   String get activityLight => 'Light';
+
   @override
   String get activityModerate => 'Moderate';
+
   @override
   String get activityHigh => 'High';
+
   @override
   String get exerciseLabel => 'Exercise';
+
   @override
   String get exerciseMinutesLabel => 'Duration';
+
   @override
   String get exerciseMinutesUnit => 'min';
+
   @override
   String get exerciseMinutesHint => 'Enter minutes';
+
   @override
   String get exerciseCaloriesLabel => 'Exercise burn';
+
   @override
   String get exerciseNone => 'None';
+
   @override
   String get exerciseWalking => 'Brisk walk';
+
   @override
   String get exerciseJogging => 'Jogging';
+
   @override
   String get exerciseCycling => 'Cycling';
+
   @override
   String get exerciseSwimming => 'Swimming';
+
   @override
   String get exerciseStrength => 'Strength training';
+
   @override
   String get exerciseYoga => 'Yoga';
+
   @override
   String get exerciseHiit => 'HIIT';
+
   @override
   String get exerciseBasketball => 'Basketball';
+
   @override
   String get exerciseHiking => 'Hiking';
+
   @override
   String get deltaUnknown => 'Not estimated';
+
   @override
   String get deltaOk => 'Near target';
+
   @override
   String deltaSurplus(int kcal) {
     return 'Surplus $kcal kcal';
@@ -768,6 +810,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get versionUnavailable => 'Version info unavailable';
+
   @override
   String get nutritionChartLabel => 'Nutrition chart';
 
@@ -798,4 +841,3 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clearDone => 'Cleared';
 }
-

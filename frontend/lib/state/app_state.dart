@@ -1155,7 +1155,11 @@ class AppState extends ChangeNotifier {
   }
 
   void updateEntryPortionPercent(MealEntry entry, int percent) {
-    entry.portionPercent = percent.clamp(10, 100);
+    final next = percent.clamp(10, 100);
+    if (next == entry.portionPercent) {
+      return;
+    }
+    entry.portionPercent = next;
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     _store.upsert(entry);
@@ -1318,7 +1322,13 @@ class AppState extends ChangeNotifier {
       entry.loading = false;
       notifyListeners();
       await _store.upsert(entry);
-      if (force && entry.error == null) {
+      const refreshMealAdviceReasons = {
+        'manual',
+        'name_changed',
+        'note_changed',
+        'label_added',
+      };
+      if (force && entry.error == null && refreshMealAdviceReasons.contains(reason)) {
         await _refreshMealAdviceForEntry(entry, locale);
       }
     }
