@@ -238,8 +238,13 @@ def _build_prompt(
 ) -> str:
     profile_text = ""
     if profile:
+        tone = str(profile.get("tone") or "").strip()
+        persona = str(profile.get("persona") or "").strip()
+        tone_line = f"Tone: {tone}\n" if tone else ""
+        persona_line = f"Persona: {persona}\n" if persona else ""
         profile_text = (
             f"User profile (do not mention exact values): {json.dumps(profile, ensure_ascii=True)}\n"
+            f"{persona_line}{tone_line}"
             "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
         )
     note_text = ""
