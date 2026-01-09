@@ -618,14 +618,22 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => themeController.loadFromAsset('assets/themes/theme_clean.json'),
+                        onPressed: () {
+                          const asset = 'assets/themes/theme_clean.json';
+                          themeController.loadFromAsset(asset);
+                          app.updateField((p) => p.themeAsset = asset);
+                        },
                         child: Text(t.themeClean),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => themeController.loadFromAsset('assets/themes/theme_warm.json'),
+                        onPressed: () {
+                          const asset = 'assets/themes/theme_warm.json';
+                          themeController.loadFromAsset(asset);
+                          app.updateField((p) => p.themeAsset = asset);
+                        },
                         child: Text(t.themeWarm),
                       ),
                     ),
@@ -636,7 +644,11 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => themeController.loadFromAsset('assets/themes/theme_green.json'),
+                        onPressed: () {
+                          const asset = 'assets/themes/theme_green.json';
+                          themeController.loadFromAsset(asset);
+                          app.updateField((p) => p.themeAsset = asset);
+                        },
                         child: Text(t.themeGreen),
                       ),
                     ),

@@ -16,7 +16,10 @@ Future<void> main() async {
   final tabState = TabState();
   final appState = AppState();
   await appState.init();
-  themeController.loadFromAsset('assets/themes/theme_clean.json');
+  final themeAsset = appState.profile.themeAsset.isEmpty
+      ? 'assets/themes/theme_clean.json'
+      : appState.profile.themeAsset;
+  themeController.loadFromAsset(themeAsset);
   runApp(ThemeScope(
     notifier: themeController,
     child: TabScope(

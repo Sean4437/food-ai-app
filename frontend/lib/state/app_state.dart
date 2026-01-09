@@ -16,6 +16,7 @@ import '../storage/settings_store.dart';
 
 const String kDefaultApiBaseUrl = 'https://sussex-oscar-southern-scanning.trycloudflare.com';
 const String kDefaultPlateAsset = 'assets/plates/plate_warm.png';
+const String kDefaultThemeAsset = 'assets/themes/theme_clean.json';
 
 class AppState extends ChangeNotifier {
   AppState()
@@ -1258,6 +1259,7 @@ class AppState extends ChangeNotifier {
       ..language = updated.language
       ..apiBaseUrl = updated.apiBaseUrl
       ..plateAsset = updated.plateAsset
+      ..themeAsset = updated.themeAsset
       ..nutritionChartStyle = updated.nutritionChartStyle
       ..glowEnabled = updated.glowEnabled;
     notifyListeners();
@@ -1750,6 +1752,7 @@ class AppState extends ChangeNotifier {
       'language': profile.language,
       'api_base_url': profile.apiBaseUrl,
       'plate_asset': profile.plateAsset,
+      'theme_asset': profile.themeAsset,
       'nutrition_chart': profile.nutritionChartStyle,
       'glow_enabled': profile.glowEnabled,
     };
@@ -1777,6 +1780,7 @@ class AppState extends ChangeNotifier {
       ..language = (data['language'] as String?) ?? profile.language
       ..apiBaseUrl = (data['api_base_url'] as String?) ?? profile.apiBaseUrl
       ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset
+      ..themeAsset = (data['theme_asset'] as String?) ?? profile.themeAsset
       ..nutritionChartStyle = (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle
       ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled;
   }
@@ -1951,6 +1955,7 @@ class UserProfile {
     required this.language,
     required this.apiBaseUrl,
     required this.plateAsset,
+    required this.themeAsset,
     required this.nutritionChartStyle,
     required this.glowEnabled,
   });
@@ -1975,6 +1980,7 @@ class UserProfile {
   String language;
   String apiBaseUrl;
   String plateAsset;
+  String themeAsset;
   String nutritionChartStyle;
   bool glowEnabled;
 
@@ -2000,6 +2006,7 @@ class UserProfile {
       language: 'zh-TW',
       apiBaseUrl: kDefaultApiBaseUrl,
       plateAsset: kDefaultPlateAsset,
+      themeAsset: kDefaultThemeAsset,
       nutritionChartStyle: 'bars',
       glowEnabled: true,
     );
