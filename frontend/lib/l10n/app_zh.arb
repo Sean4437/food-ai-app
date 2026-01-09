@@ -206,6 +206,7 @@
   "planSpeedStable": "穩定",
   "planSpeedGentle": "保守",
   "activityLevelLabel": "預設活動量",
+  "activityLabel": "活動量",
   "activityCardTitle": "今日活動量",
   "targetCalorieUnknown": "尚未估計",
   "activitySedentary": "久坐",

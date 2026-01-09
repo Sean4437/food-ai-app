@@ -206,6 +206,7 @@
   "planSpeedStable": "Steady",
   "planSpeedGentle": "Gentle",
   "activityLevelLabel": "Default activity",
+  "activityLabel": "Activity level",
   "activityCardTitle": "Today activity",
   "targetCalorieUnknown": "Not estimated",
   "activitySedentary": "Sedentary",

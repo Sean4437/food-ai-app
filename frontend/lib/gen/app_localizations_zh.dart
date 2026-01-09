@@ -612,6 +612,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityLevelLabel => '預設活動量';
 
   @override
+  String get activityLabel => '活動量';
+
+  @override
   String get activityCardTitle => '今日活動量';
 
   @override
@@ -1441,6 +1444,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get activityLevelLabel => '預設活動量';
+
+  @override
+  String get activityLabel => '活動量';
 
   @override
   String get activityCardTitle => '今日活動量';

@@ -1293,6 +1293,8 @@ abstract class AppLocalizations {
   /// **'預設活動量'**
   String get activityLevelLabel;
 
+  String get activityLabel;
+
   /// No description provided for @activityCardTitle.
   ///
   /// In zh_TW, this message translates to:

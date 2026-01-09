@@ -619,6 +619,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityLevelLabel => 'Default activity';
 
   @override
+  String get activityLabel => 'Activity level';
+
+  @override
   String get activityCardTitle => 'Today activity';
 
   @override
