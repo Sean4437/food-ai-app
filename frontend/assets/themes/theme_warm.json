@@ -4,6 +4,9 @@
   "colors": {
     "primary": "#E8916A",
     "background": "#FFF6EE",
+    "background_top": "#FFE8D8",
+    "background_bottom": "#F2F3F7",
+    "glow": "#FFD2B5",
     "card": "#FFFFFF",
     "text": "#3B2E2A",
     "muted": "#8D7B74",

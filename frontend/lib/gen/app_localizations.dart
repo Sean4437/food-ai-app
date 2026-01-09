@@ -1497,9 +1497,21 @@ abstract class AppLocalizations {
 
   /// No description provided for @themeWarm.
   ///
+  /// In en, this message translates to:
+  /// **'Warm'**
+
+  /// No description provided for @themeCool.
+  ///
+  /// In en, this message translates to:
+  /// **'Cool Blue'**
+  ///
   /// In zh_TW, this message translates to:
   /// **'暖橘'**
   String get themeWarm;
+
+  String get themeCool;
+
+  String get glowToggleLabel;
 
   /// No description provided for @plateSection.
   ///

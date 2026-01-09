@@ -255,6 +255,8 @@
   "noMealPrompt": "No record yet. Take a quick photo.",
   "layoutThemeLabel": "Theme & layout",
   "themeClean": "Clean Blue",
+  "themeCool": "Cool Blue",
+  "glowToggleLabel": "Glow background",
   "themeWarm": "Warm Orange",
   "plateSection": "Plate style",
   "plateStyleLabel": "Plate design",

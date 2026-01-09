@@ -630,6 +630,26 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => themeController.loadFromAsset('assets/themes/theme_cool.json'),
+                        child: Text(t.themeCool),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(child: SizedBox()),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  value: profile.glowEnabled,
+                  onChanged: (value) => app.updateField((p) => p.glowEnabled = value),
+                  title: Text(t.glowToggleLabel),
+                  secondary: const Icon(Icons.blur_on),
+                ),
+                const SizedBox(height: 8),
                 _sectionTitle(t.plateSection),
                 _row(
                   t.plateStyleLabel,

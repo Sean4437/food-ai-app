@@ -8,6 +8,9 @@ class AppTheme extends ThemeExtension<AppTheme> {
     required this.success,
     required this.warning,
     required this.danger,
+    required this.gradientTop,
+    required this.gradientBottom,
+    required this.glow,
     required this.radiusCard,
     required this.radiusButton,
   });
@@ -18,6 +21,9 @@ class AppTheme extends ThemeExtension<AppTheme> {
   final Color success;
   final Color warning;
   final Color danger;
+  final Color gradientTop;
+  final Color gradientBottom;
+  final Color glow;
   final double radiusCard;
   final double radiusButton;
 
@@ -29,6 +35,9 @@ class AppTheme extends ThemeExtension<AppTheme> {
     Color? success,
     Color? warning,
     Color? danger,
+    Color? gradientTop,
+    Color? gradientBottom,
+    Color? glow,
     double? radiusCard,
     double? radiusButton,
   }) {
@@ -39,6 +48,9 @@ class AppTheme extends ThemeExtension<AppTheme> {
       success: success ?? this.success,
       warning: warning ?? this.warning,
       danger: danger ?? this.danger,
+      gradientTop: gradientTop ?? this.gradientTop,
+      gradientBottom: gradientBottom ?? this.gradientBottom,
+      glow: glow ?? this.glow,
       radiusCard: radiusCard ?? this.radiusCard,
       radiusButton: radiusButton ?? this.radiusButton,
     );
@@ -54,6 +66,9 @@ class AppTheme extends ThemeExtension<AppTheme> {
       success: Color.lerp(success, other.success, t) ?? success,
       warning: Color.lerp(warning, other.warning, t) ?? warning,
       danger: Color.lerp(danger, other.danger, t) ?? danger,
+      gradientTop: Color.lerp(gradientTop, other.gradientTop, t) ?? gradientTop,
+      gradientBottom: Color.lerp(gradientBottom, other.gradientBottom, t) ?? gradientBottom,
+      glow: Color.lerp(glow, other.glow, t) ?? glow,
       radiusCard: radiusCard + (other.radiusCard - radiusCard) * t,
       radiusButton: radiusButton + (other.radiusButton - radiusButton) * t,
     );

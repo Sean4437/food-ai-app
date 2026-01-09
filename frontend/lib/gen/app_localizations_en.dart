@@ -730,6 +730,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeWarm => 'Warm Orange';
 
   @override
+  String get themeCool => 'Cool Blue';
+
+  @override
+  String get glowToggleLabel => 'Glow background';
+
+  @override
   String get plateSection => 'Plate style';
 
   @override

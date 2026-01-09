@@ -7,6 +7,9 @@ class ThemeFactory {
   static ThemeData fromConfig(ThemeConfig config) {
     final primary = _hex(config.colors['primary'] ?? '#5B7CFA');
     final background = _hex(config.colors['background'] ?? '#F3F5FB');
+    final gradientTop = _hex(config.colors['background_top'] ?? '#E6F1FF');
+    final gradientBottom = _hex(config.colors['background_bottom'] ?? '#F3F5FA');
+    final glow = _hex(config.colors['glow'] ?? '#D7E9FF');
     final card = _hex(config.colors['card'] ?? '#FFFFFF');
     final text = _hex(config.colors['text'] ?? '#1B1D21');
     final muted = _hex(config.colors['muted'] ?? '#6B7280');
@@ -19,7 +22,7 @@ class ThemeFactory {
 
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: background,
+      scaffoldBackgroundColor: Colors.transparent,
       cardColor: card,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
@@ -37,6 +40,9 @@ class ThemeFactory {
           success: success,
           warning: warning,
           danger: danger,
+          gradientTop: gradientTop,
+          gradientBottom: gradientBottom,
+          glow: glow,
           radiusCard: radiusCard,
           radiusButton: radiusButton,
         ),

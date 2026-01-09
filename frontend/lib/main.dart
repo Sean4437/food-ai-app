@@ -8,6 +8,7 @@ import 'screens/suggestions_screen.dart';
 import 'screens/settings_screen.dart';
 import 'state/app_state.dart';
 import 'design/theme_controller.dart';
+import 'design/app_theme.dart';
 import 'state/tab_state.dart';
 
 Future<void> main() async {
@@ -52,9 +53,48 @@ class FoodAiApp extends StatelessWidget {
           : const Locale('zh', 'TW'),
       builder: (context, child) {
         final data = MediaQuery.of(context);
-        return MediaQuery(
+        final theme = Theme.of(context);
+        final appTheme = theme.extension<AppTheme>()!;
+        final glowEnabled = AppStateScope.of(context).profile.glowEnabled;
+        final content = MediaQuery(
           data: data.copyWith(textScaler: const TextScaler.linear(1.0)),
           child: child ?? const SizedBox.shrink(),
+        );
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      appTheme.gradientTop,
+                      appTheme.gradientBottom,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (glowEnabled)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: Alignment.topCenter,
+                        radius: 1.1,
+                        colors: [
+                          appTheme.glow.withOpacity(0.45),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            content,
+          ],
         );
       },
       home: const MainShell(),

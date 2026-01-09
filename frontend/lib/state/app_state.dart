@@ -1258,7 +1258,8 @@ class AppState extends ChangeNotifier {
       ..language = updated.language
       ..apiBaseUrl = updated.apiBaseUrl
       ..plateAsset = updated.plateAsset
-      ..nutritionChartStyle = updated.nutritionChartStyle;
+      ..nutritionChartStyle = updated.nutritionChartStyle
+      ..glowEnabled = updated.glowEnabled;
     notifyListeners();
     // ignore: unawaited_futures
     _saveProfile();
@@ -1750,6 +1751,7 @@ class AppState extends ChangeNotifier {
       'api_base_url': profile.apiBaseUrl,
       'plate_asset': profile.plateAsset,
       'nutrition_chart': profile.nutritionChartStyle,
+      'glow_enabled': profile.glowEnabled,
     };
   }
 
@@ -1775,7 +1777,8 @@ class AppState extends ChangeNotifier {
       ..language = (data['language'] as String?) ?? profile.language
       ..apiBaseUrl = (data['api_base_url'] as String?) ?? profile.apiBaseUrl
       ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset
-      ..nutritionChartStyle = (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle;
+      ..nutritionChartStyle = (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle
+      ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled;
   }
 
   int _parseInt(dynamic value, int fallback) {
@@ -1949,6 +1952,7 @@ class UserProfile {
     required this.apiBaseUrl,
     required this.plateAsset,
     required this.nutritionChartStyle,
+    required this.glowEnabled,
   });
 
   String name;
@@ -1972,6 +1976,7 @@ class UserProfile {
   String apiBaseUrl;
   String plateAsset;
   String nutritionChartStyle;
+  bool glowEnabled;
 
   factory UserProfile.initial() {
     return UserProfile(
@@ -1996,6 +2001,7 @@ class UserProfile {
       apiBaseUrl: kDefaultApiBaseUrl,
       plateAsset: kDefaultPlateAsset,
       nutritionChartStyle: 'bars',
+      glowEnabled: true,
     );
   }
 }

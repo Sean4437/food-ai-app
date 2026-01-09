@@ -255,6 +255,8 @@
   "noMealPrompt": "尚未紀錄，拍一張也可以",
   "layoutThemeLabel": "主題與版面",
   "themeClean": "清爽藍",
+  "themeCool": "微藍",
+  "glowToggleLabel": "柔光背景",
   "themeWarm": "暖橘",
   "plateSection": "盤子樣式",
   "plateStyleLabel": "盤子款式",

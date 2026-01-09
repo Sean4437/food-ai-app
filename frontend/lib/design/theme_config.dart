@@ -34,6 +34,9 @@ class ThemeConfig {
       colors: {
         'primary': '#5B7CFA',
         'background': '#F3F5FB',
+        'background_top': '#E6F1FF',
+        'background_bottom': '#F3F5FA',
+        'glow': '#D7E9FF',
         'card': '#FFFFFF',
         'text': '#1B1D21',
         'muted': '#6B7280',
