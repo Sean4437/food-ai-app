@@ -101,19 +101,50 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
 
   Widget _thumbnailRow(List<MealEntry> group) {
     final sorted = List<MealEntry>.from(group)..sort((a, b) => b.time.compareTo(a.time));
+    if (sorted.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final count = sorted.length;
+    int columns;
+    int rows;
+    if (count <= 2) {
+      columns = 1;
+      rows = count;
+    } else if (count <= 4) {
+      columns = 2;
+      rows = 2;
+    } else if (count <= 9) {
+      columns = 3;
+      rows = 3;
+    } else {
+      columns = 4;
+      rows = 3;
+    }
+    final maxItems = rows * columns;
+    final items = sorted.take(maxItems).toList();
+    final spacing = 6.0;
+    final cellSize = columns == 4 ? 32.0 : (columns == 3 ? 40.0 : 48.0);
+    final gridWidth = columns * cellSize + (columns - 1) * spacing;
+    final gridHeight = rows * cellSize + (rows - 1) * spacing;
     return SizedBox(
-      height: 54,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
+      width: gridWidth,
+      height: gridHeight,
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          mainAxisSpacing: spacing,
+          crossAxisSpacing: spacing,
+        ),
+        itemCount: items.length,
         itemBuilder: (context, index) {
-          final entry = sorted[index];
+          final entry = items[index];
           return ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.memory(entry.imageBytes, width: 54, height: 54, fit: BoxFit.cover),
+            child: Image.memory(entry.imageBytes, fit: BoxFit.cover),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemCount: sorted.length,
       ),
     );
   }
@@ -314,7 +345,6 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                       if (currentGroup != null) ...[
                         const SizedBox(width: 12),
                         Container(
-                          width: 140,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: Colors.white,
