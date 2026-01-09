@@ -28,7 +28,7 @@ class MealItemsScreen extends StatefulWidget {
 }
 
 class _MealItemsScreenState extends State<MealItemsScreen> {
-  final PageController _pageController = PageController(viewportFraction: 0.86);
+  final PageController _pageController = PageController(viewportFraction: 1);
   final ImagePicker _picker = ImagePicker();
   int _pageIndex = 0;
   Timer? _autoTimer;
@@ -306,7 +306,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     }
     final currentEntry = sorted.isEmpty ? null : sorted[_pageIndex];
     final screenWidth = MediaQuery.of(context).size.width;
-    final contentWidth = (screenWidth - 32) * 0.86;
+    final contentWidth = screenWidth;
     return Scaffold(
       appBar: AppBar(
         title: Text(t.mealItemsTitle),
@@ -314,7 +314,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

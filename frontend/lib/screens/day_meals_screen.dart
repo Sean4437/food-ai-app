@@ -23,7 +23,7 @@ class DayMealsScreen extends StatefulWidget {
 }
 
 class _DayMealsScreenState extends State<DayMealsScreen> {
-  final PageController _pageController = PageController(viewportFraction: 0.86);
+  final PageController _pageController = PageController(viewportFraction: 1);
   int _pageIndex = 0;
   final Map<int, int> _groupSelectedIndex = {};
   bool _didApplyInitial = false;
@@ -180,7 +180,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     }
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final contentWidth = (screenWidth - 32) * 0.86;
+    final contentWidth = screenWidth;
 
     return Scaffold(
       appBar: AppBar(
@@ -189,7 +189,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
