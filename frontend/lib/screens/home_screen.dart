@@ -352,12 +352,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
                 Row(
                   children: [
                     Expanded(
@@ -578,9 +575,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Center(
                   child: Text(t.captureTitle, style: const TextStyle(color: Colors.black54, fontSize: 12)),
                 ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
