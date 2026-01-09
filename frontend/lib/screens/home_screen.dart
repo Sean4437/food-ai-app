@@ -118,6 +118,48 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _selectActivityLevel(
+    BuildContext context,
+    AppState app,
+    DateTime date,
+    AppLocalizations t,
+  ) async {
+    final options = ['sedentary', 'light', 'moderate', 'high'];
+    final current = app.dailyActivityLevel(date);
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8)),
+            ),
+            const SizedBox(height: 12),
+            Text(t.activityLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            for (final option in options)
+              ListTile(
+                title: Text(app.activityLabel(option, t)),
+                trailing: option == current ? const Icon(Icons.check) : null,
+                onTap: () => Navigator.of(context).pop(option),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (result != null) {
+      await app.updateDailyActivity(date, result);
+    }
+  }
+
   Future<void> _editExerciseMinutes(
     BuildContext context,
     AppState app,
@@ -222,47 +264,47 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                t.activityCardTitle,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.14),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  app.targetCalorieRangeLabel(date, t),
-                  style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
-                ),
-              ),
-            ],
+          Text(
+            t.activityCardTitle,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            children: levels.map((level) {
-              final label = app.activityLabel(level, t);
-              final selected = level == current;
-              return ChoiceChip(
-                label: Text(label),
-                selected: selected,
-                onSelected: (_) => app.updateDailyActivity(date, level),
-                selectedColor: theme.colorScheme.primary.withOpacity(0.18),
-                labelStyle: TextStyle(
-                  color: selected ? theme.colorScheme.primary : Colors.black87,
-                  fontWeight: FontWeight.w600,
-                ),
-              );
-            }).toList(),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              app.targetCalorieRangeLabel(date, t),
+              style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+            ),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => _selectActivityLevel(context, app, date, t),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.black12),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(t.activityLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        const Spacer(),
+                        Text(app.activityLabel(current, t), style: const TextStyle(color: Colors.black54)),
+                        const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: InkWell(
                   onTap: () => _selectExerciseType(context, app, date, t),
@@ -284,42 +326,40 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.black12),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(t.exerciseMinutesLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      const Spacer(),
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () => app.updateDailyExerciseMinutes(date, exerciseMinutes - 5),
-                        icon: const Icon(Icons.remove_circle_outline, size: 18),
-                      ),
-                      const SizedBox(width: 6),
-                      GestureDetector(
-                        onTap: () => _editExerciseMinutes(context, app, date, t),
-                        child: Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                      ),
-                      const SizedBox(width: 6),
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () => app.updateDailyExerciseMinutes(date, exerciseMinutes + 5),
-                        icon: const Icon(Icons.add_circle_outline, size: 18),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.black12),
+            ),
+            child: Row(
+              children: [
+                Text(t.exerciseMinutesLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                const Spacer(),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => app.updateDailyExerciseMinutes(date, exerciseMinutes - 5),
+                  icon: const Icon(Icons.remove_circle_outline, size: 18),
+                ),
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: () => _editExerciseMinutes(context, app, date, t),
+                  child: Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => app.updateDailyExerciseMinutes(date, exerciseMinutes + 5),
+                  icon: const Icon(Icons.add_circle_outline, size: 18),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -460,55 +500,48 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          t.dayCardCalorieLabel,
-                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                                        ),
-                                        const Spacer(),
-                                        Builder(
-                                          builder: (context) {
-                                            final delta = app.dailyCalorieDeltaValue(activeDate);
-                                            final isSurplus = delta != null && delta > 0;
-                                            final pillColor = isSurplus ? Colors.redAccent : theme.colorScheme.primary;
-                                            return Row(
-                                              children: [
-                                                if (isSurplus)
-                                                  Padding(
-                                                    padding: const EdgeInsets.only(right: 6),
-                                                    child: Icon(Icons.warning_amber_rounded, color: pillColor, size: 18),
-                                                  ),
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                                  decoration: BoxDecoration(
-                                                    color: pillColor.withOpacity(0.14),
-                                                    borderRadius: BorderRadius.circular(16),
-                                                  ),
-                                                  child: Text(
-                                                    app.dailyCalorieRangeLabelForDate(activeDate, t),
-                                                    style: TextStyle(fontWeight: FontWeight.w700, color: pillColor),
-                                                  ),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        ),
-                                      ],
+                                    Text(
+                                      t.dayCardCalorieLabel,
+                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                                     ),
                                     const SizedBox(height: 8),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.06),
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        child: Text(
-                                          app.dailyCalorieDeltaLabel(activeDate, t),
-                                          style: const TextStyle(fontWeight: FontWeight.w600),
-                                        ),
+                                    Builder(
+                                      builder: (context) {
+                                        final delta = app.dailyCalorieDeltaValue(activeDate);
+                                        final isSurplus = delta != null && delta > 0;
+                                        final pillColor = isSurplus ? Colors.redAccent : theme.colorScheme.primary;
+                                        return Row(
+                                          children: [
+                                            if (isSurplus)
+                                              Padding(
+                                                padding: const EdgeInsets.only(right: 6),
+                                                child: Icon(Icons.warning_amber_rounded, color: pillColor, size: 18),
+                                              ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              decoration: BoxDecoration(
+                                                color: pillColor.withOpacity(0.14),
+                                                borderRadius: BorderRadius.circular(16),
+                                              ),
+                                              child: Text(
+                                                app.dailyCalorieRangeLabelForDate(activeDate, t),
+                                                style: TextStyle(fontWeight: FontWeight.w700, color: pillColor),
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.06),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Text(
+                                        app.dailyCalorieDeltaLabel(activeDate, t),
+                                        style: const TextStyle(fontWeight: FontWeight.w600),
                                       ),
                                     ),
                                     const SizedBox(height: 8),
