@@ -378,7 +378,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
-                            currentEntry?.result?.calorieRange ?? t.calorieUnknown,
+                            currentEntry == null ? t.calorieUnknown : app.entryCalorieRangeLabel(currentEntry, t),
                             style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
                           ),
                         ),

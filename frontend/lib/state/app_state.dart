@@ -387,6 +387,16 @@ class AppState extends ChangeNotifier {
     return _dailyCalorieRangeLabelForDate(date, t);
   }
 
+  String entryCalorieRangeLabel(MealEntry entry, AppLocalizations t) {
+    final baseRange = entry.result?.calorieRange ?? '';
+    final parsed = _parseCalorieRange(baseRange);
+    if (parsed == null) return t.calorieUnknown;
+    final weight = _portionWeight(entry.portionPercent);
+    final minVal = (parsed[0] * weight).round();
+    final maxVal = (parsed[1] * weight).round();
+    return '$minVal-$maxVal kcal';
+  }
+
   String _dailyCalorieRangeLabelForDate(DateTime date, AppLocalizations t) {
     final summary = buildDaySummary(date, t);
     if (summary != null && summary.calorieRange != t.calorieUnknown) {
