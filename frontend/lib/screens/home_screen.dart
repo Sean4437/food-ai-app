@@ -465,16 +465,32 @@ class _HomeScreenState extends State<HomeScreen> {
                                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                                   ),
                                   const Spacer(),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.primary.withOpacity(0.14),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Text(
-                                      app.dailyCalorieRangeLabelForDate(activeDate, t),
-                                      style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
-                                    ),
+                                  Builder(
+                                    builder: (context) {
+                                      final delta = app.dailyCalorieDeltaValue(activeDate);
+                                      final isSurplus = delta != null && delta > 0;
+                                      final pillColor = isSurplus ? Colors.redAccent : theme.colorScheme.primary;
+                                      return Row(
+                                        children: [
+                                          if (isSurplus)
+                                            Padding(
+                                              padding: const EdgeInsets.only(right: 6),
+                                              child: Icon(Icons.warning_amber_rounded, color: pillColor, size: 18),
+                                            ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: pillColor.withOpacity(0.14),
+                                              borderRadius: BorderRadius.circular(16),
+                                            ),
+                                            child: Text(
+                                              app.dailyCalorieRangeLabelForDate(activeDate, t),
+                                              style: TextStyle(fontWeight: FontWeight.w700, color: pillColor),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
                                   ),
                                 ],
                               ),
@@ -505,63 +521,129 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _homeInfoCard(
-                          appTheme: appTheme,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                t.dayCardSummaryLabel,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _homeInfoCard(
+                                appTheme: appTheme,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.chat_bubble_outline, size: 16, color: Colors.black54),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          t.dayCardSummaryLabel,
+                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      app.daySummaryText(activeDate, t),
+                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                app.daySummaryText(activeDate, t),
-                                style: const TextStyle(fontSize: 14, color: Colors.black54),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _homeInfoCard(
+                                appTheme: appTheme,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.lightbulb_outline, size: 16, color: Colors.black54),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          t.dayCardTomorrowLabel,
+                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      app.dayTomorrowAdvice(activeDate, t),
+                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                t.dayCardTomorrowLabel,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                app.dayTomorrowAdvice(activeDate, t),
-                                style: const TextStyle(fontSize: 14, color: Colors.black54),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _homeInfoCard(
-                          appTheme: appTheme,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                t.weekSummaryTitle,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _homeInfoCard(
+                                appTheme: appTheme,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.filter_alt_outlined, size: 16, color: Colors.black54),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          t.weekSummaryTitle,
+                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    if (!app.isWeeklySummaryReady(activeDate))
+                                      Center(
+                                        child: Icon(Icons.filter_alt_outlined, size: 28, color: Colors.black38),
+                                      ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      app.weekSummaryText(activeDate, t),
+                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                app.weekSummaryText(activeDate, t),
-                                style: const TextStyle(fontSize: 14, color: Colors.black54),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _homeInfoCard(
+                                appTheme: appTheme,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.filter_alt_outlined, size: 16, color: Colors.black54),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          t.nextWeekAdviceTitle,
+                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    if (!app.isWeeklySummaryReady(activeDate))
+                                      Center(
+                                        child: Icon(Icons.filter_alt_outlined, size: 28, color: Colors.black38),
+                                      ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      app.nextWeekAdviceText(activeDate, t),
+                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                t.nextWeekAdviceTitle,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                app.nextWeekAdviceText(activeDate, t),
-                                style: const TextStyle(fontSize: 14, color: Colors.black54),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

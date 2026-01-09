@@ -210,6 +210,15 @@ class AppState extends ChangeNotifier {
     return t.deltaDeficit(amount);
   }
 
+  double? dailyCalorieDeltaValue(DateTime date) {
+    final actualRange = _dailyCalorieRangeNumbers(date);
+    final targetRange = _parseCalorieRange(targetCalorieRangeValue(date) ?? '');
+    if (actualRange == null || targetRange == null) return null;
+    final actualMid = (actualRange[0] + actualRange[1]) / 2;
+    final targetMid = (targetRange[0] + targetRange[1]) / 2;
+    return actualMid - targetMid;
+  }
+
   Future<QuickCaptureAnalysis?> analyzeQuickCapture(
     XFile file,
     String locale, {
