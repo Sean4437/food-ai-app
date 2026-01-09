@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
@@ -180,7 +181,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     }
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final contentWidth = screenWidth;
+    final contentWidth = math.max(0.0, screenWidth - 32);
 
     return Scaffold(
       appBar: AppBar(
@@ -194,13 +195,16 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (groups.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(t.noEntries),
                 ),
-                child: Text(t.noEntries),
               )
             else ...[
               SizedBox(

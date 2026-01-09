@@ -306,7 +306,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     }
     final currentEntry = sorted.isEmpty ? null : sorted[_pageIndex];
     final screenWidth = MediaQuery.of(context).size.width;
-    final contentWidth = screenWidth;
+    final contentWidth = math.max(0.0, screenWidth - 32);
     return Scaffold(
       appBar: AppBar(
         title: Text(t.mealItemsTitle),
