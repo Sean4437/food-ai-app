@@ -142,7 +142,7 @@ class AppState extends ChangeNotifier {
       case 'hiking':
         return t.exerciseHiking;
       default:
-        return t.exerciseNone;
+        return t.exerciseNoExercise;
     }
   }
 

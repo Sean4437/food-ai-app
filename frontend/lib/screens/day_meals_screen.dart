@@ -312,6 +312,12 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                         ),
                         if (currentGroup != null) ...[
                           const SizedBox(width: 12),
+                          Container(
+                            width: 1,
+                            height: 64,
+                            color: Colors.black.withOpacity(0.06),
+                          ),
+                          const SizedBox(width: 12),
                           _thumbnailRow(currentGroup),
                         ],
                       ],
