@@ -72,7 +72,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final maxWidth = constraints.maxWidth;
-          final plateSize = math.max(240.0, math.min(320.0, maxWidth - 16));
+          final plateSize = math.max(240.0, math.min(320.0, maxWidth));
           final imageSize = plateSize * 0.72;
           return SizedBox(
             height: 420,
