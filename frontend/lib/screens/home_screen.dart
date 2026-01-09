@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
       title: t.exerciseMinutesLabel,
       options: options,
       initialIndex: initialIndex == -1 ? 0 : initialIndex,
-      labelBuilder: (value) => f"{value} {t.exerciseMinutesUnit}",
+      labelBuilder: (value) => '$value ${t.exerciseMinutesUnit}',
     );
     if (result != null) {
       await app.updateDailyExerciseMinutes(date, result);
