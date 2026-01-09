@@ -5,6 +5,7 @@ import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import 'meal_items_screen.dart';
 import '../widgets/record_sheet.dart';
+import '../widgets/app_background.dart';
 
 class LogScreen extends StatelessWidget {
   const LogScreen({super.key});
@@ -204,15 +205,16 @@ class LogScreen extends StatelessWidget {
     dates.sort((a, b) => b.compareTo(a));
     final displayDates = dates.isEmpty ? [DateTime.now()] : dates;
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+    return AppBackground(
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 Text(t.logTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 12),
                 for (final date in displayDates) ...[
@@ -247,7 +249,8 @@ class LogScreen extends StatelessWidget {
                   _mealSection(context, app, MealType.other, app.mealGroupsForDate(date, MealType.other)),
                   const SizedBox(height: 16),
                 ],
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
+import '../widgets/app_background.dart';
 
 class NextMealScreen extends StatelessWidget {
   const NextMealScreen({super.key});
@@ -58,68 +59,70 @@ class NextMealScreen extends StatelessWidget {
     final app = AppStateScope.of(context);
     final entry = app.latestEntryAny;
     final prefix = entry?.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(t.nextMealTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                Text(t.nextMealHint, style: const TextStyle(fontSize: 14, color: Colors.black54)),
-                if (entry?.result != null) ...[
+    return AppBackground(
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(t.nextMealTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 6),
+                  Text(t.nextMealHint, style: const TextStyle(fontSize: 14, color: Colors.black54)),
+                  if (entry?.result != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${prefix}${entry!.result!.suggestion}',
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  _optionCard(
+                    icon: Icons.store_mall_directory,
+                    title: t.optionConvenienceTitle,
+                    desc: t.optionConvenienceDesc,
+                    tint: const Color(0xFF5B7CFA),
+                  ),
                   const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${prefix}${entry!.result!.suggestion}',
-                          style: const TextStyle(color: Colors.black54),
-                        ),
-                      ],
-                    ),
+                  _optionCard(
+                    icon: Icons.lunch_dining,
+                    title: t.optionBentoTitle,
+                    desc: t.optionBentoDesc,
+                    tint: const Color(0xFF8AD7A4),
+                  ),
+                  const SizedBox(height: 12),
+                  _optionCard(
+                    icon: Icons.restaurant,
+                    title: t.optionLightTitle,
+                    desc: t.optionLightDesc,
+                    tint: const Color(0xFFF4C95D),
                   ),
                 ],
-                const SizedBox(height: 16),
-                _optionCard(
-                  icon: Icons.store_mall_directory,
-                  title: t.optionConvenienceTitle,
-                  desc: t.optionConvenienceDesc,
-                  tint: const Color(0xFF5B7CFA),
-                ),
-                const SizedBox(height: 12),
-                _optionCard(
-                  icon: Icons.lunch_dining,
-                  title: t.optionBentoTitle,
-                  desc: t.optionBentoDesc,
-                  tint: const Color(0xFF8AD7A4),
-                ),
-                const SizedBox(height: 12),
-                _optionCard(
-                  icon: Icons.restaurant,
-                  title: t.optionLightTitle,
-                  desc: t.optionLightDesc,
-                  tint: const Color(0xFFF4C95D),
-                ),
-              ],
+              ),
             ),
           ),
         ),

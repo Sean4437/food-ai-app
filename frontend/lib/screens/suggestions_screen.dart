@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../widgets/plate_photo.dart';
+import '../widgets/app_background.dart';
 
 class SuggestionsScreen extends StatefulWidget {
   const SuggestionsScreen({super.key});
@@ -193,21 +194,24 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final analysis = _analysis?.result;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.suggestTitle),
-        backgroundColor: const Color(0xFFF3F5FB),
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+    return AppBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text(t.suggestTitle),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                   Text(t.suggestTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   Text(t.suggestInstantHint, style: const TextStyle(color: Colors.black54)),
@@ -324,7 +328,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                         ],
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

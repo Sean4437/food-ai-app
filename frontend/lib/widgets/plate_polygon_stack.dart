@@ -33,7 +33,7 @@ class PlatePolygonStack extends StatelessWidget {
         var plateSize = maxPlateSize * 0.85;
         final maxWidth = constraints.maxWidth;
         if (maxWidth > 0) {
-          final maxAllowed = maxWidth * 0.9;
+          final maxAllowed = maxWidth;
           plateSize = plateSize.clamp(minPlateSize, maxAllowed);
         }
         var radius = plateSize * 0.7;

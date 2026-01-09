@@ -4,6 +4,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
 import '../state/app_state.dart';
 import '../widgets/plate_photo.dart';
+import '../widgets/app_background.dart';
 
 class MealDetailScreen extends StatelessWidget {
   const MealDetailScreen({super.key, required this.entry});
@@ -165,160 +166,164 @@ class MealDetailScreen extends StatelessWidget {
     final mealSummary = app.buildMealSummary(mealGroup, t);
     final prefix = entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.detailTitle),
-        backgroundColor: const Color(0xFFF3F5FB),
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () => _confirmDelete(context),
-            icon: const Icon(Icons.delete_outline),
-            tooltip: t.delete,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  height: 420,
-                  child: Stack(
-                    alignment: Alignment.topCenter,
-                    children: [
-                      Positioned(
-                        top: 140,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.fromLTRB(16, 130, 16, 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
-                                blurRadius: 18,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (entry.result != null) ...[
-                                Text(
-                                  '${prefix}${entry.overrideFoodName ?? entry.result!.foodName}',
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                                ),
-                                if ((entry.result!.dishSummary ?? '').trim().isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(entry.result!.dishSummary!, style: const TextStyle(color: Colors.black54)),
-                                ],
-                              ] else
-                                Text(t.unknownFood, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 10),
-                              Text('${t.portionLabel} ${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
-                              const SizedBox(height: 6),
-                              _portionSelector(context, app, t),
-                            ],
-                          ),
-                        ),
-                      ),
-                      PlatePhoto(
-                        imageBytes: entry.imageBytes,
-                        plateAsset: plateAsset,
-                        plateSize: 320,
-                        imageSize: 230,
-                        tilt: -0.08,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  t.mealSummaryTitle,
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  mealSummary?.advice ?? t.detailAiEmpty,
-                                  style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w600),
+    return AppBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text(t.detailTitle),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          actions: [
+            IconButton(
+              onPressed: () => _confirmDelete(context),
+              icon: const Icon(Icons.delete_outline),
+              tooltip: t.delete,
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    height: 420,
+                    child: Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        Positioned(
+                          top: 140,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.fromLTRB(16, 130, 16, 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.06),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 8),
                                 ),
                               ],
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.14),
-                              borderRadius: BorderRadius.circular(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (entry.result != null) ...[
+                                  Text(
+                                    '${prefix}${entry.overrideFoodName ?? entry.result!.foodName}',
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                  ),
+                                  if ((entry.result!.dishSummary ?? '').trim().isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(entry.result!.dishSummary!, style: const TextStyle(color: Colors.black54)),
+                                  ],
+                                ] else
+                                  Text(t.unknownFood, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 10),
+                                Text('${t.portionLabel} ${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
+                                const SizedBox(height: 6),
+                                _portionSelector(context, app, t),
+                              ],
                             ),
-                            child: Text(
-                              mealSummary?.calorieRange ?? t.calorieUnknown,
-                              style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
-                            ),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.detailWhyLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-                      if (entry.error != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(entry.error!, style: const TextStyle(color: Colors.red)),
-                        )
-                      else if (entry.result != null)
-                        _radarChart(entry, t)
-                      else
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
                         ),
-                    ],
+                        PlatePhoto(
+                          imageBytes: entry.imageBytes,
+                          plateAsset: plateAsset,
+                          plateSize: 320,
+                          imageSize: 230,
+                          tilt: -0.08,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    t.mealSummaryTitle,
+                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    mealSummary?.advice ?? t.detailAiEmpty,
+                                    style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withOpacity(0.14),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                mealSummary?.calorieRange ?? t.calorieUnknown,
+                                style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t.detailWhyLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        if (entry.error != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(entry.error!, style: const TextStyle(color: Colors.red)),
+                          )
+                        else if (entry.result != null)
+                          _radarChart(entry, t)
+                        else
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

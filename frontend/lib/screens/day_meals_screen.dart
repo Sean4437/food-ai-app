@@ -8,6 +8,7 @@ import '../design/app_theme.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/plate_polygon_stack.dart';
 import 'meal_items_screen.dart';
+import '../widgets/app_background.dart';
 
 class DayMealsScreen extends StatefulWidget {
   const DayMealsScreen({
@@ -214,17 +215,20 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final contentWidth = math.max(0.0, screenWidth - 32);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${t.dayMealsTitle} • ${formatter.format(widget.date)}'),
-        backgroundColor: const Color(0xFFF3F5FB),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    return AppBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text('${t.dayMealsTitle} • ${formatter.format(widget.date)}'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             if (groups.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -400,7 +404,8 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                 ),
               ),
             ],
-          ],
+            ],
+          ),
         ),
       ),
     );

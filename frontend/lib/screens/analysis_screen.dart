@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/analysis_result.dart';
+import '../widgets/app_background.dart';
 
 enum MacroLevel { low, medium, high }
 
@@ -117,8 +118,9 @@ class AnalysisScreen extends StatelessWidget {
     final prefix = entry?.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
 
 
-    return SafeArea(
-      child: SingleChildScrollView(
+    return AppBackground(
+      child: SafeArea(
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Center(
           child: ConstrainedBox(

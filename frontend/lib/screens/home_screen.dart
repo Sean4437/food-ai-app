@@ -8,6 +8,7 @@ import '../design/app_theme.dart';
 import '../widgets/record_sheet.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/plate_polygon_stack.dart';
+import '../widgets/app_background.dart';
 import 'day_meals_screen.dart';
 import 'meal_items_screen.dart';
 
@@ -398,12 +399,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     final activeDate = displayDates.isEmpty ? DateTime.now() : displayDates[_pageIndex];
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    return AppBackground(
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
                 Row(
                   children: [
                     Expanded(
@@ -737,7 +739,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 Center(
                   child: Text(t.captureTitle, style: const TextStyle(color: Colors.black54, fontSize: 12)),
                 ),
-          ],
+            ],
+          ),
         ),
       ),
     );

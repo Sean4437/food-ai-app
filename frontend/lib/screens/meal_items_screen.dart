@@ -8,6 +8,7 @@ import '../state/app_state.dart';
 import 'day_meals_screen.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/nutrition_chart.dart';
+import '../widgets/app_background.dart';
 
 class MealItemsScreen extends StatefulWidget {
   const MealItemsScreen({
@@ -307,25 +308,28 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final currentEntry = sorted.isEmpty ? null : sorted[_pageIndex];
     final screenWidth = MediaQuery.of(context).size.width;
     final contentWidth = math.max(0.0, screenWidth - 32);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.mealItemsTitle),
-        backgroundColor: const Color(0xFFF3F5FB),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: 420,
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) => setState(() => _pageIndex = index),
-                itemCount: sorted.length,
-                itemBuilder: (context, index) => _itemCard(context, app, sorted[index], plateAsset),
-              ),
+    return AppBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: Text(t.mealItemsTitle),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 420,
+                child: PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) => setState(() => _pageIndex = index),
+                  itemCount: sorted.length,
+                  itemBuilder: (context, index) => _itemCard(context, app, sorted[index], plateAsset),
+                ),
               ),
               const SizedBox(height: 12),
               Align(
@@ -388,114 +392,115 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-            if (currentEntry?.result != null)
-              Align(
-                alignment: Alignment.topCenter,
-                child: SizedBox(
-                  width: contentWidth,
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _nutritionTitle(context),
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 8),
-                        NutritionChart(
-                          macros: currentEntry!.result!.macros,
-                          style: _chartStyle(app.profile.nutritionChartStyle),
-                          t: t,
-                        ),
-                      ],
+              if (currentEntry?.result != null)
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: contentWidth,
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _nutritionTitle(context),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          NutritionChart(
+                            macros: currentEntry!.result!.macros,
+                            style: _chartStyle(app.profile.nutritionChartStyle),
+                            t: t,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            if (currentEntry?.labelResult != null)
-              Align(
-                alignment: Alignment.topCenter,
-                child: SizedBox(
-                  width: contentWidth,
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (currentEntry!.labelImageBytes != null)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.memory(
-                              currentEntry!.labelImageBytes!,
-                              width: 64,
-                              height: 64,
-                              fit: BoxFit.cover,
-                            ),
+              if (currentEntry?.labelResult != null)
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: contentWidth,
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
                           ),
-                        if (currentEntry!.labelImageBytes != null) const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                t.labelInfoTitle,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (currentEntry!.labelImageBytes != null)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.memory(
+                                currentEntry!.labelImageBytes!,
+                                width: 64,
+                                height: 64,
+                                fit: BoxFit.cover,
                               ),
-                              if ((currentEntry!.labelResult!.labelName ?? '').trim().isNotEmpty) ...[
+                            ),
+                          if (currentEntry!.labelImageBytes != null) const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  t.labelInfoTitle,
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                ),
+                                if ((currentEntry!.labelResult!.labelName ?? '').trim().isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    currentEntry!.labelResult!.labelName!.trim(),
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
                                 const SizedBox(height: 6),
                                 Text(
-                                  currentEntry!.labelResult!.labelName!.trim(),
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                                  '${t.calorieLabel}：${currentEntry!.labelResult!.calorieRange}',
+                                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 6,
+                                  children: [
+                                    Text('${t.protein} ${currentEntry!.labelResult!.macros['protein']?.round() ?? 0}%'),
+                                    Text('${t.carbs} ${currentEntry!.labelResult!.macros['carbs']?.round() ?? 0}%'),
+                                    Text('${t.fat} ${currentEntry!.labelResult!.macros['fat']?.round() ?? 0}%'),
+                                    Text('${t.sodium} ${currentEntry!.labelResult!.macros['sodium']?.round() ?? 0}%'),
+                                  ],
                                 ),
                               ],
-                              const SizedBox(height: 6),
-                              Text(
-                                '${t.calorieLabel}：${currentEntry!.labelResult!.calorieRange}',
-                                style: const TextStyle(fontSize: 13, color: Colors.black87),
-                              ),
-                              const SizedBox(height: 6),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 6,
-                                children: [
-                                  Text('${t.protein} ${currentEntry!.labelResult!.macros['protein']?.round() ?? 0}%'),
-                                  Text('${t.carbs} ${currentEntry!.labelResult!.macros['carbs']?.round() ?? 0}%'),
-                                  Text('${t.fat} ${currentEntry!.labelResult!.macros['fat']?.round() ?? 0}%'),
-                                  Text('${t.sodium} ${currentEntry!.labelResult!.macros['sodium']?.round() ?? 0}%'),
-                                ],
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

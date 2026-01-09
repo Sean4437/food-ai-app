@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../state/app_state.dart';
 import '../state/tab_state.dart';
 import '../models/meal_entry.dart';
+import '../widgets/app_background.dart';
 
 class SummaryScreen extends StatelessWidget {
   const SummaryScreen({super.key});
@@ -68,86 +69,88 @@ class SummaryScreen extends StatelessWidget {
     final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
     final selectedDate = app.selectedDate;
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () {
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                        } else {
-                          TabScope.of(context).setIndex(0);
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 4),
-                    Text(t.summaryTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: () => app.shiftSelectedDate(-1),
-                    ),
-                    Expanded(
-                      child: Text(
-                        dateFormatter.format(selectedDate),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.chevron_right),
-                      onPressed: () => app.shiftSelectedDate(1),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return AppBackground(
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
                     children: [
-                      Text('${t.mealsCountLabel} $totalMeals ${t.mealsLabel}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text(_summaryText(t, entry), style: const TextStyle(color: Colors.black54)),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          _statChip(Icons.free_breakfast, t.breakfast, breakfast.toString()),
-                          _statChip(Icons.lunch_dining, t.lunch, lunch.toString()),
-                          _statChip(Icons.restaurant, t.dinner, dinner.toString()),
-                          _statChip(Icons.nightlife, t.lateSnack, lateSnack.toString()),
-                        ],
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () {
+                          if (Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop();
+                          } else {
+                            TabScope.of(context).setIndex(0);
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 4),
+                      Text(t.summaryTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: () => app.shiftSelectedDate(-1),
+                      ),
+                      Expanded(
+                        child: Text(
+                          dateFormatter.format(selectedDate),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: () => app.shiftSelectedDate(1),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${t.mealsCountLabel} $totalMeals ${t.mealsLabel}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 6),
+                        Text(_summaryText(t, entry), style: const TextStyle(color: Colors.black54)),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            _statChip(Icons.free_breakfast, t.breakfast, breakfast.toString()),
+                            _statChip(Icons.lunch_dining, t.lunch, lunch.toString()),
+                            _statChip(Icons.restaurant, t.dinner, dinner.toString()),
+                            _statChip(Icons.nightlife, t.lateSnack, lateSnack.toString()),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
