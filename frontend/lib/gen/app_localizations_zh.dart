@@ -722,7 +722,7 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get themeWarm => '暖橘';
 
-  String get themeCool => '微藍';
+  String get themeGreen => '清爽綠';
 
   String get glowToggleLabel => '柔光背景';
 

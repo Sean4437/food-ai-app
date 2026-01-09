@@ -634,8 +634,8 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => themeController.loadFromAsset('assets/themes/theme_cool.json'),
-                        child: Text(t.themeCool),
+                        onPressed: () => themeController.loadFromAsset('assets/themes/theme_green.json'),
+                        child: Text(t.themeGreen),
                       ),
                     ),
                     const SizedBox(width: 10),

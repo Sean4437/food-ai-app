@@ -1,12 +1,12 @@
 {
-  "name": "cool",
+  "name": "green",
   "font": "Manrope",
   "colors": {
-    "primary": "#4C8DFF",
-    "background": "#F2F6FF",
-    "background_top": "#E6F1FF",
-    "background_bottom": "#F3F5FA",
-    "glow": "#D7E9FF",
+    "primary": "#5FBF8A",
+    "background": "#EEF6F1",
+    "background_top": "#DDF6E5",
+    "background_bottom": "#EEF2F6",
+    "glow": "#CFF3DD",
     "card": "#FFFFFF",
     "text": "#1B1D21",
     "muted": "#6B7280",

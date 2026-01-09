@@ -729,9 +729,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get themeWarm => 'Warm Orange';
 
-  @override
-  String get themeCool => 'Cool Blue';
+  String get themeGreen => 'Fresh Green';
 
+  @override
   @override
   String get glowToggleLabel => 'Glow background';
 
