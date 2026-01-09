@@ -715,6 +715,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get layoutThemeLabel => '主題與版面';
+  @override
+  String get textSizeLabel => '字體大小';
+  @override
+  String get textSizeSmall => '標準';
+  @override
+  String get textSizeMedium => '偏大';
+  @override
+  String get textSizeLarge => '特大';
 
   @override
   String get themeClean => '清爽藍';
@@ -1555,6 +1563,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get layoutThemeLabel => '主題與版面';
+  @override
+  String get textSizeLabel => '字體大小';
+  @override
+  String get textSizeSmall => '標準';
+  @override
+  String get textSizeMedium => '偏大';
+  @override
+  String get textSizeLarge => '特大';
 
   @override
   String get themeClean => '清爽藍';

@@ -56,7 +56,7 @@ class FoodAiApp extends StatelessWidget {
       builder: (context, child) {
         final data = MediaQuery.of(context);
         return MediaQuery(
-          data: data.copyWith(textScaler: const TextScaler.linear(1.0)),
+          data: data.copyWith(textScaler: TextScaler.linear(AppStateScope.of(context).profile.textScale)),
           child: child ?? const SizedBox.shrink(),
         );
       },

@@ -1489,6 +1489,30 @@ abstract class AppLocalizations {
   /// **'主題與版面'**
   String get layoutThemeLabel;
 
+  /// No description provided for @textSizeLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'字體大小'**
+  String get textSizeLabel;
+
+  /// No description provided for @textSizeSmall.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'標準'**
+  String get textSizeSmall;
+
+  /// No description provided for @textSizeMedium.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'偏大'**
+  String get textSizeMedium;
+
+  /// No description provided for @textSizeLarge.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'特大'**
+  String get textSizeLarge;
+
   /// No description provided for @themeClean.
   ///
   /// In zh_TW, this message translates to:

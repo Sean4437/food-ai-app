@@ -373,6 +373,17 @@ class SettingsScreen extends StatelessWidget {
       t.activityModerate: 'moderate',
       t.activityHigh: 'high',
     };
+    final textSizeOptions = <String, double>{
+      t.textSizeSmall: 1.0,
+      t.textSizeMedium: 1.1,
+      t.textSizeLarge: 1.2,
+    };
+    final currentTextSizeLabel = textSizeOptions.entries
+        .firstWhere(
+          (entry) => (profile.textScale - entry.value).abs() < 0.01,
+          orElse: () => MapEntry(t.textSizeSmall, 1.0),
+        )
+        .key;
     final currentActivityLabel = activityOptions.entries
         .firstWhere(
           (entry) => entry.value == profile.activityLevel,
@@ -614,6 +625,18 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 _sectionTitle(t.layoutThemeLabel),
+                _row(
+                  t.textSizeLabel,
+                  currentTextSizeLabel,
+                  onTap: () => _selectOption(
+                    context,
+                    title: t.textSizeLabel,
+                    current: currentTextSizeLabel,
+                    options: textSizeOptions.keys.toList(),
+                    onSave: (value) => app.updateField((p) => p.textScale = textSizeOptions[value] ?? 1.0),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(

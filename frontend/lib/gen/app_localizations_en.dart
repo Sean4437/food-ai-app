@@ -722,6 +722,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get layoutThemeLabel => 'Theme & layout';
+  @override
+  String get textSizeLabel => 'Text size';
+  @override
+  String get textSizeSmall => 'Standard';
+  @override
+  String get textSizeMedium => 'Larger';
+  @override
+  String get textSizeLarge => 'Largest';
 
   @override
   String get themeClean => 'Clean Blue';

@@ -17,6 +17,7 @@ import '../storage/settings_store.dart';
 const String kDefaultApiBaseUrl = 'https://sussex-oscar-southern-scanning.trycloudflare.com';
 const String kDefaultPlateAsset = 'assets/plates/plate_warm.png';
 const String kDefaultThemeAsset = 'assets/themes/theme_clean.json';
+const double kDefaultTextScale = 1.0;
 
 class AppState extends ChangeNotifier {
   AppState()
@@ -1260,6 +1261,7 @@ class AppState extends ChangeNotifier {
       ..apiBaseUrl = updated.apiBaseUrl
       ..plateAsset = updated.plateAsset
       ..themeAsset = updated.themeAsset
+      ..textScale = updated.textScale
       ..nutritionChartStyle = updated.nutritionChartStyle
       ..glowEnabled = updated.glowEnabled;
     notifyListeners();
@@ -1753,6 +1755,7 @@ class AppState extends ChangeNotifier {
       'api_base_url': profile.apiBaseUrl,
       'plate_asset': profile.plateAsset,
       'theme_asset': profile.themeAsset,
+      'text_scale': profile.textScale,
       'nutrition_chart': profile.nutritionChartStyle,
       'glow_enabled': profile.glowEnabled,
     };
@@ -1781,6 +1784,7 @@ class AppState extends ChangeNotifier {
       ..apiBaseUrl = (data['api_base_url'] as String?) ?? profile.apiBaseUrl
       ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset
       ..themeAsset = (data['theme_asset'] as String?) ?? profile.themeAsset
+      ..textScale = (data['text_scale'] as num?)?.toDouble() ?? profile.textScale
       ..nutritionChartStyle = (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle
       ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled;
   }
@@ -1956,6 +1960,7 @@ class UserProfile {
     required this.apiBaseUrl,
     required this.plateAsset,
     required this.themeAsset,
+    required this.textScale,
     required this.nutritionChartStyle,
     required this.glowEnabled,
   });
@@ -1981,6 +1986,7 @@ class UserProfile {
   String apiBaseUrl;
   String plateAsset;
   String themeAsset;
+  double textScale;
   String nutritionChartStyle;
   bool glowEnabled;
 
@@ -2007,6 +2013,7 @@ class UserProfile {
       apiBaseUrl: kDefaultApiBaseUrl,
       plateAsset: kDefaultPlateAsset,
       themeAsset: kDefaultThemeAsset,
+      textScale: kDefaultTextScale,
       nutritionChartStyle: 'bars',
       glowEnabled: true,
     );
