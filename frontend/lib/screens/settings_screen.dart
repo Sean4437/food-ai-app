@@ -71,6 +71,25 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  Widget _grid2(List<Widget> items) {
+    final rows = <Widget>[];
+    for (var i = 0; i < items.length; i += 2) {
+      rows.add(
+        Row(
+          children: [
+            Expanded(child: items[i]),
+            const SizedBox(width: 10),
+            Expanded(child: i + 1 < items.length ? items[i + 1] : const SizedBox()),
+          ],
+        ),
+      );
+      if (i + 2 < items.length) {
+        rows.add(const SizedBox(height: 8));
+      }
+    }
+    return Column(children: rows);
+  }
+
   String _weekdayLabel(int weekday, AppLocalizations t) {
     switch (weekday) {
       case DateTime.monday:
@@ -435,141 +454,138 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
                 _sectionTitle(t.planSection),
-                _row(
-                  t.heightLabel,
-                  '${profile.heightCm} cm',
-                  onTap: () => _editText(
-                    context,
-                    title: t.heightLabel,
-                    initial: profile.heightCm.toString(),
-                    keyboardType: TextInputType.number,
-                    onSave: (value) => app.updateField((p) => p.heightCm = int.tryParse(value) ?? p.heightCm),
+                _grid2([
+                  _row(
+                    t.heightLabel,
+                    '${profile.heightCm} cm',
+                    onTap: () => _editText(
+                      context,
+                      title: t.heightLabel,
+                      initial: profile.heightCm.toString(),
+                      keyboardType: TextInputType.number,
+                      onSave: (value) => app.updateField((p) => p.heightCm = int.tryParse(value) ?? p.heightCm),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _row(
-                  t.weightLabel,
-                  '${profile.weightKg} kg',
-                  onTap: () => _editText(
-                    context,
-                    title: t.weightLabel,
-                    initial: profile.weightKg.toString(),
-                    keyboardType: TextInputType.number,
-                    onSave: (value) => app.updateField((p) => p.weightKg = int.tryParse(value) ?? p.weightKg),
+                  _row(
+                    t.weightLabel,
+                    '${profile.weightKg} kg',
+                    onTap: () => _editText(
+                      context,
+                      title: t.weightLabel,
+                      initial: profile.weightKg.toString(),
+                      keyboardType: TextInputType.number,
+                      onSave: (value) => app.updateField((p) => p.weightKg = int.tryParse(value) ?? p.weightKg),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _row(
-                  t.ageLabel,
-                  '${profile.age}',
-                  onTap: () => _editText(
-                    context,
-                    title: t.ageLabel,
-                    initial: profile.age.toString(),
-                    keyboardType: TextInputType.number,
-                    onSave: (value) => app.updateField((p) => p.age = int.tryParse(value) ?? p.age),
+                  _row(
+                    t.ageLabel,
+                    '${profile.age}',
+                    onTap: () => _editText(
+                      context,
+                      title: t.ageLabel,
+                      initial: profile.age.toString(),
+                      keyboardType: TextInputType.number,
+                      onSave: (value) => app.updateField((p) => p.age = int.tryParse(value) ?? p.age),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _row(
-                  t.genderLabel,
-                  currentGenderLabel,
-                  onTap: () => _selectOption(
-                    context,
-                    title: t.genderLabel,
-                    current: currentGenderLabel,
-                    options: genderOptions.keys.toList(),
-                    onSave: (value) => app.updateField((p) => p.gender = genderOptions[value] ?? 'unspecified'),
+                  _row(
+                    t.genderLabel,
+                    currentGenderLabel,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.genderLabel,
+                      current: currentGenderLabel,
+                      options: genderOptions.keys.toList(),
+                      onSave: (value) => app.updateField((p) => p.gender = genderOptions[value] ?? 'unspecified'),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _row(
-                  t.bmiLabel,
-                  _bmiText(profile, t),
-                  showChevron: false,
-                ),
-                const SizedBox(height: 8),
-                _row(
-                  t.goalLabel,
-                  profile.goal,
-                  onTap: () => _selectOption(
-                    context,
-                    title: t.goalLabel,
-                    current: profile.goal,
-                    options: [t.goalLoseFat, t.goalMaintain],
-                    onSave: (value) => app.updateField((p) => p.goal = value),
+                  _row(
+                    t.bmiLabel,
+                    _bmiText(profile, t),
+                    showChevron: false,
                   ),
-                ),
-                const SizedBox(height: 8),
-                _row(
-                  t.planSpeedLabel,
-                  profile.planSpeed,
-                  onTap: () => _selectOption(
-                    context,
-                    title: t.planSpeedLabel,
-                    current: profile.planSpeed,
-                    options: [t.planSpeedStable, t.planSpeedGentle],
-                    onSave: (value) => app.updateField((p) => p.planSpeed = value),
+                  _row(
+                    t.goalLabel,
+                    profile.goal,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.goalLabel,
+                      current: profile.goal,
+                      options: [t.goalLoseFat, t.goalMaintain],
+                      onSave: (value) => app.updateField((p) => p.goal = value),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _row(
-                  t.activityLevelLabel,
-                  currentActivityLabel,
-                  onTap: () => _selectOption(
-                    context,
-                    title: t.activityLevelLabel,
-                    current: currentActivityLabel,
-                    options: activityOptions.keys.toList(),
-                    onSave: (value) => app.updateField((p) => p.activityLevel = activityOptions[value] ?? 'light'),
+                  _row(
+                    t.planSpeedLabel,
+                    profile.planSpeed,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.planSpeedLabel,
+                      current: profile.planSpeed,
+                      options: [t.planSpeedStable, t.planSpeedGentle],
+                      onSave: (value) => app.updateField((p) => p.planSpeed = value),
+                    ),
                   ),
-                ),
+                  _row(
+                    t.activityLevelLabel,
+                    currentActivityLabel,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.activityLevelLabel,
+                      current: currentActivityLabel,
+                      options: activityOptions.keys.toList(),
+                      onSave: (value) => app.updateField((p) => p.activityLevel = activityOptions[value] ?? 'light'),
+                    ),
+                  ),
+                ]),
                 _sectionTitle(t.adviceStyleSection),
-                _row(
-                  t.toneLabel,
-                  currentToneLabel,
-                  onTap: () => _selectOption(
-                    context,
-                    title: t.toneLabel,
-                    current: currentToneLabel,
-                    options: toneOptions.keys.toList(),
-                    onSave: (value) => app.updateField((p) => p.tone = toneOptions[value] ?? 'gentle'),
+                _grid2([
+                  _row(
+                    t.toneLabel,
+                    currentToneLabel,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.toneLabel,
+                      current: currentToneLabel,
+                      options: toneOptions.keys.toList(),
+                      onSave: (value) => app.updateField((p) => p.tone = toneOptions[value] ?? 'gentle'),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _row(
-                  t.personaLabel,
-                  currentPersonaLabel,
-                  onTap: () => _selectOption(
-                    context,
-                    title: t.personaLabel,
-                    current: currentPersonaLabel,
-                    options: personaOptions.keys.toList(),
-                    onSave: (value) => app.updateField((p) => p.persona = personaOptions[value] ?? 'nutritionist'),
+                  _row(
+                    t.personaLabel,
+                    currentPersonaLabel,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.personaLabel,
+                      current: currentPersonaLabel,
+                      options: personaOptions.keys.toList(),
+                      onSave: (value) => app.updateField((p) => p.persona = personaOptions[value] ?? 'nutritionist'),
+                    ),
                   ),
-                ),
+                ]),
                 _sectionTitle(t.summarySettingsSection),
-                _row(
-                  t.summaryTimeLabel,
-                  profile.dailySummaryTime.format(context),
-                  onTap: () => _pickTime(
-                    context,
-                    initial: profile.dailySummaryTime,
-                    onSave: (time) => app.updateField((p) => p.dailySummaryTime = time),
+                _grid2([
+                  _row(
+                    t.summaryTimeLabel,
+                    profile.dailySummaryTime.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.dailySummaryTime,
+                      onSave: (time) => app.updateField((p) => p.dailySummaryTime = time),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                _row(
-                  t.weeklySummaryDayLabel,
-                  currentWeekdayLabel,
-                  onTap: () => _selectOption(
-                    context,
-                    title: t.weeklySummaryDayLabel,
-                    current: currentWeekdayLabel,
-                    options: weekdayOptions.keys.toList(),
-                    onSave: (value) => app.updateField((p) => p.weeklySummaryWeekday = weekdayOptions[value] ?? DateTime.sunday),
+                  _row(
+                    t.weeklySummaryDayLabel,
+                    currentWeekdayLabel,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.weeklySummaryDayLabel,
+                      current: currentWeekdayLabel,
+                      options: weekdayOptions.keys.toList(),
+                      onSave: (value) => app.updateField((p) => p.weeklySummaryWeekday = weekdayOptions[value] ?? DateTime.sunday),
+                    ),
                   ),
-                ),
+                ]),
                 _sectionTitle(t.reminderSection),
                 SwitchListTile(
                   value: profile.lunchReminderEnabled,
@@ -603,19 +619,20 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
                 _sectionTitle(t.subscriptionSection),
-                _row(t.subscriptionPlan, t.planMonthly),
-                const SizedBox(height: 8),
-                _row(
-                  t.languageLabel,
-                  profile.language == 'zh-TW' ? t.langZh : t.langEn,
-                  onTap: () => _selectOption(
-                    context,
-                    title: t.languageLabel,
-                    current: profile.language == 'zh-TW' ? t.langZh : t.langEn,
-                    options: [t.langZh, t.langEn],
-                    onSave: (value) => app.updateField((p) => p.language = value == t.langZh ? 'zh-TW' : 'en'),
+                _grid2([
+                  _row(t.subscriptionPlan, t.planMonthly),
+                  _row(
+                    t.languageLabel,
+                    profile.language == 'zh-TW' ? t.langZh : t.langEn,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.languageLabel,
+                      current: profile.language == 'zh-TW' ? t.langZh : t.langEn,
+                      options: [t.langZh, t.langEn],
+                      onSave: (value) => app.updateField((p) => p.language = value == t.langZh ? 'zh-TW' : 'en'),
+                    ),
                   ),
-                ),
+                ]),
                 const SizedBox(height: 8),
                 _sectionTitle(t.apiSection),
                 _apiRow(
@@ -737,19 +754,20 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 _sectionTitle(t.dataSection),
-                _row(
-                  t.exportData,
-                  '',
-                  showChevron: false,
-                  onTap: () => _exportData(context, app),
-                ),
-                const SizedBox(height: 8),
-                _row(
-                  t.clearData,
-                  '',
-                  showChevron: false,
-                  onTap: () => _clearData(context, app),
-                ),
+                _grid2([
+                  _row(
+                    t.exportData,
+                    '',
+                    showChevron: false,
+                    onTap: () => _exportData(context, app),
+                  ),
+                  _row(
+                    t.clearData,
+                    '',
+                    showChevron: false,
+                    onTap: () => _clearData(context, app),
+                  ),
+                ]),
                 ],
               ),
             ),
