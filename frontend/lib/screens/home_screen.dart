@@ -540,6 +540,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ],
                                     ),
                                     const SizedBox(height: 6),
+                                    if (!app.isDailySummaryReady(activeDate))
+                                      Center(
+                                        child: Icon(Icons.hourglass_empty, size: 26, color: Colors.black38),
+                                      ),
+                                    const SizedBox(height: 6),
                                     Text(
                                       app.daySummaryText(activeDate, t),
                                       style: const TextStyle(fontSize: 14, color: Colors.black54),
@@ -565,6 +570,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ],
                                     ),
+                                    const SizedBox(height: 6),
+                                    if (!app.isDailySummaryReady(activeDate))
+                                      Center(
+                                        child: Icon(Icons.hourglass_empty, size: 26, color: Colors.black38),
+                                      ),
                                     const SizedBox(height: 6),
                                     Text(
                                       app.dayTomorrowAdvice(activeDate, t),
@@ -601,7 +611,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     if (!app.isWeeklySummaryReady(activeDate))
                                       Center(
-                                        child: Icon(Icons.filter_alt_outlined, size: 28, color: Colors.black38),
+                                        child: Icon(Icons.hourglass_empty, size: 26, color: Colors.black38),
                                       ),
                                     const SizedBox(height: 6),
                                     Text(
@@ -632,7 +642,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     if (!app.isWeeklySummaryReady(activeDate))
                                       Center(
-                                        child: Icon(Icons.filter_alt_outlined, size: 28, color: Colors.black38),
+                                        child: Icon(Icons.hourglass_empty, size: 26, color: Colors.black38),
                                       ),
                                     const SizedBox(height: 6),
                                     Text(
