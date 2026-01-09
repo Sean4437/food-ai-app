@@ -284,23 +284,23 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                 alignment: Alignment.topCenter,
                 child: SizedBox(
                   width: contentWidth,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -310,18 +310,27 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                             ],
                           ),
                         ),
-                        if (currentGroup != null) ...[
-                          const SizedBox(width: 12),
-                          Container(
-                            width: 1,
-                            height: 64,
-                            color: Colors.black.withOpacity(0.06),
+                      ),
+                      if (currentGroup != null) ...[
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 140,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          _thumbnailRow(currentGroup),
-                        ],
+                          child: _thumbnailRow(currentGroup),
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ),
