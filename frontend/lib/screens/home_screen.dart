@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
@@ -65,6 +66,79 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
+  Future<T?> _showPickerSheet<T>({
+    required BuildContext context,
+    required String title,
+    required List<T> options,
+    required int initialIndex,
+    required String Function(T value) labelBuilder,
+  }) async {
+    T selected = options[initialIndex.clamp(0, options.length - 1)];
+    return showModalBottomSheet<T>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) => SafeArea(
+        child: SizedBox(
+          height: 280,
+          child: Column(
+            children: [
+              const SizedBox(height: 6),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8)),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('取消'),
+                    ),
+                    Expanded(
+                      child: Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(selected),
+                      child: const Text('完成'),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: CupertinoPicker(
+                  itemExtent: 40,
+                  scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                  onSelectedItemChanged: (index) => selected = options[index],
+                  children: [
+                    for (final option in options)
+                      Center(
+                        child: Text(
+                          labelBuilder(option),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
   Future<void> _selectExerciseType(
     BuildContext context,
     AppState app,
@@ -84,39 +158,19 @@ class _HomeScreenState extends State<HomeScreen> {
       'hiking',
     ];
     final current = app.dailyExerciseType(date);
-    final result = await showModalBottomSheet<String>(
+    final initialIndex = options.indexOf(current);
+    final result = await _showPickerSheet<String>(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8)),
-            ),
-            const SizedBox(height: 12),
-            Text(t.exerciseLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            for (final option in options)
-              ListTile(
-                title: Text(app.exerciseLabel(option, t)),
-                trailing: option == current ? const Icon(Icons.check) : null,
-                onTap: () => Navigator.of(context).pop(option),
-              ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+      title: t.exerciseLabel,
+      options: options,
+      initialIndex: initialIndex == -1 ? 0 : initialIndex,
+      labelBuilder: (value) => app.exerciseLabel(value, t),
     );
     if (result != null) {
       await app.updateDailyExerciseType(date, result);
     }
   }
+
 
   Future<void> _selectActivityLevel(
     BuildContext context,
@@ -126,65 +180,39 @@ class _HomeScreenState extends State<HomeScreen> {
   ) async {
     final options = ['sedentary', 'light', 'moderate', 'high'];
     final current = app.dailyActivityLevel(date);
-    final result = await showModalBottomSheet<String>(
+    final initialIndex = options.indexOf(current);
+    final result = await _showPickerSheet<String>(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8)),
-            ),
-            const SizedBox(height: 12),
-            Text(t.activityLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            for (final option in options)
-              ListTile(
-                title: Text(app.activityLabel(option, t)),
-                trailing: option == current ? const Icon(Icons.check) : null,
-                onTap: () => Navigator.of(context).pop(option),
-              ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+      title: t.activityLevelLabel,
+      options: options,
+      initialIndex: initialIndex == -1 ? 0 : initialIndex,
+      labelBuilder: (value) => app.activityLabel(value, t),
     );
     if (result != null) {
       await app.updateDailyActivity(date, result);
     }
   }
 
-  Future<void> _editExerciseMinutes(
+
+  Future<void> _selectExerciseMinutes(
     BuildContext context,
     AppState app,
     DateTime date,
     AppLocalizations t,
   ) async {
-    final controller = TextEditingController(text: app.dailyExerciseMinutes(date).toString());
-    final result = await showDialog<String>(
+    final options = List.generate(37, (index) => index * 5);
+    final current = app.dailyExerciseMinutes(date);
+    final initialIndex = options.indexOf(current);
+    final result = await _showPickerSheet<int>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.exerciseMinutesLabel),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(hintText: t.exerciseMinutesHint),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: Text(t.save)),
-        ],
-      ),
+      title: t.exerciseMinutesLabel,
+      options: options,
+      initialIndex: initialIndex == -1 ? 0 : initialIndex,
+      labelBuilder: (value) => f"{value} {t.exerciseMinutesUnit}",
     );
-    if (result == null) return;
-    final value = int.tryParse(result) ?? app.dailyExerciseMinutes(date);
-    await app.updateDailyExerciseMinutes(date, value);
+    if (result != null) {
+      await app.updateDailyExerciseMinutes(date, result);
+    }
   }
 
   Widget _plateStackForGroups(DateTime date, List<List<MealEntry>> groups) {
@@ -254,11 +282,12 @@ class _HomeScreenState extends State<HomeScreen> {
     AppState app,
     ThemeData theme,
   ) {
-    final levels = ['sedentary', 'light', 'moderate', 'high'];
     final current = app.dailyActivityLevel(date);
     final exerciseType = app.dailyExerciseType(date);
     final exerciseMinutes = app.dailyExerciseMinutes(date);
     final exerciseCalories = app.dailyExerciseCalories(date).round();
+    final exerciseLabel = app.exerciseLabel(exerciseType, t);
+    final shortExercise = exerciseLabel.length > 3 ? exerciseLabel.substring(0, 3) : exerciseLabel;
     return _homeInfoCard(
       appTheme: appTheme,
       child: Column(
@@ -295,7 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        Text(t.activityLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(t.activityLevelLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                         const Spacer(),
                         Text(app.activityLabel(current, t), style: const TextStyle(color: Colors.black54)),
                         const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
@@ -317,9 +346,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        Text(t.exerciseLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(shortExercise, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
                         const Spacer(),
-                        Text(app.exerciseLabel(exerciseType, t), style: const TextStyle(color: Colors.black54)),
                         const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
                       ],
                     ),
@@ -329,36 +357,23 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.black12),
-            ),
-            child: Row(
-              children: [
-                Text(t.exerciseMinutesLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
-                const Spacer(),
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () => app.updateDailyExerciseMinutes(date, exerciseMinutes - 5),
-                  icon: const Icon(Icons.remove_circle_outline, size: 18),
-                ),
-                const SizedBox(width: 6),
-                GestureDetector(
-                  onTap: () => _editExerciseMinutes(context, app, date, t),
-                  child: Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                ),
-                const SizedBox(width: 6),
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () => app.updateDailyExerciseMinutes(date, exerciseMinutes + 5),
-                  icon: const Icon(Icons.add_circle_outline, size: 18),
-                ),
-              ],
+          InkWell(
+            onTap: () => _selectExerciseMinutes(context, app, date, t),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: Row(
+                children: [
+                  Text(t.exerciseMinutesLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -507,25 +522,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 8),
                                     Builder(
                                       builder: (context) {
-                                        final delta = app.dailyCalorieDeltaValue(activeDate);
-                                        final isSurplus = delta != null && delta > 0;
-                                        final pillColor = isSurplus ? Colors.redAccent : theme.colorScheme.primary;
                                         return Row(
                                           children: [
-                                            if (isSurplus)
-                                              Padding(
-                                                padding: const EdgeInsets.only(right: 6),
-                                                child: Icon(Icons.warning_amber_rounded, color: pillColor, size: 18),
-                                              ),
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                               decoration: BoxDecoration(
-                                                color: pillColor.withOpacity(0.14),
+                                                color: theme.colorScheme.primary.withOpacity(0.14),
                                                 borderRadius: BorderRadius.circular(16),
                                               ),
                                               child: Text(
                                                 app.dailyCalorieRangeLabelForDate(activeDate, t),
-                                                style: TextStyle(fontWeight: FontWeight.w700, color: pillColor),
+                                                style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
                                               ),
                                             ),
                                           ],
@@ -533,17 +540,30 @@ class _HomeScreenState extends State<HomeScreen> {
                                       },
                                     ),
                                     const SizedBox(height: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.06),
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Text(
-                                        app.dailyCalorieDeltaLabel(activeDate, t),
-                                        style: const TextStyle(fontWeight: FontWeight.w600),
-                                      ),
-                                    ),
+                                    Builder(builder: (context) {
+                                      final delta = app.dailyCalorieDeltaValue(activeDate);
+                                      final isSurplus = delta != null && delta > 0;
+                                      final pillColor = isSurplus ? Colors.redAccent : theme.colorScheme.primary;
+                                      final icon = isSurplus ? Icons.warning_amber_rounded : Icons.trending_down;
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: pillColor.withOpacity(0.12),
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(icon, size: 16, color: pillColor),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              app.dailyCalorieDeltaLabel(activeDate, t),
+                                              style: TextStyle(fontWeight: FontWeight.w600, color: pillColor),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }),
                                     const SizedBox(height: 8),
                                     Text(
                                       '${t.dayCardMealsLabel} ${app.dayMealLabels(activeDate, t)}',
