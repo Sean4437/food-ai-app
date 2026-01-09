@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/meal_entry.dart';
@@ -68,85 +69,92 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => _showImagePreview(context, entry),
-      child: SizedBox(
-        height: 420,
-        child: Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            Positioned(
-              top: 140,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 170, 16, 1),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxWidth = constraints.maxWidth;
+          final plateSize = math.max(240.0, math.min(320.0, maxWidth - 16));
+          final imageSize = plateSize * 0.72;
+          return SizedBox(
+            height: 420,
+            child: Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                Positioned(
+                  top: 140,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(16, 170, 16, 1),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: IconButton(
+                                onPressed: () => _editFoodName(context, app, entry),
+                                icon: const Icon(Icons.edit, size: 20),
+                                tooltip: t.editFoodName,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: IconButton(
+                                onPressed: () => _reanalyzeEntry(context, app, entry),
+                                icon: const Icon(Icons.refresh, size: 20),
+                                tooltip: t.reanalyzeLabel,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                              ),
+                            ),
+                          ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: IconButton(
-                            onPressed: () => _editFoodName(context, app, entry),
-                            icon: const Icon(Icons.edit, size: 20),
-                            tooltip: t.editFoodName,
-                            padding: const EdgeInsets.all(6),
-                            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 4),
-                          child: IconButton(
-                            onPressed: () => _reanalyzeEntry(context, app, entry),
-                            icon: const Icon(Icons.refresh, size: 20),
-                            tooltip: t.reanalyzeLabel,
-                            padding: const EdgeInsets.all(6),
-                            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                        const SizedBox(height: 1),
+                        _portionSelector(context, app, entry, theme, t),
+                        const SizedBox(height: 6),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () => _pickLabelImage(context, app, entry),
+                            icon: const Icon(Icons.receipt_long, size: 18),
+                            label: Text(t.addLabel),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 1),
-                    _portionSelector(context, app, entry, theme, t),
-                    const SizedBox(height: 6),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => _pickLabelImage(context, app, entry),
-                        icon: const Icon(Icons.receipt_long, size: 18),
-                        label: Text(t.addLabel),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                PlatePhoto(
+                  imageBytes: entry.imageBytes,
+                  plateAsset: plateAsset,
+                  plateSize: plateSize,
+                  imageSize: imageSize,
+                  tilt: -0.08,
+                ),
+              ],
             ),
-            PlatePhoto(
-              imageBytes: entry.imageBytes,
-              plateAsset: plateAsset,
-              plateSize: 320,
-              imageSize: 230,
-              tilt: -0.08,
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
