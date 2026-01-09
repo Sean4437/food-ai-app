@@ -213,6 +213,7 @@
   "activityLight": "輕量",
   "activityModerate": "中度",
   "activityHigh": "高",
+  "exerciseNoExercise": "無運動",
   "exerciseLabel": "運动",
   "exerciseMinutesLabel": "时间",
   "exerciseMinutesUnit": "分钟",

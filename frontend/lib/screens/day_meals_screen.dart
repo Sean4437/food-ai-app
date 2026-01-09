@@ -273,8 +273,6 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                             ],
                           ),
                         if (currentGroup != null) ...[
-                          const SizedBox(height: 12),
-                          _thumbnailRow(currentGroup),
                         ],
                       ],
                     ),
@@ -299,12 +297,23 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                         ),
                       ],
                     ),
-                    child: Column(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(t.dishSummaryLabel, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                        const SizedBox(height: 6),
-                        _dishSummaryBlock(currentGroup ?? const [], t),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(t.dishSummaryLabel, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                              const SizedBox(height: 6),
+                              _dishSummaryBlock(currentGroup ?? const [], t),
+                            ],
+                          ),
+                        ),
+                        if (currentGroup != null) ...[
+                          const SizedBox(width: 12),
+                          _thumbnailRow(currentGroup),
+                        ],
                       ],
                     ),
                   ),

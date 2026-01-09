@@ -657,6 +657,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get exerciseNone => 'None';
 
+  String get exerciseNoExercise => 'No exercise';
+
   @override
   String get exerciseWalking => 'Brisk walk';
 

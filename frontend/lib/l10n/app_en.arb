@@ -213,6 +213,7 @@
   "activityLight": "Light",
   "activityModerate": "Moderate",
   "activityHigh": "High",
+  "exerciseNoExercise": "No exercise",
   "exerciseLabel": "Exercise",
   "exerciseMinutesLabel": "Duration",
   "exerciseMinutesUnit": "min",

@@ -324,9 +324,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        Text(t.activityLevelLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(app.activityLabel(current, t), style: const TextStyle(fontWeight: FontWeight.w600)),
                         const Spacer(),
-                        Text(app.activityLabel(current, t), style: const TextStyle(color: Colors.black54)),
                         const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
                       ],
                     ),
@@ -375,11 +374,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${t.exerciseCaloriesLabel} ${exerciseCalories} kcal',
-            style: const TextStyle(color: Colors.black54),
           ),
         ],
       ),

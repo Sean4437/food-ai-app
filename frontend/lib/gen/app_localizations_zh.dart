@@ -650,6 +650,8 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get exerciseNone => '无';
 
+  String get exerciseNoExercise => '无运动';
+
   @override
   String get exerciseWalking => '快走';
 
@@ -1483,6 +1485,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get exerciseNone => '無';
+
+  String get exerciseNoExercise => '無運動';
 
   @override
   String get exerciseWalking => '快走';

@@ -1367,6 +1367,8 @@ abstract class AppLocalizations {
   /// **'無'**
   String get exerciseNone;
 
+  String get exerciseNoExercise;
+
   /// No description provided for @exerciseWalking.
   ///
   /// In zh_TW, this message translates to:
