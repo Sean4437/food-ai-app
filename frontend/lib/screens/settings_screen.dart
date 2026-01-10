@@ -31,7 +31,7 @@ class SettingsScreen extends StatelessWidget {
         child: Row(
           children: [
             Expanded(child: Text(title)),
-            Text(value, style: const TextStyle(color: Colors.black54)),
+            Text(value, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
             if (showChevron)
               const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
           ],
@@ -52,14 +52,14 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Row(
               children: [
                 Expanded(
                   child: Text(
                     value,
-                    style: const TextStyle(color: Colors.black54),
+                    style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -219,7 +219,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8))),
             const SizedBox(height: 12),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             for (final option in options)
               ListTile(
@@ -442,7 +442,7 @@ class SettingsScreen extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(profile.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Text(profile.name, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                           Text(profile.email, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                         ],
                       ),

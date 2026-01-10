@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../widgets/app_background.dart';
+import '../design/text_styles.dart';
 
 class NextMealScreen extends StatelessWidget {
   const NextMealScreen({super.key});
@@ -42,9 +43,9 @@ class NextMealScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                Text(desc, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
               ],
             ),
           ),
@@ -69,9 +70,9 @@ class NextMealScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(t.nextMealTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                  Text(t.nextMealTitle, style: AppTextStyles.title1(context)),
                   const SizedBox(height: 6),
-                  Text(t.nextMealHint, style: const TextStyle(fontSize: 14, color: Colors.black54)),
+                  Text(t.nextMealHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                   if (entry?.result != null) ...[
                     const SizedBox(height: 12),
                     Container(
@@ -90,11 +91,11 @@ class NextMealScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(t.detailAiLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Text(t.detailAiLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 6),
                           Text(
                             '${prefix}${entry!.result!.suggestion}',
-                            style: const TextStyle(color: Colors.black54),
+                            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                           ),
                         ],
                       ),

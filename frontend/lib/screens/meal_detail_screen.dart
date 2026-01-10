@@ -5,6 +5,7 @@ import '../models/meal_entry.dart';
 import '../state/app_state.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/app_background.dart';
+import '../design/text_styles.dart';
 
 class MealDetailScreen extends StatelessWidget {
   const MealDetailScreen({super.key, required this.entry});
@@ -46,7 +47,7 @@ class MealDetailScreen extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           '$label ${_displayValue(value)}',
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
+          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
         ),
       ],
     );
@@ -132,7 +133,7 @@ class MealDetailScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${entry.portionPercent}%', style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text('${entry.portionPercent}%', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: 8,
@@ -218,16 +219,16 @@ class MealDetailScreen extends StatelessWidget {
                                 if (entry.result != null) ...[
                                   Text(
                                     '${prefix}${entry.overrideFoodName ?? entry.result!.foodName}',
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                    style: AppTextStyles.title2(context),
                                   ),
                                   if ((entry.result!.dishSummary ?? '').trim().isNotEmpty) ...[
                                     const SizedBox(height: 4),
-                                    Text(entry.result!.dishSummary!, style: const TextStyle(color: Colors.black54)),
+                                    Text(entry.result!.dishSummary!, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                                   ],
                                 ] else
-                                  Text(t.unknownFood, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                                  Text(t.unknownFood, style: AppTextStyles.title2(context)),
                                 const SizedBox(height: 10),
-                                Text('${t.portionLabel} ${entry.portionPercent}%', style: const TextStyle(color: Colors.black54)),
+                                Text('${t.portionLabel} ${entry.portionPercent}%', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                                 const SizedBox(height: 6),
                                 _portionSelector(context, app, t),
                               ],
@@ -263,12 +264,12 @@ class MealDetailScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     t.mealSummaryTitle,
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                                    style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
                                     mealSummary?.advice ?? t.detailAiEmpty,
-                                    style: const TextStyle(color: Colors.black87, fontSize: 20, fontWeight: FontWeight.w600),
+                                    style: AppTextStyles.title1(context).copyWith(color: Colors.black87, fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -306,18 +307,18 @@ class MealDetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(t.detailWhyLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(t.detailWhyLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                         if (entry.error != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
-                            child: Text(entry.error!, style: const TextStyle(color: Colors.red)),
+                            child: Text(entry.error!, style: AppTextStyles.caption(context).copyWith(color: Colors.red)),
                           )
                         else if (entry.result != null)
                           _radarChart(entry, t)
                         else
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
-                            child: Text(t.detailAiEmpty, style: const TextStyle(color: Colors.black54)),
+                            child: Text(t.detailAiEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                           ),
                       ],
                     ),

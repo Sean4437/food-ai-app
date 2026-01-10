@@ -4,6 +4,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/app_background.dart';
+import '../design/text_styles.dart';
 
 class SuggestionsScreen extends StatefulWidget {
   const SuggestionsScreen({super.key});
@@ -156,12 +157,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
 
   Widget _buildAdviceCard(AppLocalizations t) {
     if (_analysis == null) {
-      return Text(t.suggestInstantMissing, style: const TextStyle(color: Colors.black54));
+      return Text(t.suggestInstantMissing, style: AppTextStyles.caption(context).copyWith(color: Colors.black54));
     }
     final suggestion = _analysis!.result.suggestion;
     final sections = _parseAdviceSections(suggestion);
     if (sections.isEmpty) {
-      return Text(suggestion, style: const TextStyle(color: Colors.black87, height: 1.4));
+      return Text(suggestion, style: AppTextStyles.caption(context).copyWith(color: Colors.black87, height: 1.4));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,10 +180,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(value ?? '-', style: const TextStyle(color: Colors.black87, height: 1.4)),
+          child: Text(value ?? '-', style: AppTextStyles.caption(context).copyWith(color: Colors.black87, height: 1.4)),
         ),
       ],
     );
@@ -212,9 +213,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                  Text(t.suggestTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                  Text(t.suggestTitle, style: AppTextStyles.title1(context)),
                   const SizedBox(height: 6),
-                  Text(t.suggestInstantHint, style: const TextStyle(color: Colors.black54)),
+                  Text(t.suggestInstantHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                   const SizedBox(height: 18),
                   if (_analysis != null)
                     Center(
@@ -249,7 +250,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                   if (_loading)
                     const Center(child: CircularProgressIndicator())
                   else if (_error != null)
-                    Text(_error!, style: const TextStyle(color: Colors.redAccent))
+                    Text(_error!, style: AppTextStyles.caption(context).copyWith(color: Colors.redAccent))
                   else
                     Center(
                       child: OutlinedButton.icon(
@@ -281,7 +282,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                               Expanded(
                                 child: Text(
                                   analysis.foodName,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                  style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
                                 ),
                               ),
                               IconButton(
@@ -294,14 +295,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                             ],
                           ),
                           const SizedBox(height: 6),
-                          Text('${analysis.calorieRange} ${t.estimated}', style: const TextStyle(color: Colors.black54)),
+                          Text('${analysis.calorieRange} ${t.estimated}', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                           const SizedBox(height: 12),
-                          Text(t.suggestInstantAdviceTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
                           _buildAdviceCard(t),
                           if (_showSaveActions) ...[
                             const SizedBox(height: 14),
-                            Text(t.suggestInstantSavePrompt, style: const TextStyle(fontWeight: FontWeight.w600)),
+                            Text(t.suggestInstantSavePrompt, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                             const SizedBox(height: 8),
                             Row(
                               children: [
@@ -324,7 +325,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                             ),
                           ],
                           const SizedBox(height: 12),
-                          Text(t.suggestInstantRecentHint, style: const TextStyle(color: Colors.black45, fontSize: 12)),
+                          Text(t.suggestInstantRecentHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
                         ],
                       ),
                     ),

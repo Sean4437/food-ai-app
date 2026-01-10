@@ -3,6 +3,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/analysis_result.dart';
 import '../widgets/app_background.dart';
+import '../design/text_styles.dart';
 
 enum MacroLevel { low, medium, high }
 
@@ -86,9 +87,9 @@ class AnalysisScreen extends StatelessWidget {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(label, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(width: 6),
-          Text(_levelLabel(level, t), style: const TextStyle(fontSize: 12, color: Colors.black54)),
+          Text(_levelLabel(level, t), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
         ],
       ),
     );
@@ -128,7 +129,7 @@ class AnalysisScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(t.analysisTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                Text(t.analysisTitle, style: AppTextStyles.title1(context)),
                 const SizedBox(height: 12),
                 if (entry == null)
                   Container(
@@ -137,7 +138,7 @@ class AnalysisScreen extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: Text(t.analysisEmpty, style: const TextStyle(color: Colors.black54)),
+                    child: Text(t.analysisEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                   ),
                 if (entry != null)
                   Container(
@@ -164,13 +165,13 @@ class AnalysisScreen extends StatelessWidget {
                         if (entry.loading)
                           const Center(child: CircularProgressIndicator())
                         else if (entry.error != null)
-                          Text(entry.error!, style: const TextStyle(color: Colors.red))
+                          Text(entry.error!, style: AppTextStyles.caption(context).copyWith(color: Colors.red))
                         else if (entry.result != null) ...[
-                          Text('${prefix}${entry.result!.foodName}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                          Text('${prefix}${entry.result!.foodName}', style: AppTextStyles.title2(context)),
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              Text(t.overallLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                              Text(t.overallLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                               const SizedBox(width: 8),
                               Builder(
                                 builder: (context) {
@@ -182,7 +183,7 @@ class AnalysisScreen extends StatelessWidget {
                                       color: color.withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: Text(label, style: TextStyle(fontSize: 11, color: color)),
+                                    child: Text(label, style: AppTextStyles.caption(context).copyWith(color: color)),
                                   );
                                 },
                               ),
@@ -200,7 +201,7 @@ class AnalysisScreen extends StatelessWidget {
                                     color: const Color(0xFFEFF3FF),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: Text(tag, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                  child: Text(tag, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
                                 ),
                             ],
                           ),
@@ -217,13 +218,13 @@ class AnalysisScreen extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Text(
                                   '${t.calorieLabel}：${prefix}${entry.result!.calorieRange}',
-                                  style: const TextStyle(fontSize: 13),
+                                  style: AppTextStyles.caption(context),
                                 ),
                               ],
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Text(t.macroLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                          Text(t.macroLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
                           Wrap(
                             spacing: 8,
@@ -231,9 +232,9 @@ class AnalysisScreen extends StatelessWidget {
                             children: _macroChips(entry.result!, t),
                           ),
                           const SizedBox(height: 12),
-                          Text('${prefix}${entry.result!.suggestion}', style: const TextStyle(color: Colors.black54)),
+                          Text('${prefix}${entry.result!.suggestion}', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                           const SizedBox(height: 6),
-                          Text('source: ${entry.result!.source}', style: const TextStyle(fontSize: 11, color: Colors.black45)),
+                          Text('source: ${entry.result!.source}', style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
                         ],
                       ],
                     ),

@@ -9,6 +9,7 @@ import 'day_meals_screen.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/nutrition_chart.dart';
 import '../widgets/app_background.dart';
+import '../design/text_styles.dart';
 
 class MealItemsScreen extends StatefulWidget {
   const MealItemsScreen({
@@ -105,7 +106,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             Expanded(
                               child: Text(
                                 entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                style: AppTextStyles.title2(context),
                               ),
                             ),
                             Padding(
@@ -252,7 +253,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   ) {
     return Row(
       children: [
-        Text('${t.portionLabel}${entry.portionPercent}%', style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text('${t.portionLabel}${entry.portionPercent}%', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(width: 12),
         Expanded(
           child: SliderTheme(
@@ -358,16 +359,15 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             children: [
                               Text(
                                 t.mealSummaryTitle,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                style: AppTextStyles.title2(context),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 (currentEntry?.result?.dishSummary?.trim().isNotEmpty == true)
                                     ? currentEntry!.result!.dishSummary!.trim()
                                     : t.detailAiEmpty,
-                                style: const TextStyle(
+                                style: AppTextStyles.caption(context).copyWith(
                                   color: Colors.black87,
-                                  fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -415,7 +415,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                         children: [
                           Text(
                             _nutritionTitle(context),
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            style: AppTextStyles.title2(context),
                           ),
                           const SizedBox(height: 8),
                           NutritionChart(
@@ -466,19 +466,19 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                               children: [
                                 Text(
                                   t.labelInfoTitle,
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                  style: AppTextStyles.title2(context),
                                 ),
                                 if ((currentEntry!.labelResult!.labelName ?? '').trim().isNotEmpty) ...[
                                   const SizedBox(height: 6),
                                   Text(
                                     currentEntry!.labelResult!.labelName!.trim(),
-                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                                    style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600),
                                   ),
                                 ],
                                 const SizedBox(height: 6),
                                 Text(
                                   '${t.calorieLabel}：${currentEntry!.labelResult!.calorieRange}',
-                                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                                  style: AppTextStyles.caption(context).copyWith(color: Colors.black87),
                                 ),
                                 const SizedBox(height: 6),
                                 Wrap(

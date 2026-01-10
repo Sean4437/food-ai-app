@@ -5,6 +5,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
+import '../design/text_styles.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/plate_polygon_stack.dart';
 import 'meal_items_screen.dart';
@@ -36,10 +37,10 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
       children: [
         SizedBox(
           width: 64,
-          child: Text(label, style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w600, fontSize: 14)),
+          child: Text(label, style: AppTextStyles.caption(context).copyWith(color: Colors.black54, fontWeight: FontWeight.w600)),
         ),
         const SizedBox(width: 6),
-        Expanded(child: Text(value, style: const TextStyle(color: Colors.black54, fontSize: 14))),
+        Expanded(child: Text(value, style: AppTextStyles.caption(context).copyWith(color: Colors.black54))),
       ],
     );
   }
@@ -162,7 +163,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
       if (fallback.isNotEmpty) items.add(fallback);
     }
     if (items.isEmpty) {
-      return Text(t.detailAiEmpty, style: const TextStyle(color: Colors.black54));
+      return Text(t.detailAiEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +171,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
         for (final item in items)
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
-            child: Text('• $item', style: const TextStyle(color: Colors.black54)),
+            child: Text('• $item', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
           ),
       ],
     );
@@ -238,7 +239,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(t.noEntries),
+                  child: Text(t.noEntries, style: AppTextStyles.caption(context)),
                 ),
               )
             else ...[
@@ -286,12 +287,12 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                             children: [
                               Text(
                                 _mealTypeLabel(currentGroup.first.type, t),
-                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+                                style: AppTextStyles.title2(context),
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 _groupTimeLabel(currentGroup),
-                                style: const TextStyle(color: Colors.black45, fontSize: 12),
+                                style: AppTextStyles.caption(context).copyWith(color: Colors.black45),
                               ),
                               const Spacer(),
                               Container(
@@ -302,7 +303,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                                 ),
                                 child: Text(
                                   summary?.calorieRange ?? t.calorieUnknown,
-                                  style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+                                  style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
                                 ),
                               ),
                             ],
@@ -339,7 +340,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(t.dishSummaryLabel, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                              Text(t.dishSummaryLabel, style: AppTextStyles.title2(context)),
                               const SizedBox(height: 6),
                               _dishSummaryBlock(currentGroup ?? const [], t),
                             ],
@@ -389,7 +390,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(t.nextMealSectionTitle, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+                        Text(t.nextMealSectionTitle, style: AppTextStyles.title2(context)),
                         const SizedBox(height: 6),
                         _adviceRow(t.nextSelfCookLabel, advice?.selfCook ?? t.nextSelfCookHint),
                         const SizedBox(height: 6),

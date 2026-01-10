@@ -1,6 +1,7 @@
 import "dart:math" as math;
 import "package:flutter/material.dart";
 import "package:food_ai_app/gen/app_localizations.dart";
+import "../design/text_styles.dart";
 
 enum NutritionChartStyle {
   radar,
@@ -132,7 +133,7 @@ class _RadarChart extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           "${point.label} ${displayValue(point.rawValue)}",
-          style: const TextStyle(fontSize: 11, color: Colors.black54),
+          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
           textAlign: align,
         ),
       ],
@@ -147,7 +148,7 @@ class _RadarChart extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           "${point.label} ${displayValue(point.rawValue)}",
-          style: const TextStyle(fontSize: 11, color: Colors.black54),
+          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
           textAlign: align,
         ),
       ],
@@ -313,9 +314,8 @@ class _MacroBar extends StatelessWidget {
                       Expanded(
                         child: Text(
                           point.label,
-                          style: const TextStyle(
+                          style: AppTextStyles.caption(context).copyWith(
                             color: Colors.black87,
-                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -323,9 +323,8 @@ class _MacroBar extends StatelessWidget {
                       ),
                       Text(
                         displayValue(point.rawValue),
-                        style: const TextStyle(
+                        style: AppTextStyles.caption(context).copyWith(
                           color: Colors.black87,
-                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -372,7 +371,7 @@ class _DonutChart extends StatelessWidget {
                       ),
                       Text(
                         displayValue(point.rawValue),
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                        style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -383,7 +382,7 @@ class _DonutChart extends StatelessWidget {
                   children: [
                     Icon(point.icon, size: 14, color: point.color),
                     const SizedBox(width: 4),
-                    Text(point.label, style: const TextStyle(fontSize: 11, color: Colors.black54)),
+                    Text(point.label, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                   ],
                 ),
               ],

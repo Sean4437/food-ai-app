@@ -5,6 +5,7 @@ import '../state/app_state.dart';
 import '../state/tab_state.dart';
 import '../models/meal_entry.dart';
 import '../widgets/app_background.dart';
+import '../design/text_styles.dart';
 
 class SummaryScreen extends StatelessWidget {
   const SummaryScreen({super.key});
@@ -46,8 +47,8 @@ class SummaryScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 11, color: Colors.black54)),
-              Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              Text(label, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+              Text(value, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
             ],
           ),
         ],
@@ -92,7 +93,7 @@ class SummaryScreen extends StatelessWidget {
                         },
                       ),
                       const SizedBox(width: 4),
-                      Text(t.summaryTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                      Text(t.summaryTitle, style: AppTextStyles.title1(context)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -106,7 +107,7 @@ class SummaryScreen extends StatelessWidget {
                         child: Text(
                           dateFormatter.format(selectedDate),
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                          style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
                         ),
                       ),
                       IconButton(
@@ -132,9 +133,9 @@ class SummaryScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${t.mealsCountLabel} $totalMeals ${t.mealsLabel}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        Text('${t.mealsCountLabel} $totalMeals ${t.mealsLabel}', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
-                        Text(_summaryText(t, entry), style: const TextStyle(color: Colors.black54)),
+                        Text(_summaryText(t, entry), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 10,

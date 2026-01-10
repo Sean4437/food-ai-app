@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import '../design/text_styles.dart';
 
 class PlatePhoto extends StatelessWidget {
   const PlatePhoto({
@@ -82,7 +83,7 @@ class PlatePhoto extends StatelessWidget {
                 color: Colors.black.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Text('+$badgeCount', style: const TextStyle(color: Colors.white, fontSize: 12)),
+              child: Text('+$badgeCount', style: AppTextStyles.caption(context).copyWith(color: Colors.white)),
             ),
           ),
       ],
