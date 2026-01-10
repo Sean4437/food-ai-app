@@ -326,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        Text(app.activityLabel(current, t), style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                        Text(app.activityLabel(current, t), style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
                         const Spacer(),
                         const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
                       ],
@@ -347,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        Text(shortExercise, style: AppTextStyles.body(context).copyWith(color: Colors.black87, fontWeight: FontWeight.w600)),
+                        Text(shortExercise, style: AppTextStyles.caption(context).copyWith(color: Colors.black87, fontWeight: FontWeight.w600)),
                         const Spacer(),
                         const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
                       ],
@@ -369,9 +369,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Row(
                 children: [
-                  Text(t.exerciseMinutesLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                  Text(t.exerciseMinutesLabel, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
                   const Spacer(),
-                  Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                  Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
                   const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
                 ],
               ),
