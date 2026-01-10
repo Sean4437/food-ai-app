@@ -603,6 +603,8 @@ class AppState extends ChangeNotifier {
         'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
         'lang': locale,
         'meals': meals,
+        'day_calorie_range': _dailyCalorieRangeLabelForDate(date, t),
+        'day_meal_count': groups.length,
         'profile': {
           'height_cm': profile.heightCm,
           'weight_kg': profile.weightKg,
@@ -662,11 +664,37 @@ class AppState extends ChangeNotifier {
       final daySummary = buildDaySummary(day, t);
       if (daySummary == null) continue;
       final entriesFor = entriesForDate(day);
+      final groups = mealGroupsForDateAll(day);
+      final dayMealSummaries = <String>[];
+      for (final group in groups) {
+        if (group.isEmpty) continue;
+        final summary = buildMealSummary(group, t);
+        final dishSummaries = <String>[];
+        for (final entry in group) {
+          final summaryText = entry.result?.dishSummary?.trim();
+          if (summaryText != null && summaryText.isNotEmpty) {
+            dishSummaries.add(summaryText);
+            continue;
+          }
+          final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? '';
+          if (fallback.isNotEmpty) {
+            dishSummaries.add(fallback);
+          }
+        }
+        final label = _mealTypeLabel(group.first.type, t);
+        final rangeText = summary?.calorieRange ?? t.calorieUnknown;
+        final dishText = dishSummaries.isEmpty ? '' : dishSummaries.join(' / ');
+        final parts = <String>[label];
+        if (rangeText.isNotEmpty) parts.add(rangeText);
+        if (dishText.isNotEmpty) parts.add(dishText);
+        dayMealSummaries.add(parts.join(' · '));
+      }
       days.add({
         'date': '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}',
         'calorie_range': daySummary.calorieRange,
         'day_summary': daySummary.advice,
         'meal_count': entriesFor.length,
+        'day_meal_summaries': dayMealSummaries,
       });
     }
     if (days.isEmpty) return;
@@ -758,6 +786,8 @@ class AppState extends ChangeNotifier {
     if (_mealAdviceLoading.contains(mealId)) return;
     _mealAdviceLoading.add(mealId);
     try {
+      final mealDate = _dateOnly(group.first.time);
+      final dayGroups = mealGroupsForDateAll(mealDate);
       final summary = buildMealSummary(group, t);
       final dishSummaries = <String>[];
       for (final entry in group) {
@@ -769,10 +799,35 @@ class AppState extends ChangeNotifier {
         final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
         if (fallback.isNotEmpty) dishSummaries.add(fallback);
       }
+      final dayMealSummaries = <String>[];
+      for (final dayGroup in dayGroups) {
+        if (dayGroup.isEmpty) continue;
+        final daySummary = buildMealSummary(dayGroup, t);
+        final dayDishSummaries = <String>[];
+        for (final entry in dayGroup) {
+          final summaryText = entry.result?.dishSummary?.trim();
+          if (summaryText != null && summaryText.isNotEmpty) {
+            dayDishSummaries.add(summaryText);
+            continue;
+          }
+          final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
+          if (fallback.isNotEmpty) dayDishSummaries.add(fallback);
+        }
+        final label = _mealTypeLabel(dayGroup.first.type, t);
+        final rangeText = daySummary?.calorieRange ?? t.calorieUnknown;
+        final dishText = dayDishSummaries.isEmpty ? '' : dayDishSummaries.join(' / ');
+        final parts = <String>[label];
+        if (rangeText.isNotEmpty) parts.add(rangeText);
+        if (dishText.isNotEmpty) parts.add(dishText);
+        dayMealSummaries.add(parts.join(' · '));
+      }
       final payload = {
         'meal_type': _mealTypeKey(group.first.type),
         'calorie_range': summary?.calorieRange ?? '',
         'dish_summaries': dishSummaries,
+        'day_calorie_range': _dailyCalorieRangeLabelForDate(mealDate, t),
+        'day_meal_count': dayGroups.length,
+        'day_meal_summaries': dayMealSummaries,
         'lang': locale,
         'profile': {
           'height_cm': profile.heightCm,

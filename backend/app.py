@@ -63,6 +63,8 @@ class MealSummaryInput(BaseModel):
 class DaySummaryRequest(BaseModel):
     date: str
     meals: List[MealSummaryInput]
+    day_calorie_range: Optional[str] = None
+    day_meal_count: Optional[int] = None
     lang: Optional[str] = None
     profile: Optional[dict] = None
 
@@ -79,6 +81,7 @@ class WeekSummaryInput(BaseModel):
     calorie_range: str
     day_summary: str
     meal_count: int
+    day_meal_summaries: Optional[List[str]] = None
 
 
 class WeekSummaryRequest(BaseModel):
@@ -100,6 +103,9 @@ class MealAdviceRequest(BaseModel):
     meal_type: str
     calorie_range: str
     dish_summaries: List[str]
+    day_calorie_range: Optional[str] = None
+    day_meal_count: Optional[int] = None
+    day_meal_summaries: Optional[List[str]] = None
     lang: Optional[str] = None
     profile: Optional[dict] = None
 
@@ -364,7 +370,13 @@ def _build_prompt(
     ) + profile_text + note_text + context_text + label_text + meal_text
 
 
-def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryInput]) -> str:
+def _build_day_prompt(
+    lang: str,
+    profile: dict | None,
+    meals: List[MealSummaryInput],
+    day_calorie_range: Optional[str],
+    day_meal_count: Optional[int],
+) -> str:
     profile_text = ""
     if profile:
         tone = str(profile.get("tone") or "").strip()
@@ -396,6 +408,8 @@ def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryIn
             "  \"tomorrow_advice\": \"明天以清淡蛋白質與蔬菜為主\",\n"
             "  \"confidence\": 0.7\n"
             "}\n"
+            f"今日累計熱量區間：{day_calorie_range or '未知'}\n"
+            f"今日已記錄餐數：{day_meal_count or 0}\n"
             f"餐次摘要：\n{meal_block}\n"
         ) + profile_text
     return (
@@ -412,6 +426,8 @@ def _build_day_prompt(lang: str, profile: dict | None, meals: List[MealSummaryIn
         "  \"tomorrow_advice\": \"Aim for lean protein and more vegetables\",\n"
         "  \"confidence\": 0.7\n"
         "}\n"
+        f"Today total range: {day_calorie_range or 'unknown'}\n"
+        f"Meals today: {day_meal_count or 0}\n"
         f"Meal summaries:\n{meal_block}\n"
     ) + profile_text
 
@@ -431,7 +447,12 @@ def _build_week_prompt(lang: str, profile: dict | None, days: List[WeekSummaryIn
     day_lines = []
     for day in days:
         summary = day.day_summary or "no summary"
-        day_lines.append(f"- {day.date}: {day.calorie_range} | {summary} | meals={day.meal_count}")
+        line = f"- {day.date}: {day.calorie_range} | {summary} | meals={day.meal_count}"
+        if day.day_meal_summaries:
+            meal_text = "; ".join([s for s in day.day_meal_summaries if s])
+            if meal_text:
+                line += f" | details: {meal_text}"
+        day_lines.append(line)
     day_block = "\n".join(day_lines)
     if lang == "zh-TW":
         return (
@@ -503,6 +524,16 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
         )
     summaries = "; ".join(meal.dish_summaries) if meal.dish_summaries else "no dish summary"
+    day_summaries = ""
+    if meal.day_meal_summaries:
+        day_summaries = "\n".join([f"- {item}" for item in meal.day_meal_summaries if item])
+    day_context = ""
+    if meal.day_calorie_range or meal.day_meal_count or day_summaries:
+        day_context = (
+            f"今日累計熱量區間：{meal.day_calorie_range or '未知'}\n"
+            f"今日已記錄餐數：{meal.day_meal_count or 0}\n"
+            f"今日餐點摘要：\n{day_summaries or '- 無'}\n"
+        )
     if lang == "zh-TW":
         return (
             "你是營養分析助理。請根據本餐摘要，給出下一餐建議，回傳 JSON。\n"
@@ -512,6 +543,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             "- 每句需包含具體食物方向 + 份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
             "- 避免醫療或診斷字眼；避免精準數值或克數\n"
             "- 需提到上一餐摘要的影響（例如偏油、偏鹹）\n"
+            "- 需考量今日累計與已吃內容，避免重複負擔\n"
             "JSON 範例：\n"
             "{\n"
             "  \"self_cook\": \"清炒蔬菜＋蒸魚，主食半碗即可\",\n"
@@ -522,6 +554,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             "}\n"
             f"本餐：{meal.meal_type} | {meal.calorie_range}\n"
             f"本餐摘要：{summaries}\n"
+            f"{day_context}"
         ) + profile_text
     return (
         "You are a nutrition assistant. Based on the meal summary, return JSON advice for the next meal.\n"
@@ -531,6 +564,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
         "- Each sentence must include food direction + portion guidance (e.g., half bowl carbs, palm-sized protein, one bowl veggies)\n"
         "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
         "- Mention the influence of the previous meal summary\n"
+        "- Consider today’s cumulative intake and foods already eaten\n"
         "JSON example:\n"
         "{\n"
         "  \"self_cook\": \"Steamed fish + veggies, half bowl carbs\",\n"
@@ -541,6 +575,9 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
         "}\n"
         f"Meal: {meal.meal_type} | {meal.calorie_range}\n"
         f"Meal summary: {summaries}\n"
+        f"Today total range: {meal.day_calorie_range or 'unknown'}\n"
+        f"Meals today: {meal.day_meal_count or 0}\n"
+        f"Meal summaries today:\n{day_summaries or '- none'}\n"
     ) + profile_text
 
 
@@ -1084,7 +1121,13 @@ async def summarize_day(payload: DaySummaryRequest):
     use_ai = _should_use_ai()
     if use_ai and _client is not None:
         try:
-            prompt = _build_day_prompt(use_lang, payload.profile or {}, payload.meals)
+            prompt = _build_day_prompt(
+                use_lang,
+                payload.profile or {},
+                payload.meals,
+                payload.day_calorie_range,
+                payload.day_meal_count,
+            )
             response = _client.chat.completions.create(
                 model=OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
