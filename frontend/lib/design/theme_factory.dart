@@ -20,6 +20,14 @@ class ThemeFactory {
     final radiusCard = config.radii['card'] ?? 18.0;
     final radiusButton = config.radii['button'] ?? 16.0;
 
+    final baseTextTheme = GoogleFonts.getTextTheme(config.font);
+    final textTheme = baseTextTheme.copyWith(
+      titleLarge: baseTextTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w600, color: text),
+      titleMedium: baseTextTheme.titleMedium?.copyWith(fontSize: 18, fontWeight: FontWeight.w600, color: text),
+      bodyLarge: baseTextTheme.bodyLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w500, color: text),
+      bodyMedium: baseTextTheme.bodyMedium?.copyWith(fontSize: 14, fontWeight: FontWeight.w400, color: text),
+    );
+
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: Colors.transparent,
@@ -31,7 +39,7 @@ class ThemeFactory {
         surface: card,
         onSurface: text,
       ),
-      textTheme: GoogleFonts.getTextTheme(config.font),
+      textTheme: textTheme,
       extensions: [
         AppTheme(
           card: card,

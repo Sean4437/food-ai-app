@@ -6,6 +6,7 @@ import '../models/meal_entry.dart';
 import 'meal_items_screen.dart';
 import '../widgets/record_sheet.dart';
 import '../widgets/app_background.dart';
+import '../design/text_styles.dart';
 
 class LogScreen extends StatelessWidget {
   const LogScreen({super.key});
@@ -75,11 +76,11 @@ class LogScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${prefix}${foodName}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text('${prefix}${foodName}', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
                   Text(
                     '${t.timeLabel}: ${_timeLabel(entry.time)} · ${portion} · ${prefix}${entry.result?.calorieRange ?? t.calorieUnknown}',
-                    style: const TextStyle(color: Colors.black54, fontSize: 12),
+                    style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                   ),
                 ],
               ),
@@ -112,11 +113,11 @@ class LogScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(title, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
-          Text('${t.mealTotal}: $calorie', style: const TextStyle(color: Colors.black54, fontSize: 12)),
+          Text('${t.mealTotal}: $calorie', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
           const SizedBox(height: 4),
-          Text(advice, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+          Text(advice, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
           const SizedBox(height: 10),
           Column(children: [for (final entry in group) _mealRow(context, app, entry, group)]),
         ],
@@ -151,7 +152,7 @@ class LogScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
               const Spacer(),
               TextButton(
                 onPressed: () => showRecordSheet(context, app, fixedType: type),
@@ -160,7 +161,7 @@ class LogScreen extends StatelessWidget {
             ],
           ),
           if (groups.isEmpty)
-            Text(t.noMealPrompt, style: const TextStyle(color: Colors.black54)),
+            Text(t.noMealPrompt, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
           if (groups.isNotEmpty) ...[
             const SizedBox(height: 8),
             Column(
@@ -215,12 +216,12 @@ class LogScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                Text(t.logTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                Text(t.logTitle, style: AppTextStyles.title1(context)),
                 const SizedBox(height: 12),
                 for (final date in displayDates) ...[
                   Text(
                     dateFormatter.format(date),
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -232,11 +233,11 @@ class LogScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(t.dailyCalorieRange, style: const TextStyle(color: Colors.black54)),
+                        Text(t.dailyCalorieRange, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                         const SizedBox(height: 6),
                         Text(
                           app.dailyCalorieRangeLabelForDate(date, t),
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                          style: AppTextStyles.title2(context),
                         ),
                       ],
                     ),

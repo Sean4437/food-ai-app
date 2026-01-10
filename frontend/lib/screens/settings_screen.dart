@@ -7,14 +7,15 @@ import '../utils/data_exporter.dart';
 import '../design/theme_controller.dart';
 import '../state/app_state.dart';
 import '../widgets/app_background.dart';
+import '../design/text_styles.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-  Widget _sectionTitle(String text) {
+  Widget _sectionTitle(BuildContext context, String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+      child: Text(text, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
     );
   }
 
@@ -419,7 +420,7 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                Text(t.settingsTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                Text(t.settingsTitle, style: AppTextStyles.title1(context)),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -442,7 +443,7 @@ class SettingsScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(profile.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                          Text(profile.email, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                          Text(profile.email, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                         ],
                       ),
                       const Spacer(),
@@ -453,7 +454,7 @@ class SettingsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                _sectionTitle(t.planSection),
+                _sectionTitle(context, t.planSection),
                 _grid2([
                   _row(
                     t.heightLabel,
@@ -538,7 +539,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ]),
-                _sectionTitle(t.adviceStyleSection),
+                _sectionTitle(context, t.adviceStyleSection),
                 _grid2([
                   _row(
                     t.toneLabel,
@@ -563,7 +564,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ]),
-                _sectionTitle(t.summarySettingsSection),
+                _sectionTitle(context, t.summarySettingsSection),
                 _grid2([
                   _row(
                     t.summaryTimeLabel,
@@ -586,7 +587,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ]),
-                _sectionTitle(t.reminderSection),
+                _sectionTitle(context, t.reminderSection),
                 SwitchListTile(
                   value: profile.lunchReminderEnabled,
                   onChanged: (value) => app.updateField((p) => p.lunchReminderEnabled = value),
@@ -618,7 +619,7 @@ class SettingsScreen extends StatelessWidget {
                     onSave: (time) => app.updateField((p) => p.dinnerReminderTime = time),
                   ),
                 ),
-                _sectionTitle(t.subscriptionSection),
+                _sectionTitle(context, t.subscriptionSection),
                 _grid2([
                   _row(t.subscriptionPlan, t.planMonthly),
                   _row(
@@ -634,14 +635,14 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ]),
                 const SizedBox(height: 8),
-                _sectionTitle(t.apiSection),
+                _sectionTitle(context, t.apiSection),
                 _apiRow(
                   t.apiBaseUrlLabel,
                   profile.apiBaseUrl,
                   onTap: () => _editApiUrl(context, app),
                 ),
                 const SizedBox(height: 8),
-                _sectionTitle(t.layoutThemeLabel),
+                _sectionTitle(context, t.layoutThemeLabel),
                 _row(
                   t.textSizeLabel,
                   currentTextSizeLabel,
@@ -704,7 +705,7 @@ class SettingsScreen extends StatelessWidget {
                   secondary: const Icon(Icons.blur_on),
                 ),
                 const SizedBox(height: 8),
-                _sectionTitle(t.plateSection),
+                _sectionTitle(context, t.plateSection),
                 _row(
                   t.plateStyleLabel,
                   currentPlateLabel,
@@ -717,7 +718,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _sectionTitle(t.nutritionChartLabel),
+                _sectionTitle(context, t.nutritionChartLabel),
                 _row(
                   t.nutritionChartLabel,
                   currentChartLabel,
@@ -730,7 +731,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _sectionTitle(t.versionSection),
+                _sectionTitle(context, t.versionSection),
                 FutureBuilder<Map<String, String>?>(
                   future: _loadVersionInfo(),
                   builder: (context, snapshot) {
@@ -753,7 +754,7 @@ class SettingsScreen extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: 8),
-                _sectionTitle(t.dataSection),
+                _sectionTitle(context, t.dataSection),
                 _grid2([
                   _row(
                     t.exportData,

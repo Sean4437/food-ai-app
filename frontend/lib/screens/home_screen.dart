@@ -5,6 +5,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
+import '../design/text_styles.dart';
 import '../widgets/record_sheet.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/plate_polygon_stack.dart';
@@ -63,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
         color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+      child: Text(label, style: AppTextStyles.caption(context).copyWith(color: color, fontWeight: FontWeight.w600)),
     );
   }
 
@@ -106,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         title,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
                     TextButton(
@@ -126,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Center(
                         child: Text(
                           labelBuilder(option),
-                          style: const TextStyle(fontSize: 16),
+                          style: AppTextStyles.body(context),
                         ),
                       ),
                   ],
@@ -250,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(appTheme.radiusCard),
           border: Border.all(color: Colors.black.withOpacity(0.08)),
         ),
-        child: Text(t.latestMealEmpty, style: const TextStyle(color: Colors.black54)),
+        child: Text(t.latestMealEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
       );
     }
 
@@ -296,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             t.activityCardTitle,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            style: AppTextStyles.title2(context),
           ),
           const SizedBox(height: 8),
           Container(
@@ -325,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        Text(app.activityLabel(current, t), style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(app.activityLabel(current, t), style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                         const Spacer(),
                         const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
                       ],
@@ -346,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        Text(shortExercise, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+                        Text(shortExercise, style: AppTextStyles.body(context).copyWith(color: Colors.black87, fontWeight: FontWeight.w600)),
                         const Spacer(),
                         const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
                       ],
@@ -368,9 +369,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Row(
                 children: [
-                  Text(t.exerciseMinutesLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(t.exerciseMinutesLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                   const Spacer(),
-                  Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                   const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
                 ],
               ),
@@ -412,9 +413,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(t.greetingTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                          Text(t.greetingTitle, style: AppTextStyles.title2(context)),
                           const SizedBox(height: 4),
-                          Text(t.streakLabel, style: const TextStyle(color: Colors.black54)),
+                          Text(t.streakLabel, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                         ],
                       ),
                     ),
@@ -431,7 +432,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: appTheme.card,
                         borderRadius: BorderRadius.circular(appTheme.radiusCard),
                       ),
-                      child: Text(t.latestMealEmpty, style: const TextStyle(color: Colors.black54)),
+                      child: Text(t.latestMealEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                     ),
                   )
                 else
@@ -485,7 +486,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag()).format(activeDate),
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                style: AppTextStyles.title2(context),
                               ),
                               const Spacer(),
                               TextButton(
@@ -513,7 +514,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     Text(
                                       t.dayCardCalorieLabel,
-                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                      style: AppTextStyles.title2(context),
                                     ),
                                     const SizedBox(height: 8),
                                     Builder(
@@ -563,7 +564,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 8),
                                     Text(
                                       '${t.dayCardMealsLabel} ${app.dayMealLabels(activeDate, t)}',
-                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                                     ),
                                   ],
                                 ),
@@ -589,7 +590,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           t.dayCardSummaryLabel,
-                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                          style: AppTextStyles.title2(context),
                                         ),
                                       ],
                                     ),
@@ -601,7 +602,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     Text(
                                       app.daySummaryText(activeDate, t),
-                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                                     ),
                                   ],
                                 ),
@@ -620,7 +621,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           t.dayCardTomorrowLabel,
-                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                          style: AppTextStyles.title2(context),
                                         ),
                                       ],
                                     ),
@@ -632,7 +633,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     Text(
                                       app.dayTomorrowAdvice(activeDate, t),
-                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                                     ),
                                   ],
                                 ),
@@ -658,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           t.weekSummaryTitle,
-                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                          style: AppTextStyles.title2(context),
                                         ),
                                       ],
                                     ),
@@ -670,7 +671,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     Text(
                                       app.weekSummaryText(activeDate, t),
-                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                                     ),
                                   ],
                                 ),
@@ -689,7 +690,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           t.nextWeekAdviceTitle,
-                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                          style: AppTextStyles.title2(context),
                                         ),
                                       ],
                                     ),
@@ -701,7 +702,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     Text(
                                       app.nextWeekAdviceText(activeDate, t),
-                                      style: const TextStyle(fontSize: 14, color: Colors.black54),
+                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                                     ),
                                   ],
                                 ),
@@ -737,7 +738,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 6),
                 Center(
-                  child: Text(t.captureTitle, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                  child: Text(t.captureTitle, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                 ),
             ],
           ),
