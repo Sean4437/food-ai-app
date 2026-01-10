@@ -19,7 +19,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(String title, String value, {VoidCallback? onTap, bool showChevron = true}) {
+  Widget _row(BuildContext context, String title, String value, {VoidCallback? onTap, bool showChevron = true}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -40,7 +40,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _apiRow(String title, String value, {VoidCallback? onTap}) {
+  Widget _apiRow(BuildContext context, String title, String value, {VoidCallback? onTap}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
@@ -57,8 +57,8 @@ class SettingsScreen extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    value,
+                    child: Text(
+                      value,
                     style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -457,6 +457,7 @@ class SettingsScreen extends StatelessWidget {
                 _sectionTitle(context, t.planSection),
                 _grid2([
                   _row(
+                    context,
                     t.heightLabel,
                     '${profile.heightCm} cm',
                     onTap: () => _editText(
@@ -468,6 +469,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   _row(
+                    context,
                     t.weightLabel,
                     '${profile.weightKg} kg',
                     onTap: () => _editText(
@@ -479,6 +481,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   _row(
+                    context,
                     t.ageLabel,
                     '${profile.age}',
                     onTap: () => _editText(
@@ -490,6 +493,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   _row(
+                    context,
                     t.genderLabel,
                     currentGenderLabel,
                     onTap: () => _selectOption(
@@ -501,11 +505,13 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   _row(
+                    context,
                     t.bmiLabel,
                     _bmiText(profile, t),
                     showChevron: false,
                   ),
                   _row(
+                    context,
                     t.goalLabel,
                     profile.goal,
                     onTap: () => _selectOption(
@@ -517,6 +523,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   _row(
+                    context,
                     t.planSpeedLabel,
                     profile.planSpeed,
                     onTap: () => _selectOption(
@@ -528,6 +535,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   _row(
+                    context,
                     t.activityLevelLabel,
                     currentActivityLabel,
                     onTap: () => _selectOption(
@@ -542,6 +550,7 @@ class SettingsScreen extends StatelessWidget {
                 _sectionTitle(context, t.adviceStyleSection),
                 _grid2([
                   _row(
+                    context,
                     t.toneLabel,
                     currentToneLabel,
                     onTap: () => _selectOption(
@@ -553,6 +562,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   _row(
+                    context,
                     t.personaLabel,
                     currentPersonaLabel,
                     onTap: () => _selectOption(
@@ -567,6 +577,7 @@ class SettingsScreen extends StatelessWidget {
                 _sectionTitle(context, t.summarySettingsSection),
                 _grid2([
                   _row(
+                    context,
                     t.summaryTimeLabel,
                     profile.dailySummaryTime.format(context),
                     onTap: () => _pickTime(
@@ -576,6 +587,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   _row(
+                    context,
                     t.weeklySummaryDayLabel,
                     currentWeekdayLabel,
                     onTap: () => _selectOption(
@@ -595,6 +607,7 @@ class SettingsScreen extends StatelessWidget {
                   secondary: const Icon(Icons.alarm),
                 ),
                 _row(
+                  context,
                   t.reminderLunchTime,
                   profile.lunchReminderTime.format(context),
                   onTap: () => _pickTime(
@@ -611,6 +624,7 @@ class SettingsScreen extends StatelessWidget {
                   secondary: const Icon(Icons.alarm),
                 ),
                 _row(
+                  context,
                   t.reminderDinnerTime,
                   profile.dinnerReminderTime.format(context),
                   onTap: () => _pickTime(
@@ -621,8 +635,9 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 _sectionTitle(context, t.subscriptionSection),
                 _grid2([
-                  _row(t.subscriptionPlan, t.planMonthly),
+                  _row(context, t.subscriptionPlan, t.planMonthly),
                   _row(
+                    context,
                     t.languageLabel,
                     profile.language == 'zh-TW' ? t.langZh : t.langEn,
                     onTap: () => _selectOption(
@@ -637,6 +652,7 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 _sectionTitle(context, t.apiSection),
                 _apiRow(
+                  context,
                   t.apiBaseUrlLabel,
                   profile.apiBaseUrl,
                   onTap: () => _editApiUrl(context, app),
@@ -644,6 +660,7 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 _sectionTitle(context, t.layoutThemeLabel),
                 _row(
+                  context,
                   t.textSizeLabel,
                   currentTextSizeLabel,
                   onTap: () => _selectOption(
@@ -736,19 +753,19 @@ class SettingsScreen extends StatelessWidget {
                   future: _loadVersionInfo(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return _row(t.versionBuild, t.usageLoading, showChevron: false);
+                      return _row(context, t.versionBuild, t.usageLoading, showChevron: false);
                     }
                     final info = snapshot.data;
                     if (info == null) {
-                      return _row(t.versionBuild, t.versionUnavailable, showChevron: false);
+                      return _row(context, t.versionBuild, t.versionUnavailable, showChevron: false);
                     }
                     final commit = info['commit'] ?? '';
                     final shortCommit = commit.length > 7 ? commit.substring(0, 7) : commit;
                     return Column(
                       children: [
-                        _row(t.versionBuild, info['build_time'] ?? '--', showChevron: false),
+                        _row(context, t.versionBuild, info['build_time'] ?? '--', showChevron: false),
                         const SizedBox(height: 6),
-                        _row(t.versionCommit, shortCommit.isEmpty ? '--' : shortCommit, showChevron: false),
+                        _row(context, t.versionCommit, shortCommit.isEmpty ? '--' : shortCommit, showChevron: false),
                       ],
                     );
                   },
@@ -757,12 +774,14 @@ class SettingsScreen extends StatelessWidget {
                 _sectionTitle(context, t.dataSection),
                 _grid2([
                   _row(
+                    context,
                     t.exportData,
                     '',
                     showChevron: false,
                     onTap: () => _exportData(context, app),
                   ),
                   _row(
+                    context,
                     t.clearData,
                     '',
                     showChevron: false,

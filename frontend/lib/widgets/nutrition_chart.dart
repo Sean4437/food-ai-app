@@ -103,19 +103,19 @@ class _RadarChart extends StatelessWidget {
               children: [
                 Align(
                   alignment: const Alignment(0, -1.35),
-                  child: _nutrientValue(points[0], displayValue, TextAlign.center),
+                  child: _nutrientValue(context, points[0], displayValue, TextAlign.center),
                 ),
                 Align(
                   alignment: const Alignment(1.45, 0.05),
-                  child: _nutrientStack(points[1], displayValue, TextAlign.left),
+                  child: _nutrientStack(context, points[1], displayValue, TextAlign.left),
                 ),
                 Align(
                   alignment: const Alignment(0, 1.35),
-                  child: _nutrientValue(points[2], displayValue, TextAlign.center),
+                  child: _nutrientValue(context, points[2], displayValue, TextAlign.center),
                 ),
                 Align(
                   alignment: const Alignment(-1.45, 0.05),
-                  child: _nutrientStack(points[3], displayValue, TextAlign.right),
+                  child: _nutrientStack(context, points[3], displayValue, TextAlign.right),
                 ),
               ],
             ),
@@ -125,7 +125,12 @@ class _RadarChart extends StatelessWidget {
     );
   }
 
-  Widget _nutrientValue(_MacroPoint point, String Function(double) displayValue, TextAlign align) {
+  Widget _nutrientValue(
+    BuildContext context,
+    _MacroPoint point,
+    String Function(double) displayValue,
+    TextAlign align,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -140,7 +145,12 @@ class _RadarChart extends StatelessWidget {
     );
   }
 
-  Widget _nutrientStack(_MacroPoint point, String Function(double) displayValue, TextAlign align) {
+  Widget _nutrientStack(
+    BuildContext context,
+    _MacroPoint point,
+    String Function(double) displayValue,
+    TextAlign align,
+  ) {
     return Column(
       crossAxisAlignment: align == TextAlign.right ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
