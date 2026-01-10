@@ -724,6 +724,7 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 _sectionTitle(context, t.plateSection),
                 _row(
+                  context,
                   t.plateStyleLabel,
                   currentPlateLabel,
                   onTap: () => _selectOption(
@@ -737,6 +738,7 @@ class SettingsScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 _sectionTitle(context, t.nutritionChartLabel),
                 _row(
+                  context,
                   t.nutritionChartLabel,
                   currentChartLabel,
                   onTap: () => _selectOption(
