@@ -292,7 +292,7 @@ class _MacroBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final barHeight = 20.0;
+        final barHeight = 40.0;
         final radius = BorderRadius.circular(12);
         final fillWidth = constraints.maxWidth * point.ratio;
         return ClipRRect(
