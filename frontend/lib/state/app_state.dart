@@ -422,7 +422,9 @@ class AppState extends ChangeNotifier {
     bool hasRange = false;
     final groups = <List<MealEntry>>[
       ...mealGroupsForDate(date, MealType.breakfast),
+      ...mealGroupsForDate(date, MealType.brunch),
       ...mealGroupsForDate(date, MealType.lunch),
+      ...mealGroupsForDate(date, MealType.afternoonTea),
       ...mealGroupsForDate(date, MealType.dinner),
       ...mealGroupsForDate(date, MealType.lateSnack),
       ...mealGroupsForDate(date, MealType.other),
@@ -445,7 +447,9 @@ class AppState extends ChangeNotifier {
     bool hasRange = false;
     final groups = <List<MealEntry>>[
       ...mealGroupsForDate(date, MealType.breakfast),
+      ...mealGroupsForDate(date, MealType.brunch),
       ...mealGroupsForDate(date, MealType.lunch),
+      ...mealGroupsForDate(date, MealType.afternoonTea),
       ...mealGroupsForDate(date, MealType.dinner),
       ...mealGroupsForDate(date, MealType.lateSnack),
       ...mealGroupsForDate(date, MealType.other),
@@ -938,12 +942,24 @@ class AppState extends ChangeNotifier {
   }
 
   MealType resolveMealType(DateTime time) {
-    final hour = time.hour;
-    if (hour >= 5 && hour <= 10) return MealType.breakfast;
-    if (hour >= 11 && hour <= 14) return MealType.lunch;
-    if (hour >= 17 && hour <= 20) return MealType.dinner;
-    if (hour >= 21 || hour <= 2) return MealType.lateSnack;
+    final current = TimeOfDay.fromDateTime(time);
+    if (_inRange(profile.breakfastStart, profile.breakfastEnd, current)) return MealType.breakfast;
+    if (_inRange(profile.brunchStart, profile.brunchEnd, current)) return MealType.brunch;
+    if (_inRange(profile.lunchStart, profile.lunchEnd, current)) return MealType.lunch;
+    if (_inRange(profile.afternoonTeaStart, profile.afternoonTeaEnd, current)) return MealType.afternoonTea;
+    if (_inRange(profile.dinnerStart, profile.dinnerEnd, current)) return MealType.dinner;
+    if (_inRange(profile.lateSnackStart, profile.lateSnackEnd, current)) return MealType.lateSnack;
     return MealType.other;
+  }
+
+  bool _inRange(TimeOfDay start, TimeOfDay end, TimeOfDay value) {
+    final startMinutes = start.hour * 60 + start.minute;
+    final endMinutes = end.hour * 60 + end.minute;
+    final valueMinutes = value.hour * 60 + value.minute;
+    if (startMinutes <= endMinutes) {
+      return valueMinutes >= startMinutes && valueMinutes <= endMinutes;
+    }
+    return valueMinutes >= startMinutes || valueMinutes <= endMinutes;
   }
 
   void markMealInteraction(String mealId) {
@@ -956,8 +972,12 @@ class AppState extends ChangeNotifier {
     switch (type) {
       case MealType.breakfast:
         return 'breakfast';
+      case MealType.brunch:
+        return 'brunch';
       case MealType.lunch:
         return 'lunch';
+      case MealType.afternoonTea:
+        return 'afternoon_tea';
       case MealType.dinner:
         return 'dinner';
       case MealType.lateSnack:
@@ -971,8 +991,12 @@ class AppState extends ChangeNotifier {
     switch (type) {
       case MealType.breakfast:
         return t.breakfast;
+      case MealType.brunch:
+        return t.brunch;
       case MealType.lunch:
         return t.lunch;
+      case MealType.afternoonTea:
+        return t.afternoonTea;
       case MealType.dinner:
         return t.dinner;
       case MealType.lateSnack:
@@ -1806,6 +1830,18 @@ class AppState extends ChangeNotifier {
       'dinner_reminder_enabled': profile.dinnerReminderEnabled,
       'lunch_reminder_time': _timeToString(profile.lunchReminderTime),
       'dinner_reminder_time': _timeToString(profile.dinnerReminderTime),
+      'breakfast_start': _timeToString(profile.breakfastStart),
+      'breakfast_end': _timeToString(profile.breakfastEnd),
+      'brunch_start': _timeToString(profile.brunchStart),
+      'brunch_end': _timeToString(profile.brunchEnd),
+      'lunch_start': _timeToString(profile.lunchStart),
+      'lunch_end': _timeToString(profile.lunchEnd),
+      'afternoon_tea_start': _timeToString(profile.afternoonTeaStart),
+      'afternoon_tea_end': _timeToString(profile.afternoonTeaEnd),
+      'dinner_start': _timeToString(profile.dinnerStart),
+      'dinner_end': _timeToString(profile.dinnerEnd),
+      'late_snack_start': _timeToString(profile.lateSnackStart),
+      'late_snack_end': _timeToString(profile.lateSnackEnd),
       'language': profile.language,
       'api_base_url': profile.apiBaseUrl,
       'plate_asset': profile.plateAsset,
@@ -1835,6 +1871,18 @@ class AppState extends ChangeNotifier {
       ..dinnerReminderEnabled = (data['dinner_reminder_enabled'] as bool?) ?? profile.dinnerReminderEnabled
       ..lunchReminderTime = _parseTime(data['lunch_reminder_time'] as String?, profile.lunchReminderTime)
       ..dinnerReminderTime = _parseTime(data['dinner_reminder_time'] as String?, profile.dinnerReminderTime)
+      ..breakfastStart = _parseTime(data['breakfast_start'] as String?, profile.breakfastStart)
+      ..breakfastEnd = _parseTime(data['breakfast_end'] as String?, profile.breakfastEnd)
+      ..brunchStart = _parseTime(data['brunch_start'] as String?, profile.brunchStart)
+      ..brunchEnd = _parseTime(data['brunch_end'] as String?, profile.brunchEnd)
+      ..lunchStart = _parseTime(data['lunch_start'] as String?, profile.lunchStart)
+      ..lunchEnd = _parseTime(data['lunch_end'] as String?, profile.lunchEnd)
+      ..afternoonTeaStart = _parseTime(data['afternoon_tea_start'] as String?, profile.afternoonTeaStart)
+      ..afternoonTeaEnd = _parseTime(data['afternoon_tea_end'] as String?, profile.afternoonTeaEnd)
+      ..dinnerStart = _parseTime(data['dinner_start'] as String?, profile.dinnerStart)
+      ..dinnerEnd = _parseTime(data['dinner_end'] as String?, profile.dinnerEnd)
+      ..lateSnackStart = _parseTime(data['late_snack_start'] as String?, profile.lateSnackStart)
+      ..lateSnackEnd = _parseTime(data['late_snack_end'] as String?, profile.lateSnackEnd)
       ..language = (data['language'] as String?) ?? profile.language
       ..apiBaseUrl = (data['api_base_url'] as String?) ?? profile.apiBaseUrl
       ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset
@@ -2011,6 +2059,18 @@ class UserProfile {
     required this.dinnerReminderEnabled,
     required this.lunchReminderTime,
     required this.dinnerReminderTime,
+    required this.breakfastStart,
+    required this.breakfastEnd,
+    required this.brunchStart,
+    required this.brunchEnd,
+    required this.lunchStart,
+    required this.lunchEnd,
+    required this.afternoonTeaStart,
+    required this.afternoonTeaEnd,
+    required this.dinnerStart,
+    required this.dinnerEnd,
+    required this.lateSnackStart,
+    required this.lateSnackEnd,
     required this.language,
     required this.apiBaseUrl,
     required this.plateAsset,
@@ -2037,6 +2097,18 @@ class UserProfile {
   bool dinnerReminderEnabled;
   TimeOfDay lunchReminderTime;
   TimeOfDay dinnerReminderTime;
+  TimeOfDay breakfastStart;
+  TimeOfDay breakfastEnd;
+  TimeOfDay brunchStart;
+  TimeOfDay brunchEnd;
+  TimeOfDay lunchStart;
+  TimeOfDay lunchEnd;
+  TimeOfDay afternoonTeaStart;
+  TimeOfDay afternoonTeaEnd;
+  TimeOfDay dinnerStart;
+  TimeOfDay dinnerEnd;
+  TimeOfDay lateSnackStart;
+  TimeOfDay lateSnackEnd;
   String language;
   String apiBaseUrl;
   String plateAsset;
@@ -2064,6 +2136,18 @@ class UserProfile {
       dinnerReminderEnabled: true,
       lunchReminderTime: const TimeOfDay(hour: 12, minute: 15),
       dinnerReminderTime: const TimeOfDay(hour: 18, minute: 45),
+      breakfastStart: const TimeOfDay(hour: 6, minute: 0),
+      breakfastEnd: const TimeOfDay(hour: 10, minute: 0),
+      brunchStart: const TimeOfDay(hour: 10, minute: 0),
+      brunchEnd: const TimeOfDay(hour: 12, minute: 0),
+      lunchStart: const TimeOfDay(hour: 12, minute: 0),
+      lunchEnd: const TimeOfDay(hour: 14, minute: 0),
+      afternoonTeaStart: const TimeOfDay(hour: 14, minute: 0),
+      afternoonTeaEnd: const TimeOfDay(hour: 17, minute: 0),
+      dinnerStart: const TimeOfDay(hour: 17, minute: 0),
+      dinnerEnd: const TimeOfDay(hour: 20, minute: 30),
+      lateSnackStart: const TimeOfDay(hour: 20, minute: 30),
+      lateSnackEnd: const TimeOfDay(hour: 2, minute: 0),
       language: 'zh-TW',
       apiBaseUrl: kDefaultApiBaseUrl,
       plateAsset: kDefaultPlateAsset,

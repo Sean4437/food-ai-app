@@ -599,6 +599,129 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ]),
+                _sectionTitle(context, t.mealTimeSection),
+                _grid2([
+                  _row(
+                    context,
+                    t.breakfastStartLabel,
+                    profile.breakfastStart.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.breakfastStart,
+                      onSave: (time) => app.updateField((p) => p.breakfastStart = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.breakfastEndLabel,
+                    profile.breakfastEnd.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.breakfastEnd,
+                      onSave: (time) => app.updateField((p) => p.breakfastEnd = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.brunchStartLabel,
+                    profile.brunchStart.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.brunchStart,
+                      onSave: (time) => app.updateField((p) => p.brunchStart = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.brunchEndLabel,
+                    profile.brunchEnd.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.brunchEnd,
+                      onSave: (time) => app.updateField((p) => p.brunchEnd = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.lunchStartLabel,
+                    profile.lunchStart.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.lunchStart,
+                      onSave: (time) => app.updateField((p) => p.lunchStart = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.lunchEndLabel,
+                    profile.lunchEnd.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.lunchEnd,
+                      onSave: (time) => app.updateField((p) => p.lunchEnd = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.afternoonTeaStartLabel,
+                    profile.afternoonTeaStart.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.afternoonTeaStart,
+                      onSave: (time) => app.updateField((p) => p.afternoonTeaStart = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.afternoonTeaEndLabel,
+                    profile.afternoonTeaEnd.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.afternoonTeaEnd,
+                      onSave: (time) => app.updateField((p) => p.afternoonTeaEnd = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.dinnerStartLabel,
+                    profile.dinnerStart.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.dinnerStart,
+                      onSave: (time) => app.updateField((p) => p.dinnerStart = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.dinnerEndLabel,
+                    profile.dinnerEnd.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.dinnerEnd,
+                      onSave: (time) => app.updateField((p) => p.dinnerEnd = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.lateSnackStartLabel,
+                    profile.lateSnackStart.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.lateSnackStart,
+                      onSave: (time) => app.updateField((p) => p.lateSnackStart = time),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.lateSnackEndLabel,
+                    profile.lateSnackEnd.format(context),
+                    onTap: () => _pickTime(
+                      context,
+                      initial: profile.lateSnackEnd,
+                      onSave: (time) => app.updateField((p) => p.lateSnackEnd = time),
+                    ),
+                  ),
+                ]),
                 _sectionTitle(context, t.reminderSection),
                 SwitchListTile(
                   value: profile.lunchReminderEnabled,

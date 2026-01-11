@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'analysis_result.dart';
 import 'label_result.dart';
 
-enum MealType { breakfast, lunch, dinner, lateSnack, other }
+enum MealType { breakfast, brunch, lunch, afternoonTea, dinner, lateSnack, other }
 
 class MealEntry {
   MealEntry({
@@ -51,8 +51,12 @@ class MealEntry {
     switch (type) {
       case MealType.breakfast:
         return 'breakfast';
+      case MealType.brunch:
+        return 'brunch';
       case MealType.lunch:
         return 'lunch';
+      case MealType.afternoonTea:
+        return 'afternoon_tea';
       case MealType.dinner:
         return 'dinner';
       case MealType.lateSnack:
@@ -66,8 +70,12 @@ class MealEntry {
     switch (value) {
       case 'breakfast':
         return MealType.breakfast;
+      case 'brunch':
+        return MealType.brunch;
       case 'lunch':
         return MealType.lunch;
+      case 'afternoon_tea':
+        return MealType.afternoonTea;
       case 'dinner':
         return MealType.dinner;
       case 'late_snack':

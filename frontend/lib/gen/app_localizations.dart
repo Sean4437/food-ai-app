@@ -129,11 +129,23 @@ abstract class AppLocalizations {
   /// **'早餐'**
   String get breakfast;
 
+  /// No description provided for @brunch.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'??'**
+  String get brunch;
+
   /// No description provided for @lunch.
   ///
   /// In zh_TW, this message translates to:
   /// **'中餐'**
   String get lunch;
+
+  /// No description provided for @afternoonTea.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'?祕?'**
+  String get afternoonTea;
 
   /// No description provided for @dinner.
   ///
@@ -482,6 +494,84 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'返回本餐'**
   String get mealItemsTitle;
+
+  /// No description provided for @mealTimeSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'?憓???'**
+  String get mealTimeSection;
+
+  /// No description provided for @breakfastStartLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'?拚???'**
+  String get breakfastStartLabel;
+
+  /// No description provided for @breakfastEndLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'?拚???'**
+  String get breakfastEndLabel;
+
+  /// No description provided for @brunchStartLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'????'**
+  String get brunchStartLabel;
+
+  /// No description provided for @brunchEndLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'????'**
+  String get brunchEndLabel;
+
+  /// No description provided for @lunchStartLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'銝剝???'**
+  String get lunchStartLabel;
+
+  /// No description provided for @lunchEndLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'銝剝???'**
+  String get lunchEndLabel;
+
+  /// No description provided for @afternoonTeaStartLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'?祕???'**
+  String get afternoonTeaStartLabel;
+
+  /// No description provided for @afternoonTeaEndLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'?祕???'**
+  String get afternoonTeaEndLabel;
+
+  /// No description provided for @dinnerStartLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'????'**
+  String get dinnerStartLabel;
+
+  /// No description provided for @dinnerEndLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'????'**
+  String get dinnerEndLabel;
+
+  /// No description provided for @lateSnackStartLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'瘨???'**
+  String get lateSnackStartLabel;
+
+  /// No description provided for @lateSnackEndLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'瘨???'**
+  String get lateSnackEndLabel;
 
   /// No description provided for @optionConvenienceTitle.
   ///

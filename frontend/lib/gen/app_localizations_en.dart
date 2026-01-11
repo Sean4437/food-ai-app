@@ -1,4 +1,4 @@
-// ignore: unused_import
+﻿// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -24,7 +24,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get breakfast => 'Breakfast';
 
   @override
+  String get brunch => 'Brunch';
+
+  @override
   String get lunch => 'Lunch';
+
+  @override
+  String get afternoonTea => 'Afternoon tea';
 
   @override
   String get dinner => 'Dinner';
@@ -205,6 +211,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mealItemsTitle => 'Back to meal';
+
+  @override
+  String get mealTimeSection => 'Meal time ranges';
+
+  @override
+  String get breakfastStartLabel => 'Breakfast start';
+  @override
+  String get breakfastEndLabel => 'Breakfast end';
+  @override
+  String get brunchStartLabel => 'Brunch start';
+  @override
+  String get brunchEndLabel => 'Brunch end';
+  @override
+  String get lunchStartLabel => 'Lunch start';
+  @override
+  String get lunchEndLabel => 'Lunch end';
+  @override
+  String get afternoonTeaStartLabel => 'Afternoon tea start';
+  @override
+  String get afternoonTeaEndLabel => 'Afternoon tea end';
+  @override
+  String get dinnerStartLabel => 'Dinner start';
+  @override
+  String get dinnerEndLabel => 'Dinner end';
+  @override
+  String get lateSnackStartLabel => 'Late snack start';
+  @override
+  String get lateSnackEndLabel => 'Late snack end';
 
   @override
   String get optionConvenienceTitle => 'Convenience store';

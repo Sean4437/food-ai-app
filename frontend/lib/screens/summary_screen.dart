@@ -64,7 +64,9 @@ class SummaryScreen extends StatelessWidget {
     final entries = app.entriesForSelectedDate;
     final totalMeals = entries.length;
     final breakfast = entries.where((e) => e.type == MealType.breakfast).length;
+    final brunch = entries.where((e) => e.type == MealType.brunch).length;
     final lunch = entries.where((e) => e.type == MealType.lunch).length;
+    final afternoonTea = entries.where((e) => e.type == MealType.afternoonTea).length;
     final dinner = entries.where((e) => e.type == MealType.dinner).length;
     final lateSnack = entries.where((e) => e.type == MealType.lateSnack).length;
     final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
@@ -142,7 +144,9 @@ class SummaryScreen extends StatelessWidget {
                           runSpacing: 10,
                           children: [
                             _statChip(Icons.free_breakfast, t.breakfast, breakfast.toString()),
+                            _statChip(Icons.brunch_dining, t.brunch, brunch.toString()),
                             _statChip(Icons.lunch_dining, t.lunch, lunch.toString()),
+                            _statChip(Icons.emoji_food_beverage, t.afternoonTea, afternoonTea.toString()),
                             _statChip(Icons.restaurant, t.dinner, dinner.toString()),
                             _statChip(Icons.nightlife, t.lateSnack, lateSnack.toString()),
                           ],

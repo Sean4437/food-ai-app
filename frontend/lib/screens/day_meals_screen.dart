@@ -66,8 +66,12 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     switch (type) {
       case MealType.breakfast:
         return t.breakfast;
+      case MealType.brunch:
+        return t.brunch;
       case MealType.lunch:
         return t.lunch;
+      case MealType.afternoonTea:
+        return t.afternoonTea;
       case MealType.dinner:
         return t.dinner;
       case MealType.lateSnack:
