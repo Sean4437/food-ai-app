@@ -484,10 +484,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               const Icon(Icons.calendar_today, size: 18, color: Colors.black54),
                               const SizedBox(width: 8),
-                              Text(
-                                DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag()).format(activeDate),
-                                style: AppTextStyles.title2(context),
-                              ),
+                              Builder(builder: (context) {
+                                final localeTag = Localizations.localeOf(context).toLanguageTag();
+                                final dateLabel = DateFormat('yyyy/MM/dd', localeTag).format(activeDate);
+                                final weekdayLabel = DateFormat('E', localeTag).format(activeDate);
+                                return Text(
+                                  '$dateLabel（$weekdayLabel）',
+                                  style: AppTextStyles.title2(context),
+                                );
+                              }),
                               const Spacer(),
                               TextButton(
                                 onPressed: () => app.finalizeDay(activeDate, Localizations.localeOf(context).toLanguageTag(), t),
