@@ -30,24 +30,13 @@ class ThemeController extends ChangeNotifier {
     }
   }
 
-  void applyColorOverrides({
-    String? primaryHex,
-    String? cardHex,
-    String? backgroundTopHex,
-    String? backgroundBottomHex,
-  }) {
+  void applyColorOverrides({String? primaryHex, String? cardHex}) {
     final colors = Map<String, String>.from(_config.colors);
     if (primaryHex != null && primaryHex.trim().isNotEmpty) {
       colors['primary'] = primaryHex.trim();
     }
     if (cardHex != null && cardHex.trim().isNotEmpty) {
       colors['card'] = cardHex.trim();
-    }
-    if (backgroundTopHex != null && backgroundTopHex.trim().isNotEmpty) {
-      colors['background_top'] = backgroundTopHex.trim();
-    }
-    if (backgroundBottomHex != null && backgroundBottomHex.trim().isNotEmpty) {
-      colors['background_bottom'] = backgroundBottomHex.trim();
     }
     _config = ThemeConfig(
       name: _config.name,

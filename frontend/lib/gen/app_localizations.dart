@@ -1537,16 +1537,6 @@ abstract class AppLocalizations {
 
   String get themeCardColorLabel;
 
-  String get themeBackgroundTopLabel;
-
-  String get themeBackgroundBottomLabel;
-
-  String get colorPickerHue;
-
-  String get colorPickerSaturation;
-
-  String get colorPickerValue;
-
   /// No description provided for @plateSection.
   ///
   /// In zh_TW, this message translates to:

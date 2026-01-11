@@ -1318,8 +1318,6 @@ class AppState extends ChangeNotifier {
       ..themeAsset = updated.themeAsset
       ..themePrimaryHex = updated.themePrimaryHex
       ..cardColorHex = updated.cardColorHex
-      ..themeBackgroundTopHex = updated.themeBackgroundTopHex
-      ..themeBackgroundBottomHex = updated.themeBackgroundBottomHex
       ..textScale = updated.textScale
       ..nutritionChartStyle = updated.nutritionChartStyle
       ..glowEnabled = updated.glowEnabled;
@@ -1816,8 +1814,6 @@ class AppState extends ChangeNotifier {
       'theme_asset': profile.themeAsset,
       'theme_primary_hex': profile.themePrimaryHex,
       'card_color_hex': profile.cardColorHex,
-      'theme_bg_top_hex': profile.themeBackgroundTopHex,
-      'theme_bg_bottom_hex': profile.themeBackgroundBottomHex,
       'text_scale': profile.textScale,
       'nutrition_chart': profile.nutritionChartStyle,
       'glow_enabled': profile.glowEnabled,
@@ -1849,8 +1845,6 @@ class AppState extends ChangeNotifier {
       ..themeAsset = (data['theme_asset'] as String?) ?? profile.themeAsset
       ..themePrimaryHex = (data['theme_primary_hex'] as String?) ?? profile.themePrimaryHex
       ..cardColorHex = (data['card_color_hex'] as String?) ?? profile.cardColorHex
-      ..themeBackgroundTopHex = (data['theme_bg_top_hex'] as String?) ?? profile.themeBackgroundTopHex
-      ..themeBackgroundBottomHex = (data['theme_bg_bottom_hex'] as String?) ?? profile.themeBackgroundBottomHex
       ..textScale = (data['text_scale'] as num?)?.toDouble() ?? profile.textScale
       ..nutritionChartStyle = (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle
       ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled;
@@ -2029,8 +2023,6 @@ class UserProfile {
     required this.themeAsset,
     required this.themePrimaryHex,
     required this.cardColorHex,
-    required this.themeBackgroundTopHex,
-    required this.themeBackgroundBottomHex,
     required this.textScale,
     required this.nutritionChartStyle,
     required this.glowEnabled,
@@ -2059,8 +2051,6 @@ class UserProfile {
   String themeAsset;
   String themePrimaryHex;
   String cardColorHex;
-  String themeBackgroundTopHex;
-  String themeBackgroundBottomHex;
   double textScale;
   String nutritionChartStyle;
   bool glowEnabled;
@@ -2090,8 +2080,6 @@ class UserProfile {
       themeAsset: kDefaultThemeAsset,
       themePrimaryHex: '',
       cardColorHex: '',
-      themeBackgroundTopHex: '',
-      themeBackgroundBottomHex: '',
       textScale: kDefaultTextScale,
       nutritionChartStyle: 'bars',
       glowEnabled: true,
