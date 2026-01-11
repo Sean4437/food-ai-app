@@ -15,12 +15,14 @@ class MealItemsScreen extends StatefulWidget {
   const MealItemsScreen({
     super.key,
     required this.group,
+    this.initialIndex,
     this.autoReturnToDayMeals = false,
     this.autoReturnDate,
     this.autoReturnMealId,
   });
 
   final List<MealEntry> group;
+  final int? initialIndex;
   final bool autoReturnToDayMeals;
   final DateTime? autoReturnDate;
   final String? autoReturnMealId;
@@ -30,11 +32,19 @@ class MealItemsScreen extends StatefulWidget {
 }
 
 class _MealItemsScreenState extends State<MealItemsScreen> {
-  final PageController _pageController = PageController(viewportFraction: 1);
+  late final PageController _pageController;
   final ImagePicker _picker = ImagePicker();
   int _pageIndex = 0;
   Timer? _autoTimer;
   bool _autoTimerStarted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final maxIndex = math.max(0, widget.group.length - 1);
+    _pageIndex = (widget.initialIndex ?? 0).clamp(0, maxIndex);
+    _pageController = PageController(viewportFraction: 1, initialPage: _pageIndex);
+  }
 
   @override
   void dispose() {

@@ -90,8 +90,13 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
       plateAsset: plateAsset,
       selectedIndex: selectedIndex,
       onSelect: (index) => setState(() => _groupSelectedIndex[groupIndex] = index),
-      onOpen: (_) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => MealItemsScreen(group: group)),
+      onOpen: (index) => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => MealItemsScreen(
+            group: group,
+            initialIndex: index,
+          ),
+        ),
       ),
       maxPlateSize: 280,
       minPlateSize: 0,
