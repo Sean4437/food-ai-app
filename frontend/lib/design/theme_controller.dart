@@ -29,25 +29,6 @@ class ThemeController extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  void applyColorOverrides({String? primaryHex, String? cardHex}) {
-    final colors = Map<String, String>.from(_config.colors);
-    if (primaryHex != null && primaryHex.trim().isNotEmpty) {
-      colors['primary'] = primaryHex.trim();
-    }
-    if (cardHex != null && cardHex.trim().isNotEmpty) {
-      colors['card'] = cardHex.trim();
-    }
-    _config = ThemeConfig(
-      name: _config.name,
-      font: _config.font,
-      colors: colors,
-      radii: _config.radii,
-      layout: _config.layout,
-    );
-    _theme = ThemeFactory.fromConfig(_config);
-    notifyListeners();
-  }
 }
 
 class ThemeScope extends InheritedNotifier<ThemeController> {

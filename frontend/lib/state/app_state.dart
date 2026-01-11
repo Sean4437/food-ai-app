@@ -1316,8 +1316,6 @@ class AppState extends ChangeNotifier {
       ..apiBaseUrl = updated.apiBaseUrl
       ..plateAsset = updated.plateAsset
       ..themeAsset = updated.themeAsset
-      ..themePrimaryHex = updated.themePrimaryHex
-      ..cardColorHex = updated.cardColorHex
       ..textScale = updated.textScale
       ..nutritionChartStyle = updated.nutritionChartStyle
       ..glowEnabled = updated.glowEnabled;
@@ -1812,8 +1810,6 @@ class AppState extends ChangeNotifier {
       'api_base_url': profile.apiBaseUrl,
       'plate_asset': profile.plateAsset,
       'theme_asset': profile.themeAsset,
-      'theme_primary_hex': profile.themePrimaryHex,
-      'card_color_hex': profile.cardColorHex,
       'text_scale': profile.textScale,
       'nutrition_chart': profile.nutritionChartStyle,
       'glow_enabled': profile.glowEnabled,
@@ -1843,8 +1839,6 @@ class AppState extends ChangeNotifier {
       ..apiBaseUrl = (data['api_base_url'] as String?) ?? profile.apiBaseUrl
       ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset
       ..themeAsset = (data['theme_asset'] as String?) ?? profile.themeAsset
-      ..themePrimaryHex = (data['theme_primary_hex'] as String?) ?? profile.themePrimaryHex
-      ..cardColorHex = (data['card_color_hex'] as String?) ?? profile.cardColorHex
       ..textScale = (data['text_scale'] as num?)?.toDouble() ?? profile.textScale
       ..nutritionChartStyle = (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle
       ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled;
@@ -2021,8 +2015,6 @@ class UserProfile {
     required this.apiBaseUrl,
     required this.plateAsset,
     required this.themeAsset,
-    required this.themePrimaryHex,
-    required this.cardColorHex,
     required this.textScale,
     required this.nutritionChartStyle,
     required this.glowEnabled,
@@ -2049,8 +2041,6 @@ class UserProfile {
   String apiBaseUrl;
   String plateAsset;
   String themeAsset;
-  String themePrimaryHex;
-  String cardColorHex;
   double textScale;
   String nutritionChartStyle;
   bool glowEnabled;
@@ -2078,8 +2068,6 @@ class UserProfile {
       apiBaseUrl: kDefaultApiBaseUrl,
       plateAsset: kDefaultPlateAsset,
       themeAsset: kDefaultThemeAsset,
-      themePrimaryHex: '',
-      cardColorHex: '',
       textScale: kDefaultTextScale,
       nutritionChartStyle: 'bars',
       glowEnabled: true,

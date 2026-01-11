@@ -5,7 +5,6 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:http/http.dart' as http;
 import '../utils/data_exporter.dart';
 import '../design/theme_controller.dart';
-import '../design/app_theme.dart';
 import '../state/app_state.dart';
 import '../widgets/app_background.dart';
 import '../design/text_styles.dart';
@@ -90,59 +89,6 @@ class SettingsScreen extends StatelessWidget {
       }
     }
     return Column(children: rows);
-  }
-
-  String _colorToHex(Color color) {
-    final value = color.value.toRadixString(16).padLeft(8, '0').toUpperCase();
-    return '#${value.substring(2)}';
-  }
-
-  Widget _colorStrip(
-    BuildContext context, {
-    required String title,
-    required String selectedHex,
-    required List<String> options,
-    required ValueChanged<String> onSelect,
-  }) {
-    final selected = selectedHex.toUpperCase();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: options.map((hex) {
-              final color = Color(int.parse(hex.replaceAll('#', 'FF'), radix: 16));
-              final isSelected = selected == hex.toUpperCase();
-              return GestureDetector(
-                onTap: () => onSelect(hex),
-                child: Container(
-                  margin: const EdgeInsets.only(right: 10),
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? Colors.black87 : Colors.black12,
-                      width: isSelected ? 2 : 1,
-                    ),
-                  ),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
   }
 
   String _weekdayLabel(int weekday, AppLocalizations t) {
@@ -373,8 +319,6 @@ class SettingsScreen extends StatelessWidget {
     final t = AppLocalizations.of(context)!;
     final themeController = ThemeScope.of(context);
     final app = AppStateScope.of(context);
-    final theme = Theme.of(context);
-    final appTheme = theme.extension<AppTheme>()!;
     final profile = app.profile;
     final plateOptions = <String, String>{
       t.plateDefaultLabel: kDefaultPlateAsset,
@@ -732,14 +676,10 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () async {
+                        onPressed: () {
                           const asset = 'assets/themes/theme_clean.json';
-                          await themeController.loadFromAsset(asset);
+                          themeController.loadFromAsset(asset);
                           app.updateField((p) => p.themeAsset = asset);
-                          themeController.applyColorOverrides(
-                            primaryHex: profile.themePrimaryHex,
-                            cardHex: profile.cardColorHex,
-                          );
                         },
                         child: Text(t.themeClean),
                       ),
@@ -747,14 +687,10 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () async {
+                        onPressed: () {
                           const asset = 'assets/themes/theme_warm.json';
-                          await themeController.loadFromAsset(asset);
+                          themeController.loadFromAsset(asset);
                           app.updateField((p) => p.themeAsset = asset);
-                          themeController.applyColorOverrides(
-                            primaryHex: profile.themePrimaryHex,
-                            cardHex: profile.cardColorHex,
-                          );
                         },
                         child: Text(t.themeWarm),
                       ),
@@ -766,14 +702,10 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () async {
+                        onPressed: () {
                           const asset = 'assets/themes/theme_green.json';
-                          await themeController.loadFromAsset(asset);
+                          themeController.loadFromAsset(asset);
                           app.updateField((p) => p.themeAsset = asset);
-                          themeController.applyColorOverrides(
-                            primaryHex: profile.themePrimaryHex,
-                            cardHex: profile.cardColorHex,
-                          );
                         },
                         child: Text(t.themeGreen),
                       ),
@@ -781,52 +713,6 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(width: 10),
                     const Expanded(child: SizedBox()),
                   ],
-                ),
-                const SizedBox(height: 12),
-                _colorStrip(
-                  context,
-                  title: t.themePrimaryColorLabel,
-                  selectedHex: profile.themePrimaryHex.isEmpty
-                      ? _colorToHex(theme.colorScheme.primary)
-                      : profile.themePrimaryHex,
-                  options: const [
-                    '#5B7CFA',
-                    '#E8916A',
-                    '#5CB88B',
-                    '#5FB5C9',
-                    '#A579FF',
-                    '#F08A7C',
-                  ],
-                  onSelect: (hex) {
-                    app.updateField((p) => p.themePrimaryHex = hex);
-                    themeController.applyColorOverrides(
-                      primaryHex: hex,
-                      cardHex: profile.cardColorHex,
-                    );
-                  },
-                ),
-                const SizedBox(height: 10),
-                _colorStrip(
-                  context,
-                  title: t.themeCardColorLabel,
-                  selectedHex: profile.cardColorHex.isEmpty
-                      ? _colorToHex(appTheme.card)
-                      : profile.cardColorHex,
-                  options: const [
-                    '#FFFFFF',
-                    '#FFF6EE',
-                    '#F6F8FF',
-                    '#F2F7F2',
-                    '#FFF0E6',
-                    '#F3F5FB',
-                  ],
-                  onSelect: (hex) {
-                    app.updateField((p) => p.cardColorHex = hex);
-                    themeController.applyColorOverrides(
-                      primaryHex: profile.themePrimaryHex,
-                      cardHex: hex,
-                    );
-                  },
                 ),
                 const SizedBox(height: 8),
                 SwitchListTile(
