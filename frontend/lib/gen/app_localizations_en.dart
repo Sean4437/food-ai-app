@@ -603,6 +603,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toneBullet => 'Clear bullets';
+  @override
+  String get toneStrict => 'Strict';
 
   @override
   String get personaNutritionist => 'Nutritionist';
@@ -620,10 +622,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get summarySettingsSection => 'Summary settings';
 
   @override
-  String get summaryTimeLabel => 'Daily summary time';
+  String get summaryTimeLabel => 'Daily summary';
 
   @override
-  String get weeklySummaryDayLabel => 'Weekly summary day';
+  String get weeklySummaryDayLabel => 'Weekly summary';
 
   @override
   String get weekSummaryTitle => 'Weekly summary';

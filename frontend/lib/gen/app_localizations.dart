@@ -1293,6 +1293,12 @@ abstract class AppLocalizations {
   /// **'皜?璇?'**
   String get toneBullet;
 
+  /// No description provided for @toneStrict.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'嚴厲'**
+  String get toneStrict;
+
   /// No description provided for @personaNutritionist.
   ///
   /// In zh_TW, this message translates to:

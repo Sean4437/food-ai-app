@@ -321,8 +321,6 @@ class SettingsScreen extends StatelessWidget {
     final app = AppStateScope.of(context);
     final profile = app.profile;
     final plateOptions = <String, String>{
-      t.plateDefaultLabel: kDefaultPlateAsset,
-      t.plateWarmLabel: 'assets/plates/plate_warm.png',
       '日式盤 02': 'assets/plates/plate_Japanese_02.png',
       '日式盤 04': 'assets/plates/plate_Japanese_04.png',
       '中式盤 01': 'assets/plates/plate_China_01.png',
@@ -336,7 +334,7 @@ class SettingsScreen extends StatelessWidget {
     final currentPlateLabel = plateOptions.entries
         .firstWhere(
           (entry) => entry.value == profile.plateAsset,
-          orElse: () => MapEntry(t.plateDefaultLabel, kDefaultPlateAsset),
+          orElse: () => MapEntry('日式盤 02', kDefaultPlateAsset),
         )
         .key;
     final currentChartLabel = chartOptions.entries
@@ -362,6 +360,7 @@ class SettingsScreen extends StatelessWidget {
       t.toneDirect: 'direct',
       t.toneEncouraging: 'encouraging',
       t.toneBullet: 'bullet',
+      t.toneStrict: 'strict',
     };
     final currentToneLabel = toneOptions.entries
         .firstWhere(

@@ -596,6 +596,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get toneBullet => '皜?璇?';
+  @override
+  String get toneStrict => '嚴厲';
 
   @override
   String get personaNutritionist => '??撣?;
@@ -613,10 +615,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get summarySettingsSection => '蝮賜?閮剖?';
 
   @override
-  String get summaryTimeLabel => '瘥蝮賜???';
+  String get summaryTimeLabel => '每日總結';
 
   @override
-  String get weeklySummaryDayLabel => '瘥梁蜇蝯';
+  String get weeklySummaryDayLabel => '每周總結';
 
   @override
   String get weekSummaryTitle => '銝?梁蜇蝯?;
@@ -1487,6 +1489,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get toneBullet => '皜?璇?';
+  @override
+  String get toneStrict => '嚴厲';
 
   @override
   String get personaNutritionist => '??撣?;
@@ -1504,10 +1508,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get summarySettingsSection => '蝮賜?閮剖?';
 
   @override
-  String get summaryTimeLabel => '瘥蝮賜???';
+  String get summaryTimeLabel => '每日總結';
 
   @override
-  String get weeklySummaryDayLabel => '瘥梁蜇蝯';
+  String get weeklySummaryDayLabel => '每周總結';
 
   @override
   String get weekSummaryTitle => '銝?梁蜇蝯?;
