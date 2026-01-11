@@ -133,15 +133,6 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                         ),
                         const SizedBox(height: 1),
                         _portionSelector(context, app, entry, theme, t),
-                        const SizedBox(height: 6),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            onPressed: () => _pickLabelImage(context, app, entry),
-                            icon: const Icon(Icons.receipt_long, size: 18),
-                            label: Text(t.addLabel),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -413,9 +404,21 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _nutritionTitle(context),
-                            style: AppTextStyles.title2(context),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _nutritionTitle(context),
+                                  style: AppTextStyles.title2(context),
+                                ),
+                              ),
+                              if (currentEntry != null)
+                                TextButton.icon(
+                                  onPressed: () => _pickLabelImage(context, app, currentEntry),
+                                  icon: const Icon(Icons.receipt_long, size: 18),
+                                  label: Text(t.addLabel),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           NutritionChart(
