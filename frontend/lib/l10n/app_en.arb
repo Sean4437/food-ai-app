@@ -262,6 +262,8 @@
   "glowToggleLabel": "Glow background",
   "themeGreen": "Fresh Green",
   "themeWarm": "Warm Orange",
+  "themePrimaryColorLabel": "Theme color",
+  "themeCardColorLabel": "Card color",
   "plateSection": "Plate style",
   "plateStyleLabel": "Plate design",
   "plateDefaultLabel": "Default plate",

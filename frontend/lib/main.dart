@@ -19,7 +19,11 @@ Future<void> main() async {
   final themeAsset = appState.profile.themeAsset.isEmpty
       ? 'assets/themes/theme_clean.json'
       : appState.profile.themeAsset;
-  themeController.loadFromAsset(themeAsset);
+  await themeController.loadFromAsset(themeAsset);
+  themeController.applyColorOverrides(
+    primaryHex: appState.profile.themePrimaryHex,
+    cardHex: appState.profile.cardColorHex,
+  );
   runApp(ThemeScope(
     notifier: themeController,
     child: TabScope(

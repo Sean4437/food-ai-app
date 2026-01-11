@@ -1533,6 +1533,10 @@ abstract class AppLocalizations {
 
   String get glowToggleLabel;
 
+  String get themePrimaryColorLabel;
+
+  String get themeCardColorLabel;
+
   /// No description provided for @plateSection.
   ///
   /// In zh_TW, this message translates to:

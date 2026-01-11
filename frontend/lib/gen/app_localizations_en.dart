@@ -740,6 +740,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeGreen => 'Fresh Green';
 
   @override
+  String get themePrimaryColorLabel => 'Theme color';
+
+  @override
+  String get themeCardColorLabel => 'Card color';
+
+  @override
   @override
   String get glowToggleLabel => 'Glow background';
 
