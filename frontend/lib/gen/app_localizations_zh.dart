@@ -738,6 +738,21 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get themeCardColorLabel => '卡片顏色';
 
+  @override
+  String get themeBackgroundTopLabel => '背景上色';
+
+  @override
+  String get themeBackgroundBottomLabel => '背景下色';
+
+  @override
+  String get colorPickerHue => '色相';
+
+  @override
+  String get colorPickerSaturation => '飽和度';
+
+  @override
+  String get colorPickerValue => '亮度';
+
   String get glowToggleLabel => '柔光背景';
 
   @override

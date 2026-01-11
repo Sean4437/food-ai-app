@@ -23,6 +23,8 @@ Future<void> main() async {
   themeController.applyColorOverrides(
     primaryHex: appState.profile.themePrimaryHex,
     cardHex: appState.profile.cardColorHex,
+    backgroundTopHex: appState.profile.themeBackgroundTopHex,
+    backgroundBottomHex: appState.profile.themeBackgroundBottomHex,
   );
   runApp(ThemeScope(
     notifier: themeController,

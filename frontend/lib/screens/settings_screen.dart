@@ -97,6 +97,94 @@ class SettingsScreen extends StatelessWidget {
     return '#${value.substring(2)}';
   }
 
+  Color _hexToColor(String hex) {
+    final cleaned = hex.replaceAll('#', '').trim();
+    final value = cleaned.length == 6 ? 'FF$cleaned' : cleaned;
+    return Color(int.parse(value, radix: 16));
+  }
+
+  Future<String?> _pickColor(
+    BuildContext context, {
+    required String title,
+    required Color initial,
+  }) async {
+    final t = AppLocalizations.of(context)!;
+    return showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        double hue = HSVColor.fromColor(initial).hue;
+        double saturation = HSVColor.fromColor(initial).saturation;
+        double value = HSVColor.fromColor(initial).value;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final color = HSVColor.fromAHSV(1, hue, saturation, value).toColor();
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 12),
+                    Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.black12),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(t.colorPickerHue, style: AppTextStyles.caption(context)),
+                    Slider(
+                      value: hue,
+                      min: 0,
+                      max: 360,
+                      onChanged: (v) => setState(() => hue = v),
+                    ),
+                    Text(t.colorPickerSaturation, style: AppTextStyles.caption(context)),
+                    Slider(
+                      value: saturation,
+                      min: 0,
+                      max: 1,
+                      onChanged: (v) => setState(() => saturation = v),
+                    ),
+                    Text(t.colorPickerValue, style: AppTextStyles.caption(context)),
+                    Slider(
+                      value: value,
+                      min: 0,
+                      max: 1,
+                      onChanged: (v) => setState(() => value = v),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(t.cancel),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(_colorToHex(color)),
+                          child: Text(t.save),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _colorStrip(
     BuildContext context, {
     required String title,
@@ -739,6 +827,8 @@ class SettingsScreen extends StatelessWidget {
                           themeController.applyColorOverrides(
                             primaryHex: profile.themePrimaryHex,
                             cardHex: profile.cardColorHex,
+                            backgroundTopHex: profile.themeBackgroundTopHex,
+                            backgroundBottomHex: profile.themeBackgroundBottomHex,
                           );
                         },
                         child: Text(t.themeClean),
@@ -754,6 +844,8 @@ class SettingsScreen extends StatelessWidget {
                           themeController.applyColorOverrides(
                             primaryHex: profile.themePrimaryHex,
                             cardHex: profile.cardColorHex,
+                            backgroundTopHex: profile.themeBackgroundTopHex,
+                            backgroundBottomHex: profile.themeBackgroundBottomHex,
                           );
                         },
                         child: Text(t.themeWarm),
@@ -773,6 +865,8 @@ class SettingsScreen extends StatelessWidget {
                           themeController.applyColorOverrides(
                             primaryHex: profile.themePrimaryHex,
                             cardHex: profile.cardColorHex,
+                            backgroundTopHex: profile.themeBackgroundTopHex,
+                            backgroundBottomHex: profile.themeBackgroundBottomHex,
                           );
                         },
                         child: Text(t.themeGreen),
@@ -790,18 +884,27 @@ class SettingsScreen extends StatelessWidget {
                       ? _colorToHex(theme.colorScheme.primary)
                       : profile.themePrimaryHex,
                   options: const [
-                    '#5B7CFA',
-                    '#E8916A',
-                    '#5CB88B',
-                    '#5FB5C9',
-                    '#A579FF',
-                    '#F08A7C',
+                    '#FF0000',
+                    '#FFA500',
+                    '#FFFF00',
+                    '#00FF00',
+                    '#00FFFF',
+                    '#0000FF',
+                    '#8B00FF',
                   ],
-                  onSelect: (hex) {
-                    app.updateField((p) => p.themePrimaryHex = hex);
+                  onSelect: (hex) async {
+                    final picked = await _pickColor(
+                      context,
+                      title: t.themePrimaryColorLabel,
+                      initial: _hexToColor(hex),
+                    );
+                    if (picked == null) return;
+                    app.updateField((p) => p.themePrimaryHex = picked);
                     themeController.applyColorOverrides(
-                      primaryHex: hex,
+                      primaryHex: picked,
                       cardHex: profile.cardColorHex,
+                      backgroundTopHex: profile.themeBackgroundTopHex,
+                      backgroundBottomHex: profile.themeBackgroundBottomHex,
                     );
                   },
                 ),
@@ -814,17 +917,87 @@ class SettingsScreen extends StatelessWidget {
                       : profile.cardColorHex,
                   options: const [
                     '#FFFFFF',
-                    '#FFF6EE',
-                    '#F6F8FF',
+                    '#F8F8F8',
+                    '#F0F0F0',
+                    '#FFEFE6',
+                    '#EAF3FF',
                     '#F2F7F2',
-                    '#FFF0E6',
-                    '#F3F5FB',
                   ],
-                  onSelect: (hex) {
-                    app.updateField((p) => p.cardColorHex = hex);
+                  onSelect: (hex) async {
+                    final picked = await _pickColor(
+                      context,
+                      title: t.themeCardColorLabel,
+                      initial: _hexToColor(hex),
+                    );
+                    if (picked == null) return;
+                    app.updateField((p) => p.cardColorHex = picked);
                     themeController.applyColorOverrides(
                       primaryHex: profile.themePrimaryHex,
-                      cardHex: hex,
+                      cardHex: picked,
+                      backgroundTopHex: profile.themeBackgroundTopHex,
+                      backgroundBottomHex: profile.themeBackgroundBottomHex,
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                _colorStrip(
+                  context,
+                  title: t.themeBackgroundTopLabel,
+                  selectedHex: profile.themeBackgroundTopHex.isEmpty
+                      ? _colorToHex(appTheme.gradientTop)
+                      : profile.themeBackgroundTopHex,
+                  options: const [
+                    '#FFFFFF',
+                    '#F3F5FB',
+                    '#E6F1FF',
+                    '#FFE8D8',
+                    '#EAF7F0',
+                    '#F1F5FF',
+                  ],
+                  onSelect: (hex) async {
+                    final picked = await _pickColor(
+                      context,
+                      title: t.themeBackgroundTopLabel,
+                      initial: _hexToColor(hex),
+                    );
+                    if (picked == null) return;
+                    app.updateField((p) => p.themeBackgroundTopHex = picked);
+                    themeController.applyColorOverrides(
+                      primaryHex: profile.themePrimaryHex,
+                      cardHex: profile.cardColorHex,
+                      backgroundTopHex: picked,
+                      backgroundBottomHex: profile.themeBackgroundBottomHex,
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                _colorStrip(
+                  context,
+                  title: t.themeBackgroundBottomLabel,
+                  selectedHex: profile.themeBackgroundBottomHex.isEmpty
+                      ? _colorToHex(appTheme.gradientBottom)
+                      : profile.themeBackgroundBottomHex,
+                  options: const [
+                    '#FFFFFF',
+                    '#F2F3F7',
+                    '#F3F5FA',
+                    '#EDEFF5',
+                    '#F7F2EF',
+                    '#F0F4FF',
+                  ],
+                  onSelect: (hex) async {
+                    final picked = await _pickColor(
+                      context,
+                      title: t.themeBackgroundBottomLabel,
+                      initial: _hexToColor(hex),
+                    );
+                    if (picked == null) return;
+                    app.updateField((p) => p.themeBackgroundBottomHex = picked);
+                    themeController.applyColorOverrides(
+                      primaryHex: profile.themePrimaryHex,
+                      cardHex: profile.cardColorHex,
+                      backgroundTopHex: profile.themeBackgroundTopHex,
+                      backgroundBottomHex: picked,
                     );
                   },
                 ),

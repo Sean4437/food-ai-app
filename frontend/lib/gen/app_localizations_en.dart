@@ -746,6 +746,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeCardColorLabel => 'Card color';
 
   @override
+  String get themeBackgroundTopLabel => 'Background top';
+
+  @override
+  String get themeBackgroundBottomLabel => 'Background bottom';
+
+  @override
+  String get colorPickerHue => 'Hue';
+
+  @override
+  String get colorPickerSaturation => 'Saturation';
+
+  @override
+  String get colorPickerValue => 'Value';
+
+  @override
   @override
   String get glowToggleLabel => 'Glow background';
 
