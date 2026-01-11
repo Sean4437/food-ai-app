@@ -94,7 +94,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
         MaterialPageRoute(builder: (_) => MealItemsScreen(group: group)),
       ),
       maxPlateSize: 280,
-      minPlateSize: 200,
+      minPlateSize: 0,
     );
   }
 
