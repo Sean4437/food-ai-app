@@ -19,13 +19,19 @@ class LogScreen extends StatelessWidget {
     switch (type) {
       case MealType.breakfast:
         return t.breakfast;
+      case MealType.brunch:
+        return t.brunch;
       case MealType.lunch:
         return t.lunch;
+      case MealType.afternoonTea:
+        return t.afternoonTea;
       case MealType.dinner:
         return t.dinner;
       case MealType.lateSnack:
         return t.lateSnack;
       case MealType.other:
+        return t.other;
+      default:
         return t.other;
     }
   }
@@ -244,7 +250,9 @@ class LogScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   _mealSection(context, app, MealType.breakfast, app.mealGroupsForDate(date, MealType.breakfast)),
+                  _mealSection(context, app, MealType.brunch, app.mealGroupsForDate(date, MealType.brunch)),
                   _mealSection(context, app, MealType.lunch, app.mealGroupsForDate(date, MealType.lunch)),
+                  _mealSection(context, app, MealType.afternoonTea, app.mealGroupsForDate(date, MealType.afternoonTea)),
                   _mealSection(context, app, MealType.dinner, app.mealGroupsForDate(date, MealType.dinner)),
                   _mealSection(context, app, MealType.lateSnack, app.mealGroupsForDate(date, MealType.lateSnack)),
                   _mealSection(context, app, MealType.other, app.mealGroupsForDate(date, MealType.other)),
