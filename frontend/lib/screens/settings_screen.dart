@@ -323,6 +323,10 @@ class SettingsScreen extends StatelessWidget {
     final plateOptions = <String, String>{
       t.plateDefaultLabel: kDefaultPlateAsset,
       t.plateWarmLabel: 'assets/plates/plate_warm.png',
+      '日式盤 02': 'assets/plates/plate_Japanese_02.png',
+      '日式盤 04': 'assets/plates/plate_Japanese_04.png',
+      '中式盤 01': 'assets/plates/plate_China_01.png',
+      '中式盤 02': 'assets/plates/plate_China_02.png',
     };
     final chartOptions = <String, String>{
       t.chartRadar: 'radar',
