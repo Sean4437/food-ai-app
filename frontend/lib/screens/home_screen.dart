@@ -318,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: InkWell(
                   onTap: () => _selectActivityLevel(context, app, date, t),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
@@ -339,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: InkWell(
                   onTap: () => _selectExerciseType(context, app, date, t),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
@@ -361,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
           InkWell(
             onTap: () => _selectExerciseMinutes(context, app, date, t),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(14),
