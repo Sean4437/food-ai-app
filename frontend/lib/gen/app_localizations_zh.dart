@@ -179,6 +179,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nextMealSectionTitle => '銝?擗遣霅唳獐??;
 
   @override
+  String get noLateSnackSelfCook => '不建議消夜；若想吃，清湯蔬菜小份';
+  @override
+  String get noLateSnackConvenience => '不建議消夜；若想吃，無糖豆漿或小份沙拉';
+  @override
+  String get noLateSnackBento => '不建議消夜；若想吃，半份蔬菜便當';
+  @override
+  String get noLateSnackOther => '不建議消夜；若想吃，少量水果即可';
+
+  @override
   String get nextMealHint => '?訾????嫣噶?撘停憟?;
 
   @override
@@ -1059,6 +1068,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get nextMealSectionTitle => '銝?擗遣霅唳獐??;
+
+  @override
+  String get noLateSnackSelfCook => '不建議消夜；若想吃，清湯蔬菜小份';
+  @override
+  String get noLateSnackConvenience => '不建議消夜；若想吃，無糖豆漿或小份沙拉';
+  @override
+  String get noLateSnackBento => '不建議消夜；若想吃，半份蔬菜便當';
+  @override
+  String get noLateSnackOther => '不建議消夜；若想吃，少量水果即可';
 
   @override
   String get nextMealHint => '?訾????嫣噶?撘停憟?;

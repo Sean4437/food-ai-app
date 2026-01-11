@@ -791,6 +791,19 @@ class AppState extends ChangeNotifier {
     _mealAdviceLoading.add(mealId);
     try {
       final mealDate = _dateOnly(group.first.time);
+      final delta = dailyCalorieDeltaValue(mealDate);
+      final isDinner = group.first.type == MealType.dinner;
+      final nearOrOverTarget = delta != null && delta >= -100;
+      if (isDinner && nearOrOverTarget) {
+        final advice = MealAdvice(
+          selfCook: t.noLateSnackSelfCook,
+          convenience: t.noLateSnackConvenience,
+          bento: t.noLateSnackBento,
+          other: t.noLateSnackOther,
+        );
+        await updateMealAdvice(mealId, advice, reanalyzeEntries: false);
+        return;
+      }
       final dayGroups = mealGroupsForDateAll(mealDate);
       final summary = buildMealSummary(group, t);
       final dishSummaries = <String>[];

@@ -182,6 +182,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nextMealSectionTitle => 'How to balance your next meal';
 
   @override
+  String get noLateSnackSelfCook => 'No late snack; if needed, small clear soup + veggies';
+  @override
+  String get noLateSnackConvenience => 'No late snack; if needed, unsweetened soy milk or a small salad';
+  @override
+  String get noLateSnackBento => 'No late snack; if needed, half-portion veggie bento';
+  @override
+  String get noLateSnackOther => 'No late snack; if needed, a small portion of fruit';
+
+  @override
   String get nextMealHint => 'Pick the easiest option for you';
 
   @override
