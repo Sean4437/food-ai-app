@@ -31,24 +31,32 @@ class PlatePolygonStack extends StatelessWidget {
         final count = images.length;
         if (count == 0) return const SizedBox.shrink();
         var plateSize = maxPlateSize * 0.85;
-        if (plateSize < minPlateSize) {
-          plateSize = minPlateSize;
+        final maxWidth = constraints.maxWidth;
+        if (maxWidth > 0) {
+          final maxAllowed = maxWidth;
+          plateSize = plateSize.clamp(minPlateSize, maxAllowed);
         }
         var radius = plateSize * 0.7;
+        if (maxWidth > 0) {
+          radius = math.min(radius, (maxWidth - plateSize) / 2);
+        }
+        var size = plateSize + radius * 2;
+        final imageSize = plateSize * 0.7;
+        final center = Offset((maxWidth > 0 ? maxWidth : size) / 2, size / 2);
         final outerCount = count <= 5 ? count : math.min(6, count);
         final innerCount = count - outerCount;
-        final offsets = <Offset>[];
+        final positions = <Offset>[];
         if (count == 1) {
-          offsets.add(Offset.zero);
+          positions.add(center);
         } else if (count == 2) {
-          offsets.add(Offset(-radius * 0.7, -radius * 0.35));
-          offsets.add(Offset(radius * 0.7, radius * 0.35));
+          positions.add(center + Offset(-radius * 0.7, -radius * 0.35));
+          positions.add(center + Offset(radius * 0.7, radius * 0.35));
         } else {
           final outerStep = 2 * math.pi / outerCount;
           final startAngle = -math.pi / 2;
           for (var i = 0; i < outerCount; i++) {
             final angle = startAngle + outerStep * i;
-            offsets.add(Offset(radius * math.cos(angle), radius * math.sin(angle)));
+            positions.add(center + Offset(radius * math.cos(angle), radius * math.sin(angle)));
           }
           if (innerCount > 0) {
             final innerRadius = radius * 0.48;
@@ -56,44 +64,10 @@ class PlatePolygonStack extends StatelessWidget {
             final innerStart = -math.pi / 2 + innerStep / 2;
             for (var i = 0; i < innerCount; i++) {
               final angle = innerStart + innerStep * i;
-              offsets.add(Offset(innerRadius * math.cos(angle), innerRadius * math.sin(angle)));
+              positions.add(center + Offset(innerRadius * math.cos(angle), innerRadius * math.sin(angle)));
             }
           }
         }
-
-        double minX = double.infinity;
-        double maxX = -double.infinity;
-        double minY = double.infinity;
-        double maxY = -double.infinity;
-        for (final offset in offsets) {
-          minX = math.min(minX, offset.dx - plateSize / 2);
-          maxX = math.max(maxX, offset.dx + plateSize / 2);
-          minY = math.min(minY, offset.dy - plateSize / 2);
-          maxY = math.max(maxY, offset.dy + plateSize / 2);
-        }
-        final boundsWidth = maxX - minX;
-        final boundsHeight = maxY - minY;
-        final maxWidth = constraints.maxWidth;
-        final maxHeight = constraints.maxHeight;
-        final availableWidth = maxWidth > 0 ? maxWidth : boundsWidth;
-        final availableHeight = maxHeight > 0 ? maxHeight : boundsHeight;
-        final widthScale = availableWidth > 0 && boundsWidth > 0 ? availableWidth / boundsWidth : 1.0;
-        final heightScale = availableHeight > 0 && boundsHeight > 0 ? availableHeight / boundsHeight : 1.0;
-        final scale = math.min(1.0, math.min(widthScale, heightScale));
-        if (scale < 1.0) {
-          plateSize *= scale;
-          radius *= scale;
-          minX *= scale;
-          maxX *= scale;
-          minY *= scale;
-          maxY *= scale;
-        }
-        final imageSize = plateSize * 0.7;
-        final size = math.max(boundsWidth * scale, boundsHeight * scale);
-        final center = Offset(availableWidth / 2, availableHeight / 2);
-        final positions = offsets
-            .map((offset) => center + offset * scale)
-            .toList();
 
         final safeSelected = selectedIndex.clamp(0, count - 1);
         final drawOrder = <int>[
@@ -102,8 +76,8 @@ class PlatePolygonStack extends StatelessWidget {
         ];
 
         return SizedBox(
-          width: availableWidth,
-          height: availableHeight,
+          width: maxWidth > 0 ? maxWidth : size,
+          height: size,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
