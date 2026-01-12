@@ -132,6 +132,22 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
                               child: IconButton(
+                                onPressed: () async {
+                                  await app.addCustomFoodFromEntry(entry, t);
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(t.customAdded)),
+                                  );
+                                },
+                                icon: const Icon(Icons.bookmark_add, size: 20),
+                                tooltip: t.customAdd,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: IconButton(
                                 onPressed: () => _reanalyzeEntry(context, app, entry),
                                 icon: const Icon(Icons.refresh, size: 20),
                                 tooltip: t.reanalyzeLabel,

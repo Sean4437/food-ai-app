@@ -10,6 +10,7 @@ import 'package:crypto/crypto.dart';
 import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
 import '../models/label_result.dart';
+import '../models/custom_food.dart';
 import '../services/api_service.dart';
 import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
@@ -35,6 +36,7 @@ class AppState extends ChangeNotifier {
   final Map<String, Map<String, String>> _mealOverrides = {};
   final Map<String, Map<String, String>> _weekOverrides = {};
   final Map<String, String> _meta = {};
+  final List<CustomFood> customFoods = [];
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
   final Map<String, String> _analysisTimerReason = {};
@@ -160,6 +162,25 @@ class AppState extends ChangeNotifier {
         return t.activityHigh;
       default:
         return t.activityLight;
+    }
+  }
+
+  String mealTypeLabel(MealType type, AppLocalizations t) {
+    switch (type) {
+      case MealType.breakfast:
+        return t.breakfast;
+      case MealType.brunch:
+        return t.brunch;
+      case MealType.lunch:
+        return t.lunch;
+      case MealType.afternoonTea:
+        return t.afternoonTea;
+      case MealType.dinner:
+        return t.dinner;
+      case MealType.lateSnack:
+        return t.lateSnack;
+      case MealType.other:
+        return t.other;
     }
   }
 
@@ -363,6 +384,78 @@ class AppState extends ChangeNotifier {
     _scheduleAutoFinalize();
     _scheduleAutoFinalizeWeek();
     notifyListeners();
+  }
+
+  Future<void> addCustomFoodFromEntry(MealEntry entry, AppLocalizations t) async {
+    final now = DateTime.now();
+    final result = entry.result;
+    if (result == null) return;
+    final food = CustomFood(
+      id: _newId(),
+      name: entry.overrideFoodName ?? result.foodName,
+      summary: result.dishSummary ?? '',
+      calorieRange: result.calorieRange,
+      suggestion: result.suggestion,
+      macros: Map<String, double>.from(result.macros),
+      imageBytes: entry.imageBytes,
+      createdAt: now,
+      updatedAt: now,
+    );
+    customFoods.insert(0, food);
+    notifyListeners();
+    await _saveOverrides();
+  }
+
+  Future<void> upsertCustomFood(CustomFood food) async {
+    final index = customFoods.indexWhere((item) => item.id == food.id);
+    if (index == -1) {
+      customFoods.insert(0, food);
+    } else {
+      customFoods[index] = food;
+    }
+    notifyListeners();
+    await _saveOverrides();
+  }
+
+  Future<void> deleteCustomFood(CustomFood food) async {
+    customFoods.removeWhere((item) => item.id == food.id);
+    notifyListeners();
+    await _saveOverrides();
+  }
+
+  Future<MealEntry> saveCustomFoodUsage(
+    CustomFood food,
+    DateTime time,
+    MealType type,
+  ) async {
+    final mealId = _assignMealId(time, type);
+    final entry = MealEntry(
+      id: _newId(),
+      imageBytes: food.imageBytes,
+      filename: 'custom.png',
+      time: time,
+      type: type,
+      portionPercent: 100,
+      mealId: mealId,
+      imageHash: _hashBytes(food.imageBytes),
+    );
+    entry.result = AnalysisResult(
+      foodName: food.name,
+      calorieRange: food.calorieRange,
+      macros: Map<String, double>.from(food.macros),
+      dishSummary: food.summary,
+      suggestion: food.suggestion,
+      tier: 'custom',
+      source: 'custom',
+    );
+    entry.lastAnalyzedAt = DateTime.now().toIso8601String();
+    entry.lastAnalyzeReason = 'custom_use';
+    entries.insert(0, entry);
+    markMealInteraction(entry.mealId ?? entry.id);
+    _selectedDate = _dateOnly(entry.time);
+    notifyListeners();
+    await _store.upsert(entry);
+    return entry;
   }
 
   MealEntry? get latestEntryAny => entries.isNotEmpty ? entries.first : null;
@@ -1773,6 +1866,17 @@ class AppState extends ChangeNotifier {
         _meta[key] = value.toString();
       });
     }
+    final custom = overrides['custom_foods'];
+    customFoods.clear();
+    if (custom is List) {
+      for (final item in custom) {
+        if (item is Map<String, dynamic>) {
+          try {
+            customFoods.add(CustomFood.fromJson(item));
+          } catch (_) {}
+        }
+      }
+    }
   }
 
   Future<void> _saveOverrides() async {
@@ -1781,6 +1885,7 @@ class AppState extends ChangeNotifier {
       'meal': _mealOverrides,
       'week': _weekOverrides,
       'meta': _meta,
+      'custom_foods': customFoods.map((item) => item.toJson()).toList(),
     });
   }
 
