@@ -221,15 +221,22 @@ class _HomeScreenState extends State<HomeScreen> {
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final key = DateTime(date.year, date.month, date.day);
-    final selectedIndex = (_dateSelectedMeal[key] ?? 0).clamp(0, groups.length - 1);
+    final displayGroups = List<List<MealEntry>>.from(groups);
+    final selectedIndex = (_dateSelectedMeal[key] ?? 0).clamp(0, displayGroups.length - 1);
     return PlatePolygonStack(
-      images: groups.map((group) => group.first.imageBytes).toList(),
+      images: displayGroups.map((group) => group.first.imageBytes).toList(),
       plateAsset: plateAsset,
       selectedIndex: selectedIndex,
       onSelect: (index) => setState(() => _dateSelectedMeal[key] = index),
-      onOpen: (_) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => DayMealsScreen(date: date)),
-      ),
+      onOpen: (index) {
+        final group = displayGroups[index];
+        final mealId = group.first.mealId ?? group.first.id;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DayMealsScreen(date: date, initialMealId: mealId),
+          ),
+        );
+      },
       maxPlateSize: 300,
       minPlateSize: 220,
     );
