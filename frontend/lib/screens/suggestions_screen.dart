@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:math' as math;
 import '../state/app_state.dart';
@@ -25,6 +26,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   String? _error;
   bool _showSaveActions = false;
   late final AnimationController _scanController;
+  double _progressValue = 0;
+  int _statusIndex = 0;
+  bool _finishingProgress = false;
+  Timer? _progressTimer;
+  Timer? _statusTimer;
 
   @override
   void initState() {
@@ -39,6 +45,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   
   @override
   void dispose() {
+    _progressTimer?.cancel();
+    _statusTimer?.cancel();
     _scanController.dispose();
     super.dispose();
   }
@@ -61,6 +69,7 @@ Future<void> _startCapture() async {
       _error = null;
       _previewBytes = preview;
     });
+    _startSmartProgress();
     final app = AppStateScope.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final historyContext = app.buildAiContext();
@@ -71,14 +80,18 @@ Future<void> _startCapture() async {
         historyContext: historyContext.isEmpty ? null : historyContext,
       );
       if (!mounted) return;
-      setState(() {
-        _analysis = analysis;
-        _loading = false;
-        _previewBytes = null;
-        _showSaveActions = true;
+      _analysis = analysis;
+      _previewBytes = null;
+      _showSaveActions = true;
+      _completeSmartProgress(() {
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+        });
       });
     } catch (err) {
       if (!mounted) return;
+      _stopSmartProgress();
       setState(() {
         _error = err.toString();
         _loading = false;
@@ -126,6 +139,7 @@ Future<void> _startCapture() async {
       _loading = true;
       _error = null;
     });
+    _startSmartProgress();
     final historyContext = app.buildAiContext();
     try {
       final updated = await app.reanalyzeQuickCapture(
@@ -135,14 +149,18 @@ Future<void> _startCapture() async {
         foodName: result.trim(),
       );
       if (!mounted) return;
-      setState(() {
-        _analysis = updated;
-        _loading = false;
-        _previewBytes = null;
-        _showSaveActions = true;
+      _analysis = updated;
+      _previewBytes = null;
+      _showSaveActions = true;
+      _completeSmartProgress(() {
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+        });
       });
     } catch (err) {
       if (!mounted) return;
+      _stopSmartProgress();
       setState(() {
         _error = err.toString();
         _loading = false;
@@ -373,21 +391,42 @@ Future<void> _startCapture() async {
           animation: _scanController,
           builder: (context, child) {
             final value = _scanController.value;
-            final dots = List.filled((value * 3).floor() % 3 + 1, '.').join();
+            final t = AppLocalizations.of(context)!;
+            final steps = [
+              t.suggestInstantStepDetect,
+              t.suggestInstantStepEstimate,
+              t.suggestInstantStepAdvice,
+            ];
+            final statusText = steps[_statusIndex % steps.length];
+            final percent = (_progressValue * 100).clamp(0, 100).round();
             return Stack(
               children: [
                 Container(color: Colors.white.withOpacity(0.02)),
                 CustomPaint(
-                  painter: _DotScanPainter(progress: value),
+                  painter: _ProgressArcPainter(
+                    progress: _progressValue,
+                    rotation: value,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   size: Size.infinite,
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 18),
-                    child: Text(
-                      'AI 分析中$dots',
-                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$percent%',
+                          style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600, color: Colors.black87),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          statusText,
+                          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -397,6 +436,69 @@ Future<void> _startCapture() async {
         ),
       ),
     );
+  }
+
+  void _startSmartProgress() {
+    _progressTimer?.cancel();
+    _statusTimer?.cancel();
+    _finishingProgress = false;
+    setState(() {
+      _progressValue = 0;
+      _statusIndex = 0;
+    });
+    _statusTimer = Timer.periodic(const Duration(milliseconds: 1200), (_) {
+      if (!mounted || !_loading) return;
+      setState(() {
+        _statusIndex = (_statusIndex + 1) % 3;
+      });
+    });
+    _animateProgress(0.6, const Duration(milliseconds: 1000), () {
+      _animateProgress(0.9, const Duration(milliseconds: 4000), () {
+        _animateProgress(0.95, const Duration(milliseconds: 8000));
+      });
+    });
+  }
+
+  void _stopSmartProgress() {
+    _progressTimer?.cancel();
+    _statusTimer?.cancel();
+    _finishingProgress = false;
+  }
+
+  void _completeSmartProgress(VoidCallback onDone) {
+    _finishingProgress = true;
+    _progressTimer?.cancel();
+    _animateProgress(1.0, const Duration(milliseconds: 400), () {
+      _statusTimer?.cancel();
+      onDone();
+    });
+  }
+
+  void _animateProgress(double target, Duration duration, [VoidCallback? onComplete]) {
+    _progressTimer?.cancel();
+    final start = _progressValue;
+    final startTime = DateTime.now();
+    _progressTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      if (!_loading && !_finishingProgress) {
+        timer.cancel();
+        return;
+      }
+      final elapsed = DateTime.now().difference(startTime).inMilliseconds;
+      final t = (elapsed / duration.inMilliseconds).clamp(0.0, 1.0);
+      final eased = 1 - math.pow(1 - t, 2).toDouble();
+      final nextValue = start + (target - start) * eased;
+      if (mounted) {
+        setState(() {
+          _progressValue = nextValue;
+        });
+      }
+      if (t >= 1) {
+        timer.cancel();
+        if (onComplete != null) {
+          onComplete();
+        }
+      }
+    });
   }
 
 Widget _buildAdviceCard(AppLocalizations t) {
@@ -624,10 +726,16 @@ Widget _buildAdviceCard(AppLocalizations t) {
   }
 }
 
-class _DotScanPainter extends CustomPainter {
-  _DotScanPainter({required this.progress});
+class _ProgressArcPainter extends CustomPainter {
+  _ProgressArcPainter({
+    required this.progress,
+    required this.rotation,
+    required this.color,
+  });
 
   final double progress;
+  final double rotation;
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -636,33 +744,48 @@ class _DotScanPainter extends CustomPainter {
     if (w <= 0 || h <= 0) return;
 
     final center = Offset(w * 0.5, h * 0.46);
-    final radius = math.min(w, h) * 0.22;
-    final spacing = 10.0;
-    final dotRadius = 1.6;
-    final maxDots = ((radius * 2 / spacing) * (radius * 2 / spacing)).floor();
-    final visibleCount = (maxDots * progress.clamp(0.0, 1.0)).floor();
-    int shown = 0;
+    final radius = math.min(w, h) * 0.27;
+    final trackPaint = Paint()
+      ..color = color.withOpacity(0.12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4;
 
-    final paint = Paint()..color = Colors.white.withOpacity(0.18);
+    final progressPaint = Paint()
+      ..color = color.withOpacity(0.65)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
 
-    for (double y = center.dy - radius; y <= center.dy + radius; y += spacing) {
-      for (double x = center.dx - radius; x <= center.dx + radius; x += spacing) {
-        final dx = x - center.dx;
-        final dy = y - center.dy;
-        if (dx * dx + dy * dy > radius * radius) {
-          continue;
-        }
-        if (shown >= visibleCount) {
-          return;
-        }
-        canvas.drawCircle(Offset(x, y), dotRadius, paint);
-        shown += 1;
-      }
-    }
+    final spinnerPaint = Paint()
+      ..color = color.withOpacity(0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawCircle(center, radius, trackPaint);
+
+    final sweep = (progress.clamp(0.0, 1.0)) * math.pi * 2;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      sweep,
+      false,
+      progressPaint,
+    );
+
+    final spinnerSweep = math.pi * 0.6;
+    final spinnerStart = rotation * math.pi * 2 - math.pi / 2;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius + 6),
+      spinnerStart,
+      spinnerSweep,
+      false,
+      spinnerPaint,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _DotScanPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _ProgressArcPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.rotation != rotation || oldDelegate.color != color;
   }
 }

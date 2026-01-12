@@ -1053,6 +1053,24 @@ abstract class AppLocalizations {
   /// **'重新拍照'**
   String get suggestInstantRetake;
 
+  /// No description provided for @suggestInstantStepDetect.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'正在辨識餐點'**
+  String get suggestInstantStepDetect;
+
+  /// No description provided for @suggestInstantStepEstimate.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'估算熱量與份量'**
+  String get suggestInstantStepEstimate;
+
+  /// No description provided for @suggestInstantStepAdvice.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'產生吃法建議'**
+  String get suggestInstantStepAdvice;
+
   /// No description provided for @suggestInstantSavePrompt.
   ///
   /// In zh_TW, this message translates to:

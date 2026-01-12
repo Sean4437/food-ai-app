@@ -492,6 +492,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantRetake => '重新拍照';
 
   @override
+  String get suggestInstantStepDetect => '正在辨識餐點';
+
+  @override
+  String get suggestInstantStepEstimate => '估算熱量與份量';
+
+  @override
+  String get suggestInstantStepAdvice => '產生吃法建議';
+
+  @override
   String get suggestInstantSavePrompt => '要儲存這餐嗎？';
 
   @override
@@ -1462,6 +1471,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get suggestInstantRetake => '重新拍照';
+
+  @override
+  String get suggestInstantStepDetect => '正在辨識餐點';
+
+  @override
+  String get suggestInstantStepEstimate => '估算熱量與份量';
+
+  @override
+  String get suggestInstantStepAdvice => '產生吃法建議';
 
   @override
   String get suggestInstantSavePrompt => '要儲存這餐嗎？';

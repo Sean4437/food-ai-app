@@ -502,6 +502,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantRetake => 'Retake photo';
 
   @override
+  String get suggestInstantStepDetect => 'Identifying the meal';
+
+  @override
+  String get suggestInstantStepEstimate => 'Estimating calories and portion';
+
+  @override
+  String get suggestInstantStepAdvice => 'Generating how-to-eat advice';
+
+  @override
   String get suggestInstantSavePrompt => 'Save this meal?';
 
   @override
