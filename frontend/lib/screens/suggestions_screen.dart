@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'dart:typed_data';
+import 'dart:math' as math;
 import '../state/app_state.dart';
 import '../models/custom_food.dart';
 import '../models/meal_entry.dart';
@@ -373,12 +374,38 @@ Future<void> _startCapture() async {
           builder: (context, child) {
             final value = _scanController.value;
             final dots = List.filled((value * 3).floor() % 3 + 1, '.').join();
+            final pulse = (math.sin(value * math.pi * 4) + 1) / 2;
+            final scale = 0.7 + pulse * 0.45;
+            final glowOpacity = 0.08 + pulse * 0.18;
             return Stack(
               children: [
-                Container(color: Colors.white.withOpacity(0.05)),
-                CustomPaint(
-                  painter: _ScanPainter(progress: value),
-                  size: Size.infinite,
+                Container(color: Colors.white.withOpacity(0.03)),
+                Center(
+                  child: Transform.scale(
+                    scale: scale,
+                    child: Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.45 + glowOpacity),
+                            Colors.white.withOpacity(glowOpacity),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.55, 1.0],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.25 + glowOpacity),
+                            blurRadius: 28,
+                            spreadRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
@@ -620,46 +647,5 @@ Widget _buildAdviceCard(AppLocalizations t) {
         ),
       ),
     );
-  }
-}
-
-class _ScanPainter extends CustomPainter {
-  _ScanPainter({required this.progress});
-
-  final double progress;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.black.withOpacity(0.28)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6;
-
-    final w = size.width;
-    final h = size.height;
-    if (w <= 0 || h <= 0) return;
-
-    final rect1 = Rect.fromCenter(center: Offset(w * 0.5, h * 0.42), width: w * 0.38, height: h * 0.22);
-    final rect2 = Rect.fromCenter(center: Offset(w * 0.4, h * 0.55), width: w * 0.22, height: h * 0.12);
-    final rect3 = Rect.fromCenter(center: Offset(w * 0.62, h * 0.58), width: w * 0.2, height: h * 0.1);
-
-    _drawAnimatedRect(canvas, rect1, paint, progress);
-    _drawAnimatedRect(canvas, rect2, paint, (progress + 0.2) % 1.0);
-    _drawAnimatedRect(canvas, rect3, paint, (progress + 0.4) % 1.0);
-  }
-
-  void _drawAnimatedRect(Canvas canvas, Rect rect, Paint paint, double t) {
-    final path = Path()..addRect(rect);
-    final metrics = path.computeMetrics().toList();
-    if (metrics.isEmpty) return;
-    final metric = metrics.first;
-    final length = metric.length * t.clamp(0.0, 1.0);
-    final segment = metric.extractPath(0, length);
-    canvas.drawPath(segment, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ScanPainter oldDelegate) {
-    return oldDelegate.progress != progress;
   }
 }
