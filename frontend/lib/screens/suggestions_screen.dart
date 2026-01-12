@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import 'dart:typed_data';
 import '../state/app_state.dart';
 import '../models/custom_food.dart';
 import '../models/meal_entry.dart';
@@ -15,33 +16,49 @@ class SuggestionsScreen extends StatefulWidget {
   State<SuggestionsScreen> createState() => _SuggestionsScreenState();
 }
 
-class _SuggestionsScreenState extends State<SuggestionsScreen> {
+class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   QuickCaptureAnalysis? _analysis;
+  Uint8List? _previewBytes;
   bool _loading = false;
   String? _error;
   bool _showSaveActions = false;
+  late final AnimationController _scanController;
 
   @override
   void initState() {
     super.initState();
+    _scanController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
     WidgetsBinding.instance.addPostFrameCallback((_) => _startCapture());
   }
 
-  Future<void> _startCapture() async {
+  
+  @override
+  void dispose() {
+    _scanController.dispose();
+    super.dispose();
+  }
+
+Future<void> _startCapture() async {
     if (!mounted) return;
     setState(() {
       _loading = false;
       _error = null;
       _analysis = null;
+      _previewBytes = null;
       _showSaveActions = false;
     });
     final file = await _picker.pickImage(source: ImageSource.camera);
     if (!mounted) return;
     if (file == null) return;
+    final preview = await file.readAsBytes();
     setState(() {
       _loading = true;
       _error = null;
+      _previewBytes = preview;
     });
     final app = AppStateScope.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
@@ -56,6 +73,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
       setState(() {
         _analysis = analysis;
         _loading = false;
+        _previewBytes = null;
         _showSaveActions = true;
       });
     } catch (err) {
@@ -63,6 +81,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
       setState(() {
         _error = err.toString();
         _loading = false;
+        _previewBytes = null;
       });
     }
   }
@@ -118,6 +137,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
       setState(() {
         _analysis = updated;
         _loading = false;
+        _previewBytes = null;
         _showSaveActions = true;
       });
     } catch (err) {
@@ -125,6 +145,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
       setState(() {
         _error = err.toString();
         _loading = false;
+        _previewBytes = null;
       });
     }
   }
@@ -343,7 +364,66 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
     return line.trim();
   }
 
-  Widget _buildAdviceCard(AppLocalizations t) {
+  
+  Widget _buildScanOverlay() {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const width = 120.0;
+            return AnimatedBuilder(
+              animation: _scanController,
+              builder: (context, child) {
+                final value = _scanController.value;
+                final travel = constraints.maxWidth + width * 2;
+                final dx = -width + travel * value;
+                final dots = List.filled((value * 3).floor() % 3 + 1, '.').join();
+                return Stack(
+                  children: [
+                    Container(color: Colors.white.withOpacity(0.06)),
+                    Positioned(
+                      left: dx,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: width,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withOpacity(0.0),
+                              Colors.white.withOpacity(0.22),
+                              Colors.white.withOpacity(0.0),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.auto_awesome, color: Colors.black.withOpacity(0.55), size: 22),
+                          const SizedBox(height: 6),
+                          Text(
+                            'AI 分析中$dots',
+                            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+Widget _buildAdviceCard(AppLocalizations t) {
     if (_analysis == null) {
       return Text(t.suggestInstantMissing, style: AppTextStyles.caption(context).copyWith(color: Colors.black54));
     }
@@ -405,14 +485,20 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                   const SizedBox(height: 6),
                   Text(t.suggestInstantHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                   const SizedBox(height: 18),
-                  if (_analysis != null)
+                  final showPreview = _analysis == null && _previewBytes != null;
+                  if (_analysis != null || showPreview)
                     Center(
-                      child: PlatePhoto(
-                        imageBytes: _analysis!.imageBytes,
-                        plateAsset: plateAsset,
-                        plateSize: 260,
-                        imageSize: 185,
-                        tilt: 0,
+                      child: Stack(
+                        children: [
+                          PlatePhoto(
+                            imageBytes: _analysis?.imageBytes ?? _previewBytes!,
+                            plateAsset: plateAsset,
+                            plateSize: 260,
+                            imageSize: 185,
+                            tilt: 0,
+                          ),
+                          if (_loading) _buildScanOverlay(),
+                        ],
                       ),
                     )
                   else
