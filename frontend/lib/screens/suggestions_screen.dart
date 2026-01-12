@@ -463,6 +463,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final analysis = _analysis?.result;
+    final showPreview = _analysis == null && _previewBytes != null;
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -479,13 +480,12 @@ Widget _buildAdviceCard(AppLocalizations t) {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                  Text(t.suggestTitle, style: AppTextStyles.title1(context)),
-                  const SizedBox(height: 6),
-                  Text(t.suggestInstantHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                  const SizedBox(height: 18),
-                  final showPreview = _analysis == null && _previewBytes != null;
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                    Text(t.suggestTitle, style: AppTextStyles.title1(context)),
+                    const SizedBox(height: 6),
+                    Text(t.suggestInstantHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                    const SizedBox(height: 18),
                   if (_analysis != null || showPreview)
                     Center(
                       child: Stack(
