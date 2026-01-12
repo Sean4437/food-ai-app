@@ -368,54 +368,29 @@ Future<void> _startCapture() async {
   Widget _buildScanOverlay() {
     return Positioned.fill(
       child: IgnorePointer(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            const width = 120.0;
-            return AnimatedBuilder(
-              animation: _scanController,
-              builder: (context, child) {
-                final value = _scanController.value;
-                final travel = constraints.maxWidth + width * 2;
-                final dx = -width + travel * value;
-                final dots = List.filled((value * 3).floor() % 3 + 1, '.').join();
-                return Stack(
-                  children: [
-                    Container(color: Colors.white.withOpacity(0.06)),
-                    Positioned(
-                      left: dx,
-                      top: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: width,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.white.withOpacity(0.0),
-                              Colors.white.withOpacity(0.22),
-                              Colors.white.withOpacity(0.0),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                      ),
+        child: AnimatedBuilder(
+          animation: _scanController,
+          builder: (context, child) {
+            final value = _scanController.value;
+            final dots = List.filled((value * 3).floor() % 3 + 1, '.').join();
+            return Stack(
+              children: [
+                Container(color: Colors.white.withOpacity(0.05)),
+                CustomPaint(
+                  painter: _ScanPainter(progress: value),
+                  size: Size.infinite,
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 18),
+                    child: Text(
+                      'AI 分析中$dots',
+                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                     ),
-                    Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.auto_awesome, color: Colors.black.withOpacity(0.55), size: 22),
-                          const SizedBox(height: 6),
-                          Text(
-                            'AI 分析中$dots',
-                            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
+                  ),
+                ),
+              ],
             );
           },
         ),
@@ -617,5 +592,46 @@ Widget _buildAdviceCard(AppLocalizations t) {
         ),
       ),
     );
+  }
+}
+
+class _ScanPainter extends CustomPainter {
+  _ScanPainter({required this.progress});
+
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black.withOpacity(0.28)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+
+    final w = size.width;
+    final h = size.height;
+    if (w <= 0 || h <= 0) return;
+
+    final rect1 = Rect.fromCenter(center: Offset(w * 0.5, h * 0.42), width: w * 0.38, height: h * 0.22);
+    final rect2 = Rect.fromCenter(center: Offset(w * 0.4, h * 0.55), width: w * 0.22, height: h * 0.12);
+    final rect3 = Rect.fromCenter(center: Offset(w * 0.62, h * 0.58), width: w * 0.2, height: h * 0.1);
+
+    _drawAnimatedRect(canvas, rect1, paint, progress);
+    _drawAnimatedRect(canvas, rect2, paint, (progress + 0.2) % 1.0);
+    _drawAnimatedRect(canvas, rect3, paint, (progress + 0.4) % 1.0);
+  }
+
+  void _drawAnimatedRect(Canvas canvas, Rect rect, Paint paint, double t) {
+    final path = Path()..addRect(rect);
+    final metrics = path.computeMetrics().toList();
+    if (metrics.isEmpty) return;
+    final metric = metrics.first;
+    final length = metric.length * t.clamp(0.0, 1.0);
+    final segment = metric.extractPath(0, length);
+    canvas.drawPath(segment, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScanPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
