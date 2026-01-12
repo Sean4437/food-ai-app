@@ -84,16 +84,17 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
   Widget _photoStack(List<MealEntry> group, int groupIndex) {
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
-    final selectedIndex = (_groupSelectedIndex[groupIndex] ?? 0).clamp(0, group.length - 1);
+    final displayGroup = List<MealEntry>.from(group)..sort((a, b) => a.time.compareTo(b.time));
+    final selectedIndex = (_groupSelectedIndex[groupIndex] ?? 0).clamp(0, displayGroup.length - 1);
     return PlatePolygonStack(
-      images: group.map((entry) => entry.imageBytes).toList(),
+      images: displayGroup.map((entry) => entry.imageBytes).toList(),
       plateAsset: plateAsset,
       selectedIndex: selectedIndex,
       onSelect: (index) => setState(() => _groupSelectedIndex[groupIndex] = index),
       onOpen: (index) => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => MealItemsScreen(
-            group: group,
+            group: displayGroup,
             initialIndex: index,
           ),
         ),
