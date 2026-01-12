@@ -374,38 +374,12 @@ Future<void> _startCapture() async {
           builder: (context, child) {
             final value = _scanController.value;
             final dots = List.filled((value * 3).floor() % 3 + 1, '.').join();
-            final pulse = (math.sin(value * math.pi * 4) + 1) / 2;
-            final scale = 0.7 + pulse * 0.45;
-            final glowOpacity = 0.08 + pulse * 0.18;
             return Stack(
               children: [
-                Container(color: Colors.white.withOpacity(0.03)),
-                Center(
-                  child: Transform.scale(
-                    scale: scale,
-                    child: Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            Colors.white.withOpacity(0.45 + glowOpacity),
-                            Colors.white.withOpacity(glowOpacity),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.55, 1.0],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.white.withOpacity(0.25 + glowOpacity),
-                            blurRadius: 28,
-                            spreadRadius: 6,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                Container(color: Colors.white.withOpacity(0.02)),
+                CustomPaint(
+                  painter: _DotScanPainter(progress: value),
+                  size: Size.infinite,
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
@@ -647,5 +621,48 @@ Widget _buildAdviceCard(AppLocalizations t) {
         ),
       ),
     );
+  }
+}
+
+class _DotScanPainter extends CustomPainter {
+  _DotScanPainter({required this.progress});
+
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    if (w <= 0 || h <= 0) return;
+
+    final center = Offset(w * 0.5, h * 0.46);
+    final radius = math.min(w, h) * 0.22;
+    final spacing = 10.0;
+    final dotRadius = 1.6;
+    final maxDots = ((radius * 2 / spacing) * (radius * 2 / spacing)).floor();
+    final visibleCount = (maxDots * progress.clamp(0.0, 1.0)).floor();
+    int shown = 0;
+
+    final paint = Paint()..color = Colors.white.withOpacity(0.18);
+
+    for (double y = center.dy - radius; y <= center.dy + radius; y += spacing) {
+      for (double x = center.dx - radius; x <= center.dx + radius; x += spacing) {
+        final dx = x - center.dx;
+        final dy = y - center.dy;
+        if (dx * dx + dy * dy > radius * radius) {
+          continue;
+        }
+        if (shown >= visibleCount) {
+          return;
+        }
+        canvas.drawCircle(Offset(x, y), dotRadius, paint);
+        shown += 1;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DotScanPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
