@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -104,6 +104,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelInfoTitle => 'Label info';
 
   @override
+  String get customTabTitle => 'Custom';
+
+  @override
+  String get customAdd => 'Add to custom';
+
+  @override
+  String get customAdded => 'Saved to custom';
+
+  @override
+  String get customEmpty => 'No custom items yet.';
+
+  @override
+  String get customSelectTitle => 'Choose a custom item';
+
+  @override
+  String get customConfirmTitle => 'Confirm meal info';
+
+  @override
+  String get customConfirmDate => 'Date';
+
+  @override
+  String get customConfirmTime => 'Time';
+
+  @override
+  String get customConfirmMealType => 'Meal type';
+
+  @override
+  String get customUse => 'Use custom item';
+
+  @override
+  String get customUseSaved => 'Custom meal saved';
+
+  @override
+  String get customCountUnit => 'items';
+
+  @override
+  String get customEditTitle => 'Edit custom item';
+
+  @override
+  String get customChangePhoto => 'Change photo';
+
+  @override
+  String get customSummaryLabel => 'Dish summary';
+
+  @override
+  String get customSuggestionLabel => 'Suggestion';
+
+  @override
+  String get customDeleteTitle => 'Delete custom item';
+
+  @override
+  String get customDeleteConfirm => 'Delete this custom item?';
+
+  @override
   String get unknownFood => 'Unnamed meal';
 
   @override
@@ -182,13 +236,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nextMealSectionTitle => 'How to balance your next meal';
 
   @override
-  String get noLateSnackSelfCook => 'No late snack; if needed, small clear soup + veggies';
+  String get noLateSnackSelfCook =>
+      'No late snack; if needed, small clear soup + veggies';
+
   @override
-  String get noLateSnackConvenience => 'No late snack; if needed, unsweetened soy milk or a small salad';
+  String get noLateSnackConvenience =>
+      'No late snack; if needed, unsweetened soy milk or a small salad';
+
   @override
-  String get noLateSnackBento => 'No late snack; if needed, half-portion veggie bento';
+  String get noLateSnackBento =>
+      'No late snack; if needed, half-portion veggie bento';
+
   @override
-  String get noLateSnackOther => 'No late snack; if needed, a small portion of fruit';
+  String get noLateSnackOther =>
+      'No late snack; if needed, a small portion of fruit';
 
   @override
   String get nextMealHint => 'Pick the easiest option for you';
@@ -226,26 +287,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get breakfastStartLabel => 'Breakfast start';
+
   @override
   String get breakfastEndLabel => 'Breakfast end';
+
   @override
   String get brunchStartLabel => 'Brunch start';
+
   @override
   String get brunchEndLabel => 'Brunch end';
+
   @override
   String get lunchStartLabel => 'Lunch start';
+
   @override
   String get lunchEndLabel => 'Lunch end';
+
   @override
   String get afternoonTeaStartLabel => 'Afternoon tea start';
+
   @override
   String get afternoonTeaEndLabel => 'Afternoon tea end';
+
   @override
   String get dinnerStartLabel => 'Dinner start';
+
   @override
   String get dinnerEndLabel => 'Dinner end';
+
   @override
   String get lateSnackStartLabel => 'Late snack start';
+
   @override
   String get lateSnackEndLabel => 'Late snack end';
 
@@ -315,6 +387,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tabSuggest => 'Instant';
+
+  @override
+  String get tabCustom => 'Custom';
 
   @override
   String get tabSettings => 'Settings';
@@ -603,6 +678,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toneBullet => 'Clear bullets';
+
   @override
   String get toneStrict => 'Strict';
 
@@ -685,6 +761,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityHigh => 'High';
 
   @override
+  String get exerciseNoExercise => 'No exercise';
+
+  @override
   String get exerciseLabel => 'Exercise';
 
   @override
@@ -701,8 +780,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exerciseNone => 'None';
-
-  String get exerciseNoExercise => 'No exercise';
 
   @override
   String get exerciseWalking => 'Brisk walk';
@@ -767,12 +844,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get layoutThemeLabel => 'Theme & layout';
+
   @override
   String get textSizeLabel => 'Text size';
+
   @override
   String get textSizeSmall => 'Standard';
+
   @override
   String get textSizeMedium => 'Larger';
+
   @override
   String get textSizeLarge => 'Largest';
 
@@ -780,13 +861,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeClean => 'Clean Blue';
 
   @override
-  String get themeWarm => 'Warm Orange';
+  String get glowToggleLabel => 'Glow background';
 
+  @override
   String get themeGreen => 'Fresh Green';
 
   @override
-  @override
-  String get glowToggleLabel => 'Glow background';
+  String get themeWarm => 'Warm Orange';
 
   @override
   String get plateSection => 'Plate style';

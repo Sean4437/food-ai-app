@@ -49,6 +49,7 @@
   "customConfirmMealType": "Meal type",
   "customUse": "Use custom item",
   "customUseSaved": "Custom meal saved",
+  "customCountUnit": "items",
   "customEditTitle": "Edit custom item",
   "customChangePhoto": "Change photo",
   "customSummaryLabel": "Dish summary",

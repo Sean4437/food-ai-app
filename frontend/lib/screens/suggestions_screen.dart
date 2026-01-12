@@ -509,10 +509,47 @@ Widget _buildAdviceCard(AppLocalizations t) {
                       ),
                     ),
                   const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: _useCustomFood,
-                    icon: const Icon(Icons.bookmark_add_outlined),
-                    label: Text(t.customUse),
+                  InkWell(
+                    onTap: _useCustomFood,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.bookmark_add_outlined, size: 20, color: theme.colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              t.customUse,
+                              style: AppTextStyles.body(context)
+                                  .copyWith(fontWeight: FontWeight.w600, color: theme.colorScheme.primary),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${app.customFoods.length}${t.customCountUnit}',
+                              style: AppTextStyles.caption(context).copyWith(color: theme.colorScheme.primary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   if (analysis != null)
