@@ -1062,8 +1062,7 @@ async def analyze_label(
                 output_tokens = int(usage_data.get("output_tokens") or 0)
                 cost_estimate = _estimate_cost_usd(input_tokens, output_tokens) if usage_data else None
                 logging.info(
-                    "Analyze ai result reason=%s tokens=%s cost=%s",
-                    analyze_reason,
+                    "Analyze label result tokens=%s cost=%s",
                     int(usage_data.get("total_tokens") or 0),
                     cost_estimate,
                 )

@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/custom_food.dart';
+import '../models/meal_entry.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/app_background.dart';
 import '../design/text_styles.dart';
@@ -316,15 +317,16 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
   Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
     final lines = suggestion
-        .split(RegExp(r'[\\r\\n]+'))
+        .split(RegExp(r'[\r\n]+'))
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty);
     for (final line in lines) {
-      if (line.startsWith('可以吃') || line.toLowerCase().startsWith('can eat')) {
+      final lower = line.toLowerCase();
+      if (line.startsWith('可以吃') || lower.startsWith('can eat')) {
         sections['can'] = _splitAdviceValue(line);
-      } else if (line.startsWith('不建議吃') || line.toLowerCase().startsWith('avoid')) {
+      } else if (line.startsWith('不建議吃') || lower.startsWith('avoid')) {
         sections['avoid'] = _splitAdviceValue(line);
-      } else if (line.startsWith('份量上限') || line.toLowerCase().startsWith('portion')) {
+      } else if (line.startsWith('份量上限') || lower.startsWith('portion')) {
         sections['limit'] = _splitAdviceValue(line);
       }
     }
