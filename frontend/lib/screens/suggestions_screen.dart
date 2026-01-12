@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
+import '../models/custom_food.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/app_background.dart';
 import '../design/text_styles.dart';
@@ -125,6 +126,191 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
         _loading = false;
       });
     }
+  }
+
+  Future<void> _useCustomFood() async {
+    final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    if (app.customFoods.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.customEmpty)),
+      );
+      return;
+    }
+    final selected = await showModalBottomSheet<CustomFood>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) => SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(t.customSelectTitle, style: AppTextStyles.title2(context)),
+            const SizedBox(height: 12),
+            for (final food in app.customFoods)
+              ListTile(
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.memory(food.imageBytes, width: 48, height: 48, fit: BoxFit.cover),
+                ),
+                title: Text(food.name, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                subtitle: Text(food.summary, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                onTap: () => Navigator.of(context).pop(food),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (selected == null || !mounted) return;
+
+    final now = DateTime.now();
+    DateTime pickedDate = DateTime(now.year, now.month, now.day);
+    TimeOfDay pickedTime = TimeOfDay.fromDateTime(now);
+    MealType pickedMealType = app.resolveMealType(now);
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) => SafeArea(
+        child: StatefulBuilder(
+          builder: (context, setModalState) {
+            final dateLabel = '${pickedDate.year}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.day.toString().padLeft(2, '0')}';
+            final timeLabel = pickedTime.format(context);
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.customConfirmTitle, style: AppTextStyles.title2(context)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Text('${t.customConfirmDate}:', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () async {
+                          final result = await showDatePicker(
+                            context: context,
+                            initialDate: pickedDate,
+                            firstDate: DateTime(now.year - 1),
+                            lastDate: DateTime(now.year + 1),
+                          );
+                          if (result == null) return;
+                          setModalState(() => pickedDate = result);
+                        },
+                        child: Text(dateLabel),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text('${t.customConfirmTime}:', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () async {
+                          final result = await showTimePicker(
+                            context: context,
+                            initialTime: pickedTime,
+                          );
+                          if (result == null) return;
+                          setModalState(() {
+                            pickedTime = result;
+                            final dt = DateTime(
+                              pickedDate.year,
+                              pickedDate.month,
+                              pickedDate.day,
+                              pickedTime.hour,
+                              pickedTime.minute,
+                            );
+                            pickedMealType = app.resolveMealType(dt);
+                          });
+                        },
+                        child: Text(timeLabel),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text('${t.customConfirmMealType}:', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () async {
+                          final result = await _showMealTypePicker(app, t, pickedMealType);
+                          if (result == null) return;
+                          setModalState(() => pickedMealType = result);
+                        },
+                        child: Text(app.mealTypeLabel(pickedMealType, t)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(t.cancel),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: Text(t.save),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    if (confirmed != true) return;
+    final dateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+    await app.saveCustomFoodUsage(selected, dateTime, pickedMealType);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(t.customUseSaved)),
+    );
+  }
+
+  Future<MealType?> _showMealTypePicker(AppState app, AppLocalizations t, MealType current) async {
+    final options = MealType.values;
+    return showModalBottomSheet<MealType>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final option in options)
+              ListTile(
+                title: Text(app.mealTypeLabel(option, t)),
+                trailing: option == current ? const Icon(Icons.check) : null,
+                onTap: () => Navigator.of(context).pop(option),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Map<String, String> _parseAdviceSections(String suggestion) {
@@ -260,6 +446,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                       ),
                     ),
                   const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _useCustomFood,
+                    icon: const Icon(Icons.bookmark_add_outlined),
+                    label: Text(t.customUse),
+                  ),
+                  const SizedBox(height: 12),
                   if (analysis != null)
                     Container(
                       padding: const EdgeInsets.all(14),

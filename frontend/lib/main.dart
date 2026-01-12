@@ -6,6 +6,7 @@ import 'screens/home_screen.dart';
 import 'screens/log_screen.dart';
 import 'screens/suggestions_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/custom_foods_screen.dart';
 import 'state/app_state.dart';
 import 'design/theme_controller.dart';
 import 'state/tab_state.dart';
@@ -81,6 +82,7 @@ class _MainShellState extends State<MainShell> {
       SuggestionsScreen(),
       HomeScreen(),
       LogScreen(),
+      CustomFoodsScreen(),
       SettingsScreen(),
     ];
 
@@ -95,6 +97,7 @@ class _MainShellState extends State<MainShell> {
           BottomNavigationBarItem(icon: const Icon(Icons.camera_alt), label: t.tabSuggest),
           BottomNavigationBarItem(icon: const Icon(Icons.home_filled), label: t.tabHome),
           BottomNavigationBarItem(icon: const Icon(Icons.receipt_long), label: t.tabLog),
+          BottomNavigationBarItem(icon: const Icon(Icons.bookmark), label: t.tabCustom),
           BottomNavigationBarItem(icon: const Icon(Icons.settings), label: t.tabSettings),
         ],
       ),
