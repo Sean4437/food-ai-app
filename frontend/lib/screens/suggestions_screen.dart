@@ -620,7 +620,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                       style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 20),
                     Stack(
                       clipBehavior: Clip.none,
                       children: [
