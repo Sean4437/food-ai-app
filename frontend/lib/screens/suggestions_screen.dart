@@ -624,11 +624,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                     Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        Positioned(
-                          top: -70,
-                          bottom: -70,
-                          left: 0,
-                          right: 0,
+                        Positioned.fill(
                           child: Center(
                             child: Container(
                               width: 320,
@@ -639,11 +635,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             ),
                           ),
                         ),
-                        Positioned(
-                          top: -60,
-                          bottom: -60,
-                          left: 0,
-                          right: 0,
+                        Positioned.fill(
                           child: Center(
                             child: Container(
                               width: 300,
@@ -654,7 +646,9 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             ),
                           ),
                         ),
-                        Column(
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 70),
+                          child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             if (_analysis != null || showPreview)
@@ -798,6 +792,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                               ),
                             ),
                           ],
+                          ),
                         ),
                       ],
                     ),
