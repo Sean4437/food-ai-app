@@ -526,7 +526,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: Text(t.suggestTitle),
+          title: const SizedBox.shrink(),
           backgroundColor: Colors.transparent,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
@@ -540,8 +540,18 @@ Widget _buildAdviceCard(AppLocalizations t) {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                    Text(t.suggestInstantHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                    const SizedBox(height: 18),
+                    Text(
+                      t.suggestTitle,
+                      style: AppTextStyles.title1(context),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      t.suggestInstantHint,
+                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
                   if (_analysis != null || showPreview)
                     Center(
                       child: Stack(
@@ -608,19 +618,33 @@ Widget _buildAdviceCard(AppLocalizations t) {
                     Text(_error!, style: AppTextStyles.caption(context).copyWith(color: Colors.redAccent))
                   else
                     Center(
-                      child: OutlinedButton.icon(
-                        onPressed: _startCapture,
-                        icon: const Icon(Icons.camera_alt),
-                        label: Text(_analysis == null ? t.suggestInstantStart : t.suggestInstantRetake),
+                      child: SizedBox(
+                        width: 180,
+                        child: ElevatedButton.icon(
+                          onPressed: _startCapture,
+                          icon: const Icon(Icons.camera_alt, color: Colors.white),
+                          label: Text(_analysis == null ? t.suggestInstantStart : t.suggestInstantRetake),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            side: BorderSide(color: theme.colorScheme.primary),
+                          ),
+                        ),
                       ),
                     ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _useCustomFood,
-                      icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-                      label: Text('${t.customUse} · ${app.customFoods.length}${t.customCountUnit}'),
+                  Center(
+                    child: SizedBox(
+                      width: 180,
+                      child: OutlinedButton.icon(
+                        onPressed: _useCustomFood,
+                        icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
+                        label: Text('${t.customUse} · ${app.customFoods.length}${t.customCountUnit}'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: theme.colorScheme.primary,
+                          side: BorderSide(color: theme.colorScheme.primary),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
