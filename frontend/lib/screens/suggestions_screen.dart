@@ -406,9 +406,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
     final lines = suggestion
-        .split(RegExp(r'[
-
-]+'))
+        .split(RegExp(r'[\r\n]+'))
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty);
     for (final line in lines) {
