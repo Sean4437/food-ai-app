@@ -78,6 +78,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final tabState = TabScope.of(context);
+    final theme = Theme.of(context);
     final screens = const [
       SuggestionsScreen(),
       HomeScreen(),
@@ -90,8 +91,8 @@ class _MainShellState extends State<MainShell> {
       body: screens[tabState.index],
       bottomNavigationBar: CupertinoTabBar(
         currentIndex: tabState.index,
-        activeColor: const Color(0xFF5B7CFA),
-        inactiveColor: Colors.black54,
+        activeColor: theme.colorScheme.primary,
+        inactiveColor: theme.colorScheme.onSurface.withOpacity(0.6),
         onTap: (value) => tabState.setIndex(value),
         items: [
           BottomNavigationBarItem(icon: const Icon(Icons.camera_alt), label: t.tabSuggest),

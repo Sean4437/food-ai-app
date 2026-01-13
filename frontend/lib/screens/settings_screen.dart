@@ -413,6 +413,7 @@ class SettingsScreen extends StatelessWidget {
           orElse: () => MapEntry(t.activityLight, 'light'),
         )
         .key;
+    final theme = Theme.of(context);
     return AppBackground(
       child: SafeArea(
         child: SingleChildScrollView(
@@ -440,7 +441,11 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      CircleAvatar(radius: 24, backgroundColor: const Color(0xFFEFF3FF), child: const Icon(Icons.person, color: Color(0xFF5B7CFA))),
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
+                        child: Icon(Icons.person, color: theme.colorScheme.primary),
+                      ),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -607,21 +612,25 @@ class SettingsScreen extends StatelessWidget {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: ListTileTheme(
-                    dense: true,
-                    minVerticalPadding: 0,
-                    child: ExpansionTile(
-                      title: Text(
-                        t.mealTimeSection,
-                        style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                      initiallyExpanded: false,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      children: [
-                      _grid2([
+                  child: Theme(
+                    data: theme.copyWith(dividerColor: Colors.transparent),
+                    child: ListTileTheme(
+                      dense: true,
+                      minVerticalPadding: 0,
+                      visualDensity: const VisualDensity(vertical: -4),
+                      contentPadding: EdgeInsets.zero,
+                      child: ExpansionTile(
+                        title: Text(
+                          t.mealTimeSection,
+                          style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        initiallyExpanded: false,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        children: [
+                        _grid2([
                         _row(
                           context,
                           t.breakfastStartLabel,
