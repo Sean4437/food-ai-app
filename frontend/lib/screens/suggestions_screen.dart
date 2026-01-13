@@ -625,23 +625,40 @@ Widget _buildAdviceCard(AppLocalizations t) {
                       clipBehavior: Clip.none,
                       children: [
                         Positioned.fill(
-                          child: Center(
-                            child: Container(
-                              width: 320,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.22),
-                                borderRadius: BorderRadius.circular(28),
+                          child: IgnorePointer(
+                            child: Center(
+                              child: Container(
+                                width: 340,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.16),
+                                  borderRadius: BorderRadius.circular(32),
+                                ),
                               ),
                             ),
                           ),
                         ),
                         Positioned.fill(
-                          child: Center(
-                            child: Container(
-                              width: 300,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.4),
-                                borderRadius: BorderRadius.circular(26),
+                          child: IgnorePointer(
+                            child: Center(
+                              child: Container(
+                                width: 320,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.22),
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: Center(
+                              child: Container(
+                                width: 300,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.4),
+                                  borderRadius: BorderRadius.circular(26),
+                                ),
                               ),
                             ),
                           ),
