@@ -565,8 +565,8 @@ Widget _buildAdviceCard(AppLocalizations t) {
                         Positioned.fill(
                           child: Center(
                             child: Container(
-                              width: 340,
-                              height: 420,
+                              width: 320,
+                              height: 470,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.22),
                                 borderRadius: BorderRadius.circular(28),
@@ -577,8 +577,8 @@ Widget _buildAdviceCard(AppLocalizations t) {
                         Positioned.fill(
                           child: Center(
                             child: Container(
-                              width: 320,
-                              height: 400,
+                              width: 300,
+                              height: 440,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.4),
                                 borderRadius: BorderRadius.circular(26),
@@ -610,21 +610,27 @@ Widget _buildAdviceCard(AppLocalizations t) {
                               )
                             else
                               Center(
-                                child: Container(
-                                  width: 180,
-                                  height: 180,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.92),
-                                    borderRadius: BorderRadius.circular(28),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.08),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 12),
+                                child: SizedBox(
+                                  width: 220,
+                                  height: 220,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.12),
+                                              blurRadius: 26,
+                                              offset: const Offset(0, 16),
+                                            ),
+                                          ],
+                                        ),
                                       ),
+                                      Image.asset(plateAsset, fit: BoxFit.contain),
                                     ],
                                   ),
-                                  child: Icon(Icons.camera_alt, color: Colors.black.withOpacity(0.45), size: 60),
                                 ),
                               ),
                             const SizedBox(height: 16),
