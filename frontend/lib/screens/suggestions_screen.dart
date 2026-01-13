@@ -560,8 +560,11 @@ Widget _buildAdviceCard(AppLocalizations t) {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    Stack(
-                      children: [
+                    SizedBox(
+                      height: 700,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
                         Positioned.fill(
                           child: Center(
                             child: Container(
@@ -717,6 +720,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                           ],
                         ),
                       ],
+                    ),
                     ),
                   const SizedBox(height: 12),
                   if (analysis != null)
