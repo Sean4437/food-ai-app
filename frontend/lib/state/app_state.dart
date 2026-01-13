@@ -1879,6 +1879,79 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<MealAdvice> suggestNowMealAdvice(AppLocalizations t, String locale) async {
+    final now = DateTime.now();
+    final mealType = resolveMealType(now);
+    final mealDate = _dateOnly(now);
+    final dayGroups = mealGroupsForDateAll(mealDate);
+    final dishSummaries = <String>[];
+    for (final dayGroup in dayGroups) {
+      for (final entry in dayGroup) {
+        final summaryText = entry.result?.dishSummary?.trim();
+        if (summaryText != null && summaryText.isNotEmpty) {
+          dishSummaries.add(summaryText);
+          continue;
+        }
+        final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
+        if (fallback.isNotEmpty) dishSummaries.add(fallback);
+      }
+    }
+    final dayMealSummaries = <String>[];
+    for (final dayGroup in dayGroups) {
+      if (dayGroup.isEmpty) continue;
+      final daySummary = buildMealSummary(dayGroup, t);
+      final dayDishSummaries = <String>[];
+      for (final entry in dayGroup) {
+        final summaryText = entry.result?.dishSummary?.trim();
+        if (summaryText != null && summaryText.isNotEmpty) {
+          dayDishSummaries.add(summaryText);
+          continue;
+        }
+        final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
+        if (fallback.isNotEmpty) dayDishSummaries.add(fallback);
+      }
+      final label = _mealTypeLabel(dayGroup.first.type, t);
+      final rangeText = daySummary?.calorieRange ?? t.calorieUnknown;
+      final dishText = dayDishSummaries.isEmpty ? '' : dayDishSummaries.join(' / ');
+      final parts = <String>[label];
+      if (rangeText.isNotEmpty) parts.add(rangeText);
+      if (dishText.isNotEmpty) parts.add(dishText);
+      dayMealSummaries.add(parts.join(' · '));
+    }
+    final payload = {
+      'meal_type': _mealTypeKey(mealType),
+      'calorie_range': '',
+      'dish_summaries': dishSummaries,
+      'day_calorie_range': _dailyCalorieRangeLabelForDate(mealDate, t),
+      'day_meal_count': dayGroups.length,
+      'day_meal_summaries': dayMealSummaries,
+      'lang': locale,
+      'profile': {
+        'height_cm': profile.heightCm,
+        'weight_kg': profile.weightKg,
+        'age': profile.age,
+        'gender': profile.gender,
+        'tone': profile.tone,
+        'persona': profile.persona,
+        'activity_level': dailyActivityLevel(now),
+        'target_calorie_range': targetCalorieRangeValue(now),
+        'goal': profile.goal,
+        'plan_speed': profile.planSpeed,
+      },
+    };
+    try {
+      final response = await _api.suggestMeal(payload);
+      return MealAdvice(
+        selfCook: (response['self_cook'] as String?) ?? t.nextSelfCookHint,
+        convenience: (response['convenience'] as String?) ?? t.nextConvenienceHint,
+        bento: (response['bento'] as String?) ?? t.nextBentoHint,
+        other: (response['other'] as String?) ?? t.nextOtherHint,
+      );
+    } catch (_) {
+      return MealAdvice.defaults(t);
+    }
+  }
+
   Future<void> _saveOverrides() async {
     await _settings.saveOverrides({
       'day': _dayOverrides,

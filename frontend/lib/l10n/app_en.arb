@@ -167,6 +167,7 @@
   "suggestInstantStart": "Take photo",
   "suggestInstantRetake": "Retake photo",
   "suggestInstantPickGallery": "Choose from album",
+  "suggestInstantNowEat": "What to eat now",
   "suggestInstantStepDetect": "Identifying the meal",
   "suggestInstantStepEstimate": "Estimating calories and portion",
   "suggestInstantStepAdvice": "Generating how-to-eat advice",

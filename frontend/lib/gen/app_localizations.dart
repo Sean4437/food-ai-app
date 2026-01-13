@@ -1059,6 +1059,12 @@ abstract class AppLocalizations {
   /// **'從相簿選擇'**
   String get suggestInstantPickGallery;
 
+  /// No description provided for @suggestInstantNowEat.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'現在吃什麼'**
+  String get suggestInstantNowEat;
+
   /// No description provided for @suggestInstantStepDetect.
   ///
   /// In zh_TW, this message translates to:

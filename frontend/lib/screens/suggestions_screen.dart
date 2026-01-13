@@ -21,6 +21,7 @@ class SuggestionsScreen extends StatefulWidget {
 class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   QuickCaptureAnalysis? _analysis;
+  MealAdvice? _instantAdvice;
   Uint8List? _previewBytes;
   bool _loading = false;
   String? _error;
@@ -57,6 +58,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _loading = false;
       _error = null;
       _analysis = null;
+      _instantAdvice = null;
       _previewBytes = null;
       _showSaveActions = false;
     });
@@ -81,6 +83,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       );
       if (!mounted) return;
       _analysis = analysis;
+      _instantAdvice = null;
       _previewBytes = null;
       _showSaveActions = true;
       _completeSmartProgress(() {
@@ -106,6 +109,42 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   Future<void> _startCaptureFromGallery() async {
     await _startCapture(source: ImageSource.gallery);
+  }
+
+  Future<void> _requestNowAdvice() async {
+    if (!mounted) return;
+    final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    setState(() {
+      _loading = true;
+      _error = null;
+      _analysis = null;
+      _instantAdvice = null;
+      _previewBytes = null;
+      _showSaveActions = false;
+    });
+    _startSmartProgress();
+    try {
+      final advice = await app.suggestNowMealAdvice(t, locale);
+      if (!mounted) return;
+      _instantAdvice = advice;
+      _previewBytes = null;
+      _completeSmartProgress(() {
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+        });
+      });
+    } catch (err) {
+      if (!mounted) return;
+      _stopSmartProgress();
+      setState(() {
+        _error = err.toString();
+        _loading = false;
+        _previewBytes = null;
+      });
+    }
   }
 
   Future<void> _saveIfNeeded() async {
@@ -147,6 +186,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _loading = true;
       _error = null;
     });
+    _instantAdvice = null;
     _startSmartProgress();
     final historyContext = app.buildAiContext();
     try {
@@ -158,6 +198,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       );
       if (!mounted) return;
       _analysis = updated;
+      _instantAdvice = null;
       _previewBytes = null;
       _showSaveActions = true;
       _completeSmartProgress(() {
@@ -365,33 +406,40 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
     final lines = suggestion
-        .split(RegExp(r'[\r\n]+'))
+        .split(RegExp(r'[
+
+]+'))
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty);
     for (final line in lines) {
       final lower = line.toLowerCase();
-      if (line.startsWith('可以吃') || lower.startsWith('can eat')) {
+      if (_startsWithAny(line, ['可以吃', '可吃', '建議吃']) || lower.startsWith('can eat')) {
         sections['can'] = _splitAdviceValue(line);
-      } else if (line.startsWith('不建議吃') || lower.startsWith('avoid')) {
+      } else if (_startsWithAny(line, ['不建議', '避免']) || lower.startsWith('avoid')) {
         sections['avoid'] = _splitAdviceValue(line);
-      } else if (line.startsWith('份量上限') || lower.startsWith('portion')) {
+      } else if (_startsWithAny(line, ['建議份量', '份量']) || lower.startsWith('portion') || lower.startsWith('limit')) {
         sections['limit'] = _splitAdviceValue(line);
       }
     }
     return sections;
   }
 
-  String _splitAdviceValue(String line) {
-    if (line.contains('：')) {
-      return line.split('：').last.trim();
+  bool _startsWithAny(String value, List<String> prefixes) {
+    for (final prefix in prefixes) {
+      if (value.startsWith(prefix)) return true;
     }
-    if (line.contains(':')) {
-      return line.split(':').last.trim();
+    return false;
+  }
+
+  String _splitAdviceValue(String line) {
+    for (final separator in ['：', ':', '-', '—']) {
+      if (line.contains(separator)) {
+        return line.split(separator).last.trim();
+      }
     }
     return line.trim();
   }
 
-  
   Widget _buildScanOverlay() {
     return Positioned.fill(
       child: IgnorePointer(
@@ -522,6 +570,21 @@ Widget _buildAdviceCard(AppLocalizations t) {
     );
   }
 
+  Widget _buildInstantAdviceFromModel(AppLocalizations t, MealAdvice advice) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _adviceRow(t.nextSelfCookLabel, advice.selfCook),
+        const SizedBox(height: 8),
+        _adviceRow(t.nextConvenienceLabel, advice.convenience),
+        const SizedBox(height: 8),
+        _adviceRow(t.nextBentoLabel, advice.bento),
+        const SizedBox(height: 8),
+        _adviceRow(t.nextOtherLabel, advice.other),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
@@ -558,18 +621,18 @@ Widget _buildAdviceCard(AppLocalizations t) {
                       t.suggestInstantHint,
                       style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                       textAlign: TextAlign.center,
-                    ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      height: 700,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                        Positioned.fill(
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Positioned(
+                          top: -70,
+                          bottom: -70,
+                          left: 0,
+                          right: 0,
                           child: Center(
                             child: Container(
                               width: 320,
-                              height: 700,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.22),
                                 borderRadius: BorderRadius.circular(28),
@@ -577,11 +640,14 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             ),
                           ),
                         ),
-                        Positioned.fill(
+                        Positioned(
+                          top: -60,
+                          bottom: -60,
+                          left: 0,
+                          right: 0,
                           child: Center(
                             child: Container(
                               width: 300,
-                              height: 640,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.4),
                                 borderRadius: BorderRadius.circular(26),
@@ -687,7 +753,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             const SizedBox(height: 10),
                             Center(
                               child: SizedBox(
-                                  width: 180,
+                                width: 180,
                                 child: OutlinedButton.icon(
                                   onPressed: _startCaptureFromGallery,
                                   icon: Icon(Icons.photo_library_outlined, size: 18, color: theme.colorScheme.primary),
@@ -704,10 +770,25 @@ Widget _buildAdviceCard(AppLocalizations t) {
                               child: SizedBox(
                                 width: 180,
                                 child: OutlinedButton.icon(
+                                  onPressed: _requestNowAdvice,
+                                  icon: Icon(Icons.restaurant_menu, size: 18, color: theme.colorScheme.primary),
+                                  label: Text(t.suggestInstantNowEat, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: theme.colorScheme.primary,
+                                    side: BorderSide(color: theme.colorScheme.primary),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Center(
+                              child: SizedBox(
+                                width: 180,
+                                child: OutlinedButton.icon(
                                   onPressed: _useCustomFood,
                                   icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
                                   label: Text(
-                                    '${t.customUse} · ${app.customFoods.length}${t.customCountUnit}',
+                                    '${t.customUse} - ${app.customFoods.length}${t.customCountUnit}',
                                     style: const TextStyle(fontWeight: FontWeight.w600),
                                   ),
                                   style: OutlinedButton.styleFrom(
@@ -721,8 +802,31 @@ Widget _buildAdviceCard(AppLocalizations t) {
                         ),
                       ],
                     ),
-                    ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 12),
+                    if (_instantAdvice != null)
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 14,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(t.suggestInstantNowEat, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 8),
+                            _buildInstantAdviceFromModel(t, _instantAdvice!),
+                          ],
+                        ),
+                      ),
+                    if (_instantAdvice != null) const SizedBox(height: 12),
                   if (analysis != null)
                     Container(
                       padding: const EdgeInsets.all(14),

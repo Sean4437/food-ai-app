@@ -505,6 +505,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantPickGallery => 'Choose from album';
 
   @override
+  String get suggestInstantNowEat => 'What to eat now';
+
+  @override
   String get suggestInstantStepDetect => 'Identifying the meal';
 
   @override
