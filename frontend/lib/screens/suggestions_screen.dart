@@ -566,7 +566,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                           child: Center(
                             child: Container(
                               width: 320,
-                              height: 470,
+                              height: 560,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.22),
                                 borderRadius: BorderRadius.circular(28),
@@ -578,7 +578,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                           child: Center(
                             child: Container(
                               width: 300,
-                              height: 440,
+                              height: 520,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.4),
                                 borderRadius: BorderRadius.circular(26),
