@@ -820,7 +820,23 @@ Widget _buildAdviceCard(AppLocalizations t) {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(t.suggestInstantNowEat, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    t.suggestInstantNowEat,
+                                    style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () => setState(() => _instantAdvice = null),
+                                  icon: const Icon(Icons.close, size: 18),
+                                  tooltip: t.close,
+                                  padding: const EdgeInsets.all(6),
+                                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 8),
                             _buildInstantAdviceFromModel(t, _instantAdvice!),
                           ],
