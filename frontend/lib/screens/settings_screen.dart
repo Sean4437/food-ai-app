@@ -617,7 +617,6 @@ class SettingsScreen extends StatelessWidget {
                     child: ListTileTheme(
                       dense: true,
                       minVerticalPadding: 0,
-                      visualDensity: const VisualDensity(vertical: -4),
                       contentPadding: EdgeInsets.zero,
                       child: ExpansionTile(
                         title: Text(
