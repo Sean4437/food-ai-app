@@ -612,10 +612,11 @@ class SettingsScreen extends StatelessWidget {
                       t.mealTimeSection,
                       style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
                     ),
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                     initiallyExpanded: false,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     children: [
                       _grid2([
                         _row(
@@ -854,7 +855,16 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(child: SizedBox()),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          const asset = 'assets/themes/theme_pink.json';
+                          themeController.loadFromAsset(asset);
+                          app.updateField((p) => p.themeAsset = asset);
+                        },
+                        child: Text(t.themePink),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),

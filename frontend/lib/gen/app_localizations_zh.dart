@@ -874,6 +874,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeWarm => '暖橘';
 
   @override
+  String get themePink => '柔粉';
+
+  @override
   String get plateSection => '盤子樣式';
 
   @override
@@ -1859,6 +1862,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get themeWarm => '暖橘';
+
+  @override
+  String get themePink => '柔粉';
 
   @override
   String get plateSection => '盤子樣式';

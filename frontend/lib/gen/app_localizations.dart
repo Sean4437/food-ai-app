@@ -1809,6 +1809,12 @@ abstract class AppLocalizations {
   /// **'暖橘'**
   String get themeWarm;
 
+  /// No description provided for @themePink.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'柔粉'**
+  String get themePink;
+
   /// No description provided for @plateSection.
   ///
   /// In zh_TW, this message translates to:

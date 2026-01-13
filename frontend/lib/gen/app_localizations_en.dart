@@ -885,6 +885,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeWarm => 'Warm Orange';
 
   @override
+  String get themePink => 'Soft Pink';
+
+  @override
   String get plateSection => 'Plate style';
 
   @override
