@@ -831,7 +831,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                 IconButton(
                                   onPressed: () => setState(() => _instantAdvice = null),
                                   icon: const Icon(Icons.close, size: 18),
-                                  tooltip: t.close,
+                                  tooltip: t.cancel,
                                   padding: const EdgeInsets.all(6),
                                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                                 ),
