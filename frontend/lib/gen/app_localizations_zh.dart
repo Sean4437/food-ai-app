@@ -492,6 +492,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantRetake => '重新拍照';
 
   @override
+  String get suggestInstantPickGallery => '從相簿選擇';
+
+  @override
   String get suggestInstantStepDetect => '正在辨識餐點';
 
   @override
@@ -1471,6 +1474,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get suggestInstantRetake => '重新拍照';
+
+  @override
+  String get suggestInstantPickGallery => '從相簿選擇';
 
   @override
   String get suggestInstantStepDetect => '正在辨識餐點';

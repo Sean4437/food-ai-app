@@ -502,6 +502,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantRetake => 'Retake photo';
 
   @override
+  String get suggestInstantPickGallery => 'Choose from album';
+
+  @override
   String get suggestInstantStepDetect => 'Identifying the meal';
 
   @override

@@ -39,7 +39,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startCapture());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startCaptureFromCamera());
   }
 
   
@@ -51,7 +51,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     super.dispose();
   }
 
-Future<void> _startCapture() async {
+  Future<void> _startCapture({required ImageSource source}) async {
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -60,7 +60,7 @@ Future<void> _startCapture() async {
       _previewBytes = null;
       _showSaveActions = false;
     });
-    final file = await _picker.pickImage(source: ImageSource.camera);
+    final file = await _picker.pickImage(source: source);
     if (!mounted) return;
     if (file == null) return;
     final preview = await file.readAsBytes();
@@ -98,6 +98,14 @@ Future<void> _startCapture() async {
         _previewBytes = null;
       });
     }
+  }
+
+  Future<void> _startCaptureFromCamera() async {
+    await _startCapture(source: ImageSource.camera);
+  }
+
+  Future<void> _startCaptureFromGallery() async {
+    await _startCapture(source: ImageSource.gallery);
   }
 
   Future<void> _saveIfNeeded() async {
@@ -552,101 +560,152 @@ Widget _buildAdviceCard(AppLocalizations t) {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                  if (_analysis != null || showPreview)
-                    Center(
-                      child: Stack(
-                        children: [
-                          AnimatedOpacity(
-                            opacity: _loading ? _progressValue.clamp(0.0, 1.0) : 1.0,
-                            duration: const Duration(milliseconds: 200),
-                            child: PlatePhoto(
-                              imageBytes: _analysis?.imageBytes ?? _previewBytes!,
-                              plateAsset: plateAsset,
-                              plateSize: 260,
-                              imageSize: 185,
-                              tilt: 0,
+                    Stack(
+                      children: [
+                        Positioned.fill(
+                          child: Center(
+                            child: Container(
+                              width: 340,
+                              height: 360,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.25),
+                                borderRadius: BorderRadius.circular(28),
+                              ),
                             ),
                           ),
-                          if (_loading) _buildScanOverlay(),
-                        ],
-                      ),
-                    )
-                  else
-                    Center(
-                      child: Container(
-                        width: 180,
-                        height: 180,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 20,
-                              offset: const Offset(0, 12),
+                        ),
+                        Positioned.fill(
+                          child: Center(
+                            child: Container(
+                              width: 320,
+                              height: 340,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.45),
+                                borderRadius: BorderRadius.circular(26),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (_analysis != null || showPreview)
+                              Center(
+                                child: Stack(
+                                  children: [
+                                    AnimatedOpacity(
+                                      opacity: _loading ? _progressValue.clamp(0.0, 1.0) : 1.0,
+                                      duration: const Duration(milliseconds: 200),
+                                      child: PlatePhoto(
+                                        imageBytes: _analysis?.imageBytes ?? _previewBytes!,
+                                        plateAsset: plateAsset,
+                                        plateSize: 260,
+                                        imageSize: 185,
+                                        tilt: 0,
+                                      ),
+                                    ),
+                                    if (_loading) _buildScanOverlay(),
+                                  ],
+                                ),
+                              )
+                            else
+                              Center(
+                                child: Container(
+                                  width: 180,
+                                  height: 180,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(28),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.08),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 12),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(Icons.camera_alt, color: Colors.black.withOpacity(0.35), size: 48),
+                                ),
+                              ),
+                            const SizedBox(height: 16),
+                            if (_loading)
+                              Builder(builder: (context) {
+                                final steps = [
+                                  t.suggestInstantStepDetect,
+                                  t.suggestInstantStepEstimate,
+                                  t.suggestInstantStepAdvice,
+                                ];
+                                final statusText = steps[_statusIndex % steps.length];
+                                final percent = (_progressValue * 100).clamp(0, 100).round();
+                                return Column(
+                                  children: [
+                                    Text(
+                                      '$percent%',
+                                      style: AppTextStyles.body(context).copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      statusText,
+                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                                    ),
+                                  ],
+                                );
+                              })
+                            else if (_error != null)
+                              Text(_error!, style: AppTextStyles.caption(context).copyWith(color: Colors.redAccent))
+                            else
+                              Center(
+                                child: SizedBox(
+                                  width: 180,
+                                  child: ElevatedButton.icon(
+                                    onPressed: _startCaptureFromCamera,
+                                    icon: const Icon(Icons.camera_alt, color: Colors.white),
+                                    label: Text(_analysis == null ? t.suggestInstantStart : t.suggestInstantRetake),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: theme.colorScheme.primary,
+                                      foregroundColor: Colors.white,
+                                      side: BorderSide(color: theme.colorScheme.primary),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 10),
+                            Center(
+                              child: SizedBox(
+                                width: 180,
+                                child: OutlinedButton.icon(
+                                  onPressed: _startCaptureFromGallery,
+                                  icon: Icon(Icons.photo_library_outlined, size: 18, color: theme.colorScheme.primary),
+                                  label: Text(t.suggestInstantPickGallery),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: theme.colorScheme.primary,
+                                    side: BorderSide(color: theme.colorScheme.primary),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Center(
+                              child: SizedBox(
+                                width: 180,
+                                child: OutlinedButton.icon(
+                                  onPressed: _useCustomFood,
+                                  icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
+                                  label: Text('${t.customUse} · ${app.customFoods.length}${t.customCountUnit}'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: theme.colorScheme.primary,
+                                    side: BorderSide(color: theme.colorScheme.primary),
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        child: Icon(Icons.camera_alt, color: Colors.black.withOpacity(0.35), size: 48),
-                      ),
+                      ],
                     ),
-                  const SizedBox(height: 16),
-                  if (_loading)
-                    Builder(builder: (context) {
-                      final steps = [
-                        t.suggestInstantStepDetect,
-                        t.suggestInstantStepEstimate,
-                        t.suggestInstantStepAdvice,
-                      ];
-                      final statusText = steps[_statusIndex % steps.length];
-                      final percent = (_progressValue * 100).clamp(0, 100).round();
-                      return Column(
-                        children: [
-                          Text(
-                            '$percent%',
-                            style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600, color: Colors.black87),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            statusText,
-                            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                          ),
-                        ],
-                      );
-                    })
-                  else if (_error != null)
-                    Text(_error!, style: AppTextStyles.caption(context).copyWith(color: Colors.redAccent))
-                  else
-                    Center(
-                      child: SizedBox(
-                        width: 180,
-                        child: ElevatedButton.icon(
-                          onPressed: _startCapture,
-                          icon: const Icon(Icons.camera_alt, color: Colors.white),
-                          label: Text(_analysis == null ? t.suggestInstantStart : t.suggestInstantRetake),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: Colors.white,
-                            side: BorderSide(color: theme.colorScheme.primary),
-                          ),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: SizedBox(
-                      width: 180,
-                      child: OutlinedButton.icon(
-                        onPressed: _useCustomFood,
-                        icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
-                        label: Text('${t.customUse} · ${app.customFoods.length}${t.customCountUnit}'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.primary,
-                          side: BorderSide(color: theme.colorScheme.primary),
-                        ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 12),
                   if (analysis != null)
                     Container(

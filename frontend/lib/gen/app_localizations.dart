@@ -1053,6 +1053,12 @@ abstract class AppLocalizations {
   /// **'重新拍照'**
   String get suggestInstantRetake;
 
+  /// No description provided for @suggestInstantPickGallery.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'從相簿選擇'**
+  String get suggestInstantPickGallery;
+
   /// No description provided for @suggestInstantStepDetect.
   ///
   /// In zh_TW, this message translates to:
