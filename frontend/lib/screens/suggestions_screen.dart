@@ -628,20 +628,8 @@ Widget _buildAdviceCard(AppLocalizations t) {
                           child: IgnorePointer(
                             child: Center(
                               child: Container(
-                                width: 340,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.16),
-                                  borderRadius: BorderRadius.circular(32),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: Center(
-                              child: Container(
                                 width: 320,
+                                height: 520,
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.22),
                                   borderRadius: BorderRadius.circular(28),
@@ -655,6 +643,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             child: Center(
                               child: Container(
                                 width: 300,
+                                height: 500,
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.4),
                                   borderRadius: BorderRadius.circular(26),
