@@ -614,38 +614,14 @@ Widget _buildAdviceCard(AppLocalizations t) {
                         label: Text(_analysis == null ? t.suggestInstantStart : t.suggestInstantRetake),
                       ),
                     ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      InkWell(
-                        onTap: _useCustomFood,
-                        borderRadius: BorderRadius.circular(999),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.bookmark_add_outlined, size: 16, color: theme.colorScheme.primary),
-                              const SizedBox(width: 6),
-                              Text(
-                                t.customUse,
-                                style: AppTextStyles.caption(context)
-                                    .copyWith(fontWeight: FontWeight.w600, color: theme.colorScheme.primary),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${app.customFoods.length}${t.customCountUnit}',
-                                style: AppTextStyles.caption(context).copyWith(color: theme.colorScheme.primary),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _useCustomFood,
+                      icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                      label: Text('${t.customUse} · ${app.customFoods.length}${t.customCountUnit}'),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   if (analysis != null)
