@@ -621,6 +621,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                       t.suggestInstantHint,
                       style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                       textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 12),
                     Stack(
                       clipBehavior: Clip.none,
