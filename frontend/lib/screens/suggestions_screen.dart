@@ -566,9 +566,9 @@ Widget _buildAdviceCard(AppLocalizations t) {
                           child: Center(
                             child: Container(
                               width: 340,
-                              height: 360,
+                              height: 420,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.25),
+                                color: Colors.white.withOpacity(0.22),
                                 borderRadius: BorderRadius.circular(28),
                               ),
                             ),
@@ -578,9 +578,9 @@ Widget _buildAdviceCard(AppLocalizations t) {
                           child: Center(
                             child: Container(
                               width: 320,
-                              height: 340,
+                              height: 400,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.45),
+                                color: Colors.white.withOpacity(0.4),
                                 borderRadius: BorderRadius.circular(26),
                               ),
                             ),
@@ -614,7 +614,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                   width: 180,
                                   height: 180,
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: Colors.white.withOpacity(0.92),
                                     borderRadius: BorderRadius.circular(28),
                                     boxShadow: [
                                       BoxShadow(
@@ -624,7 +624,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                       ),
                                     ],
                                   ),
-                                  child: Icon(Icons.camera_alt, color: Colors.black.withOpacity(0.35), size: 48),
+                                  child: Icon(Icons.camera_alt, color: Colors.black.withOpacity(0.45), size: 60),
                                 ),
                               ),
                             const SizedBox(height: 16),
@@ -663,7 +663,10 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                   child: ElevatedButton.icon(
                                     onPressed: _startCaptureFromCamera,
                                     icon: const Icon(Icons.camera_alt, color: Colors.white),
-                                    label: Text(_analysis == null ? t.suggestInstantStart : t.suggestInstantRetake),
+                                    label: Text(
+                                      _analysis == null ? t.suggestInstantStart : t.suggestInstantRetake,
+                                      style: const TextStyle(fontWeight: FontWeight.w700),
+                                    ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: theme.colorScheme.primary,
                                       foregroundColor: Colors.white,
@@ -675,11 +678,11 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             const SizedBox(height: 10),
                             Center(
                               child: SizedBox(
-                                width: 180,
+                                  width: 180,
                                 child: OutlinedButton.icon(
                                   onPressed: _startCaptureFromGallery,
                                   icon: Icon(Icons.photo_library_outlined, size: 18, color: theme.colorScheme.primary),
-                                  label: Text(t.suggestInstantPickGallery),
+                                  label: Text(t.suggestInstantPickGallery, style: const TextStyle(fontWeight: FontWeight.w600)),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: theme.colorScheme.primary,
                                     side: BorderSide(color: theme.colorScheme.primary),
@@ -694,7 +697,10 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                 child: OutlinedButton.icon(
                                   onPressed: _useCustomFood,
                                   icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
-                                  label: Text('${t.customUse} · ${app.customFoods.length}${t.customCountUnit}'),
+                                  label: Text(
+                                    '${t.customUse} · ${app.customFoods.length}${t.customCountUnit}',
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: theme.colorScheme.primary,
                                     side: BorderSide(color: theme.colorScheme.primary),
