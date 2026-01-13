@@ -25,3 +25,4 @@ frontend\lib\gen\app_localizations_zh.dart
 backend\app.py
 push.ps1
 git_files.txt
+.github\workflows\deploy_web.yml
