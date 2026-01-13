@@ -391,14 +391,6 @@ Future<void> _startCapture() async {
           animation: _scanController,
           builder: (context, child) {
             final value = _scanController.value;
-            final t = AppLocalizations.of(context)!;
-            final steps = [
-              t.suggestInstantStepDetect,
-              t.suggestInstantStepEstimate,
-              t.suggestInstantStepAdvice,
-            ];
-            final statusText = steps[_statusIndex % steps.length];
-            final percent = (_progressValue * 100).clamp(0, 100).round();
             return Stack(
               children: [
                 Container(color: Colors.white.withOpacity(0.02)),
@@ -414,20 +406,7 @@ Future<void> _startCapture() async {
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 18),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '$percent%',
-                          style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600, color: Colors.black87),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          statusText,
-                          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                        ),
-                      ],
-                    ),
+                    child: const SizedBox.shrink(),
                   ),
                 ),
               ],
@@ -561,20 +540,22 @@ Widget _buildAdviceCard(AppLocalizations t) {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                    Text(t.suggestTitle, style: AppTextStyles.title1(context)),
-                    const SizedBox(height: 6),
                     Text(t.suggestInstantHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                     const SizedBox(height: 18),
                   if (_analysis != null || showPreview)
                     Center(
                       child: Stack(
                         children: [
-                          PlatePhoto(
-                            imageBytes: _analysis?.imageBytes ?? _previewBytes!,
-                            plateAsset: plateAsset,
-                            plateSize: 260,
-                            imageSize: 185,
-                            tilt: 0,
+                          AnimatedOpacity(
+                            opacity: _loading ? _progressValue.clamp(0.0, 1.0) : 1.0,
+                            duration: const Duration(milliseconds: 200),
+                            child: PlatePhoto(
+                              imageBytes: _analysis?.imageBytes ?? _previewBytes!,
+                              plateAsset: plateAsset,
+                              plateSize: 260,
+                              imageSize: 185,
+                              tilt: 0,
+                            ),
                           ),
                           if (_loading) _buildScanOverlay(),
                         ],
@@ -601,7 +582,28 @@ Widget _buildAdviceCard(AppLocalizations t) {
                     ),
                   const SizedBox(height: 16),
                   if (_loading)
-                    const Center(child: CircularProgressIndicator())
+                    Builder(builder: (context) {
+                      final steps = [
+                        t.suggestInstantStepDetect,
+                        t.suggestInstantStepEstimate,
+                        t.suggestInstantStepAdvice,
+                      ];
+                      final statusText = steps[_statusIndex % steps.length];
+                      final percent = (_progressValue * 100).clamp(0, 100).round();
+                      return Column(
+                        children: [
+                          Text(
+                            '$percent%',
+                            style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600, color: Colors.black87),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            statusText,
+                            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                          ),
+                        ],
+                      );
+                    })
                   else if (_error != null)
                     Text(_error!, style: AppTextStyles.caption(context).copyWith(color: Colors.redAccent))
                   else
