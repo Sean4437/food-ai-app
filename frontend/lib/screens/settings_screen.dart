@@ -607,17 +607,20 @@ class SettingsScreen extends StatelessWidget {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: ExpansionTile(
-                    title: Text(
-                      t.mealTimeSection,
-                      style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                    initiallyExpanded: false,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    children: [
+                  child: ListTileTheme(
+                    dense: true,
+                    minVerticalPadding: 0,
+                    child: ExpansionTile(
+                      title: Text(
+                        t.mealTimeSection,
+                        style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      initiallyExpanded: false,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      children: [
                       _grid2([
                         _row(
                           context,
@@ -740,7 +743,8 @@ class SettingsScreen extends StatelessWidget {
                           ),
                         ),
                       ]),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 _sectionTitle(context, t.reminderSection),
