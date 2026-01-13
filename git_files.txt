@@ -22,6 +22,8 @@ frontend\lib\l10n\app_zh_TW.arb
 frontend\lib\gen\app_localizations.dart
 frontend\lib\gen\app_localizations_en.dart
 frontend\lib\gen\app_localizations_zh.dart
+frontend\pubspec.yaml
+frontend\assets\themes\theme_pink.json
 backend\app.py
 push.ps1
 git_files.txt

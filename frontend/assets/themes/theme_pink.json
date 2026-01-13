@@ -1,0 +1,25 @@
+{
+  "name": "pink",
+  "font": "Manrope",
+  "colors": {
+    "primary": "#E953A3",
+    "background": "#FDF1F7",
+    "background_top": "#FDE3F0",
+    "background_bottom": "#F9EEF6",
+    "glow": "#F7CFE6",
+    "card": "#FFFFFF",
+    "text": "#1B1D21",
+    "muted": "#6B7280",
+    "accent": "#F4C95D",
+    "success": "#8AD7A4",
+    "warning": "#F4C95D",
+    "danger": "#F08A7C"
+  },
+  "radii": {
+    "card": 18,
+    "button": 16
+  },
+  "layout": {
+    "home": ["capture", "latest", "next", "summary"]
+  }
+}

@@ -35,6 +35,7 @@ flutter:
     - assets/themes/theme_clean.json
     - assets/themes/theme_warm.json
     - assets/themes/theme_green.json
+    - assets/themes/theme_pink.json
     - assets/plates/
     - assets/icons/favicon.png
     - assets/icons/Icon-192.png
