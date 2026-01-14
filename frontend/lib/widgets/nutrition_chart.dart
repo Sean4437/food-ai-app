@@ -150,7 +150,7 @@ class _RadarChart extends StatelessWidget {
   });
 
   final List<_MacroPoint> points;
-  final String Function(double) displayValue;
+  final String Function(_MacroPoint) displayValue;
 
   @override
   Widget build(BuildContext context) {

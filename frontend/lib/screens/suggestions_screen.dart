@@ -405,18 +405,18 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
-    final lines = suggestion
-        .split(RegExp(r'[\r\n]+'))
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty);
+    final lines = suggestion.split(RegExp(r'[
+]+')).map((e) => e.trim()).where((e) => e.isNotEmpty);
     for (final line in lines) {
       final lower = line.toLowerCase();
-      if (_startsWithAny(line, ['可以吃', '可吃', '建議吃']) || lower.startsWith('can eat')) {
+      if (_startsWithAny(line, ['可以吃', '建議吃', '自煮']) || lower.startsWith('can eat')) {
         sections['can'] = _splitAdviceValue(line);
       } else if (_startsWithAny(line, ['不建議', '避免']) || lower.startsWith('avoid')) {
         sections['avoid'] = _splitAdviceValue(line);
-      } else if (_startsWithAny(line, ['建議份量', '份量']) || lower.startsWith('portion') || lower.startsWith('limit')) {
+      } else if (_startsWithAny(line, ['份量', '上限']) || lower.startsWith('portion') || lower.startsWith('limit')) {
         sections['limit'] = _splitAdviceValue(line);
+      } else if (_startsWithAny(line, ['便利店', '便當', '其他'])) {
+        sections['can'] = _splitAdviceValue(line);
       }
     }
     return sections;
@@ -438,7 +438,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     return line.trim();
   }
 
-  Widget _buildScanOverlay() {
+Widget _buildScanOverlay() {
     return Positioned.fill(
       child: IgnorePointer(
         child: AnimatedBuilder(
