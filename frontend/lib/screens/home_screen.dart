@@ -24,6 +24,18 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController(viewportFraction: 1);
   int _pageIndex = 0;
   final Map<DateTime, int> _dateSelectedMeal = {};
+  String? _lastPlateAsset;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final app = AppStateScope.of(context);
+    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
+    if (_lastPlateAsset != plateAsset) {
+      _lastPlateAsset = plateAsset;
+      precacheImage(AssetImage(plateAsset), context);
+    }
+  }
 
   @override
   void dispose() {
