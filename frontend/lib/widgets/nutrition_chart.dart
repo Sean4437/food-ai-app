@@ -9,17 +9,24 @@ enum NutritionChartStyle {
   donut,
 }
 
+enum NutritionValueMode {
+  percent,
+  amount,
+}
+
 class NutritionChart extends StatelessWidget {
   const NutritionChart({
     super.key,
     required this.macros,
     required this.style,
     required this.t,
+    this.valueMode = NutritionValueMode.percent,
   });
 
   final Map<String, double> macros;
   final NutritionChartStyle style;
   final AppLocalizations t;
+  final NutritionValueMode valueMode;
 
   static const _axisColors = [
     Color(0xFF7FCB99), // protein
@@ -33,9 +40,35 @@ class NutritionChart extends StatelessWidget {
     return (value.clamp(0, 100)) / 100;
   }
 
-  String _displayValue(double value) {
-    final normalized = value <= 1 ? (value * 100) : value;
-    return "${normalized.round()}%";
+  double _normalizedPercent(double value) {
+    return value <= 1 ? (value * 100) : value;
+  }
+
+  double _amountFromPercent(String key, double percent) {
+    final ratio = (percent.clamp(0, 100)) / 100;
+    switch (key) {
+      case "protein":
+        return 30 * ratio;
+      case "carbs":
+        return 80 * ratio;
+      case "fat":
+        return 25 * ratio;
+      case "sodium":
+        return 800 * ratio;
+      default:
+        return 0;
+    }
+  }
+
+  String _displayValue(_MacroPoint point) {
+    final percent = _normalizedPercent(point.rawValue);
+    if (valueMode == NutritionValueMode.percent) {
+      return "${percent.round()}%";
+    }
+    final amount = _amountFromPercent(point.key, percent);
+    final unit = point.unit;
+    final valueText = amount.round().toString();
+    return unit == "mg" ? "~${valueText}mg" : "~${valueText}g";
   }
 
   List<_MacroPoint> _macroPoints() {
@@ -48,11 +81,39 @@ class NutritionChart extends StatelessWidget {
     final fatRatio = _ratioFromValue(fat);
     final sodiumRatio = _ratioFromValue(sodium);
     return [
-      _MacroPoint(t.protein, protein, proteinRatio, _axisColors[0], Icons.eco),
-      _MacroPoint(t.carbs, carbs, carbsRatio, _axisColors[1], Icons.grass),
-      _MacroPoint(t.fat, fat, fatRatio, _axisColors[2], Icons.local_pizza),
-      _MacroPoint(t.sodium, sodium, sodiumRatio, _axisColors[3], Icons.opacity),
+      _MacroPoint("protein", t.protein, protein, proteinRatio, _axisColors[0], Icons.eco, "g"),
+      _MacroPoint("carbs", t.carbs, carbs, carbsRatio, _axisColors[1], Icons.grass, "g"),
+      _MacroPoint("fat", t.fat, fat, fatRatio, _axisColors[2], Icons.local_pizza, "g"),
+      _MacroPoint("sodium", t.sodium, sodium, sodiumRatio, _axisColors[3], Icons.opacity, "mg"),
     ];
+  }
+
+  static String formatValue({
+    required String key,
+    required double value,
+    required NutritionValueMode mode,
+  }) {
+    final percent = value <= 1 ? (value * 100) : value;
+    if (mode == NutritionValueMode.percent) {
+      return "${percent.round()}%";
+    }
+    final ratio = (percent.clamp(0, 100)) / 100;
+    final amount = () {
+      switch (key) {
+        case "protein":
+          return 30 * ratio;
+        case "carbs":
+          return 80 * ratio;
+        case "fat":
+          return 25 * ratio;
+        case "sodium":
+          return 800 * ratio;
+        default:
+          return 0;
+      }
+    }();
+    final unit = key == "sodium" ? "mg" : "g";
+    return unit == "mg" ? "~${amount.round()}mg" : "~${amount.round()}g";
   }
 
   @override
@@ -71,13 +132,15 @@ class NutritionChart extends StatelessWidget {
 }
 
 class _MacroPoint {
-  _MacroPoint(this.label, this.rawValue, this.ratio, this.color, this.icon);
+  _MacroPoint(this.key, this.label, this.rawValue, this.ratio, this.color, this.icon, this.unit);
 
+  final String key;
   final String label;
   final double rawValue;
   final double ratio;
   final Color color;
   final IconData icon;
+  final String unit;
 }
 
 class _RadarChart extends StatelessWidget {
@@ -128,7 +191,7 @@ class _RadarChart extends StatelessWidget {
   Widget _nutrientValue(
     BuildContext context,
     _MacroPoint point,
-    String Function(double) displayValue,
+    String Function(_MacroPoint) displayValue,
     TextAlign align,
   ) {
     return Row(
@@ -137,7 +200,7 @@ class _RadarChart extends StatelessWidget {
         Icon(point.icon, size: 16, color: point.color),
         const SizedBox(width: 6),
         Text(
-          "${point.label} ${displayValue(point.rawValue)}",
+          "${point.label} ${displayValue(point)}",
           style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
           textAlign: align,
         ),
@@ -148,7 +211,7 @@ class _RadarChart extends StatelessWidget {
   Widget _nutrientStack(
     BuildContext context,
     _MacroPoint point,
-    String Function(double) displayValue,
+    String Function(_MacroPoint) displayValue,
     TextAlign align,
   ) {
     return Column(
@@ -157,7 +220,7 @@ class _RadarChart extends StatelessWidget {
         Icon(point.icon, size: 16, color: point.color),
         const SizedBox(height: 4),
         Text(
-          "${point.label} ${displayValue(point.rawValue)}",
+          "${point.label} ${displayValue(point)}",
           style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
           textAlign: align,
         ),
@@ -262,7 +325,7 @@ class _BarsChart extends StatelessWidget {
   const _BarsChart({required this.points, required this.displayValue});
 
   final List<_MacroPoint> points;
-  final String Function(double) displayValue;
+  final String Function(_MacroPoint) displayValue;
 
   @override
   Widget build(BuildContext context) {
@@ -286,7 +349,7 @@ class _MacroBar extends StatelessWidget {
   });
 
   final _MacroPoint point;
-  final String Function(double) displayValue;
+  final String Function(_MacroPoint) displayValue;
 
   @override
   Widget build(BuildContext context) {
@@ -332,7 +395,7 @@ class _MacroBar extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        displayValue(point.rawValue),
+                        displayValue(point),
                         style: AppTextStyles.caption(context).copyWith(
                           color: Colors.black87,
                           fontWeight: FontWeight.w600,
@@ -354,7 +417,7 @@ class _DonutChart extends StatelessWidget {
   const _DonutChart({required this.points, required this.displayValue});
 
   final List<_MacroPoint> points;
-  final String Function(double) displayValue;
+  final String Function(_MacroPoint) displayValue;
 
   @override
   Widget build(BuildContext context) {
@@ -380,7 +443,7 @@ class _DonutChart extends StatelessWidget {
                         valueColor: AlwaysStoppedAnimation<Color>(point.color),
                       ),
                       Text(
-                        displayValue(point.rawValue),
+                        displayValue(point),
                         style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600),
                       ),
                     ],

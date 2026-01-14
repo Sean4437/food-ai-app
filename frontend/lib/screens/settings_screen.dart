@@ -331,6 +331,10 @@ class SettingsScreen extends StatelessWidget {
       t.chartBars: 'bars',
       t.chartDonut: 'donut',
     };
+    final nutritionValueOptions = <String, String>{
+      t.nutritionValuePercent: 'percent',
+      t.nutritionValueAmount: 'amount',
+    };
     final currentPlateLabel = plateOptions.entries
         .firstWhere(
           (entry) => entry.value == profile.plateAsset,
@@ -341,6 +345,12 @@ class SettingsScreen extends StatelessWidget {
         .firstWhere(
           (entry) => entry.value == profile.nutritionChartStyle,
           orElse: () => MapEntry(t.chartRadar, 'radar'),
+        )
+        .key;
+    final currentNutritionValueLabel = nutritionValueOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.nutritionValueMode,
+          orElse: () => MapEntry(t.nutritionValuePercent, 'percent'),
         )
         .key;
     final genderOptions = <String, String>{
@@ -913,6 +923,19 @@ class SettingsScreen extends StatelessWidget {
                     current: currentChartLabel,
                     options: chartOptions.keys.toList(),
                     onSave: (value) => app.updateField((p) => p.nutritionChartStyle = chartOptions[value] ?? 'radar'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _row(
+                  context,
+                  t.nutritionValueLabel,
+                  currentNutritionValueLabel,
+                  onTap: () => _selectOption(
+                    context,
+                    title: t.nutritionValueLabel,
+                    current: currentNutritionValueLabel,
+                    options: nutritionValueOptions.keys.toList(),
+                    onSave: (value) => app.updateField((p) => p.nutritionValueMode = nutritionValueOptions[value] ?? 'percent'),
                   ),
                 ),
                 const SizedBox(height: 8),

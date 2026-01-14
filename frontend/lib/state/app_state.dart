@@ -2039,6 +2039,7 @@ class AppState extends ChangeNotifier {
       'theme_asset': profile.themeAsset,
       'text_scale': profile.textScale,
       'nutrition_chart': profile.nutritionChartStyle,
+      'nutrition_value_mode': profile.nutritionValueMode,
       'glow_enabled': profile.glowEnabled,
     };
   }
@@ -2080,6 +2081,7 @@ class AppState extends ChangeNotifier {
       ..themeAsset = (data['theme_asset'] as String?) ?? profile.themeAsset
       ..textScale = (data['text_scale'] as num?)?.toDouble() ?? profile.textScale
       ..nutritionChartStyle = (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle
+      ..nutritionValueMode = (data['nutrition_value_mode'] as String?) ?? profile.nutritionValueMode
       ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled;
   }
 
@@ -2268,6 +2270,7 @@ class UserProfile {
     required this.themeAsset,
     required this.textScale,
     required this.nutritionChartStyle,
+    required this.nutritionValueMode,
     required this.glowEnabled,
   });
 
@@ -2306,6 +2309,7 @@ class UserProfile {
   String themeAsset;
   double textScale;
   String nutritionChartStyle;
+  String nutritionValueMode;
   bool glowEnabled;
 
   factory UserProfile.initial() {
@@ -2345,6 +2349,7 @@ class UserProfile {
       themeAsset: kDefaultThemeAsset,
       textScale: kDefaultTextScale,
       nutritionChartStyle: 'bars',
+      nutritionValueMode: 'percent',
       glowEnabled: true,
     );
   }

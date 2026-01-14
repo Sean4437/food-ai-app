@@ -313,6 +313,16 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     }
   }
 
+  NutritionValueMode _valueMode(String value) {
+    switch (value) {
+      case 'amount':
+        return NutritionValueMode.amount;
+      case 'percent':
+      default:
+        return NutritionValueMode.percent;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
@@ -450,6 +460,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                           NutritionChart(
                             macros: currentEntry!.result!.macros,
                             style: _chartStyle(app.profile.nutritionChartStyle),
+                            valueMode: _valueMode(app.profile.nutritionValueMode),
                             t: t,
                           ),
                         ],
@@ -514,10 +525,10 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                   spacing: 8,
                                   runSpacing: 6,
                                   children: [
-                                    Text('${t.protein} ${currentEntry!.labelResult!.macros['protein']?.round() ?? 0}%'),
-                                    Text('${t.carbs} ${currentEntry!.labelResult!.macros['carbs']?.round() ?? 0}%'),
-                                    Text('${t.fat} ${currentEntry!.labelResult!.macros['fat']?.round() ?? 0}%'),
-                                    Text('${t.sodium} ${currentEntry!.labelResult!.macros['sodium']?.round() ?? 0}%'),
+                                    Text('${t.protein} ${NutritionChart.formatValue(key: 'protein', value: currentEntry!.labelResult!.macros['protein'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}'),
+                                    Text('${t.carbs} ${NutritionChart.formatValue(key: 'carbs', value: currentEntry!.labelResult!.macros['carbs'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}'),
+                                    Text('${t.fat} ${NutritionChart.formatValue(key: 'fat', value: currentEntry!.labelResult!.macros['fat'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}'),
+                                    Text('${t.sodium} ${NutritionChart.formatValue(key: 'sodium', value: currentEntry!.labelResult!.macros['sodium'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}'),
                                   ],
                                 ),
                               ],

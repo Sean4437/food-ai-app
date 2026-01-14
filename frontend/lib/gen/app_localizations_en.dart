@@ -976,6 +976,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nutritionChartLabel => 'Nutrition chart';
+  String get nutritionValueLabel => 'Nutrition display';
+  String get nutritionValuePercent => 'Percent';
+  String get nutritionValueAmount => 'Amount';
 
   @override
   String get chartRadar => 'Radar';

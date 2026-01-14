@@ -965,6 +965,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nutritionChartLabel => '營養圖表';
+  @override
+  String get nutritionValueLabel => '營養顯示';
+  @override
+  String get nutritionValuePercent => '百分比';
+  @override
+  String get nutritionValueAmount => '數值';
 
   @override
   String get chartRadar => '雷達圖';
@@ -1955,6 +1961,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get nutritionChartLabel => '營養圖表';
+  @override
+  String get nutritionValueLabel => '營養顯示';
+  @override
+  String get nutritionValuePercent => '百分比';
+  @override
+  String get nutritionValueAmount => '數值';
 
   @override
   String get chartRadar => '雷達圖';

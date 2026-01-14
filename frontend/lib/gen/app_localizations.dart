@@ -1995,6 +1995,24 @@ abstract class AppLocalizations {
   /// **'營養圖表'**
   String get nutritionChartLabel;
 
+  /// No description provided for @nutritionValueLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'營養顯示'**
+  String get nutritionValueLabel;
+
+  /// No description provided for @nutritionValuePercent.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'百分比'**
+  String get nutritionValuePercent;
+
+  /// No description provided for @nutritionValueAmount.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'數值'**
+  String get nutritionValueAmount;
+
   /// No description provided for @chartRadar.
   ///
   /// In zh_TW, this message translates to:
