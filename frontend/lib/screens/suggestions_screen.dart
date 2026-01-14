@@ -405,8 +405,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
-    final lines = suggestion.split(RegExp(r'[
-]+')).map((e) => e.trim()).where((e) => e.isNotEmpty);
+    final lines = suggestion.split(RegExp(r'[\\r\\n]+')).map((e) => e.trim()).where((e) => e.isNotEmpty);
     for (final line in lines) {
       final lower = line.toLowerCase();
       if (_startsWithAny(line, ['可以吃', '建議吃', '自煮']) || lower.startsWith('can eat')) {
