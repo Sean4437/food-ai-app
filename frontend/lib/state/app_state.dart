@@ -1352,12 +1352,28 @@ class AppState extends ChangeNotifier {
   }
 
   void updateEntryTime(MealEntry entry, DateTime time) {
+    final oldMealId = entry.mealId ?? entry.id;
+    final oldDate = _dateOnly(entry.time);
     entry.time = time;
     entry.type = resolveMealType(time);
     entry.mealId = _assignMealId(time, entry.type);
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     _store.upsert(entry);
+    if (oldMealId != (entry.mealId ?? entry.id)) {
+      final oldKey = _mealKey(oldMealId);
+      if (_mealOverrides.containsKey(oldKey)) {
+        _mealOverrides.remove(oldKey);
+      }
+      final newKey = _mealKey(entry.mealId ?? entry.id);
+      if (_mealOverrides.containsKey(newKey)) {
+        _mealOverrides.remove(newKey);
+      }
+      _saveOverrides();
+    }
+    _scheduleAnalyze(entry, profile.language, force: true, reason: 'time_changed');
+    _refreshDaySummaryForDate(oldDate, profile.language);
+    _refreshDaySummaryForDate(_dateOnly(entry.time), profile.language);
   }
 
   void updateEntryPortionPercent(MealEntry entry, int percent) {
@@ -1486,6 +1502,7 @@ class AppState extends ChangeNotifier {
       'new_entry',
       'quick_capture',
       'quick_capture_manual',
+      'time_changed',
     };
     if (_isDayLocked(entry.time) && !allowedWhenLocked.contains(reason)) {
       return;
@@ -1537,6 +1554,7 @@ class AppState extends ChangeNotifier {
         'note_changed',
         'label_added',
         'portion_changed',
+        'time_changed',
       };
       if (force && entry.error == null && refreshMealAdviceReasons.contains(reason)) {
         await _refreshMealAdviceForEntry(entry, locale);
@@ -1547,6 +1565,7 @@ class AppState extends ChangeNotifier {
         'note_changed',
         'label_added',
         'portion_changed',
+        'time_changed',
       };
       if (entry.error == null && refreshDaySummaryReasons.contains(reason)) {
         await _refreshDaySummaryForEntry(entry, locale);
@@ -1569,12 +1588,17 @@ class AppState extends ChangeNotifier {
 
   Future<void> _refreshDaySummaryForEntry(MealEntry entry, String locale) async {
     final date = _dateOnly(entry.time);
+    final t = lookupAppLocalizations(Locale.fromSubtags(languageCode: locale.split('-').first));
+    await _refreshDaySummaryForDate(date, locale, t: t);
+  }
+
+  Future<void> _refreshDaySummaryForDate(DateTime date, String locale, {AppLocalizations? t}) async {
     final key = _dayKey(date);
     if (!_isDayLocked(date) && !_dayOverrides.containsKey(key)) {
       return;
     }
-    final t = lookupAppLocalizations(Locale.fromSubtags(languageCode: locale.split('-').first));
-    await finalizeDay(date, locale, t);
+    final resolved = t ?? lookupAppLocalizations(Locale.fromSubtags(languageCode: locale.split('-').first));
+    await finalizeDay(date, locale, resolved);
   }
 
   Future<DateTime> _resolveImageTime(XFile xfile, List<int> bytes) async {
