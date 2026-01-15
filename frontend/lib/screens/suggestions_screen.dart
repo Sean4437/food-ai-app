@@ -647,15 +647,11 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                   color: Colors.white.withOpacity(0.4),
                                   borderRadius: BorderRadius.circular(26),
                                 ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 70),
-                          child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 70),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
                             if (_analysis != null || showPreview)
                               Center(
                                 child: Stack(
@@ -796,7 +792,11 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                 ),
                               ),
                             ),
-                          ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],
