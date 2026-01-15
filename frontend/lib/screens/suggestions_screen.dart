@@ -945,8 +945,8 @@ class _ProgressArcPainter extends CustomPainter {
     final h = size.height;
     if (w <= 0 || h <= 0) return;
 
-    final center = Offset(w * 0.5, h * 0.46);
-    final radius = math.min(w, h) * 0.27;
+      final center = Offset(w * 0.5, h * 0.5);
+      final radius = math.min(w, h) * 0.36;
     final trackPaint = Paint()
       ..color = color.withOpacity(0.12)
       ..style = PaintingStyle.stroke
