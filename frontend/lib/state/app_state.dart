@@ -1509,7 +1509,6 @@ class AppState extends ChangeNotifier {
     }
     entry.loading = true;
     entry.error = null;
-    entry.result = null;
     notifyListeners();
 
     try {
