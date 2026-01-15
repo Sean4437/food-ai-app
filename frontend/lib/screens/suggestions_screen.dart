@@ -437,9 +437,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     return line.trim();
   }
 
-Widget _buildScanOverlay() {
-    return Positioned.fill(
-      child: IgnorePointer(
+  Widget _buildScanOverlay(double size) {
+    return IgnorePointer(
+      child: SizedBox(
+        width: size,
+        height: size,
         child: AnimatedBuilder(
           animation: _scanController,
           builder: (context, child) {
@@ -453,14 +455,7 @@ Widget _buildScanOverlay() {
                     rotation: value,
                     color: Theme.of(context).colorScheme.primary,
                   ),
-                  size: Size.infinite,
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 18),
-                    child: const SizedBox.shrink(),
-                  ),
+                  size: Size(size, size),
                 ),
               ],
             );
@@ -677,7 +672,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                           tilt: 0,
                                         ),
                                       ),
-                                      if (_loading) _buildScanOverlay(),
+                                      if (_loading) _buildScanOverlay(plateSize),
                                     ],
                                   ),
                                 ),
