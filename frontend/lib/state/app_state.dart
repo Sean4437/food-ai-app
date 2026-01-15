@@ -1536,9 +1536,20 @@ class AppState extends ChangeNotifier {
         'name_changed',
         'note_changed',
         'label_added',
+        'portion_changed',
       };
       if (force && entry.error == null && refreshMealAdviceReasons.contains(reason)) {
         await _refreshMealAdviceForEntry(entry, locale);
+      }
+      const refreshDaySummaryReasons = {
+        'manual',
+        'name_changed',
+        'note_changed',
+        'label_added',
+        'portion_changed',
+      };
+      if (entry.error == null && refreshDaySummaryReasons.contains(reason)) {
+        await _refreshDaySummaryForEntry(entry, locale);
       }
     }
   }
@@ -1554,6 +1565,16 @@ class AppState extends ChangeNotifier {
     final group = entriesForMealId(mealId);
     if (group.isEmpty) return;
     await ensureMealAdviceForGroup(group, t, locale);
+  }
+
+  Future<void> _refreshDaySummaryForEntry(MealEntry entry, String locale) async {
+    final date = _dateOnly(entry.time);
+    final key = _dayKey(date);
+    if (!_isDayLocked(date) && !_dayOverrides.containsKey(key)) {
+      return;
+    }
+    final t = lookupAppLocalizations(Locale.fromSubtags(languageCode: locale.split('-').first));
+    await finalizeDay(date, locale, t);
   }
 
   Future<DateTime> _resolveImageTime(XFile xfile, List<int> bytes) async {
@@ -1707,11 +1728,14 @@ class AppState extends ChangeNotifier {
   }
 
   MealEntry? _findMealAnchor(MealEntry entry) {
+    if ((entry.note ?? '').trim().isNotEmpty) return null;
     for (final existing in entries) {
       if (existing.id == entry.id) continue;
-      if (existing.imageHash != null && existing.imageHash == entry.imageHash && existing.result != null) {
-        return existing;
-      }
+      if (existing.imageHash == null || existing.imageHash != entry.imageHash) continue;
+      if (existing.result == null) continue;
+      if ((existing.overrideFoodName ?? '').trim().isNotEmpty) continue;
+      if ((existing.note ?? '').trim().isNotEmpty) continue;
+      return existing;
     }
     return null;
   }
