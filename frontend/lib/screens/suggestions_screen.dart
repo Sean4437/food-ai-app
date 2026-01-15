@@ -660,10 +660,14 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                     children: [
                             if (_analysis != null || showPreview)
                               Center(
-                                child: Stack(
-                                  children: [
-                                    AnimatedOpacity(
-                                      opacity: _loading ? _progressValue.clamp(0.0, 1.0) : 1.0,
+                                child: SizedBox(
+                                  width: plateSize,
+                                  height: plateSize,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      AnimatedOpacity(
+                                        opacity: _loading ? _progressValue.clamp(0.0, 1.0) : 1.0,
                                         duration: const Duration(milliseconds: 200),
                                         child: PlatePhoto(
                                           imageBytes: _analysis?.imageBytes ?? _previewBytes!,
@@ -676,7 +680,8 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                       if (_loading) _buildScanOverlay(),
                                     ],
                                   ),
-                                )
+                                ),
+                              )
                               else
                                 Center(
                                   child: SizedBox(
