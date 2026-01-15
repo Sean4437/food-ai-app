@@ -620,38 +620,36 @@ Widget _buildAdviceCard(AppLocalizations t) {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: Center(
+                    Center(
+                      child: SizedBox(
+                        width: 320,
+                        height: 520,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IgnorePointer(
                               child: Container(
-                                width: 320,
-                                height: 520,
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.22),
                                   borderRadius: BorderRadius.circular(28),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: Center(
-                              child: Container(
-                                width: 300,
-                                height: 500,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.4),
-                                  borderRadius: BorderRadius.circular(26),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 70),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
+                            Align(
+                              alignment: Alignment.center,
+                              child: IgnorePointer(
+                                child: Container(
+                                  width: 300,
+                                  height: 500,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.4),
+                                    borderRadius: BorderRadius.circular(26),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 70),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
                             if (_analysis != null || showPreview)
                               Center(
                                 child: Stack(
@@ -792,14 +790,15 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                 ),
                               ),
                             ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                     const SizedBox(height: 12),
                     if (_instantAdvice != null)
