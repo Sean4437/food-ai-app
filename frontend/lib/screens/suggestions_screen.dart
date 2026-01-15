@@ -592,13 +592,13 @@ Widget _buildAdviceCard(AppLocalizations t) {
     final showPreview = _analysis == null && _previewBytes != null;
     final media = MediaQuery.of(context);
     final cardWidth = (media.size.width - 32).clamp(280.0, 340.0);
-    final cardHeight = (media.size.height * 0.62).clamp(380.0, 560.0);
+    final cardHeight = (media.size.height * 0.7).clamp(420.0, 620.0);
     final innerWidth = (cardWidth - 20).clamp(260.0, 320.0);
-    final innerHeight = (cardHeight - 20).clamp(360.0, 540.0);
-    final plateSize = (cardWidth * 0.78).clamp(200.0, 270.0);
+    final innerHeight = (cardHeight - 16).clamp(380.0, 600.0);
+    final plateSize = (cardHeight * 0.42).clamp(180.0, 250.0);
     final imageSize = (plateSize * 0.72).clamp(140.0, 200.0);
     final buttonWidth = (cardWidth * 0.7).clamp(160.0, 220.0);
-    final contentVerticalPadding = (cardHeight * 0.14).clamp(40.0, 90.0);
+    final contentVerticalPadding = (cardHeight * 0.1).clamp(24.0, 60.0);
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -646,19 +646,18 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             ),
                             Align(
                               alignment: Alignment.center,
-                              child: IgnorePointer(
-                                child: Container(
-                                  width: innerWidth,
-                                  height: innerHeight,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.4),
-                                    borderRadius: BorderRadius.circular(26),
-                                  ),
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: contentVerticalPadding),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
+                              child: Container(
+                                width: innerWidth,
+                                height: innerHeight,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.4),
+                                  borderRadius: BorderRadius.circular(26),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: contentVerticalPadding),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
                             if (_analysis != null || showPreview)
                               Center(
                                 child: Stack(
@@ -799,8 +798,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                 ),
                               ),
                             ),
-                                      ],
-                                    ),
+                                    ],
                                   ),
                                 ),
                               ),
