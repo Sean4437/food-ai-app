@@ -590,6 +590,15 @@ Widget _buildAdviceCard(AppLocalizations t) {
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final analysis = _analysis?.result;
     final showPreview = _analysis == null && _previewBytes != null;
+    final media = MediaQuery.of(context);
+    final cardWidth = (media.size.width - 32).clamp(280.0, 340.0);
+    final cardHeight = (media.size.height * 0.62).clamp(380.0, 560.0);
+    final innerWidth = (cardWidth - 20).clamp(260.0, 320.0);
+    final innerHeight = (cardHeight - 20).clamp(360.0, 540.0);
+    final plateSize = (cardWidth * 0.78).clamp(200.0, 270.0);
+    final imageSize = (plateSize * 0.72).clamp(140.0, 200.0);
+    final buttonWidth = (cardWidth * 0.7).clamp(160.0, 220.0);
+    final contentVerticalPadding = (cardHeight * 0.14).clamp(40.0, 90.0);
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -622,8 +631,8 @@ Widget _buildAdviceCard(AppLocalizations t) {
                     const SizedBox(height: 10),
                     Center(
                       child: SizedBox(
-                        width: 320,
-                        height: 520,
+                        width: cardWidth,
+                        height: cardHeight,
                         child: Stack(
                           clipBehavior: Clip.none,
                           children: [
@@ -639,14 +648,14 @@ Widget _buildAdviceCard(AppLocalizations t) {
                               alignment: Alignment.center,
                               child: IgnorePointer(
                                 child: Container(
-                                  width: 300,
-                                  height: 500,
+                                  width: innerWidth,
+                                  height: innerHeight,
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.4),
                                     borderRadius: BorderRadius.circular(26),
                                   ),
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 70),
+                                    padding: EdgeInsets.symmetric(vertical: contentVerticalPadding),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.stretch,
                                       children: [
@@ -656,27 +665,27 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                   children: [
                                     AnimatedOpacity(
                                       opacity: _loading ? _progressValue.clamp(0.0, 1.0) : 1.0,
-                                      duration: const Duration(milliseconds: 200),
-                                      child: PlatePhoto(
-                                        imageBytes: _analysis?.imageBytes ?? _previewBytes!,
-                                        plateAsset: plateAsset,
-                                        plateSize: 260,
-                                        imageSize: 185,
-                                        tilt: 0,
+                                        duration: const Duration(milliseconds: 200),
+                                        child: PlatePhoto(
+                                          imageBytes: _analysis?.imageBytes ?? _previewBytes!,
+                                          plateAsset: plateAsset,
+                                          plateSize: plateSize,
+                                          imageSize: imageSize,
+                                          tilt: 0,
+                                        ),
                                       ),
-                                    ),
-                                    if (_loading) _buildScanOverlay(),
-                                  ],
-                                ),
-                              )
-                            else
-                              Center(
-                                child: SizedBox(
-                                  width: 220,
-                                  height: 220,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
+                                      if (_loading) _buildScanOverlay(),
+                                    ],
+                                  ),
+                                )
+                              else
+                                Center(
+                                  child: SizedBox(
+                                    width: plateSize,
+                                    height: plateSize,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
                                       Container(
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
@@ -726,7 +735,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             else
                               Center(
                                 child: SizedBox(
-                                  width: 180,
+                                  width: buttonWidth,
                                   child: ElevatedButton.icon(
                                     onPressed: _startCaptureFromCamera,
                                     icon: const Icon(Icons.camera_alt, color: Colors.white),
@@ -745,7 +754,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             const SizedBox(height: 10),
                             Center(
                               child: SizedBox(
-                                width: 180,
+                                width: buttonWidth,
                                 child: OutlinedButton.icon(
                                   onPressed: _startCaptureFromGallery,
                                   icon: Icon(Icons.photo_library_outlined, size: 18, color: theme.colorScheme.primary),
@@ -760,7 +769,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             const SizedBox(height: 10),
                             Center(
                               child: SizedBox(
-                                width: 180,
+                                width: buttonWidth,
                                 child: OutlinedButton.icon(
                                   onPressed: _requestNowAdvice,
                                   icon: Icon(Icons.restaurant_menu, size: 18, color: theme.colorScheme.primary),
@@ -775,7 +784,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             const SizedBox(height: 10),
                             Center(
                               child: SizedBox(
-                                width: 180,
+                                width: buttonWidth,
                                 child: OutlinedButton.icon(
                                   onPressed: _useCustomFood,
                                   icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
