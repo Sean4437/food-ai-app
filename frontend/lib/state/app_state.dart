@@ -1354,6 +1354,7 @@ class AppState extends ChangeNotifier {
   void updateEntryTime(MealEntry entry, DateTime time) {
     final oldMealId = entry.mealId ?? entry.id;
     final oldDate = _dateOnly(entry.time);
+    final locale = profile.language;
     entry.time = time;
     entry.type = resolveMealType(time);
     entry.mealId = _assignMealId(time, entry.type);
@@ -1370,10 +1371,16 @@ class AppState extends ChangeNotifier {
         _mealOverrides.remove(newKey);
       }
       _saveOverrides();
+      // Recompute advice for the old meal group if it still exists.
+      final oldGroup = entriesForMealId(oldMealId);
+      if (oldGroup.isNotEmpty) {
+        // ignore: discarded_futures
+        _refreshMealAdviceForMealId(oldMealId, locale);
+      }
     }
-    _scheduleAnalyze(entry, profile.language, force: true, reason: 'time_changed');
-    _refreshDaySummaryForDate(oldDate, profile.language);
-    _refreshDaySummaryForDate(_dateOnly(entry.time), profile.language);
+    _scheduleAnalyze(entry, locale, force: true, reason: 'time_changed');
+    _refreshDaySummaryForDate(oldDate, locale);
+    _refreshDaySummaryForDate(_dateOnly(entry.time), locale);
   }
 
   void updateEntryPortionPercent(MealEntry entry, int percent) {
@@ -1574,6 +1581,10 @@ class AppState extends ChangeNotifier {
 
   Future<void> _refreshMealAdviceForEntry(MealEntry entry, String locale) async {
     final mealId = entry.mealId ?? entry.id;
+    await _refreshMealAdviceForMealId(mealId, locale);
+  }
+
+  Future<void> _refreshMealAdviceForMealId(String mealId, String locale) async {
     final key = _mealKey(mealId);
     if (_mealOverrides.containsKey(key)) {
       _mealOverrides.remove(key);
