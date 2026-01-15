@@ -31,45 +31,54 @@ class PlatePhoto extends StatelessWidget {
           angle: tilt,
           child: SizedBox.square(
             dimension: plateSize,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.14),
-                        blurRadius: 28,
-                        offset: const Offset(0, 16),
-                      ),
-                    ],
-                  ),
-                ),
-                Image.asset(plateAsset, fit: BoxFit.contain),
-                Container(
-                  width: plateSize * 0.92,
-                  height: plateSize * 0.92,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        Colors.white.withOpacity(0.0),
-                        Colors.white.withOpacity(0.25),
+            child: RepaintBoundary(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.14),
+                          blurRadius: 28,
+                          offset: const Offset(0, 16),
+                        ),
                       ],
-                      stops: const [0.6, 1],
                     ),
                   ),
-                ),
-                ClipOval(
-                  child: Image.memory(
-                    imageBytes,
-                    width: imageSize,
-                    height: imageSize,
-                    fit: BoxFit.cover,
+                  Image.asset(
+                    plateAsset,
+                    fit: BoxFit.contain,
+                    cacheWidth: (plateSize * 2).round(),
+                    gaplessPlayback: true,
                   ),
-                ),
-              ],
+                  Container(
+                    width: plateSize * 0.92,
+                    height: plateSize * 0.92,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.white.withOpacity(0.0),
+                          Colors.white.withOpacity(0.25),
+                        ],
+                        stops: const [0.6, 1],
+                      ),
+                    ),
+                  ),
+                  ClipOval(
+                    child: Image.memory(
+                      imageBytes,
+                      width: imageSize,
+                      height: imageSize,
+                      fit: BoxFit.cover,
+                      cacheWidth: (imageSize * 2).round(),
+                      gaplessPlayback: true,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
