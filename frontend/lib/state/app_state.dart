@@ -15,7 +15,7 @@ import '../services/api_service.dart';
 import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
 
-const String kDefaultApiBaseUrl = 'https://sussex-oscar-southern-scanning.trycloudflare.com';
+const String kDefaultApiBaseUrl = 'https://highest-find-inkjet-prove.trycloudflare.com';
 const String kDefaultPlateAsset = 'assets/plates/plate_Japanese_02.png';
 const String kDefaultThemeAsset = 'assets/themes/theme_clean.json';
 const double kDefaultTextScale = 1.0;
