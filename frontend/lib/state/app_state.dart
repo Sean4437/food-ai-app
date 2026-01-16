@@ -1392,7 +1392,6 @@ class AppState extends ChangeNotifier {
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     _store.upsert(entry);
-    _scheduleAnalyze(entry, profile.language, force: true, reason: 'portion_changed');
   }
 
   Future<void> addLabelToEntry(MealEntry entry, XFile file, String locale) async {
