@@ -1811,6 +1811,18 @@ class AppState extends ChangeNotifier {
     return safe / 100.0;
   }
 
+  Map<String, double> scaledMacrosForEntry(MealEntry entry) {
+    final macros = entry.result?.macros;
+    if (macros == null) return {};
+    final weight = _portionWeight(entry.portionPercent);
+    return {
+      'protein': (macros['protein'] ?? 0) * weight,
+      'carbs': (macros['carbs'] ?? 0) * weight,
+      'fat': (macros['fat'] ?? 0) * weight,
+      'sodium': (macros['sodium'] ?? 0) * weight,
+    };
+  }
+
   double _levelScorePercent(double value) {
     if (value >= 70) return 3.0;
     if (value <= 35) return 1.0;

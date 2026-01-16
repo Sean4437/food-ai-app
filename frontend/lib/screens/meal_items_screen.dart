@@ -458,7 +458,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                           ),
                           const SizedBox(height: 8),
                           NutritionChart(
-                            macros: currentEntry!.result!.macros,
+                            macros: app.scaledMacrosForEntry(currentEntry!),
                             style: _chartStyle(app.profile.nutritionChartStyle),
                             valueMode: _valueMode(app.profile.nutritionValueMode),
                             t: t,
@@ -508,6 +508,33 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                   t.labelInfoTitle,
                                   style: AppTextStyles.title2(context),
                                 ),
+                                ...(() {
+                                  if (currentEntry == null) return <Widget>[];
+                                  final macros = app.scaledMacrosForEntry(currentEntry);
+                                  if (macros.isEmpty) return <Widget>[];
+                                  return [
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '${t.protein} ${NutritionChart.formatValue(key: 'protein', value: macros['protein'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}',
+                                      style: AppTextStyles.body(context),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${t.carbs} ${NutritionChart.formatValue(key: 'carbs', value: macros['carbs'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}',
+                                      style: AppTextStyles.body(context),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${t.fat} ${NutritionChart.formatValue(key: 'fat', value: macros['fat'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}',
+                                      style: AppTextStyles.body(context),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${t.sodium} ${NutritionChart.formatValue(key: 'sodium', value: macros['sodium'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}',
+                                      style: AppTextStyles.body(context),
+                                    ),
+                                  ];
+                                })(),
                                 if ((currentEntry!.labelResult!.labelName ?? '').trim().isNotEmpty) ...[
                                   const SizedBox(height: 6),
                                   Text(
