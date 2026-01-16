@@ -1763,6 +1763,7 @@ class AppState extends ChangeNotifier {
 
   MealEntry? _findMealAnchor(MealEntry entry) {
     if ((entry.note ?? '').trim().isNotEmpty) return null;
+    if ((entry.overrideFoodName ?? '').trim().isNotEmpty) return null;
     for (final existing in entries) {
       if (existing.id == entry.id) continue;
       if (existing.imageHash == null || existing.imageHash != entry.imageHash) continue;
