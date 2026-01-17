@@ -41,6 +41,7 @@ class AppState extends ChangeNotifier {
   final Map<String, bool> _analysisTimerForce = {};
   final Map<String, String> _analysisTimerReason = {};
   final Map<String, DateTime> _mealInteractionAt = {};
+  final Map<String, Timer> _mealAdviceTimers = {};
   final Set<String> _mealAdviceLoading = {};
   Timer? _autoFinalizeTimer;
   Timer? _autoWeeklyTimer;
@@ -1375,7 +1376,7 @@ class AppState extends ChangeNotifier {
       final oldGroup = entriesForMealId(oldMealId);
       if (oldGroup.isNotEmpty) {
         // ignore: discarded_futures
-        _refreshMealAdviceForMealId(oldMealId, locale);
+        _scheduleMealAdviceRefresh(oldMealId, locale);
       }
     }
     _scheduleAnalyze(entry, locale, force: true, reason: 'time_changed');
@@ -1580,7 +1581,16 @@ class AppState extends ChangeNotifier {
 
   Future<void> _refreshMealAdviceForEntry(MealEntry entry, String locale) async {
     final mealId = entry.mealId ?? entry.id;
-    await _refreshMealAdviceForMealId(mealId, locale);
+    _scheduleMealAdviceRefresh(mealId, locale);
+  }
+
+  void _scheduleMealAdviceRefresh(String mealId, String locale) {
+    _mealAdviceTimers[mealId]?.cancel();
+    _mealAdviceTimers[mealId] = Timer(const Duration(seconds: 60), () {
+      _mealAdviceTimers.remove(mealId);
+      // ignore: discarded_futures
+      _refreshMealAdviceForMealId(mealId, locale);
+    });
   }
 
   Future<void> _refreshMealAdviceForMealId(String mealId, String locale) async {
