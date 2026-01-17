@@ -884,13 +884,14 @@ async def analyze_image(
     )
 
     tier = "full"
+    portion_is_default = portion_percent in (None, 100)
     if (
         not force_reanalyze_flag
         and advice_mode != "current_meal"
         and food_name is None
         and note is None
         and context is None
-        and portion_percent is None
+        and portion_is_default
         and advice_mode is None
         and label_context is None
     ):
