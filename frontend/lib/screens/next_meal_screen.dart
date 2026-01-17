@@ -8,6 +8,7 @@ class NextMealScreen extends StatelessWidget {
   const NextMealScreen({super.key});
 
   Widget _optionCard({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String desc,
@@ -103,6 +104,7 @@ class NextMealScreen extends StatelessWidget {
                   ],
                   const SizedBox(height: 16),
                   _optionCard(
+                    context: context,
                     icon: Icons.store_mall_directory,
                     title: t.optionConvenienceTitle,
                     desc: t.optionConvenienceDesc,
@@ -110,6 +112,7 @@ class NextMealScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   _optionCard(
+                    context: context,
                     icon: Icons.lunch_dining,
                     title: t.optionBentoTitle,
                     desc: t.optionBentoDesc,
@@ -117,6 +120,7 @@ class NextMealScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   _optionCard(
+                    context: context,
                     icon: Icons.restaurant,
                     title: t.optionLightTitle,
                     desc: t.optionLightDesc,

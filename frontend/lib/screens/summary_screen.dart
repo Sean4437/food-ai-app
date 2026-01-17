@@ -26,7 +26,7 @@ class SummaryScreen extends StatelessWidget {
     return t.summaryNeutral;
   }
 
-  Widget _statChip(IconData icon, String label, String value) {
+  Widget _statChip(BuildContext context, IconData icon, String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -143,12 +143,12 @@ class SummaryScreen extends StatelessWidget {
                           spacing: 10,
                           runSpacing: 10,
                           children: [
-                            _statChip(Icons.free_breakfast, t.breakfast, breakfast.toString()),
-                            _statChip(Icons.brunch_dining, t.brunch, brunch.toString()),
-                            _statChip(Icons.lunch_dining, t.lunch, lunch.toString()),
-                            _statChip(Icons.emoji_food_beverage, t.afternoonTea, afternoonTea.toString()),
-                            _statChip(Icons.restaurant, t.dinner, dinner.toString()),
-                            _statChip(Icons.nightlife, t.lateSnack, lateSnack.toString()),
+                            _statChip(context, Icons.free_breakfast, t.breakfast, breakfast.toString()),
+                            _statChip(context, Icons.brunch_dining, t.brunch, brunch.toString()),
+                            _statChip(context, Icons.lunch_dining, t.lunch, lunch.toString()),
+                            _statChip(context, Icons.emoji_food_beverage, t.afternoonTea, afternoonTea.toString()),
+                            _statChip(context, Icons.restaurant, t.dinner, dinner.toString()),
+                            _statChip(context, Icons.nightlife, t.lateSnack, lateSnack.toString()),
                           ],
                         ),
                       ],

@@ -39,7 +39,7 @@ class MealDetailScreen extends StatelessWidget {
 
   String _displayValue(double percent) => '${percent.round()}%';
 
-  Widget _nutrientValue(String label, double value, double ratio, IconData icon, Color color) {
+  Widget _nutrientValue(BuildContext context, String label, double value, double ratio, IconData icon, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -53,7 +53,7 @@ class MealDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _radarChart(MealEntry entry, AppLocalizations t) {
+  Widget _radarChart(BuildContext context, MealEntry entry, AppLocalizations t) {
     final protein = entry.result?.macros['protein'] ?? 55;
     final carbs = entry.result?.macros['carbs'] ?? 55;
     final fat = entry.result?.macros['fat'] ?? 55;
@@ -81,6 +81,7 @@ class MealDetailScreen extends StatelessWidget {
                     Align(
                       alignment: const Alignment(0, -1.05),
                       child: _nutrientValue(
+                        context,
                         t.protein,
                         protein,
                         proteinRatio,
@@ -91,6 +92,7 @@ class MealDetailScreen extends StatelessWidget {
                     Align(
                       alignment: const Alignment(1.05, 0.1),
                       child: _nutrientValue(
+                        context,
                         t.carbs,
                         carbs,
                         carbsRatio,
@@ -101,6 +103,7 @@ class MealDetailScreen extends StatelessWidget {
                     Align(
                       alignment: const Alignment(0, 1.05),
                       child: _nutrientValue(
+                        context,
                         t.fat,
                         fat,
                         fatRatio,
@@ -111,6 +114,7 @@ class MealDetailScreen extends StatelessWidget {
                     Align(
                       alignment: const Alignment(-1.05, 0.1),
                       child: _nutrientValue(
+                        context,
                         t.sodium,
                         sodium,
                         sodiumRatio,
@@ -314,7 +318,7 @@ class MealDetailScreen extends StatelessWidget {
                             child: Text(entry.error!, style: AppTextStyles.caption(context).copyWith(color: Colors.red)),
                           )
                         else if (entry.result != null)
-                          _radarChart(entry, t)
+                          _radarChart(context, entry, t)
                         else
                           Padding(
                             padding: const EdgeInsets.only(top: 6),

@@ -71,7 +71,7 @@ class AnalysisScreen extends StatelessWidget {
     return const Color(0xFF8AD7A4);
   }
 
-  Widget _macroChip(String label, MacroLevel level, AppLocalizations t) {
+  Widget _macroChip(BuildContext context, String label, MacroLevel level, AppLocalizations t) {
     final color = _levelColor(level);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -95,7 +95,7 @@ class AnalysisScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _macroChips(AnalysisResult result, AppLocalizations t) {
+  List<Widget> _macroChips(BuildContext context, AnalysisResult result, AppLocalizations t) {
     final items = <MapEntry<String, double>>[
       MapEntry(t.protein, result.macros['protein'] ?? 0),
       MapEntry(t.carbs, result.macros['carbs'] ?? 0),
@@ -107,7 +107,7 @@ class AnalysisScreen extends StatelessWidget {
     }
     return [
       for (final item in items)
-        _macroChip(item.key, _levelFromPercent(item.value), t),
+        _macroChip(context, item.key, _levelFromPercent(item.value), t),
     ];
   }
 
@@ -122,124 +122,125 @@ class AnalysisScreen extends StatelessWidget {
     return AppBackground(
       child: SafeArea(
         child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(t.analysisTitle, style: AppTextStyles.title1(context)),
-                const SizedBox(height: 12),
-                if (entry == null)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
+          padding: const EdgeInsets.all(16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(t.analysisTitle, style: AppTextStyles.title1(context)),
+                  const SizedBox(height: 12),
+                  if (entry == null)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Text(t.analysisEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                     ),
-                    child: Text(t.analysisEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                  ),
-                if (entry != null)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Image.memory(entry.imageBytes, height: 200, width: double.infinity, fit: BoxFit.cover),
-                        ),
-                        const SizedBox(height: 12),
-                        if (entry.loading)
-                          const Center(child: CircularProgressIndicator())
-                        else if (entry.error != null)
-                          Text(entry.error!, style: AppTextStyles.caption(context).copyWith(color: Colors.red))
-                        else if (entry.result != null) ...[
-                          Text('${prefix}${entry.result!.foodName}', style: AppTextStyles.title2(context)),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Text(t.overallLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                              const SizedBox(width: 8),
-                              Builder(
-                                builder: (context) {
-                                  final label = _statusLabel(entry.result!, t);
-                                  final color = _statusColor(label, t);
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: color.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(label, style: AppTextStyles.caption(context).copyWith(color: color)),
-                                  );
-                                },
-                              ),
-                            ],
+                  if (entry != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 16,
+                            offset: const Offset(0, 8),
                           ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (final tag in _overallTags(entry.result!, t))
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFEFF3FF),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(tag, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
-                                ),
-                            ],
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Image.memory(entry.imageBytes, height: 200, width: double.infinity, fit: BoxFit.cover),
                           ),
                           const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF7F8FC),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
+                          if (entry.loading)
+                            const Center(child: CircularProgressIndicator())
+                          else if (entry.error != null)
+                            Text(entry.error!, style: AppTextStyles.caption(context).copyWith(color: Colors.red))
+                          else if (entry.result != null) ...[
+                            Text('${prefix}${entry.result!.foodName}', style: AppTextStyles.title2(context)),
+                            const SizedBox(height: 8),
+                            Row(
                               children: [
-                                const Icon(Icons.local_fire_department, color: Color(0xFFF4C95D)),
+                                Text(t.overallLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                                 const SizedBox(width: 8),
-                                Text(
-                                  '${t.calorieLabel}：${prefix}${entry.result!.calorieRange}',
-                                  style: AppTextStyles.caption(context),
+                                Builder(
+                                  builder: (context) {
+                                    final label = _statusLabel(entry.result!, t);
+                                    final color = _statusColor(label, t);
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: color.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(label, style: AppTextStyles.caption(context).copyWith(color: color)),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(t.macroLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: _macroChips(entry.result!, t),
-                          ),
-                          const SizedBox(height: 12),
-                          Text('${prefix}${entry.result!.suggestion}', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                          const SizedBox(height: 6),
-                          Text('source: ${entry.result!.source}', style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                for (final tag in _overallTags(entry.result!, t))
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEFF3FF),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(tag, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF7F8FC),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.local_fire_department, color: Color(0xFFF4C95D)),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${t.calorieLabel}: ${prefix}${entry.result!.calorieRange}',
+                                    style: AppTextStyles.caption(context),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(t.macroLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _macroChips(context, entry.result!, t),
+                            ),
+                            const SizedBox(height: 12),
+                            Text('${prefix}${entry.result!.suggestion}', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                            const SizedBox(height: 6),
+                            Text('source: ${entry.result!.source}', style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
