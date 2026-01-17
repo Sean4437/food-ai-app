@@ -13,7 +13,7 @@ import os
 import random
 import uuid
 import hashlib
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 _base_dir = Path(__file__).resolve().parent
 _env_path = _base_dir / ".env.runtime"
@@ -136,6 +136,11 @@ _usage_dir.mkdir(exist_ok=True)
 _usage_log_path = _usage_dir / "usage.jsonl"
 _daily_count_path = _usage_dir / "daily_counts.json"
 _analysis_cache_path = _usage_dir / "analysis_cache.json"
+
+ANALYSIS_CACHE_TTL_DAYS = int(os.getenv("ANALYSIS_CACHE_TTL_DAYS", "30"))
+ANALYSIS_CACHE_MAX = int(os.getenv("ANALYSIS_CACHE_MAX", "5000"))
+USAGE_LOG_TTL_DAYS = int(os.getenv("USAGE_LOG_TTL_DAYS", "90"))
+USAGE_LOG_MAX = int(os.getenv("USAGE_LOG_MAX", "10000"))
 
 _fake_foods = {
     "zh-TW": [
@@ -665,10 +670,68 @@ def _estimate_cost_usd(input_tokens: int, output_tokens: int) -> float:
     return round((input_tokens * PRICE_INPUT_PER_M + output_tokens * PRICE_OUTPUT_PER_M) / 1_000_000, 6)
 
 
+def _parse_iso(ts: str) -> Optional[datetime]:
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def _prune_usage_log() -> None:
+    if not _usage_log_path.exists():
+        return
+    try:
+        lines = _usage_log_path.read_text(encoding="utf-8").splitlines()
+    except Exception:
+        return
+    if not lines:
+        return
+    cutoff = datetime.now(timezone.utc) - timedelta(days=USAGE_LOG_TTL_DAYS)
+    entries = []
+    for line in lines:
+        try:
+            record = json.loads(line)
+        except Exception:
+            continue
+        created_at = _parse_iso(str(record.get("created_at", "")))
+        if created_at and created_at < cutoff:
+            continue
+        entries.append(record)
+    if not entries:
+        _usage_log_path.write_text("", encoding="utf-8")
+        return
+    entries.sort(key=lambda item: _parse_iso(str(item.get("created_at", ""))) or datetime.min.replace(tzinfo=timezone.utc))
+    if len(entries) > USAGE_LOG_MAX:
+        entries = entries[-USAGE_LOG_MAX:]
+    content = "\n".join(json.dumps(item, ensure_ascii=True) for item in entries)
+    _usage_log_path.write_text(content + "\n", encoding="utf-8")
+
+
+def _prune_analysis_cache(data: dict) -> dict:
+    if not data:
+        return {}
+    cutoff = datetime.now(timezone.utc) - timedelta(days=ANALYSIS_CACHE_TTL_DAYS)
+    items = []
+    for key, value in data.items():
+        if not isinstance(value, dict):
+            continue
+        saved_at = _parse_iso(str(value.get("saved_at", "")))
+        if saved_at and saved_at < cutoff:
+            continue
+        items.append((key, value, saved_at))
+    if not items:
+        return {}
+    items.sort(key=lambda item: item[2] or datetime.min.replace(tzinfo=timezone.utc))
+    if len(items) > ANALYSIS_CACHE_MAX:
+        items = items[-ANALYSIS_CACHE_MAX:]
+    return {key: value for key, value, _ in items}
+
+
 def _append_usage(record: dict) -> None:
     line = json.dumps(record, ensure_ascii=True)
     with _usage_log_path.open("a", encoding="utf-8") as handle:
         handle.write(line + "\n")
+    _prune_usage_log()
 
 
 def _load_daily_counts() -> dict:
@@ -688,13 +751,20 @@ def _load_analysis_cache() -> dict:
     if not _analysis_cache_path.exists():
         return {}
     try:
-        return json.loads(_analysis_cache_path.read_text(encoding="utf-8"))
+        data = json.loads(_analysis_cache_path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return {}
+        pruned = _prune_analysis_cache(data)
+        if len(pruned) != len(data):
+            _analysis_cache_path.write_text(json.dumps(pruned, ensure_ascii=True), encoding="utf-8")
+        return pruned
     except Exception:
         return {}
 
 
 def _save_analysis_cache(data: dict) -> None:
-    _analysis_cache_path.write_text(json.dumps(data, ensure_ascii=True), encoding="utf-8")
+    pruned = _prune_analysis_cache(data)
+    _analysis_cache_path.write_text(json.dumps(pruned, ensure_ascii=True), encoding="utf-8")
 
 
 def _hash_image(image_bytes: bytes) -> str:
