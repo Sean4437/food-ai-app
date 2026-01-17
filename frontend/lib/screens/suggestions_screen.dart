@@ -405,17 +405,23 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
-    final lines = suggestion.split(RegExp(r'[\\r\\n]+')).map((e) => e.trim()).where((e) => e.isNotEmpty);
+    final lines = suggestion
+        .split(RegExp(r'[\r\n]+'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty);
     for (final line in lines) {
       final lower = line.toLowerCase();
-      if (_startsWithAny(line, ['可以吃', '建議吃', '自煮']) || lower.startsWith('can eat')) {
+      if (_startsWithAny(line, ['\u53ef\u4ee5\u5403', '\u5efa\u8b70\u5403', '\u9069\u5408\u5403', '\u53ef\u5403']) || lower.startsWith('can eat')) {
         sections['can'] = _splitAdviceValue(line);
-      } else if (_startsWithAny(line, ['不建議', '避免']) || lower.startsWith('avoid')) {
+        continue;
+      }
+      if (_startsWithAny(line, ['\u4e0d\u5efa\u8b70\u5403', '\u907f\u514d', '\u4e0d\u63a8\u85a6']) || lower.startsWith('avoid')) {
         sections['avoid'] = _splitAdviceValue(line);
-      } else if (_startsWithAny(line, ['份量', '上限']) || lower.startsWith('portion') || lower.startsWith('limit')) {
+        continue;
+      }
+      if (_startsWithAny(line, ['\u5efa\u8b70\u4efd\u91cf\u4e0a\u9650', '\u4efd\u91cf\u4e0a\u9650', '\u4e0a\u9650']) || lower.startsWith('portion') || lower.startsWith('limit')) {
         sections['limit'] = _splitAdviceValue(line);
-      } else if (_startsWithAny(line, ['便利店', '便當', '其他'])) {
-        sections['can'] = _splitAdviceValue(line);
+        continue;
       }
     }
     return sections;
@@ -429,7 +435,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   }
 
   String _splitAdviceValue(String line) {
-    for (final separator in ['：', ':', '-', '—']) {
+    for (final separator in ['\uFF1A', ':', '-', '\u2014', '\u2013']) {
       if (line.contains(separator)) {
         return line.split(separator).last.trim();
       }
