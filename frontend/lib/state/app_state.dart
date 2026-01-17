@@ -1441,9 +1441,27 @@ class AppState extends ChangeNotifier {
   }
 
   void removeEntry(MealEntry entry) {
+    final mealId = entry.mealId ?? entry.id;
+    final date = _dateOnly(entry.time);
     entries.remove(entry);
     notifyListeners();
+    // ignore: discarded_futures
     _store.delete(entry.id);
+
+    final mealKey = _mealKey(mealId);
+    if (_mealOverrides.containsKey(mealKey)) {
+      _mealOverrides.remove(mealKey);
+      // ignore: discarded_futures
+      _saveOverrides();
+    }
+
+    if (entriesForMealId(mealId).isNotEmpty) {
+      // ignore: discarded_futures
+      _refreshMealAdviceForMealId(mealId, profile.language);
+    }
+    // Recompute day summary if the day was finalized or has overrides.
+    // ignore: discarded_futures
+    _refreshDaySummaryForDate(date, profile.language);
   }
 
   void updateProfile(UserProfile updated) {
