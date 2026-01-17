@@ -737,33 +737,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                const SizedBox(height: 18),
-                Align(
-                  alignment: Alignment.center,
-                  child: GestureDetector(
-                    onTap: () => _openRecordSheet(app),
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: theme.colorScheme.primary.withOpacity(0.3),
-                            blurRadius: 18,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 28),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Center(
-                  child: Text(t.captureTitle, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                ),
             ],
           ),
         ),
