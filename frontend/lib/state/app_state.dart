@@ -384,7 +384,28 @@ class AppState extends ChangeNotifier {
     }
     _scheduleAutoFinalize();
     _scheduleAutoFinalizeWeek();
+    await _maybeFinalizeWeekOnLaunch();
     notifyListeners();
+  }
+
+  Future<void> _maybeFinalizeWeekOnLaunch() async {
+    final now = DateTime.now();
+    if (!isWeeklySummaryReady(now)) {
+      return;
+    }
+    final weekStart = _weekStartFor(now);
+    final weekKey = _weekKey(weekStart);
+    if (_meta['last_auto_week'] == weekKey) {
+      return;
+    }
+    if (_weekOverrides.containsKey(weekKey)) {
+      return;
+    }
+    final locale = _localeFromProfile();
+    final t = lookupAppLocalizations(locale);
+    await finalizeWeek(now, locale.toLanguageTag(), t);
+    _meta['last_auto_week'] = weekKey;
+    await _saveOverrides();
   }
 
   Future<void> addCustomFoodFromEntry(MealEntry entry, AppLocalizations t) async {
