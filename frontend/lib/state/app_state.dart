@@ -758,6 +758,26 @@ class AppState extends ChangeNotifier {
       _analysisTimerReason.remove(key);
     }
     await _saveOverrides();
+    await _maybeFinalizeWeekForDate(date, locale, t);
+  }
+
+  Future<void> _maybeFinalizeWeekForDate(DateTime date, String locale, AppLocalizations t) async {
+    final normalized = _dateOnly(date);
+    final weekStart = _weekStartFor(normalized);
+    final weekKey = _weekKey(weekStart);
+    if (_weekOverrides.containsKey(weekKey)) {
+      return;
+    }
+    final targetDate = weekStart.add(Duration(days: profile.weeklySummaryWeekday - 1));
+    if (normalized.isBefore(targetDate)) {
+      return;
+    }
+    if (_meta['last_auto_week'] == weekKey) {
+      return;
+    }
+    await finalizeWeek(normalized, locale, t);
+    _meta['last_auto_week'] = weekKey;
+    await _saveOverrides();
   }
 
   Future<void> autoFinalizeToday() async {
