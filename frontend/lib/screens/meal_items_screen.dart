@@ -336,6 +336,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final currentEntry = sorted.isEmpty ? null : sorted[_pageIndex];
     final screenWidth = MediaQuery.of(context).size.width;
     final contentWidth = math.max(0.0, screenWidth - 32);
+    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -398,6 +399,36 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
+                              if (currentEntry?.result?.judgementTags.isNotEmpty == true) ...[
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: currentEntry!.result!.judgementTags.map((tag) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.primary.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        tag,
+                                        style: AppTextStyles.caption(context).copyWith(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                              if (currentEntry?.result?.foodItems.isNotEmpty == true) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${isEnglish ? 'Foods' : '食物'}：${currentEntry!.result!.foodItems.join('、')}',
+                                  style: AppTextStyles.caption(context).copyWith(color: Colors.black87),
+                                ),
+                              ],
                             ],
                           ),
                         ),

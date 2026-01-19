@@ -35,6 +35,8 @@ class AnalysisResult(BaseModel):
     food_name: str
     calorie_range: str
     macros: Dict[str, float]
+    food_items: Optional[List[str]] = None
+    judgement_tags: Optional[List[str]] = None
     dish_summary: Optional[str] = None
     suggestion: str
     tier: str
@@ -288,10 +290,11 @@ def _build_prompt(
             meal_text += f"This meal has {meal_photo_count} photos; summarize at the whole-meal level.\n"
     if lang == "zh-TW":
         suggestion_rule = (
-            "- suggestion: 溫和、非醫療的下一餐建議，請給出具體食物類型，並包含份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
+            "- suggestion: 針對下一餐的建議，輸出三行格式：可以吃 / 不建議吃 / 份量上限\n"
+            "- 需包含具體食物類型與份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
         )
         suggestion_example = (
-            "  \"suggestion\": \"下一餐以清淡蛋白質與蔬菜為主，主食半碗即可。\",\n"
+            "  \"suggestion\": \"可以吃：清淡蛋白質與蔬菜\\n不建議吃：油炸與高糖飲品\\n份量上限：主食半碗、蛋白質一掌\",\n"
         )
         if advice_mode == "current_meal":
             suggestion_rule = (
@@ -306,8 +309,10 @@ def _build_prompt(
             "要求：\n"
             "- 僅回傳 JSON（不要多餘文字）\n"
             "- food_name: 中文餐點名稱\n"
-            "- calorie_range: 例如 '450-600 kcal'\n"
+            "- food_items: 1-5 個食物名稱（列出看得到的主要食物）\n"
+            "- calorie_range: 例如 '450-600 kcal'（區間寬度控制在 120-200 kcal，飲料 <= 120）\n"
             "- macros: protein/carbs/fat/sodium 為 0-100 的百分比整數\n"
+            "- judgement_tags: 從 [偏油, 清淡, 碳水偏多, 蛋白不足] 選 1-3 個\n"
             "- dish_summary: 20 字內一句話摘要\n"
             "- 規則：自然口語，不要專業營養名詞，不要出現數字/熱量/克數，不責備不命令\n"
             "- 描述整體負擔、口味或營養重點，留空間給下一餐建議\n"
@@ -323,8 +328,10 @@ def _build_prompt(
             "JSON 範例：\n"
             "{\n"
             "  \"food_name\": \"牛肉便當\",\n"
+            "  \"food_items\": [\"白飯\", \"牛肉\", \"青菜\"],\n"
             "  \"calorie_range\": \"650-850 kcal\",\n"
             "  \"macros\": {\"protein\": 45, \"carbs\": 55, \"fat\": 65, \"sodium\": 70},\n"
+            "  \"judgement_tags\": [\"偏油\", \"蛋白不足\"],\n"
             "  \"dish_summary\": \"油脂偏多、蛋白足夠\",\n"
             f"{suggestion_example}"
             "  \"confidence\": 0.72,\n"
@@ -332,9 +339,12 @@ def _build_prompt(
             "}\n"
         ) + profile_text + note_text + context_text + label_text + meal_text
     suggestion_rule = (
-        "- suggestion: gentle next-meal advice (non-medical), include concrete food types and portion guidance (e.g. half bowl carbs, palm-sized protein, one bowl veggies)\n"
+        "- suggestion: next meal guidance, formatted as three lines: Can eat / Avoid / Portion limit\n"
+        "- Include concrete food types and portion guidance (e.g. half bowl carbs, palm-sized protein, one bowl veggies)\n"
     )
-    suggestion_example = "  \"suggestion\": \"Next meal: lean protein + veggies, smaller carbs.\",\n"
+    suggestion_example = (
+        "  \"suggestion\": \"Can eat: lean protein + veggies\\nAvoid: fried foods and sugary drinks\\nPortion limit: half bowl carbs, palm-sized protein\",\n"
+    )
     if advice_mode == "current_meal":
         suggestion_rule = (
             "- suggestion: guidance for how to eat this meal, formatted as three lines: Can eat / Avoid / Portion limit\n"
@@ -348,8 +358,10 @@ def _build_prompt(
         "Requirements:\n"
         "- Return JSON only (no extra text)\n"
         "- food_name: English name\n"
-        "- calorie_range: e.g. '450-600 kcal'\n"
+        "- food_items: 1-5 primary items visible in the meal\n"
+        "- calorie_range: e.g. '450-600 kcal' (keep range width 120-200 kcal; beverage <= 120)\n"
         "- macros: protein/carbs/fat/sodium are integer percentages (0-100)\n"
+        "- judgement_tags: choose 1-3 from [Heavier oil, Light, Higher carbs, Low protein]\n"
         "- dish_summary: single-sentence summary (<= 20 words)\n"
         "- Rules: natural language, avoid technical nutrition terms, no numbers/calories/grams, no scolding or commands\n"
         "- Describe overall burden, taste, or a key nutrition cue, leaving room for next-meal advice\n"
@@ -365,8 +377,10 @@ def _build_prompt(
         "JSON example:\n"
         "{\n"
         "  \"food_name\": \"beef bento\",\n"
+        "  \"food_items\": [\"rice\", \"beef\", \"vegetables\"],\n"
         "  \"calorie_range\": \"650-850 kcal\",\n"
         "  \"macros\": {\"protein\": 45, \"carbs\": 55, \"fat\": 65, \"sodium\": 70},\n"
+        "  \"judgement_tags\": [\"Heavier oil\", \"Low protein\"],\n"
         "  \"dish_summary\": \"Heavier oil, decent protein\",\n"
         f"{suggestion_example}"
         "  \"confidence\": 0.72,\n"
@@ -841,10 +855,18 @@ def _analyze_with_openai(
     required = {"food_name", "calorie_range", "macros", "suggestion"}
     if not required.issubset(set(data.keys())):
         return None
+    is_beverage = _parse_is_beverage(data)
+    data["is_beverage"] = is_beverage
     data["macros"] = _normalize_macros(data, lang)
+    data["calorie_range"] = _normalize_calorie_range(
+        data.get("calorie_range", ""),
+        is_beverage=is_beverage,
+        tighten=label_context is None,
+    )
     data.setdefault("confidence", 0.6)
-    data.setdefault("is_beverage", False)
     data.setdefault("dish_summary", "")
+    data.setdefault("food_items", [])
+    data.setdefault("judgement_tags", [])
 
     usage = response.usage
     usage_data = None
@@ -857,15 +879,45 @@ def _analyze_with_openai(
     return {"result": data, "usage": usage_data}
 
 
-def _normalize_calorie_range(value: str) -> str:
+def _parse_calorie_range(value: str) -> Optional[tuple[int, int]]:
     if not value:
-        return ""
+        return None
     match = [int(s) for s in value.replace(",", "").split() if s.isdigit()]
     if len(match) >= 2:
-        return f"{match[0]}-{match[1]} kcal"
+        low, high = match[0], match[1]
+        if low > high:
+            low, high = high, low
+        return low, high
     if len(match) == 1:
-        return f"{match[0]}-{match[0]} kcal"
-    return value
+        return match[0], match[0]
+    return None
+
+
+def _normalize_calorie_range(value: str, is_beverage: bool, tighten: bool = True) -> str:
+    parsed = _parse_calorie_range(value)
+    if parsed is None:
+        return value
+    low, high = parsed
+    if tighten:
+        max_width = 120 if is_beverage else 200
+        width = max(0, high - low)
+        if width > max_width:
+            mid = int(round((low + high) / 2))
+            half = max_width // 2
+            low = max(0, mid - half)
+            high = low + max_width
+    return f"{low}-{high} kcal"
+
+
+def _parse_is_beverage(data: dict) -> bool:
+    if not isinstance(data, dict):
+        return False
+    raw_flag = data.get("is_beverage")
+    if isinstance(raw_flag, bool):
+        return raw_flag
+    if isinstance(raw_flag, str):
+        return raw_flag.strip().lower() == "true"
+    return False
 
 
 def _analyze_label_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
@@ -893,10 +945,15 @@ def _analyze_label_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
     required = {"calorie_range", "macros"}
     if not required.issubset(set(data.keys())):
         return None
+    is_beverage = _parse_is_beverage(data)
+    data["is_beverage"] = is_beverage
     data["macros"] = _normalize_macros(data, lang)
-    data["calorie_range"] = _normalize_calorie_range(data.get("calorie_range", ""))
+    data["calorie_range"] = _normalize_calorie_range(
+        data.get("calorie_range", ""),
+        is_beverage=is_beverage,
+        tighten=False,
+    )
     data.setdefault("confidence", 0.6)
-    data.setdefault("is_beverage", False)
     usage = response.usage
     usage_data = None
     if usage is not None:
@@ -974,6 +1031,8 @@ async def analyze_image(
                 food_name=cached_result.get("food_name", ""),
                 calorie_range=cached_result.get("calorie_range", ""),
                 macros=_normalize_macros(cached_result, use_lang),
+                food_items=cached_result.get("food_items") or [],
+                judgement_tags=cached_result.get("judgement_tags") or [],
                 dish_summary=cached_result.get("dish_summary", ""),
                 suggestion=cached_result.get("suggestion", ""),
                 tier="cached",
@@ -1041,6 +1100,8 @@ async def analyze_image(
                         "food_name": final_name,
                         "calorie_range": payload["result"]["calorie_range"],
                         "macros": normalized_macros,
+                        "food_items": payload["result"].get("food_items") or [],
+                        "judgement_tags": payload["result"].get("judgement_tags") or [],
                         "dish_summary": payload["result"].get("dish_summary", ""),
                         "suggestion": payload["result"]["suggestion"],
                     },
@@ -1050,6 +1111,8 @@ async def analyze_image(
                     food_name=final_name,
                     calorie_range=payload["result"]["calorie_range"],
                     macros=normalized_macros,
+                    food_items=payload["result"].get("food_items") or [],
+                    judgement_tags=payload["result"].get("judgement_tags") or [],
                     dish_summary=payload["result"].get("dish_summary", ""),
                     suggestion=payload["result"]["suggestion"],
                     tier=tier,
@@ -1072,13 +1135,22 @@ async def analyze_image(
 
     chosen_name = food_name or random.choice(_fake_foods[use_lang])
     calorie_range = random.choice(["350-450 kcal", "450-600 kcal", "600-800 kcal"])
+    calorie_range = _normalize_calorie_range(calorie_range, is_beverage=False, tighten=True)
     macros = {
         "protein": float(random.choice(_fake_macro_choices)),
         "carbs": float(random.choice(_fake_macro_choices)),
         "fat": float(random.choice(_fake_macro_choices)),
         "sodium": float(random.choice(_fake_macro_choices)),
     }
-    suggestion = random.choice(_fake_suggestions[use_lang])
+    if use_lang == "zh-TW":
+        judgement_tags = random.sample(["偏油", "清淡", "碳水偏多", "蛋白不足"], k=2)
+    else:
+        judgement_tags = random.sample(["Heavier oil", "Light", "Higher carbs", "Low protein"], k=2)
+    suggestion = (
+        "可以吃：清淡蛋白質與蔬菜\n"
+        "不建議吃：油炸與高糖飲品\n"
+        "份量上限：主食半碗、蛋白質一掌"
+    )
     if advice_mode == "current_meal":
         if use_lang == "zh-TW":
             suggestion = (
@@ -1101,6 +1173,8 @@ async def analyze_image(
         food_name=chosen_name,
         calorie_range=calorie_range,
         macros=macros,
+        food_items=[chosen_name],
+        judgement_tags=judgement_tags,
         dish_summary="",
         suggestion=suggestion,
         tier=tier,

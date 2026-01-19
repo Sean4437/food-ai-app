@@ -2,6 +2,8 @@
   final String foodName;
   final String calorieRange;
   final Map<String, double> macros;
+  final List<String> foodItems;
+  final List<String> judgementTags;
   final String? dishSummary;
   final String suggestion;
   final String tier;
@@ -14,6 +16,8 @@
     required this.foodName,
     required this.calorieRange,
     required this.macros,
+    this.foodItems = const [],
+    this.judgementTags = const [],
     this.dishSummary,
     required this.suggestion,
     required this.tier,
@@ -43,6 +47,8 @@
       foodName: json['food_name'] as String,
       calorieRange: json['calorie_range'] as String,
       macros: parsedMacros,
+      foodItems: (json['food_items'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      judgementTags: (json['judgement_tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       dishSummary: json['dish_summary'] as String?,
       suggestion: json['suggestion'] as String,
       tier: json['tier'] as String,
@@ -58,6 +64,8 @@
       'food_name': foodName,
       'calorie_range': calorieRange,
       'macros': macros,
+      'food_items': foodItems,
+      'judgement_tags': judgementTags,
       'dish_summary': dishSummary,
       'suggestion': suggestion,
       'tier': tier,
