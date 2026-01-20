@@ -647,7 +647,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.breakfastStart,
-                                onSave: (time) => app.updateField((p) => p.breakfastStart = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.breakfastStart = time),
                               ),
                             ),
                             _row(
@@ -657,7 +657,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.breakfastEnd,
-                                onSave: (time) => app.updateField((p) => p.breakfastEnd = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.breakfastEnd = time),
                               ),
                             ),
                             _row(
@@ -667,7 +667,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.brunchStart,
-                                onSave: (time) => app.updateField((p) => p.brunchStart = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.brunchStart = time),
                               ),
                             ),
                             _row(
@@ -677,7 +677,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.brunchEnd,
-                                onSave: (time) => app.updateField((p) => p.brunchEnd = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.brunchEnd = time),
                               ),
                             ),
                             _row(
@@ -687,7 +687,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.lunchStart,
-                                onSave: (time) => app.updateField((p) => p.lunchStart = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.lunchStart = time),
                               ),
                             ),
                             _row(
@@ -697,7 +697,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.lunchEnd,
-                                onSave: (time) => app.updateField((p) => p.lunchEnd = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.lunchEnd = time),
                               ),
                             ),
                             _row(
@@ -707,7 +707,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.afternoonTeaStart,
-                                onSave: (time) => app.updateField((p) => p.afternoonTeaStart = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.afternoonTeaStart = time),
                               ),
                             ),
                             _row(
@@ -717,7 +717,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.afternoonTeaEnd,
-                                onSave: (time) => app.updateField((p) => p.afternoonTeaEnd = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.afternoonTeaEnd = time),
                               ),
                             ),
                             _row(
@@ -727,7 +727,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.dinnerStart,
-                                onSave: (time) => app.updateField((p) => p.dinnerStart = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.dinnerStart = time),
                               ),
                             ),
                             _row(
@@ -737,7 +737,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.dinnerEnd,
-                                onSave: (time) => app.updateField((p) => p.dinnerEnd = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.dinnerEnd = time),
                               ),
                             ),
                             _row(
@@ -747,7 +747,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.lateSnackStart,
-                                onSave: (time) => app.updateField((p) => p.lateSnackStart = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.lateSnackStart = time),
                               ),
                             ),
                             _row(
@@ -757,7 +757,7 @@ class SettingsScreen extends StatelessWidget {
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.lateSnackEnd,
-                                onSave: (time) => app.updateField((p) => p.lateSnackEnd = time),
+                                onSave: (time) => app.updateMealTimeField((p) => p.lateSnackEnd = time),
                               ),
                             ),
                           ]),

@@ -38,6 +38,7 @@
   "reanalyzeLabel": "Reanalyze",
   "addLabel": "Add label",
   "labelInfoTitle": "Label info",
+  "labelSummaryFallback": "Using label info",
   "customTabTitle": "Custom",
   "customAdd": "Add to custom",
   "customAdded": "Saved to custom",

@@ -285,6 +285,12 @@ abstract class AppLocalizations {
   /// **'標示資訊'**
   String get labelInfoTitle;
 
+  /// No description provided for @labelSummaryFallback.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已採用標示資訊'**
+  String get labelSummaryFallback;
+
   /// No description provided for @customTabTitle.
   ///
   /// In zh_TW, this message translates to:
@@ -630,7 +636,7 @@ abstract class AppLocalizations {
   /// No description provided for @mealTimeSection.
   ///
   /// In zh_TW, this message translates to:
-  /// **'餐次時間設定'**
+  /// **'餐次區間'**
   String get mealTimeSection;
 
   /// No description provided for @breakfastStartLabel.
@@ -960,7 +966,7 @@ abstract class AppLocalizations {
   /// No description provided for @finalizeDay.
   ///
   /// In zh_TW, this message translates to:
-  /// **'結算今天'**
+  /// **'完成今日總結'**
   String get finalizeDay;
 
   /// No description provided for @dishSummaryLabel.
@@ -1038,7 +1044,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'拍完立即分析，給你這餐怎麼吃'**
+  /// **'拍完立即分析，提供這餐吃法建議'**
   String get suggestInstantHint;
 
   /// No description provided for @suggestInstantStart.
@@ -1638,7 +1644,7 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseNone.
   ///
   /// In zh_TW, this message translates to:
-  /// **'無'**
+  /// **'無運動'**
   String get exerciseNone;
 
   /// No description provided for @exerciseWalking.
@@ -1962,7 +1968,7 @@ abstract class AppLocalizations {
   /// No description provided for @mockPrefix.
   ///
   /// In zh_TW, this message translates to:
-  /// **'虛假'**
+  /// **'模擬'**
   String get mockPrefix;
 
   /// No description provided for @versionSection.

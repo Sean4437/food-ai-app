@@ -38,6 +38,7 @@
   "reanalyzeLabel": "重新分析",
   "addLabel": "補充標示",
   "labelInfoTitle": "標示資訊",
+  "labelSummaryFallback": "已採用標示資訊",
   "customTabTitle": "自訂義",
   "customAdd": "加入自訂義",
   "customAdded": "已加入自訂義",

@@ -132,6 +132,16 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
                               child: IconButton(
+                                onPressed: () => _editEntryTime(context, app, entry),
+                                icon: const Icon(Icons.schedule, size: 20),
+                                tooltip: t.editTime,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: IconButton(
                                 onPressed: () async {
                                   await app.addCustomFoodFromEntry(entry, t);
                                   if (!context.mounted) return;
@@ -227,6 +237,29 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     await app.updateEntryFoodName(entry, result, locale);
   }
 
+  Future<void> _editEntryTime(BuildContext context, AppState app, MealEntry entry) async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: entry.time,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (pickedDate == null) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(entry.time),
+    );
+    if (pickedTime == null) return;
+    final nextTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+    app.updateEntryTime(entry, nextTime);
+  }
+
   Future<void> _pickLabelImage(BuildContext context, AppState app, MealEntry entry) async {
     final t = AppLocalizations.of(context)!;
     final source = await showModalBottomSheet<ImageSource>(
@@ -284,8 +317,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
             child: Slider(
               value: entry.portionPercent.toDouble(),
               min: 10,
-              max: 100,
-              divisions: 9,
+              max: 200,
+              divisions: 19,
               label: '${entry.portionPercent}%',
               onChanged: (value) {
                 app.updateEntryPortionPercent(entry, value.round());
@@ -391,9 +424,15 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                (currentEntry?.result?.dishSummary?.trim().isNotEmpty == true)
-                                    ? currentEntry!.result!.dishSummary!.trim()
-                                    : t.detailAiEmpty,
+                                () {
+                                  final summary = currentEntry?.result?.dishSummary?.trim() ?? '';
+                                  if (summary.isNotEmpty) return summary;
+                                  final labelName = (currentEntry?.labelResult?.labelName ?? '').trim();
+                                  if (currentEntry?.labelResult != null) {
+                                    return labelName.isNotEmpty ? '${t.labelSummaryFallback}：$labelName' : t.labelSummaryFallback;
+                                  }
+                                  return t.detailAiEmpty;
+                                }(),
                                 style: AppTextStyles.caption(context).copyWith(
                                   color: Colors.black87,
                                   fontWeight: FontWeight.w500,
@@ -539,33 +578,6 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                   t.labelInfoTitle,
                                   style: AppTextStyles.title2(context),
                                 ),
-                                ...(() {
-                                  if (currentEntry == null) return <Widget>[];
-                                  final macros = app.scaledMacrosForEntry(currentEntry);
-                                  if (macros.isEmpty) return <Widget>[];
-                                  return [
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      '${t.protein} ${NutritionChart.formatValue(key: 'protein', value: macros['protein'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}',
-                                      style: AppTextStyles.body(context),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${t.carbs} ${NutritionChart.formatValue(key: 'carbs', value: macros['carbs'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}',
-                                      style: AppTextStyles.body(context),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${t.fat} ${NutritionChart.formatValue(key: 'fat', value: macros['fat'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}',
-                                      style: AppTextStyles.body(context),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${t.sodium} ${NutritionChart.formatValue(key: 'sodium', value: macros['sodium'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}',
-                                      style: AppTextStyles.body(context),
-                                    ),
-                                  ];
-                                })(),
                                 if ((currentEntry!.labelResult!.labelName ?? '').trim().isNotEmpty) ...[
                                   const SizedBox(height: 6),
                                   Text(
@@ -577,17 +589,6 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                 Text(
                                   '${t.calorieLabel}：${currentEntry!.labelResult!.calorieRange}',
                                   style: AppTextStyles.caption(context).copyWith(color: Colors.black87),
-                                ),
-                                const SizedBox(height: 6),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 6,
-                                  children: [
-                                    Text('${t.protein} ${NutritionChart.formatValue(key: 'protein', value: currentEntry!.labelResult!.macros['protein'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}'),
-                                    Text('${t.carbs} ${NutritionChart.formatValue(key: 'carbs', value: currentEntry!.labelResult!.macros['carbs'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}'),
-                                    Text('${t.fat} ${NutritionChart.formatValue(key: 'fat', value: currentEntry!.labelResult!.macros['fat'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}'),
-                                    Text('${t.sodium} ${NutritionChart.formatValue(key: 'sodium', value: currentEntry!.labelResult!.macros['sodium'] ?? 0, mode: _valueMode(app.profile.nutritionValueMode))}'),
-                                  ],
                                 ),
                               ],
                             ),

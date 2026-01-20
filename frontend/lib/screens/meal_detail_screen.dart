@@ -149,8 +149,8 @@ class MealDetailScreen extends StatelessWidget {
           child: Slider(
             value: entry.portionPercent.toDouble(),
             min: 10,
-            max: 100,
-            divisions: 9,
+            max: 200,
+            divisions: 19,
             label: '${entry.portionPercent}%',
             onChanged: (value) {
               app.updateEntryPortionPercent(entry, value.round());

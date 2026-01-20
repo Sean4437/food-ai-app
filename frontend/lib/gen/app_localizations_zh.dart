@@ -104,6 +104,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get labelInfoTitle => '标示資訊';
 
   @override
+  String get labelSummaryFallback => '已採用標示資訊';
+
+  @override
   String get customTabTitle => '自訂義';
 
   @override
@@ -275,7 +278,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mealItemsTitle => '返回本餐';
 
   @override
-  String get mealTimeSection => '餐次時間設定';
+  String get mealTimeSection => '餐次區間';
 
   @override
   String get breakfastStartLabel => '早餐開始';
@@ -444,7 +447,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get finalizeDay => '結算今天';
+  String get finalizeDay => '完成今日總結';
 
   @override
   String get dishSummaryLabel => '本餐摘要';
@@ -483,7 +486,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestTitle => '即拍建議';
 
   @override
-  String get suggestInstantHint => '拍完立即分析，給你這餐怎麼吃';
+  String get suggestInstantHint => '拍完立即分析，提供這餐吃法建議';
 
   @override
   String get suggestInstantStart => '開始拍照';
@@ -783,7 +786,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseCaloriesLabel => '运动消耗';
 
   @override
-  String get exerciseNone => '无';
+  String get exerciseNone => '無運動';
 
   @override
   String get exerciseWalking => '快走';
@@ -949,7 +952,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get usageLoading => '載入中...';
 
   @override
-  String get mockPrefix => '虛假';
+  String get mockPrefix => '模擬';
 
   @override
   String get versionSection => '版本資訊';
@@ -1101,6 +1104,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get labelInfoTitle => '標示資訊';
+
+  @override
+  String get labelSummaryFallback => '已採用標示資訊';
 
   @override
   String get customTabTitle => '自訂義';
@@ -1274,7 +1280,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get mealItemsTitle => '返回本餐';
 
   @override
-  String get mealTimeSection => '餐次時間設定';
+  String get mealTimeSection => '餐次區間';
 
   @override
   String get breakfastStartLabel => '早餐開始';
@@ -1443,7 +1449,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get finalizeDay => '結算今天';
+  String get finalizeDay => '完成今日總結';
 
   @override
   String get dishSummaryLabel => '本餐摘要';
@@ -1482,7 +1488,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestTitle => '即拍建議';
 
   @override
-  String get suggestInstantHint => '拍完立即分析，給你這餐怎麼吃';
+  String get suggestInstantHint => '拍完立即分析，提供這餐吃法建議';
 
   @override
   String get suggestInstantStart => '開始拍照';
@@ -1782,7 +1788,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get exerciseCaloriesLabel => '運動消耗';
 
   @override
-  String get exerciseNone => '無';
+  String get exerciseNone => '無運動';
 
   @override
   String get exerciseWalking => '快走';
@@ -1948,7 +1954,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get usageLoading => '載入中...';
 
   @override
-  String get mockPrefix => '虛假';
+  String get mockPrefix => '模擬';
 
   @override
   String get versionSection => '版本資訊';

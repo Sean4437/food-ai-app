@@ -1426,7 +1426,7 @@ class AppState extends ChangeNotifier {
   }
 
   void updateEntryPortionPercent(MealEntry entry, int percent) {
-    final next = percent.clamp(10, 100);
+    final next = percent.clamp(10, 200);
     if (next == entry.portionPercent) {
       return;
     }
@@ -1450,6 +1450,23 @@ class AppState extends ChangeNotifier {
       entry.labelResult = labelResult;
       if (entry.result != null) {
         entry.result = _applyLabelOverride(entry.result!, labelResult);
+      } else {
+        final fallbackName = (entry.overrideFoodName ?? '').trim().isNotEmpty
+            ? entry.overrideFoodName!.trim()
+            : (labelResult.labelName ?? '').trim().isNotEmpty
+                ? labelResult.labelName!.trim()
+                : entry.filename;
+        entry.result = AnalysisResult(
+          foodName: fallbackName,
+          calorieRange: labelResult.calorieRange,
+          macros: labelResult.macros,
+          dishSummary: '',
+          suggestion: '',
+          tier: 'label',
+          source: 'label',
+          confidence: labelResult.confidence,
+          isBeverage: labelResult.isBeverage,
+        );
       }
       await _store.upsert(entry);
       notifyListeners();
@@ -1543,6 +1560,17 @@ class AppState extends ChangeNotifier {
     _scheduleAutoFinalizeWeek();
     // ignore: unawaited_futures
     _saveProfile();
+  }
+
+  void updateMealTimeField(void Function(UserProfile profile) updater) {
+    updater(profile);
+    notifyListeners();
+    _scheduleAutoFinalize();
+    _scheduleAutoFinalizeWeek();
+    // ignore: unawaited_futures
+    _saveProfile();
+    // ignore: unawaited_futures
+    _reassignMealTypesForAllEntries();
   }
 
   Future<void> _analyzeEntry(
@@ -1875,8 +1903,46 @@ class AppState extends ChangeNotifier {
   }
 
   double _portionWeight(int percent) {
-    final safe = percent.clamp(10, 100);
+    final safe = percent.clamp(10, 200);
     return safe / 100.0;
+  }
+
+  Future<void> _reassignMealTypesForAllEntries() async {
+    if (entries.isEmpty) return;
+    final affectedMealIds = <String>{};
+    final affectedDates = <DateTime>{};
+    for (final entry in entries) {
+      final oldMealId = entry.mealId ?? entry.id;
+      final oldDate = _dateOnly(entry.time);
+      final newType = resolveMealType(entry.time);
+      final newMealId = _assignMealId(entry.time, newType);
+      if (entry.type == newType && oldMealId == newMealId) {
+        continue;
+      }
+      entry.type = newType;
+      entry.mealId = newMealId;
+      affectedMealIds.add(oldMealId);
+      affectedMealIds.add(newMealId);
+      affectedDates.add(oldDate);
+      affectedDates.add(_dateOnly(entry.time));
+      await _store.upsert(entry);
+    }
+    if (affectedMealIds.isNotEmpty) {
+      for (final mealId in affectedMealIds) {
+        _mealOverrides.remove(_mealKey(mealId));
+      }
+      await _saveOverrides();
+      for (final mealId in affectedMealIds) {
+        if (entriesForMealId(mealId).isNotEmpty) {
+          // ignore: discarded_futures
+          _refreshMealAdviceForMealId(mealId, profile.language);
+        }
+      }
+    }
+    for (final date in affectedDates) {
+      // ignore: discarded_futures
+      _refreshDaySummaryForDate(date, profile.language);
+    }
   }
 
   Map<String, double> scaledMacrosForEntry(MealEntry entry) {

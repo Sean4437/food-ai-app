@@ -104,6 +104,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get labelInfoTitle => 'Label info';
 
   @override
+  String get labelSummaryFallback => 'Using label info';
+
+  @override
   String get customTabTitle => 'Custom';
 
   @override
