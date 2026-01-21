@@ -192,7 +192,7 @@ abstract class AppLocalizations {
   /// No description provided for @mealSummaryTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'本菜摘要'**
+  /// **'菜色摘要'**
   String get mealSummaryTitle;
 
   /// No description provided for @todayMeals.
@@ -384,7 +384,7 @@ abstract class AppLocalizations {
   /// No description provided for @customSummaryLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'本菜摘要'**
+  /// **'菜色摘要'**
   String get customSummaryLabel;
 
   /// No description provided for @customSuggestionLabel.

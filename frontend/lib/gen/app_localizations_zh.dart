@@ -54,7 +54,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mealTotal => '本餐估計熱量';
 
   @override
-  String get mealSummaryTitle => '本菜摘要';
+  String get mealSummaryTitle => '菜色摘要';
 
   @override
   String get todayMeals => '今日餐點';
@@ -152,7 +152,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customChangePhoto => '更換照片';
 
   @override
-  String get customSummaryLabel => '本菜摘要';
+  String get customSummaryLabel => '菜色摘要';
 
   @override
   String get customSuggestionLabel => '建議';
@@ -1061,7 +1061,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get mealTotal => '本餐估計熱量';
 
   @override
-  String get mealSummaryTitle => '本菜摘要';
+  String get mealSummaryTitle => '菜色摘要';
 
   @override
   String get todayMeals => '今日餐點';
@@ -1156,7 +1156,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get customChangePhoto => '更換照片';
 
   @override
-  String get customSummaryLabel => '本菜摘要';
+  String get customSummaryLabel => '菜色摘要';
 
   @override
   String get customSuggestionLabel => '建議';

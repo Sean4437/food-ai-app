@@ -15,7 +15,7 @@
   "editTime": "修改時間",
   "noEntries": "尚無紀錄",
   "mealTotal": "本餐估計熱量",
-  "mealSummaryTitle": "本菜摘要",
+  "mealSummaryTitle": "菜色摘要",
   "todayMeals": "今日餐點",
   "itemsCount": "{count} 筆",
   "@itemsCount": {
@@ -54,7 +54,7 @@
   "customCountUnit": "筆",
   "customEditTitle": "編輯自訂義",
   "customChangePhoto": "更換照片",
-  "customSummaryLabel": "本菜摘要",
+  "customSummaryLabel": "菜色摘要",
   "customSuggestionLabel": "建議",
   "customDeleteTitle": "刪除自訂義",
   "customDeleteConfirm": "確定刪除這個自訂義？",
