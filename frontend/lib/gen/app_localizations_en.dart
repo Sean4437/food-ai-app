@@ -101,6 +101,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addLabel => 'Add label';
 
   @override
+  String get removeLabel => 'Remove label';
+
+  @override
   String get labelInfoTitle => 'Label info';
 
   @override

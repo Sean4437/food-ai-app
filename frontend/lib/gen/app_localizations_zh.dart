@@ -101,6 +101,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addLabel => '補充標示';
 
   @override
+  String get removeLabel => '移除標示';
+
+  @override
   String get labelInfoTitle => '标示資訊';
 
   @override
@@ -1008,6 +1011,8 @@ class AppLocalizationsZh extends AppLocalizations {
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
 class AppLocalizationsZhTw extends AppLocalizationsZh {
+  @override
+  String get removeLabel => '移除標示';
   AppLocalizationsZhTw() : super('zh_TW');
 
   @override

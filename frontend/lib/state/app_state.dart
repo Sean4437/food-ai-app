@@ -1666,6 +1666,21 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<void> removeLabelFromEntry(MealEntry entry, String locale) async {
+    entry.loading = true;
+    entry.error = null;
+    notifyListeners();
+    entry.labelImageBytes = null;
+    entry.labelFilename = null;
+    entry.labelResult = null;
+    await _store.upsert(entry);
+    notifyListeners();
+    await _analyzeEntry(entry, locale, force: true, reason: 'label_removed');
+    entry.loading = false;
+    notifyListeners();
+    await _store.upsert(entry);
+  }
+
   Future<void> _refreshMealAdviceForEntry(MealEntry entry, String locale) async {
     final mealId = entry.mealId ?? entry.id;
     _scheduleMealAdviceRefresh(mealId, locale);
@@ -1894,12 +1909,19 @@ class AppState extends ChangeNotifier {
 
   List<int>? _parseCalorieRange(String? value) {
     if (value == null) return null;
-    final match = RegExp(r'(\d+)\s*-\s*(\d+)').firstMatch(value);
-    if (match == null) return null;
-    final minVal = int.tryParse(match.group(1)!);
-    final maxVal = int.tryParse(match.group(2)!);
-    if (minVal == null || maxVal == null) return null;
-    return [minVal, maxVal];
+    final rangeMatch = RegExp(r'(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)').firstMatch(value);
+    if (rangeMatch != null) {
+      final minVal = double.tryParse(rangeMatch.group(1)!);
+      final maxVal = double.tryParse(rangeMatch.group(2)!);
+      if (minVal == null || maxVal == null) return null;
+      return [minVal.round(), maxVal.round()];
+    }
+    final singleMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(value);
+    if (singleMatch == null) return null;
+    final singleVal = double.tryParse(singleMatch.group(1)!);
+    if (singleVal == null) return null;
+    final rounded = singleVal.round();
+    return [rounded, rounded];
   }
 
   double _portionWeight(int percent) {

@@ -279,6 +279,12 @@ abstract class AppLocalizations {
   /// **'補充標示'**
   String get addLabel;
 
+  /// No description provided for @removeLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'移除標示'**
+  String get removeLabel;
+
   /// No description provided for @labelInfoTitle.
   ///
   /// In zh_TW, this message translates to:

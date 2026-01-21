@@ -574,9 +574,22 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  t.labelInfoTitle,
-                                  style: AppTextStyles.title2(context),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        t.labelInfoTitle,
+                                        style: AppTextStyles.title2(context),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: () => app.removeLabelFromEntry(currentEntry, Localizations.localeOf(context).toLanguageTag()),
+                                      icon: const Icon(Icons.delete_outline, size: 20),
+                                      tooltip: t.removeLabel,
+                                      padding: const EdgeInsets.all(6),
+                                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                    ),
+                                  ],
                                 ),
                                 if ((currentEntry!.labelResult!.labelName ?? '').trim().isNotEmpty) ...[
                                   const SizedBox(height: 6),

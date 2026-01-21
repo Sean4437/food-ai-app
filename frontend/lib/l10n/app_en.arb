@@ -37,6 +37,7 @@
   "editFoodName": "Edit food name",
   "reanalyzeLabel": "Reanalyze",
   "addLabel": "Add label",
+  "removeLabel": "Remove label",
   "labelInfoTitle": "Label info",
   "labelSummaryFallback": "Using label info",
   "customTabTitle": "Custom",
