@@ -16,6 +16,9 @@ import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
 
 const String kDefaultApiBaseUrl = 'https://highest-find-inkjet-prove.trycloudflare.com';
+const List<String> kDeprecatedApiBaseUrls = [
+  'https://sussex-oscar-southern-scanning.trycloudflare.com',
+];
 const String kDefaultPlateAsset = 'assets/plates/plate_Japanese_02.png';
 const String kDefaultThemeAsset = 'assets/themes/theme_clean.json';
 const double kDefaultTextScale = 1.0;
@@ -357,6 +360,7 @@ class AppState extends ChangeNotifier {
     if (profileMap != null) {
       _applyProfile(profileMap);
     }
+    final didMigrateApi = _migrateApiBaseUrlIfNeeded();
     final overrides = await _settings.loadOverrides();
     if (overrides != null) {
       _loadOverrides(overrides);
@@ -381,6 +385,9 @@ class AppState extends ChangeNotifier {
       for (final entry in entries) {
         await _store.upsert(entry);
       }
+    }
+    if (didMigrateApi) {
+      await _saveProfile();
     }
     _scheduleAutoFinalize();
     _scheduleAutoFinalizeWeek();
@@ -1082,6 +1089,18 @@ class AppState extends ChangeNotifier {
 
   static String _resolveBaseUrl() {
     return kDefaultApiBaseUrl;
+  }
+
+  bool _migrateApiBaseUrlIfNeeded() {
+    if (profile.apiBaseUrl.isEmpty) {
+      profile.apiBaseUrl = kDefaultApiBaseUrl;
+      return true;
+    }
+    if (kDeprecatedApiBaseUrls.contains(profile.apiBaseUrl)) {
+      profile.apiBaseUrl = kDefaultApiBaseUrl;
+      return true;
+    }
+    return false;
   }
 
   void updateApiBaseUrl(String url) {
