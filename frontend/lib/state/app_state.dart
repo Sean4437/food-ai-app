@@ -2358,7 +2358,11 @@ class AppState extends ChangeNotifier {
     required Uint8List bytes,
   }) async {
     try {
-      await _supabase.client.storage.from(bucket).uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: false));
+      await _supabase.client.storage.from(bucket).uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(upsert: false),
+          );
     } catch (_) {}
     return path;
   }

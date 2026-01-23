@@ -3,15 +3,15 @@ import '../config/supabase_config.dart';
 
 class SupabaseService {
   SupabaseService();
+  static bool _initialized = false;
 
   static Future<void> ensureInitialized() async {
-    if (Supabase.instance.client.supabaseUrl.isNotEmpty) {
-      return;
-    }
+    if (_initialized) return;
     await Supabase.initialize(
       url: kSupabaseUrl,
       anonKey: kSupabaseAnonKey,
     );
+    _initialized = true;
   }
 
   SupabaseClient get client => Supabase.instance.client;
