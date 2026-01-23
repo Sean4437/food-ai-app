@@ -350,5 +350,21 @@
   "clearData": "Clear data",
   "clearDataConfirm": "Clear all data?",
   "exportDone": "Exported",
-  "clearDone": "Cleared"
+  "clearDone": "Cleared",
+  "close": "Close",
+  "syncSection": "Account & Sync",
+  "syncSignedInAs": "Signed in:",
+  "syncNotSignedIn": "Not signed in",
+  "syncEmailLabel": "Email",
+  "syncPasswordLabel": "Password",
+  "syncSignIn": "Sign in",
+  "syncSignUp": "Sign up",
+  "syncSignOut": "Sign out",
+  "syncUpload": "Upload sync",
+  "syncDownload": "Download sync",
+  "syncSuccess": "Sync complete",
+  "syncError": "Sync failed",
+  "syncRequireLogin": "Please sign in first",
+  "syncAuthTitleSignIn": "Sign in",
+  "syncAuthTitleSignUp": "Create account"
 }

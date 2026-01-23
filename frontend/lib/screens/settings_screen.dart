@@ -264,6 +264,88 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _showSupabaseAuthDialog(
+    BuildContext context,
+    AppState app, {
+    required bool isSignUp,
+  }) async {
+    final t = AppLocalizations.of(context)!;
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isSignUp ? t.syncAuthTitleSignUp : t.syncAuthTitleSignIn),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(labelText: t.syncEmailLabel),
+            ),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: InputDecoration(labelText: t.syncPasswordLabel),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(isSignUp ? t.syncSignUp : t.syncSignIn),
+          ),
+        ],
+      ),
+    );
+    if (result != true) return;
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    if (email.isEmpty || password.isEmpty) return;
+    try {
+      if (isSignUp) {
+        await app.signUpSupabase(email, password);
+      } else {
+        await app.signInSupabase(email, password);
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncSuccess)));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncError)));
+      }
+    }
+  }
+
+  Future<void> _runSupabaseSync(
+    BuildContext context,
+    AppState app, {
+    required bool upload,
+  }) async {
+    final t = AppLocalizations.of(context)!;
+    if (!app.isSupabaseSignedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncRequireLogin)));
+      return;
+    }
+    try {
+      if (upload) {
+        await app.syncToSupabase();
+      } else {
+        await app.syncFromSupabase();
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncSuccess)));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncError)));
+      }
+    }
+  }
+
   Future<void> _exportData(BuildContext context, AppState app) async {
     final t = AppLocalizations.of(context)!;
     final data = await app.exportData();
@@ -423,6 +505,8 @@ class SettingsScreen extends StatelessWidget {
           orElse: () => MapEntry(t.activityLight, 'light'),
         )
         .key;
+    final isSupabaseSignedIn = app.isSupabaseSignedIn;
+    final supabaseEmail = app.supabaseUserEmail ?? '';
     final theme = Theme.of(context);
     return AppBackground(
       child: SafeArea(
@@ -816,6 +900,73 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ]),
+                const SizedBox(height: 8),
+                _sectionTitle(context, t.syncSection),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              isSupabaseSignedIn ? '${t.syncSignedInAs} $supabaseEmail' : t.syncNotSignedIn,
+                              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                            ),
+                          ),
+                          if (isSupabaseSignedIn)
+                            TextButton(
+                              onPressed: () async {
+                                await app.signOutSupabase();
+                              },
+                              child: Text(t.syncSignOut),
+                            ),
+                        ],
+                      ),
+                      if (!isSupabaseSignedIn)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _showSupabaseAuthDialog(context, app, isSignUp: false),
+                                child: Text(t.syncSignIn),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _showSupabaseAuthDialog(context, app, isSignUp: true),
+                                child: Text(t.syncSignUp),
+                              ),
+                            ),
+                          ],
+                        ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => _runSupabaseSync(context, app, upload: true),
+                              child: Text(t.syncUpload),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => _runSupabaseSync(context, app, upload: false),
+                              child: Text(t.syncDownload),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 8),
                 _sectionTitle(context, t.apiSection),
                 _apiRow(

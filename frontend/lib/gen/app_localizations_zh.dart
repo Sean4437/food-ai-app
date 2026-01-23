@@ -994,6 +994,51 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataSection => '資料管理';
 
   @override
+  String get syncSection => '帳號與同步';
+
+  @override
+  String get syncSignedInAs => '已登入：';
+
+  @override
+  String get syncNotSignedIn => '尚未登入';
+
+  @override
+  String get syncEmailLabel => 'Email';
+
+  @override
+  String get syncPasswordLabel => '密碼';
+
+  @override
+  String get syncSignIn => '登入';
+
+  @override
+  String get syncSignUp => '註冊';
+
+  @override
+  String get syncSignOut => '登出';
+
+  @override
+  String get syncUpload => '上傳同步';
+
+  @override
+  String get syncDownload => '下載同步';
+
+  @override
+  String get syncSuccess => '同步完成';
+
+  @override
+  String get syncError => '同步失敗';
+
+  @override
+  String get syncRequireLogin => '請先登入';
+
+  @override
+  String get syncAuthTitleSignIn => '登入帳號';
+
+  @override
+  String get syncAuthTitleSignUp => '註冊帳號';
+
+  @override
   String get exportData => '匯出資料';
 
   @override
@@ -1007,12 +1052,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearDone => '已清除';
+
+  @override
+  String get close => '關閉';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
 class AppLocalizationsZhTw extends AppLocalizationsZh {
-  @override
-  String get removeLabel => '移除標示';
   AppLocalizationsZhTw() : super('zh_TW');
 
   @override
@@ -1106,6 +1152,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get addLabel => '補充標示';
+
+  @override
+  String get removeLabel => '移除標示';
 
   @override
   String get labelInfoTitle => '標示資訊';
@@ -1998,6 +2047,51 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dataSection => '資料管理';
 
   @override
+  String get syncSection => '帳號與同步';
+
+  @override
+  String get syncSignedInAs => '已登入：';
+
+  @override
+  String get syncNotSignedIn => '尚未登入';
+
+  @override
+  String get syncEmailLabel => 'Email';
+
+  @override
+  String get syncPasswordLabel => '密碼';
+
+  @override
+  String get syncSignIn => '登入';
+
+  @override
+  String get syncSignUp => '註冊';
+
+  @override
+  String get syncSignOut => '登出';
+
+  @override
+  String get syncUpload => '上傳同步';
+
+  @override
+  String get syncDownload => '下載同步';
+
+  @override
+  String get syncSuccess => '同步完成';
+
+  @override
+  String get syncError => '同步失敗';
+
+  @override
+  String get syncRequireLogin => '請先登入';
+
+  @override
+  String get syncAuthTitleSignIn => '登入帳號';
+
+  @override
+  String get syncAuthTitleSignUp => '註冊帳號';
+
+  @override
   String get exportData => '匯出資料';
 
   @override
@@ -2011,4 +2105,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get clearDone => '已清除';
+
+  @override
+  String get close => '關閉';
 }

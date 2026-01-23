@@ -12,6 +12,8 @@ import '../models/meal_entry.dart';
 import '../models/label_result.dart';
 import '../models/custom_food.dart';
 import '../services/api_service.dart';
+import '../services/supabase_service.dart';
+import '../config/supabase_config.dart';
 import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
 
@@ -30,6 +32,7 @@ class AppState extends ChangeNotifier {
         _settings = createSettingsStore();
 
   ApiService _api;
+  final SupabaseService _supabase = SupabaseService();
   final MealStore _store;
   final SettingsStore _settings;
   final List<MealEntry> entries = [];
@@ -48,6 +51,10 @@ class AppState extends ChangeNotifier {
   final Set<String> _mealAdviceLoading = {};
   Timer? _autoFinalizeTimer;
   Timer? _autoWeeklyTimer;
+
+  bool get isSupabaseSignedIn => _supabase.isSignedIn;
+
+  String? get supabaseUserEmail => _supabase.currentUser?.email;
 
   String buildAiContext() {
     final now = DateTime.now();
@@ -1154,6 +1161,26 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  MealType _mealTypeFromKey(String value) {
+    switch (value) {
+      case 'breakfast':
+        return MealType.breakfast;
+      case 'brunch':
+        return MealType.brunch;
+      case 'lunch':
+        return MealType.lunch;
+      case 'afternoon_tea':
+        return MealType.afternoonTea;
+      case 'dinner':
+        return MealType.dinner;
+      case 'late_snack':
+        return MealType.lateSnack;
+      case 'other':
+      default:
+        return MealType.other;
+    }
+  }
+
   String _mealTypeLabel(MealType type, AppLocalizations t) {
     switch (type) {
       case MealType.breakfast:
@@ -2196,6 +2223,228 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       return MealAdvice.defaults(t);
     }
+  }
+
+  Future<void> signUpSupabase(String email, String password) async {
+    final trimmedEmail = email.trim();
+    if (trimmedEmail.isEmpty || password.isEmpty) return;
+    await _supabase.client.auth.signUp(email: trimmedEmail, password: password);
+    notifyListeners();
+  }
+
+  Future<void> signInSupabase(String email, String password) async {
+    final trimmedEmail = email.trim();
+    if (trimmedEmail.isEmpty || password.isEmpty) return;
+    await _supabase.client.auth.signInWithPassword(email: trimmedEmail, password: password);
+    notifyListeners();
+  }
+
+  Future<void> signOutSupabase() async {
+    await _supabase.client.auth.signOut();
+    notifyListeners();
+  }
+
+  Future<void> syncToSupabase() async {
+    final user = _supabase.currentUser;
+    if (user == null) {
+      throw Exception('Supabase not signed in');
+    }
+    final client = _supabase.client;
+    for (final entry in entries) {
+      final imageHash = entry.imageHash ?? _hashBytes(entry.imageBytes);
+      final imagePath = await _uploadImageIfNeeded(
+        bucket: kSupabaseMealImagesBucket,
+        path: '${user.id}/meals/$imageHash.jpg',
+        bytes: entry.imageBytes,
+      );
+      String? labelPath;
+      if (entry.labelImageBytes != null) {
+        final labelHash = _hashBytes(entry.labelImageBytes!);
+        labelPath = await _uploadImageIfNeeded(
+          bucket: kSupabaseLabelImagesBucket,
+          path: '${user.id}/labels/$labelHash.jpg',
+          bytes: entry.labelImageBytes!,
+        );
+      }
+      final payload = _mealEntryToRow(entry, user.id, imagePath, labelPath);
+      await client.from(kSupabaseMealsTable).upsert(payload);
+    }
+    for (final food in customFoods) {
+      final imageHash = _hashBytes(food.imageBytes);
+      final imagePath = await _uploadImageIfNeeded(
+        bucket: kSupabaseMealImagesBucket,
+        path: '${user.id}/custom/$imageHash.jpg',
+        bytes: food.imageBytes,
+      );
+      final payload = {
+        'id': food.id,
+        'user_id': user.id,
+        'name': food.name,
+        'summary': food.summary,
+        'calorie_range': food.calorieRange,
+        'suggestion': food.suggestion,
+        'macros': food.macros,
+        'image_path': imagePath,
+        'created_at': food.createdAt.toIso8601String(),
+        'updated_at': food.updatedAt.toIso8601String(),
+      };
+      await client.from(kSupabaseCustomFoodsTable).upsert(payload);
+    }
+  }
+
+  Future<void> syncFromSupabase() async {
+    final user = _supabase.currentUser;
+    if (user == null) {
+      throw Exception('Supabase not signed in');
+    }
+    final client = _supabase.client;
+    final rows = await client.from(kSupabaseMealsTable).select().eq('user_id', user.id);
+    if (rows is List) {
+      for (final row in rows) {
+        if (row is! Map<String, dynamic>) continue;
+        final imagePath = row['image_path'] as String?;
+        final labelPath = row['label_image_path'] as String?;
+        final imageBytes = await _downloadImageIfAvailable(
+          bucket: kSupabaseMealImagesBucket,
+          path: imagePath,
+        );
+        if (imageBytes == null) continue;
+        final labelBytes = await _downloadImageIfAvailable(
+          bucket: kSupabaseLabelImagesBucket,
+          path: labelPath,
+        );
+        final entry = _mealEntryFromRow(row, imageBytes, labelBytes);
+        final index = entries.indexWhere((item) => item.id == entry.id);
+        if (index == -1) {
+          entries.insert(0, entry);
+        } else {
+          entries[index] = entry;
+        }
+        await _store.upsert(entry);
+      }
+    }
+    final foodRows = await client.from(kSupabaseCustomFoodsTable).select().eq('user_id', user.id);
+    if (foodRows is List) {
+      customFoods.clear();
+      for (final row in foodRows) {
+        if (row is! Map<String, dynamic>) continue;
+        final imagePath = row['image_path'] as String?;
+        final bytes = await _downloadImageIfAvailable(
+          bucket: kSupabaseMealImagesBucket,
+          path: imagePath,
+        );
+        if (bytes == null) continue;
+        final food = CustomFood(
+          id: row['id'] as String,
+          name: (row['name'] as String?) ?? '',
+          summary: (row['summary'] as String?) ?? '',
+          calorieRange: (row['calorie_range'] as String?) ?? '',
+          suggestion: (row['suggestion'] as String?) ?? '',
+          macros: _parseMacros(row['macros']),
+          imageBytes: bytes,
+          createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ?? DateTime.now(),
+          updatedAt: DateTime.tryParse(row['updated_at'] as String? ?? '') ?? DateTime.now(),
+        );
+        customFoods.add(food);
+      }
+      notifyListeners();
+      await _saveOverrides();
+    }
+  }
+
+  Future<String?> _uploadImageIfNeeded({
+    required String bucket,
+    required String path,
+    required Uint8List bytes,
+  }) async {
+    try {
+      await _supabase.client.storage.from(bucket).uploadBinary(path, bytes, fileOptions: const FileOptions(upsert: false));
+    } catch (_) {}
+    return path;
+  }
+
+  Future<Uint8List?> _downloadImageIfAvailable({
+    required String bucket,
+    required String? path,
+  }) async {
+    if (path == null || path.isEmpty) return null;
+    try {
+      final data = await _supabase.client.storage.from(bucket).download(path);
+      return data;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Map<String, dynamic> _mealEntryToRow(MealEntry entry, String userId, String? imagePath, String? labelPath) {
+    return {
+      'id': entry.id,
+      'user_id': userId,
+      'time': entry.time.toIso8601String(),
+      'type': _mealTypeKey(entry.type),
+      'filename': entry.filename,
+      'portion_percent': entry.portionPercent,
+      'meal_id': entry.mealId,
+      'note': entry.note,
+      'override_food_name': entry.overrideFoodName,
+      'image_hash': entry.imageHash,
+      'image_path': imagePath,
+      'label_image_path': labelPath,
+      'result_json': entry.result?.toJson(),
+      'label_json': entry.labelResult?.toJson(),
+      'last_analyzed_note': entry.lastAnalyzedNote,
+      'last_analyzed_food_name': entry.lastAnalyzedFoodName,
+      'last_analyzed_at': entry.lastAnalyzedAt,
+      'last_analyze_reason': entry.lastAnalyzeReason,
+    };
+  }
+
+  MealEntry _mealEntryFromRow(
+    Map<String, dynamic> row,
+    Uint8List imageBytes,
+    Uint8List? labelBytes,
+  ) {
+    final entry = MealEntry(
+      id: row['id'] as String,
+      imageBytes: imageBytes,
+      filename: (row['filename'] as String?) ?? 'photo.jpg',
+      time: DateTime.parse(row['time'] as String),
+      type: _mealTypeFromKey((row['type'] as String?) ?? 'other'),
+      portionPercent: (row['portion_percent'] as num?)?.toInt() ?? 100,
+      note: row['note'] as String?,
+      overrideFoodName: row['override_food_name'] as String?,
+      imageHash: row['image_hash'] as String?,
+      mealId: row['meal_id'] as String?,
+      lastAnalyzedNote: row['last_analyzed_note'] as String?,
+      lastAnalyzedFoodName: row['last_analyzed_food_name'] as String?,
+      lastAnalyzedAt: row['last_analyzed_at'] as String?,
+      lastAnalyzeReason: row['last_analyze_reason'] as String?,
+      labelImageBytes: labelBytes,
+    );
+    final resultJson = row['result_json'];
+    if (resultJson is Map<String, dynamic>) {
+      entry.result = AnalysisResult.fromJson(resultJson);
+    }
+    final labelJson = row['label_json'];
+    if (labelJson is Map<String, dynamic>) {
+      entry.labelResult = LabelResult.fromJson(labelJson);
+    }
+    return entry;
+  }
+
+  Map<String, double> _parseMacros(dynamic raw) {
+    final parsed = <String, double>{};
+    if (raw is Map) {
+      raw.forEach((key, value) {
+        if (value is num) {
+          parsed[key.toString()] = value.toDouble();
+        } else if (value is String) {
+          final cleaned = value.replaceAll('%', '').trim();
+          parsed[key.toString()] = double.tryParse(cleaned) ?? 0;
+        }
+      });
+    }
+    return parsed;
   }
 
   Future<void> _saveOverrides() async {

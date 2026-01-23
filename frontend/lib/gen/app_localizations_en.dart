@@ -1005,6 +1005,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dataSection => 'Data';
 
   @override
+  String get syncSection => 'Account & Sync';
+
+  @override
+  String get syncSignedInAs => 'Signed in:';
+
+  @override
+  String get syncNotSignedIn => 'Not signed in';
+
+  @override
+  String get syncEmailLabel => 'Email';
+
+  @override
+  String get syncPasswordLabel => 'Password';
+
+  @override
+  String get syncSignIn => 'Sign in';
+
+  @override
+  String get syncSignUp => 'Sign up';
+
+  @override
+  String get syncSignOut => 'Sign out';
+
+  @override
+  String get syncUpload => 'Upload sync';
+
+  @override
+  String get syncDownload => 'Download sync';
+
+  @override
+  String get syncSuccess => 'Sync complete';
+
+  @override
+  String get syncError => 'Sync failed';
+
+  @override
+  String get syncRequireLogin => 'Please sign in first';
+
+  @override
+  String get syncAuthTitleSignIn => 'Sign in';
+
+  @override
+  String get syncAuthTitleSignUp => 'Create account';
+
+  @override
   String get exportData => 'Export data';
 
   @override
@@ -1018,4 +1063,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearDone => 'Cleared';
+
+  @override
+  String get close => 'Close';
 }

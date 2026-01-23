@@ -2049,6 +2049,96 @@ abstract class AppLocalizations {
   /// **'資料管理'**
   String get dataSection;
 
+  /// No description provided for @syncSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'帳號與同步'**
+  String get syncSection;
+
+  /// No description provided for @syncSignedInAs.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已登入：'**
+  String get syncSignedInAs;
+
+  /// No description provided for @syncNotSignedIn.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'尚未登入'**
+  String get syncNotSignedIn;
+
+  /// No description provided for @syncEmailLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'Email'**
+  String get syncEmailLabel;
+
+  /// No description provided for @syncPasswordLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'密碼'**
+  String get syncPasswordLabel;
+
+  /// No description provided for @syncSignIn.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登入'**
+  String get syncSignIn;
+
+  /// No description provided for @syncSignUp.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'註冊'**
+  String get syncSignUp;
+
+  /// No description provided for @syncSignOut.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登出'**
+  String get syncSignOut;
+
+  /// No description provided for @syncUpload.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'上傳同步'**
+  String get syncUpload;
+
+  /// No description provided for @syncDownload.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'下載同步'**
+  String get syncDownload;
+
+  /// No description provided for @syncSuccess.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'同步完成'**
+  String get syncSuccess;
+
+  /// No description provided for @syncError.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'同步失敗'**
+  String get syncError;
+
+  /// No description provided for @syncRequireLogin.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'請先登入'**
+  String get syncRequireLogin;
+
+  /// No description provided for @syncAuthTitleSignIn.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登入帳號'**
+  String get syncAuthTitleSignIn;
+
+  /// No description provided for @syncAuthTitleSignUp.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'註冊帳號'**
+  String get syncAuthTitleSignUp;
+
   /// No description provided for @exportData.
   ///
   /// In zh_TW, this message translates to:
@@ -2078,6 +2168,12 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'已清除'**
   String get clearDone;
+
+  /// No description provided for @close.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'關閉'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate

@@ -10,9 +10,11 @@ import 'screens/custom_foods_screen.dart';
 import 'state/app_state.dart';
 import 'design/theme_controller.dart';
 import 'state/tab_state.dart';
+import 'services/supabase_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SupabaseService.ensureInitialized();
   final themeController = ThemeController();
   final tabState = TabState();
   final appState = AppState();
