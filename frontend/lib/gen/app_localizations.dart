@@ -1215,6 +1215,12 @@ abstract class AppLocalizations {
   /// **'編輯個人資料'**
   String get editProfile;
 
+  /// No description provided for @nicknameLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'暱稱'**
+  String get nicknameLabel;
+
   /// No description provided for @planSection.
   ///
   /// In zh_TW, this message translates to:

@@ -193,6 +193,7 @@
   "profileName": "Alex",
   "profileEmail": "alex@example.com",
   "editProfile": "Edit profile",
+  "nicknameLabel": "Nickname",
   "planSection": "Plan",
   "heightLabel": "Height",
   "weightLabel": "Weight",

@@ -164,42 +164,6 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _editProfile(BuildContext context, AppState app) async {
-    final t = AppLocalizations.of(context)!;
-    final nameController = TextEditingController(text: app.profile.name);
-    final emailController = TextEditingController(text: app.profile.email);
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.editProfile),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: t.profileName),
-            ),
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(labelText: t.profileEmail),
-              keyboardType: TextInputType.emailAddress,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.save)),
-        ],
-      ),
-    );
-    if (result == true) {
-      app.updateField((p) {
-        p.name = nameController.text.trim().isEmpty ? p.name : nameController.text.trim();
-        p.email = emailController.text.trim().isEmpty ? p.email : emailController.text.trim();
-      });
-    }
-  }
-
   Future<void> _selectOption(
     BuildContext context, {
     required String title,
@@ -521,38 +485,82 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                 Text(t.settingsTitle, style: AppTextStyles.title1(context)),
                 const SizedBox(height: 12),
+                _sectionTitle(context, t.syncSection),
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
-                        child: Icon(Icons.person, color: theme.colorScheme.primary),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
                         children: [
-                          Text(profile.name, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                          Text(profile.email, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                          Expanded(
+                            child: Text(
+                              isSupabaseSignedIn ? '${t.syncSignedInAs} $supabaseEmail' : t.syncNotSignedIn,
+                              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                            ),
+                          ),
+                          if (isSupabaseSignedIn)
+                            TextButton(
+                              onPressed: () async {
+                                await app.signOutSupabase();
+                              },
+                              child: Text(t.syncSignOut),
+                            ),
                         ],
                       ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () => _editProfile(context, app),
-                        child: Text(t.editProfile),
+                      const SizedBox(height: 8),
+                      _row(
+                        context,
+                        t.nicknameLabel,
+                        profile.name,
+                        onTap: () => _editText(
+                          context,
+                          title: t.nicknameLabel,
+                          initial: profile.name,
+                          onSave: (value) => app.updateNickname(value),
+                        ),
+                      ),
+                      if (!isSupabaseSignedIn) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _showSupabaseAuthDialog(context, app, isSignUp: false),
+                                child: Text(t.syncSignIn),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _showSupabaseAuthDialog(context, app, isSignUp: true),
+                                child: Text(t.syncSignUp),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => _runSupabaseSync(context, app, upload: true),
+                              child: Text(t.syncUpload),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => _runSupabaseSync(context, app, upload: false),
+                              child: Text(t.syncDownload),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -901,73 +909,6 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ]),
-                const SizedBox(height: 8),
-                _sectionTitle(context, t.syncSection),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              isSupabaseSignedIn ? '${t.syncSignedInAs} $supabaseEmail' : t.syncNotSignedIn,
-                              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                            ),
-                          ),
-                          if (isSupabaseSignedIn)
-                            TextButton(
-                              onPressed: () async {
-                                await app.signOutSupabase();
-                              },
-                              child: Text(t.syncSignOut),
-                            ),
-                        ],
-                      ),
-                      if (!isSupabaseSignedIn)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => _showSupabaseAuthDialog(context, app, isSignUp: false),
-                                child: Text(t.syncSignIn),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () => _showSupabaseAuthDialog(context, app, isSignUp: true),
-                                child: Text(t.syncSignUp),
-                              ),
-                            ),
-                          ],
-                        ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => _runSupabaseSync(context, app, upload: true),
-                              child: Text(t.syncUpload),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => _runSupabaseSync(context, app, upload: false),
-                              child: Text(t.syncDownload),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
                 const SizedBox(height: 8),
                 _sectionTitle(context, t.apiSection),
                 _apiRow(

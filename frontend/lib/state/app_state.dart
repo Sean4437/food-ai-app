@@ -2246,6 +2246,7 @@ class AppState extends ChangeNotifier {
       password: password,
       emailRedirectTo: kSupabaseEmailRedirectUrl,
     );
+    _applySupabaseNickname(_supabase.currentUser);
     notifyListeners();
   }
 
@@ -2253,12 +2254,36 @@ class AppState extends ChangeNotifier {
     final trimmedEmail = email.trim();
     if (trimmedEmail.isEmpty || password.isEmpty) return;
     await _supabase.client.auth.signInWithPassword(email: trimmedEmail, password: password);
+    _applySupabaseNickname(_supabase.currentUser);
     notifyListeners();
   }
 
   Future<void> signOutSupabase() async {
     await _supabase.client.auth.signOut();
     notifyListeners();
+  }
+
+  Future<void> updateNickname(String nickname) async {
+    final trimmed = nickname.trim();
+    if (trimmed.isEmpty) return;
+    updateField((p) => p.name = trimmed);
+    if (!isSupabaseSignedIn) return;
+    try {
+      await _supabase.client.auth.updateUser(
+        UserAttributes(data: {'nickname': trimmed}),
+      );
+    } catch (_) {}
+  }
+
+  void _applySupabaseNickname(User? user) {
+    if (user == null) return;
+    final data = user.userMetadata;
+    if (data is Map) {
+      final nickname = data['nickname'];
+      if (nickname is String && nickname.trim().isNotEmpty) {
+        updateField((p) => p.name = nickname.trim());
+      }
+    }
   }
 
   Future<void> syncToSupabase() async {

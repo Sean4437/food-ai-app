@@ -584,6 +584,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProfile => 'Edit profile';
 
   @override
+  String get nicknameLabel => 'Nickname';
+
+  @override
   String get planSection => 'Plan';
 
   @override

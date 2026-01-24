@@ -573,6 +573,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editProfile => '編輯個人資料';
 
   @override
+  String get nicknameLabel => '暱稱';
+
+  @override
   String get planSection => '計畫設定';
 
   @override

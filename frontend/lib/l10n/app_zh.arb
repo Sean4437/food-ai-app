@@ -193,6 +193,7 @@
   "profileName": "小明",
   "profileEmail": "xiaoming123@gmail.com",
   "editProfile": "編輯個人資料",
+  "nicknameLabel": "暱稱",
   "planSection": "計畫設定",
   "heightLabel": "身高",
   "weightLabel": "體重",
