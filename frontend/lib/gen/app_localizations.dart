@@ -2085,11 +2085,15 @@ abstract class AppLocalizations {
   /// **'登入'**
   String get syncSignIn;
 
+  String get syncSignInSuccess;
+
   /// No description provided for @syncSignUp.
   ///
   /// In zh_TW, this message translates to:
   /// **'註冊'**
   String get syncSignUp;
+
+  String get syncSignUpSuccess;
 
   /// No description provided for @syncSignOut.
   ///

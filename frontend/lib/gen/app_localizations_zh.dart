@@ -1012,7 +1012,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncSignIn => '登入';
 
   @override
+  String get syncSignInSuccess => '登入成功';
+
+  @override
   String get syncSignUp => '註冊';
+
+  @override
+  String get syncSignUpSuccess => '註冊完成，請登入';
 
   @override
   String get syncSignOut => '登出';
@@ -2065,7 +2071,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get syncSignIn => '登入';
 
   @override
+  String get syncSignInSuccess => '登入成功';
+
+  @override
   String get syncSignUp => '註冊';
+
+  @override
+  String get syncSignUpSuccess => '註冊完成，請登入';
 
   @override
   String get syncSignOut => '登出';

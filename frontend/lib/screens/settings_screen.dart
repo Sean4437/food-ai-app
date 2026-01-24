@@ -311,7 +311,8 @@ class SettingsScreen extends StatelessWidget {
         await app.signInSupabase(email, password);
       }
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncSuccess)));
+        final message = isSignUp ? t.syncSignUpSuccess : t.syncSignInSuccess;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (_) {
       if (context.mounted) {

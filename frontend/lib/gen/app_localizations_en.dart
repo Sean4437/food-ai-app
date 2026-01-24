@@ -1023,7 +1023,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncSignIn => 'Sign in';
 
   @override
+  String get syncSignInSuccess => 'Signed in';
+
+  @override
   String get syncSignUp => 'Sign up';
+
+  @override
+  String get syncSignUpSuccess => 'Sign up complete. Please sign in.';
 
   @override
   String get syncSignOut => 'Sign out';

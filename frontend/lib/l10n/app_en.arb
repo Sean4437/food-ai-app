@@ -359,6 +359,8 @@
   "syncPasswordLabel": "Password",
   "syncSignIn": "Sign in",
   "syncSignUp": "Sign up",
+  "syncSignUpSuccess": "Sign up complete. Please sign in.",
+  "syncSignInSuccess": "Signed in",
   "syncSignOut": "Sign out",
   "syncUpload": "Upload sync",
   "syncDownload": "Download sync",

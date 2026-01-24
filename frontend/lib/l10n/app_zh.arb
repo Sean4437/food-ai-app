@@ -359,6 +359,8 @@
   "syncPasswordLabel": "密碼",
   "syncSignIn": "登入",
   "syncSignUp": "註冊",
+  "syncSignUpSuccess": "註冊完成，請登入",
+  "syncSignInSuccess": "登入成功",
   "syncSignOut": "登出",
   "syncUpload": "上傳同步",
   "syncDownload": "下載同步",
