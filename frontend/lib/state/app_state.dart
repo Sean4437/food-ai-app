@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:storage_client/storage_client.dart';
 import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
 import '../models/label_result.dart';
