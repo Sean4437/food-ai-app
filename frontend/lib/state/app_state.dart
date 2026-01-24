@@ -2229,7 +2229,11 @@ class AppState extends ChangeNotifier {
   Future<void> signUpSupabase(String email, String password) async {
     final trimmedEmail = email.trim();
     if (trimmedEmail.isEmpty || password.isEmpty) return;
-    await _supabase.client.auth.signUp(email: trimmedEmail, password: password);
+    await _supabase.client.auth.signUp(
+      email: trimmedEmail,
+      password: password,
+      emailRedirectTo: kSupabaseEmailRedirectUrl,
+    );
     notifyListeners();
   }
 

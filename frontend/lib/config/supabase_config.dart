@@ -6,3 +6,4 @@ const String kSupabaseMealsTable = 'meals';
 const String kSupabaseCustomFoodsTable = 'custom_foods';
 const String kSupabaseMealImagesBucket = 'meal-images';
 const String kSupabaseLabelImagesBucket = 'label-images';
+const String kSupabaseEmailRedirectUrl = 'https://sean4437.github.io/food-ai-app/#/';
