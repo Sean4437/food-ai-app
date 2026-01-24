@@ -1100,20 +1100,31 @@ class AppState extends ChangeNotifier {
     return kDefaultApiBaseUrl;
   }
 
+  static String _normalizeApiBaseUrl(String url) {
+    return url.trim().replaceAll(RegExp(r'/+$'), '');
+  }
+
   bool _migrateApiBaseUrlIfNeeded() {
     if (profile.apiBaseUrl.isEmpty) {
       profile.apiBaseUrl = kDefaultApiBaseUrl;
       return true;
     }
-    if (kDeprecatedApiBaseUrls.contains(profile.apiBaseUrl)) {
+    final normalized = _normalizeApiBaseUrl(profile.apiBaseUrl);
+    final deprecatedNormalized = kDeprecatedApiBaseUrls.map(_normalizeApiBaseUrl);
+    if (deprecatedNormalized.contains(normalized)) {
       profile.apiBaseUrl = kDefaultApiBaseUrl;
+      return true;
+    }
+    if (normalized != profile.apiBaseUrl) {
+      profile.apiBaseUrl = normalized;
       return true;
     }
     return false;
   }
 
   void updateApiBaseUrl(String url) {
-    _api = ApiService(baseUrl: url);
+    final normalized = _normalizeApiBaseUrl(url);
+    _api = ApiService(baseUrl: normalized);
     notifyListeners();
   }
 
