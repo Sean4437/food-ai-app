@@ -2277,8 +2277,8 @@ class AppState extends ChangeNotifier {
 
   void _applySupabaseNickname(User? user) {
     if (user == null) return;
-    final data = user.userMetadata;
-    if (data is Map) {
+    final data = user.userMetadata ?? const <String, dynamic>{};
+    if (data is Map<String, dynamic>) {
       final nickname = data['nickname'];
       if (nickname is String && nickname.trim().isNotEmpty) {
         updateField((p) => p.name = nickname.trim());
