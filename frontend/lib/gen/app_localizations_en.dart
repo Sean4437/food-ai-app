@@ -728,6 +728,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weeklySummaryDayLabel => 'Weekly summary';
 
   @override
+  String get weekTopMealTitle => 'Top meal this week';
+
+  @override
+  String get recentGuidanceTitle => 'Recent guidance (last 7 days)';
+
+  @override
   String get weekSummaryTitle => 'Weekly summary';
 
   @override

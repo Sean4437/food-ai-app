@@ -241,6 +241,8 @@
   "summarySettingsSection": "Summary settings",
   "summaryTimeLabel": "Daily summary",
   "weeklySummaryDayLabel": "Weekly summary",
+  "weekTopMealTitle": "Top meal this week",
+  "recentGuidanceTitle": "Recent guidance (last 7 days)",
   "weekSummaryTitle": "Weekly summary",
   "nextWeekAdviceTitle": "Next week advice",
   "weekdayMon": "Mon",

@@ -1503,6 +1503,18 @@ abstract class AppLocalizations {
   /// **'每周總結'**
   String get weeklySummaryDayLabel;
 
+  /// No description provided for @weekTopMealTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'本週熱量最高餐'**
+  String get weekTopMealTitle;
+
+  /// No description provided for @recentGuidanceTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'近期方針（近 7 天）'**
+  String get recentGuidanceTitle;
+
   /// No description provided for @weekSummaryTitle.
   ///
   /// In zh_TW, this message translates to:

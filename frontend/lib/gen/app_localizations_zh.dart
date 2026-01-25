@@ -717,6 +717,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get weeklySummaryDayLabel => '每周總結';
 
   @override
+  String get weekTopMealTitle => '本週熱量最高餐';
+
+  @override
+  String get recentGuidanceTitle => '近期方針（近 7 天）';
+
+  @override
   String get weekSummaryTitle => '一週總結';
 
   @override
@@ -1786,6 +1792,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get weeklySummaryDayLabel => '每周總結';
+  @override
+  String get weekTopMealTitle => '本週熱量最高餐';
+
+  @override
+  String get recentGuidanceTitle => '近期方針（近 7 天）';
+
 
   @override
   String get weekSummaryTitle => '一週總結';

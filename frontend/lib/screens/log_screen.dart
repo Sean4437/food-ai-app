@@ -11,6 +11,72 @@ import '../design/text_styles.dart';
 class LogScreen extends StatelessWidget {
   const LogScreen({super.key});
 
+  String _weekdayLabel(DateTime date, AppLocalizations t) {
+    switch (date.weekday) {
+      case DateTime.monday:
+        return t.weekdayMon;
+      case DateTime.tuesday:
+        return t.weekdayTue;
+      case DateTime.wednesday:
+        return t.weekdayWed;
+      case DateTime.thursday:
+        return t.weekdayThu;
+      case DateTime.friday:
+        return t.weekdayFri;
+      case DateTime.saturday:
+        return t.weekdaySat;
+      case DateTime.sunday:
+        return t.weekdaySun;
+    }
+    return t.weekdayMon;
+  }
+
+  List<int>? _parseCalorieRange(String text) {
+    final match = RegExp(r'(\d+)\s*-\s*(\d+)').firstMatch(text);
+    if (match == null) return null;
+    final min = int.tryParse(match.group(1) ?? '');
+    final max = int.tryParse(match.group(2) ?? '');
+    if (min == null || max == null) return null;
+    return [min, max];
+  }
+
+  _TopMealInfo? _weeklyTopMeal(AppState app, AppLocalizations t) {
+    final now = DateTime.now();
+    final cutoff = now.subtract(const Duration(days: 7));
+    final recent = app.entries.where((entry) => entry.time.isAfter(cutoff)).toList();
+    if (recent.isEmpty) return null;
+    final dates = recent
+        .map((entry) => DateTime(entry.time.year, entry.time.month, entry.time.day))
+        .toSet()
+        .toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    _TopMealInfo? best;
+    double bestScore = -1;
+    for (final date in dates) {
+      for (final type in MealType.values) {
+        final groups = app.mealGroupsForDate(date, type);
+        for (final group in groups) {
+          final summary = app.buildMealSummary(group, t);
+          if (summary == null) continue;
+          final range = _parseCalorieRange(summary.calorieRange);
+          if (range == null) continue;
+          final score = (range[0] + range[1]) / 2.0;
+          if (score > bestScore) {
+            bestScore = score;
+            best = _TopMealInfo(
+              date: date,
+              type: type,
+              timeLabel: _groupTimeLabel(group),
+              calorieRange: summary.calorieRange,
+            );
+          }
+        }
+      }
+    }
+    return best;
+  }
+
   String _timeLabel(DateTime time) {
     return '${time.month}/${time.day} ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
@@ -211,6 +277,7 @@ class LogScreen extends StatelessWidget {
         .toList();
     dates.sort((a, b) => b.compareTo(a));
     final displayDates = dates.isEmpty ? [DateTime.now()] : dates;
+    final topMeal = _weeklyTopMeal(app, t);
 
     return AppBackground(
       child: SafeArea(
@@ -224,6 +291,41 @@ class LogScreen extends StatelessWidget {
                 children: [
                 Text(t.logTitle, style: AppTextStyles.title1(context)),
                 const SizedBox(height: 12),
+                if (topMeal != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t.weekTopMealTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${_weekdayLabel(topMeal.date, t)} · ${_mealLabel(topMeal.type, t)} · ${topMeal.timeLabel} · ${topMeal.calorieRange}',
+                          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(t.recentGuidanceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 6),
+                        Text(
+                          app.weekSummaryText(DateTime.now(), t),
+                          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 for (final date in displayDates) ...[
                   Text(
                     dateFormatter.format(date),
@@ -266,4 +368,18 @@ class LogScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TopMealInfo {
+  _TopMealInfo({
+    required this.date,
+    required this.type,
+    required this.timeLabel,
+    required this.calorieRange,
+  });
+
+  final DateTime date;
+  final MealType type;
+  final String timeLabel;
+  final String calorieRange;
 }
