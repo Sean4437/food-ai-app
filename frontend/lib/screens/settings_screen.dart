@@ -542,7 +542,7 @@ class SettingsScreen extends StatelessWidget {
                       _row(
                         context,
                         t.nicknameLabel,
-                        profile.name,
+                        profile.name.isEmpty ? '--' : profile.name,
                         onTap: () => _editText(
                           context,
                           title: t.nicknameLabel,
@@ -569,8 +569,9 @@ class SettingsScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 4),
                         Align(
-                          alignment: Alignment.centerRight,
+                          alignment: Alignment.centerLeft,
                           child: TextButton(
                             onPressed: () => _showResetPasswordDialog(context, app),
                             child: Text(t.syncForgotPassword),
@@ -582,14 +583,14 @@ class SettingsScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () => _runSupabaseSync(context, app, upload: true),
+                              onPressed: isSupabaseSignedIn ? () => _runSupabaseSync(context, app, upload: true) : null,
                               child: Text(t.syncUpload),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () => _runSupabaseSync(context, app, upload: false),
+                              onPressed: isSupabaseSignedIn ? () => _runSupabaseSync(context, app, upload: false) : null,
                               child: Text(t.syncDownload),
                             ),
                           ),
@@ -759,7 +760,7 @@ class SettingsScreen extends StatelessWidget {
                           t.mealTimeSection,
                           style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
                         ),
-                        tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                        tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                         initiallyExpanded: false,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
