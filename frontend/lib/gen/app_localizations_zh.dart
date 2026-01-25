@@ -501,7 +501,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantPickGallery => '從相簿選擇';
 
   @override
-  String get suggestInstantNowEat => '現在吃什麼';
+  String get suggestInstantNowEat => '建議我吃什麼';
 
   @override
   String get suggestInstantStepDetect => '正在辨識餐點';
@@ -1575,7 +1575,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantPickGallery => '從相簿選擇';
 
   @override
-  String get suggestInstantNowEat => '現在吃什麼';
+  String get suggestInstantNowEat => '建議我吃什麼';
 
   @override
   String get suggestInstantStepDetect => '正在辨識餐點';

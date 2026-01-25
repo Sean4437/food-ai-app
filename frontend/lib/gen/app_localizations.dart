@@ -1074,7 +1074,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantNowEat.
   ///
   /// In zh_TW, this message translates to:
-  /// **'現在吃什麼'**
+  /// **'建議我吃什麼'**
   String get suggestInstantNowEat;
 
   /// No description provided for @suggestInstantStepDetect.
