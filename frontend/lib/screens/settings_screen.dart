@@ -539,43 +539,60 @@ class SettingsScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      _row(
-                        context,
-                        t.nicknameLabel,
-                        profile.name.isEmpty ? '--' : profile.name,
-                        onTap: () => _editText(
+                      if (isSupabaseSignedIn)
+                        _row(
                           context,
-                          title: t.nicknameLabel,
-                          initial: profile.name,
-                          onSave: (value) => app.updateNickname(value),
-                        ),
-                      ),
-                      if (!isSupabaseSignedIn) ...[
-                        const SizedBox(height: 8),
+                          t.nicknameLabel,
+                          profile.name.isEmpty ? '--' : profile.name,
+                          onTap: () => _editText(
+                            context,
+                            title: t.nicknameLabel,
+                            initial: profile.name,
+                            onSave: (value) => app.updateNickname(value),
+                          ),
+                        )
+                      else ...[
                         Row(
                           children: [
+                            Expanded(
+                              child: _row(
+                                context,
+                                t.nicknameLabel,
+                                profile.name.isEmpty ? '--' : profile.name,
+                                onTap: () => _editText(
+                                  context,
+                                  title: t.nicknameLabel,
+                                  initial: profile.name,
+                                  onSave: (value) => app.updateNickname(value),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: OutlinedButton(
                                 onPressed: () => _showSupabaseAuthDialog(context, app, isSignUp: false),
                                 child: Text(t.syncSignIn),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
                             Expanded(
                               child: OutlinedButton(
                                 onPressed: () => _showSupabaseAuthDialog(context, app, isSignUp: true),
                                 child: Text(t.syncSignUp),
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _showResetPasswordDialog(context, app),
+                                child: Text(t.syncForgotPassword),
+                              ),
+                            ),
                           ],
-                        ),
-                        const SizedBox(height: 4),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton(
-                            onPressed: () => _showResetPasswordDialog(context, app),
-                            child: Text(t.syncForgotPassword),
-                          ),
                         ),
                       ],
                       const SizedBox(height: 8),
@@ -744,6 +761,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ]),
+                const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -752,7 +770,7 @@ class SettingsScreen extends StatelessWidget {
                   child: Theme(
                     data: theme.copyWith(dividerColor: Colors.transparent),
                     child: ListTileTheme(
-                      dense: true,
+                      dense: false,
                       minVerticalPadding: 0,
                       contentPadding: EdgeInsets.zero,
                       child: ExpansionTile(
