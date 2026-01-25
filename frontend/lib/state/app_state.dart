@@ -2263,6 +2263,15 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> resetSupabasePassword(String email) async {
+    final trimmedEmail = email.trim();
+    if (trimmedEmail.isEmpty) return;
+    await _supabase.client.auth.resetPasswordForEmail(
+      trimmedEmail,
+      redirectTo: kSupabaseEmailRedirectUrl,
+    );
+  }
+
   Future<void> updateNickname(String nickname) async {
     final trimmed = nickname.trim();
     if (trimmed.isEmpty) return;

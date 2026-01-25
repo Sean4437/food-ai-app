@@ -2099,9 +2099,33 @@ abstract class AppLocalizations {
   /// **'註冊'**
   String get syncSignUp;
 
-  String get syncSignUpSuccess;
-
-  /// No description provided for @syncSignOut.
+    String get syncSignUpSuccess;
+  
+    /// No description provided for @syncForgotPassword.
+    ///
+    /// In zh_TW, this message translates to:
+    /// **'忘記密碼'**
+    String get syncForgotPassword;
+  
+    /// No description provided for @syncResetPasswordTitle.
+    ///
+    /// In zh_TW, this message translates to:
+    /// **'重設密碼'**
+    String get syncResetPasswordTitle;
+  
+    /// No description provided for @syncResetPasswordHint.
+    ///
+    /// In zh_TW, this message translates to:
+    /// **'輸入註冊信箱'**
+    String get syncResetPasswordHint;
+  
+    /// No description provided for @syncResetPasswordSent.
+    ///
+    /// In zh_TW, this message translates to:
+    /// **'已寄送重設密碼郵件'**
+    String get syncResetPasswordSent;
+  
+    /// No description provided for @syncSignOut.
   ///
   /// In zh_TW, this message translates to:
   /// **'登出'**

@@ -1021,7 +1021,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncSignUp => '註冊';
 
   @override
-  String get syncSignUpSuccess => '註冊完成，請登入';
+  String get syncSignUpSuccess => '已寄送驗證信，請先完成信箱驗證';
+
+  @override
+  String get syncForgotPassword => '忘記密碼';
+
+  @override
+  String get syncResetPasswordTitle => '重設密碼';
+
+  @override
+  String get syncResetPasswordHint => '輸入註冊信箱';
+
+  @override
+  String get syncResetPasswordSent => '已寄送重設密碼郵件';
 
   @override
   String get syncSignOut => '登出';
@@ -2080,7 +2092,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get syncSignUp => '註冊';
 
   @override
-  String get syncSignUpSuccess => '註冊完成，請登入';
+  String get syncSignUpSuccess => '已寄送驗證信，請先完成信箱驗證';
+
+  @override
+  String get syncForgotPassword => '忘記密碼';
+
+  @override
+  String get syncResetPasswordTitle => '重設密碼';
+
+  @override
+  String get syncResetPasswordHint => '輸入註冊信箱';
+
+  @override
+  String get syncResetPasswordSent => '已寄送重設密碼郵件';
 
   @override
   String get syncSignOut => '登出';

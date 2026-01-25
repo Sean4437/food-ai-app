@@ -164,6 +164,32 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _showResetPasswordDialog(BuildContext context, AppState app) async {
+    final t = AppLocalizations.of(context)!;
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.syncResetPasswordTitle),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(hintText: t.syncResetPasswordHint),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: Text(t.save)),
+        ],
+      ),
+    );
+    if (result != null && result.isNotEmpty) {
+      await app.resetSupabasePassword(result);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncResetPasswordSent)));
+      }
+    }
+  }
+
   Future<void> _selectOption(
     BuildContext context, {
     required String title,
@@ -542,6 +568,13 @@ class SettingsScreen extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => _showResetPasswordDialog(context, app),
+                            child: Text(t.syncForgotPassword),
+                          ),
                         ),
                       ],
                       const SizedBox(height: 8),

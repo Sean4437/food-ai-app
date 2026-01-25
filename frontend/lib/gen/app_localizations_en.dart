@@ -1032,7 +1032,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncSignUp => 'Sign up';
 
   @override
-  String get syncSignUpSuccess => 'Sign up complete. Please sign in.';
+  String get syncSignUpSuccess => 'Verification email sent. Please confirm your email.';
+
+  @override
+  String get syncForgotPassword => 'Forgot password';
+
+  @override
+  String get syncResetPasswordTitle => 'Reset password';
+
+  @override
+  String get syncResetPasswordHint => 'Enter your email';
+
+  @override
+  String get syncResetPasswordSent => 'Password reset email sent';
 
   @override
   String get syncSignOut => 'Sign out';
