@@ -332,9 +332,11 @@ class SettingsScreen extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncSuccess)));
       }
-    } catch (_) {
+    } catch (err) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncError)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${t.syncError}: $err')),
+        );
       }
     }
   }
