@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (email.isEmpty) return;
     setState(() => _loading = true);
     try {
-      await app.resetPasswordSupabase(email);
+      await app.resetSupabasePassword(email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authResetSent)));
       }
