@@ -225,10 +225,12 @@ class ApiService {
     String? accessToken,
   }) async {
     final uri = Uri.parse('$baseUrl/access_status');
-    final response = await http.get(
-      uri,
-      headers: _authHeaders(accessToken),
-    );
+    final response = await http
+        .get(
+          uri,
+          headers: _authHeaders(accessToken),
+        )
+        .timeout(const Duration(seconds: 8));
     if (response.statusCode != 200) {
       throw Exception('Access status failed: ${response.statusCode}');
     }
