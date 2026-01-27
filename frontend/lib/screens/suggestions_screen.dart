@@ -26,6 +26,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   bool _loading = false;
   String? _error;
   bool _showSaveActions = false;
+  MealEntry? _savedEntry;
+  final TextEditingController _nameController = TextEditingController();
   late final AnimationController _scanController;
   double _progressValue = 0;
   int _statusIndex = 0;
@@ -49,6 +51,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     _progressTimer?.cancel();
     _statusTimer?.cancel();
     _scanController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -61,6 +64,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _instantAdvice = null;
       _previewBytes = null;
       _showSaveActions = false;
+      _savedEntry = null;
     });
     final file = await _picker.pickImage(source: source);
     if (!mounted) return;
@@ -123,6 +127,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _instantAdvice = null;
       _previewBytes = null;
       _showSaveActions = false;
+      _savedEntry = null;
     });
     _startSmartProgress();
     try {
@@ -147,14 +152,104 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     }
   }
 
+  Future<void> _submitNameAnalysis() async {
+    if (!mounted) return;
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+    final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    setState(() {
+      _loading = true;
+      _error = null;
+      _analysis = null;
+      _instantAdvice = null;
+      _previewBytes = null;
+      _showSaveActions = false;
+      _savedEntry = null;
+    });
+    _startSmartProgress();
+    final historyContext = app.buildAiContext();
+    try {
+      final entry = await app.analyzeNameAndSave(
+        name,
+        locale,
+        historyContext: historyContext.isEmpty ? null : historyContext,
+      );
+      if (!mounted) return;
+      final result = entry.result;
+      if (result == null) {
+        throw Exception('Missing analysis result');
+      }
+      final file = XFile.fromData(
+        entry.imageBytes,
+        name: entry.filename,
+        mimeType: 'image/png',
+      );
+      _analysis = QuickCaptureAnalysis(
+        file: file,
+        originalBytes: entry.imageBytes,
+        imageBytes: entry.imageBytes,
+        time: entry.time,
+        mealType: entry.type,
+        result: result,
+      );
+      _savedEntry = entry;
+      _nameController.clear();
+      _completeSmartProgress(() {
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+        });
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.logSuccess)),
+      );
+    } catch (err) {
+      if (!mounted) return;
+      _stopSmartProgress();
+      setState(() {
+        _error = err.toString();
+        _loading = false;
+        _previewBytes = null;
+      });
+    }
+  }
+
+  Future<void> _deleteSavedEntry() async {
+    final entry = _savedEntry;
+    if (entry == null || !mounted) return;
+    final t = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.delete),
+        content: Text(t.deleteConfirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.delete)),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final app = AppStateScope.of(context);
+    app.removeEntry(entry);
+    setState(() {
+      _savedEntry = null;
+      _analysis = null;
+      _showSaveActions = false;
+    });
+  }
+
   Future<void> _saveIfNeeded() async {
     if (_analysis == null) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    await app.saveQuickCapture(_analysis!);
+    final saved = await app.saveQuickCapture(_analysis!);
     if (!mounted) return;
     setState(() {
       _showSaveActions = false;
+      _savedEntry = saved;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(t.logSuccess)),
@@ -790,6 +885,47 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             Center(
                               child: SizedBox(
                                 width: buttonWidth,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    TextField(
+                                      controller: _nameController,
+                                      enabled: !_loading,
+                                      textInputAction: TextInputAction.done,
+                                      onSubmitted: (_) => _submitNameAnalysis(),
+                                      decoration: InputDecoration(
+                                        labelText: t.foodNameLabel,
+                                        hintText: t.suggestInstantNameHint,
+                                        filled: true,
+                                        fillColor: Colors.white.withOpacity(0.85),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ElevatedButton.icon(
+                                      onPressed: _loading ? null : _submitNameAnalysis,
+                                      icon: const Icon(Icons.search, size: 18),
+                                      label: Text(
+                                        t.suggestInstantNameSubmit,
+                                        style: const TextStyle(fontWeight: FontWeight.w600),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: theme.colorScheme.primary,
+                                        foregroundColor: Colors.white,
+                                        side: BorderSide(color: theme.colorScheme.primary),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Center(
+                              child: SizedBox(
+                                width: buttonWidth,
                                 child: OutlinedButton.icon(
                                   onPressed: _useCustomFood,
                                   icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
@@ -886,6 +1022,14 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                 padding: const EdgeInsets.all(8),
                                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                               ),
+                              if (_savedEntry != null)
+                                IconButton(
+                                  onPressed: _deleteSavedEntry,
+                                  icon: const Icon(Icons.delete_outline, size: 18),
+                                  tooltip: t.delete,
+                                  padding: const EdgeInsets.all(8),
+                                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                                ),
                             ],
                           ),
                           const SizedBox(height: 6),

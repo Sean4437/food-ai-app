@@ -170,6 +170,8 @@
   "suggestInstantRetake": "Retake photo",
   "suggestInstantPickGallery": "Choose from album",
   "suggestInstantNowEat": "What to eat now",
+  "suggestInstantNameHint": "Enter a food name (no photo needed)",
+  "suggestInstantNameSubmit": "Analyze name",
   "suggestInstantStepDetect": "Identifying the meal",
   "suggestInstantStepEstimate": "Estimating calories and portion",
   "suggestInstantStepAdvice": "Generating how-to-eat advice",

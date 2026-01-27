@@ -120,6 +120,17 @@ class MealAdviceResponse(BaseModel):
     source: str
     confidence: Optional[float] = None
 
+
+class NameAnalyzeRequest(BaseModel):
+    food_name: str
+    lang: Optional[str] = None
+    profile: Optional[dict] = None
+    note: Optional[str] = None
+    context: Optional[str] = None
+    meal_type: Optional[str] = None
+    portion_percent: Optional[int] = None
+    advice_mode: Optional[str] = None
+
 FREE_DAILY_LIMIT = int(os.getenv("FREE_DAILY_LIMIT", "1"))
 CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
 DEFAULT_LANG = os.getenv("DEFAULT_LANG", "zh-TW")
@@ -387,6 +398,137 @@ def _build_prompt(
         "  \"is_beverage\": false\n"
         "}\n"
     ) + profile_text + note_text + context_text + label_text + meal_text
+
+
+def _build_name_prompt(
+    lang: str,
+    profile: dict,
+    food_name: str,
+    note: str | None,
+    portion_percent: int | None,
+    meal_type: str | None,
+    context: str | None,
+    advice_mode: str | None,
+) -> str:
+    profile_text = ""
+    if profile:
+        tone = str(profile.get("tone") or "").strip()
+        persona = str(profile.get("persona") or "").strip()
+        tone_line = f"Tone: {tone}\n" if tone else ""
+        persona_line = f"Persona: {persona}\n" if persona else ""
+        profile_text = (
+            f"User profile (do not mention exact values): {json.dumps(profile, ensure_ascii=True)}\n"
+            f"{persona_line}{tone_line}"
+            "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
+        )
+    note_text = ""
+    if note:
+        note_text += f"User note (do not quote directly): {note}\n"
+    if portion_percent:
+        note_text += f"Portion eaten: {portion_percent}% (use to scale calorie range)\n"
+    context_text = ""
+    if context:
+        context_text = f"Recent context (use for suggestions): {context}\n"
+    meal_text = ""
+    if meal_type:
+        if lang == "zh-TW":
+            meal_text = f"餐次：{meal_type}\n"
+            if meal_type in ("dinner", "late_snack"):
+                meal_text += "若為晚餐或消夜，建議提醒避免夜間加餐。\n"
+        else:
+            meal_text = f"Meal type: {meal_type}\n"
+            if meal_type in ("dinner", "late_snack"):
+                meal_text += "If this is dinner or a late-night snack, suggest avoiding additional late-night eating.\n"
+    if lang == "zh-TW":
+        suggestion_rule = (
+            "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：可以吃 / 不建議吃 / 份量上限\n"
+            "- 需要參考 recent context 並用一句話提到上一餐\n"
+        )
+        suggestion_example = (
+            "  \"suggestion\": \"可以吃：蔬菜多一點、保留瘦肉\\n不建議吃：湯底與加工配料\\n份量上限：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
+        )
+        if advice_mode != "current_meal":
+            suggestion_rule = (
+                "- suggestion: 針對下一餐的建議，輸出三行格式：可以吃 / 不建議吃 / 份量上限\n"
+                "- 需包含具體食物類型與份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
+            )
+            suggestion_example = (
+                "  \"suggestion\": \"可以吃：清淡蛋白質與蔬菜\\n不建議吃：油炸與高糖飲品\\n份量上限：主食半碗、蛋白質一掌\",\n"
+            )
+        return (
+            "你是營養分析助理。請根據食物名稱估算內容，回傳 JSON。\n"
+            "注意：沒有照片，只能根據名稱估算。\n"
+            "要求：\n"
+            "- 僅回傳 JSON（不要多餘文字）\n"
+            "- food_name: 中文餐點名稱（必須使用提供的名稱）\n"
+            "- food_items: 1-5 個食物名稱（用名稱推測主要食物）\n"
+            "- calorie_range: 例如 '450-600 kcal'（區間寬度控制在 120-200 kcal，飲料 <= 120）\n"
+            "- macros: protein/carbs/fat/sodium 為 0-100 的百分比整數\n"
+            "- judgement_tags: 從 [偏油, 清淡, 碳水偏多, 蛋白不足] 選 1-3 個\n"
+            "- dish_summary: 20 字內一句話摘要\n"
+            "- 規則：自然口語，不要專業營養名詞，不要出現數字/熱量/克數，不責備不命令\n"
+            "- 描述整體負擔、口味或營養重點，留空間給下一餐建議\n"
+            f"{suggestion_rule}"
+            "- confidence: 0 到 1 的信心分數\n"
+            "- is_beverage: 是否為飲料（true/false）\n"
+            "- 飲料規則：若為飲料，protein/fat 建議 <= 15，熱量偏低；含糖可提升 carbs\n"
+            "JSON 範例：\n"
+            "{\n"
+            f"  \"food_name\": \"{food_name}\",\n"
+            "  \"food_items\": [\"白飯\", \"牛肉\", \"青菜\"],\n"
+            "  \"calorie_range\": \"650-850 kcal\",\n"
+            "  \"macros\": {\"protein\": 45, \"carbs\": 55, \"fat\": 65, \"sodium\": 70},\n"
+            "  \"judgement_tags\": [\"偏油\", \"蛋白不足\"],\n"
+            "  \"dish_summary\": \"油脂偏多、蛋白足夠\",\n"
+            f"{suggestion_example}"
+            "  \"confidence\": 0.72,\n"
+            "  \"is_beverage\": false\n"
+            "}\n"
+        ) + profile_text + note_text + context_text + meal_text
+    suggestion_rule = (
+        "- suggestion: guidance for how to eat this meal, formatted as three lines: Can eat / Avoid / Portion limit\n"
+        "- Reference the recent context and briefly mention the previous meal in the suggestion\n"
+    )
+    suggestion_example = (
+        "  \"suggestion\": \"Can eat: more veggies, keep lean protein\\nAvoid: broth and processed sides\\nPortion limit: half bowl carbs, palm-sized protein (previous meal was heavier, so keep it light)\",\n"
+    )
+    if advice_mode != "current_meal":
+        suggestion_rule = (
+            "- suggestion: next meal guidance, formatted as three lines: Can eat / Avoid / Portion limit\n"
+            "- Include concrete food types and portion guidance (e.g. half bowl carbs, palm-sized protein, one bowl veggies)\n"
+        )
+        suggestion_example = (
+            "  \"suggestion\": \"Can eat: lean protein + veggies\\nAvoid: fried foods and sugary drinks\\nPortion limit: half bowl carbs, palm-sized protein\",\n"
+        )
+    return (
+        "You are a nutrition assistant. Estimate based on food name and return JSON.\n"
+        "Note: there is no photo, estimate from the name only.\n"
+        "Requirements:\n"
+        "- Return JSON only\n"
+        f"- food_name: must use provided name ({food_name})\n"
+        "- food_items: 1-5 primary items inferred from the name\n"
+        "- calorie_range: e.g. '450-600 kcal' (keep range width 120-200 kcal; beverage <= 120)\n"
+        "- macros: protein/carbs/fat/sodium are integer percentages (0-100)\n"
+        "- judgement_tags: choose 1-3 from [Heavier oil, Light, Higher carbs, Low protein]\n"
+        "- dish_summary: single-sentence summary (<= 20 words)\n"
+        "- Rules: natural language, avoid technical nutrition terms, no numbers/calories/grams, no scolding or commands\n"
+        f"{suggestion_rule}"
+        "- confidence: 0 to 1\n"
+        "- is_beverage: true/false\n"
+        "- Beverage rule: if beverage, protein/fat should be <= 15; calories should be low; sugary drinks may increase carbs\n"
+        "JSON example:\n"
+        "{\n"
+        f"  \"food_name\": \"{food_name}\",\n"
+        "  \"food_items\": [\"rice\", \"beef\", \"vegetables\"],\n"
+        "  \"calorie_range\": \"650-850 kcal\",\n"
+        "  \"macros\": {\"protein\": 45, \"carbs\": 55, \"fat\": 65, \"sodium\": 70},\n"
+        "  \"judgement_tags\": [\"Heavier oil\", \"Low protein\"],\n"
+        "  \"dish_summary\": \"Heavier oil, decent protein\",\n"
+        f"{suggestion_example}"
+        "  \"confidence\": 0.72,\n"
+        "  \"is_beverage\": false\n"
+        "}\n"
+    ) + profile_text + note_text + context_text + meal_text
 
 
 def _build_day_prompt(
@@ -1178,6 +1320,155 @@ async def analyze_image(
         dish_summary="",
         suggestion=suggestion,
         tier=tier,
+        source="mock",
+        cost_estimate_usd=None,
+        confidence=0.35,
+        is_beverage=False,
+        debug_reason=debug_reason,
+    )
+
+
+@app.post("/analyze_name", response_model=AnalysisResult)
+async def analyze_name(payload: NameAnalyzeRequest):
+    raw_name = (payload.food_name or "").strip()
+    if not raw_name:
+        return AnalysisResult(
+            food_name="",
+            calorie_range="",
+            macros=_normalize_macros({}, DEFAULT_LANG),
+            food_items=[],
+            judgement_tags=[],
+            dish_summary="",
+            suggestion="",
+            tier="name",
+            source="mock",
+            cost_estimate_usd=None,
+            confidence=0.0,
+            is_beverage=False,
+            debug_reason="missing_food_name",
+        )
+
+    use_lang = payload.lang or DEFAULT_LANG
+    if use_lang not in _fake_foods:
+        use_lang = "zh-TW"
+
+    use_ai = _should_use_ai()
+    profile = payload.profile or {}
+    if use_ai and _client is not None:
+        try:
+            prompt = _build_name_prompt(
+                use_lang,
+                profile,
+                raw_name,
+                payload.note,
+                payload.portion_percent,
+                payload.meal_type,
+                payload.context,
+                payload.advice_mode,
+            )
+            response = _client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+            )
+            text = response.choices[0].message.content or ""
+            data = _parse_json(text)
+            if isinstance(data, dict) and "food_name" in data and "calorie_range" in data:
+                usage = response.usage
+                usage_data = None
+                if usage is not None:
+                    usage_data = {
+                        "input_tokens": usage.prompt_tokens,
+                        "output_tokens": usage.completion_tokens,
+                        "total_tokens": usage.total_tokens,
+                    }
+                cost_estimate = None
+                if usage_data is not None:
+                    cost_estimate = _estimate_cost_usd(
+                        int(usage_data.get("input_tokens") or 0),
+                        int(usage_data.get("output_tokens") or 0),
+                    )
+                _append_usage(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "model": OPENAI_MODEL,
+                        "lang": use_lang,
+                        "source": "name",
+                        "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
+                        "output_tokens": int(usage_data.get("output_tokens") or 0) if usage_data else 0,
+                        "total_tokens": int(usage_data.get("total_tokens") or 0) if usage_data else 0,
+                        "cost_estimate_usd": cost_estimate,
+                    }
+                )
+                _increment_daily_count()
+                is_beverage = _parse_is_beverage(data)
+                data["is_beverage"] = is_beverage
+                normalized_macros = _normalize_macros(data, use_lang)
+                calorie_range = _normalize_calorie_range(
+                    data.get("calorie_range", ""),
+                    is_beverage=is_beverage,
+                    tighten=False,
+                )
+                return AnalysisResult(
+                    food_name=raw_name or data.get("food_name", ""),
+                    calorie_range=calorie_range,
+                    macros=normalized_macros,
+                    food_items=data.get("food_items") or [],
+                    judgement_tags=data.get("judgement_tags") or [],
+                    dish_summary=data.get("dish_summary", ""),
+                    suggestion=data.get("suggestion", ""),
+                    tier="name",
+                    source="ai",
+                    cost_estimate_usd=cost_estimate,
+                    confidence=data.get("confidence"),
+                    is_beverage=is_beverage,
+                    debug_reason=None,
+                )
+        except Exception as exc:
+            global _last_ai_error
+            _last_ai_error = str(exc)
+            logging.exception("Name analyze failed: %s", exc)
+
+    if CALL_REAL_AI and _client is None:
+        logging.warning("CALL_REAL_AI is true but API_KEY is missing.")
+
+    chosen_name = raw_name or random.choice(_fake_foods[use_lang])
+    calorie_range = random.choice(["300-420 kcal", "420-580 kcal", "580-760 kcal"])
+    calorie_range = _normalize_calorie_range(calorie_range, is_beverage=False, tighten=True)
+    macros = {
+        "protein": float(random.choice(_fake_macro_choices)),
+        "carbs": float(random.choice(_fake_macro_choices)),
+        "fat": float(random.choice(_fake_macro_choices)),
+        "sodium": float(random.choice(_fake_macro_choices)),
+    }
+    if use_lang == "zh-TW":
+        judgement_tags = random.sample(["偏油", "清淡", "碳水偏多", "蛋白不足"], k=2)
+        suggestion = (
+            "可以吃：清淡蛋白質與蔬菜\n"
+            "不建議吃：油炸與高糖飲品\n"
+            "份量上限：主食半碗、蛋白質一掌"
+        )
+    else:
+        judgement_tags = random.sample(["Heavier oil", "Light", "Higher carbs", "Low protein"], k=2)
+        suggestion = (
+            "Can eat: lean protein + veggies\n"
+            "Avoid: fried foods and sugary drinks\n"
+            "Portion limit: half bowl carbs, palm-sized protein"
+        )
+    debug_reason = None
+    if CALL_REAL_AI and RETURN_AI_ERROR:
+        debug_reason = _last_ai_error or "ai_failed_unknown"
+    logging.info("Name analyze mock result name=%s", chosen_name)
+    return AnalysisResult(
+        food_name=chosen_name,
+        calorie_range=calorie_range,
+        macros=macros,
+        food_items=[chosen_name],
+        judgement_tags=judgement_tags,
+        dish_summary="",
+        suggestion=suggestion,
+        tier="name",
         source="mock",
         cost_estimate_usd=None,
         confidence=0.35,

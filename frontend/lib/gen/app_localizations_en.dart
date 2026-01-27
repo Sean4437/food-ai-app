@@ -514,6 +514,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantNowEat => 'What to eat now';
 
   @override
+  String get suggestInstantNameHint => 'Enter a food name (no photo needed)';
+
+  @override
+  String get suggestInstantNameSubmit => 'Analyze name';
+
+  @override
   String get suggestInstantStepDetect => 'Identifying the meal';
 
   @override

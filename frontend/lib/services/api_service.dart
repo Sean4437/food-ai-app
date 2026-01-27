@@ -160,6 +160,39 @@ class ApiService {
     return LabelResult.fromJson(jsonMap);
   }
 
+  Future<AnalysisResult> analyzeName(
+    String foodName, {
+    String? lang,
+    String? note,
+    String? context,
+    int? portionPercent,
+    String? mealType,
+    String? adviceMode,
+    Map<String, dynamic>? profile,
+  }) async {
+    final uri = Uri.parse('$baseUrl/analyze_name');
+    final payload = <String, dynamic>{
+      'food_name': foodName,
+      if (lang != null && lang.trim().isNotEmpty) 'lang': lang,
+      if (note != null && note.trim().isNotEmpty) 'note': note,
+      if (context != null && context.trim().isNotEmpty) 'context': context,
+      if (portionPercent != null && portionPercent > 0) 'portion_percent': portionPercent,
+      if (mealType != null && mealType.trim().isNotEmpty) 'meal_type': mealType,
+      if (adviceMode != null && adviceMode.trim().isNotEmpty) 'advice_mode': adviceMode,
+      if (profile != null) 'profile': profile,
+    };
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(payload),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Analyze name failed: ${response.statusCode}');
+    }
+    final jsonMap = json.decode(response.body) as Map<String, dynamic>;
+    return AnalysisResult.fromJson(jsonMap);
+  }
+
   Future<Map<String, dynamic>> suggestMeal(
     Map<String, dynamic> payload,
   ) async {

@@ -3,6 +3,7 @@ import 'package:exif/exif.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
@@ -26,6 +27,8 @@ const List<String> kDeprecatedApiBaseUrls = [
 const String kDefaultPlateAsset = 'assets/plates/plate_Japanese_02.png';
 const String kDefaultThemeAsset = 'assets/themes/theme_clean.json';
 const double kDefaultTextScale = 1.0;
+const String _kNamePlaceholderBase64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/Pi3n1wAAAABJRU5ErkJggg==';
 
 class AppState extends ChangeNotifier {
   AppState()
@@ -38,6 +41,7 @@ class AppState extends ChangeNotifier {
   final MealStore _store;
   final SettingsStore _settings;
   final List<MealEntry> entries = [];
+  static final Uint8List _namePlaceholderBytes = Uint8List.fromList(base64Decode(_kNamePlaceholderBase64));
   DateTime _selectedDate = _dateOnly(DateTime.now());
   final UserProfile profile = UserProfile.initial();
   final Map<String, Map<String, String>> _dayOverrides = {};
@@ -491,6 +495,73 @@ class AppState extends ChangeNotifier {
     entries.insert(0, entry);
     markMealInteraction(entry.mealId ?? entry.id);
     _selectedDate = _dateOnly(entry.time);
+    notifyListeners();
+    await _store.upsert(entry);
+    return entry;
+  }
+
+  Future<MealEntry> analyzeNameAndSave(
+    String foodName,
+    String locale, {
+    String? historyContext,
+  }) async {
+    final trimmed = foodName.trim();
+    if (trimmed.isEmpty) {
+      throw Exception('Food name is empty');
+    }
+    final now = DateTime.now();
+    final mealType = resolveMealType(now);
+    final mealId = _assignMealId(now, mealType);
+
+    CustomFood? matched;
+    for (final item in customFoods) {
+      if (item.name.trim() == trimmed) {
+        matched = item;
+        break;
+      }
+    }
+    if (matched != null) {
+      return saveCustomFoodUsage(matched, now, mealType);
+    }
+
+    final result = await _api.analyzeName(
+      trimmed,
+      lang: locale,
+      context: historyContext,
+      mealType: _mealTypeKey(mealType),
+      portionPercent: 100,
+      adviceMode: 'current_meal',
+      profile: {
+        'height_cm': profile.heightCm,
+        'weight_kg': profile.weightKg,
+        'age': profile.age,
+        'gender': profile.gender,
+        'tone': profile.tone,
+        'persona': profile.persona,
+        'activity_level': dailyActivityLevel(now),
+        'target_calorie_range': targetCalorieRangeValue(now),
+        'goal': profile.goal,
+        'plan_speed': profile.planSpeed,
+      },
+    );
+
+    final entry = MealEntry(
+      id: _newId(),
+      imageBytes: _namePlaceholderBytes,
+      filename: 'name_only.png',
+      time: now,
+      type: mealType,
+      portionPercent: 100,
+      mealId: mealId,
+      imageHash: _hashBytes(_namePlaceholderBytes),
+      lastAnalyzedFoodName: trimmed,
+    );
+    entry.result = result;
+    entry.lastAnalyzedAt = DateTime.now().toIso8601String();
+    entry.lastAnalyzeReason = 'name_only';
+    entries.insert(0, entry);
+    markMealInteraction(mealId);
+    _selectedDate = _dateOnly(now);
     notifyListeners();
     await _store.upsert(entry);
     return entry;
@@ -1110,6 +1181,11 @@ class AppState extends ChangeNotifier {
       return true;
     }
     final normalized = _normalizeApiBaseUrl(profile.apiBaseUrl);
+    final normalizedDefault = _normalizeApiBaseUrl(kDefaultApiBaseUrl);
+    if (normalized.contains('trycloudflare.com') && normalized != normalizedDefault) {
+      profile.apiBaseUrl = kDefaultApiBaseUrl;
+      return true;
+    }
     final deprecatedNormalized = kDeprecatedApiBaseUrls.map(_normalizeApiBaseUrl);
     if (deprecatedNormalized.contains(normalized)) {
       profile.apiBaseUrl = kDefaultApiBaseUrl;

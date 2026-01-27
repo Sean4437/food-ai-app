@@ -1076,6 +1076,8 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'建議我吃什麼'**
   String get suggestInstantNowEat;
+  String get suggestInstantNameHint;
+  String get suggestInstantNameSubmit;
 
   /// No description provided for @suggestInstantStepDetect.
   ///

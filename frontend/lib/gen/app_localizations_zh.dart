@@ -504,6 +504,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantNowEat => '建議我吃什麼';
 
   @override
+  String get suggestInstantNameHint => '輸入食物名稱（沒有照片也可以）';
+
+  @override
+  String get suggestInstantNameSubmit => '送出';
+
+  @override
+  String get suggestInstantNameHint => '輸入食物名稱（沒有照片也可以）';
+
+  @override
+  String get suggestInstantNameSubmit => '送出';
+
+  @override
   String get suggestInstantStepDetect => '正在辨識餐點';
 
   @override
