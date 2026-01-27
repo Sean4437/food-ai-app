@@ -2450,6 +2450,9 @@ class AppState extends ChangeNotifier {
     final fingerprint = _syncFingerprint();
     final lastFingerprint = _meta['last_sync_fingerprint'];
     final hasChanges = fingerprint != lastFingerprint;
+    if (!hasChanges) {
+      return false;
+    }
     final client = _supabase.client;
     for (final entry in entries) {
       final imageHash = entry.imageHash ?? _hashBytes(entry.imageBytes);
@@ -2512,12 +2515,12 @@ class AppState extends ChangeNotifier {
           bucket: kSupabaseMealImagesBucket,
           path: imagePath,
         );
-        if (imageBytes == null) continue;
+        final resolvedImageBytes = imageBytes ?? _namePlaceholderBytes;
         final labelBytes = await _downloadImageIfAvailable(
           bucket: kSupabaseLabelImagesBucket,
           path: labelPath,
         );
-        final entry = _mealEntryFromRow(row, imageBytes, labelBytes);
+        final entry = _mealEntryFromRow(row, resolvedImageBytes, labelBytes);
         final index = entries.indexWhere((item) => item.id == entry.id);
         if (index == -1) {
           entries.insert(0, entry);
@@ -2609,13 +2612,11 @@ class AppState extends ChangeNotifier {
     required String path,
     required Uint8List bytes,
   }) async {
-    try {
-      await _supabase.client.storage.from(bucket).uploadBinary(
-            path,
-            bytes,
-            fileOptions: FileOptions(upsert: false),
-          );
-    } catch (_) {}
+    await _supabase.client.storage.from(bucket).uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(upsert: true),
+        ).timeout(const Duration(seconds: 12));
     return path;
   }
 
