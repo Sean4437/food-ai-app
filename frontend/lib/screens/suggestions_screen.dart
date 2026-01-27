@@ -688,9 +688,9 @@ Widget _buildAdviceCard(AppLocalizations t) {
     final showPreview = _analysis == null && _previewBytes != null;
     final media = MediaQuery.of(context);
     final cardWidth = (media.size.width - 32).clamp(280.0, 340.0);
-    final cardHeight = (media.size.height * 0.7).clamp(420.0, 620.0);
+    final cardHeight = (media.size.height * 0.76).clamp(440.0, 680.0);
     final innerWidth = (cardWidth - 20).clamp(260.0, 320.0);
-    final innerHeight = (cardHeight - 16).clamp(380.0, 600.0);
+    final innerHeight = (cardHeight - 16).clamp(400.0, 640.0);
     final plateSize = (cardHeight * 0.42).clamp(180.0, 250.0);
     final imageSize = (plateSize * 0.72).clamp(140.0, 200.0);
     final buttonWidth = (cardWidth * 0.7).clamp(160.0, 220.0);
@@ -885,47 +885,6 @@ Widget _buildAdviceCard(AppLocalizations t) {
                             Center(
                               child: SizedBox(
                                 width: buttonWidth,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    TextField(
-                                      controller: _nameController,
-                                      enabled: !_loading,
-                                      textInputAction: TextInputAction.done,
-                                      onSubmitted: (_) => _submitNameAnalysis(),
-                                      decoration: InputDecoration(
-                                        labelText: t.foodNameLabel,
-                                        hintText: t.suggestInstantNameHint,
-                                        filled: true,
-                                        fillColor: Colors.white.withOpacity(0.85),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    ElevatedButton.icon(
-                                      onPressed: _loading ? null : _submitNameAnalysis,
-                                      icon: const Icon(Icons.search, size: 18),
-                                      label: Text(
-                                        t.suggestInstantNameSubmit,
-                                        style: const TextStyle(fontWeight: FontWeight.w600),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: theme.colorScheme.primary,
-                                        foregroundColor: Colors.white,
-                                        side: BorderSide(color: theme.colorScheme.primary),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Center(
-                              child: SizedBox(
-                                width: buttonWidth,
                                 child: OutlinedButton.icon(
                                   onPressed: _useCustomFood,
                                   icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
@@ -937,6 +896,47 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                     foregroundColor: theme.colorScheme.primary,
                                     side: BorderSide(color: theme.colorScheme.primary),
                                   ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Center(
+                              child: SizedBox(
+                                width: buttonWidth,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    TextField(
+                                      controller: _nameController,
+                                      enabled: !_loading,
+                                      textInputAction: TextInputAction.done,
+                                      onSubmitted: (_) => _submitNameAnalysis(),
+                                      decoration: InputDecoration(
+                                        labelText: t.foodNameLabel,
+                                        hintText: t.suggestInstantNameHint,
+                                        isDense: true,
+                                        filled: true,
+                                        fillColor: Colors.white.withOpacity(0.85),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    OutlinedButton.icon(
+                                      onPressed: _loading ? null : _submitNameAnalysis,
+                                      icon: const Icon(Icons.search, size: 18),
+                                      label: Text(
+                                        t.suggestInstantNameSubmit,
+                                        style: const TextStyle(fontWeight: FontWeight.w600),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: theme.colorScheme.primary,
+                                        side: BorderSide(color: theme.colorScheme.primary),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
