@@ -450,10 +450,23 @@ class AppState extends ChangeNotifier {
     _scheduleAutoFinalize();
     _scheduleAutoFinalizeWeek();
     await _maybeFinalizeWeekOnLaunch();
+    // Warm plate asset cache on startup (web uses network for assets).
+    precachePlateAsset();
     if (isSupabaseSignedIn) {
       await refreshAccessStatus();
     }
     notifyListeners();
+  }
+
+  Future<void> precachePlateAsset() async {
+    final binding = WidgetsBinding.instance;
+    await binding.endOfFrame;
+    final context = binding.renderViewElement;
+    if (context == null) return;
+    final asset = profile.plateAsset.isEmpty ? kDefaultPlateAsset : profile.plateAsset;
+    try {
+      await precacheImage(AssetImage(asset), context);
+    } catch (_) {}
   }
 
   Future<void> _maybeFinalizeWeekOnLaunch() async {

@@ -1057,7 +1057,11 @@ class SettingsScreen extends StatelessWidget {
                     title: t.plateStyleLabel,
                     current: currentPlateLabel,
                     options: plateOptions.keys.toList(),
-                    onSave: (value) => app.updateField((p) => p.plateAsset = plateOptions[value] ?? kDefaultPlateAsset),
+                    onSave: (value) {
+                      app.updateField((p) => p.plateAsset = plateOptions[value] ?? kDefaultPlateAsset);
+                      // Warm cache for the newly selected plate.
+                      app.precachePlateAsset();
+                    },
                   ),
                 ),
                 const SizedBox(height: 8),
