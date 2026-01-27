@@ -569,10 +569,15 @@ def _get_jwks_client() -> PyJWKClient:
 def _decode_bearer_token(token: str) -> dict:
     jwks_client = _get_jwks_client()
     signing_key = jwks_client.get_signing_key_from_jwt(token)
+    header = jwt.get_unverified_header(token)
+    alg = header.get("alg") or "RS256"
+    allowed = {"RS256", "ES256"}
+    if alg not in allowed:
+        raise HTTPException(status_code=401, detail="invalid_token_alg")
     return jwt.decode(
         token,
         signing_key.key,
-        algorithms=["RS256"],
+        algorithms=[alg],
         audience="authenticated",
         issuer=f"{SUPABASE_URL}/auth/v1",
     )
