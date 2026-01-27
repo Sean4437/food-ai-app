@@ -1130,7 +1130,7 @@ class AppState extends ChangeNotifier {
           'plan_speed': profile.planSpeed,
         },
       };
-      final response = await _api.suggestMeal(payload, accessToken: _accessToken());
+      final response = await _api.suggestMeal(payload, _accessToken());
       final advice = MealAdvice(
         selfCook: (response['self_cook'] as String?) ?? t.nextSelfCookHint,
         convenience: (response['convenience'] as String?) ?? t.nextConvenienceHint,
@@ -2357,7 +2357,7 @@ class AppState extends ChangeNotifier {
       },
     };
     try {
-      final response = await _api.suggestMeal(payload, accessToken: _accessToken());
+      final response = await _api.suggestMeal(payload, _accessToken());
       return MealAdvice(
         selfCook: (response['self_cook'] as String?) ?? t.nextSelfCookHint,
         convenience: (response['convenience'] as String?) ?? t.nextConvenienceHint,

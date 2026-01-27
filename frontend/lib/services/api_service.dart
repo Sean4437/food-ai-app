@@ -207,7 +207,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> suggestMeal(
     Map<String, dynamic> payload,
-    {String? accessToken},
+    [String? accessToken],
   ) async {
     final uri = Uri.parse('$baseUrl/suggest_meal');
     final response = await http.post(
