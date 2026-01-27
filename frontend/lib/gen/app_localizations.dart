@@ -2163,6 +2163,10 @@ abstract class AppLocalizations {
   /// **'同步完成'**
   String get syncSuccess;
 
+  String get syncUpdated;
+
+  String get syncNoChanges;
+
   /// No description provided for @syncError.
   ///
   /// In zh_TW, this message translates to:

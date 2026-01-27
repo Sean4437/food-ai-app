@@ -325,12 +325,17 @@ class SettingsScreen extends StatelessWidget {
     }
     try {
       if (upload) {
-        await app.syncToSupabase();
+        final changed = await app.syncToSupabase();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(changed ? t.syncUpdated : t.syncNoChanges)),
+          );
+        }
       } else {
         await app.syncFromSupabase();
-      }
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncSuccess)));
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncSuccess)));
+        }
       }
     } catch (err) {
       if (context.mounted) {

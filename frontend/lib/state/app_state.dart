@@ -2442,11 +2442,14 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> syncToSupabase() async {
+  Future<bool> syncToSupabase() async {
     final user = _supabase.currentUser;
     if (user == null) {
       throw Exception('Supabase not signed in');
     }
+    final fingerprint = _syncFingerprint();
+    final lastFingerprint = _meta['last_sync_fingerprint'];
+    final hasChanges = fingerprint != lastFingerprint;
     final client = _supabase.client;
     for (final entry in entries) {
       final imageHash = entry.imageHash ?? _hashBytes(entry.imageBytes);
@@ -2488,6 +2491,9 @@ class AppState extends ChangeNotifier {
       };
       await client.from(kSupabaseCustomFoodsTable).upsert(payload);
     }
+    _meta['last_sync_fingerprint'] = fingerprint;
+    await _saveOverrides();
+    return hasChanges;
   }
 
   Future<void> syncFromSupabase() async {
@@ -2548,6 +2554,54 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       await _saveOverrides();
     }
+  }
+
+  String _syncFingerprint() {
+    final buffer = StringBuffer();
+    for (final entry in entries) {
+      buffer
+        ..write(entry.id)
+        ..write('|')
+        ..write(entry.time.toIso8601String())
+        ..write('|')
+        ..write(entry.type.name)
+        ..write('|')
+        ..write(entry.portionPercent)
+        ..write('|')
+        ..write(entry.mealId ?? '')
+        ..write('|')
+        ..write(entry.note ?? '')
+        ..write('|')
+        ..write(entry.overrideFoodName ?? '')
+        ..write('|')
+        ..write(entry.imageHash ?? '')
+        ..write('|')
+        ..write(entry.lastAnalyzedAt ?? '')
+        ..write('|')
+        ..write(entry.lastAnalyzeReason ?? '')
+        ..write('|')
+        ..write(entry.result?.calorieRange ?? '')
+        ..write('|')
+        ..write(entry.result?.suggestion ?? '')
+        ..write('||');
+    }
+    for (final food in customFoods) {
+      buffer
+        ..write(food.id)
+        ..write('|')
+        ..write(food.name)
+        ..write('|')
+        ..write(food.summary)
+        ..write('|')
+        ..write(food.calorieRange)
+        ..write('|')
+        ..write(food.suggestion)
+        ..write('|')
+        ..write(food.updatedAt.toIso8601String())
+        ..write('||');
+    }
+    final bytes = utf8.encode(buffer.toString());
+    return sha1.convert(bytes).toString();
   }
 
   Future<String?> _uploadImageIfNeeded({

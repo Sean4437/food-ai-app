@@ -368,6 +368,8 @@
   "syncUpload": "上傳同步",
   "syncDownload": "下載同步",
   "syncSuccess": "同步完成",
+  "syncUpdated": "更新完成",
+  "syncNoChanges": "已同步完成",
   "syncError": "同步失敗",
   "syncRequireLogin": "請先登入",
   "syncAuthTitleSignIn": "登入帳號",

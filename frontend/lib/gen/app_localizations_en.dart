@@ -1071,6 +1071,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncSuccess => 'Sync complete';
 
   @override
+  String get syncUpdated => 'Update complete';
+
+  @override
+  String get syncNoChanges => 'Sync complete';
+
+  @override
   String get syncError => 'Sync failed';
 
   @override

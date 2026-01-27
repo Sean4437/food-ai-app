@@ -1066,6 +1066,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncSuccess => '同步完成';
 
   @override
+  String get syncUpdated => '更新完成';
+
+  @override
+  String get syncNoChanges => '已同步完成';
+
+  @override
   String get syncError => '同步失敗';
 
   @override

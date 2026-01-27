@@ -374,6 +374,8 @@
   "syncUpload": "Upload sync",
   "syncDownload": "Download sync",
   "syncSuccess": "Sync complete",
+  "syncUpdated": "Update complete",
+  "syncNoChanges": "Sync complete",
   "syncError": "Sync failed",
   "syncRequireLogin": "Please sign in first",
   "syncAuthTitleSignIn": "Sign in",
