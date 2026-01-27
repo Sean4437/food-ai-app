@@ -2187,6 +2187,40 @@ abstract class AppLocalizations {
   /// **'註冊帳號'**
   String get syncAuthTitleSignUp;
 
+  String get authTitle;
+
+  String get authSubtitle;
+
+  String get authEmailLabel;
+
+  String get authPasswordLabel;
+
+  String get authSignIn;
+
+  String get authSignUp;
+
+  String get authToggleToSignUp;
+
+  String get authToggleToSignIn;
+
+  String get authForgotPassword;
+
+  String get authSignInSuccess;
+
+  String get authSignUpSuccess;
+
+  String get authResetSent;
+
+  String get authError;
+
+  String get trialExpiredTitle;
+
+  String get trialExpiredBody;
+
+  String get trialExpiredAction;
+
+  String get signOut;
+
   /// No description provided for @exportData.
   ///
   /// In zh_TW, this message translates to:

@@ -377,5 +377,22 @@
   "syncError": "同步失敗",
   "syncRequireLogin": "請先登入",
   "syncAuthTitleSignIn": "登入帳號",
-  "syncAuthTitleSignUp": "註冊帳號"
+  "syncAuthTitleSignUp": "註冊帳號",
+  "authTitle": "登入使用",
+  "authSubtitle": "先登入才能使用完整功能",
+  "authEmailLabel": "Email",
+  "authPasswordLabel": "密碼",
+  "authSignIn": "登入",
+  "authSignUp": "註冊",
+  "authToggleToSignUp": "沒有帳號？立即註冊",
+  "authToggleToSignIn": "已有帳號？返回登入",
+  "authForgotPassword": "忘記密碼",
+  "authSignInSuccess": "登入成功",
+  "authSignUpSuccess": "註冊成功",
+  "authResetSent": "重設密碼信已寄出",
+  "authError": "登入失敗，請稍後再試",
+  "trialExpiredTitle": "試用期已結束",
+  "trialExpiredBody": "你已完成 2 天免費試用，請訂閱後繼續使用 AI 分析功能。",
+  "trialExpiredAction": "了解方案",
+  "signOut": "登出"
 }

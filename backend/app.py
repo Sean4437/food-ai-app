@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI, UploadFile, File, Query, Form
+﻿from fastapi import FastAPI, UploadFile, File, Query, Form, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Optional, List
@@ -14,6 +14,9 @@ import random
 import uuid
 import hashlib
 from datetime import datetime, timezone, timedelta
+import jwt
+from jwt import PyJWKClient
+import httpx
 
 _base_dir = Path(__file__).resolve().parent
 _env_path = _base_dir / ".env.runtime"
@@ -139,10 +142,19 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 PRICE_INPUT_PER_M = float(os.getenv("PRICE_INPUT_PER_M", "0.15"))
 PRICE_OUTPUT_PER_M = float(os.getenv("PRICE_OUTPUT_PER_M", "0.60"))
 RETURN_AI_ERROR = os.getenv("RETURN_AI_ERROR", "false").lower() == "true"
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+TEST_BYPASS_EMAILS = {
+    email.strip().lower()
+    for email in os.getenv("TEST_BYPASS_EMAILS", "").split(",")
+    if email.strip()
+}
+TRIAL_DAYS = int(os.getenv("TRIAL_DAYS", "2"))
 
 _client = OpenAI(api_key=API_KEY) if API_KEY else None
 logging.basicConfig(level=logging.INFO)
 _last_ai_error: Optional[str] = None
+_jwks_client: Optional[PyJWKClient] = None
 
 _usage_dir = _base_dir / "data"
 _usage_dir.mkdir(exist_ok=True)
@@ -529,6 +541,113 @@ def _build_name_prompt(
         "  \"is_beverage\": false\n"
         "}\n"
     ) + profile_text + note_text + context_text + meal_text
+
+
+
+
+def _supabase_headers() -> dict:
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        raise HTTPException(status_code=500, detail="supabase_not_configured")
+    return {
+        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+        "Content-Type": "application/json",
+    }
+
+
+def _get_jwks_client() -> PyJWKClient:
+    global _jwks_client
+    if _jwks_client is not None:
+        return _jwks_client
+    if not SUPABASE_URL:
+        raise HTTPException(status_code=500, detail="supabase_not_configured")
+    jwks_url = f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json"
+    _jwks_client = PyJWKClient(jwks_url)
+    return _jwks_client
+
+
+def _decode_bearer_token(token: str) -> dict:
+    jwks_client = _get_jwks_client()
+    signing_key = jwks_client.get_signing_key_from_jwt(token)
+    return jwt.decode(
+        token,
+        signing_key.key,
+        algorithms=["RS256"],
+        audience="authenticated",
+        issuer=f"{SUPABASE_URL}/auth/v1",
+    )
+
+
+def _trial_start_from_profile(user_id: str) -> Optional[datetime]:
+    headers = _supabase_headers()
+    url = f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}&select=trial_start"
+    with httpx.Client(timeout=10) as client:
+        resp = client.get(url, headers=headers)
+    if resp.status_code >= 400:
+        logging.error("Supabase profiles fetch failed: %s", resp.text)
+        raise HTTPException(status_code=500, detail="profile_fetch_failed")
+    data = resp.json()
+    if not data:
+        return None
+    raw = data[0].get("trial_start")
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def _upsert_profile_trial(user_id: str, email: str, trial_start: datetime) -> None:
+    headers = _supabase_headers()
+    headers["Prefer"] = "resolution=merge-duplicates"
+    payload = [{
+        "id": user_id,
+        "email": email,
+        "trial_start": trial_start.isoformat(),
+    }]
+    url = f"{SUPABASE_URL}/rest/v1/profiles"
+    with httpx.Client(timeout=10) as client:
+        resp = client.post(url, headers=headers, json=payload)
+    if resp.status_code >= 400:
+        logging.error("Supabase profiles upsert failed: %s", resp.text)
+        raise HTTPException(status_code=500, detail="profile_upsert_failed")
+
+
+def _ensure_trial_start(user_id: str, email: str) -> datetime:
+    trial_start = _trial_start_from_profile(user_id)
+    if trial_start is None:
+        trial_start = datetime.now(timezone.utc)
+        _upsert_profile_trial(user_id, email, trial_start)
+    return trial_start
+
+
+def _is_whitelisted(email: str) -> bool:
+    return email.strip().lower() in TEST_BYPASS_EMAILS
+
+
+def _require_auth(request: Request) -> dict:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if not auth_header or not auth_header.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="missing_token")
+    token = auth_header.split(" ", 1)[1].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="missing_token")
+    try:
+        payload = _decode_bearer_token(token)
+    except Exception as exc:
+        logging.exception("Token decode failed: %s", exc)
+        raise HTTPException(status_code=401, detail="invalid_token")
+    user_id = payload.get("sub") or ""
+    email = payload.get("email") or ""
+    if not user_id or not email:
+        raise HTTPException(status_code=401, detail="invalid_token")
+    if _is_whitelisted(email):
+        return {"user_id": user_id, "email": email, "whitelisted": True}
+    trial_start = _ensure_trial_start(user_id, email)
+    if datetime.now(timezone.utc) - trial_start > timedelta(days=TRIAL_DAYS):
+        raise HTTPException(status_code=402, detail="trial_expired")
+    return {"user_id": user_id, "email": email, "whitelisted": False, "trial_start": trial_start}
 
 
 def _build_day_prompt(
@@ -1109,6 +1228,7 @@ def _analyze_label_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
 
 @app.post("/analyze", response_model=AnalysisResult)
 async def analyze_image(
+    _auth: dict = Depends(_require_auth),
     image: UploadFile = File(...),
     lang: str = Query(default=None, description="Language code, e.g. zh-TW, en"),
     food_name: str = Form(default=None),
@@ -1329,7 +1449,10 @@ async def analyze_image(
 
 
 @app.post("/analyze_name", response_model=AnalysisResult)
-async def analyze_name(payload: NameAnalyzeRequest):
+async def analyze_name(
+    payload: NameAnalyzeRequest,
+    _auth: dict = Depends(_require_auth),
+):
     raw_name = (payload.food_name or "").strip()
     if not raw_name:
         return AnalysisResult(
@@ -1479,6 +1602,7 @@ async def analyze_name(payload: NameAnalyzeRequest):
 
 @app.post("/analyze_label", response_model=LabelResult)
 async def analyze_label(
+    _auth: dict = Depends(_require_auth),
     image: UploadFile = File(...),
     lang: str = Query(default=None, description="Language code, e.g. zh-TW, en"),
 ):
@@ -1549,7 +1673,10 @@ async def analyze_label(
 
 
 @app.post("/summarize_day", response_model=DaySummaryResponse)
-async def summarize_day(payload: DaySummaryRequest):
+async def summarize_day(
+    payload: DaySummaryRequest,
+    _auth: dict = Depends(_require_auth),
+):
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _fake_foods:
         use_lang = "zh-TW"
@@ -1591,7 +1718,10 @@ async def summarize_day(payload: DaySummaryRequest):
 
 
 @app.post("/summarize_week", response_model=WeekSummaryResponse)
-async def summarize_week(payload: WeekSummaryRequest):
+async def summarize_week(
+    payload: WeekSummaryRequest,
+    _auth: dict = Depends(_require_auth),
+):
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _fake_foods:
         use_lang = "zh-TW"
@@ -1627,7 +1757,10 @@ async def summarize_week(payload: WeekSummaryRequest):
 
 
 @app.post("/suggest_meal", response_model=MealAdviceResponse)
-async def suggest_meal(payload: MealAdviceRequest):
+async def suggest_meal(
+    payload: MealAdviceRequest,
+    _auth: dict = Depends(_require_auth),
+):
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _fake_foods:
         use_lang = "zh-TW"
@@ -1695,6 +1828,28 @@ async def suggest_meal(payload: MealAdviceRequest):
         confidence=fallback.get("confidence"),
     )
 
+
+
+
+@app.get("/access_status")
+def access_status(_auth: dict = Depends(_require_auth)):
+    if _auth.get("whitelisted"):
+        return {
+            "trial_active": True,
+            "trial_start": None,
+            "trial_end": None,
+            "whitelisted": True,
+        }
+    trial_start = _auth.get("trial_start")
+    if trial_start is None:
+        trial_start = datetime.now(timezone.utc)
+    trial_end = trial_start + timedelta(days=TRIAL_DAYS)
+    return {
+        "trial_active": datetime.now(timezone.utc) <= trial_end,
+        "trial_start": trial_start.isoformat(),
+        "trial_end": trial_end.isoformat(),
+        "whitelisted": False,
+    }
 
 @app.get("/health")
 def health():

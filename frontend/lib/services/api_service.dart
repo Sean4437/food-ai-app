@@ -8,9 +8,15 @@ class ApiService {
   final String baseUrl;
   ApiService({required this.baseUrl});
 
+  Map<String, String> _authHeaders(String? accessToken) {
+    if (accessToken == null || accessToken.isEmpty) return {};
+    return {'Authorization': 'Bearer $accessToken'};
+  }
+
   Future<AnalysisResult> analyzeImage(
     Uint8List imageBytes,
     String filename, {
+    String? accessToken,
     String? lang,
     String? foodName,
     String? note,
@@ -36,6 +42,7 @@ class ApiService {
     final query = lang == null ? '' : '?lang=$lang';
     final uri = Uri.parse('$baseUrl/analyze$query');
     final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(_authHeaders(accessToken));
     request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
     if (foodName != null && foodName.trim().isNotEmpty) {
       request.fields['food_name'] = foodName.trim();
@@ -111,11 +118,12 @@ class ApiService {
 
   Future<Map<String, dynamic>> summarizeDay(
     Map<String, dynamic> payload,
+    String? accessToken,
   ) async {
     final uri = Uri.parse('$baseUrl/summarize_day');
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', ..._authHeaders(accessToken)},
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
@@ -126,11 +134,12 @@ class ApiService {
 
   Future<Map<String, dynamic>> summarizeWeek(
     Map<String, dynamic> payload,
+    String? accessToken,
   ) async {
     final uri = Uri.parse('$baseUrl/summarize_week');
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', ..._authHeaders(accessToken)},
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
@@ -142,11 +151,13 @@ class ApiService {
   Future<LabelResult> analyzeLabel(
     Uint8List imageBytes,
     String filename, {
+    String? accessToken,
     String? lang,
   }) async {
     final query = lang == null ? '' : '?lang=$lang';
     final uri = Uri.parse('$baseUrl/analyze_label$query');
     final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(_authHeaders(accessToken));
     request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
 
     final response = await request.send();
@@ -162,6 +173,7 @@ class ApiService {
 
   Future<AnalysisResult> analyzeName(
     String foodName, {
+    String? accessToken,
     String? lang,
     String? note,
     String? context,
@@ -183,7 +195,7 @@ class ApiService {
     };
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', ..._authHeaders(accessToken)},
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
@@ -195,15 +207,30 @@ class ApiService {
 
   Future<Map<String, dynamic>> suggestMeal(
     Map<String, dynamic> payload,
+    String? accessToken,
   ) async {
     final uri = Uri.parse('$baseUrl/suggest_meal');
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', ..._authHeaders(accessToken)},
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
       throw Exception('Suggest meal failed: ${response.statusCode}');
+    }
+    return json.decode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> accessStatus({
+    String? accessToken,
+  }) async {
+    final uri = Uri.parse('$baseUrl/access_status');
+    final response = await http.get(
+      uri,
+      headers: _authHeaders(accessToken),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Access status failed: ${response.statusCode}');
     }
     return json.decode(response.body) as Map<String, dynamic>;
   }

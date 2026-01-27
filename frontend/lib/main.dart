@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/home_screen.dart';
 import 'screens/log_screen.dart';
 import 'screens/suggestions_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/custom_foods_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/trial_expired_screen.dart';
 import 'state/app_state.dart';
 import 'design/theme_controller.dart';
 import 'state/tab_state.dart';
@@ -63,7 +66,47 @@ class FoodAiApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: const MainShell(),
+      home: const AuthGate(),
+    );
+  }
+}
+
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _requestedAccess = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<AuthState>(
+      stream: Supabase.instance.client.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        final session = Supabase.instance.client.auth.currentSession;
+        final app = AppStateScope.of(context);
+        if (session == null) {
+          _requestedAccess = false;
+          return const LoginScreen();
+        }
+        if (!app.trialChecked) {
+          if (!_requestedAccess) {
+            _requestedAccess = true;
+            // ignore: discarded_futures
+            app.refreshAccessStatus();
+          }
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (app.trialExpired && !app.isWhitelisted) {
+          return const TrialExpiredScreen();
+        }
+        return const MainShell();
+      },
     );
   }
 }

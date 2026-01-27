@@ -1078,6 +1078,57 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncAuthTitleSignUp => '註冊帳號';
 
   @override
+  String get authTitle => '登入使用';
+
+  @override
+  String get authSubtitle => '先登入才能使用完整功能';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordLabel => '密碼';
+
+  @override
+  String get authSignIn => '登入';
+
+  @override
+  String get authSignUp => '註冊';
+
+  @override
+  String get authToggleToSignUp => '沒有帳號？立即註冊';
+
+  @override
+  String get authToggleToSignIn => '已有帳號？返回登入';
+
+  @override
+  String get authForgotPassword => '忘記密碼';
+
+  @override
+  String get authSignInSuccess => '登入成功';
+
+  @override
+  String get authSignUpSuccess => '註冊成功';
+
+  @override
+  String get authResetSent => '重設密碼信已寄出';
+
+  @override
+  String get authError => '登入失敗，請稍後再試';
+
+  @override
+  String get trialExpiredTitle => '試用期已結束';
+
+  @override
+  String get trialExpiredBody => '你已完成 2 天免費試用，請訂閱後繼續使用 AI 分析功能。';
+
+  @override
+  String get trialExpiredAction => '了解方案';
+
+  @override
+  String get signOut => '登出';
+
+  @override
   String get exportData => '匯出資料';
 
   @override

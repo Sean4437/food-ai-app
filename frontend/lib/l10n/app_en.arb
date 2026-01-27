@@ -377,5 +377,22 @@
   "syncError": "Sync failed",
   "syncRequireLogin": "Please sign in first",
   "syncAuthTitleSignIn": "Sign in",
-  "syncAuthTitleSignUp": "Create account"
+  "syncAuthTitleSignUp": "Create account",
+  "authTitle": "Sign in to continue",
+  "authSubtitle": "Please sign in to use the full features",
+  "authEmailLabel": "Email",
+  "authPasswordLabel": "Password",
+  "authSignIn": "Sign in",
+  "authSignUp": "Sign up",
+  "authToggleToSignUp": "No account? Create one",
+  "authToggleToSignIn": "Already have an account? Sign in",
+  "authForgotPassword": "Forgot password",
+  "authSignInSuccess": "Signed in",
+  "authSignUpSuccess": "Signed up",
+  "authResetSent": "Password reset email sent",
+  "authError": "Authentication failed, please try again",
+  "trialExpiredTitle": "Trial ended",
+  "trialExpiredBody": "Your 2-day free trial has ended. Please subscribe to continue using AI analysis.",
+  "trialExpiredAction": "View plans",
+  "signOut": "Sign out"
 }

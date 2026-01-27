@@ -1083,6 +1083,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncAuthTitleSignUp => 'Create account';
 
   @override
+  String get authTitle => 'Sign in to continue';
+
+  @override
+  String get authSubtitle => 'Please sign in to use the full features';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordLabel => 'Password';
+
+  @override
+  String get authSignIn => 'Sign in';
+
+  @override
+  String get authSignUp => 'Sign up';
+
+  @override
+  String get authToggleToSignUp => 'No account? Create one';
+
+  @override
+  String get authToggleToSignIn => 'Already have an account? Sign in';
+
+  @override
+  String get authForgotPassword => 'Forgot password';
+
+  @override
+  String get authSignInSuccess => 'Signed in';
+
+  @override
+  String get authSignUpSuccess => 'Signed up';
+
+  @override
+  String get authResetSent => 'Password reset email sent';
+
+  @override
+  String get authError => 'Authentication failed, please try again';
+
+  @override
+  String get trialExpiredTitle => 'Trial ended';
+
+  @override
+  String get trialExpiredBody => 'Your 2-day free trial has ended. Please subscribe to continue using AI analysis.';
+
+  @override
+  String get trialExpiredAction => 'View plans';
+
+  @override
+  String get signOut => 'Sign out';
+
+  @override
   String get exportData => 'Export data';
 
   @override

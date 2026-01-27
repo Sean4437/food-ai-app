@@ -42,6 +42,10 @@ class AppState extends ChangeNotifier {
   final SettingsStore _settings;
   final List<MealEntry> entries = [];
   static final Uint8List _namePlaceholderBytes = Uint8List.fromList(base64Decode(_kNamePlaceholderBase64));
+  bool _trialExpired = false;
+  bool _trialChecked = false;
+  bool _whitelisted = false;
+  DateTime? _trialEnd;
   DateTime _selectedDate = _dateOnly(DateTime.now());
   final UserProfile profile = UserProfile.initial();
   final Map<String, Map<String, String>> _dayOverrides = {};
@@ -61,6 +65,45 @@ class AppState extends ChangeNotifier {
   bool get isSupabaseSignedIn => _supabase.isSignedIn;
 
   String? get supabaseUserEmail => _supabase.currentUser?.email;
+
+  String? _accessToken() {
+    return _supabase.client.auth.currentSession?.accessToken;
+  }
+
+  Future<void> refreshAccessStatus() async {
+    if (!isSupabaseSignedIn) {
+      _trialChecked = false;
+      _trialExpired = false;
+      _whitelisted = false;
+      _trialEnd = null;
+      notifyListeners();
+      return;
+    }
+    try {
+      final response = await _api.accessStatus(accessToken: _accessToken());
+      _trialChecked = true;
+      _whitelisted = response['whitelisted'] == true;
+      final active = response['trial_active'] == true || _whitelisted;
+      _trialExpired = !active;
+      final endRaw = response['trial_end'] as String?;
+      _trialEnd = endRaw == null ? null : DateTime.tryParse(endRaw);
+      notifyListeners();
+    } catch (_) {
+      _trialChecked = true;
+      _trialExpired = false;
+      _whitelisted = false;
+      _trialEnd = null;
+      notifyListeners();
+    }
+  }
+
+  bool get trialExpired => _trialChecked && _trialExpired;
+
+  bool get trialChecked => _trialChecked;
+
+  bool get isWhitelisted => _whitelisted;
+
+  DateTime? get trialEndAt => _trialEnd;
 
   String buildAiContext() {
     final now = DateTime.now();
@@ -272,6 +315,7 @@ class AppState extends ChangeNotifier {
     final result = await _api.analyzeImage(
       bytes,
       filename,
+      accessToken: _accessToken(),
       lang: locale,
       context: historyContext,
       mealType: _mealTypeKey(mealType),
@@ -309,6 +353,7 @@ class AppState extends ChangeNotifier {
     final result = await _api.analyzeImage(
       analysis.imageBytes,
       filename,
+      accessToken: _accessToken(),
       lang: locale,
       context: historyContext,
       foodName: foodName,
@@ -405,6 +450,9 @@ class AppState extends ChangeNotifier {
     _scheduleAutoFinalize();
     _scheduleAutoFinalizeWeek();
     await _maybeFinalizeWeekOnLaunch();
+    if (isSupabaseSignedIn) {
+      await refreshAccessStatus();
+    }
     notifyListeners();
   }
 
@@ -526,6 +574,7 @@ class AppState extends ChangeNotifier {
 
     final result = await _api.analyzeName(
       trimmed,
+      accessToken: _accessToken(),
       lang: locale,
       context: historyContext,
       mealType: _mealTypeKey(mealType),
@@ -825,7 +874,7 @@ class AppState extends ChangeNotifier {
         },
       };
     try {
-      final response = await _api.summarizeDay(payload);
+      final response = await _api.summarizeDay(payload, _accessToken());
       final summaryText = (response['day_summary'] as String?) ?? '';
       final adviceText = (response['tomorrow_advice'] as String?) ?? '';
       await updateDayOverride(
@@ -943,7 +992,7 @@ class AppState extends ChangeNotifier {
         },
       };
     try {
-      final response = await _api.summarizeWeek(payload);
+      final response = await _api.summarizeWeek(payload, _accessToken());
       final summaryText = (response['week_summary'] as String?) ?? '';
       final adviceText = (response['next_week_advice'] as String?) ?? '';
       await updateWeekOverride(
@@ -1081,7 +1130,7 @@ class AppState extends ChangeNotifier {
           'plan_speed': profile.planSpeed,
         },
       };
-      final response = await _api.suggestMeal(payload);
+      final response = await _api.suggestMeal(payload, accessToken: _accessToken());
       final advice = MealAdvice(
         selfCook: (response['self_cook'] as String?) ?? t.nextSelfCookHint,
         convenience: (response['convenience'] as String?) ?? t.nextConvenienceHint,
@@ -1579,7 +1628,12 @@ class AppState extends ChangeNotifier {
       final originalBytes = await file.readAsBytes();
       final bytes = _compressImageBytes(originalBytes);
       final filename = file.name.isNotEmpty ? file.name : 'label.jpg';
-      final labelResult = await _api.analyzeLabel(bytes, filename, lang: locale);
+      final labelResult = await _api.analyzeLabel(
+        bytes,
+        filename,
+        accessToken: _accessToken(),
+        lang: locale,
+      );
       entry.labelImageBytes = bytes;
       entry.labelFilename = filename;
       entry.labelResult = labelResult;
@@ -1745,6 +1799,7 @@ class AppState extends ChangeNotifier {
       final AnalysisResult res = await _api.analyzeImage(
         entry.imageBytes,
         entry.filename,
+        accessToken: _accessToken(),
         lang: locale,
         foodName: entry.overrideFoodName,
         note: entry.note,
@@ -2302,7 +2357,7 @@ class AppState extends ChangeNotifier {
       },
     };
     try {
-      final response = await _api.suggestMeal(payload);
+      final response = await _api.suggestMeal(payload, accessToken: _accessToken());
       return MealAdvice(
         selfCook: (response['self_cook'] as String?) ?? t.nextSelfCookHint,
         convenience: (response['convenience'] as String?) ?? t.nextConvenienceHint,
@@ -2323,6 +2378,7 @@ class AppState extends ChangeNotifier {
       emailRedirectTo: kSupabaseEmailRedirectUrl,
     );
     _applySupabaseNickname(_supabase.currentUser);
+    await refreshAccessStatus();
     notifyListeners();
   }
 
@@ -2331,11 +2387,13 @@ class AppState extends ChangeNotifier {
     if (trimmedEmail.isEmpty || password.isEmpty) return;
     await _supabase.client.auth.signInWithPassword(email: trimmedEmail, password: password);
     _applySupabaseNickname(_supabase.currentUser);
+    await refreshAccessStatus();
     notifyListeners();
   }
 
   Future<void> signOutSupabase() async {
     await _supabase.client.auth.signOut();
+    await refreshAccessStatus();
     notifyListeners();
   }
 
