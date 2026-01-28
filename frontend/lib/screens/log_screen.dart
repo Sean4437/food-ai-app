@@ -502,7 +502,7 @@ class _LogScreenState extends State<LogScreen> {
                           ),
                         ),
                       );
-                    ),
+                    },
                   ),
                   const SizedBox(height: 16),
                   _mealSection(context, app, MealType.breakfast, app.mealGroupsForDate(_selectedDate, MealType.breakfast)),
