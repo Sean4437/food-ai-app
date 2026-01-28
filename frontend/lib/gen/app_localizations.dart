@@ -2179,6 +2179,12 @@ abstract class AppLocalizations {
   /// **'同步中'**
   String get syncInProgress;
 
+  /// No description provided for @syncNow.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'同步'**
+  String get syncNow;
+
   /// No description provided for @syncSuccess.
   ///
   /// In zh_TW, this message translates to:

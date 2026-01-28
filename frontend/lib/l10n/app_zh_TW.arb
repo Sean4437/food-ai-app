@@ -397,6 +397,7 @@
   "syncSignOut": "登出",
   "syncUpload": "上傳同步",
   "syncDownload": "下載同步",
+  "syncNow": "同步",
   "syncInProgress": "同步中",
   "syncSuccess": "同步完成",
   "syncUpdated": "更新完成",

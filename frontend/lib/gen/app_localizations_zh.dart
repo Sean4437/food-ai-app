@@ -1114,6 +1114,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncInProgress => '同步中';
 
   @override
+  String get syncNow => '同步';
+
+  @override
   String get syncSuccess => '同步完成';
 
   @override
@@ -2249,6 +2252,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncInProgress => '同步中';
+
+  @override
+  String get syncNow => '同步';
 
   @override
   String get syncSuccess => '同步完成';

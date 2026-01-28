@@ -403,6 +403,7 @@
   "syncSignOut": "Sign out",
   "syncUpload": "Upload sync",
   "syncDownload": "Download sync",
+  "syncNow": "Sync now",
   "syncInProgress": "Syncing",
   "syncSuccess": "Sync complete",
   "syncUpdated": "Update complete",

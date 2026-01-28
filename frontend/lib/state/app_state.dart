@@ -61,8 +61,10 @@ class AppState extends ChangeNotifier {
   final Set<String> _mealAdviceLoading = {};
   Timer? _autoFinalizeTimer;
   Timer? _autoWeeklyTimer;
+  bool _syncing = false;
 
   bool get isSupabaseSignedIn => _supabase.isSignedIn;
+  bool get syncInProgress => _syncing;
 
   String? get supabaseUserEmail => _supabase.currentUser?.email;
 
@@ -2630,6 +2632,12 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       await _saveOverrides();
     }
+  }
+
+  void setSyncInProgress(bool value) {
+    if (_syncing == value) return;
+    _syncing = value;
+    notifyListeners();
   }
 
   String _syncFingerprint() {

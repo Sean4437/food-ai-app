@@ -17,7 +17,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _syncing = false;
 
   Widget _sectionTitle(BuildContext context, String text) {
     return Padding(
@@ -323,28 +322,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _runSupabaseSync(
     BuildContext context,
     AppState app, {
-    required bool upload,
   }) async {
     final t = AppLocalizations.of(context)!;
     if (!app.isSupabaseSignedIn) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncRequireLogin)));
       return;
     }
-    if (_syncing) return;
-    setState(() => _syncing = true);
+    if (app.syncInProgress) return;
+    app.setSyncInProgress(true);
     try {
-      if (upload) {
-        final changed = await app.syncToSupabase();
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(changed ? t.syncUpdated : t.syncNoChanges)),
-          );
-        }
-      } else {
-        await app.syncFromSupabase();
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncSuccess)));
-        }
+      final changed = await app.syncToSupabase();
+      await app.syncFromSupabase();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(changed ? t.syncUpdated : t.syncNoChanges)),
+        );
       }
     } catch (err) {
       if (context.mounted) {
@@ -353,9 +345,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _syncing = false);
-      }
+      app.setSyncInProgress(false);
     }
   }
 
@@ -537,6 +527,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         )
         .key;
     final isSupabaseSignedIn = app.isSupabaseSignedIn;
+    final isSyncing = app.syncInProgress;
     final supabaseEmail = app.supabaseUserEmail ?? '';
     final theme = Theme.of(context);
     return AppBackground(
@@ -640,11 +631,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: isSupabaseSignedIn && !_syncing ? () => _runSupabaseSync(context, app, upload: true) : null,
+                              onPressed: isSupabaseSignedIn && !isSyncing ? () => _runSupabaseSync(context, app) : null,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  if (_syncing) ...[
+                                  if (isSyncing) ...[
                                     const SizedBox(
                                       width: 14,
                                       height: 14,
@@ -652,27 +643,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                   ],
-                                  Text(_syncing ? t.syncInProgress : t.syncUpload),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: isSupabaseSignedIn && !_syncing ? () => _runSupabaseSync(context, app, upload: false) : null,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (_syncing) ...[
-                                    const SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    ),
-                                    const SizedBox(width: 8),
-                                  ],
-                                  Text(_syncing ? t.syncInProgress : t.syncDownload),
+                                  Text(isSyncing ? t.syncInProgress : t.syncNow),
                                 ],
                               ),
                             ),
