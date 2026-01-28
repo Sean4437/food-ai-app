@@ -331,8 +331,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (app.syncInProgress) return;
     app.setSyncInProgress(true);
     try {
-      final changed = await app.syncToSupabase();
-      await app.syncFromSupabase();
+      final changed = await app.syncAuto();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(changed ? t.syncUpdated : t.syncNoChanges)),

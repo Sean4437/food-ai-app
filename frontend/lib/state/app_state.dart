@@ -2640,6 +2640,47 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> syncAuto() async {
+    final user = _supabase.currentUser;
+    if (user == null) {
+      throw Exception('Supabase not signed in');
+    }
+    final beforeFingerprint = _syncFingerprint();
+    final localSyncAt = _localSyncAt();
+    final remoteSyncAt = await _fetchRemoteSyncAt(user.id);
+    final hasLocalData = entries.isNotEmpty || customFoods.isNotEmpty;
+
+    if (remoteSyncAt == null) {
+      if (!hasLocalData) return false;
+      final changed = await syncToSupabase();
+      if (changed) {
+        final now = DateTime.now().toUtc();
+        await _storeRemoteSyncAt(user.id, now);
+        await _storeLocalSyncAt(now);
+      }
+      return changed;
+    }
+
+    if (localSyncAt == null || remoteSyncAt.isAfter(localSyncAt)) {
+      await syncFromSupabase();
+      await _storeLocalSyncAt(remoteSyncAt);
+      final afterFingerprint = _syncFingerprint();
+      return afterFingerprint != beforeFingerprint;
+    }
+
+    if (localSyncAt.isAtSameMomentAs(remoteSyncAt)) {
+      return false;
+    }
+
+    final changed = await syncToSupabase();
+    if (changed) {
+      final now = DateTime.now().toUtc();
+      await _storeRemoteSyncAt(user.id, now);
+      await _storeLocalSyncAt(now);
+    }
+    return changed;
+  }
+
   String _syncFingerprint() {
     final buffer = StringBuffer();
     for (final entry in entries) {
@@ -2686,6 +2727,36 @@ class AppState extends ChangeNotifier {
     }
     final bytes = utf8.encode(buffer.toString());
     return sha1.convert(bytes).toString();
+  }
+
+  DateTime? _localSyncAt() {
+    final raw = _meta['last_sync_at'];
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  Future<void> _storeLocalSyncAt(DateTime time) async {
+    _meta['last_sync_at'] = time.toIso8601String();
+    await _saveOverrides();
+  }
+
+  Future<DateTime?> _fetchRemoteSyncAt(String userId) async {
+    final row = await _supabase.client
+        .from('sync_meta')
+        .select('last_sync_at')
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (row is! Map<String, dynamic>) return null;
+    final raw = row['last_sync_at'] as String?;
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  Future<void> _storeRemoteSyncAt(String userId, DateTime time) async {
+    await _supabase.client.from('sync_meta').upsert({
+      'user_id': userId,
+      'last_sync_at': time.toIso8601String(),
+    });
   }
 
   Future<String?> _uploadImageIfNeeded({
