@@ -321,8 +321,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _runSupabaseSync(
     BuildContext context,
-    AppState app, {
-  }) async {
+    AppState app,
+  ) async {
     final t = AppLocalizations.of(context)!;
     if (!app.isSupabaseSignedIn) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncRequireLogin)));
