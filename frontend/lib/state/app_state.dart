@@ -302,6 +302,45 @@ class AppState extends ChangeNotifier {
     return actualMid - targetMid;
   }
 
+  double? targetCalorieMid(DateTime date) {
+    final range = _parseCalorieRange(targetCalorieRangeValue(date) ?? '');
+    if (range == null) return null;
+    return (range[0] + range[1]) / 2;
+  }
+
+  double? calorieRangeMid(String? rangeText) {
+    final range = _parseCalorieRange(rangeText);
+    if (range == null) return null;
+    return (range[0] + range[1]) / 2;
+  }
+
+  double dailyConsumedCalorieMid(DateTime date, {String? excludeEntryId}) {
+    double sum = 0;
+    bool hasRange = false;
+    for (final entry in entriesForDate(date)) {
+      if (excludeEntryId != null && entry.id == excludeEntryId) continue;
+      final range = _parseCalorieRange(entry.result?.calorieRange);
+      if (range == null) continue;
+      final weight = _portionWeight(entry.portionPercent);
+      final mid = ((range[0] + range[1]) / 2) * weight;
+      sum += mid;
+      hasRange = true;
+    }
+    return hasRange ? sum : 0;
+  }
+
+  int? exerciseMinutesForCalories(double calories, String type) {
+    if (calories <= 0) return null;
+    if (type == 'none') return null;
+    final weight = profile.weightKg;
+    if (weight <= 0) return null;
+    final met = _exerciseMet(type);
+    if (met <= 0) return null;
+    final minutes = (calories / (met * weight)) * 60.0;
+    if (!minutes.isFinite || minutes <= 0) return null;
+    return minutes.ceil();
+  }
+
   Future<QuickCaptureAnalysis?> analyzeQuickCapture(
     XFile file,
     String locale, {
@@ -2793,6 +2832,7 @@ class AppState extends ChangeNotifier {
       'nutrition_chart': profile.nutritionChartStyle,
       'nutrition_value_mode': profile.nutritionValueMode,
       'glow_enabled': profile.glowEnabled,
+      'exercise_suggestion_type': profile.exerciseSuggestionType,
     };
   }
 
@@ -2834,7 +2874,8 @@ class AppState extends ChangeNotifier {
       ..textScale = (data['text_scale'] as num?)?.toDouble() ?? profile.textScale
       ..nutritionChartStyle = (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle
       ..nutritionValueMode = (data['nutrition_value_mode'] as String?) ?? profile.nutritionValueMode
-      ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled;
+      ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled
+      ..exerciseSuggestionType = (data['exercise_suggestion_type'] as String?) ?? profile.exerciseSuggestionType;
   }
 
   int _parseInt(dynamic value, int fallback) {
@@ -3024,6 +3065,7 @@ class UserProfile {
     required this.nutritionChartStyle,
     required this.nutritionValueMode,
     required this.glowEnabled,
+    required this.exerciseSuggestionType,
   });
 
   String name;
@@ -3063,6 +3105,7 @@ class UserProfile {
   String nutritionChartStyle;
   String nutritionValueMode;
   bool glowEnabled;
+  String exerciseSuggestionType;
 
   factory UserProfile.initial() {
     return UserProfile(
@@ -3103,6 +3146,7 @@ class UserProfile {
       nutritionChartStyle: 'bars',
       nutritionValueMode: 'percent',
       glowEnabled: true,
+      exerciseSuggestionType: 'walking',
     );
   }
 }

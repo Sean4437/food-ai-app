@@ -298,6 +298,35 @@
       }
     }
   },
+  "commonExerciseLabel": "Preferred exercise",
+  "suggestRemainingTitle": "Calories left today",
+  "suggestRemainingLeft": "You can still have {cal} kcal",
+  "@suggestRemainingLeft": {
+    "placeholders": {
+      "cal": {
+        "type": "int"
+      }
+    }
+  },
+  "suggestRemainingOver": "Over by {cal} kcal",
+  "@suggestRemainingOver": {
+    "placeholders": {
+      "cal": {
+        "type": "int"
+      }
+    }
+  },
+  "suggestExerciseHint": "Try {exercise} for about {minutes} min",
+  "@suggestExerciseHint": {
+    "placeholders": {
+      "exercise": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "reminderLunchTime": "Lunch reminder time",
   "reminderDinnerTime": "Dinner reminder time",
   "pickFromCamera": "Camera",

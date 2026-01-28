@@ -1751,6 +1751,16 @@ abstract class AppLocalizations {
   /// **'赤字 {kcal} kcal'**
   String deltaDeficit(int kcal);
 
+  String get commonExerciseLabel;
+
+  String get suggestRemainingTitle;
+
+  String suggestRemainingLeft(int cal);
+
+  String suggestRemainingOver(int cal);
+
+  String suggestExerciseHint(String exercise, int minutes);
+
   /// No description provided for @reminderLunchTime.
   ///
   /// In zh_TW, this message translates to:

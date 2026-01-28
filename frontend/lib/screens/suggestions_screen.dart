@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'dart:math' as math;
 import '../state/app_state.dart';
 import '../models/custom_food.dart';
+import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/app_background.dart';
@@ -678,6 +679,51 @@ Widget _buildAdviceCard(AppLocalizations t) {
     );
   }
 
+  Widget? _buildRemainingCalories(
+    AppLocalizations t,
+    AppState app,
+    AnalysisResult analysis,
+    DateTime analysisTime, {
+    String? excludeEntryId,
+  }) {
+    final targetMid = app.targetCalorieMid(analysisTime);
+    final mealMid = app.calorieRangeMid(analysis.calorieRange);
+    if (targetMid == null || mealMid == null) return null;
+    final consumedMid = app.dailyConsumedCalorieMid(analysisTime, excludeEntryId: excludeEntryId);
+    final remaining = targetMid - consumedMid - mealMid;
+    final remainingAbs = remaining.abs().round();
+    final remainingText =
+        remaining >= 0 ? t.suggestRemainingLeft(remainingAbs) : t.suggestRemainingOver(remainingAbs);
+    final exerciseType = app.profile.exerciseSuggestionType;
+    final exerciseMinutes = remaining < 0
+        ? app.exerciseMinutesForCalories(remainingAbs.toDouble(), exerciseType)
+        : null;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(t.suggestRemainingTitle, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(remainingText, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+          if (exerciseMinutes != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                t.suggestExerciseHint(app.exerciseLabel(exerciseType, t), exerciseMinutes),
+                style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
@@ -686,6 +732,15 @@ Widget _buildAdviceCard(AppLocalizations t) {
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final analysis = _analysis?.result;
     final showPreview = _analysis == null && _previewBytes != null;
+    final remainingWidget = analysis == null
+        ? null
+        : _buildRemainingCalories(
+            t,
+            app,
+            analysis,
+            _analysis!.time,
+            excludeEntryId: _savedEntry?.id,
+          );
     final media = MediaQuery.of(context);
     final cardWidth = (media.size.width - 32).clamp(280.0, 340.0);
     final cardHeight = (media.size.height * 0.76).clamp(440.0, 680.0);
@@ -1034,6 +1089,10 @@ Widget _buildAdviceCard(AppLocalizations t) {
                           ),
                           const SizedBox(height: 6),
                           Text('${analysis.calorieRange} ${t.estimated}', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                          if (remainingWidget != null) ...[
+                            const SizedBox(height: 12),
+                            remainingWidget,
+                          ],
                           const SizedBox(height: 12),
                           Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),

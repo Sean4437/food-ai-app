@@ -861,6 +861,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commonExerciseLabel => 'Preferred exercise';
+
+  @override
+  String get suggestRemainingTitle => 'Calories left today';
+
+  @override
+  String suggestRemainingLeft(int cal) {
+    return 'You can still have $cal kcal';
+  }
+
+  @override
+  String suggestRemainingOver(int cal) {
+    return 'Over by $cal kcal';
+  }
+
+  @override
+  String suggestExerciseHint(String exercise, int minutes) {
+    return 'Try $exercise for about $minutes min';
+  }
+
+  @override
   String get reminderLunchTime => 'Lunch reminder time';
 
   @override

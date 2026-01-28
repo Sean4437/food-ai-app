@@ -6,3 +6,4 @@ backend/__pycache__/
 .venv/
 test.jpg
 .DS_Store
+food-ai-export.json

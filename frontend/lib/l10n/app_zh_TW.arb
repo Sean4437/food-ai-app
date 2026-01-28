@@ -298,6 +298,35 @@
       }
     }
   },
+  "commonExerciseLabel": "常用運動",
+  "suggestRemainingTitle": "今日剩餘熱量",
+  "suggestRemainingLeft": "還可吃 {cal} kcal",
+  "@suggestRemainingLeft": {
+    "placeholders": {
+      "cal": {
+        "type": "int"
+      }
+    }
+  },
+  "suggestRemainingOver": "已超過 {cal} kcal",
+  "@suggestRemainingOver": {
+    "placeholders": {
+      "cal": {
+        "type": "int"
+      }
+    }
+  },
+  "suggestExerciseHint": "建議 {exercise} 約 {minutes} 分鐘",
+  "@suggestExerciseHint": {
+    "placeholders": {
+      "exercise": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "reminderLunchTime": "午餐提醒時間",
   "reminderDinnerTime": "晚餐提醒時間",
   "pickFromCamera": "拍照",

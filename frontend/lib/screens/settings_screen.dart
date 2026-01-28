@@ -488,6 +488,18 @@ class SettingsScreen extends StatelessWidget {
       t.activityModerate: 'moderate',
       t.activityHigh: 'high',
     };
+    final exerciseOptions = <String, String>{
+      t.exerciseWalking: 'walking',
+      t.exerciseJogging: 'jogging',
+      t.exerciseCycling: 'cycling',
+      t.exerciseSwimming: 'swimming',
+      t.exerciseStrength: 'strength',
+      t.exerciseYoga: 'yoga',
+      t.exerciseHiit: 'hiit',
+      t.exerciseBasketball: 'basketball',
+      t.exerciseHiking: 'hiking',
+      t.exerciseNoExercise: 'none',
+    };
     final textSizeOptions = <String, double>{
       t.textSizeSmall: 1.0,
       t.textSizeMedium: 1.1,
@@ -503,6 +515,12 @@ class SettingsScreen extends StatelessWidget {
         .firstWhere(
           (entry) => entry.value == profile.activityLevel,
           orElse: () => MapEntry(t.activityLight, 'light'),
+        )
+        .key;
+    final currentExerciseLabel = exerciseOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.exerciseSuggestionType,
+          orElse: () => MapEntry(t.exerciseWalking, 'walking'),
         )
         .key;
     final isSupabaseSignedIn = app.isSupabaseSignedIn;
@@ -715,6 +733,19 @@ class SettingsScreen extends StatelessWidget {
                       current: currentActivityLabel,
                       options: activityOptions.keys.toList(),
                       onSave: (value) => app.updateField((p) => p.activityLevel = activityOptions[value] ?? 'light'),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.commonExerciseLabel,
+                    currentExerciseLabel,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.commonExerciseLabel,
+                      current: currentExerciseLabel,
+                      options: exerciseOptions.keys.toList(),
+                      onSave: (value) =>
+                          app.updateField((p) => p.exerciseSuggestionType = exerciseOptions[value] ?? 'walking'),
                     ),
                   ),
                 ]),

@@ -852,7 +852,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String deltaDeficit(int kcal) {
-    return '赤字 $kcal kcal';
+    return '韏文? $kcal kcal';
+  }
+
+  @override
+  String get commonExerciseLabel => '常用運動';
+
+  @override
+  String get suggestRemainingTitle => '今日剩餘熱量';
+
+  @override
+  String suggestRemainingLeft(int cal) {
+    return '還可吃 $cal kcal';
+  }
+
+  @override
+  String suggestRemainingOver(int cal) {
+    return '已超過 $cal kcal';
+  }
+
+  @override
+  String suggestExerciseHint(String exercise, int minutes) {
+    return '建議 $exercise 約 $minutes 分鐘';
+  }
+
+  @override
+  String get commonExerciseLabel => '常用運動';
+
+  @override
+  String get suggestRemainingTitle => '今日剩餘熱量';
+
+  @override
+  String suggestRemainingLeft(int cal) {
+    return '還可吃 $cal kcal';
+  }
+
+  @override
+  String suggestRemainingOver(int cal) {
+    return '已超過 $cal kcal';
+  }
+
+  @override
+  String suggestExerciseHint(String exercise, int minutes) {
+    return '建議 $exercise 約 $minutes 分鐘';
   }
 
   @override
