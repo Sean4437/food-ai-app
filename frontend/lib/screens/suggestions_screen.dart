@@ -76,6 +76,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     });
     _startSmartProgress();
     final t = AppLocalizations.of(context)!;
+    final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final historyContext = app.buildAiContext();
