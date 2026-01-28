@@ -18,6 +18,11 @@ class LogScreen extends StatefulWidget {
 class _LogScreenState extends State<LogScreen> {
   late DateTime _selectedDate;
   late DateTime _currentMonth;
+  final ScrollController _dateController = ScrollController();
+  String _lastJumpKey = '';
+
+  static const double _dateItemWidth = 78;
+  static const double _dateItemGap = 6;
 
   @override
   void initState() {
@@ -25,6 +30,12 @@ class _LogScreenState extends State<LogScreen> {
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
     _currentMonth = DateTime(now.year, now.month, 1);
+  }
+
+  @override
+  void dispose() {
+    _dateController.dispose();
+    super.dispose();
   }
 
   String _mealLabel(MealType type, AppLocalizations t) {
@@ -101,17 +112,26 @@ class _LogScreenState extends State<LogScreen> {
 
   bool _isSameMonth(DateTime a, DateTime b) => a.year == b.year && a.month == b.month;
 
-  void _shiftMonth(int delta) {
+  DateTime _defaultSelectedDateForMonth(AppState app, DateTime month) {
+    final today = DateTime.now();
+    if (_isSameMonth(today, month)) {
+      return DateTime(today.year, today.month, today.day);
+    }
+    final dates = app.entries
+        .where((entry) => entry.time.year == month.year && entry.time.month == month.month)
+        .map((entry) => DateTime(entry.time.year, entry.time.month, entry.time.day))
+        .toSet()
+        .toList()
+      ..sort((a, b) => b.compareTo(a));
+    return dates.isNotEmpty ? dates.first : DateTime(month.year, month.month, 1);
+  }
+
+  void _shiftMonth(AppState app, int delta) {
     setState(() {
       final next = DateTime(_currentMonth.year, _currentMonth.month + delta, 1);
       _currentMonth = next;
       if (!_isSameMonth(_selectedDate, next)) {
-        final today = DateTime.now();
-        if (_isSameMonth(today, next)) {
-          _selectedDate = DateTime(today.year, today.month, today.day);
-        } else {
-          _selectedDate = DateTime(next.year, next.month, 1);
-        }
+        _selectedDate = _defaultSelectedDateForMonth(app, next);
       }
     });
   }
@@ -198,14 +218,14 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
-  Widget _buildMonthHeader(BuildContext context) {
+  Widget _buildMonthHeader(BuildContext context, AppState app) {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final isZh = locale.startsWith('zh');
     final formatter = DateFormat(isZh ? 'yyyy年M月' : 'MMM yyyy', locale);
     return Row(
       children: [
         IconButton(
-          onPressed: () => _shiftMonth(-1),
+          onPressed: () => _shiftMonth(app, -1),
           icon: const Icon(Icons.chevron_left),
         ),
         Expanded(
@@ -216,39 +236,104 @@ class _LogScreenState extends State<LogScreen> {
           ),
         ),
         IconButton(
-          onPressed: () => _shiftMonth(1),
+          onPressed: () => _shiftMonth(app, 1),
           icon: const Icon(Icons.chevron_right),
         ),
       ],
     );
   }
 
-  Widget _buildDateCard(BuildContext context, AppState app, AppLocalizations t, DateTime date) {
-    final isSelected = date.year == _selectedDate.year && date.month == _selectedDate.month && date.day == _selectedDate.day;
-    final hasData = app.entriesForDate(date).isNotEmpty;
-    final calorieLabel = hasData ? app.dailyCalorieRangeLabelForDate(date, t) : '—';
-    final bgColor = isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent;
-    final fgColor = isSelected ? Colors.white : (hasData ? Colors.black87 : Colors.black38);
-    final borderColor = isSelected ? Colors.transparent : Colors.black12;
+  double _dateItemExtent() => _dateItemWidth + _dateItemGap * 2;
 
-    return GestureDetector(
-      onTap: () => setState(() => _selectedDate = date),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('${date.month}/${date.day}', style: TextStyle(color: fgColor, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(calorieLabel, style: TextStyle(color: fgColor, fontSize: 11)),
-          ],
+  int _indexForDate(DateTime date) => date.day - 1;
+
+  int _centerIndexForOffset(double offset, double viewportWidth, int count) {
+    final extent = _dateItemExtent();
+    final leading = _leadingPadding(viewportWidth);
+    final center = offset + viewportWidth / 2;
+    final index = ((center - leading - extent / 2) / extent).round();
+    return index.clamp(0, count - 1);
+  }
+
+  double _offsetForIndex(int index, double viewportWidth) {
+    final extent = _dateItemExtent();
+    final leading = _leadingPadding(viewportWidth);
+    return (leading + index * extent + extent / 2) - viewportWidth / 2;
+  }
+
+  double _leadingPadding(double viewportWidth) {
+    final extent = _dateItemExtent();
+    final padding = (viewportWidth - extent) / 2;
+    return padding < 0 ? 0 : padding;
+  }
+
+  void _snapToClosest(AppState app, double viewportWidth, List<DateTime> days) {
+    if (!_dateController.hasClients) return;
+    final index = _centerIndexForOffset(_dateController.offset, viewportWidth, days.length);
+    final target = _offsetForIndex(index, viewportWidth).clamp(0.0, _dateController.position.maxScrollExtent);
+    final date = days[index];
+    if (date.year != _selectedDate.year || date.month != _selectedDate.month || date.day != _selectedDate.day) {
+      setState(() => _selectedDate = date);
+    }
+    _dateController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _jumpToSelected(DateTime date, double viewportWidth, int count) {
+    if (!_dateController.hasClients) return;
+    final index = _indexForDate(date).clamp(0, count - 1);
+    final target = _offsetForIndex(index, viewportWidth).clamp(0.0, _dateController.position.maxScrollExtent);
+    _dateController.jumpTo(target);
+  }
+
+  String _dailyAverageNumber(AppState app, AppLocalizations t, DateTime date) {
+    final label = app.dailyCalorieRangeLabelForDate(date, t);
+    final range = _parseCalorieRange(label);
+    if (range == null) return '—';
+    final mid = ((range[0] + range[1]) / 2).round();
+    return mid.toString();
+  }
+
+  Widget _buildDateCard(
+    BuildContext context,
+    AppState app,
+    AppLocalizations t,
+    DateTime date, {
+    required double scale,
+    required bool isCentered,
+  }) {
+    final hasData = app.entriesForDate(date).isNotEmpty;
+    final selectedLabel = hasData ? app.dailyCalorieRangeLabelForDate(date, t) : '—';
+    final idleLabel = hasData ? _dailyAverageNumber(app, t, date) : '—';
+    final bgColor = isCentered ? Theme.of(context).colorScheme.primary : Colors.transparent;
+    final fgColor = isCentered ? Colors.white : (hasData ? Colors.black87 : Colors.black38);
+    final borderColor = isCentered ? Colors.transparent : Colors.black12;
+    return SizedBox(
+      width: _dateItemExtent(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: _dateItemGap, vertical: 4),
+        child: Transform.scale(
+          scale: scale,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: borderColor),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('${date.month}/${date.day}', style: TextStyle(color: fgColor, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                Text(isCentered ? selectedLabel : idleLabel, style: TextStyle(color: fgColor, fontSize: 11)),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -346,7 +431,6 @@ class _LogScreenState extends State<LogScreen> {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final days = _daysInMonth(_currentMonth);
-
     return AppBackground(
       child: SafeArea(
         child: SingleChildScrollView(
@@ -361,14 +445,63 @@ class _LogScreenState extends State<LogScreen> {
                   const SizedBox(height: 12),
                   _buildHighlightCard(context, app, t),
                   const SizedBox(height: 16),
-                  _buildMonthHeader(context),
+                  _buildMonthHeader(context, app),
                   const SizedBox(height: 6),
-                  SizedBox(
-                    height: 86,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: days.length,
-                      itemBuilder: (context, index) => _buildDateCard(context, app, t, days[index]),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final viewportWidth = constraints.maxWidth;
+                      final jumpKey = '${_currentMonth.year}-${_currentMonth.month}-${_selectedDate.day}-${days.length}';
+                      if (_lastJumpKey != jumpKey) {
+                        _lastJumpKey = jumpKey;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          _jumpToSelected(_selectedDate, viewportWidth, days.length);
+                        });
+                      }
+                      return SizedBox(
+                        height: 92,
+                        child: NotificationListener<ScrollEndNotification>(
+                          onNotification: (_) {
+                            _snapToClosest(app, viewportWidth, days);
+                            return false;
+                          },
+                          child: AnimatedBuilder(
+                            animation: _dateController,
+                            builder: (context, child) {
+                              final extent = _dateItemExtent();
+                              final leading = _leadingPadding(viewportWidth);
+                              final center = _dateController.hasClients
+                                  ? _dateController.offset + viewportWidth / 2
+                                  : viewportWidth / 2;
+                              final centerIndex = _centerIndexForOffset(
+                                _dateController.hasClients ? _dateController.offset : 0,
+                                viewportWidth,
+                                days.length,
+                              );
+                              return ListView.builder(
+                                controller: _dateController,
+                                scrollDirection: Axis.horizontal,
+                                itemCount: days.length,
+                                padding: EdgeInsets.symmetric(horizontal: leading),
+                                itemBuilder: (context, index) {
+                                  final itemCenter = leading + index * extent + extent / 2;
+                                  final distance = (center - itemCenter).abs();
+                                  final factor = (distance / extent).clamp(0.0, 1.0);
+                                  final scale = 1.1 - 0.16 * factor;
+                                  return _buildDateCard(
+                                    context,
+                                    app,
+                                    t,
+                                    days[index],
+                                    scale: scale,
+                                    isCentered: index == centerIndex,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      );
                     ),
                   ),
                   const SizedBox(height: 16),
