@@ -708,15 +708,13 @@ Widget _buildAdviceCard(AppLocalizations t) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(t.suggestRemainingTitle, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
           Text(remainingText, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
           if (exerciseMinutes != null)
             Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.only(top: 8),
               child: Text(
                 t.suggestExerciseHint(app.exerciseLabel(exerciseType, t), exerciseMinutes),
-                style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                style: AppTextStyles.body(context).copyWith(color: Colors.black87),
               ),
             ),
         ],
