@@ -75,6 +75,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _previewBytes = preview;
     });
     _startSmartProgress();
+    final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final historyContext = app.buildAiContext();
@@ -85,6 +86,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         historyContext: historyContext.isEmpty ? null : historyContext,
       );
       if (!mounted) return;
+      if (analysis == null) {
+        throw Exception(t.analyzeFailed);
+      }
       _analysis = analysis;
       _instantAdvice = null;
       _previewBytes = null;
