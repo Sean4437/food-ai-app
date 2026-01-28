@@ -141,6 +141,17 @@
   "latestMealEmpty": "尚未有餐點紀錄",
   "homeNextMealHint": "點進建議頁，選一個最方便的方案",
   "logTitle": "紀錄",
+  "logTopMealTitle": "熱量最高一餐",
+  "logTopMealEmpty": "近 7 天尚未有完整紀錄",
+  "logRecentDaysTag": "近 7 天 {date}",
+  "@logRecentDaysTag": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "logAddMealPrompt": "補記這一餐",
   "dailyCalorieRange": "今日熱量攝取",
   "dayCardTitle": "每日摘要",
   "dayMealsTitle": "返回本日餐次",

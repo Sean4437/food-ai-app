@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../state/app_state.dart';
@@ -8,77 +8,23 @@ import '../widgets/record_sheet.dart';
 import '../widgets/app_background.dart';
 import '../design/text_styles.dart';
 
-class LogScreen extends StatelessWidget {
+class LogScreen extends StatefulWidget {
   const LogScreen({super.key});
 
-  String _weekdayLabel(DateTime date, AppLocalizations t) {
-    switch (date.weekday) {
-      case DateTime.monday:
-        return t.weekdayMon;
-      case DateTime.tuesday:
-        return t.weekdayTue;
-      case DateTime.wednesday:
-        return t.weekdayWed;
-      case DateTime.thursday:
-        return t.weekdayThu;
-      case DateTime.friday:
-        return t.weekdayFri;
-      case DateTime.saturday:
-        return t.weekdaySat;
-      case DateTime.sunday:
-        return t.weekdaySun;
-    }
-    return t.weekdayMon;
-  }
+  @override
+  State<LogScreen> createState() => _LogScreenState();
+}
 
-  List<int>? _parseCalorieRange(String text) {
-    final match = RegExp(r'(\d+)\s*-\s*(\d+)').firstMatch(text);
-    if (match == null) return null;
-    final min = int.tryParse(match.group(1) ?? '');
-    final max = int.tryParse(match.group(2) ?? '');
-    if (min == null || max == null) return null;
-    return [min, max];
-  }
+class _LogScreenState extends State<LogScreen> {
+  late DateTime _selectedDate;
+  late DateTime _currentMonth;
 
-  _TopMealInfo? _weeklyTopMeal(AppState app, AppLocalizations t) {
+  @override
+  void initState() {
+    super.initState();
     final now = DateTime.now();
-    final cutoff = now.subtract(const Duration(days: 7));
-    final recent = app.entries.where((entry) => entry.time.isAfter(cutoff)).toList();
-    if (recent.isEmpty) return null;
-    final dates = recent
-        .map((entry) => DateTime(entry.time.year, entry.time.month, entry.time.day))
-        .toSet()
-        .toList()
-      ..sort((a, b) => b.compareTo(a));
-
-    _TopMealInfo? best;
-    double bestScore = -1;
-    for (final date in dates) {
-      for (final type in MealType.values) {
-        final groups = app.mealGroupsForDate(date, type);
-        for (final group in groups) {
-          final summary = app.buildMealSummary(group, t);
-          if (summary == null) continue;
-          final range = _parseCalorieRange(summary.calorieRange);
-          if (range == null) continue;
-          final score = (range[0] + range[1]) / 2.0;
-          if (score > bestScore) {
-            bestScore = score;
-            best = _TopMealInfo(
-              date: date,
-              type: type,
-              timeLabel: _groupTimeLabel(group),
-              calorieRange: summary.calorieRange,
-            );
-          }
-        }
-      }
-    }
-    return best;
-  }
-
-  String _timeLabel(DateTime time) {
-    return '${time.month}/${time.day} ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    _selectedDate = DateTime(now.year, now.month, now.day);
+    _currentMonth = DateTime(now.year, now.month, 1);
   }
 
   String _mealLabel(MealType type, AppLocalizations t) {
@@ -97,38 +43,87 @@ class LogScreen extends StatelessWidget {
         return t.lateSnack;
       case MealType.other:
         return t.other;
-      default:
-        return t.other;
     }
   }
 
-  String _groupTimeLabel(List<MealEntry> group) {
-    final times = group.map((e) => e.time).toList()..sort();
-    final start = times.first;
-    final end = times.last;
-    if (start == end) {
-      return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}';
+  String _timeLabel(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  List<int>? _parseCalorieRange(String text) {
+    final match = RegExp(r'(\d+)\s*-\s*(\d+)').firstMatch(text);
+    if (match == null) return null;
+    final min = int.tryParse(match.group(1) ?? '');
+    final max = int.tryParse(match.group(2) ?? '');
+    if (min == null || max == null) return null;
+    return [min, max];
+  }
+
+  double? _entryCalorieMid(MealEntry entry) {
+    final range = _parseCalorieRange(entry.result?.calorieRange ?? '');
+    if (range == null) return null;
+    final weight = (entry.portionPercent) / 100.0;
+    return ((range[0] + range[1]) / 2.0) * weight;
+  }
+
+  MealEntry? _topMealLast7Days(AppState app) {
+    final now = DateTime.now();
+    final cutoff = now.subtract(const Duration(days: 7));
+    MealEntry? best;
+    double bestScore = -1;
+    for (final entry in app.entries) {
+      if (entry.time.isBefore(cutoff)) continue;
+      final score = _entryCalorieMid(entry);
+      if (score == null) continue;
+      if (score > bestScore) {
+        bestScore = score;
+        best = entry;
+      }
     }
-    return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
+    return best;
   }
 
-  String _mockPrefix(MealEntry entry, AppLocalizations t) {
-    return entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
+  String _entryTitle(MealEntry entry, AppLocalizations t) {
+    final override = entry.overrideFoodName?.trim();
+    if (override != null && override.isNotEmpty) return override;
+    final result = entry.result;
+    if (result == null) return entry.filename;
+    if (result.foodItems.isNotEmpty) return result.foodItems.join(' + ');
+    final summary = result.dishSummary?.trim();
+    if (summary != null && summary.isNotEmpty) return summary;
+    return result.foodName.isNotEmpty ? result.foodName : t.unknownFood;
   }
 
-  Widget _mealRow(BuildContext context, AppState app, MealEntry entry, List<MealEntry> group) {
-    final t = AppLocalizations.of(context)!;
-    final prefix = _mockPrefix(entry, t);
-    final foodName = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
-    final portion = '${t.portionLabel} ${entry.portionPercent}%';
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealItemsScreen(group: group))),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
+  List<DateTime> _daysInMonth(DateTime month) {
+    final lastDay = DateTime(month.year, month.month + 1, 0).day;
+    return List.generate(lastDay, (i) => DateTime(month.year, month.month, i + 1));
+  }
+
+  bool _isSameMonth(DateTime a, DateTime b) => a.year == b.year && a.month == b.month;
+
+  void _shiftMonth(int delta) {
+    setState(() {
+      final next = DateTime(_currentMonth.year, _currentMonth.month + delta, 1);
+      _currentMonth = next;
+      if (!_isSameMonth(_selectedDate, next)) {
+        final today = DateTime.now();
+        if (_isSameMonth(today, next)) {
+          _selectedDate = DateTime(today.year, today.month, today.day);
+        } else {
+          _selectedDate = DateTime(next.year, next.month, 1);
+        }
+      }
+    });
+  }
+
+  Widget _buildHighlightCard(BuildContext context, AppState app, AppLocalizations t) {
+    final entry = _topMealLast7Days(app);
+    if (entry == null) {
+      return Container(
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -137,77 +132,18 @@ class LogScreen extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.memory(entry.imageBytes, width: 72, height: 72, fit: BoxFit.cover),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${prefix}${foodName}', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${t.timeLabel}: ${_timeLabel(entry.time)} · ${portion} · ${prefix}${entry.result?.calorieRange ?? t.calorieUnknown}',
-                    style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.black45),
-              onPressed: () => _confirmDelete(context, app, entry),
-              tooltip: t.delete,
-            ),
-            const Icon(Icons.chevron_right, color: Colors.black38),
-          ],
-        ),
-      ),
-    );
-  }
+        child: Text(t.logTopMealEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+      );
+    }
 
-  Widget _mealGroupCard(BuildContext context, AppState app, List<MealEntry> group) {
-    final t = AppLocalizations.of(context)!;
-    final summary = app.buildMealSummary(group, t);
-    final title = '${t.mealSummaryTitle} · ${_groupTimeLabel(group)}';
-    final calorie = summary?.calorieRange ?? t.calorieUnknown;
-    final advice = summary?.advice ?? t.detailAiEmpty;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FC),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 4),
-          Text('${t.mealTotal}: $calorie', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-          const SizedBox(height: 4),
-          Text(advice, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-          const SizedBox(height: 10),
-          Column(children: [for (final entry in group) _mealRow(context, app, entry, group)]),
-        ],
-      ),
-    );
-  }
+    final title = _entryTitle(entry, t);
+    final mid = _entryCalorieMid(entry);
+    final kcalText = mid == null ? t.calorieUnknown : '${mid.round()} kcal';
+    final dateLabel = '${entry.time.month}/${entry.time.day}';
+    final mealLabel = _mealLabel(entry.type, t);
 
-  Widget _mealSection(
-    BuildContext context,
-    AppState app,
-    MealType type,
-    List<List<MealEntry>> groups,
-  ) {
-    final t = AppLocalizations.of(context)!;
-    final title = _mealLabel(type, t);
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -219,65 +155,197 @@ class LogScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-              const Spacer(),
-              TextButton(
-                onPressed: () => showRecordSheet(context, app, fixedType: type),
-                child: Text(t.addMeal),
-              ),
-            ],
-          ),
-          if (groups.isEmpty)
-            Text(t.noMealPrompt, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-          if (groups.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Column(
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (final group in groups) _mealGroupCard(context, app, group),
+                Text(t.logTopMealTitle, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                const SizedBox(height: 6),
+                Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Text(kcalText, style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    _chip(mealLabel),
+                    _chip(t.logRecentDaysTag(dateLabel)),
+                  ],
+                ),
               ],
             ),
-          ],
+          ),
+          const SizedBox(width: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.memory(entry.imageBytes, width: 72, height: 72, fit: BoxFit.cover),
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, AppState app, MealEntry entry) async {
+  Widget _chip(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE9F2EE),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(text, style: const TextStyle(fontSize: 12, color: Color(0xFF3C6F5B), fontWeight: FontWeight.w600)),
+    );
+  }
+
+  Widget _buildMonthHeader(BuildContext context) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final isZh = locale.startsWith('zh');
+    final formatter = DateFormat(isZh ? 'yyyy年M月' : 'MMM yyyy', locale);
+    return Row(
+      children: [
+        IconButton(
+          onPressed: () => _shiftMonth(-1),
+          icon: const Icon(Icons.chevron_left),
+        ),
+        Expanded(
+          child: Text(
+            formatter.format(_currentMonth),
+            textAlign: TextAlign.center,
+            style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+          ),
+        ),
+        IconButton(
+          onPressed: () => _shiftMonth(1),
+          icon: const Icon(Icons.chevron_right),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateCard(BuildContext context, AppState app, AppLocalizations t, DateTime date) {
+    final isSelected = date.year == _selectedDate.year && date.month == _selectedDate.month && date.day == _selectedDate.day;
+    final hasData = app.entriesForDate(date).isNotEmpty;
+    final calorieLabel = hasData ? app.dailyCalorieRangeLabelForDate(date, t) : '—';
+    final bgColor = isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent;
+    final fgColor = isSelected ? Colors.white : (hasData ? Colors.black87 : Colors.black38);
+    final borderColor = isSelected ? Colors.transparent : Colors.black12;
+
+    return GestureDetector(
+      onTap: () => setState(() => _selectedDate = date),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('${date.month}/${date.day}', style: TextStyle(color: fgColor, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(calorieLabel, style: TextStyle(color: fgColor, fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _mealRow(BuildContext context, AppState app, MealEntry entry, List<MealEntry> group) {
     final t = AppLocalizations.of(context)!;
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.delete),
-        content: Text(t.deleteConfirm),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.delete)),
+    final summary = _entryTitle(entry, t);
+    final calorie = app.entryCalorieRangeLabel(entry, t);
+    final tags = entry.result?.judgementTags ?? const <String>[];
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealItemsScreen(group: group))),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(_timeLabel(entry.time), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(summary, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                ),
+                Text(calorie, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+              ],
+            ),
+            if (tags.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(tags.join(' · '), style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _mealSection(BuildContext context, AppState app, MealType type, List<List<MealEntry>> groups) {
+    final t = AppLocalizations.of(context)!;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(_mealLabel(type, t), style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          if (groups.isEmpty)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => showRecordSheet(context, app, fixedType: type),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(t.logAddMealPrompt),
+              ),
+            )
+          else
+            Column(
+              children: [
+                for (final group in groups)
+                  for (final entry in group)
+                    _mealRow(context, app, entry, group),
+              ],
+            ),
         ],
       ),
     );
-    if (result == true) {
-      app.removeEntry(entry);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    final entries = app.entries;
-    final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
-    final dates = entries
-        .map((e) => DateTime(e.time.year, e.time.month, e.time.day))
-        .toSet()
-        .toList();
-    dates.sort((a, b) => b.compareTo(a));
-    final displayDates = dates.isEmpty ? [DateTime.now()] : dates;
-    final topMeal = _weeklyTopMeal(app, t);
+    final days = _daysInMonth(_currentMonth);
 
     return AppBackground(
       child: SafeArea(
@@ -289,77 +357,28 @@ class LogScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                Text(t.logTitle, style: AppTextStyles.title1(context)),
-                const SizedBox(height: 12),
-                if (topMeal != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.weekTopMealTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${_weekdayLabel(topMeal.date, t)} · ${_mealLabel(topMeal.type, t)} · ${topMeal.timeLabel} · ${topMeal.calorieRange}',
-                          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(t.recentGuidanceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 6),
-                        Text(
-                          app.weekSummaryText(DateTime.now(), t),
-                          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                for (final date in displayDates) ...[
-                  Text(
-                    dateFormatter.format(date),
-                    style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.dailyCalorieRange, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                        const SizedBox(height: 6),
-                        Text(
-                          app.dailyCalorieRangeLabelForDate(date, t),
-                          style: AppTextStyles.title2(context),
-                        ),
-                      ],
-                    ),
-                  ),
+                  Text(t.logTitle, style: AppTextStyles.title1(context)),
                   const SizedBox(height: 12),
-                  _mealSection(context, app, MealType.breakfast, app.mealGroupsForDate(date, MealType.breakfast)),
-                  _mealSection(context, app, MealType.brunch, app.mealGroupsForDate(date, MealType.brunch)),
-                  _mealSection(context, app, MealType.lunch, app.mealGroupsForDate(date, MealType.lunch)),
-                  _mealSection(context, app, MealType.afternoonTea, app.mealGroupsForDate(date, MealType.afternoonTea)),
-                  _mealSection(context, app, MealType.dinner, app.mealGroupsForDate(date, MealType.dinner)),
-                  _mealSection(context, app, MealType.lateSnack, app.mealGroupsForDate(date, MealType.lateSnack)),
-                  _mealSection(context, app, MealType.other, app.mealGroupsForDate(date, MealType.other)),
+                  _buildHighlightCard(context, app, t),
                   const SizedBox(height: 16),
-                ],
+                  _buildMonthHeader(context),
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 86,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: days.length,
+                      itemBuilder: (context, index) => _buildDateCard(context, app, t, days[index]),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _mealSection(context, app, MealType.breakfast, app.mealGroupsForDate(_selectedDate, MealType.breakfast)),
+                  _mealSection(context, app, MealType.brunch, app.mealGroupsForDate(_selectedDate, MealType.brunch)),
+                  _mealSection(context, app, MealType.lunch, app.mealGroupsForDate(_selectedDate, MealType.lunch)),
+                  _mealSection(context, app, MealType.afternoonTea, app.mealGroupsForDate(_selectedDate, MealType.afternoonTea)),
+                  _mealSection(context, app, MealType.dinner, app.mealGroupsForDate(_selectedDate, MealType.dinner)),
+                  _mealSection(context, app, MealType.lateSnack, app.mealGroupsForDate(_selectedDate, MealType.lateSnack)),
+                  _mealSection(context, app, MealType.other, app.mealGroupsForDate(_selectedDate, MealType.other)),
                 ],
               ),
             ),
@@ -368,18 +387,4 @@ class LogScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class _TopMealInfo {
-  _TopMealInfo({
-    required this.date,
-    required this.type,
-    required this.timeLabel,
-    required this.calorieRange,
-  });
-
-  final DateTime date;
-  final MealType type;
-  final String timeLabel;
-  final String calorieRange;
 }

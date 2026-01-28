@@ -413,6 +413,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get logTitle => '紀錄';
 
   @override
+  String get logTopMealTitle => '熱量最高一餐';
+
+  @override
+  String get logTopMealEmpty => '近 7 天尚未有完整紀錄';
+
+  @override
+  String logRecentDaysTag(String date) {
+    return '近 7 天 $date';
+  }
+
+  @override
+  String get logAddMealPrompt => '補記這一餐';
+
+
+  @override
+  String get logTopMealTitle => '熱量最高一餐';
+
+  @override
+  String get logTopMealEmpty => '近 7 天尚未有完整紀錄';
+
+  @override
+  String logRecentDaysTag(String date) {
+    return '近 7 天 $date';
+  }
+
+  @override
+  String get logAddMealPrompt => '補記這一餐';
+
+
+  @override
   String get dailyCalorieRange => '今日熱量攝取';
 
   @override

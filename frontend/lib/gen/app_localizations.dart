@@ -903,6 +903,30 @@ abstract class AppLocalizations {
   /// **'紀錄'**
   String get logTitle;
 
+  /// No description provided for @logTopMealTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'熱量最高一餐'**
+  String get logTopMealTitle;
+
+  /// No description provided for @logTopMealEmpty.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'近 7 天尚未有完整紀錄'**
+  String get logTopMealEmpty;
+
+  /// No description provided for @logRecentDaysTag.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'近 7 天 {date}'**
+  String logRecentDaysTag(String date);
+
+  /// No description provided for @logAddMealPrompt.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'補記這一餐'**
+  String get logAddMealPrompt;
+
   /// No description provided for @dailyCalorieRange.
   ///
   /// In zh_TW, this message translates to:

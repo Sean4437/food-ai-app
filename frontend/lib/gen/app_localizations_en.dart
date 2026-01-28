@@ -423,6 +423,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logTitle => 'Log';
 
   @override
+  String get logTopMealTitle => 'Highest calorie meal';
+
+  @override
+  String get logTopMealEmpty => 'No complete records in the past 7 days';
+
+  @override
+  String logRecentDaysTag(String date) {
+    return 'Last 7 days $date';
+  }
+
+  @override
+  String get logAddMealPrompt => 'Add this meal';
+
+  @override
   String get dailyCalorieRange => 'Today calorie range';
 
   @override
