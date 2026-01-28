@@ -26,7 +26,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   Uint8List? _previewBytes;
   bool _loading = false;
   String? _error;
-  bool _showSaveActions = false;
   MealEntry? _savedEntry;
   final TextEditingController _nameController = TextEditingController();
   late final AnimationController _scanController;
@@ -64,7 +63,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _analysis = null;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = false;
       _savedEntry = null;
     });
     final file = await _picker.pickImage(source: source);
@@ -90,13 +88,17 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _analysis = analysis;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = true;
+      final saved = await app.saveQuickCapture(analysis);
+      _savedEntry = saved;
       _completeSmartProgress(() {
         if (!mounted) return;
         setState(() {
           _loading = false;
         });
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.logSuccess)),
+      );
     } catch (err) {
       if (!mounted) return;
       _stopSmartProgress();
@@ -127,7 +129,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _analysis = null;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = false;
       _savedEntry = null;
     });
     _startSmartProgress();
@@ -166,7 +167,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _analysis = null;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = false;
       _savedEntry = null;
     });
     _startSmartProgress();
@@ -238,23 +238,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     setState(() {
       _savedEntry = null;
       _analysis = null;
-      _showSaveActions = false;
     });
-  }
-
-  Future<void> _saveIfNeeded() async {
-    if (_analysis == null) return;
-    final t = AppLocalizations.of(context)!;
-    final app = AppStateScope.of(context);
-    final saved = await app.saveQuickCapture(_analysis!);
-    if (!mounted) return;
-    setState(() {
-      _showSaveActions = false;
-      _savedEntry = saved;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(t.logSuccess)),
-    );
   }
 
   Future<void> _editFoodName() async {
@@ -296,13 +280,17 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _analysis = updated;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = true;
+      final saved = await app.saveQuickCapture(updated);
+      _savedEntry = saved;
       _completeSmartProgress(() {
         if (!mounted) return;
         setState(() {
           _loading = false;
         });
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.logSuccess)),
+      );
     } catch (err) {
       if (!mounted) return;
       _stopSmartProgress();
@@ -1095,30 +1083,6 @@ Widget _buildAdviceCard(AppLocalizations t) {
                           Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
                           _buildAdviceCard(t),
-                          if (_showSaveActions) ...[
-                            const SizedBox(height: 14),
-                            Text(t.suggestInstantSavePrompt, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () {
-                                      setState(() => _showSaveActions = false);
-                                    },
-                                    child: Text(t.suggestInstantSkipSave),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: _saveIfNeeded,
-                                    child: Text(t.suggestInstantSave),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
                           const SizedBox(height: 12),
                           Text(t.suggestInstantRecentHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
                         ],
