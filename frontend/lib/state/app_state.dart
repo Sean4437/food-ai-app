@@ -2493,6 +2493,7 @@ class AppState extends ChangeNotifier {
       return false;
     }
     final client = _supabase.client;
+    final mealPayloads = <Map<String, dynamic>>[];
     for (final entry in entries) {
       final imageHash = entry.imageHash ?? _hashBytes(entry.imageBytes);
       final imagePath = await _uploadImageIfNeeded(
@@ -2510,8 +2511,12 @@ class AppState extends ChangeNotifier {
         );
       }
       final payload = _mealEntryToRow(entry, user.id, imagePath, labelPath);
-      await client.from(kSupabaseMealsTable).upsert(payload);
+      mealPayloads.add(payload);
     }
+    if (mealPayloads.isNotEmpty) {
+      await client.from(kSupabaseMealsTable).upsert(mealPayloads);
+    }
+    final foodPayloads = <Map<String, dynamic>>[];
     for (final food in customFoods) {
       final imageHash = _hashBytes(food.imageBytes);
       final imagePath = await _uploadImageIfNeeded(
@@ -2531,7 +2536,10 @@ class AppState extends ChangeNotifier {
         'created_at': food.createdAt.toIso8601String(),
         'updated_at': food.updatedAt.toIso8601String(),
       };
-      await client.from(kSupabaseCustomFoodsTable).upsert(payload);
+      foodPayloads.add(payload);
+    }
+    if (foodPayloads.isNotEmpty) {
+      await client.from(kSupabaseCustomFoodsTable).upsert(foodPayloads);
     }
     _meta['last_sync_fingerprint'] = fingerprint;
     await _saveOverrides();
@@ -2544,21 +2552,36 @@ class AppState extends ChangeNotifier {
       throw Exception('Supabase not signed in');
     }
     final client = _supabase.client;
+    final existingEntries = {
+      for (final entry in entries) entry.id: entry,
+    };
     final rows = await client.from(kSupabaseMealsTable).select().eq('user_id', user.id);
     if (rows is List) {
       for (final row in rows) {
         if (row is! Map<String, dynamic>) continue;
+        final entryId = row['id'] as String?;
+        final existing = entryId == null ? null : existingEntries[entryId];
         final imagePath = row['image_path'] as String?;
         final labelPath = row['label_image_path'] as String?;
-        final imageBytes = await _downloadImageIfAvailable(
-          bucket: kSupabaseMealImagesBucket,
-          path: imagePath,
-        );
+        Uint8List? imageBytes;
+        if (existing != null && existing.imageBytes.isNotEmpty && existing.imageHash == row['image_hash']) {
+          imageBytes = existing.imageBytes;
+        } else {
+          imageBytes = await _downloadImageIfAvailable(
+            bucket: kSupabaseMealImagesBucket,
+            path: imagePath,
+          );
+        }
         final resolvedImageBytes = imageBytes ?? _namePlaceholderBytes;
-        final labelBytes = await _downloadImageIfAvailable(
-          bucket: kSupabaseLabelImagesBucket,
-          path: labelPath,
-        );
+        Uint8List? labelBytes;
+        if (existing != null && existing.labelImageBytes != null && labelPath != null && labelPath.isNotEmpty) {
+          labelBytes = existing.labelImageBytes;
+        } else {
+          labelBytes = await _downloadImageIfAvailable(
+            bucket: kSupabaseLabelImagesBucket,
+            path: labelPath,
+          );
+        }
         final entry = _mealEntryFromRow(row, resolvedImageBytes, labelBytes);
         final index = entries.indexWhere((item) => item.id == entry.id);
         if (index == -1) {
@@ -2569,16 +2592,27 @@ class AppState extends ChangeNotifier {
         await _store.upsert(entry);
       }
     }
+    final existingFoods = {
+      for (final food in customFoods) food.id: food,
+    };
     final foodRows = await client.from(kSupabaseCustomFoodsTable).select().eq('user_id', user.id);
     if (foodRows is List) {
       customFoods.clear();
       for (final row in foodRows) {
         if (row is! Map<String, dynamic>) continue;
+        final foodId = row['id'] as String?;
+        final existing = foodId == null ? null : existingFoods[foodId];
         final imagePath = row['image_path'] as String?;
-        final bytes = await _downloadImageIfAvailable(
-          bucket: kSupabaseMealImagesBucket,
-          path: imagePath,
-        );
+        final updatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
+        Uint8List? bytes;
+        if (existing != null && updatedAt != null && existing.updatedAt.isAtSameMomentAs(updatedAt)) {
+          bytes = existing.imageBytes;
+        } else {
+          bytes = await _downloadImageIfAvailable(
+            bucket: kSupabaseMealImagesBucket,
+            path: imagePath,
+          );
+        }
         if (bytes == null) continue;
         final food = CustomFood(
           id: row['id'] as String,
