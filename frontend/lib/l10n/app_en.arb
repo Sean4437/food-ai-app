@@ -402,6 +402,7 @@
   "syncSignOut": "Sign out",
   "syncUpload": "Upload sync",
   "syncDownload": "Download sync",
+  "syncInProgress": "Syncing",
   "syncSuccess": "Sync complete",
   "syncUpdated": "Update complete",
   "syncNoChanges": "Sync complete",

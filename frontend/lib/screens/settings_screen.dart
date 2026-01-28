@@ -9,8 +9,15 @@ import '../state/app_state.dart';
 import '../widgets/app_background.dart';
 import '../design/text_styles.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _syncing = false;
 
   Widget _sectionTitle(BuildContext context, String text) {
     return Padding(
@@ -323,6 +330,8 @@ class SettingsScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncRequireLogin)));
       return;
     }
+    if (_syncing) return;
+    setState(() => _syncing = true);
     try {
       if (upload) {
         final changed = await app.syncToSupabase();
@@ -342,6 +351,10 @@ class SettingsScreen extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${t.syncError}: $err')),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _syncing = false);
       }
     }
   }
@@ -627,15 +640,41 @@ class SettingsScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: isSupabaseSignedIn ? () => _runSupabaseSync(context, app, upload: true) : null,
-                              child: Text(t.syncUpload),
+                              onPressed: isSupabaseSignedIn && !_syncing ? () => _runSupabaseSync(context, app, upload: true) : null,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (_syncing) ...[
+                                    const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  Text(_syncing ? t.syncInProgress : t.syncUpload),
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: isSupabaseSignedIn ? () => _runSupabaseSync(context, app, upload: false) : null,
-                              child: Text(t.syncDownload),
+                              onPressed: isSupabaseSignedIn && !_syncing ? () => _runSupabaseSync(context, app, upload: false) : null,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  if (_syncing) ...[
+                                    const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  Text(_syncing ? t.syncInProgress : t.syncDownload),
+                                ],
+                              ),
                             ),
                           ),
                         ],

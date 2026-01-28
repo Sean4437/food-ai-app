@@ -1105,6 +1105,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncDownload => '下載同步';
 
   @override
+  String get syncInProgress => '同步中';
+
+  @override
   String get syncSuccess => '同步完成';
 
   @override
@@ -2237,6 +2240,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncDownload => '下載同步';
+
+  @override
+  String get syncInProgress => '同步中';
 
   @override
   String get syncSuccess => '同步完成';

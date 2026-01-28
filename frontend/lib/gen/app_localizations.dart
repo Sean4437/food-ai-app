@@ -2167,6 +2167,12 @@ abstract class AppLocalizations {
   /// **'下載同步'**
   String get syncDownload;
 
+  /// No description provided for @syncInProgress.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'同步中'**
+  String get syncInProgress;
+
   /// No description provided for @syncSuccess.
   ///
   /// In zh_TW, this message translates to:
