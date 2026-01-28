@@ -184,6 +184,7 @@
   "suggestInstantLimit": "Portion limit",
   "suggestInstantMissing": "No analysis yet",
   "suggestInstantRecentHint": "Advice uses the last 7 days and the previous meal",
+  "suggestAutoSaved": "Saved automatically",
   "suggestTodayLabel": "Today's status",
   "suggestTodayHint": "A bit oily today, go lighter next meal",
   "suggestTodayOilyCarb": "Oily and carb-heavy today",

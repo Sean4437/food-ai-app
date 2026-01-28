@@ -1151,6 +1151,12 @@ abstract class AppLocalizations {
   /// **'建議已參考最近 7 天與上一餐'**
   String get suggestInstantRecentHint;
 
+  /// No description provided for @suggestAutoSaved.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已自動儲存'**
+  String get suggestAutoSaved;
+
   /// No description provided for @suggestTodayLabel.
   ///
   /// In zh_TW, this message translates to:

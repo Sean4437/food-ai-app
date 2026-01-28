@@ -557,6 +557,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Advice uses the last 7 days and the previous meal';
 
   @override
+  String get suggestAutoSaved => 'Saved automatically';
+
+  @override
   String get suggestTodayLabel => 'Today\'s status';
 
   @override

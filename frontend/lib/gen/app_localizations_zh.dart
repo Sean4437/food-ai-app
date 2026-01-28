@@ -552,6 +552,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';
 
   @override
+  String get suggestAutoSaved => '已自動儲存';
+
+  @override
+  String get suggestAutoSaved => '已自動儲存';
+
+  @override
   String get suggestTodayLabel => '今日整體判斷';
 
   @override

@@ -1083,6 +1083,8 @@ Widget _buildAdviceCard(AppLocalizations t) {
                           Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
                           _buildAdviceCard(t),
+                          const SizedBox(height: 10),
+                          Text(t.suggestAutoSaved, style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
                           const SizedBox(height: 12),
                           Text(t.suggestInstantRecentHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
                         ],

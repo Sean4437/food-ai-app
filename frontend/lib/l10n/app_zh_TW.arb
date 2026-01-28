@@ -184,6 +184,7 @@
   "suggestInstantLimit": "建議份量上限",
   "suggestInstantMissing": "尚未有分析結果",
   "suggestInstantRecentHint": "建議已參考最近 7 天與上一餐",
+  "suggestAutoSaved": "已自動儲存",
   "suggestTodayLabel": "今日整體判斷",
   "suggestTodayHint": "今天油脂偏高，建議下一餐清淡一點",
   "suggestTodayOilyCarb": "今天偏油、碳水也偏多",
