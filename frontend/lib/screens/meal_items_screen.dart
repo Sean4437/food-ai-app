@@ -38,6 +38,25 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   Timer? _autoTimer;
   bool _autoTimerStarted = false;
 
+  Future<void> _confirmDelete(BuildContext context, AppState app, MealEntry entry) async {
+    final t = AppLocalizations.of(context)!;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.delete),
+        content: Text(t.deleteConfirm),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.delete)),
+        ],
+      ),
+    );
+    if (result == true) {
+      app.removeEntry(entry);
+      if (context.mounted) Navigator.of(context).pop();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -161,6 +180,16 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                 onPressed: () => _reanalyzeEntry(context, app, entry),
                                 icon: const Icon(Icons.refresh, size: 20),
                                 tooltip: t.reanalyzeLabel,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: IconButton(
+                                onPressed: () => _confirmDelete(context, app, entry),
+                                icon: const Icon(Icons.delete_outline, size: 20),
+                                tooltip: t.delete,
                                 padding: const EdgeInsets.all(6),
                                 constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                               ),
