@@ -385,6 +385,9 @@ class _LogScreenState extends State<LogScreen> {
 
   Widget _mealSection(BuildContext context, AppState app, MealType type, List<List<MealEntry>> groups) {
     final t = AppLocalizations.of(context)!;
+    if (groups.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(12),
@@ -404,16 +407,13 @@ class _LogScreenState extends State<LogScreen> {
         children: [
           Text(_mealLabel(type, t), style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          if (groups.isEmpty)
-            Text(t.noMealPrompt, style: AppTextStyles.caption(context).copyWith(color: Colors.black54))
-          else
-            Column(
-              children: [
-                for (final group in groups)
-                  for (final entry in group)
-                    _mealRow(context, app, entry, group),
-              ],
-            ),
+          Column(
+            children: [
+              for (final group in groups)
+                for (final entry in group)
+                  _mealRow(context, app, entry, group),
+            ],
+          ),
         ],
       ),
     );
