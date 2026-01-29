@@ -3,7 +3,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
-import 'meal_detail_screen.dart';
+import 'meal_items_screen.dart';
 import '../widgets/record_sheet.dart';
 import '../widgets/app_background.dart';
 import '../design/text_styles.dart';
@@ -336,13 +336,23 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
-  Widget _mealRow(BuildContext context, AppState app, MealEntry entry) {
+  Widget _mealRow(BuildContext context, AppState app, MealEntry entry, List<MealEntry> group) {
     final t = AppLocalizations.of(context)!;
     final summary = _entryTitle(entry, t);
     final calorie = app.entryCalorieRangeLabel(entry, t);
     final tags = entry.result?.judgementTags ?? const <String>[];
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
+      onTap: () {
+        final initialIndex = group.indexOf(entry);
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MealItemsScreen(
+              group: group,
+              initialIndex: initialIndex >= 0 ? initialIndex : null,
+            ),
+          ),
+        );
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
@@ -425,7 +435,7 @@ class _LogScreenState extends State<LogScreen> {
             children: [
               for (final group in groups)
                 for (final entry in group)
-                  _mealRow(context, app, entry),
+                  _mealRow(context, app, entry, group),
             ],
           ),
         ],
