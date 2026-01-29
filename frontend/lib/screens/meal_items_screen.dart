@@ -531,6 +531,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             macros: app.scaledMacrosForEntry(currentEntry!),
                             style: _chartStyle(app.profile.nutritionChartStyle),
                             valueMode: _valueMode(app.profile.nutritionValueMode),
+                            calories: app.calorieRangeMid(currentEntry!.result?.calorieRange),
                             t: t,
                           ),
                         ],

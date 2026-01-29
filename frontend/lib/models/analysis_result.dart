@@ -31,17 +31,7 @@
     final rawMacros = (json['macros'] as Map?) ?? {};
     final parsedMacros = <String, double>{};
     rawMacros.forEach((key, value) {
-      if (value is num) {
-        parsedMacros[key.toString()] = value.toDouble();
-      } else if (value is String) {
-        final cleaned = value.replaceAll('%', '').trim();
-        final numeric = double.tryParse(cleaned);
-        if (numeric != null) {
-          parsedMacros[key.toString()] = numeric;
-        } else {
-          parsedMacros[key.toString()] = _macroLevelToPercent(cleaned);
-        }
-      }
+      parsedMacros[key.toString()] = _parseMacroValue(value, key.toString());
     });
     return AnalysisResult(
       foodName: json['food_name'] as String,
@@ -77,9 +67,23 @@
   }
 }
 
-double _macroLevelToPercent(String value) {
-  final lower = value.toLowerCase();
-  if (value.contains('低') || lower.contains('low')) return 30;
-  if (value.contains('高') || lower.contains('high')) return 80;
-  return 55;
+double _parseMacroValue(Object? value, String key) {
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    var cleaned = value.trim().toLowerCase();
+    cleaned = cleaned.replaceAll('公克', 'g').replaceAll('毫克', 'mg');
+    cleaned = cleaned.replaceAll('%', '').replaceAll('kcal', '').trim();
+    final isMg = cleaned.contains('mg');
+    cleaned = cleaned.replaceAll('mg', '').replaceAll('g', '').trim();
+    final numeric = double.tryParse(cleaned);
+    if (numeric == null) return 0;
+    if (key == 'sodium') {
+      return isMg ? numeric : numeric * 1000;
+    }
+    if (isMg) {
+      return numeric / 1000;
+    }
+    return numeric;
+  }
+  return 0;
 }

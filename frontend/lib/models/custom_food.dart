@@ -42,12 +42,7 @@ class CustomFood {
     final rawMacros = (json['macros'] as Map?) ?? {};
     final parsed = <String, double>{};
     rawMacros.forEach((key, value) {
-      if (value is num) {
-        parsed[key.toString()] = value.toDouble();
-      } else if (value is String) {
-        final cleaned = value.replaceAll('%', '').trim();
-        parsed[key.toString()] = double.tryParse(cleaned) ?? 0;
-      }
+      parsed[key.toString()] = _parseMacroValue(value, key.toString());
     });
     return CustomFood(
       id: json['id'] as String,
@@ -61,4 +56,25 @@ class CustomFood {
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
   }
+}
+
+double _parseMacroValue(Object? value, String key) {
+  if (value is num) return value.toDouble();
+  if (value is String) {
+    var cleaned = value.trim().toLowerCase();
+    cleaned = cleaned.replaceAll('公克', 'g').replaceAll('毫克', 'mg');
+    cleaned = cleaned.replaceAll('%', '').replaceAll('kcal', '').trim();
+    final isMg = cleaned.contains('mg');
+    cleaned = cleaned.replaceAll('mg', '').replaceAll('g', '').trim();
+    final numeric = double.tryParse(cleaned);
+    if (numeric == null) return 0;
+    if (key == 'sodium') {
+      return isMg ? numeric : numeric * 1000;
+    }
+    if (isMg) {
+      return numeric / 1000;
+    }
+    return numeric;
+  }
+  return 0;
 }

@@ -21,12 +21,14 @@ class NutritionChart extends StatelessWidget {
     required this.style,
     required this.t,
     this.valueMode = NutritionValueMode.percent,
+    this.calories,
   });
 
   final Map<String, double> macros;
   final NutritionChartStyle style;
   final AppLocalizations t;
   final NutritionValueMode valueMode;
+  final double? calories;
 
   static const _axisColors = [
     Color(0xFF7FCB99), // protein
@@ -35,40 +37,32 @@ class NutritionChart extends StatelessWidget {
     Color(0xFF8AB4F8), // sodium
   ];
 
-  double _ratioFromValue(double value) {
-    if (value <= 1) return value;
-    return (value.clamp(0, 100)) / 100;
-  }
-
-  double _normalizedPercent(double value) {
-    return value <= 1 ? (value * 100) : value;
-  }
-
-  double _amountFromPercent(String key, double percent) {
-    final ratio = (percent.clamp(0, 100)) / 100;
-    switch (key) {
-      case "protein":
-        return 30 * ratio;
-      case "carbs":
-        return 80 * ratio;
-      case "fat":
-        return 25 * ratio;
-      case "sodium":
-        return 800 * ratio;
-      default:
-        return 0;
+  double _percentFromGrams(String key, double grams) {
+    if (key == "sodium") {
+      const baseline = 800.0;
+      return baseline <= 0 ? 0 : (grams / baseline) * 100;
     }
+    if (calories != null && calories! > 0) {
+      final kcal = key == "fat" ? grams * 9 : grams * 4;
+      return (kcal / calories!) * 100;
+    }
+    const baselines = {
+      "protein": 30.0,
+      "carbs": 80.0,
+      "fat": 25.0,
+    };
+    final baseline = baselines[key] ?? 0;
+    return baseline <= 0 ? 0 : (grams / baseline) * 100;
   }
 
   String _displayValue(_MacroPoint point) {
-    final percent = _normalizedPercent(point.rawValue);
     if (valueMode == NutritionValueMode.percent) {
+      final percent = _percentFromGrams(point.key, point.rawValue);
       return "${percent.round()}%";
     }
-    final amount = _amountFromPercent(point.key, percent);
     final unit = point.unit;
-    final valueText = amount.round().toString();
-    return unit == "mg" ? "~${valueText}mg" : "~${valueText}g";
+    final valueText = point.rawValue.round().toString();
+    return unit == "mg" ? "${valueText}mg" : "${valueText}g";
   }
 
   List<_MacroPoint> _macroPoints() {
@@ -76,10 +70,10 @@ class NutritionChart extends StatelessWidget {
     final carbs = macros["carbs"] ?? 55;
     final fat = macros["fat"] ?? 55;
     final sodium = macros["sodium"] ?? 55;
-    final proteinRatio = _ratioFromValue(protein);
-    final carbsRatio = _ratioFromValue(carbs);
-    final fatRatio = _ratioFromValue(fat);
-    final sodiumRatio = _ratioFromValue(sodium);
+    final proteinRatio = (_percentFromGrams("protein", protein).clamp(0, 100)) / 100;
+    final carbsRatio = (_percentFromGrams("carbs", carbs).clamp(0, 100)) / 100;
+    final fatRatio = (_percentFromGrams("fat", fat).clamp(0, 100)) / 100;
+    final sodiumRatio = (_percentFromGrams("sodium", sodium).clamp(0, 100)) / 100;
     return [
       _MacroPoint("protein", t.protein, protein, proteinRatio, _axisColors[0], Icons.eco, "g"),
       _MacroPoint("carbs", t.carbs, carbs, carbsRatio, _axisColors[1], Icons.grass, "g"),
@@ -92,28 +86,26 @@ class NutritionChart extends StatelessWidget {
     required String key,
     required double value,
     required NutritionValueMode mode,
+    double? calories,
   }) {
-    final percent = value <= 1 ? (value * 100) : value;
     if (mode == NutritionValueMode.percent) {
+      final percent = () {
+        if (key == "sodium") {
+          const baseline = 800.0;
+          return baseline <= 0 ? 0 : (value / baseline) * 100;
+        }
+        if (calories != null && calories > 0) {
+          final kcal = key == "fat" ? value * 9 : value * 4;
+          return (kcal / calories) * 100;
+        }
+        const baselines = {"protein": 30.0, "carbs": 80.0, "fat": 25.0};
+        final baseline = baselines[key] ?? 0;
+        return baseline <= 0 ? 0 : (value / baseline) * 100;
+      }();
       return "${percent.round()}%";
     }
-    final ratio = (percent.clamp(0, 100)) / 100;
-    final amount = () {
-      switch (key) {
-        case "protein":
-          return 30 * ratio;
-        case "carbs":
-          return 80 * ratio;
-        case "fat":
-          return 25 * ratio;
-        case "sodium":
-          return 800 * ratio;
-        default:
-          return 0;
-      }
-    }();
     final unit = key == "sodium" ? "mg" : "g";
-    return unit == "mg" ? "~${amount.round()}mg" : "~${amount.round()}g";
+    return unit == "mg" ? "${value.round()}mg" : "${value.round()}g";
   }
 
   @override

@@ -65,13 +65,13 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
               const SizedBox(height: 8),
               TextField(controller: suggestionController, decoration: InputDecoration(labelText: t.customSuggestionLabel)),
               const SizedBox(height: 8),
-              TextField(controller: proteinController, decoration: InputDecoration(labelText: t.protein)),
+              TextField(controller: proteinController, decoration: InputDecoration(labelText: '${t.protein} (g)')),
               const SizedBox(height: 8),
-              TextField(controller: carbsController, decoration: InputDecoration(labelText: t.carbs)),
+              TextField(controller: carbsController, decoration: InputDecoration(labelText: '${t.carbs} (g)')),
               const SizedBox(height: 8),
-              TextField(controller: fatController, decoration: InputDecoration(labelText: t.fat)),
+              TextField(controller: fatController, decoration: InputDecoration(labelText: '${t.fat} (g)')),
               const SizedBox(height: 8),
-              TextField(controller: sodiumController, decoration: InputDecoration(labelText: t.sodium)),
+              TextField(controller: sodiumController, decoration: InputDecoration(labelText: '${t.sodium} (mg)')),
             ],
           ),
         ),
@@ -88,10 +88,10 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
       ..calorieRange = calorieController.text.trim()
       ..suggestion = suggestionController.text.trim()
       ..macros = {
-        'protein': _parsePercent(proteinController.text),
-        'carbs': _parsePercent(carbsController.text),
-        'fat': _parsePercent(fatController.text),
-        'sodium': _parsePercent(sodiumController.text),
+        'protein': _parseMacroValue(proteinController.text),
+        'carbs': _parseMacroValue(carbsController.text),
+        'fat': _parseMacroValue(fatController.text),
+        'sodium': _parseMacroValue(sodiumController.text, isSodium: true),
       }
       ..updatedAt = DateTime.now();
     if (newImage != null) {
@@ -118,9 +118,20 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
     await app.deleteCustomFood(food);
   }
 
-  double _parsePercent(String value) {
-    final cleaned = value.replaceAll('%', '').trim();
-    return double.tryParse(cleaned) ?? 0;
+  double _parseMacroValue(String value, {bool isSodium = false}) {
+    var cleaned = value.trim().toLowerCase();
+    cleaned = cleaned.replaceAll('公克', 'g').replaceAll('毫克', 'mg');
+    cleaned = cleaned.replaceAll('%', '').replaceAll('kcal', '').trim();
+    final isMg = cleaned.contains('mg');
+    cleaned = cleaned.replaceAll('mg', '').replaceAll('g', '').trim();
+    final numeric = double.tryParse(cleaned) ?? 0;
+    if (isSodium) {
+      return isMg ? numeric : numeric * 1000;
+    }
+    if (isMg) {
+      return numeric / 1000;
+    }
+    return numeric;
   }
 
   String _macroValue(CustomFood food, String key) {

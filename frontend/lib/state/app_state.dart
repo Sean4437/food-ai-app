@@ -27,6 +27,13 @@ const List<String> kDeprecatedApiBaseUrls = [
 const String kDefaultPlateAsset = 'assets/plates/plate_Japanese_02.png';
 const String kDefaultThemeAsset = 'assets/themes/theme_clean.json';
 const double kDefaultTextScale = 1.0;
+const String _kMacroUnitMetaKey = 'macro_unit';
+const String _kMacroUnitGrams = 'grams';
+const String _kMacroUnitPercent = 'percent';
+const double _kMacroBaselineProteinG = 30;
+const double _kMacroBaselineCarbsG = 80;
+const double _kMacroBaselineFatG = 25;
+const double _kMacroBaselineSodiumMg = 800;
 const String _kNamePlaceholderBase64 =
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/Pi3n1wAAAABJRU5ErkJggg==';
 
@@ -460,6 +467,11 @@ class AppState extends ChangeNotifier {
       _applyProfile(profileMap);
     }
     final didMigrateApi = _migrateApiBaseUrlIfNeeded();
+    bool profileChanged = false;
+    if (profile.nutritionValueMode != 'amount') {
+      profile.nutritionValueMode = 'amount';
+      profileChanged = true;
+    }
     final overrides = await _settings.loadOverrides();
     if (overrides != null) {
       _loadOverrides(overrides);
@@ -485,7 +497,17 @@ class AppState extends ChangeNotifier {
         await _store.upsert(entry);
       }
     }
-    if (didMigrateApi) {
+    final migratedMacros = _maybeMigrateMacrosToGrams();
+    if (migratedMacros) {
+      for (final entry in entries) {
+        await _store.upsert(entry);
+      }
+      await _saveOverrides();
+    } else if (_meta[_kMacroUnitMetaKey] != _kMacroUnitGrams) {
+      _meta[_kMacroUnitMetaKey] = _kMacroUnitGrams;
+      await _saveOverrides();
+    }
+    if (didMigrateApi || profileChanged) {
       await _saveProfile();
     }
     _scheduleAutoFinalize();
@@ -775,8 +797,8 @@ class AppState extends ChangeNotifier {
   String todayStatusLabel(AppLocalizations t) {
     final entry = latestEntryForSelectedDate;
     if (entry == null || entry.result == null) return t.suggestTodayHint;
-    final fat = entry.result!.macros['fat'] ?? 0;
-    final carbs = entry.result!.macros['carbs'] ?? 0;
+    final fat = macroPercentFromResult(entry.result!, 'fat');
+    final carbs = macroPercentFromResult(entry.result!, 'carbs');
     final oily = _isHigh(fat);
     final carbHigh = _isHigh(carbs);
     if (oily && carbHigh) return t.suggestTodayOilyCarb;
@@ -788,9 +810,9 @@ class AppState extends ChangeNotifier {
   String todaySummary(AppLocalizations t) {
     final entry = latestEntryForSelectedDate;
     if (entry == null || entry.result == null) return t.summaryEmpty;
-    final fat = entry.result!.macros['fat'] ?? 0;
-    final protein = entry.result!.macros['protein'] ?? 0;
-    final carbs = entry.result!.macros['carbs'] ?? 0;
+    final fat = macroPercentFromResult(entry.result!, 'fat');
+    final protein = macroPercentFromResult(entry.result!, 'protein');
+    final carbs = macroPercentFromResult(entry.result!, 'carbs');
     final oily = _isHigh(fat);
     final proteinOk = _isProteinOk(protein);
     final carbHigh = _isHigh(carbs);
@@ -1480,13 +1502,13 @@ class AppState extends ChangeNotifier {
 
     if (totalWeight == 0) return null;
     final macros = <String, double>{
-      'protein': proteinSum / totalWeight,
-      'carbs': carbSum / totalWeight,
-      'fat': fatSum / totalWeight,
-      'sodium': sodiumSum / totalWeight,
+      'protein': proteinSum,
+      'carbs': carbSum,
+      'fat': fatSum,
+      'sodium': sodiumSum,
     };
     final dishSummary = _buildMealDishSummary(group);
-    final advice = dishSummary.isNotEmpty ? dishSummary : _buildMealAdvice(macros, t);
+    final advice = dishSummary.isNotEmpty ? dishSummary : _buildMealAdvice(macros, calorieRange, t);
     final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
     return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
   }
@@ -1520,12 +1542,12 @@ class AppState extends ChangeNotifier {
 
     if (totalWeight == 0) return null;
     final macros = <String, double>{
-      'protein': proteinSum / totalWeight,
-      'carbs': carbSum / totalWeight,
-      'fat': fatSum / totalWeight,
-      'sodium': sodiumSum / totalWeight,
+      'protein': proteinSum,
+      'carbs': carbSum,
+      'fat': fatSum,
+      'sodium': sodiumSum,
     };
-    final advice = _buildMealAdvice(macros, t);
+    final advice = _buildMealAdvice(macros, calorieRange, t);
     final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
     return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
   }
@@ -2052,6 +2074,155 @@ class AppState extends ChangeNotifier {
     return sha1.convert(bytes).toString();
   }
 
+  double _macroBaselineForKey(String key) {
+    switch (key) {
+      case 'protein':
+        return _kMacroBaselineProteinG;
+      case 'carbs':
+        return _kMacroBaselineCarbsG;
+      case 'fat':
+        return _kMacroBaselineFatG;
+      case 'sodium':
+        return _kMacroBaselineSodiumMg;
+      default:
+        return 0;
+    }
+  }
+
+  double _macroPercentFromGramsValue(
+    double grams,
+    String key, {
+    double? calories,
+    double baselineMultiplier = 1.0,
+  }) {
+    if (key == 'sodium') {
+      final baseline = _kMacroBaselineSodiumMg * baselineMultiplier;
+      if (baseline <= 0) return 0;
+      return (grams / baseline) * 100;
+    }
+    if (calories != null && calories > 0) {
+      final kcal = key == 'fat' ? grams * 9 : grams * 4;
+      return (kcal / calories) * 100;
+    }
+    final baseline = _macroBaselineForKey(key) * baselineMultiplier;
+    if (baseline <= 0) return 0;
+    return (grams / baseline) * 100;
+  }
+
+  Map<String, double> _macroPercentMapFromGrams(Map<String, double> grams, String? calorieRange,
+      {double baselineMultiplier = 1.0}) {
+    final calories = calorieRangeMid(calorieRange);
+    return {
+      'protein': _macroPercentFromGramsValue(grams['protein'] ?? 0, 'protein',
+          calories: calories, baselineMultiplier: baselineMultiplier),
+      'carbs': _macroPercentFromGramsValue(grams['carbs'] ?? 0, 'carbs',
+          calories: calories, baselineMultiplier: baselineMultiplier),
+      'fat': _macroPercentFromGramsValue(grams['fat'] ?? 0, 'fat',
+          calories: calories, baselineMultiplier: baselineMultiplier),
+      'sodium': _macroPercentFromGramsValue(grams['sodium'] ?? 0, 'sodium',
+          calories: calories, baselineMultiplier: baselineMultiplier),
+    };
+  }
+
+  double macroPercentFromResult(AnalysisResult result, String key) {
+    return _macroPercentFromGramsValue(
+      result.macros[key] ?? 0,
+      key,
+      calories: calorieRangeMid(result.calorieRange),
+    );
+  }
+
+  Map<String, double> _percentMacrosToGrams(Map<String, double> percentMacros) {
+    final protein = (percentMacros['protein'] ?? 0) / 100;
+    final carbs = (percentMacros['carbs'] ?? 0) / 100;
+    final fat = (percentMacros['fat'] ?? 0) / 100;
+    final sodium = (percentMacros['sodium'] ?? 0) / 100;
+    return {
+      'protein': _kMacroBaselineProteinG * protein,
+      'carbs': _kMacroBaselineCarbsG * carbs,
+      'fat': _kMacroBaselineFatG * fat,
+      'sodium': _kMacroBaselineSodiumMg * sodium,
+    };
+  }
+
+  bool _maybeMigrateMacrosToGrams() {
+    final unit = _meta[_kMacroUnitMetaKey];
+    if (unit == _kMacroUnitGrams) {
+      return false;
+    }
+    bool looksLikeGrams = false;
+    bool checkMacros(Map<String, double> macros) {
+      if (macros.isEmpty) return false;
+      final protein = macros['protein'] ?? 0;
+      final carbs = macros['carbs'] ?? 0;
+      final fat = macros['fat'] ?? 0;
+      final sodium = macros['sodium'] ?? 0;
+      return protein > 100 || carbs > 100 || fat > 100 || sodium > 120;
+    }
+    for (final entry in entries) {
+      if (entry.result != null && checkMacros(entry.result!.macros)) {
+        looksLikeGrams = true;
+        break;
+      }
+      if (entry.labelResult != null && checkMacros(entry.labelResult!.macros)) {
+        looksLikeGrams = true;
+        break;
+      }
+    }
+    if (!looksLikeGrams) {
+      for (final food in customFoods) {
+        if (checkMacros(food.macros)) {
+          looksLikeGrams = true;
+          break;
+        }
+      }
+    }
+    if (looksLikeGrams) {
+      _meta[_kMacroUnitMetaKey] = _kMacroUnitGrams;
+      return false;
+    }
+    bool changed = false;
+    for (final entry in entries) {
+      final result = entry.result;
+      if (result != null && result.macros.isNotEmpty) {
+        entry.result = AnalysisResult(
+          foodName: result.foodName,
+          calorieRange: result.calorieRange,
+          macros: _percentMacrosToGrams(result.macros),
+          foodItems: result.foodItems,
+          judgementTags: result.judgementTags,
+          dishSummary: result.dishSummary,
+          suggestion: result.suggestion,
+          tier: result.tier,
+          source: result.source,
+          costEstimateUsd: result.costEstimateUsd,
+          confidence: result.confidence,
+          isBeverage: result.isBeverage,
+        );
+        changed = true;
+      }
+      final label = entry.labelResult;
+      if (label != null && label.macros.isNotEmpty) {
+        entry.labelResult = LabelResult(
+          labelName: label.labelName,
+          calorieRange: label.calorieRange,
+          macros: _percentMacrosToGrams(label.macros),
+          isBeverage: label.isBeverage,
+          confidence: label.confidence,
+        );
+        changed = true;
+      }
+    }
+    for (final food in customFoods) {
+      if (food.macros.isNotEmpty) {
+        food.macros = _percentMacrosToGrams(food.macros);
+        changed = true;
+      }
+    }
+    _meta[_kMacroUnitMetaKey] = _kMacroUnitGrams;
+    return changed;
+  }
+
   double _aggregateMacroScore(List<MealEntry> dayEntries, String key, AppLocalizations t) {
     double totalWeight = 0;
     double score = 0;
@@ -2059,8 +2230,15 @@ class AppState extends ChangeNotifier {
       final result = entry.result;
       if (result == null) continue;
       final weight = _portionWeight(entry.portionPercent);
+      final calories = calorieRangeMid(result.calorieRange);
       totalWeight += weight;
-      score += _levelScorePercent(result.macros[key] ?? 0) * weight;
+      final percent = _macroPercentFromGramsValue(
+        result.macros[key] ?? 0,
+        key,
+        calories: calories,
+        baselineMultiplier: 1.0,
+      );
+      score += _levelScorePercent(percent) * weight;
     }
     if (totalWeight == 0) return 0;
     return score / totalWeight;
@@ -2068,16 +2246,29 @@ class AppState extends ChangeNotifier {
 
   double _aggregateMacroPercentPlain(List<MealEntry> dayEntries, String key) {
     double totalWeight = 0;
-    double score = 0;
+    double gramsSum = 0;
+    double caloriesSum = 0;
+    bool hasCalories = false;
     for (final entry in dayEntries) {
       final result = entry.result;
       if (result == null) continue;
       final weight = _portionWeight(entry.portionPercent);
       totalWeight += weight;
-      score += (result.macros[key] ?? 0) * weight;
+      gramsSum += (result.macros[key] ?? 0) * weight;
+      final calories = calorieRangeMid(result.calorieRange);
+      if (calories != null && calories > 0) {
+        caloriesSum += calories * weight;
+        hasCalories = true;
+      }
     }
     if (totalWeight == 0) return 0;
-    return score / totalWeight;
+    final calories = hasCalories ? caloriesSum : null;
+    return _macroPercentFromGramsValue(
+      gramsSum,
+      key,
+      calories: calories,
+      baselineMultiplier: totalWeight,
+    );
   }
 
   String? _buildLabelContext(LabelResult? labelResult) {
@@ -2091,7 +2282,7 @@ class AppState extends ChangeNotifier {
     }
     if (macros.isNotEmpty) {
       parts.add(
-        'macros=protein:${macros['protein']?.round() ?? 0}, carbs:${macros['carbs']?.round() ?? 0}, fat:${macros['fat']?.round() ?? 0}, sodium:${macros['sodium']?.round() ?? 0}',
+        'macros=protein_g:${macros['protein']?.round() ?? 0}, carbs_g:${macros['carbs']?.round() ?? 0}, fat_g:${macros['fat']?.round() ?? 0}, sodium_mg:${macros['sodium']?.round() ?? 0}',
       );
     }
     if (labelResult.labelName != null && labelResult.labelName!.trim().isNotEmpty) {
@@ -2241,12 +2432,13 @@ class AppState extends ChangeNotifier {
     return t.levelMedium;
   }
 
-  String _buildMealAdvice(Map<String, double> macros, AppLocalizations t) {
+  String _buildMealAdvice(Map<String, double> macros, String calorieRange, AppLocalizations t) {
     final advice = <String>[];
-    final protein = macros['protein'] ?? 0;
-    final fat = macros['fat'] ?? 0;
-    final carbs = macros['carbs'] ?? 0;
-    final sodium = macros['sodium'] ?? 0;
+    final percentMap = _macroPercentMapFromGrams(macros, calorieRange);
+    final protein = percentMap['protein'] ?? 0;
+    final fat = percentMap['fat'] ?? 0;
+    final carbs = percentMap['carbs'] ?? 0;
+    final sodium = percentMap['sodium'] ?? 0;
     if (_isLow(protein)) advice.add(t.dietitianProteinLow);
     if (_isHigh(fat)) advice.add(t.dietitianFatHigh);
     if (_isHigh(carbs)) advice.add(t.dietitianCarbHigh);
@@ -2847,11 +3039,21 @@ class AppState extends ChangeNotifier {
     final parsed = <String, double>{};
     if (raw is Map) {
       raw.forEach((key, value) {
+        final k = key.toString();
         if (value is num) {
-          parsed[key.toString()] = value.toDouble();
+          parsed[k] = value.toDouble();
         } else if (value is String) {
-          final cleaned = value.replaceAll('%', '').trim();
-          parsed[key.toString()] = double.tryParse(cleaned) ?? 0;
+          var cleaned = value.trim().toLowerCase();
+          cleaned = cleaned.replaceAll('公克', 'g').replaceAll('毫克', 'mg');
+          cleaned = cleaned.replaceAll('%', '').replaceAll('kcal', '').trim();
+          final isMg = cleaned.contains('mg');
+          cleaned = cleaned.replaceAll('mg', '').replaceAll('g', '').trim();
+          final numeric = double.tryParse(cleaned) ?? 0;
+          if (k == 'sodium') {
+            parsed[k] = isMg ? numeric : numeric * 1000;
+          } else {
+            parsed[k] = isMg ? numeric / 1000 : numeric;
+          }
         }
       });
     }
@@ -2991,6 +3193,9 @@ class AppState extends ChangeNotifier {
       ..nutritionValueMode = (data['nutrition_value_mode'] as String?) ?? profile.nutritionValueMode
       ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled
       ..exerciseSuggestionType = (data['exercise_suggestion_type'] as String?) ?? profile.exerciseSuggestionType;
+    if (profile.nutritionValueMode == 'percent') {
+      profile.nutritionValueMode = 'amount';
+    }
   }
 
   int _parseInt(dynamic value, int fallback) {
@@ -3259,7 +3464,7 @@ class UserProfile {
       themeAsset: kDefaultThemeAsset,
       textScale: kDefaultTextScale,
       nutritionChartStyle: 'bars',
-      nutritionValueMode: 'percent',
+      nutritionValueMode: 'amount',
       glowEnabled: true,
       exerciseSuggestionType: 'walking',
     );

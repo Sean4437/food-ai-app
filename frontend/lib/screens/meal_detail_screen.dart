@@ -37,16 +37,29 @@ class MealDetailScreen extends StatelessWidget {
     return safe / 100.0;
   }
 
-  String _displayValue(double percent) => '${percent.round()}%';
+  String _displayValue(String key, double grams) {
+    if (key == 'sodium') {
+      return '${grams.round()}mg';
+    }
+    return '${grams.round()}g';
+  }
 
-  Widget _nutrientValue(BuildContext context, String label, double value, double ratio, IconData icon, Color color) {
+  Widget _nutrientValue(
+    BuildContext context,
+    String key,
+    String label,
+    double grams,
+    double ratio,
+    IconData icon,
+    Color color,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 6),
         Text(
-          '$label ${_displayValue(value)}',
+          '$label ${_displayValue(key, grams)}',
           style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
         ),
       ],
@@ -54,14 +67,16 @@ class MealDetailScreen extends StatelessWidget {
   }
 
   Widget _radarChart(BuildContext context, MealEntry entry, AppLocalizations t) {
-    final protein = entry.result?.macros['protein'] ?? 55;
-    final carbs = entry.result?.macros['carbs'] ?? 55;
-    final fat = entry.result?.macros['fat'] ?? 55;
-    final sodium = entry.result?.macros['sodium'] ?? 55;
-    final proteinRatio = _ratioFromPercent(protein);
-    final carbsRatio = _ratioFromPercent(carbs);
-    final fatRatio = _ratioFromPercent(fat);
-    final sodiumRatio = _ratioFromPercent(sodium);
+    final app = AppStateScope.of(context);
+    final result = entry.result;
+    final protein = result?.macros['protein'] ?? 0;
+    final carbs = result?.macros['carbs'] ?? 0;
+    final fat = result?.macros['fat'] ?? 0;
+    final sodium = result?.macros['sodium'] ?? 0;
+    final proteinRatio = _ratioFromPercent(result == null ? 0 : app.macroPercentFromResult(result, 'protein'));
+    final carbsRatio = _ratioFromPercent(result == null ? 0 : app.macroPercentFromResult(result, 'carbs'));
+    final fatRatio = _ratioFromPercent(result == null ? 0 : app.macroPercentFromResult(result, 'fat'));
+    final sodiumRatio = _ratioFromPercent(result == null ? 0 : app.macroPercentFromResult(result, 'sodium'));
     final values = [proteinRatio, carbsRatio, fatRatio, sodiumRatio];
 
     return Column(
@@ -82,6 +97,7 @@ class MealDetailScreen extends StatelessWidget {
                       alignment: const Alignment(0, -1.05),
                       child: _nutrientValue(
                         context,
+                        'protein',
                         t.protein,
                         protein,
                         proteinRatio,
@@ -93,6 +109,7 @@ class MealDetailScreen extends StatelessWidget {
                       alignment: const Alignment(1.05, 0.1),
                       child: _nutrientValue(
                         context,
+                        'carbs',
                         t.carbs,
                         carbs,
                         carbsRatio,
@@ -104,6 +121,7 @@ class MealDetailScreen extends StatelessWidget {
                       alignment: const Alignment(0, 1.05),
                       child: _nutrientValue(
                         context,
+                        'fat',
                         t.fat,
                         fat,
                         fatRatio,
@@ -115,6 +133,7 @@ class MealDetailScreen extends StatelessWidget {
                       alignment: const Alignment(-1.05, 0.1),
                       child: _nutrientValue(
                         context,
+                        'sodium',
                         t.sodium,
                         sodium,
                         sodiumRatio,

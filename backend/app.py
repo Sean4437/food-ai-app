@@ -197,7 +197,8 @@ _fake_suggestions = {
     ],
 }
 
-_fake_macro_choices = [25, 40, 55, 70, 85]
+_fake_macro_choices_g = [8, 15, 25, 35, 45]
+_fake_sodium_choices_mg = [120, 250, 450, 700, 950]
 
 
 def _macro_level_to_percent(value: str) -> int:
@@ -209,17 +210,29 @@ def _macro_level_to_percent(value: str) -> int:
     return 55
 
 
-def _normalize_macro_value(value) -> float:
+def _normalize_macro_value(value, key: str) -> float:
     if isinstance(value, (int, float)):
-        return float(max(0, min(100, value)))
+        return float(max(0, value))
     if isinstance(value, str):
-        stripped = value.strip()
+        stripped = value.strip().lower()
+        stripped = stripped.replace("公克", "g").replace("毫克", "mg")
         try:
-            num = float(stripped.replace("%", ""))
-            return float(max(0, min(100, num)))
+            cleaned = stripped.replace("%", "").replace("kcal", "").strip()
+            if "mg" in cleaned:
+                num = float(cleaned.replace("mg", "").strip())
+                return float(max(0, num))
+            if cleaned.endswith("g"):
+                num = float(cleaned.replace("g", "").strip())
+                if key == "sodium":
+                    return float(max(0, num * 1000))
+                return float(max(0, num))
+            num = float(cleaned)
+            if key == "sodium" and "mg" in stripped:
+                return float(max(0, num))
+            return float(max(0, num))
         except Exception:
-            return float(_macro_level_to_percent(stripped))
-    return 55.0
+            return 0.0
+    return 0.0
 
 
 def _normalize_macros(data: dict, lang: str) -> dict:
@@ -227,21 +240,11 @@ def _normalize_macros(data: dict, lang: str) -> dict:
     if not isinstance(macros, dict):
         macros = {}
     macros = {
-        "protein": _normalize_macro_value(macros.get("protein", 55)),
-        "carbs": _normalize_macro_value(macros.get("carbs", 55)),
-        "fat": _normalize_macro_value(macros.get("fat", 55)),
-        "sodium": _normalize_macro_value(macros.get("sodium", 55)),
+        "protein": _normalize_macro_value(macros.get("protein", 0), "protein"),
+        "carbs": _normalize_macro_value(macros.get("carbs", 0), "carbs"),
+        "fat": _normalize_macro_value(macros.get("fat", 0), "fat"),
+        "sodium": _normalize_macro_value(macros.get("sodium", 0), "sodium"),
     }
-    is_beverage = False
-    if isinstance(data, dict):
-        raw_flag = data.get("is_beverage")
-        if isinstance(raw_flag, bool):
-            is_beverage = raw_flag
-        elif isinstance(raw_flag, str):
-            is_beverage = raw_flag.strip().lower() == "true"
-    if is_beverage:
-        macros["protein"] = min(macros["protein"], 15.0)
-        macros["fat"] = min(macros["fat"], 15.0)
     return macros
 
 
@@ -334,7 +337,7 @@ def _build_prompt(
             "- food_name: 中文餐點名稱\n"
             "- food_items: 1-5 個食物名稱（列出看得到的主要食物）\n"
             "- calorie_range: 例如 '450-600 kcal'（區間寬度控制在 120-200 kcal，飲料 <= 120）\n"
-            "- macros: protein/carbs/fat/sodium 為 0-100 的百分比整數\n"
+            "- macros: protein/carbs/fat 為克數(g)，sodium 為毫克(mg)，以此餐份量估算（不要用百分比）\n"
             "- judgement_tags: 從 [偏油, 清淡, 碳水偏多, 蛋白不足] 選 1-3 個\n"
             "- dish_summary: 20 字內一句話摘要\n"
             "- 規則：自然口語，不要專業營養名詞，不要出現數字/熱量/克數，不責備不命令\n"
@@ -343,7 +346,7 @@ def _build_prompt(
             f"{suggestion_rule}"
             "- confidence: 0 到 1 的信心分數\n"
             "- is_beverage: 是否為飲料（true/false）\n"
-            "- 飲料規則：若為飲料，protein/fat 建議 <= 15，熱量偏低；含糖可提升 carbs\n"
+            "- 飲料規則：若為飲料，protein/fat 請偏低（約 <= 3g），熱量偏低；含糖可提升 carbs\n"
             "- 若使用者提供 food_name，必須優先採用\n"
             "- 若提供 nutrition label info，必須使用其 calorie_range 與 macros\n"
             "- 避免醫療或診斷字眼；避免精準數值或克數，維持區間與語意描述\n"
@@ -353,7 +356,7 @@ def _build_prompt(
             "  \"food_name\": \"牛肉便當\",\n"
             "  \"food_items\": [\"白飯\", \"牛肉\", \"青菜\"],\n"
             "  \"calorie_range\": \"650-850 kcal\",\n"
-            "  \"macros\": {\"protein\": 45, \"carbs\": 55, \"fat\": 65, \"sodium\": 70},\n"
+            "  \"macros\": {\"protein\": 35, \"carbs\": 90, \"fat\": 25, \"sodium\": 900},\n"
             "  \"judgement_tags\": [\"偏油\", \"蛋白不足\"],\n"
             "  \"dish_summary\": \"油脂偏多、蛋白足夠\",\n"
             f"{suggestion_example}"
@@ -383,7 +386,7 @@ def _build_prompt(
         "- food_name: English name\n"
         "- food_items: 1-5 primary items visible in the meal\n"
         "- calorie_range: e.g. '450-600 kcal' (keep range width 120-200 kcal; beverage <= 120)\n"
-        "- macros: protein/carbs/fat/sodium are integer percentages (0-100)\n"
+        "- macros: protein/carbs/fat are grams (g), sodium is milligrams (mg) for this portion (no percentages)\n"
         "- judgement_tags: choose 1-3 from [Heavier oil, Light, Higher carbs, Low protein]\n"
         "- dish_summary: single-sentence summary (<= 20 words)\n"
         "- Rules: natural language, avoid technical nutrition terms, no numbers/calories/grams, no scolding or commands\n"
@@ -392,7 +395,7 @@ def _build_prompt(
         f"{suggestion_rule}"
         "- confidence: 0 to 1 confidence score\n"
         "- is_beverage: true/false\n"
-        "- Beverage rule: if beverage, protein/fat should be <= 15; calories should be low; sugary drinks may increase carbs\n"
+        "- Beverage rule: if beverage, protein/fat should be low (around <= 3g); calories should be low; sugary drinks may increase carbs\n"
         "- If user provides food_name, it must be used as the primary name\n"
         "- If nutrition label info is provided, you must use its calorie_range and macros\n"
         "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
@@ -402,7 +405,7 @@ def _build_prompt(
         "  \"food_name\": \"beef bento\",\n"
         "  \"food_items\": [\"rice\", \"beef\", \"vegetables\"],\n"
         "  \"calorie_range\": \"650-850 kcal\",\n"
-        "  \"macros\": {\"protein\": 45, \"carbs\": 55, \"fat\": 65, \"sodium\": 70},\n"
+        "  \"macros\": {\"protein\": 35, \"carbs\": 90, \"fat\": 25, \"sodium\": 900},\n"
         "  \"judgement_tags\": [\"Heavier oil\", \"Low protein\"],\n"
         "  \"dish_summary\": \"Heavier oil, decent protein\",\n"
         f"{suggestion_example}"
@@ -475,7 +478,7 @@ def _build_name_prompt(
             "- food_name: 中文餐點名稱（必須使用提供的名稱）\n"
             "- food_items: 1-5 個食物名稱（用名稱推測主要食物）\n"
             "- calorie_range: 例如 '450-600 kcal'（區間寬度控制在 120-200 kcal，飲料 <= 120）\n"
-            "- macros: protein/carbs/fat/sodium 為 0-100 的百分比整數\n"
+            "- macros: protein/carbs/fat 為克數(g)，sodium 為毫克(mg)，以此餐份量估算（不要用百分比）\n"
             "- judgement_tags: 從 [偏油, 清淡, 碳水偏多, 蛋白不足] 選 1-3 個\n"
             "- dish_summary: 20 字內一句話摘要\n"
             "- 規則：自然口語，不要專業營養名詞，不要出現數字/熱量/克數，不責備不命令\n"
@@ -483,13 +486,13 @@ def _build_name_prompt(
             f"{suggestion_rule}"
             "- confidence: 0 到 1 的信心分數\n"
             "- is_beverage: 是否為飲料（true/false）\n"
-            "- 飲料規則：若為飲料，protein/fat 建議 <= 15，熱量偏低；含糖可提升 carbs\n"
+            "- 飲料規則：若為飲料，protein/fat 請偏低（約 <= 3g），熱量偏低；含糖可提升 carbs\n"
             "JSON 範例：\n"
             "{\n"
             f"  \"food_name\": \"{food_name}\",\n"
             "  \"food_items\": [\"白飯\", \"牛肉\", \"青菜\"],\n"
             "  \"calorie_range\": \"650-850 kcal\",\n"
-            "  \"macros\": {\"protein\": 45, \"carbs\": 55, \"fat\": 65, \"sodium\": 70},\n"
+            "  \"macros\": {\"protein\": 35, \"carbs\": 90, \"fat\": 25, \"sodium\": 900},\n"
             "  \"judgement_tags\": [\"偏油\", \"蛋白不足\"],\n"
             "  \"dish_summary\": \"油脂偏多、蛋白足夠\",\n"
             f"{suggestion_example}"
@@ -520,20 +523,20 @@ def _build_name_prompt(
         f"- food_name: must use provided name ({food_name})\n"
         "- food_items: 1-5 primary items inferred from the name\n"
         "- calorie_range: e.g. '450-600 kcal' (keep range width 120-200 kcal; beverage <= 120)\n"
-        "- macros: protein/carbs/fat/sodium are integer percentages (0-100)\n"
+        "- macros: protein/carbs/fat are grams (g), sodium is milligrams (mg) for this portion (no percentages)\n"
         "- judgement_tags: choose 1-3 from [Heavier oil, Light, Higher carbs, Low protein]\n"
         "- dish_summary: single-sentence summary (<= 20 words)\n"
         "- Rules: natural language, avoid technical nutrition terms, no numbers/calories/grams, no scolding or commands\n"
         f"{suggestion_rule}"
         "- confidence: 0 to 1\n"
         "- is_beverage: true/false\n"
-        "- Beverage rule: if beverage, protein/fat should be <= 15; calories should be low; sugary drinks may increase carbs\n"
+        "- Beverage rule: if beverage, protein/fat should be low (around <= 3g); calories should be low; sugary drinks may increase carbs\n"
         "JSON example:\n"
         "{\n"
         f"  \"food_name\": \"{food_name}\",\n"
         "  \"food_items\": [\"rice\", \"beef\", \"vegetables\"],\n"
         "  \"calorie_range\": \"650-850 kcal\",\n"
-        "  \"macros\": {\"protein\": 45, \"carbs\": 55, \"fat\": 65, \"sodium\": 70},\n"
+        "  \"macros\": {\"protein\": 35, \"carbs\": 90, \"fat\": 25, \"sodium\": 900},\n"
         "  \"judgement_tags\": [\"Heavier oil\", \"Low protein\"],\n"
         "  \"dish_summary\": \"Heavier oil, decent protein\",\n"
         f"{suggestion_example}"
@@ -891,15 +894,15 @@ def _build_label_prompt(lang: str) -> str:
             "- 僅回傳 JSON（不要多餘文字）\n"
             "- label_name: 產品或品名（若看不到可留空）\n"
             "- calorie_range: 若有熱量數字，請輸出區間或單一值（例：200 kcal 或 180-220 kcal）\n"
-            "- macros: protein/carbs/fat/sodium 為 0-100 的百分比整數\n"
+            "- macros: protein/carbs/fat 為克數(g)，sodium 為毫克(mg)（不要用百分比）\n"
             "- confidence: 0 到 1 的信心分數\n"
             "- is_beverage: 是否為飲料（true/false）\n"
-            "- 飲料規則：若為飲料，protein/fat 建議 <= 15\n"
+            "- 飲料規則：若為飲料，protein/fat 請偏低（約 <= 3g）\n"
             "JSON 範例：\n"
             "{\n"
             "  \"label_name\": \"無糖茶\",\n"
             "  \"calorie_range\": \"0-10 kcal\",\n"
-            "  \"macros\": {\"protein\": 5, \"carbs\": 8, \"fat\": 5, \"sodium\": 15},\n"
+            "  \"macros\": {\"protein\": 0, \"carbs\": 2, \"fat\": 0, \"sodium\": 15},\n"
             "  \"confidence\": 0.7,\n"
             "  \"is_beverage\": true\n"
             "}\n"
@@ -910,15 +913,15 @@ def _build_label_prompt(lang: str) -> str:
         "- Return JSON only\n"
         "- label_name: product name (empty if not visible)\n"
         "- calorie_range: range or single value (e.g., 200 kcal or 180-220 kcal)\n"
-        "- macros: protein/carbs/fat/sodium as integer percentages (0-100)\n"
+        "- macros: protein/carbs/fat in grams (g), sodium in milligrams (mg) (no percentages)\n"
         "- confidence: 0 to 1\n"
         "- is_beverage: true/false\n"
-        "- Beverage rule: if beverage, protein/fat <= 15\n"
+        "- Beverage rule: if beverage, protein/fat should be low (around <= 3g)\n"
         "JSON example:\n"
         "{\n"
         "  \"label_name\": \"unsweetened tea\",\n"
         "  \"calorie_range\": \"0-10 kcal\",\n"
-        "  \"macros\": {\"protein\": 5, \"carbs\": 8, \"fat\": 5, \"sodium\": 15},\n"
+        "  \"macros\": {\"protein\": 0, \"carbs\": 2, \"fat\": 0, \"sodium\": 15},\n"
         "  \"confidence\": 0.7,\n"
         "  \"is_beverage\": true\n"
         "}\n"
@@ -1404,10 +1407,10 @@ async def analyze_image(
     calorie_range = random.choice(["350-450 kcal", "450-600 kcal", "600-800 kcal"])
     calorie_range = _normalize_calorie_range(calorie_range, is_beverage=False, tighten=True)
     macros = {
-        "protein": float(random.choice(_fake_macro_choices)),
-        "carbs": float(random.choice(_fake_macro_choices)),
-        "fat": float(random.choice(_fake_macro_choices)),
-        "sodium": float(random.choice(_fake_macro_choices)),
+        "protein": float(random.choice(_fake_macro_choices_g)),
+        "carbs": float(random.choice(_fake_macro_choices_g)),
+        "fat": float(random.choice(_fake_macro_choices_g)),
+        "sodium": float(random.choice(_fake_sodium_choices_mg)),
     }
     if use_lang == "zh-TW":
         judgement_tags = random.sample(["偏油", "清淡", "碳水偏多", "蛋白不足"], k=2)
@@ -1565,10 +1568,10 @@ async def analyze_name(
     calorie_range = random.choice(["300-420 kcal", "420-580 kcal", "580-760 kcal"])
     calorie_range = _normalize_calorie_range(calorie_range, is_beverage=False, tighten=True)
     macros = {
-        "protein": float(random.choice(_fake_macro_choices)),
-        "carbs": float(random.choice(_fake_macro_choices)),
-        "fat": float(random.choice(_fake_macro_choices)),
-        "sodium": float(random.choice(_fake_macro_choices)),
+        "protein": float(random.choice(_fake_macro_choices_g)),
+        "carbs": float(random.choice(_fake_macro_choices_g)),
+        "fat": float(random.choice(_fake_macro_choices_g)),
+        "sodium": float(random.choice(_fake_sodium_choices_mg)),
     }
     if use_lang == "zh-TW":
         judgement_tags = random.sample(["偏油", "清淡", "碳水偏多", "蛋白不足"], k=2)
@@ -1662,10 +1665,10 @@ async def analyze_label(
         logging.warning("CALL_REAL_AI is true but API_KEY is missing.")
 
     macros = {
-        "protein": float(random.choice(_fake_macro_choices)),
-        "carbs": float(random.choice(_fake_macro_choices)),
-        "fat": float(random.choice(_fake_macro_choices)),
-        "sodium": float(random.choice(_fake_macro_choices)),
+        "protein": float(random.choice(_fake_macro_choices_g)),
+        "carbs": float(random.choice(_fake_macro_choices_g)),
+        "fat": float(random.choice(_fake_macro_choices_g)),
+        "sodium": float(random.choice(_fake_sodium_choices_mg)),
     }
     return LabelResult(
         label_name="",

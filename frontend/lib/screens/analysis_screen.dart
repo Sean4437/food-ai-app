@@ -38,11 +38,11 @@ class AnalysisScreen extends StatelessWidget {
     }
   }
 
-  List<String> _overallTags(AnalysisResult result, AppLocalizations t) {
+  List<String> _overallTags(AppState app, AnalysisResult result, AppLocalizations t) {
     final tags = <String>[];
-    final fat = _levelFromPercent(result.macros['fat'] ?? 0);
-    final protein = _levelFromPercent(result.macros['protein'] ?? 0);
-    final carbs = _levelFromPercent(result.macros['carbs'] ?? 0);
+    final fat = _levelFromPercent(app.macroPercentFromResult(result, 'fat'));
+    final protein = _levelFromPercent(app.macroPercentFromResult(result, 'protein'));
+    final carbs = _levelFromPercent(app.macroPercentFromResult(result, 'carbs'));
 
     if (fat == MacroLevel.high) tags.add(t.tagOily);
     if (protein == MacroLevel.high) tags.add(t.tagProteinOk);
@@ -52,11 +52,11 @@ class AnalysisScreen extends StatelessWidget {
     return tags.take(3).toList();
   }
 
-  String _statusLabel(AnalysisResult result, AppLocalizations t) {
+  String _statusLabel(AppState app, AnalysisResult result, AppLocalizations t) {
     int score = 0;
-    final fat = _levelFromPercent(result.macros['fat'] ?? 0);
-    final protein = _levelFromPercent(result.macros['protein'] ?? 0);
-    final carbs = _levelFromPercent(result.macros['carbs'] ?? 0);
+    final fat = _levelFromPercent(app.macroPercentFromResult(result, 'fat'));
+    final protein = _levelFromPercent(app.macroPercentFromResult(result, 'protein'));
+    final carbs = _levelFromPercent(app.macroPercentFromResult(result, 'carbs'));
     if (fat == MacroLevel.high) score += 1;
     if (carbs == MacroLevel.high) score += 1;
     if (protein == MacroLevel.low) score += 1;
@@ -95,14 +95,14 @@ class AnalysisScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _macroChips(BuildContext context, AnalysisResult result, AppLocalizations t) {
+  List<Widget> _macroChips(BuildContext context, AppState app, AnalysisResult result, AppLocalizations t) {
     final items = <MapEntry<String, double>>[
-      MapEntry(t.protein, result.macros['protein'] ?? 0),
-      MapEntry(t.carbs, result.macros['carbs'] ?? 0),
-      MapEntry(t.fat, result.macros['fat'] ?? 0),
+      MapEntry(t.protein, app.macroPercentFromResult(result, 'protein')),
+      MapEntry(t.carbs, app.macroPercentFromResult(result, 'carbs')),
+      MapEntry(t.fat, app.macroPercentFromResult(result, 'fat')),
     ];
-    final sodium = result.macros['sodium'];
-    if (sodium != null) {
+    final sodium = app.macroPercentFromResult(result, 'sodium');
+    if (sodium > 0) {
       items.add(MapEntry(t.sodium, sodium));
     }
     return [
@@ -175,7 +175,7 @@ class AnalysisScreen extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Builder(
                                   builder: (context) {
-                                    final label = _statusLabel(entry.result!, t);
+                                    final label = _statusLabel(app, entry.result!, t);
                                     final color = _statusColor(label, t);
                                     return Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -194,7 +194,7 @@ class AnalysisScreen extends StatelessWidget {
                               spacing: 8,
                               runSpacing: 8,
                               children: [
-                                for (final tag in _overallTags(entry.result!, t))
+                                for (final tag in _overallTags(app, entry.result!, t))
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                     decoration: BoxDecoration(
@@ -229,7 +229,7 @@ class AnalysisScreen extends StatelessWidget {
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
-                              children: _macroChips(context, entry.result!, t),
+                              children: _macroChips(context, app, entry.result!, t),
                             ),
                             const SizedBox(height: 12),
                             Text('${prefix}${entry.result!.suggestion}', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),

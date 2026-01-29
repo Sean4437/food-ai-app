@@ -416,7 +416,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       t.chartDonut: 'donut',
     };
     final nutritionValueOptions = <String, String>{
-      t.nutritionValuePercent: 'percent',
       t.nutritionValueAmount: 'amount',
     };
     final currentPlateLabel = plateOptions.entries
@@ -434,7 +433,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final currentNutritionValueLabel = nutritionValueOptions.entries
         .firstWhere(
           (entry) => entry.value == profile.nutritionValueMode,
-          orElse: () => MapEntry(t.nutritionValuePercent, 'percent'),
+      orElse: () => MapEntry(t.nutritionValueAmount, 'amount'),
         )
         .key;
     final genderOptions = <String, String>{

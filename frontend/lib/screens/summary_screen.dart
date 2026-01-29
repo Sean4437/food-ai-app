@@ -10,11 +10,11 @@ import '../design/text_styles.dart';
 class SummaryScreen extends StatelessWidget {
   const SummaryScreen({super.key});
 
-  String _summaryText(AppLocalizations t, MealEntry? entry) {
+  String _summaryText(AppState app, AppLocalizations t, MealEntry? entry) {
     if (entry == null || entry.result == null) return t.summaryEmpty;
-    final fat = entry.result!.macros['fat'] ?? 0;
-    final protein = entry.result!.macros['protein'] ?? 0;
-    final carbs = entry.result!.macros['carbs'] ?? 0;
+    final fat = app.macroPercentFromResult(entry.result!, 'fat');
+    final protein = app.macroPercentFromResult(entry.result!, 'protein');
+    final carbs = app.macroPercentFromResult(entry.result!, 'carbs');
     final oily = fat >= 70;
     final proteinOk = protein >= 45;
     final carbHigh = carbs >= 70;
@@ -137,7 +137,7 @@ class SummaryScreen extends StatelessWidget {
                       children: [
                         Text('${t.mealsCountLabel} $totalMeals ${t.mealsLabel}', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                         const SizedBox(height: 6),
-                        Text(_summaryText(t, entry), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                        Text(_summaryText(app, t, entry), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 10,
