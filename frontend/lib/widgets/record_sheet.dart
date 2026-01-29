@@ -26,6 +26,7 @@ Future<RecordResult?> showRecordSheet(
   BuildContext context,
   AppState app, {
   MealType? fixedType,
+  DateTime? overrideTime,
 }) async {
   final t = AppLocalizations.of(context)!;
   final source = await showModalBottomSheet<ImageSource>(
@@ -71,7 +72,7 @@ Future<RecordResult?> showRecordSheet(
     if (files.isEmpty) return null;
     isMulti = files.length > 1;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final entry = await app.addEntryFromFiles(files, locale, fixedType: fixedType);
+    final entry = await app.addEntryFromFiles(files, locale, fixedType: fixedType, overrideTime: overrideTime);
     if (entry == null) return null;
     final mealId = entry.mealId ?? entry.id;
     final date = DateTime(entry.time.year, entry.time.month, entry.time.day);
@@ -89,7 +90,7 @@ Future<RecordResult?> showRecordSheet(
   final xfile = await picker.pickImage(source: source);
   if (xfile == null) return null;
   final locale = Localizations.localeOf(context).toLanguageTag();
-  final entry = await app.addEntry(xfile, locale, fixedType: fixedType);
+  final entry = await app.addEntry(xfile, locale, fixedType: fixedType, overrideTime: overrideTime);
   if (entry == null) return null;
   final mealId = entry.mealId ?? entry.id;
   final date = DateTime(entry.time.year, entry.time.month, entry.time.day);

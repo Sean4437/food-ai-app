@@ -1535,16 +1535,17 @@ class AppState extends ChangeNotifier {
     String locale, {
     String? note,
     MealType? fixedType,
+    DateTime? overrideTime,
   }) async {
     if (files.isEmpty) return null;
     if (files.length == 1) {
-      return addEntry(files.first, locale, note: note, fixedType: fixedType);
+      return addEntry(files.first, locale, note: note, fixedType: fixedType, overrideTime: overrideTime);
     }
     final List<MealEntry> created = [];
     DateTime? anchorTime;
     for (final file in files) {
       final originalBytes = await file.readAsBytes();
-      final time = await _resolveImageTime(file, originalBytes);
+      final time = overrideTime ?? await _resolveImageTime(file, originalBytes);
       anchorTime ??= time;
       final bytes = _compressImageBytes(originalBytes);
       final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
@@ -1583,9 +1584,10 @@ class AppState extends ChangeNotifier {
     String locale, {
     String? note,
     MealType? fixedType,
+    DateTime? overrideTime,
   }) async {
     final originalBytes = await xfile.readAsBytes();
-    final time = await _resolveImageTime(xfile, originalBytes);
+    final time = overrideTime ?? await _resolveImageTime(xfile, originalBytes);
     final bytes = _compressImageBytes(originalBytes);
     final filename = xfile.name.isNotEmpty ? xfile.name : 'upload.jpg';
     final imageHash = _hashBytes(originalBytes);

@@ -405,14 +405,7 @@ class _LogScreenState extends State<LogScreen> {
           Text(_mealLabel(type, t), style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           if (groups.isEmpty)
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => showRecordSheet(context, app, fixedType: type),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(t.logAddMealPrompt),
-              ),
-            )
+            Text(t.noMealPrompt, style: AppTextStyles.caption(context).copyWith(color: Colors.black54))
           else
             Column(
               children: [
@@ -426,93 +419,138 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
+  Future<void> _quickRecord(BuildContext context, AppState app) async {
+    final t = AppLocalizations.of(context)!;
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(_currentMonth.year - 1),
+      lastDate: DateTime(_currentMonth.year + 1),
+    );
+    if (!mounted || pickedDate == null) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(DateTime.now()),
+    );
+    if (!mounted || pickedTime == null) return;
+    final overrideTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+    final result = await showRecordSheet(
+      context,
+      app,
+      overrideTime: overrideTime,
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      _selectedDate = DateTime(overrideTime.year, overrideTime.month, overrideTime.day);
+      _currentMonth = DateTime(overrideTime.year, overrideTime.month, 1);
+      _lastJumpKey = '';
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(t.logSuccess)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final days = _daysInMonth(_currentMonth);
     return AppBackground(
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(t.logTitle, style: AppTextStyles.title1(context)),
-                  const SizedBox(height: 12),
-                  _buildHighlightCard(context, app, t),
-                  const SizedBox(height: 16),
-                  _buildMonthHeader(context, app),
-                  const SizedBox(height: 6),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final viewportWidth = constraints.maxWidth;
-                      final jumpKey = '${_currentMonth.year}-${_currentMonth.month}-${_selectedDate.day}-${days.length}';
-                      if (_lastJumpKey != jumpKey) {
-                        _lastJumpKey = jumpKey;
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (!mounted) return;
-                          _jumpToSelected(_selectedDate, viewportWidth, days.length);
-                        });
-                      }
-                      return SizedBox(
-                        height: 92,
-                        child: NotificationListener<ScrollEndNotification>(
-                          onNotification: (_) {
-                            _snapToClosest(app, viewportWidth, days);
-                            return false;
-                          },
-                          child: AnimatedBuilder(
-                            animation: _dateController,
-                            builder: (context, child) {
-                              final extent = _dateItemExtent();
-                              final leading = _leadingPadding(viewportWidth);
-                              final center = _dateController.hasClients
-                                  ? _dateController.offset + viewportWidth / 2
-                                  : viewportWidth / 2;
-                              final centerIndex = _centerIndexForOffset(
-                                _dateController.hasClients ? _dateController.offset : 0,
-                                viewportWidth,
-                                days.length,
-                              );
-                              return ListView.builder(
-                                controller: _dateController,
-                                scrollDirection: Axis.horizontal,
-                                itemCount: days.length,
-                                padding: EdgeInsets.symmetric(horizontal: leading),
-                                itemBuilder: (context, index) {
-                                  final itemCenter = leading + index * extent + extent / 2;
-                                  final distance = (center - itemCenter).abs();
-                                  final factor = (distance / extent).clamp(0.0, 1.0);
-                                  final scale = 1.1 - 0.16 * factor;
-                                  return _buildDateCard(
-                                    context,
-                                    app,
-                                    t,
-                                    days[index],
-                                    scale: scale,
-                                    isCentered: index == centerIndex,
-                                  );
-                                },
-                              );
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => _quickRecord(context, app),
+          icon: const Icon(Icons.add),
+          label: Text(t.logAddMealPrompt),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(t.logTitle, style: AppTextStyles.title1(context)),
+                    const SizedBox(height: 12),
+                    _buildHighlightCard(context, app, t),
+                    const SizedBox(height: 16),
+                    _buildMonthHeader(context, app),
+                    const SizedBox(height: 6),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final viewportWidth = constraints.maxWidth;
+                        final jumpKey = '${_currentMonth.year}-${_currentMonth.month}-${_selectedDate.day}-${days.length}';
+                        if (_lastJumpKey != jumpKey) {
+                          _lastJumpKey = jumpKey;
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!mounted) return;
+                            _jumpToSelected(_selectedDate, viewportWidth, days.length);
+                          });
+                        }
+                        return SizedBox(
+                          height: 92,
+                          child: NotificationListener<ScrollEndNotification>(
+                            onNotification: (_) {
+                              _snapToClosest(app, viewportWidth, days);
+                              return false;
                             },
+                            child: AnimatedBuilder(
+                              animation: _dateController,
+                              builder: (context, child) {
+                                final extent = _dateItemExtent();
+                                final leading = _leadingPadding(viewportWidth);
+                                final center = _dateController.hasClients
+                                    ? _dateController.offset + viewportWidth / 2
+                                    : viewportWidth / 2;
+                                final centerIndex = _centerIndexForOffset(
+                                  _dateController.hasClients ? _dateController.offset : 0,
+                                  viewportWidth,
+                                  days.length,
+                                );
+                                return ListView.builder(
+                                  controller: _dateController,
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: days.length,
+                                  padding: EdgeInsets.symmetric(horizontal: leading),
+                                  itemBuilder: (context, index) {
+                                    final itemCenter = leading + index * extent + extent / 2;
+                                    final distance = (center - itemCenter).abs();
+                                    final factor = (distance / extent).clamp(0.0, 1.0);
+                                    final scale = 1.1 - 0.16 * factor;
+                                    return _buildDateCard(
+                                      context,
+                                      app,
+                                      t,
+                                      days[index],
+                                      scale: scale,
+                                      isCentered: index == centerIndex,
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _mealSection(context, app, MealType.breakfast, app.mealGroupsForDate(_selectedDate, MealType.breakfast)),
-                  _mealSection(context, app, MealType.brunch, app.mealGroupsForDate(_selectedDate, MealType.brunch)),
-                  _mealSection(context, app, MealType.lunch, app.mealGroupsForDate(_selectedDate, MealType.lunch)),
-                  _mealSection(context, app, MealType.afternoonTea, app.mealGroupsForDate(_selectedDate, MealType.afternoonTea)),
-                  _mealSection(context, app, MealType.dinner, app.mealGroupsForDate(_selectedDate, MealType.dinner)),
-                  _mealSection(context, app, MealType.lateSnack, app.mealGroupsForDate(_selectedDate, MealType.lateSnack)),
-                  _mealSection(context, app, MealType.other, app.mealGroupsForDate(_selectedDate, MealType.other)),
-                ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _mealSection(context, app, MealType.breakfast, app.mealGroupsForDate(_selectedDate, MealType.breakfast)),
+                    _mealSection(context, app, MealType.brunch, app.mealGroupsForDate(_selectedDate, MealType.brunch)),
+                    _mealSection(context, app, MealType.lunch, app.mealGroupsForDate(_selectedDate, MealType.lunch)),
+                    _mealSection(context, app, MealType.afternoonTea, app.mealGroupsForDate(_selectedDate, MealType.afternoonTea)),
+                    _mealSection(context, app, MealType.dinner, app.mealGroupsForDate(_selectedDate, MealType.dinner)),
+                    _mealSection(context, app, MealType.lateSnack, app.mealGroupsForDate(_selectedDate, MealType.lateSnack)),
+                    _mealSection(context, app, MealType.other, app.mealGroupsForDate(_selectedDate, MealType.other)),
+                  ],
+                ),
               ),
             ),
           ),
