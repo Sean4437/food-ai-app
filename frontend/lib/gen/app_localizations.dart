@@ -1103,6 +1103,10 @@ abstract class AppLocalizations {
   String get suggestInstantNameHint;
   String get suggestInstantNameSubmit;
 
+  String get nameAnalyzeStart;
+
+  String get nameAnalyzeEmpty;
+
   /// No description provided for @suggestInstantStepDetect.
   ///
   /// In zh_TW, this message translates to:

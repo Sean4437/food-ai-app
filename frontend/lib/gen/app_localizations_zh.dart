@@ -540,6 +540,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantNameSubmit => '送出';
 
   @override
+  String get nameAnalyzeStart => '正在分析';
+
+  @override
+  String get nameAnalyzeEmpty => '請輸入食物名稱';
+
+  @override
+  String get nameAnalyzeStart => '正在分析';
+
+  @override
+  String get nameAnalyzeEmpty => '請輸入食物名稱';
+
+  @override
   String get suggestInstantNameHint => '輸入食物名稱（沒有照片也可以）';
 
   @override

@@ -183,6 +183,8 @@
   "suggestInstantNowEat": "建議我吃什麼",
   "suggestInstantNameHint": "輸入食物名稱（沒有照片也可以）",
   "suggestInstantNameSubmit": "送出",
+  "nameAnalyzeStart": "正在分析",
+  "nameAnalyzeEmpty": "請輸入食物名稱",
   "suggestInstantStepDetect": "正在辨識餐點",
   "suggestInstantStepEstimate": "估算熱量與份量",
   "suggestInstantStepAdvice": "產生吃法建議",

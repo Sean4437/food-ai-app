@@ -161,8 +161,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   Future<void> _submitNameAnalysis() async {
     if (!mounted) return;
     final name = _nameController.text.trim();
-    if (name.isEmpty) return;
     final t = AppLocalizations.of(context)!;
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.nameAnalyzeEmpty)),
+      );
+      return;
+    }
     final app = AppStateScope.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     setState(() {
@@ -174,6 +179,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _savedEntry = null;
     });
     _startSmartProgress();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(t.nameAnalyzeStart)),
+    );
     final historyContext = app.buildAiContext();
     try {
       final entry = await app.analyzeNameAndSave(
@@ -218,6 +226,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         _loading = false;
         _previewBytes = null;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${t.analyzeFailed}: $err')),
+      );
     }
   }
 

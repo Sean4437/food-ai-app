@@ -534,6 +534,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantNameSubmit => 'Analyze name';
 
   @override
+  String get nameAnalyzeStart => 'Analyzing';
+
+  @override
+  String get nameAnalyzeEmpty => 'Enter a food name';
+
+  @override
   String get suggestInstantStepDetect => 'Identifying the meal';
 
   @override
