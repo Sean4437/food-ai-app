@@ -744,13 +744,11 @@ Widget _buildAdviceCard(AppLocalizations t) {
           );
     final media = MediaQuery.of(context);
     final cardWidth = (media.size.width - 32).clamp(280.0, 340.0);
-    final cardHeight = (media.size.height * 0.76).clamp(440.0, 680.0);
     final innerWidth = (cardWidth - 20).clamp(260.0, 320.0);
-    final innerHeight = (cardHeight - 16).clamp(400.0, 640.0);
-    final plateSize = (cardHeight * 0.42).clamp(180.0, 250.0);
+    final plateSize = (cardWidth * 0.72).clamp(180.0, 240.0);
     final imageSize = (plateSize * 0.72).clamp(140.0, 200.0);
     final buttonWidth = (cardWidth * 0.7).clamp(160.0, 220.0);
-    final contentVerticalPadding = (cardHeight * 0.1).clamp(24.0, 60.0);
+    final contentVerticalPadding = 28.0;
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -784,15 +782,16 @@ Widget _buildAdviceCard(AppLocalizations t) {
                     Center(
                       child: SizedBox(
                         width: cardWidth,
-                        height: cardHeight,
                         child: Stack(
                           clipBehavior: Clip.none,
                           children: [
-                            IgnorePointer(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.22),
-                                  borderRadius: BorderRadius.circular(28),
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.22),
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
                                 ),
                               ),
                             ),
@@ -800,7 +799,6 @@ Widget _buildAdviceCard(AppLocalizations t) {
                               alignment: Alignment.center,
                               child: Container(
                                 width: innerWidth,
-                                height: innerHeight,
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.4),
                                   borderRadius: BorderRadius.circular(26),
