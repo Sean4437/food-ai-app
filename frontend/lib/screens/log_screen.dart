@@ -3,7 +3,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
-import 'meal_items_screen.dart';
+import 'meal_detail_screen.dart';
 import '../widgets/record_sheet.dart';
 import '../widgets/app_background.dart';
 import '../design/text_styles.dart';
@@ -336,13 +336,13 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
-  Widget _mealRow(BuildContext context, AppState app, MealEntry entry, List<MealEntry> group) {
+  Widget _mealRow(BuildContext context, AppState app, MealEntry entry) {
     final t = AppLocalizations.of(context)!;
     final summary = _entryTitle(entry, t);
     final calorie = app.entryCalorieRangeLabel(entry, t);
     final tags = entry.result?.judgementTags ?? const <String>[];
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealItemsScreen(group: group))),
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => MealDetailScreen(entry: entry))),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
@@ -357,23 +357,40 @@ class _LogScreenState extends State<LogScreen> {
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Text(_timeLabel(entry.time), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(summary, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                ),
-                Text(calorie, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-              ],
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.memory(
+                entry.imageBytes,
+                width: 56,
+                height: 56,
+                fit: BoxFit.cover,
+              ),
             ),
-            if (tags.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(tags.join(' · '), style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
-            ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(_timeLabel(entry.time), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(summary, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                      ),
+                      Text(calorie, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                    ],
+                  ),
+                  if (tags.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(tags.join(' · '), style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -408,7 +425,7 @@ class _LogScreenState extends State<LogScreen> {
             children: [
               for (final group in groups)
                 for (final entry in group)
-                  _mealRow(context, app, entry, group),
+                  _mealRow(context, app, entry),
             ],
           ),
         ],
