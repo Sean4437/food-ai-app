@@ -348,7 +348,7 @@ class _LogScreenState extends State<LogScreen> {
           MaterialPageRoute(
             builder: (_) => MealItemsScreen(
               group: group,
-              initialIndex: initialIndex >= 0 ? initialIndex : null,
+              initialIndex: initialIndex >= 0 ? (group.length - 1 - initialIndex) : null,
             ),
           ),
         );
