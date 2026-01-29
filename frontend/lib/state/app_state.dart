@@ -33,7 +33,7 @@ const String _kMacroUnitPercent = 'percent';
 const double _kMacroBaselineProteinG = 30;
 const double _kMacroBaselineCarbsG = 80;
 const double _kMacroBaselineFatG = 25;
-const double _kMacroBaselineSodiumMg = 800;
+const double _kMacroBaselineSodiumMg = 2300;
 const String _kNamePlaceholderBase64 =
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/Pi3n1wAAAABJRU5ErkJggg==';
 

@@ -39,7 +39,7 @@ class NutritionChart extends StatelessWidget {
 
   double _percentFromGrams(String key, double grams) {
     if (key == "sodium") {
-      const baseline = 800.0;
+      const baseline = 2300.0;
       return baseline <= 0 ? 0 : (grams / baseline) * 100;
     }
     if (calories != null && calories! > 0) {
@@ -91,7 +91,7 @@ class NutritionChart extends StatelessWidget {
     if (mode == NutritionValueMode.percent) {
       final percent = () {
         if (key == "sodium") {
-          const baseline = 800.0;
+          const baseline = 2300.0;
           return baseline <= 0 ? 0 : (value / baseline) * 100;
         }
         if (calories != null && calories > 0) {
