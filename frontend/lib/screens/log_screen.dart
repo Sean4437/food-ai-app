@@ -20,6 +20,7 @@ class _LogScreenState extends State<LogScreen> {
   late DateTime _currentMonth;
   final ScrollController _dateController = ScrollController();
   String _lastJumpKey = '';
+  bool _isSnapping = false;
 
   static const double _dateItemWidth = 78;
   static const double _dateItemGap = 6;
@@ -266,17 +267,27 @@ class _LogScreenState extends State<LogScreen> {
 
   void _snapToClosest(AppState app, double viewportWidth, List<DateTime> days) {
     if (!_dateController.hasClients) return;
+    if (_isSnapping) return;
     final index = _centerIndexForOffset(_dateController.offset, viewportWidth, days.length);
     final target = _offsetForIndex(index, viewportWidth).clamp(0.0, _dateController.position.maxScrollExtent);
     final date = days[index];
     if (date.year != _selectedDate.year || date.month != _selectedDate.month || date.day != _selectedDate.day) {
       setState(() => _selectedDate = date);
     }
-    _dateController.animateTo(
-      target,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOut,
-    );
+    if ((_dateController.offset - target).abs() < 0.5) {
+      return;
+    }
+    _isSnapping = true;
+    _dateController
+        .animateTo(
+          target,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+        )
+        .whenComplete(() {
+          if (!mounted) return;
+          _isSnapping = false;
+        });
   }
 
   void _jumpToSelected(DateTime date, double viewportWidth, int count) {
@@ -523,6 +534,7 @@ class _LogScreenState extends State<LogScreen> {
                           height: 92,
                           child: NotificationListener<ScrollEndNotification>(
                             onNotification: (_) {
+                              if (_isSnapping) return false;
                               _snapToClosest(app, viewportWidth, days);
                               return false;
                             },
