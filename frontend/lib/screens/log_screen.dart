@@ -99,9 +99,6 @@ class _LogScreenState extends State<LogScreen> {
     if (override != null && override.isNotEmpty) return override;
     final result = entry.result;
     if (result == null) return entry.filename;
-    if (result.foodItems.isNotEmpty) return result.foodItems.join(' + ');
-    final summary = result.dishSummary?.trim();
-    if (summary != null && summary.isNotEmpty) return summary;
     return result.foodName.isNotEmpty ? result.foodName : t.unknownFood;
   }
 
