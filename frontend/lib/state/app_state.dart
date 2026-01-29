@@ -1508,8 +1508,8 @@ class AppState extends ChangeNotifier {
       'sodium': sodiumSum,
     };
     final dishSummary = _buildMealDishSummary(group);
-    final advice = dishSummary.isNotEmpty ? dishSummary : _buildMealAdvice(macros, calorieRange, t);
     final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
+    final advice = dishSummary.isNotEmpty ? dishSummary : _buildMealAdvice(macros, calorieRange, t);
     return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
   }
 
@@ -1547,8 +1547,8 @@ class AppState extends ChangeNotifier {
       'fat': fatSum,
       'sodium': sodiumSum,
     };
-    final advice = _buildMealAdvice(macros, calorieRange, t);
     final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
+    final advice = _buildMealAdvice(macros, calorieRange, t);
     return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
   }
 
