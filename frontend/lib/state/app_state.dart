@@ -3510,28 +3510,24 @@ class AppState extends ChangeNotifier {
   }
 
   Future<Map<String, dynamic>?> _fetchRemoteSettingsRow(String userId) async {
-    final rows = await _supabase.client.from(kSupabaseUserSettingsTable).select().eq('user_id', userId);
-    if (rows is Map<String, dynamic>) return rows;
-    if (rows is List && rows.isNotEmpty && rows.first is Map) {
-      return Map<String, dynamic>.from(rows.first as Map);
-    }
+    final row = await _supabase.client
+        .from(kSupabaseUserSettingsTable)
+        .select()
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (row is Map<String, dynamic>) return row;
     return null;
   }
 
   Future<DateTime?> _fetchRemoteSettingsUpdatedAt(String userId) async {
-    final rows = await _supabase.client
+    final row = await _supabase.client
         .from(kSupabaseUserSettingsTable)
         .select('updated_at')
-        .eq('user_id', userId);
-    if (rows is Map<String, dynamic>) {
-      final raw = rows['updated_at'] as String?;
-      return raw == null || raw.isEmpty ? null : DateTime.tryParse(raw);
-    }
-    if (rows is List && rows.isNotEmpty && rows.first is Map) {
-      final raw = (rows.first as Map)['updated_at'] as String?;
-      return raw == null || raw.isEmpty ? null : DateTime.tryParse(raw);
-    }
-    return null;
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (row is! Map<String, dynamic>) return null;
+    final raw = row['updated_at'] as String?;
+    return raw == null || raw.isEmpty ? null : DateTime.tryParse(raw);
   }
 
   Future<void> _storeRemoteSyncAt(String userId, DateTime time) async {
