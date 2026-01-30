@@ -434,26 +434,55 @@ class AppState extends ChangeNotifier {
   Future<MealEntry?> saveQuickCapture(
     QuickCaptureAnalysis analysis, {
     String? note,
+    MealEntry? existing,
   }) async {
-    final mealId = _assignMealId(analysis.time, analysis.mealType);
-    final entry = MealEntry(
-      id: _newId(),
-      imageBytes: analysis.imageBytes,
-      filename: analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg',
-      time: analysis.time,
-      type: analysis.mealType,
-      portionPercent: 100,
-      updatedAt: DateTime.now().toUtc(),
-      mealId: mealId,
-      note: note,
-      imageHash: _hashBytes(analysis.originalBytes),
-    );
-    entry.result = analysis.result;
-    entry.lastAnalyzedNote = (note ?? '').trim();
-    entry.lastAnalyzedFoodName = entry.overrideFoodName ?? '';
-    entry.lastAnalyzedAt = DateTime.now().toIso8601String();
-    entry.lastAnalyzeReason = 'quick_capture';
-    entries.insert(0, entry);
+    final now = DateTime.now().toUtc();
+    final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
+    final imageHash = _hashBytes(analysis.originalBytes);
+    MealEntry entry;
+    if (existing != null) {
+      entry = existing;
+      entry
+        ..imageBytes = analysis.imageBytes
+        ..filename = filename
+        ..time = analysis.time
+        ..type = analysis.mealType
+        ..note = note
+        ..imageHash = imageHash
+        ..result = analysis.result
+        ..updatedAt = now
+        ..lastAnalyzedNote = (note ?? '').trim()
+        ..lastAnalyzedFoodName = entry.overrideFoodName ?? ''
+        ..lastAnalyzedAt = DateTime.now().toIso8601String()
+        ..lastAnalyzeReason = 'quick_capture_manual';
+      entry.mealId ??= _assignMealId(entry.time, entry.type);
+      final index = entries.indexWhere((item) => item.id == entry.id);
+      if (index != -1) {
+        entries[index] = entry;
+      } else {
+        entries.insert(0, entry);
+      }
+    } else {
+      final mealId = _assignMealId(analysis.time, analysis.mealType);
+      entry = MealEntry(
+        id: _newId(),
+        imageBytes: analysis.imageBytes,
+        filename: filename,
+        time: analysis.time,
+        type: analysis.mealType,
+        portionPercent: 100,
+        updatedAt: now,
+        mealId: mealId,
+        note: note,
+        imageHash: imageHash,
+      );
+      entry.result = analysis.result;
+      entry.lastAnalyzedNote = (note ?? '').trim();
+      entry.lastAnalyzedFoodName = entry.overrideFoodName ?? '';
+      entry.lastAnalyzedAt = DateTime.now().toIso8601String();
+      entry.lastAnalyzeReason = 'quick_capture';
+      entries.insert(0, entry);
+    }
     markMealInteraction(entry.mealId ?? entry.id);
     _selectedDate = _dateOnly(entry.time);
     notifyListeners();

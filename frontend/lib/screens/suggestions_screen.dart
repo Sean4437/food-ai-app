@@ -295,7 +295,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _analysis = updated;
       _instantAdvice = null;
       _previewBytes = null;
-      final saved = await app.saveQuickCapture(updated);
+      final saved = await app.saveQuickCapture(updated, existing: _savedEntry);
       _savedEntry = saved;
       _completeSmartProgress(() {
         if (!mounted) return;
