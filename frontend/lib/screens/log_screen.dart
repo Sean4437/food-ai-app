@@ -499,11 +499,6 @@ class _LogScreenState extends State<LogScreen> {
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => _quickRecord(context, app),
-          icon: const Icon(Icons.add),
-          label: Text(t.logAddMealPrompt),
-        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
