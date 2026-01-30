@@ -2900,7 +2900,7 @@ class AppState extends ChangeNotifier {
       });
     }
     if (mealPayloads.isNotEmpty) {
-      await client.from(kSupabaseMealsTable).upsert(mealPayloads);
+      await client.from(kSupabaseMealsTable).upsert(mealPayloads).select('id');
     }
     final foodPayloads = <Map<String, dynamic>>[];
     for (final food in foodsToSync) {
@@ -2926,7 +2926,7 @@ class AppState extends ChangeNotifier {
       foodPayloads.add(payload);
     }
     if (foodPayloads.isNotEmpty) {
-      await client.from(kSupabaseCustomFoodsTable).upsert(foodPayloads);
+      await client.from(kSupabaseCustomFoodsTable).upsert(foodPayloads).select('id');
     }
     if (customDeletionsToSync.isNotEmpty) {
       final deletePayloads = <Map<String, dynamic>>[];
@@ -2958,7 +2958,7 @@ class AppState extends ChangeNotifier {
         });
       }
       if (deletePayloads.isNotEmpty) {
-        await client.from(kSupabaseCustomFoodsTable).upsert(deletePayloads);
+        await client.from(kSupabaseCustomFoodsTable).upsert(deletePayloads).select('id');
       }
     }
     if (deletionsToSync.isNotEmpty) {
@@ -3263,7 +3263,7 @@ class AppState extends ChangeNotifier {
     await _supabase.client.from('sync_meta').upsert({
       'user_id': userId,
       'last_sync_at': time.toIso8601String(),
-    });
+    }).select('user_id');
   }
 
   Future<String?> _uploadImageIfNeeded({
@@ -3271,11 +3271,14 @@ class AppState extends ChangeNotifier {
     required String path,
     required Uint8List bytes,
   }) async {
-    await _supabase.client.storage.from(bucket).uploadBinary(
+    final String result = await _supabase.client.storage.from(bucket).uploadBinary(
           path,
           bytes,
           fileOptions: FileOptions(upsert: true),
         ).timeout(const Duration(seconds: 12));
+    if (result.isEmpty) {
+      throw Exception('storage_upload_failed');
+    }
     return path;
   }
 
