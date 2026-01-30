@@ -2367,6 +2367,18 @@ abstract class AppLocalizations {
   /// **'Email 格式不正確'**
   String get authEmailInvalid;
 
+  /// No description provided for @authPasswordRule.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'密碼至少 8 碼，且不可含空白或中文'**
+  String get authPasswordRule;
+
+  /// No description provided for @authPasswordInvalid.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'密碼需至少 8 碼，且不可含空白或中文'**
+  String get authPasswordInvalid;
+
   /// No description provided for @authPasswordLabel.
   ///
   /// In zh_TW, this message translates to:

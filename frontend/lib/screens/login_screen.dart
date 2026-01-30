@@ -26,6 +26,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$').hasMatch(email);
   }
 
+  bool _isValidPassword(String value) {
+    if (value.length < 8) return false;
+    if (value.contains(RegExp(r'\\s'))) return false;
+    if (value.contains(RegExp(r'[\\u4e00-\\u9fff\\u3400-\\u4dbf\\uf900-\\ufaff]'))) return false;
+    return true;
+  }
+
   bool _isNetworkError(String text) {
     final lower = text.toLowerCase();
     return lower.contains('socketexception') ||
@@ -75,6 +82,10 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     if (password.isEmpty) return;
+    if (_isSignUp && !_isValidPassword(password)) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authPasswordInvalid)));
+      return;
+    }
     if (_isSignUp && password != confirm) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authPasswordMismatch)));
       return;
@@ -181,12 +192,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    TextField(
+                TextField(
                       controller: _passwordController,
                       obscureText: !_showPassword,
                       enabled: !_loading,
                       decoration: InputDecoration(
                         labelText: t.authPasswordLabel,
+                        helperText: _isSignUp ? t.authPasswordRule : null,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         suffixIcon: IconButton(

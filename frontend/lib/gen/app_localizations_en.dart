@@ -1158,7 +1158,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get close => 'Close';
 
   @override
-  String get authTitle => 'Welcome to Food AI';
+  String get authTitle => 'Welcome to FoodAI';
 
   @override
   String get authSubtitle => 'Please sign in to continue';
@@ -1171,6 +1171,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authEmailInvalid => 'Invalid email address';
+
+  @override
+  String get authPasswordRule =>
+      'Password must be at least 8 characters and contain no spaces or Chinese characters';
+
+  @override
+  String get authPasswordInvalid =>
+      'Password must be at least 8 characters and contain no spaces or Chinese characters';
 
   @override
   String get authPasswordLabel => 'Password';

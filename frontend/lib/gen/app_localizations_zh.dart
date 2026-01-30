@@ -1146,10 +1146,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get close => '關閉';
 
   @override
-  String get authTitle => '歡迎來到 Food AI';
+  String get authTitle => '歡迎使用 FoodAI';
 
   @override
-  String get authSubtitle => '請登入使用完整功能';
+  String get authSubtitle => '請先登入使用';
 
   @override
   String get authEmailLabel => 'Email';
@@ -1159,6 +1159,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authEmailInvalid => 'Email 格式不正確';
+
+  @override
+  String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
+
+  @override
+  String get authPasswordInvalid => '密碼需至少 8 碼，且不可含空白或中文';
 
   @override
   String get authPasswordLabel => '密碼';
@@ -2369,10 +2375,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get close => '關閉';
 
   @override
-  String get authTitle => '歡迎來到 Food AI';
+  String get authTitle => '歡迎使用 FoodAI';
 
   @override
-  String get authSubtitle => '請登入使用完整功能';
+  String get authSubtitle => '請先登入使用';
 
   @override
   String get authEmailLabel => 'Email';
@@ -2382,6 +2388,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get authEmailInvalid => 'Email 格式不正確';
+
+  @override
+  String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
+
+  @override
+  String get authPasswordInvalid => '密碼需至少 8 碼，且不可含空白或中文';
 
   @override
   String get authPasswordLabel => '密碼';
