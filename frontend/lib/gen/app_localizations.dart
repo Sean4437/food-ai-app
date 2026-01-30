@@ -1100,11 +1100,29 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'建議我吃什麼'**
   String get suggestInstantNowEat;
+
+  /// No description provided for @suggestInstantNameHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'輸入食物名稱（沒有照片也可以）'**
   String get suggestInstantNameHint;
+
+  /// No description provided for @suggestInstantNameSubmit.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'送出'**
   String get suggestInstantNameSubmit;
 
+  /// No description provided for @nameAnalyzeStart.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'正在分析'**
   String get nameAnalyzeStart;
 
+  /// No description provided for @nameAnalyzeEmpty.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'請輸入食物名稱'**
   String get nameAnalyzeEmpty;
 
   /// No description provided for @suggestInstantStepDetect.
@@ -1785,14 +1803,34 @@ abstract class AppLocalizations {
   /// **'赤字 {kcal} kcal'**
   String deltaDeficit(int kcal);
 
+  /// No description provided for @commonExerciseLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'常用運動'**
   String get commonExerciseLabel;
 
+  /// No description provided for @suggestRemainingTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'今日剩餘熱量'**
   String get suggestRemainingTitle;
 
+  /// No description provided for @suggestRemainingLeft.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'還可吃 {cal} kcal'**
   String suggestRemainingLeft(int cal);
 
+  /// No description provided for @suggestRemainingOver.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已超過 {cal} kcal'**
   String suggestRemainingOver(int cal);
 
+  /// No description provided for @suggestExerciseHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'建議 {exercise} 約 {minutes} 分鐘'**
   String suggestExerciseHint(String exercise, int minutes);
 
   /// No description provided for @reminderLunchTime.
@@ -2149,41 +2187,49 @@ abstract class AppLocalizations {
   /// **'登入'**
   String get syncSignIn;
 
-  String get syncSignInSuccess;
-
   /// No description provided for @syncSignUp.
   ///
   /// In zh_TW, this message translates to:
   /// **'註冊'**
   String get syncSignUp;
 
-    String get syncSignUpSuccess;
-  
-    /// No description provided for @syncForgotPassword.
-    ///
-    /// In zh_TW, this message translates to:
-    /// **'忘記密碼'**
-    String get syncForgotPassword;
-  
-    /// No description provided for @syncResetPasswordTitle.
-    ///
-    /// In zh_TW, this message translates to:
-    /// **'重設密碼'**
-    String get syncResetPasswordTitle;
-  
-    /// No description provided for @syncResetPasswordHint.
-    ///
-    /// In zh_TW, this message translates to:
-    /// **'輸入註冊信箱'**
-    String get syncResetPasswordHint;
-  
-    /// No description provided for @syncResetPasswordSent.
-    ///
-    /// In zh_TW, this message translates to:
-    /// **'已寄送重設密碼郵件'**
-    String get syncResetPasswordSent;
-  
-    /// No description provided for @syncSignOut.
+  /// No description provided for @syncSignUpSuccess.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已寄送驗證信，請先完成信箱驗證'**
+  String get syncSignUpSuccess;
+
+  /// No description provided for @syncSignInSuccess.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登入成功'**
+  String get syncSignInSuccess;
+
+  /// No description provided for @syncForgotPassword.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'忘記密碼'**
+  String get syncForgotPassword;
+
+  /// No description provided for @syncResetPasswordTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重設密碼'**
+  String get syncResetPasswordTitle;
+
+  /// No description provided for @syncResetPasswordHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'輸入註冊信箱'**
+  String get syncResetPasswordHint;
+
+  /// No description provided for @syncResetPasswordSent.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已寄送重設密碼郵件'**
+  String get syncResetPasswordSent;
+
+  /// No description provided for @syncSignOut.
   ///
   /// In zh_TW, this message translates to:
   /// **'登出'**
@@ -2201,17 +2247,17 @@ abstract class AppLocalizations {
   /// **'下載同步'**
   String get syncDownload;
 
-  /// No description provided for @syncInProgress.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'同步中'**
-  String get syncInProgress;
-
   /// No description provided for @syncNow.
   ///
   /// In zh_TW, this message translates to:
   /// **'同步'**
   String get syncNow;
+
+  /// No description provided for @syncInProgress.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'同步中'**
+  String get syncInProgress;
 
   /// No description provided for @syncSuccess.
   ///
@@ -2219,8 +2265,16 @@ abstract class AppLocalizations {
   /// **'同步完成'**
   String get syncSuccess;
 
+  /// No description provided for @syncUpdated.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'更新完成'**
   String get syncUpdated;
 
+  /// No description provided for @syncNoChanges.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已同步完成'**
   String get syncNoChanges;
 
   /// No description provided for @syncError.
@@ -2246,46 +2300,6 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'註冊帳號'**
   String get syncAuthTitleSignUp;
-
-  String get authTitle;
-
-  String get authSubtitle;
-
-  String get authEmailLabel;
-
-  String get authPasswordLabel;
-
-  String get authConfirmPasswordLabel;
-
-  String get authSignIn;
-
-  String get authSignUp;
-
-  String get authToggleToSignUp;
-
-  String get authToggleToSignIn;
-
-  String get authForgotPassword;
-
-  String get authSignInSuccess;
-
-  String get authSignUpSuccess;
-
-  String get authSignUpVerify;
-
-  String get authPasswordMismatch;
-
-  String get authResetSent;
-
-  String get authError;
-
-  String get trialExpiredTitle;
-
-  String get trialExpiredBody;
-
-  String get trialExpiredAction;
-
-  String get signOut;
 
   /// No description provided for @exportData.
   ///
@@ -2322,6 +2336,126 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'關閉'**
   String get close;
+
+  /// No description provided for @authTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登入使用'**
+  String get authTitle;
+
+  /// No description provided for @authSubtitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'先登入才能使用完整功能'**
+  String get authSubtitle;
+
+  /// No description provided for @authEmailLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'Email'**
+  String get authEmailLabel;
+
+  /// No description provided for @authPasswordLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'密碼'**
+  String get authPasswordLabel;
+
+  /// No description provided for @authConfirmPasswordLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'確認密碼'**
+  String get authConfirmPasswordLabel;
+
+  /// No description provided for @authSignIn.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登入'**
+  String get authSignIn;
+
+  /// No description provided for @authSignUp.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'註冊'**
+  String get authSignUp;
+
+  /// No description provided for @authToggleToSignUp.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'沒有帳號？立即註冊'**
+  String get authToggleToSignUp;
+
+  /// No description provided for @authToggleToSignIn.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已有帳號？返回登入'**
+  String get authToggleToSignIn;
+
+  /// No description provided for @authForgotPassword.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'忘記密碼'**
+  String get authForgotPassword;
+
+  /// No description provided for @authSignInSuccess.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登入成功'**
+  String get authSignInSuccess;
+
+  /// No description provided for @authSignUpSuccess.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'註冊成功'**
+  String get authSignUpSuccess;
+
+  /// No description provided for @authSignUpVerify.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'註冊成功，請至信箱驗證'**
+  String get authSignUpVerify;
+
+  /// No description provided for @authPasswordMismatch.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'兩次密碼不一致'**
+  String get authPasswordMismatch;
+
+  /// No description provided for @authResetSent.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重設密碼信已寄出'**
+  String get authResetSent;
+
+  /// No description provided for @authError.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登入失敗，請稍後再試'**
+  String get authError;
+
+  /// No description provided for @trialExpiredTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'試用期已結束'**
+  String get trialExpiredTitle;
+
+  /// No description provided for @trialExpiredBody.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'你已完成 2 天免費試用，請訂閱後繼續使用 AI 分析功能。'**
+  String get trialExpiredBody;
+
+  /// No description provided for @trialExpiredAction.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'了解方案'**
+  String get trialExpiredAction;
+
+  /// No description provided for @signOut.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登出'**
+  String get signOut;
 }
 
 class _AppLocalizationsDelegate

@@ -1082,13 +1082,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncSignIn => 'Sign in';
 
   @override
-  String get syncSignInSuccess => 'Signed in';
-
-  @override
   String get syncSignUp => 'Sign up';
 
   @override
-  String get syncSignUpSuccess => 'Verification email sent. Please confirm your email.';
+  String get syncSignUpSuccess =>
+      'Verification email sent. Please confirm your email.';
+
+  @override
+  String get syncSignInSuccess => 'Signed in';
 
   @override
   String get syncForgotPassword => 'Forgot password';
@@ -1112,10 +1113,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncDownload => 'Download sync';
 
   @override
-  String get syncInProgress => 'Syncing';
+  String get syncNow => 'Sync now';
 
   @override
-  String get syncNow => 'Sync now';
+  String get syncInProgress => 'Syncing';
 
   @override
   String get syncSuccess => 'Sync complete';
@@ -1137,6 +1138,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncAuthTitleSignUp => 'Create account';
+
+  @override
+  String get exportData => 'Export data';
+
+  @override
+  String get clearData => 'Clear data';
+
+  @override
+  String get clearDataConfirm => 'Clear all data?';
+
+  @override
+  String get exportDone => 'Exported';
+
+  @override
+  String get clearDone => 'Cleared';
+
+  @override
+  String get close => 'Close';
 
   @override
   String get authTitle => 'Sign in to continue';
@@ -1175,7 +1194,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignUpSuccess => 'Signed up';
 
   @override
-  String get authSignUpVerify => 'Signed up. Please verify via email.';
+  String get authSignUpVerify => 'Sign up successful. Please verify your email';
 
   @override
   String get authPasswordMismatch => 'Passwords do not match';
@@ -1190,29 +1209,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trialExpiredTitle => 'Trial ended';
 
   @override
-  String get trialExpiredBody => 'Your 2-day free trial has ended. Please subscribe to continue using AI analysis.';
+  String get trialExpiredBody =>
+      'Your 2-day free trial has ended. Please subscribe to continue using AI analysis.';
 
   @override
   String get trialExpiredAction => 'View plans';
 
   @override
   String get signOut => 'Sign out';
-
-  @override
-  String get exportData => 'Export data';
-
-  @override
-  String get clearData => 'Clear data';
-
-  @override
-  String get clearDataConfirm => 'Clear all data?';
-
-  @override
-  String get exportDone => 'Exported';
-
-  @override
-  String get clearDone => 'Cleared';
-
-  @override
-  String get close => 'Close';
 }

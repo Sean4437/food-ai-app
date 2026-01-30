@@ -426,22 +426,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get logAddMealPrompt => '補記這一餐';
 
-
-  @override
-  String get logTopMealTitle => '熱量最高一餐';
-
-  @override
-  String get logTopMealEmpty => '近 7 天尚未有完整紀錄';
-
-  @override
-  String logRecentDaysTag(String date) {
-    return '近 7 天 $date';
-  }
-
-  @override
-  String get logAddMealPrompt => '補記這一餐';
-
-
   @override
   String get dailyCalorieRange => '今日熱量攝取';
 
@@ -546,18 +530,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nameAnalyzeEmpty => '請輸入食物名稱';
 
   @override
-  String get nameAnalyzeStart => '正在分析';
-
-  @override
-  String get nameAnalyzeEmpty => '請輸入食物名稱';
-
-  @override
-  String get suggestInstantNameHint => '輸入食物名稱（沒有照片也可以）';
-
-  @override
-  String get suggestInstantNameSubmit => '送出';
-
-  @override
   String get suggestInstantStepDetect => '正在辨識餐點';
 
   @override
@@ -592,9 +564,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';
-
-  @override
-  String get suggestAutoSaved => '已自動儲存';
 
   @override
   String get suggestAutoSaved => '已自動儲存';
@@ -900,28 +869,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String deltaDeficit(int kcal) {
-    return '韏文? $kcal kcal';
-  }
-
-  @override
-  String get commonExerciseLabel => '常用運動';
-
-  @override
-  String get suggestRemainingTitle => '今日剩餘熱量';
-
-  @override
-  String suggestRemainingLeft(int cal) {
-    return '還可吃 $cal kcal';
-  }
-
-  @override
-  String suggestRemainingOver(int cal) {
-    return '已超過 $cal kcal';
-  }
-
-  @override
-  String suggestExerciseHint(String exercise, int minutes) {
-    return '建議 $exercise 約 $minutes 分鐘';
+    return '赤字 $kcal kcal';
   }
 
   @override
@@ -1123,13 +1071,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncSignIn => '登入';
 
   @override
-  String get syncSignInSuccess => '登入成功';
-
-  @override
   String get syncSignUp => '註冊';
 
   @override
   String get syncSignUpSuccess => '已寄送驗證信，請先完成信箱驗證';
+
+  @override
+  String get syncSignInSuccess => '登入成功';
 
   @override
   String get syncForgotPassword => '忘記密碼';
@@ -1153,10 +1101,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncDownload => '下載同步';
 
   @override
-  String get syncInProgress => '同步中';
+  String get syncNow => '同步';
 
   @override
-  String get syncNow => '同步';
+  String get syncInProgress => '同步中';
 
   @override
   String get syncSuccess => '同步完成';
@@ -1178,6 +1126,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncAuthTitleSignUp => '註冊帳號';
+
+  @override
+  String get exportData => '匯出資料';
+
+  @override
+  String get clearData => '清除資料';
+
+  @override
+  String get clearDataConfirm => '確定要清除所有資料嗎？';
+
+  @override
+  String get exportDone => '已匯出';
+
+  @override
+  String get clearDone => '已清除';
+
+  @override
+  String get close => '關閉';
 
   @override
   String get authTitle => '登入使用';
@@ -1216,7 +1182,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authSignUpSuccess => '註冊成功';
 
   @override
-  String get authSignUpVerify => '註冊成功，請到信箱完成驗證';
+  String get authSignUpVerify => '註冊成功，請至信箱驗證';
 
   @override
   String get authPasswordMismatch => '兩次密碼不一致';
@@ -1238,24 +1204,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get signOut => '登出';
-
-  @override
-  String get exportData => '匯出資料';
-
-  @override
-  String get clearData => '清除資料';
-
-  @override
-  String get clearDataConfirm => '確定要清除所有資料嗎？';
-
-  @override
-  String get exportDone => '已匯出';
-
-  @override
-  String get clearDone => '已清除';
-
-  @override
-  String get close => '關閉';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1667,6 +1615,20 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get logTitle => '紀錄';
 
   @override
+  String get logTopMealTitle => '熱量最高一餐';
+
+  @override
+  String get logTopMealEmpty => '近 7 天尚未有完整紀錄';
+
+  @override
+  String logRecentDaysTag(String date) {
+    return '近 7 天 $date';
+  }
+
+  @override
+  String get logAddMealPrompt => '補記這一餐';
+
+  @override
   String get dailyCalorieRange => '今日熱量攝取';
 
   @override
@@ -1758,6 +1720,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantNowEat => '建議我吃什麼';
 
   @override
+  String get suggestInstantNameHint => '輸入食物名稱（沒有照片也可以）';
+
+  @override
+  String get suggestInstantNameSubmit => '送出';
+
+  @override
+  String get nameAnalyzeStart => '正在分析';
+
+  @override
+  String get nameAnalyzeEmpty => '請輸入食物名稱';
+
+  @override
   String get suggestInstantStepDetect => '正在辨識餐點';
 
   @override
@@ -1794,6 +1768,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';
 
   @override
+  String get suggestAutoSaved => '已自動儲存';
+
+  @override
   String get suggestTodayLabel => '今日整體判斷';
 
   @override
@@ -1825,6 +1802,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get editProfile => '編輯個人資料';
+
+  @override
+  String get nicknameLabel => '暱稱';
 
   @override
   String get planSection => '計畫設定';
@@ -1966,12 +1946,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get weeklySummaryDayLabel => '每周總結';
+
   @override
   String get weekTopMealTitle => '本週熱量最高餐';
 
   @override
   String get recentGuidanceTitle => '近期方針（近 7 天）';
-
 
   @override
   String get weekSummaryTitle => '一週總結';
@@ -2092,6 +2072,27 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String deltaDeficit(int kcal) {
     return '赤字 $kcal kcal';
+  }
+
+  @override
+  String get commonExerciseLabel => '常用運動';
+
+  @override
+  String get suggestRemainingTitle => '今日剩餘熱量';
+
+  @override
+  String suggestRemainingLeft(int cal) {
+    return '還可吃 $cal kcal';
+  }
+
+  @override
+  String suggestRemainingOver(int cal) {
+    return '已超過 $cal kcal';
+  }
+
+  @override
+  String suggestExerciseHint(String exercise, int minutes) {
+    return '建議 $exercise 約 $minutes 分鐘';
   }
 
   @override
@@ -2272,13 +2273,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get syncSignIn => '登入';
 
   @override
-  String get syncSignInSuccess => '登入成功';
-
-  @override
   String get syncSignUp => '註冊';
 
   @override
   String get syncSignUpSuccess => '已寄送驗證信，請先完成信箱驗證';
+
+  @override
+  String get syncSignInSuccess => '登入成功';
 
   @override
   String get syncForgotPassword => '忘記密碼';
@@ -2302,13 +2303,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get syncDownload => '下載同步';
 
   @override
-  String get syncInProgress => '同步中';
-
-  @override
   String get syncNow => '同步';
 
   @override
+  String get syncInProgress => '同步中';
+
+  @override
   String get syncSuccess => '同步完成';
+
+  @override
+  String get syncUpdated => '更新完成';
+
+  @override
+  String get syncNoChanges => '已同步完成';
 
   @override
   String get syncError => '同步失敗';
@@ -2339,4 +2346,64 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get close => '關閉';
+
+  @override
+  String get authTitle => '登入使用';
+
+  @override
+  String get authSubtitle => '先登入才能使用完整功能';
+
+  @override
+  String get authEmailLabel => 'Email';
+
+  @override
+  String get authPasswordLabel => '密碼';
+
+  @override
+  String get authConfirmPasswordLabel => '確認密碼';
+
+  @override
+  String get authSignIn => '登入';
+
+  @override
+  String get authSignUp => '註冊';
+
+  @override
+  String get authToggleToSignUp => '沒有帳號？立即註冊';
+
+  @override
+  String get authToggleToSignIn => '已有帳號？返回登入';
+
+  @override
+  String get authForgotPassword => '忘記密碼';
+
+  @override
+  String get authSignInSuccess => '登入成功';
+
+  @override
+  String get authSignUpSuccess => '註冊成功';
+
+  @override
+  String get authSignUpVerify => '註冊成功，請至信箱驗證';
+
+  @override
+  String get authPasswordMismatch => '兩次密碼不一致';
+
+  @override
+  String get authResetSent => '重設密碼信已寄出';
+
+  @override
+  String get authError => '登入失敗，請稍後再試';
+
+  @override
+  String get trialExpiredTitle => '試用期已結束';
+
+  @override
+  String get trialExpiredBody => '你已完成 2 天免費試用，請訂閱後繼續使用 AI 分析功能。';
+
+  @override
+  String get trialExpiredAction => '了解方案';
+
+  @override
+  String get signOut => '登出';
 }
