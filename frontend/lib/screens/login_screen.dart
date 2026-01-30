@@ -26,6 +26,31 @@ class _LoginScreenState extends State<LoginScreen> {
     return RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$').hasMatch(email);
   }
 
+  bool _isNetworkError(String text) {
+    final lower = text.toLowerCase();
+    return lower.contains('socketexception') ||
+        lower.contains('timeout') ||
+        lower.contains('failed host lookup') ||
+        lower.contains('clientexception') ||
+        lower.contains('network');
+  }
+
+  String _formatAuthError(Object err, AppLocalizations t, {required bool isSignUp}) {
+    final text = err.toString();
+    final lower = text.toLowerCase();
+    if (_isNetworkError(text)) return t.authNetworkError;
+    if (isSignUp) {
+      if (lower.contains('already registered') || lower.contains('already exists') || lower.contains('user exists')) {
+        return t.authEmailExists;
+      }
+      return t.authSignUpFailed;
+    }
+    if (lower.contains('invalid login') || lower.contains('invalid credentials') || lower.contains('invalid email or password')) {
+      return t.authLoginInvalid;
+    }
+    return t.authError;
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -65,9 +90,10 @@ class _LoginScreenState extends State<LoginScreen> {
         final message = _isSignUp ? t.authSignUpVerify : t.authSignInSuccess;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
-    } catch (_) {
+    } catch (err) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authError)));
+        final message = _formatAuthError(err, t, isSignUp: _isSignUp);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) setState(() => _loading = false);

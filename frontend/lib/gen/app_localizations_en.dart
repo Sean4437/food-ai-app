@@ -1158,10 +1158,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get close => 'Close';
 
   @override
-  String get authTitle => 'Sign in to continue';
+  String get authTitle => 'Welcome to Food AI';
 
   @override
-  String get authSubtitle => 'Please sign in to use the full features';
+  String get authSubtitle => 'Please sign in to continue';
 
   @override
   String get authEmailLabel => 'Email';
@@ -1210,6 +1210,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authResetFailed => 'Password reset failed. Check your email';
+
+  @override
+  String get authLoginInvalid => 'Invalid email or password';
+
+  @override
+  String get authEmailExists => 'Email already registered';
+
+  @override
+  String get authNetworkError => 'Network error, please try again';
+
+  @override
+  String get authSignUpFailed => 'Sign up failed';
 
   @override
   String get authError => 'Authentication failed, please try again';

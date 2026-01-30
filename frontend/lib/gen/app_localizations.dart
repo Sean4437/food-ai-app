@@ -2445,6 +2445,30 @@ abstract class AppLocalizations {
   /// **'重設密碼失敗，請確認 Email'**
   String get authResetFailed;
 
+  /// No description provided for @authLoginInvalid.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'Email ??撖Ⅳ憭??'**
+  String get authLoginInvalid;
+
+  /// No description provided for @authEmailExists.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'?? Email ?閮餃?'**
+  String get authEmailExists;
+
+  /// No description provided for @authNetworkError.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'?脣?憭望?嚗?蝔??岫'**
+  String get authNetworkError;
+
+  /// No description provided for @authSignUpFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'閮餃?憭望?'**
+  String get authSignUpFailed;
+
   /// No description provided for @authError.
   ///
   /// In zh_TW, this message translates to:

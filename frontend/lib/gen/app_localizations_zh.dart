@@ -1146,10 +1146,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get close => '關閉';
 
   @override
-  String get authTitle => '登入使用';
+  String get authTitle => '歡迎來到 Food AI';
 
   @override
-  String get authSubtitle => '先登入才能使用完整功能';
+  String get authSubtitle => '請登入使用完整功能';
 
   @override
   String get authEmailLabel => 'Email';
@@ -1198,6 +1198,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authResetFailed => '重設密碼失敗，請確認 Email';
+
+  @override
+  String get authLoginInvalid => 'Email 或密碼錯誤';
+
+  @override
+  String get authEmailExists => '此 Email 已註冊';
+
+  @override
+  String get authNetworkError => '連線失敗，請稍後再試';
+
+  @override
+  String get authSignUpFailed => '註冊失敗';
 
   @override
   String get authError => '登入失敗，請稍後再試';
@@ -2357,10 +2369,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get close => '關閉';
 
   @override
-  String get authTitle => '登入使用';
+  String get authTitle => '歡迎來到 Food AI';
 
   @override
-  String get authSubtitle => '先登入才能使用完整功能';
+  String get authSubtitle => '請登入使用完整功能';
 
   @override
   String get authEmailLabel => 'Email';
@@ -2409,6 +2421,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get authResetFailed => '重設密碼失敗，請確認 Email';
+
+  @override
+  String get authLoginInvalid => 'Email 或密碼錯誤';
+
+  @override
+  String get authEmailExists => '此 Email 已註冊';
+
+  @override
+  String get authNetworkError => '連線失敗，請稍後再試';
+
+  @override
+  String get authSignUpFailed => '註冊失敗';
 
   @override
   String get authError => '登入失敗，請稍後再試';
