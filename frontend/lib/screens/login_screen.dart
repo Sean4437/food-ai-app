@@ -23,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isValidEmail(String value) {
     final email = value.trim();
     if (email.isEmpty) return false;
-    return RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$').hasMatch(email);
+    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
   }
 
   bool _isValidPassword(String value) {
