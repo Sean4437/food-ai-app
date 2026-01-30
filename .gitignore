@@ -1,9 +1,0 @@
-backend/.env
-backend/.env.runtime
-backend/data/
-backend/__pycache__/
-*.pyc
-.venv/
-test.jpg
-.DS_Store
-food-ai-export.json
