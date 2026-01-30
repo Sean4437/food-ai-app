@@ -1151,6 +1151,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authPasswordLabel => 'Password';
 
   @override
+  String get authConfirmPasswordLabel => 'Confirm password';
+
+  @override
   String get authSignIn => 'Sign in';
 
   @override
@@ -1170,6 +1173,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authSignUpSuccess => 'Signed up';
+
+  @override
+  String get authSignUpVerify => 'Signed up. Please verify via email.';
+
+  @override
+  String get authPasswordMismatch => 'Passwords do not match';
 
   @override
   String get authResetSent => 'Password reset email sent';

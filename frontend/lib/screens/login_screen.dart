@@ -14,13 +14,17 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
   bool _isSignUp = false;
   bool _loading = false;
+  bool _showPassword = false;
+  bool _showConfirm = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
@@ -30,7 +34,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final app = AppStateScope.of(context);
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+    final confirm = _confirmController.text;
     if (email.isEmpty || password.isEmpty) return;
+    if (_isSignUp && password != confirm) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authPasswordMismatch)));
+      return;
+    }
     setState(() => _loading = true);
     try {
       if (_isSignUp) {
@@ -39,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await app.signInSupabase(email, password);
       }
       if (mounted) {
-        final message = _isSignUp ? t.authSignUpSuccess : t.authSignInSuccess;
+        final message = _isSignUp ? t.authSignUpVerify : t.authSignInSuccess;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (_) {
@@ -127,14 +136,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 10),
                     TextField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: !_showPassword,
                       enabled: !_loading,
                       decoration: InputDecoration(
                         labelText: t.authPasswordLabel,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        suffixIcon: IconButton(
+                          icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility),
+                          onPressed: _loading ? null : () => setState(() => _showPassword = !_showPassword),
+                        ),
                       ),
                     ),
+                    if (_isSignUp) ...[
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _confirmController,
+                        obscureText: !_showConfirm,
+                        enabled: !_loading,
+                        decoration: InputDecoration(
+                          labelText: t.authConfirmPasswordLabel,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          suffixIcon: IconButton(
+                            icon: Icon(_showConfirm ? Icons.visibility_off : Icons.visibility),
+                            onPressed: _loading ? null : () => setState(() => _showConfirm = !_showConfirm),
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     ElevatedButton(
                       onPressed: _loading ? null : _submit,

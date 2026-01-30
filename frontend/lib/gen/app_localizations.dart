@@ -2255,6 +2255,8 @@ abstract class AppLocalizations {
 
   String get authPasswordLabel;
 
+  String get authConfirmPasswordLabel;
+
   String get authSignIn;
 
   String get authSignUp;
@@ -2268,6 +2270,10 @@ abstract class AppLocalizations {
   String get authSignInSuccess;
 
   String get authSignUpSuccess;
+
+  String get authSignUpVerify;
+
+  String get authPasswordMismatch;
 
   String get authResetSent;
 

@@ -1192,6 +1192,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authPasswordLabel => '密碼';
 
   @override
+  String get authConfirmPasswordLabel => '確認密碼';
+
+  @override
   String get authSignIn => '登入';
 
   @override
@@ -1211,6 +1214,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authSignUpSuccess => '註冊成功';
+
+  @override
+  String get authSignUpVerify => '註冊成功，請到信箱完成驗證';
+
+  @override
+  String get authPasswordMismatch => '兩次密碼不一致';
 
   @override
   String get authResetSent => '重設密碼信已寄出';
