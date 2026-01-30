@@ -356,7 +356,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get summaryProteinOk => '蛋白質尚可，記得補蔬菜';
 
   @override
-  String get summaryNeutral => '今天整體還不錯，維持即可';
+  String get summaryNeutral => '今天狀態不錯，繼續保持';
 
   @override
   String get mealsCountLabel => '已記錄';
@@ -473,7 +473,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mealCountEmpty => '尚未分析餐次';
 
   @override
-  String get calorieUnknown => '尚未估計';
+  String get calorieUnknown => '尚無可用估算';
 
   @override
   String get portionLabel => '份量';
@@ -548,7 +548,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantSkipSave => '先不儲存';
 
   @override
-  String get suggestInstantAdviceTitle => '這道菜怎麼吃比較好';
+  String get suggestInstantAdviceTitle => '這一餐怎麼吃比較好';
 
   @override
   String get suggestInstantCanEat => '可以吃';
@@ -876,7 +876,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonExerciseLabel => '常用運動';
 
   @override
-  String get suggestRemainingTitle => '今日剩餘熱量';
+  String get suggestRemainingTitle => '今天還能吃多少';
 
   @override
   String suggestRemainingLeft(int cal) {
@@ -975,7 +975,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get calories => '熱量';
 
   @override
-  String get estimated => '估計';
+  String get estimated => 'AI 估算';
 
   @override
   String get protein => '蛋白質';
@@ -993,7 +993,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tier => '層級';
 
   @override
-  String get analyzeFailed => '分析失敗';
+  String get analyzeFailed => '目前無法分析';
 
   @override
   String get costEstimateLabel => '估算花費';
@@ -1014,7 +1014,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get usageLoading => '載入中...';
 
   @override
-  String get mockPrefix => '模擬';
+  String get mockPrefix => '預覽';
 
   @override
   String get versionSection => '版本資訊';
@@ -1104,22 +1104,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncNow => '同步';
 
   @override
-  String get syncInProgress => '同步中';
+  String get syncInProgress => '正在同步資料…';
 
   @override
-  String get syncSuccess => '同步完成';
+  String get syncSuccess => '資料已成功同步';
 
   @override
   String get syncUpdated => '更新完成';
 
   @override
-  String get syncNoChanges => '已同步完成';
+  String get syncNoChanges => '沒有需要同步的變更';
 
   @override
-  String get syncError => '同步失敗';
+  String get syncError => '同步失敗，請稍後再試';
 
   @override
-  String get syncRequireLogin => '請先登入';
+  String get syncRequireLogin => '請先登入以進行同步';
 
   @override
   String get syncAuthTitleSignIn => '登入帳號';
@@ -1146,10 +1146,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get close => '關閉';
 
   @override
-  String get authTitle => '歡迎使用 FoodAI';
+  String get authTitle => '歡迎使用 Food AI';
 
   @override
-  String get authSubtitle => '請先登入使用';
+  String get authSubtitle => '登入後即可使用完整功能';
 
   @override
   String get authEmailLabel => 'Email';
@@ -1188,22 +1188,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authForgotPassword => '忘記密碼';
 
   @override
-  String get authSignInSuccess => '登入成功';
+  String get authSignInSuccess => '已成功登入';
 
   @override
-  String get authSignUpSuccess => '註冊成功';
+  String get authSignUpSuccess => '帳號已建立';
 
   @override
-  String get authSignUpVerify => '註冊成功，請至信箱驗證';
+  String get authSignUpVerify => '帳號已建立，請完成信箱驗證';
 
   @override
   String get authPasswordMismatch => '兩次密碼不一致';
 
   @override
-  String get authResetSent => '重設密碼信已寄出';
+  String get authResetSent => '重設密碼信已寄出，請查看信箱';
 
   @override
-  String get authResetFailed => '重設密碼失敗，請確認 Email';
+  String get authResetFailed => '無法寄送重設信，請確認 Email';
 
   @override
   String get authLoginInvalid => 'Email 或密碼錯誤';
@@ -1212,13 +1212,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authEmailExists => '此 Email 已註冊';
 
   @override
-  String get authNetworkError => '連線失敗，請稍後再試';
+  String get authNetworkError => '連線異常，請稍後再試';
 
   @override
   String get authSignUpFailed => '註冊失敗';
 
   @override
-  String get authError => '登入失敗，請稍後再試';
+  String get authError => '目前無法登入，請稍後再試';
 
   @override
   String get trialExpiredTitle => '試用期已結束';
@@ -1585,7 +1585,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get summaryProteinOk => '蛋白質尚可，記得補蔬菜';
 
   @override
-  String get summaryNeutral => '今天整體還不錯，維持即可';
+  String get summaryNeutral => '今天狀態不錯，繼續保持';
 
   @override
   String get mealsCountLabel => '已記錄';
@@ -1702,7 +1702,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get mealCountEmpty => '尚未分析餐次';
 
   @override
-  String get calorieUnknown => '尚未估計';
+  String get calorieUnknown => '尚無可用估算';
 
   @override
   String get portionLabel => '份量';
@@ -1777,7 +1777,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantSkipSave => '先不儲存';
 
   @override
-  String get suggestInstantAdviceTitle => '這道菜怎麼吃比較好';
+  String get suggestInstantAdviceTitle => '這一餐怎麼吃比較好';
 
   @override
   String get suggestInstantCanEat => '可以吃';
@@ -2105,7 +2105,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get commonExerciseLabel => '常用運動';
 
   @override
-  String get suggestRemainingTitle => '今日剩餘熱量';
+  String get suggestRemainingTitle => '今天還能吃多少';
 
   @override
   String suggestRemainingLeft(int cal) {
@@ -2204,7 +2204,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get calories => '熱量';
 
   @override
-  String get estimated => '估計';
+  String get estimated => 'AI 估算';
 
   @override
   String get protein => '蛋白質';
@@ -2222,7 +2222,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tier => '層級';
 
   @override
-  String get analyzeFailed => '分析失敗';
+  String get analyzeFailed => '目前無法分析';
 
   @override
   String get costEstimateLabel => '估算花費';
@@ -2243,7 +2243,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get usageLoading => '載入中...';
 
   @override
-  String get mockPrefix => '模擬';
+  String get mockPrefix => '預覽';
 
   @override
   String get versionSection => '版本資訊';
@@ -2333,22 +2333,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get syncNow => '同步';
 
   @override
-  String get syncInProgress => '同步中';
+  String get syncInProgress => '正在同步資料…';
 
   @override
-  String get syncSuccess => '同步完成';
+  String get syncSuccess => '資料已成功同步';
 
   @override
   String get syncUpdated => '更新完成';
 
   @override
-  String get syncNoChanges => '已同步完成';
+  String get syncNoChanges => '沒有需要同步的變更';
 
   @override
-  String get syncError => '同步失敗';
+  String get syncError => '同步失敗，請稍後再試';
 
   @override
-  String get syncRequireLogin => '請先登入';
+  String get syncRequireLogin => '請先登入以進行同步';
 
   @override
   String get syncAuthTitleSignIn => '登入帳號';
@@ -2375,10 +2375,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get close => '關閉';
 
   @override
-  String get authTitle => '歡迎使用 FoodAI';
+  String get authTitle => '歡迎使用 Food AI';
 
   @override
-  String get authSubtitle => '請先登入使用';
+  String get authSubtitle => '登入後即可使用完整功能';
 
   @override
   String get authEmailLabel => 'Email';
@@ -2417,22 +2417,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authForgotPassword => '忘記密碼';
 
   @override
-  String get authSignInSuccess => '登入成功';
+  String get authSignInSuccess => '已成功登入';
 
   @override
-  String get authSignUpSuccess => '註冊成功';
+  String get authSignUpSuccess => '帳號已建立';
 
   @override
-  String get authSignUpVerify => '註冊成功，請至信箱驗證';
+  String get authSignUpVerify => '帳號已建立，請完成信箱驗證';
 
   @override
   String get authPasswordMismatch => '兩次密碼不一致';
 
   @override
-  String get authResetSent => '重設密碼信已寄出';
+  String get authResetSent => '重設密碼信已寄出，請查看信箱';
 
   @override
-  String get authResetFailed => '重設密碼失敗，請確認 Email';
+  String get authResetFailed => '無法寄送重設信，請確認 Email';
 
   @override
   String get authLoginInvalid => 'Email 或密碼錯誤';
@@ -2441,13 +2441,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authEmailExists => '此 Email 已註冊';
 
   @override
-  String get authNetworkError => '連線失敗，請稍後再試';
+  String get authNetworkError => '連線異常，請稍後再試';
 
   @override
   String get authSignUpFailed => '註冊失敗';
 
   @override
-  String get authError => '登入失敗，請稍後再試';
+  String get authError => '目前無法登入，請稍後再試';
 
   @override
   String get trialExpiredTitle => '試用期已結束';

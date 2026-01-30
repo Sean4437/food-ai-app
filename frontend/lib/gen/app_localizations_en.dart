@@ -365,7 +365,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get summaryProteinOk => 'Protein is OK, add veggies if you can';
 
   @override
-  String get summaryNeutral => 'Pretty good today, keep it up';
+  String get summaryNeutral => 'Doing well today. Keep it up.';
 
   @override
   String get mealsCountLabel => 'Logged';
@@ -483,7 +483,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mealCountEmpty => 'No meals analyzed';
 
   @override
-  String get calorieUnknown => 'Not estimated';
+  String get calorieUnknown => 'Not available yet';
 
   @override
   String get portionLabel => 'Portion';
@@ -558,7 +558,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantSkipSave => 'Not now';
 
   @override
-  String get suggestInstantAdviceTitle => 'How to eat this meal';
+  String get suggestInstantAdviceTitle => 'How to eat this meal better';
 
   @override
   String get suggestInstantCanEat => 'Good choices';
@@ -887,7 +887,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonExerciseLabel => 'Preferred exercise';
 
   @override
-  String get suggestRemainingTitle => 'Calories left today';
+  String get suggestRemainingTitle => 'Calories remaining today';
 
   @override
   String suggestRemainingLeft(int cal) {
@@ -986,7 +986,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calories => 'Calories';
 
   @override
-  String get estimated => 'estimated';
+  String get estimated => 'Estimated';
 
   @override
   String get protein => 'Protein';
@@ -1004,7 +1004,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tier => 'Tier';
 
   @override
-  String get analyzeFailed => 'Analyze failed';
+  String get analyzeFailed => 'Unable to analyze';
 
   @override
   String get costEstimateLabel => 'Estimated cost';
@@ -1025,7 +1025,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get usageLoading => 'Loading...';
 
   @override
-  String get mockPrefix => 'Mock';
+  String get mockPrefix => 'Preview';
 
   @override
   String get versionSection => 'Version info';
@@ -1116,22 +1116,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncNow => 'Sync now';
 
   @override
-  String get syncInProgress => 'Syncing';
+  String get syncInProgress => 'Syncing data…';
 
   @override
-  String get syncSuccess => 'Sync complete';
+  String get syncSuccess => 'All data synced';
 
   @override
   String get syncUpdated => 'Update complete';
 
   @override
-  String get syncNoChanges => 'Sync complete';
+  String get syncNoChanges => 'No changes to sync';
 
   @override
-  String get syncError => 'Sync failed';
+  String get syncError => 'Sync failed. Please try again.';
 
   @override
-  String get syncRequireLogin => 'Please sign in first';
+  String get syncRequireLogin => 'Please sign in to sync';
 
   @override
   String get syncAuthTitleSignIn => 'Sign in';
@@ -1158,10 +1158,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get close => 'Close';
 
   @override
-  String get authTitle => 'Welcome to FoodAI';
+  String get authTitle => 'Welcome to Food AI';
 
   @override
-  String get authSubtitle => 'Please sign in to continue';
+  String get authSubtitle => 'Sign in to continue using full features';
 
   @override
   String get authEmailLabel => 'Email';
@@ -1202,37 +1202,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authForgotPassword => 'Forgot password';
 
   @override
-  String get authSignInSuccess => 'Signed in';
+  String get authSignInSuccess => 'You\'re signed in';
 
   @override
-  String get authSignUpSuccess => 'Signed up';
+  String get authSignUpSuccess => 'Account created';
 
   @override
-  String get authSignUpVerify => 'Sign up successful. Please verify your email';
+  String get authSignUpVerify => 'Account created. Please verify your email.';
 
   @override
   String get authPasswordMismatch => 'Passwords do not match';
 
   @override
-  String get authResetSent => 'Password reset email sent';
+  String get authResetSent => 'Password reset email has been sent. Please check your inbox.';
 
   @override
-  String get authResetFailed => 'Password reset failed. Check your email';
+  String get authResetFailed => 'Unable to send reset email. Please check your email address.';
 
   @override
-  String get authLoginInvalid => 'Invalid email or password';
+  String get authLoginInvalid => 'Email or password is incorrect';
 
   @override
   String get authEmailExists => 'Email already registered';
 
   @override
-  String get authNetworkError => 'Network error, please try again';
+  String get authNetworkError => 'Connection issue. Please try again.';
 
   @override
   String get authSignUpFailed => 'Sign up failed';
 
   @override
-  String get authError => 'Authentication failed, please try again';
+  String get authError => 'Unable to sign in. Please try again.';
 
   @override
   String get trialExpiredTitle => 'Trial ended';
