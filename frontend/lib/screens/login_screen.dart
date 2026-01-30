@@ -20,6 +20,12 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _showPassword = false;
   bool _showConfirm = false;
 
+  bool _isValidEmail(String value) {
+    final email = value.trim();
+    if (email.isEmpty) return false;
+    return RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$').hasMatch(email);
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -35,7 +41,15 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirm = _confirmController.text;
-    if (email.isEmpty || password.isEmpty) return;
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailRequired)));
+      return;
+    }
+    if (!_isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailInvalid)));
+      return;
+    }
+    if (password.isEmpty) return;
     if (_isSignUp && password != confirm) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authPasswordMismatch)));
       return;
@@ -65,7 +79,14 @@ class _LoginScreenState extends State<LoginScreen> {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final email = _emailController.text.trim();
-    if (email.isEmpty) return;
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailRequired)));
+      return;
+    }
+    if (!_isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailInvalid)));
+      return;
+    }
     setState(() => _loading = true);
     try {
       await app.resetSupabasePassword(email);
@@ -74,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authError)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authResetFailed)));
       }
     } finally {
       if (mounted) setState(() => _loading = false);

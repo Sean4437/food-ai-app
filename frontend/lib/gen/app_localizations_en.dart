@@ -1167,6 +1167,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authEmailLabel => 'Email';
 
   @override
+  String get authEmailRequired => 'Please enter your email';
+
+  @override
+  String get authEmailInvalid => 'Invalid email address';
+
+  @override
   String get authPasswordLabel => 'Password';
 
   @override
@@ -1201,6 +1207,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authResetSent => 'Password reset email sent';
+
+  @override
+  String get authResetFailed => 'Password reset failed. Check your email';
 
   @override
   String get authError => 'Authentication failed, please try again';

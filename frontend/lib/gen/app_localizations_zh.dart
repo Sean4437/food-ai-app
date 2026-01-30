@@ -1155,6 +1155,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authEmailLabel => 'Email';
 
   @override
+  String get authEmailRequired => '請輸入 Email';
+
+  @override
+  String get authEmailInvalid => 'Email 格式不正確';
+
+  @override
   String get authPasswordLabel => '密碼';
 
   @override
@@ -1189,6 +1195,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authResetSent => '重設密碼信已寄出';
+
+  @override
+  String get authResetFailed => '重設密碼失敗，請確認 Email';
 
   @override
   String get authError => '登入失敗，請稍後再試';
@@ -2357,6 +2366,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authEmailLabel => 'Email';
 
   @override
+  String get authEmailRequired => '請輸入 Email';
+
+  @override
+  String get authEmailInvalid => 'Email 格式不正確';
+
+  @override
   String get authPasswordLabel => '密碼';
 
   @override
@@ -2391,6 +2406,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get authResetSent => '重設密碼信已寄出';
+
+  @override
+  String get authResetFailed => '重設密碼失敗，請確認 Email';
 
   @override
   String get authError => '登入失敗，請稍後再試';

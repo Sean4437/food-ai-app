@@ -2355,6 +2355,18 @@ abstract class AppLocalizations {
   /// **'Email'**
   String get authEmailLabel;
 
+  /// No description provided for @authEmailRequired.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'請輸入 Email'**
+  String get authEmailRequired;
+
+  /// No description provided for @authEmailInvalid.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'Email 格式不正確'**
+  String get authEmailInvalid;
+
   /// No description provided for @authPasswordLabel.
   ///
   /// In zh_TW, this message translates to:
@@ -2426,6 +2438,12 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'重設密碼信已寄出'**
   String get authResetSent;
+
+  /// No description provided for @authResetFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重設密碼失敗，請確認 Email'**
+  String get authResetFailed;
 
   /// No description provided for @authError.
   ///
