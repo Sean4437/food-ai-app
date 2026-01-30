@@ -66,6 +66,7 @@ class AppState extends ChangeNotifier {
   final Set<String> _failedCustomFoodSyncIds = {};
   final Set<String> _failedCustomFoodDeleteSyncIds = {};
   final List<CustomFood> customFoods = [];
+  SyncReport? _lastSyncReport;
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
   final Map<String, String> _analysisTimerReason = {};
@@ -78,6 +79,7 @@ class AppState extends ChangeNotifier {
 
   bool get isSupabaseSignedIn => _supabase.isSignedIn;
   bool get syncInProgress => _syncing;
+  SyncReport? get lastSyncReport => _lastSyncReport;
 
   String? get supabaseUserEmail => _supabase.currentUser?.email;
 
@@ -557,8 +559,22 @@ class AppState extends ChangeNotifier {
     precachePlateAsset();
     if (isSupabaseSignedIn) {
       await refreshAccessStatus();
+      await _runAutoSync();
     }
     notifyListeners();
+  }
+
+  Future<void> _runAutoSync() async {
+    if (!isSupabaseSignedIn) return;
+    if (syncInProgress) return;
+    setSyncInProgress(true);
+    try {
+      await syncAuto();
+    } catch (_) {
+      // Silent auto sync failure.
+    } finally {
+      setSyncInProgress(false);
+    }
   }
 
   Future<void> precachePlateAsset() async {
@@ -1052,6 +1068,7 @@ class AppState extends ChangeNotifier {
     await finalizeDay(DateTime.now(), locale.toLanguageTag(), t);
     _meta['last_auto_finalize'] = todayKey;
     await _saveOverrides();
+    await _runAutoSync();
     _scheduleAutoFinalize();
   }
 
@@ -2880,7 +2897,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<bool> syncToSupabase() async {
+  Future<bool> syncToSupabase({SyncReport? report}) async {
     final user = _supabase.currentUser;
     if (user == null) {
       throw Exception('Supabase not signed in');
@@ -2982,6 +2999,10 @@ class AppState extends ChangeNotifier {
         _failedMealDeleteSyncIds.removeAll(
           deletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
         );
+        if (report != null) {
+          report.pushedMeals += entriesToSync.length;
+          report.pushedMealDeletes += deletionsToSync.length;
+        }
       } catch (_) {
         _failedMealSyncIds.addAll(entriesToSync.map((e) => e.id));
         _failedMealDeleteSyncIds.addAll(
@@ -3024,6 +3045,9 @@ class AppState extends ChangeNotifier {
       try {
         await client.from(kSupabaseCustomFoodsTable).upsert(foodPayloads).select('id');
         _failedCustomFoodSyncIds.removeAll(foodsToSync.map((e) => e.id));
+        if (report != null) {
+          report.pushedCustomFoods += foodsToSync.length;
+        }
       } catch (_) {
         _failedCustomFoodSyncIds.addAll(foodsToSync.map((e) => e.id));
         await _saveOverrides();
@@ -3073,6 +3097,9 @@ class AppState extends ChangeNotifier {
           _failedCustomFoodDeleteSyncIds.removeAll(
             customDeletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
           );
+          if (report != null) {
+            report.pushedCustomDeletes += deletePayloads.length;
+          }
         } catch (_) {
           _failedCustomFoodDeleteSyncIds.addAll(
             customDeletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
@@ -3103,7 +3130,7 @@ class AppState extends ChangeNotifier {
     return hasChanges;
   }
 
-  Future<void> syncFromSupabase() async {
+  Future<void> syncFromSupabase({SyncReport? report}) async {
     final user = _supabase.currentUser;
     if (user == null) {
       throw Exception('Supabase not signed in');
@@ -3128,24 +3155,25 @@ class AppState extends ChangeNotifier {
         final deletedAt = row['deleted_at'] as String?;
         final remoteUpdatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
         if (deletedAt != null && deletedAt.isNotEmpty) {
-          if (entryId != null) {
-            final existing = existingEntries[entryId];
-            if (existing != null &&
-                existing.updatedAt != null &&
-                remoteUpdatedAt != null &&
-                existing.updatedAt!.isAfter(remoteUpdatedAt)) {
-              _failedMealSyncIds.add(entryId);
-              continue;
-            }
-            final index = entries.indexWhere((item) => item.id == entryId);
-            if (index != -1) {
-              entries.removeAt(index);
-              // ignore: discarded_futures
-              _store.delete(entryId);
-            }
+        if (entryId != null) {
+          final existing = existingEntries[entryId];
+          if (existing != null &&
+              existing.updatedAt != null &&
+              remoteUpdatedAt != null &&
+              existing.updatedAt!.isAfter(remoteUpdatedAt)) {
+            _failedMealSyncIds.add(entryId);
+            continue;
           }
-          continue;
+          final index = entries.indexWhere((item) => item.id == entryId);
+          if (index != -1) {
+            entries.removeAt(index);
+            // ignore: discarded_futures
+            _store.delete(entryId);
+            if (report != null) report.pulledMealDeletes += 1;
+          }
         }
+        continue;
+      }
         final existing = entryId == null ? null : existingEntries[entryId];
         if (existing != null &&
             existing.updatedAt != null &&
@@ -3179,8 +3207,10 @@ class AppState extends ChangeNotifier {
         final index = entries.indexWhere((item) => item.id == entry.id);
         if (index == -1) {
           entries.insert(0, entry);
+          if (report != null) report.pulledMeals += 1;
         } else {
           entries[index] = entry;
+          if (report != null) report.pulledMeals += 1;
         }
         await _store.upsert(entry);
       }
@@ -3218,6 +3248,7 @@ class AppState extends ChangeNotifier {
               _failedCustomFoodSyncIds.add(foodId);
               continue;
             }
+            if (report != null) report.pulledCustomDeletes += 1;
           }
           continue;
         }
@@ -3250,6 +3281,7 @@ class AppState extends ChangeNotifier {
           updatedAt: DateTime.tryParse(row['updated_at'] as String? ?? '') ?? DateTime.now(),
         );
         customFoods.add(food);
+        if (report != null) report.pulledCustomFoods += 1;
       }
       final toRemove = existingFoods.keys.where((id) => !remoteFoodIds.contains(id)).toList();
       if (toRemove.isNotEmpty) {
@@ -3275,6 +3307,7 @@ class AppState extends ChangeNotifier {
     if (user == null) {
       throw Exception('Supabase not signed in');
     }
+    final report = SyncReport();
     final beforeFingerprint = _syncFingerprint();
     final localSyncAt = _localSyncAt();
     final remoteSyncAt = await _fetchRemoteSyncAt(user.id);
@@ -3282,18 +3315,19 @@ class AppState extends ChangeNotifier {
 
     if (remoteSyncAt == null) {
       if (!hasLocalData) return false;
-      final changed = await syncToSupabase();
+      final changed = await syncToSupabase(report: report);
       if (changed) {
         final now = DateTime.now().toUtc();
         await _storeRemoteSyncAt(user.id, now);
         await _storeLocalSyncAt(now);
       }
+      _lastSyncReport = report;
       return changed;
     }
 
     bool changed = false;
     // 1) Always push local changes first (if any)
-    final pushed = await syncToSupabase();
+    final pushed = await syncToSupabase(report: report);
     if (pushed) {
       changed = true;
       final now = DateTime.now().toUtc();
@@ -3306,7 +3340,7 @@ class AppState extends ChangeNotifier {
     final shouldPull = updatedRemoteSyncAt != null &&
         (localSyncAt == null || updatedRemoteSyncAt.isAfter(localSyncAt));
     if (shouldPull) {
-      await syncFromSupabase();
+      await syncFromSupabase(report: report);
       await _storeLocalSyncAt(updatedRemoteSyncAt!);
       changed = true;
     }
@@ -3314,6 +3348,7 @@ class AppState extends ChangeNotifier {
     // 3) Update fingerprint after sync to avoid stale "no change" state
     _meta['last_sync_fingerprint'] = _syncFingerprint();
     await _saveOverrides();
+    _lastSyncReport = report;
     return changed;
   }
 
@@ -3976,6 +4011,27 @@ class UserProfile {
       exerciseSuggestionType: 'walking',
     );
   }
+}
+
+class SyncReport {
+  int pushedMeals = 0;
+  int pushedMealDeletes = 0;
+  int pushedCustomFoods = 0;
+  int pushedCustomDeletes = 0;
+  int pulledMeals = 0;
+  int pulledMealDeletes = 0;
+  int pulledCustomFoods = 0;
+  int pulledCustomDeletes = 0;
+
+  bool get hasChanges =>
+      pushedMeals > 0 ||
+      pushedMealDeletes > 0 ||
+      pushedCustomFoods > 0 ||
+      pushedCustomDeletes > 0 ||
+      pulledMeals > 0 ||
+      pulledMealDeletes > 0 ||
+      pulledCustomFoods > 0 ||
+      pulledCustomDeletes > 0;
 }
 
 class AppStateScope extends InheritedNotifier<AppState> {

@@ -333,9 +333,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final changed = await app.syncAuto();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(changed ? t.syncUpdated : t.syncNoChanges)),
-        );
+        final report = app.lastSyncReport;
+        final locale = Localizations.localeOf(context);
+        final summary = report == null ? null : _buildSyncSummary(report, t, locale);
+        final message = changed
+            ? (summary == null ? t.syncUpdated : '${t.syncUpdated} · $summary')
+            : t.syncNoChanges;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (err) {
       final message = _formatSyncError(err, t);
@@ -367,6 +371,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return '${t.syncError}: 網路連線不穩定';
     }
     return '${t.syncError}: $text';
+  }
+
+  String? _buildSyncSummary(SyncReport report, AppLocalizations t, Locale locale) {
+    if (!report.hasChanges) return null;
+    final isZh = locale.languageCode.startsWith('zh');
+    if (isZh) {
+      final parts = <String>[];
+      if (report.pushedMeals > 0) parts.add('上傳餐點 ${report.pushedMeals}');
+      if (report.pushedMealDeletes > 0) parts.add('刪除餐點 ${report.pushedMealDeletes}');
+      if (report.pushedCustomFoods > 0) parts.add('上傳自訂 ${report.pushedCustomFoods}');
+      if (report.pushedCustomDeletes > 0) parts.add('刪除自訂 ${report.pushedCustomDeletes}');
+      if (report.pulledMeals > 0) parts.add('下載餐點 ${report.pulledMeals}');
+      if (report.pulledMealDeletes > 0) parts.add('下載刪除 ${report.pulledMealDeletes}');
+      if (report.pulledCustomFoods > 0) parts.add('下載自訂 ${report.pulledCustomFoods}');
+      if (report.pulledCustomDeletes > 0) parts.add('下載自訂刪除 ${report.pulledCustomDeletes}');
+      return parts.join('、');
+    }
+    final parts = <String>[];
+    if (report.pushedMeals > 0) parts.add('upload meals ${report.pushedMeals}');
+    if (report.pushedMealDeletes > 0) parts.add('delete meals ${report.pushedMealDeletes}');
+    if (report.pushedCustomFoods > 0) parts.add('upload custom ${report.pushedCustomFoods}');
+    if (report.pushedCustomDeletes > 0) parts.add('delete custom ${report.pushedCustomDeletes}');
+    if (report.pulledMeals > 0) parts.add('download meals ${report.pulledMeals}');
+    if (report.pulledMealDeletes > 0) parts.add('download deleted ${report.pulledMealDeletes}');
+    if (report.pulledCustomFoods > 0) parts.add('download custom ${report.pulledCustomFoods}');
+    if (report.pulledCustomDeletes > 0) parts.add('download custom deleted ${report.pulledCustomDeletes}');
+    return parts.join(', ');
   }
 
   Future<void> _exportData(BuildContext context, AppState app) async {
@@ -581,9 +612,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           if (isSupabaseSignedIn)
                             TextButton(
-                              onPressed: () async {
-                                await app.signOutSupabase();
-                              },
+                              onPressed: isSyncing
+                                  ? null
+                                  : () async {
+                                      await app.signOutSupabase();
+                                    },
                               child: Text(t.syncSignOut),
                             ),
                         ],
@@ -620,7 +653,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () => _showSupabaseAuthDialog(context, app, isSignUp: false),
+                                onPressed: isSyncing ? null : () => _showSupabaseAuthDialog(context, app, isSignUp: false),
                                 child: Text(t.syncSignIn),
                               ),
                             ),
@@ -631,14 +664,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () => _showSupabaseAuthDialog(context, app, isSignUp: true),
+                                onPressed: isSyncing ? null : () => _showSupabaseAuthDialog(context, app, isSignUp: true),
                                 child: Text(t.syncSignUp),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () => _showResetPasswordDialog(context, app),
+                                onPressed: isSyncing ? null : () => _showResetPasswordDialog(context, app),
                                 child: Text(t.syncForgotPassword),
                               ),
                             ),
