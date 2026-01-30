@@ -18,6 +18,7 @@ class LogScreen extends StatefulWidget {
 class _LogScreenState extends State<LogScreen> {
   late DateTime _selectedDate;
   late DateTime _currentMonth;
+  late List<DateTime> _currentMonthDays;
   final ScrollController _dateController = ScrollController();
   String _lastJumpKey = '';
   bool _isSnapping = false;
@@ -31,6 +32,7 @@ class _LogScreenState extends State<LogScreen> {
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
     _currentMonth = DateTime(now.year, now.month, 1);
+    _currentMonthDays = _daysInMonth(_currentMonth);
   }
 
   @override
@@ -128,6 +130,7 @@ class _LogScreenState extends State<LogScreen> {
     setState(() {
       final next = DateTime(_currentMonth.year, _currentMonth.month + delta, 1);
       _currentMonth = next;
+      _currentMonthDays = _daysInMonth(_currentMonth);
       if (!_isSameMonth(_selectedDate, next)) {
         _selectedDate = _defaultSelectedDateForMonth(app, next);
       }
@@ -484,6 +487,7 @@ class _LogScreenState extends State<LogScreen> {
     setState(() {
       _selectedDate = DateTime(overrideTime.year, overrideTime.month, overrideTime.day);
       _currentMonth = DateTime(overrideTime.year, overrideTime.month, 1);
+      _currentMonthDays = _daysInMonth(_currentMonth);
       _lastJumpKey = '';
     });
     ScaffoldMessenger.of(context).showSnackBar(
@@ -495,7 +499,8 @@ class _LogScreenState extends State<LogScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    final days = _daysInMonth(_currentMonth);
+    final days = _currentMonthDays;
+    final groupsByType = app.mealGroupsByTypeForDate(_selectedDate);
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -573,13 +578,13 @@ class _LogScreenState extends State<LogScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    _mealSection(context, app, MealType.breakfast, app.mealGroupsForDate(_selectedDate, MealType.breakfast)),
-                    _mealSection(context, app, MealType.brunch, app.mealGroupsForDate(_selectedDate, MealType.brunch)),
-                    _mealSection(context, app, MealType.lunch, app.mealGroupsForDate(_selectedDate, MealType.lunch)),
-                    _mealSection(context, app, MealType.afternoonTea, app.mealGroupsForDate(_selectedDate, MealType.afternoonTea)),
-                    _mealSection(context, app, MealType.dinner, app.mealGroupsForDate(_selectedDate, MealType.dinner)),
-                    _mealSection(context, app, MealType.lateSnack, app.mealGroupsForDate(_selectedDate, MealType.lateSnack)),
-                    _mealSection(context, app, MealType.other, app.mealGroupsForDate(_selectedDate, MealType.other)),
+                    _mealSection(context, app, MealType.breakfast, groupsByType[MealType.breakfast] ?? const []),
+                    _mealSection(context, app, MealType.brunch, groupsByType[MealType.brunch] ?? const []),
+                    _mealSection(context, app, MealType.lunch, groupsByType[MealType.lunch] ?? const []),
+                    _mealSection(context, app, MealType.afternoonTea, groupsByType[MealType.afternoonTea] ?? const []),
+                    _mealSection(context, app, MealType.dinner, groupsByType[MealType.dinner] ?? const []),
+                    _mealSection(context, app, MealType.lateSnack, groupsByType[MealType.lateSnack] ?? const []),
+                    _mealSection(context, app, MealType.other, groupsByType[MealType.other] ?? const []),
                   ],
                 ),
               ),

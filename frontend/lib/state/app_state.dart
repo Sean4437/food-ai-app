@@ -1497,6 +1497,30 @@ class AppState extends ChangeNotifier {
     return result.reversed.toList();
   }
 
+  Map<MealType, List<List<MealEntry>>> mealGroupsByTypeForDate(DateTime date) {
+    final target = _dateOnly(date);
+    final grouped = <MealType, Map<String, List<MealEntry>>>{};
+    for (final type in MealType.values) {
+      grouped[type] = <String, List<MealEntry>>{};
+    }
+    for (final entry in entries) {
+      if (!_isSameDate(entry.time, target)) continue;
+      final groups = grouped[entry.type]!;
+      final key = entry.mealId ?? entry.id;
+      groups.putIfAbsent(key, () => []).add(entry);
+    }
+    final result = <MealType, List<List<MealEntry>>>{};
+    grouped.forEach((type, groups) {
+      final list = groups.values.toList();
+      for (final group in list) {
+        group.sort((a, b) => b.time.compareTo(a.time));
+      }
+      list.sort((a, b) => a.first.time.compareTo(b.first.time));
+      result[type] = list.reversed.toList();
+    });
+    return result;
+  }
+
   List<List<MealEntry>> mealGroupsForDateAll(DateTime date) {
     final target = _dateOnly(date);
     final groups = <String, List<MealEntry>>{};
