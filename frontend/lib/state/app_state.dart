@@ -61,6 +61,10 @@ class AppState extends ChangeNotifier {
   final Map<String, String> _meta = {};
   final Map<String, Map<String, dynamic>> _deletedEntries = {};
   final Map<String, Map<String, dynamic>> _deletedCustomFoods = {};
+  final Set<String> _failedMealSyncIds = {};
+  final Set<String> _failedMealDeleteSyncIds = {};
+  final Set<String> _failedCustomFoodSyncIds = {};
+  final Set<String> _failedCustomFoodDeleteSyncIds = {};
   final List<CustomFood> customFoods = [];
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
@@ -2648,6 +2652,10 @@ class AppState extends ChangeNotifier {
     final meta = overrides['meta'] as Map<String, dynamic>?;
     final deleted = overrides['deleted_entries'] as Map<String, dynamic>?;
     final deletedCustom = overrides['deleted_custom_foods'] as Map<String, dynamic>?;
+    final failedMeals = overrides['failed_meal_sync_ids'];
+    final failedMealDeletes = overrides['failed_meal_delete_sync_ids'];
+    final failedCustomFoods = overrides['failed_custom_food_sync_ids'];
+    final failedCustomDeletes = overrides['failed_custom_food_delete_sync_ids'];
     if (day != null) {
       day.forEach((key, value) {
         if (value is Map<String, dynamic>) {
@@ -2690,6 +2698,18 @@ class AppState extends ChangeNotifier {
         }
       });
     }
+    _failedMealSyncIds
+      ..clear()
+      ..addAll(_parseIdList(failedMeals));
+    _failedMealDeleteSyncIds
+      ..clear()
+      ..addAll(_parseIdList(failedMealDeletes));
+    _failedCustomFoodSyncIds
+      ..clear()
+      ..addAll(_parseIdList(failedCustomFoods));
+    _failedCustomFoodDeleteSyncIds
+      ..clear()
+      ..addAll(_parseIdList(failedCustomDeletes));
     final custom = overrides['custom_foods'];
     customFoods.clear();
     if (custom is List) {
@@ -2842,12 +2862,24 @@ class AppState extends ChangeNotifier {
       throw Exception('Supabase not signed in');
     }
     final since = _localSyncAt();
-    final entriesToSync = since == null
-        ? entries
-        : entries.where((entry) => entry.updatedAt != null && entry.updatedAt!.isAfter(since)).toList();
-    final foodsToSync = since == null
-        ? customFoods
-        : customFoods.where((food) => food.updatedAt.isAfter(since)).toList();
+    final entriesToSync = (since == null
+            ? entries
+            : entries.where((entry) => entry.updatedAt != null && entry.updatedAt!.isAfter(since)))
+        .where((entry) => entry.id.isNotEmpty)
+        .toList();
+    for (final entry in entries) {
+      if (_failedMealSyncIds.contains(entry.id) && !entriesToSync.any((e) => e.id == entry.id)) {
+        entriesToSync.add(entry);
+      }
+    }
+    final foodsToSync = (since == null ? customFoods : customFoods.where((food) => food.updatedAt.isAfter(since)))
+        .where((food) => food.id.isNotEmpty)
+        .toList();
+    for (final food in customFoods) {
+      if (_failedCustomFoodSyncIds.contains(food.id) && !foodsToSync.any((f) => f.id == food.id)) {
+        foodsToSync.add(food);
+      }
+    }
     final deletionsToSync = _deletedEntries.values.where((value) {
       final raw = value['deleted_at'];
       if (raw is! String || raw.isEmpty) return true;
@@ -2855,6 +2887,12 @@ class AppState extends ChangeNotifier {
       if (ts == null) return true;
       return since == null || ts.isAfter(since);
     }).toList();
+    for (final deleted in _deletedEntries.values) {
+      final id = deleted['id'];
+      if (id is String && _failedMealDeleteSyncIds.contains(id) && !deletionsToSync.contains(deleted)) {
+        deletionsToSync.add(deleted);
+      }
+    }
     final customDeletionsToSync = _deletedCustomFoods.values.where((value) {
       final raw = value['deleted_at'];
       if (raw is! String || raw.isEmpty) return true;
@@ -2862,6 +2900,14 @@ class AppState extends ChangeNotifier {
       if (ts == null) return true;
       return since == null || ts.isAfter(since);
     }).toList();
+    for (final deleted in _deletedCustomFoods.values) {
+      final id = deleted['id'];
+      if (id is String &&
+          _failedCustomFoodDeleteSyncIds.contains(id) &&
+          !customDeletionsToSync.contains(deleted)) {
+        customDeletionsToSync.add(deleted);
+      }
+    }
     final hasChanges = entriesToSync.isNotEmpty ||
         foodsToSync.isNotEmpty ||
         deletionsToSync.isNotEmpty ||
@@ -2869,24 +2915,30 @@ class AppState extends ChangeNotifier {
     if (!hasChanges) return false;
     final client = _supabase.client;
     final mealPayloads = <Map<String, dynamic>>[];
-    for (final entry in entriesToSync) {
-      final imageHash = entry.imageHash ?? _hashBytes(entry.imageBytes);
-      final imagePath = await _uploadImageIfNeeded(
-        bucket: kSupabaseMealImagesBucket,
-        path: '${user.id}/meals/$imageHash.jpg',
-        bytes: entry.imageBytes,
-      );
-      String? labelPath;
-      if (entry.labelImageBytes != null) {
-        final labelHash = _hashBytes(entry.labelImageBytes!);
-        labelPath = await _uploadImageIfNeeded(
-          bucket: kSupabaseLabelImagesBucket,
-          path: '${user.id}/labels/$labelHash.jpg',
-          bytes: entry.labelImageBytes!,
+    try {
+      for (final entry in entriesToSync) {
+        final imageHash = entry.imageHash ?? _hashBytes(entry.imageBytes);
+        final imagePath = await _uploadImageIfNeeded(
+          bucket: kSupabaseMealImagesBucket,
+          path: '${user.id}/meals/$imageHash.jpg',
+          bytes: entry.imageBytes,
         );
+        String? labelPath;
+        if (entry.labelImageBytes != null) {
+          final labelHash = _hashBytes(entry.labelImageBytes!);
+          labelPath = await _uploadImageIfNeeded(
+            bucket: kSupabaseLabelImagesBucket,
+            path: '${user.id}/labels/$labelHash.jpg',
+            bytes: entry.labelImageBytes!,
+          );
+        }
+        final payload = _mealEntryToRow(entry, user.id, imagePath, labelPath);
+        mealPayloads.add(payload);
       }
-      final payload = _mealEntryToRow(entry, user.id, imagePath, labelPath);
-      mealPayloads.add(payload);
+    } catch (_) {
+      _failedMealSyncIds.addAll(entriesToSync.map((e) => e.id));
+      await _saveOverrides();
+      rethrow;
     }
     for (final deleted in deletionsToSync) {
       mealPayloads.add({
@@ -2900,65 +2952,110 @@ class AppState extends ChangeNotifier {
       });
     }
     if (mealPayloads.isNotEmpty) {
-      await client.from(kSupabaseMealsTable).upsert(mealPayloads).select('id');
+      try {
+        await client.from(kSupabaseMealsTable).upsert(mealPayloads).select('id');
+        _failedMealSyncIds.removeAll(entriesToSync.map((e) => e.id));
+        _failedMealDeleteSyncIds.removeAll(
+          deletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
+        );
+      } catch (_) {
+        _failedMealSyncIds.addAll(entriesToSync.map((e) => e.id));
+        _failedMealDeleteSyncIds.addAll(
+          deletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
+        );
+        await _saveOverrides();
+        rethrow;
+      }
     }
     final foodPayloads = <Map<String, dynamic>>[];
-    for (final food in foodsToSync) {
-      final imageHash = _hashBytes(food.imageBytes);
-      final imagePath = await _uploadImageIfNeeded(
-        bucket: kSupabaseMealImagesBucket,
-        path: '${user.id}/custom/$imageHash.jpg',
-        bytes: food.imageBytes,
-      );
-      final payload = {
-        'id': food.id,
-        'user_id': user.id,
-        'name': food.name,
-        'summary': food.summary,
-        'calorie_range': food.calorieRange,
-        'suggestion': food.suggestion,
-        'macros': food.macros,
-        'image_path': imagePath,
-        'created_at': food.createdAt.toIso8601String(),
-        'updated_at': food.updatedAt.toIso8601String(),
-        'deleted_at': null,
-      };
-      foodPayloads.add(payload);
+    try {
+      for (final food in foodsToSync) {
+        final imageHash = _hashBytes(food.imageBytes);
+        final imagePath = await _uploadImageIfNeeded(
+          bucket: kSupabaseMealImagesBucket,
+          path: '${user.id}/custom/$imageHash.jpg',
+          bytes: food.imageBytes,
+        );
+        final payload = {
+          'id': food.id,
+          'user_id': user.id,
+          'name': food.name,
+          'summary': food.summary,
+          'calorie_range': food.calorieRange,
+          'suggestion': food.suggestion,
+          'macros': food.macros,
+          'image_path': imagePath,
+          'created_at': food.createdAt.toIso8601String(),
+          'updated_at': food.updatedAt.toIso8601String(),
+          'deleted_at': null,
+        };
+        foodPayloads.add(payload);
+      }
+    } catch (_) {
+      _failedCustomFoodSyncIds.addAll(foodsToSync.map((e) => e.id));
+      await _saveOverrides();
+      rethrow;
     }
     if (foodPayloads.isNotEmpty) {
-      await client.from(kSupabaseCustomFoodsTable).upsert(foodPayloads).select('id');
+      try {
+        await client.from(kSupabaseCustomFoodsTable).upsert(foodPayloads).select('id');
+        _failedCustomFoodSyncIds.removeAll(foodsToSync.map((e) => e.id));
+      } catch (_) {
+        _failedCustomFoodSyncIds.addAll(foodsToSync.map((e) => e.id));
+        await _saveOverrides();
+        rethrow;
+      }
     }
     if (customDeletionsToSync.isNotEmpty) {
       final deletePayloads = <Map<String, dynamic>>[];
-      for (final deleted in customDeletionsToSync) {
-        final id = deleted['id'];
-        if (id is! String || id.isEmpty) continue;
-        final imageBytes = _extractCustomFoodBytes(deleted);
-        String? imagePath;
-        if (imageBytes != null && imageBytes.isNotEmpty) {
-          final imageHash = _hashBytes(imageBytes);
-          imagePath = await _uploadImageIfNeeded(
-            bucket: kSupabaseMealImagesBucket,
-            path: '${user.id}/custom/$imageHash.jpg',
-            bytes: imageBytes,
-          );
+      try {
+        for (final deleted in customDeletionsToSync) {
+          final id = deleted['id'];
+          if (id is! String || id.isEmpty) continue;
+          final imageBytes = _extractCustomFoodBytes(deleted);
+          String? imagePath;
+          if (imageBytes != null && imageBytes.isNotEmpty) {
+            final imageHash = _hashBytes(imageBytes);
+            imagePath = await _uploadImageIfNeeded(
+              bucket: kSupabaseMealImagesBucket,
+              path: '${user.id}/custom/$imageHash.jpg',
+              bytes: imageBytes,
+            );
+          }
+          deletePayloads.add({
+            'id': id,
+            'user_id': user.id,
+            'name': (deleted['name'] as String?) ?? '',
+            'summary': (deleted['summary'] as String?) ?? '',
+            'calorie_range': (deleted['calorie_range'] as String?) ?? '',
+            'suggestion': (deleted['suggestion'] as String?) ?? '',
+            'macros': deleted['macros'] ?? {},
+            'image_path': imagePath,
+            'created_at': deleted['created_at'],
+            'updated_at': deleted['updated_at'],
+            'deleted_at': deleted['deleted_at'],
+          });
         }
-        deletePayloads.add({
-          'id': id,
-          'user_id': user.id,
-          'name': (deleted['name'] as String?) ?? '',
-          'summary': (deleted['summary'] as String?) ?? '',
-          'calorie_range': (deleted['calorie_range'] as String?) ?? '',
-          'suggestion': (deleted['suggestion'] as String?) ?? '',
-          'macros': deleted['macros'] ?? {},
-          'image_path': imagePath,
-          'created_at': deleted['created_at'],
-          'updated_at': deleted['updated_at'],
-          'deleted_at': deleted['deleted_at'],
-        });
+      } catch (_) {
+        _failedCustomFoodDeleteSyncIds.addAll(
+          customDeletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
+        );
+        await _saveOverrides();
+        rethrow;
       }
       if (deletePayloads.isNotEmpty) {
-        await client.from(kSupabaseCustomFoodsTable).upsert(deletePayloads).select('id');
+        try {
+          await client.from(kSupabaseCustomFoodsTable).upsert(deletePayloads).select('id');
+          _failedCustomFoodDeleteSyncIds.removeAll(
+            customDeletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
+          );
+        } catch (_) {
+          _failedCustomFoodDeleteSyncIds.addAll(
+            customDeletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
+          );
+          await _saveOverrides();
+          rethrow;
+        }
       }
     }
     if (deletionsToSync.isNotEmpty) {
@@ -3005,8 +3102,17 @@ class AppState extends ChangeNotifier {
           remoteIds.add(entryId);
         }
         final deletedAt = row['deleted_at'] as String?;
+        final remoteUpdatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
         if (deletedAt != null && deletedAt.isNotEmpty) {
           if (entryId != null) {
+            final existing = existingEntries[entryId];
+            if (existing != null &&
+                existing.updatedAt != null &&
+                remoteUpdatedAt != null &&
+                existing.updatedAt!.isAfter(remoteUpdatedAt)) {
+              _failedMealSyncIds.add(entryId);
+              continue;
+            }
             final index = entries.indexWhere((item) => item.id == entryId);
             if (index != -1) {
               entries.removeAt(index);
@@ -3017,6 +3123,13 @@ class AppState extends ChangeNotifier {
           continue;
         }
         final existing = entryId == null ? null : existingEntries[entryId];
+        if (existing != null &&
+            existing.updatedAt != null &&
+            remoteUpdatedAt != null &&
+            existing.updatedAt!.isAfter(remoteUpdatedAt)) {
+          _failedMealSyncIds.add(existing.id);
+          continue;
+        }
         final imagePath = row['image_path'] as String?;
         final labelPath = row['label_image_path'] as String?;
         Uint8List? imageBytes;
@@ -3073,10 +3186,22 @@ class AppState extends ChangeNotifier {
           remoteFoodIds.add(foodId);
         }
         final deletedAt = row['deleted_at'] as String?;
+        final remoteUpdatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
         if (deletedAt != null && deletedAt.isNotEmpty) {
+          if (foodId != null) {
+            final existing = existingFoods[foodId];
+            if (existing != null && remoteUpdatedAt != null && existing.updatedAt.isAfter(remoteUpdatedAt)) {
+              _failedCustomFoodSyncIds.add(foodId);
+              continue;
+            }
+          }
           continue;
         }
         final existing = foodId == null ? null : existingFoods[foodId];
+        if (existing != null && remoteUpdatedAt != null && existing.updatedAt.isAfter(remoteUpdatedAt)) {
+          _failedCustomFoodSyncIds.add(existing.id);
+          continue;
+        }
         final imagePath = row['image_path'] as String?;
         final updatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
         Uint8List? bytes;
@@ -3264,6 +3389,10 @@ class AppState extends ChangeNotifier {
       'user_id': userId,
       'last_sync_at': time.toIso8601String(),
     }).select('user_id');
+    final confirm = await _fetchRemoteSyncAt(userId);
+    if (confirm == null || confirm.isBefore(time)) {
+      throw Exception('sync_meta_write_failed');
+    }
   }
 
   Future<String?> _uploadImageIfNeeded({
@@ -3409,8 +3538,19 @@ class AppState extends ChangeNotifier {
       'meta': _meta,
       'deleted_entries': _deletedEntries,
       'deleted_custom_foods': _deletedCustomFoods,
+      'failed_meal_sync_ids': _failedMealSyncIds.toList(),
+      'failed_meal_delete_sync_ids': _failedMealDeleteSyncIds.toList(),
+      'failed_custom_food_sync_ids': _failedCustomFoodSyncIds.toList(),
+      'failed_custom_food_delete_sync_ids': _failedCustomFoodDeleteSyncIds.toList(),
       'custom_foods': customFoods.map((item) => item.toJson()).toList(),
     });
+  }
+
+  Iterable<String> _parseIdList(dynamic raw) {
+    if (raw is List) {
+      return raw.map((e) => e.toString()).where((e) => e.isNotEmpty);
+    }
+    return const [];
   }
 
   Locale _localeFromProfile() {

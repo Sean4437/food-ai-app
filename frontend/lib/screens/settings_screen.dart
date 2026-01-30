@@ -338,14 +338,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     } catch (err) {
+      final message = _formatSyncError(err, t);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${t.syncError}: $err')),
+          SnackBar(content: Text(message)),
         );
       }
     } finally {
       app.setSyncInProgress(false);
     }
+  }
+
+  String _formatSyncError(Object err, AppLocalizations t) {
+    final text = err.toString();
+    if (text.contains('not signed in') || text.contains('missing_token')) {
+      return t.syncRequireLogin;
+    }
+    if (text.contains('storage_upload_failed')) {
+      return '${t.syncError}: 圖片上傳失敗';
+    }
+    if (text.contains('sync_meta_write_failed')) {
+      return '${t.syncError}: 同步狀態寫入失敗';
+    }
+    if (text.contains('PGRST') || text.contains('Postgrest')) {
+      return '${t.syncError}: 資料庫同步失敗';
+    }
+    if (text.contains('SocketException') || text.contains('TimeoutException') || text.contains('timeout')) {
+      return '${t.syncError}: 網路連線不穩定';
+    }
+    return '${t.syncError}: $text';
   }
 
   Future<void> _exportData(BuildContext context, AppState app) async {
