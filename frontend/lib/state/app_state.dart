@@ -441,20 +441,20 @@ class AppState extends ChangeNotifier {
     final imageHash = _hashBytes(analysis.originalBytes);
     MealEntry entry;
     if (existing != null) {
-      entry = existing;
-      entry
-        ..imageBytes = analysis.imageBytes
-        ..filename = filename
-        ..time = analysis.time
-        ..type = analysis.mealType
-        ..note = note
-        ..imageHash = imageHash
-        ..result = analysis.result
-        ..updatedAt = now
-        ..lastAnalyzedNote = (note ?? '').trim()
-        ..lastAnalyzedFoodName = entry.overrideFoodName ?? ''
-        ..lastAnalyzedAt = DateTime.now().toIso8601String()
-        ..lastAnalyzeReason = 'quick_capture_manual';
+      entry = existing.copyWith(
+        imageBytes: analysis.imageBytes,
+        filename: filename,
+        time: analysis.time,
+        type: analysis.mealType,
+        note: note,
+        imageHash: imageHash,
+        result: analysis.result,
+        updatedAt: now,
+        lastAnalyzedNote: (note ?? '').trim(),
+        lastAnalyzedFoodName: existing.overrideFoodName ?? '',
+        lastAnalyzedAt: DateTime.now().toIso8601String(),
+        lastAnalyzeReason: 'quick_capture_manual',
+      );
       entry.mealId ??= _assignMealId(entry.time, entry.type);
       final index = entries.indexWhere((item) => item.id == entry.id);
       if (index != -1) {

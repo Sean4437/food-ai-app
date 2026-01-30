@@ -51,6 +51,56 @@ class MealEntry {
   bool loading = false;
   String? error;
 
+  MealEntry copyWith({
+    Uint8List? imageBytes,
+    String? filename,
+    DateTime? time,
+    MealType? type,
+    int? portionPercent,
+    DateTime? updatedAt,
+    DateTime? deletedAt,
+    String? note,
+    String? overrideFoodName,
+    String? imageHash,
+    String? mealId,
+    String? lastAnalyzedNote,
+    String? lastAnalyzedFoodName,
+    String? lastAnalyzedAt,
+    String? lastAnalyzeReason,
+    Uint8List? labelImageBytes,
+    String? labelFilename,
+    LabelResult? labelResult,
+    AnalysisResult? result,
+    bool? loading,
+    String? error,
+  }) {
+    final entry = MealEntry(
+      id: id,
+      imageBytes: imageBytes ?? this.imageBytes,
+      filename: filename ?? this.filename,
+      time: time ?? this.time,
+      type: type ?? this.type,
+      portionPercent: portionPercent ?? this.portionPercent,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      note: note ?? this.note,
+      overrideFoodName: overrideFoodName ?? this.overrideFoodName,
+      imageHash: imageHash ?? this.imageHash,
+      mealId: mealId ?? this.mealId,
+      lastAnalyzedNote: lastAnalyzedNote ?? this.lastAnalyzedNote,
+      lastAnalyzedFoodName: lastAnalyzedFoodName ?? this.lastAnalyzedFoodName,
+      lastAnalyzedAt: lastAnalyzedAt ?? this.lastAnalyzedAt,
+      lastAnalyzeReason: lastAnalyzeReason ?? this.lastAnalyzeReason,
+      labelImageBytes: labelImageBytes ?? this.labelImageBytes,
+      labelFilename: labelFilename ?? this.labelFilename,
+      labelResult: labelResult ?? this.labelResult,
+    );
+    entry.result = result ?? this.result;
+    entry.loading = loading ?? this.loading;
+    entry.error = error ?? this.error;
+    return entry;
+  }
+
   static String _mealTypeToString(MealType type) {
     switch (type) {
       case MealType.breakfast:
