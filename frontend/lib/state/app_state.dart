@@ -28,6 +28,7 @@ const String kDefaultPlateAsset = 'assets/plates/plate_Japanese_02.png';
 const String kDefaultThemeAsset = 'assets/themes/theme_clean.json';
 const double kDefaultTextScale = 1.0;
 const String _kMacroUnitMetaKey = 'macro_unit';
+const String _kSettingsUpdatedAtKey = 'settings_updated_at';
 const String _kMacroUnitGrams = 'grams';
 const String _kMacroUnitPercent = 'percent';
 const double _kMacroBaselineProteinG = 30;
@@ -179,6 +180,7 @@ class AppState extends ChangeNotifier {
     } else {
       _meta[key] = level;
     }
+    _touchSettingsUpdatedAt();
     notifyListeners();
     await _saveOverrides();
   }
@@ -190,6 +192,7 @@ class AppState extends ChangeNotifier {
     } else {
       _meta[key] = type;
     }
+    _touchSettingsUpdatedAt();
     notifyListeners();
     await _saveOverrides();
   }
@@ -198,6 +201,7 @@ class AppState extends ChangeNotifier {
     final key = _exerciseMinutesKey(date);
     final value = minutes.clamp(0, 360);
     _meta[key] = value.toString();
+    _touchSettingsUpdatedAt();
     notifyListeners();
     await _saveOverrides();
   }
@@ -513,6 +517,10 @@ class AppState extends ChangeNotifier {
     final overrides = await _settings.loadOverrides();
     if (overrides != null) {
       _loadOverrides(overrides);
+    }
+    if (_meta[_kSettingsUpdatedAtKey] == null || _meta[_kSettingsUpdatedAtKey]!.isEmpty) {
+      _meta[_kSettingsUpdatedAtKey] = DateTime.now().toUtc().toIso8601String();
+      await _saveOverrides();
     }
     _api = ApiService(baseUrl: profile.apiBaseUrl.isEmpty ? kDefaultApiBaseUrl : profile.apiBaseUrl);
     final loaded = await _store.loadAll();
@@ -1309,6 +1317,7 @@ class AppState extends ChangeNotifier {
     if (_dayOverrides[key]!.isEmpty) {
       _dayOverrides.remove(key);
     }
+    _touchSettingsUpdatedAt();
     notifyListeners();
     await _saveOverrides();
   }
@@ -1335,6 +1344,7 @@ class AppState extends ChangeNotifier {
     if (_weekOverrides[key]!.isEmpty) {
       _weekOverrides.remove(key);
     }
+    _touchSettingsUpdatedAt();
     notifyListeners();
     await _saveOverrides();
   }
@@ -1347,6 +1357,7 @@ class AppState extends ChangeNotifier {
       'bento': advice.bento.trim(),
       'other': advice.other.trim(),
     };
+    _touchSettingsUpdatedAt();
     markMealInteraction(mealId);
     notifyListeners();
     await _saveOverrides();
@@ -1930,8 +1941,11 @@ class AppState extends ChangeNotifier {
       ..nutritionChartStyle = updated.nutritionChartStyle
       ..glowEnabled = updated.glowEnabled;
     notifyListeners();
+    _touchSettingsUpdatedAt();
     // ignore: unawaited_futures
     _saveProfile();
+    // ignore: unawaited_futures
+    _saveOverrides();
   }
 
   void updateField(void Function(UserProfile profile) updater) {
@@ -1939,8 +1953,11 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     _scheduleAutoFinalize();
     _scheduleAutoFinalizeWeek();
+    _touchSettingsUpdatedAt();
     // ignore: unawaited_futures
     _saveProfile();
+    // ignore: unawaited_futures
+    _saveOverrides();
   }
 
   void updateMealTimeField(void Function(UserProfile profile) updater) {
@@ -1948,8 +1965,11 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     _scheduleAutoFinalize();
     _scheduleAutoFinalizeWeek();
+    _touchSettingsUpdatedAt();
     // ignore: unawaited_futures
     _saveProfile();
+    // ignore: unawaited_futures
+    _saveOverrides();
     // ignore: unawaited_futures
     _reassignMealTypesForAllEntries();
   }
@@ -2949,10 +2969,13 @@ class AppState extends ChangeNotifier {
         customDeletionsToSync.add(deleted);
       }
     }
+    final settingsUpdatedAt = _settingsUpdatedAt();
+    final settingsToSync = settingsUpdatedAt != null && (since == null || settingsUpdatedAt.isAfter(since));
     final hasChanges = entriesToSync.isNotEmpty ||
         foodsToSync.isNotEmpty ||
         deletionsToSync.isNotEmpty ||
-        customDeletionsToSync.isNotEmpty;
+        customDeletionsToSync.isNotEmpty ||
+        settingsToSync;
     if (!hasChanges) return false;
     final client = _supabase.client;
     final mealPayloads = <Map<String, dynamic>>[];
@@ -3109,6 +3132,16 @@ class AppState extends ChangeNotifier {
         }
       }
     }
+    if (settingsToSync && settingsUpdatedAt != null) {
+      final settingsPayload = {
+        'user_id': user.id,
+        'profile_json': _profileToSyncMap(),
+        'overrides_json': _settingsOverridesToSyncMap(),
+        'updated_at': settingsUpdatedAt.toIso8601String(),
+        'deleted_at': null,
+      };
+      await client.from(kSupabaseUserSettingsTable).upsert(settingsPayload).select('user_id');
+    }
     if (deletionsToSync.isNotEmpty) {
       for (final deleted in deletionsToSync) {
         final id = deleted['id'];
@@ -3136,6 +3169,31 @@ class AppState extends ChangeNotifier {
       throw Exception('Supabase not signed in');
     }
     final client = _supabase.client;
+    final settingsRow = await _fetchRemoteSettingsRow(user.id);
+    if (settingsRow != null) {
+      final remoteUpdatedAt = DateTime.tryParse(settingsRow['updated_at'] as String? ?? '');
+      final localUpdatedAt = _settingsUpdatedAt();
+      if (remoteUpdatedAt != null && (localUpdatedAt == null || remoteUpdatedAt.isAfter(localUpdatedAt))) {
+        final profileJson = settingsRow['profile_json'];
+        if (profileJson is Map<String, dynamic>) {
+          _applyProfile(profileJson);
+        } else if (profileJson is Map) {
+          _applyProfile(profileJson.map((k, v) => MapEntry(k.toString(), v)));
+        }
+        final overridesJson = settingsRow['overrides_json'];
+        if (overridesJson is Map<String, dynamic>) {
+          _applySettingsOverrides(overridesJson);
+        } else if (overridesJson is Map) {
+          _applySettingsOverrides(overridesJson.map((k, v) => MapEntry(k.toString(), v)));
+        }
+        _meta[_kSettingsUpdatedAtKey] = remoteUpdatedAt.toIso8601String();
+        await _saveProfile();
+        await _saveOverrides();
+        _scheduleAutoFinalize();
+        _scheduleAutoFinalizeWeek();
+        notifyListeners();
+      }
+    }
     final since = _localSyncAt();
     final existingEntries = {
       for (final entry in entries) entry.id: entry,
@@ -3311,10 +3369,13 @@ class AppState extends ChangeNotifier {
     final beforeFingerprint = _syncFingerprint();
     final localSyncAt = _localSyncAt();
     final remoteSyncAt = await _fetchRemoteSyncAt(user.id);
+    final localSettingsUpdatedAt = _settingsUpdatedAt();
+    final remoteSettingsUpdatedAt = await _fetchRemoteSettingsUpdatedAt(user.id);
+    final hasLocalSettings = localSettingsUpdatedAt != null;
     final hasLocalData = entries.isNotEmpty || customFoods.isNotEmpty;
 
     if (remoteSyncAt == null) {
-      if (!hasLocalData) return false;
+      if (!hasLocalData && !hasLocalSettings) return false;
       final changed = await syncToSupabase(report: report);
       if (changed) {
         final now = DateTime.now().toUtc();
@@ -3337,11 +3398,16 @@ class AppState extends ChangeNotifier {
 
     // 2) Then pull remote changes
     final updatedRemoteSyncAt = await _fetchRemoteSyncAt(user.id);
-    final shouldPull = updatedRemoteSyncAt != null &&
-        (localSyncAt == null || updatedRemoteSyncAt.isAfter(localSyncAt));
+    final shouldPullData =
+        updatedRemoteSyncAt != null && (localSyncAt == null || updatedRemoteSyncAt.isAfter(localSyncAt));
+    final shouldPullSettings = remoteSettingsUpdatedAt != null &&
+        (localSettingsUpdatedAt == null || remoteSettingsUpdatedAt.isAfter(localSettingsUpdatedAt));
+    final shouldPull = shouldPullData || shouldPullSettings;
     if (shouldPull) {
       await syncFromSupabase(report: report);
-      await _storeLocalSyncAt(updatedRemoteSyncAt!);
+      if (updatedRemoteSyncAt != null && (localSyncAt == null || updatedRemoteSyncAt.isAfter(localSyncAt))) {
+        await _storeLocalSyncAt(updatedRemoteSyncAt);
+      }
       changed = true;
     }
 
@@ -3441,6 +3507,31 @@ class AppState extends ChangeNotifier {
     final raw = row['last_sync_at'] as String?;
     if (raw == null || raw.isEmpty) return null;
     return DateTime.tryParse(raw);
+  }
+
+  Future<Map<String, dynamic>?> _fetchRemoteSettingsRow(String userId) async {
+    final rows = await _supabase.client.from(kSupabaseUserSettingsTable).select().eq('user_id', userId);
+    if (rows is Map<String, dynamic>) return rows;
+    if (rows is List && rows.isNotEmpty && rows.first is Map) {
+      return Map<String, dynamic>.from(rows.first as Map);
+    }
+    return null;
+  }
+
+  Future<DateTime?> _fetchRemoteSettingsUpdatedAt(String userId) async {
+    final rows = await _supabase.client
+        .from(kSupabaseUserSettingsTable)
+        .select('updated_at')
+        .eq('user_id', userId);
+    if (rows is Map<String, dynamic>) {
+      final raw = rows['updated_at'] as String?;
+      return raw == null || raw.isEmpty ? null : DateTime.tryParse(raw);
+    }
+    if (rows is List && rows.isNotEmpty && rows.first is Map) {
+      final raw = (rows.first as Map)['updated_at'] as String?;
+      return raw == null || raw.isEmpty ? null : DateTime.tryParse(raw);
+    }
+    return null;
   }
 
   Future<void> _storeRemoteSyncAt(String userId, DateTime time) async {
@@ -3650,6 +3741,96 @@ class AppState extends ChangeNotifier {
 
   Future<void> _saveProfile() async {
     await _settings.saveProfile(_profileToMap());
+  }
+
+  void _touchSettingsUpdatedAt() {
+    _meta[_kSettingsUpdatedAtKey] = DateTime.now().toUtc().toIso8601String();
+  }
+
+  DateTime? _settingsUpdatedAt() {
+    final raw = _meta[_kSettingsUpdatedAtKey];
+    if (raw == null || raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
+  }
+
+  Map<String, dynamic> _profileToSyncMap() {
+    final data = _profileToMap();
+    data.remove('email');
+    data.remove('api_base_url');
+    data.remove('plate_asset');
+    data.remove('theme_asset');
+    data.remove('text_scale');
+    data.remove('nutrition_chart');
+    data.remove('nutrition_value_mode');
+    data.remove('glow_enabled');
+    return data;
+  }
+
+  bool _isSettingsMetaKey(String key) {
+    return key.startsWith('activity:') ||
+        key.startsWith('exercise_type:') ||
+        key.startsWith('exercise_minutes:') ||
+        key.startsWith('day_finalized:');
+  }
+
+  Map<String, String> _settingsMetaToSync() {
+    final filtered = <String, String>{};
+    _meta.forEach((key, value) {
+      if (_isSettingsMetaKey(key)) {
+        filtered[key] = value;
+      }
+    });
+    return filtered;
+  }
+
+  Map<String, Map<String, String>> _parseOverridesSection(dynamic raw) {
+    final parsed = <String, Map<String, String>>{};
+    if (raw is Map) {
+      raw.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          parsed[key.toString()] = value.map((k, v) => MapEntry(k, v.toString()));
+        } else if (value is Map) {
+          parsed[key.toString()] = value.map((k, v) => MapEntry(k.toString(), v.toString()));
+        }
+      });
+    }
+    return parsed;
+  }
+
+  Map<String, dynamic> _settingsOverridesToSyncMap() {
+    return {
+      'day': _dayOverrides,
+      'meal': _mealOverrides,
+      'week': _weekOverrides,
+      'meta': _settingsMetaToSync(),
+    };
+  }
+
+  void _applySettingsOverrides(Map<String, dynamic> overrides) {
+    final day = _parseOverridesSection(overrides['day']);
+    final meal = _parseOverridesSection(overrides['meal']);
+    final week = _parseOverridesSection(overrides['week']);
+    final metaRaw = overrides['meta'];
+    final meta = <String, String>{};
+    if (metaRaw is Map) {
+      metaRaw.forEach((key, value) {
+        final k = key.toString();
+        if (_isSettingsMetaKey(k)) {
+          meta[k] = value.toString();
+        }
+      });
+    }
+    _dayOverrides
+      ..clear()
+      ..addAll(day);
+    _mealOverrides
+      ..clear()
+      ..addAll(meal);
+    _weekOverrides
+      ..clear()
+      ..addAll(week);
+    _meta.removeWhere((key, _) => _isSettingsMetaKey(key));
+    _meta.addAll(meta);
   }
 
   Map<String, dynamic> _profileToMap() {

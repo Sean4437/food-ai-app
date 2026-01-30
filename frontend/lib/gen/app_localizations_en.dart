@@ -417,7 +417,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get latestMealTitle => 'Latest meal';
 
   @override
-  String get latestMealEmpty => 'You haven't logged any meals today';
+  String get latestMealEmpty => 'You haven\'t logged any meals today';
 
   @override
   String get homeNextMealHint =>
@@ -462,10 +462,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayCardMealsLabel => 'Meals analyzed:';
 
   @override
-  String get dayCardSummaryLabel => 'Today's summary';
+  String get dayCardSummaryLabel => 'Today\'s summary';
 
   @override
-  String get dayCardTomorrowLabel => 'Tomorrow's advice';
+  String get dayCardTomorrowLabel => 'Tomorrow\'s advice';
 
   @override
   String summaryPendingAt(Object time) {
@@ -478,7 +478,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get finalizeDay => 'Generate today's summary';
+  String get finalizeDay => 'Generate today\'s summary';
 
   @override
   String get dishSummaryLabel => 'Meal summary';
@@ -767,7 +767,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentGuidanceTitle => 'Recent guidance (last 7 days)';
 
   @override
-  String get weekSummaryTitle => 'This week's summary';
+  String get weekSummaryTitle => 'This week\'s summary';
 
   @override
   String get nextWeekAdviceTitle => 'Next week advice';
@@ -1177,14 +1177,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authEmailInvalid => 'Invalid email address';
 
   @override
-  String get authPasswordRule =>
-      'Password must be at least 8 characters and contain no spaces or Chinese characters';
-
-  @override
-  String get authPasswordInvalid =>
-      'Password must be at least 8 characters and contain no spaces or Chinese characters';
-
-  @override
   String get authPasswordLabel => 'Password';
 
   @override
@@ -1218,10 +1210,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authPasswordMismatch => 'Passwords do not match';
 
   @override
-  String get authResetSent => 'Password reset email has been sent. Please check your inbox.';
+  String get authPasswordRule =>
+      'Password must be at least 8 characters and contain no spaces or Chinese characters';
 
   @override
-  String get authResetFailed => 'Unable to send reset email. Please check your email address.';
+  String get authPasswordInvalid =>
+      'Password must be at least 8 characters and contain no spaces or Chinese characters';
+
+  @override
+  String get authResetSent =>
+      'Password reset email has been sent. Please check your inbox.';
+
+  @override
+  String get authResetFailed =>
+      'Unable to send reset email. Please check your email address.';
 
   @override
   String get authLoginInvalid => 'Email or password is incorrect';

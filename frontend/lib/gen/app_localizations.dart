@@ -792,7 +792,7 @@ abstract class AppLocalizations {
   /// No description provided for @summaryNeutral.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天整體還不錯，維持即可'**
+  /// **'今天狀態不錯，繼續保持'**
   String get summaryNeutral;
 
   /// No description provided for @mealsCountLabel.
@@ -864,13 +864,13 @@ abstract class AppLocalizations {
   /// No description provided for @greetingTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'Hi，小明'**
+  /// **'Hi，{name}'**
   String greetingTitle(String name);
 
   /// No description provided for @streakLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'一週連續挑戰 第 3 天'**
+  /// **'連續紀錄 第 {count} 天'**
   String streakLabel(int count);
 
   /// No description provided for @aiSuggest.
@@ -888,7 +888,7 @@ abstract class AppLocalizations {
   /// No description provided for @latestMealEmpty.
   ///
   /// In zh_TW, this message translates to:
-  /// **'尚未有餐點紀錄'**
+  /// **'今天還沒記錄餐點喔'**
   String get latestMealEmpty;
 
   /// No description provided for @homeNextMealHint.
@@ -972,13 +972,13 @@ abstract class AppLocalizations {
   /// No description provided for @dayCardSummaryLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天飲食總結'**
+  /// **'今日總結'**
   String get dayCardSummaryLabel;
 
   /// No description provided for @dayCardTomorrowLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'明天建議'**
+  /// **'明日建議'**
   String get dayCardTomorrowLabel;
 
   /// No description provided for @summaryPendingAt.
@@ -996,7 +996,7 @@ abstract class AppLocalizations {
   /// No description provided for @finalizeDay.
   ///
   /// In zh_TW, this message translates to:
-  /// **'完成今日總結'**
+  /// **'生成今日總結'**
   String get finalizeDay;
 
   /// No description provided for @dishSummaryLabel.
@@ -1014,7 +1014,7 @@ abstract class AppLocalizations {
   /// No description provided for @calorieUnknown.
   ///
   /// In zh_TW, this message translates to:
-  /// **'尚未估計'**
+  /// **'尚無可用估算'**
   String get calorieUnknown;
 
   /// No description provided for @portionLabel.
@@ -1164,7 +1164,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantAdviceTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'這道菜怎麼吃比較好'**
+  /// **'這一餐怎麼吃比較好'**
   String get suggestInstantAdviceTitle;
 
   /// No description provided for @suggestInstantCanEat.
@@ -1572,7 +1572,7 @@ abstract class AppLocalizations {
   /// No description provided for @weekSummaryTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'一週總結'**
+  /// **'本週總結'**
   String get weekSummaryTitle;
 
   /// No description provided for @nextWeekAdviceTitle.
@@ -1812,7 +1812,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestRemainingTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今日剩餘熱量'**
+  /// **'今天還能吃多少'**
   String get suggestRemainingTitle;
 
   /// No description provided for @suggestRemainingLeft.
@@ -1998,7 +1998,7 @@ abstract class AppLocalizations {
   /// No description provided for @estimated.
   ///
   /// In zh_TW, this message translates to:
-  /// **'估計'**
+  /// **'AI 估算'**
   String get estimated;
 
   /// No description provided for @protein.
@@ -2034,7 +2034,7 @@ abstract class AppLocalizations {
   /// No description provided for @analyzeFailed.
   ///
   /// In zh_TW, this message translates to:
-  /// **'分析失敗'**
+  /// **'目前無法分析'**
   String get analyzeFailed;
 
   /// No description provided for @costEstimateLabel.
@@ -2076,7 +2076,7 @@ abstract class AppLocalizations {
   /// No description provided for @mockPrefix.
   ///
   /// In zh_TW, this message translates to:
-  /// **'模擬'**
+  /// **'預覽'**
   String get mockPrefix;
 
   /// No description provided for @versionSection.
@@ -2256,13 +2256,13 @@ abstract class AppLocalizations {
   /// No description provided for @syncInProgress.
   ///
   /// In zh_TW, this message translates to:
-  /// **'同步中'**
+  /// **'正在同步資料…'**
   String get syncInProgress;
 
   /// No description provided for @syncSuccess.
   ///
   /// In zh_TW, this message translates to:
-  /// **'同步完成'**
+  /// **'資料已成功同步'**
   String get syncSuccess;
 
   /// No description provided for @syncUpdated.
@@ -2274,19 +2274,19 @@ abstract class AppLocalizations {
   /// No description provided for @syncNoChanges.
   ///
   /// In zh_TW, this message translates to:
-  /// **'已同步完成'**
+  /// **'沒有需要同步的變更'**
   String get syncNoChanges;
 
   /// No description provided for @syncError.
   ///
   /// In zh_TW, this message translates to:
-  /// **'同步失敗'**
+  /// **'同步失敗，請稍後再試'**
   String get syncError;
 
   /// No description provided for @syncRequireLogin.
   ///
   /// In zh_TW, this message translates to:
-  /// **'請先登入'**
+  /// **'請先登入以進行同步'**
   String get syncRequireLogin;
 
   /// No description provided for @syncAuthTitleSignIn.
@@ -2340,13 +2340,13 @@ abstract class AppLocalizations {
   /// No description provided for @authTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'登入使用'**
+  /// **'歡迎使用 Food AI'**
   String get authTitle;
 
   /// No description provided for @authSubtitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'先登入才能使用完整功能'**
+  /// **'登入後即可使用完整功能'**
   String get authSubtitle;
 
   /// No description provided for @authEmailLabel.
@@ -2366,18 +2366,6 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'Email 格式不正確'**
   String get authEmailInvalid;
-
-  /// No description provided for @authPasswordRule.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'密碼至少 8 碼，且不可含空白或中文'**
-  String get authPasswordRule;
-
-  /// No description provided for @authPasswordInvalid.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'密碼需至少 8 碼，且不可含空白或中文'**
-  String get authPasswordInvalid;
 
   /// No description provided for @authPasswordLabel.
   ///
@@ -2424,19 +2412,19 @@ abstract class AppLocalizations {
   /// No description provided for @authSignInSuccess.
   ///
   /// In zh_TW, this message translates to:
-  /// **'登入成功'**
+  /// **'已成功登入'**
   String get authSignInSuccess;
 
   /// No description provided for @authSignUpSuccess.
   ///
   /// In zh_TW, this message translates to:
-  /// **'註冊成功'**
+  /// **'帳號已建立'**
   String get authSignUpSuccess;
 
   /// No description provided for @authSignUpVerify.
   ///
   /// In zh_TW, this message translates to:
-  /// **'註冊成功，請至信箱驗證'**
+  /// **'帳號已建立，請完成信箱驗證'**
   String get authSignUpVerify;
 
   /// No description provided for @authPasswordMismatch.
@@ -2445,46 +2433,58 @@ abstract class AppLocalizations {
   /// **'兩次密碼不一致'**
   String get authPasswordMismatch;
 
+  /// No description provided for @authPasswordRule.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'密碼至少 8 碼，且不可含空白或中文'**
+  String get authPasswordRule;
+
+  /// No description provided for @authPasswordInvalid.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'密碼需至少 8 碼，且不可含空白或中文'**
+  String get authPasswordInvalid;
+
   /// No description provided for @authResetSent.
   ///
   /// In zh_TW, this message translates to:
-  /// **'重設密碼信已寄出'**
+  /// **'重設密碼信已寄出，請查看信箱'**
   String get authResetSent;
 
   /// No description provided for @authResetFailed.
   ///
   /// In zh_TW, this message translates to:
-  /// **'重設密碼失敗，請確認 Email'**
+  /// **'無法寄送重設信，請確認 Email'**
   String get authResetFailed;
 
   /// No description provided for @authLoginInvalid.
   ///
   /// In zh_TW, this message translates to:
-  /// **'Email ??撖Ⅳ憭??'**
+  /// **'Email 或密碼錯誤'**
   String get authLoginInvalid;
 
   /// No description provided for @authEmailExists.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?? Email ?閮餃?'**
+  /// **'此 Email 已註冊'**
   String get authEmailExists;
 
   /// No description provided for @authNetworkError.
   ///
   /// In zh_TW, this message translates to:
-  /// **'?脣?憭望?嚗?蝔??岫'**
+  /// **'連線異常，請稍後再試'**
   String get authNetworkError;
 
   /// No description provided for @authSignUpFailed.
   ///
   /// In zh_TW, this message translates to:
-  /// **'閮餃?憭望?'**
+  /// **'註冊失敗'**
   String get authSignUpFailed;
 
   /// No description provided for @authError.
   ///
   /// In zh_TW, this message translates to:
-  /// **'登入失敗，請稍後再試'**
+  /// **'目前無法登入，請稍後再試'**
   String get authError;
 
   /// No description provided for @trialExpiredTitle.

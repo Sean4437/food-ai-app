@@ -1165,12 +1165,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authEmailInvalid => 'Email 格式不正確';
 
   @override
-  String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
-
-  @override
-  String get authPasswordInvalid => '密碼需至少 8 碼，且不可含空白或中文';
-
-  @override
   String get authPasswordLabel => '密碼';
 
   @override
@@ -1202,6 +1196,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authPasswordMismatch => '兩次密碼不一致';
+
+  @override
+  String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
+
+  @override
+  String get authPasswordInvalid => '密碼需至少 8 碼，且不可含空白或中文';
 
   @override
   String get authResetSent => '重設密碼信已寄出，請查看信箱';
@@ -2398,12 +2398,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authEmailInvalid => 'Email 格式不正確';
 
   @override
-  String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
-
-  @override
-  String get authPasswordInvalid => '密碼需至少 8 碼，且不可含空白或中文';
-
-  @override
   String get authPasswordLabel => '密碼';
 
   @override
@@ -2435,6 +2429,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get authPasswordMismatch => '兩次密碼不一致';
+
+  @override
+  String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
+
+  @override
+  String get authPasswordInvalid => '密碼需至少 8 碼，且不可含空白或中文';
 
   @override
   String get authResetSent => '重設密碼信已寄出，請查看信箱';
