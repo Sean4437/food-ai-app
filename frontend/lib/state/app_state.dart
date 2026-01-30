@@ -60,6 +60,7 @@ class AppState extends ChangeNotifier {
   final Map<String, Map<String, String>> _weekOverrides = {};
   final Map<String, String> _meta = {};
   final Map<String, Map<String, dynamic>> _deletedEntries = {};
+  final Map<String, Map<String, dynamic>> _deletedCustomFoods = {};
   final List<CustomFood> customFoods = [];
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
@@ -619,6 +620,12 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> deleteCustomFood(CustomFood food) async {
+    final now = DateTime.now().toUtc();
+    _deletedCustomFoods[food.id] = {
+      ...food.toJson(),
+      'deleted_at': now.toIso8601String(),
+      'updated_at': now.toIso8601String(),
+    };
     customFoods.removeWhere((item) => item.id == food.id);
     notifyListeners();
     await _saveOverrides();
@@ -2640,6 +2647,7 @@ class AppState extends ChangeNotifier {
     final week = overrides['week'] as Map<String, dynamic>?;
     final meta = overrides['meta'] as Map<String, dynamic>?;
     final deleted = overrides['deleted_entries'] as Map<String, dynamic>?;
+    final deletedCustom = overrides['deleted_custom_foods'] as Map<String, dynamic>?;
     if (day != null) {
       day.forEach((key, value) {
         if (value is Map<String, dynamic>) {
@@ -2671,6 +2679,14 @@ class AppState extends ChangeNotifier {
       deleted.forEach((key, value) {
         if (value is Map<String, dynamic>) {
           _deletedEntries[key] = Map<String, dynamic>.from(value);
+        }
+      });
+    }
+    _deletedCustomFoods.clear();
+    if (deletedCustom != null) {
+      deletedCustom.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          _deletedCustomFoods[key] = Map<String, dynamic>.from(value);
         }
       });
     }
@@ -2839,7 +2855,17 @@ class AppState extends ChangeNotifier {
       if (ts == null) return true;
       return since == null || ts.isAfter(since);
     }).toList();
-    final hasChanges = entriesToSync.isNotEmpty || foodsToSync.isNotEmpty || deletionsToSync.isNotEmpty;
+    final customDeletionsToSync = _deletedCustomFoods.values.where((value) {
+      final raw = value['deleted_at'];
+      if (raw is! String || raw.isEmpty) return true;
+      final ts = DateTime.tryParse(raw);
+      if (ts == null) return true;
+      return since == null || ts.isAfter(since);
+    }).toList();
+    final hasChanges = entriesToSync.isNotEmpty ||
+        foodsToSync.isNotEmpty ||
+        deletionsToSync.isNotEmpty ||
+        customDeletionsToSync.isNotEmpty;
     if (!hasChanges) return false;
     final client = _supabase.client;
     final mealPayloads = <Map<String, dynamic>>[];
@@ -2895,17 +2921,59 @@ class AppState extends ChangeNotifier {
         'image_path': imagePath,
         'created_at': food.createdAt.toIso8601String(),
         'updated_at': food.updatedAt.toIso8601String(),
+        'deleted_at': null,
       };
       foodPayloads.add(payload);
     }
     if (foodPayloads.isNotEmpty) {
       await client.from(kSupabaseCustomFoodsTable).upsert(foodPayloads);
     }
+    if (customDeletionsToSync.isNotEmpty) {
+      final deletePayloads = <Map<String, dynamic>>[];
+      for (final deleted in customDeletionsToSync) {
+        final id = deleted['id'];
+        if (id is! String || id.isEmpty) continue;
+        final imageBytes = _extractCustomFoodBytes(deleted);
+        String? imagePath;
+        if (imageBytes != null && imageBytes.isNotEmpty) {
+          final imageHash = _hashBytes(imageBytes);
+          imagePath = await _uploadImageIfNeeded(
+            bucket: kSupabaseMealImagesBucket,
+            path: '${user.id}/custom/$imageHash.jpg',
+            bytes: imageBytes,
+          );
+        }
+        deletePayloads.add({
+          'id': id,
+          'user_id': user.id,
+          'name': (deleted['name'] as String?) ?? '',
+          'summary': (deleted['summary'] as String?) ?? '',
+          'calorie_range': (deleted['calorie_range'] as String?) ?? '',
+          'suggestion': (deleted['suggestion'] as String?) ?? '',
+          'macros': deleted['macros'] ?? {},
+          'image_path': imagePath,
+          'created_at': deleted['created_at'],
+          'updated_at': deleted['updated_at'],
+          'deleted_at': deleted['deleted_at'],
+        });
+      }
+      if (deletePayloads.isNotEmpty) {
+        await client.from(kSupabaseCustomFoodsTable).upsert(deletePayloads);
+      }
+    }
     if (deletionsToSync.isNotEmpty) {
       for (final deleted in deletionsToSync) {
         final id = deleted['id'];
         if (id is String) {
           _deletedEntries.remove(id);
+        }
+      }
+    }
+    if (customDeletionsToSync.isNotEmpty) {
+      for (final deleted in customDeletionsToSync) {
+        final id = deleted['id'];
+        if (id is String) {
+          _deletedCustomFoods.remove(id);
         }
       }
     }
@@ -3003,6 +3071,10 @@ class AppState extends ChangeNotifier {
         final foodId = row['id'] as String?;
         if (foodId != null) {
           remoteFoodIds.add(foodId);
+        }
+        final deletedAt = row['deleted_at'] as String?;
+        if (deletedAt != null && deletedAt.isNotEmpty) {
+          continue;
         }
         final existing = foodId == null ? null : existingFoods[foodId];
         final imagePath = row['image_path'] as String?;
@@ -3128,6 +3200,15 @@ class AppState extends ChangeNotifier {
         ..write('||');
     }
     for (final deleted in _deletedEntries.values) {
+      buffer
+        ..write(deleted['id'] ?? '')
+        ..write('|')
+        ..write(deleted['deleted_at'] ?? '')
+        ..write('|')
+        ..write(deleted['updated_at'] ?? '')
+        ..write('||');
+    }
+    for (final deleted in _deletedCustomFoods.values) {
       buffer
         ..write(deleted['id'] ?? '')
         ..write('|')
@@ -3303,6 +3384,20 @@ class AppState extends ChangeNotifier {
     return parsed;
   }
 
+  Uint8List? _extractCustomFoodBytes(Map<String, dynamic> deleted) {
+    final raw = deleted['image_bytes'];
+    if (raw is Uint8List) return raw;
+    if (raw is List<int>) return Uint8List.fromList(raw);
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        return Uint8List.fromList(base64Decode(raw));
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+
   Future<void> _saveOverrides() async {
     await _settings.saveOverrides({
       'day': _dayOverrides,
@@ -3310,6 +3405,7 @@ class AppState extends ChangeNotifier {
       'week': _weekOverrides,
       'meta': _meta,
       'deleted_entries': _deletedEntries,
+      'deleted_custom_foods': _deletedCustomFoods,
       'custom_foods': customFoods.map((item) => item.toJson()).toList(),
     });
   }
