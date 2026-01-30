@@ -3180,7 +3180,13 @@ class AppState extends ChangeNotifier {
           cleaned = cleaned.replaceAll('mg', '').replaceAll('g', '').trim();
           final numeric = double.tryParse(cleaned) ?? 0;
           if (k == 'sodium') {
-            parsed[k] = isMg ? numeric : numeric * 1000;
+            if (isMg) {
+              parsed[k] = numeric;
+            } else if (value.toString().toLowerCase().contains('g')) {
+              parsed[k] = numeric * 1000;
+            } else {
+              parsed[k] = numeric; // no unit -> treat as mg
+            }
           } else {
             parsed[k] = isMg ? numeric / 1000 : numeric;
           }

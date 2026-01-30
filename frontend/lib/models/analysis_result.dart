@@ -78,7 +78,9 @@ double _parseMacroValue(Object? value, String key) {
     final numeric = double.tryParse(cleaned);
     if (numeric == null) return 0;
     if (key == 'sodium') {
-      return isMg ? numeric : numeric * 1000;
+      if (isMg) return numeric;
+      if (value.toLowerCase().contains('g')) return numeric * 1000;
+      return numeric; // no unit -> treat as mg
     }
     if (isMg) {
       return numeric / 1000;

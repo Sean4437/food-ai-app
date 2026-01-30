@@ -126,7 +126,9 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
     cleaned = cleaned.replaceAll('mg', '').replaceAll('g', '').trim();
     final numeric = double.tryParse(cleaned) ?? 0;
     if (isSodium) {
-      return isMg ? numeric : numeric * 1000;
+      if (isMg) return numeric;
+      if (value.toLowerCase().contains('g')) return numeric * 1000;
+      return numeric; // no unit -> treat as mg
     }
     if (isMg) {
       return numeric / 1000;
