@@ -134,11 +134,11 @@
   "tabSuggest": "即拍建議",
   "tabCustom": "自訂義",
   "tabSettings": "設定",
-  "greetingTitle": "Hi，小明",
-  "streakLabel": "一週連續挑戰 第 3 天",
+  "greetingTitle": "Hi，{name}",
+  "streakLabel": "連續紀錄 第 {count} 天",
   "aiSuggest": "AI 飲食建議",
   "latestMealTitle": "剛剛吃的餐點",
-  "latestMealEmpty": "尚未有餐點紀錄",
+  "latestMealEmpty": "今天還沒記錄餐點喔",
   "homeNextMealHint": "點進建議頁，選一個最方便的方案",
   "logTitle": "紀錄",
   "logTopMealTitle": "熱量最高一餐",
@@ -159,11 +159,11 @@
   "dayCardDateLabel": "日期：",
   "dayCardCalorieLabel": "今日熱量攝取",
   "dayCardMealsLabel": "分析餐數：",
-  "dayCardSummaryLabel": "今天飲食總結",
-  "dayCardTomorrowLabel": "明天建議",
+  "dayCardSummaryLabel": "今日總結",
+  "dayCardTomorrowLabel": "明日建議",
   "summaryPendingAt": "將於 {time} 總結",
   "weekSummaryPendingAt": "將於 {day} {time} 總結",
-  "finalizeDay": "完成今日總結",
+  "finalizeDay": "生成今日總結",
   "dishSummaryLabel": "本餐摘要",
   "mealCountEmpty": "尚未分析餐次",
   "calorieUnknown": "尚無可用估算",
@@ -259,7 +259,7 @@
   "weeklySummaryDayLabel": "每周總結",
   "weekTopMealTitle": "本週熱量最高餐",
   "recentGuidanceTitle": "近期方針（近 7 天）",
-  "weekSummaryTitle": "一週總結",
+  "weekSummaryTitle": "本週總結",
   "nextWeekAdviceTitle": "下週建議",
   "weekdayMon": "週一",
   "weekdayTue": "週二",
@@ -453,5 +453,19 @@
   "trialExpiredTitle": "試用期已結束",
   "trialExpiredBody": "你已完成 2 天免費試用，請訂閱後繼續使用 AI 分析功能。",
   "trialExpiredAction": "了解方案",
-  "signOut": "登出"
+  "signOut": "登出",
+  "@greetingTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@streakLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -392,10 +392,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tabSettings => '設定';
 
   @override
-  String get greetingTitle => 'Hi，小明';
+  String greetingTitle(String name) {
+    return 'Hi，$name';
+  }
 
   @override
-  String get streakLabel => '一週連續挑戰 第 3 天';
+  String streakLabel(int count) {
+    return '連續紀錄 第 $count 天';
+  }
 
   @override
   String get aiSuggest => 'AI 飲食建議';
@@ -404,7 +408,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get latestMealTitle => '剛剛吃的餐點';
 
   @override
-  String get latestMealEmpty => '尚未有餐點紀錄';
+  String get latestMealEmpty => '今天還沒記錄餐點喔';
 
   @override
   String get homeNextMealHint => '點進建議頁，選一個最方便的方案';
@@ -448,10 +452,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dayCardMealsLabel => '分析餐數：';
 
   @override
-  String get dayCardSummaryLabel => '今天飲食總結';
+  String get dayCardSummaryLabel => '今日總結';
 
   @override
-  String get dayCardTomorrowLabel => '明天建議';
+  String get dayCardTomorrowLabel => '明日建議';
 
   @override
   String summaryPendingAt(Object time) {
@@ -464,7 +468,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get finalizeDay => '完成今日總結';
+  String get finalizeDay => '生成今日總結';
 
   @override
   String get dishSummaryLabel => '本餐摘要';
@@ -752,7 +756,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recentGuidanceTitle => '近期方針（近 7 天）';
 
   @override
-  String get weekSummaryTitle => '一週總結';
+  String get weekSummaryTitle => '本週總結';
 
   @override
   String get nextWeekAdviceTitle => '下週建議';
@@ -1621,10 +1625,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tabSettings => '設定';
 
   @override
-  String get greetingTitle => 'Hi，小明';
+  String greetingTitle(String name) {
+    return 'Hi，$name';
+  }
 
   @override
-  String get streakLabel => '一週連續挑戰 第 3 天';
+  String streakLabel(int count) {
+    return '連續紀錄 第 $count 天';
+  }
 
   @override
   String get aiSuggest => 'AI 飲食建議';
@@ -1633,7 +1641,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get latestMealTitle => '剛剛吃的餐點';
 
   @override
-  String get latestMealEmpty => '尚未有餐點紀錄';
+  String get latestMealEmpty => '今天還沒記錄餐點喔';
 
   @override
   String get homeNextMealHint => '點進建議頁，選一個最方便的方案';
@@ -1677,10 +1685,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dayCardMealsLabel => '分析餐數：';
 
   @override
-  String get dayCardSummaryLabel => '今天飲食總結';
+  String get dayCardSummaryLabel => '今日總結';
 
   @override
-  String get dayCardTomorrowLabel => '明天建議';
+  String get dayCardTomorrowLabel => '明日建議';
 
   @override
   String summaryPendingAt(Object time) {
@@ -1693,7 +1701,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get finalizeDay => '完成今日總結';
+  String get finalizeDay => '生成今日總結';
 
   @override
   String get dishSummaryLabel => '本餐摘要';
@@ -1981,7 +1989,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get recentGuidanceTitle => '近期方針（近 7 天）';
 
   @override
-  String get weekSummaryTitle => '一週總結';
+  String get weekSummaryTitle => '本週總結';
 
   @override
   String get nextWeekAdviceTitle => '下週建議';

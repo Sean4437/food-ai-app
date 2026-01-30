@@ -865,13 +865,13 @@ abstract class AppLocalizations {
   ///
   /// In zh_TW, this message translates to:
   /// **'Hi，小明'**
-  String get greetingTitle;
+  String greetingTitle(String name);
 
   /// No description provided for @streakLabel.
   ///
   /// In zh_TW, this message translates to:
   /// **'一週連續挑戰 第 3 天'**
-  String get streakLabel;
+  String streakLabel(int count);
 
   /// No description provided for @aiSuggest.
   ///

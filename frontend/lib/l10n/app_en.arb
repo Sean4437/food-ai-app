@@ -134,11 +134,11 @@
   "tabSuggest": "Instant",
   "tabCustom": "Custom",
   "tabSettings": "Settings",
-  "greetingTitle": "Hi, Alex",
-  "streakLabel": "Streak: day 3",
+  "greetingTitle": "Hi, {name}",
+  "streakLabel": "Streak: day {count}",
   "aiSuggest": "AI food advice",
   "latestMealTitle": "Latest meal",
-  "latestMealEmpty": "No meals yet",
+  "latestMealEmpty": "You haven't logged any meals today",
   "homeNextMealHint": "Go to Suggestions and pick the easiest option",
   "logTitle": "Log",
   "logTopMealTitle": "Highest calorie meal",
@@ -159,11 +159,11 @@
   "dayCardDateLabel": "Date:",
   "dayCardCalorieLabel": "Today calorie range",
   "dayCardMealsLabel": "Meals analyzed:",
-  "dayCardSummaryLabel": "Today summary",
-  "dayCardTomorrowLabel": "Tomorrow advice",
+  "dayCardSummaryLabel": "Today's summary",
+  "dayCardTomorrowLabel": "Tomorrow's advice",
   "summaryPendingAt": "Summary at {time}",
   "weekSummaryPendingAt": "Summary at {day} {time}",
-  "finalizeDay": "Finalize day",
+  "finalizeDay": "Generate today's summary",
   "dishSummaryLabel": "Meal summary",
   "mealCountEmpty": "No meals analyzed",
   "calorieUnknown": "Not available yet",
@@ -259,7 +259,7 @@
   "weeklySummaryDayLabel": "Weekly summary",
   "weekTopMealTitle": "Top meal this week",
   "recentGuidanceTitle": "Recent guidance (last 7 days)",
-  "weekSummaryTitle": "Weekly summary",
+  "weekSummaryTitle": "This week's summary",
   "nextWeekAdviceTitle": "Next week advice",
   "weekdayMon": "Mon",
   "weekdayTue": "Tue",
@@ -453,5 +453,19 @@
   "trialExpiredTitle": "Trial ended",
   "trialExpiredBody": "Your 2-day free trial has ended. Please subscribe to continue using AI analysis.",
   "trialExpiredAction": "View plans",
-  "signOut": "Sign out"
+  "signOut": "Sign out",
+  "@greetingTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@streakLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

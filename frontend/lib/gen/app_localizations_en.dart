@@ -401,10 +401,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabSettings => 'Settings';
 
   @override
-  String get greetingTitle => 'Hi, Alex';
+  String greetingTitle(String name) {
+    return 'Hi, $name';
+  }
 
   @override
-  String get streakLabel => 'Streak: day 3';
+  String streakLabel(int count) {
+    return 'Streak: day $count';
+  }
 
   @override
   String get aiSuggest => 'AI food advice';
@@ -413,7 +417,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get latestMealTitle => 'Latest meal';
 
   @override
-  String get latestMealEmpty => 'No meals yet';
+  String get latestMealEmpty => 'You haven't logged any meals today';
 
   @override
   String get homeNextMealHint =>
@@ -458,10 +462,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayCardMealsLabel => 'Meals analyzed:';
 
   @override
-  String get dayCardSummaryLabel => 'Today summary';
+  String get dayCardSummaryLabel => 'Today's summary';
 
   @override
-  String get dayCardTomorrowLabel => 'Tomorrow advice';
+  String get dayCardTomorrowLabel => 'Tomorrow's advice';
 
   @override
   String summaryPendingAt(Object time) {
@@ -474,7 +478,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get finalizeDay => 'Finalize day';
+  String get finalizeDay => 'Generate today's summary';
 
   @override
   String get dishSummaryLabel => 'Meal summary';
@@ -763,7 +767,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentGuidanceTitle => 'Recent guidance (last 7 days)';
 
   @override
-  String get weekSummaryTitle => 'Weekly summary';
+  String get weekSummaryTitle => 'This week's summary';
 
   @override
   String get nextWeekAdviceTitle => 'Next week advice';

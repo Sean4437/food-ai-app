@@ -80,6 +80,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  int _streakDays(AppState app) {
+    if (app.entries.isEmpty) return 0;
+    final loggedDates = app.entries
+        .map((e) => DateTime(e.time.year, e.time.month, e.time.day))
+        .toSet();
+    var day = DateTime.now();
+    day = DateTime(day.year, day.month, day.day);
+    var count = 0;
+    while (loggedDates.contains(day)) {
+      count += 1;
+      day = day.subtract(const Duration(days: 1));
+    }
+    return count;
+  }
+
 
   Future<T?> _showPickerSheet<T>({
     required BuildContext context,
@@ -418,6 +433,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _pageIndex = 0;
     }
     final activeDate = displayDates.isEmpty ? DateTime.now() : displayDates[_pageIndex];
+    final nickname = app.profile.name.trim().isEmpty ? t.profileName : app.profile.name.trim();
+    final streakDays = _streakDays(app);
 
     return AppBackground(
       child: SafeArea(
@@ -432,9 +449,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(t.greetingTitle, style: AppTextStyles.title2(context)),
+                          Text(t.greetingTitle(nickname), style: AppTextStyles.title2(context)),
                           const SizedBox(height: 4),
-                          Text(t.streakLabel, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                          Text(t.streakLabel(streakDays), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                         ],
                       ),
                     ),
