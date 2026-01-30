@@ -448,7 +448,7 @@ class AppState extends ChangeNotifier {
         type: analysis.mealType,
         note: note,
         imageHash: imageHash,
-        result: analysis.result,
+        result: _resolveNutritionResult(analysis.result),
         updatedAt: now,
         lastAnalyzedNote: (note ?? '').trim(),
         lastAnalyzedFoodName: existing.overrideFoodName ?? '',
@@ -476,7 +476,7 @@ class AppState extends ChangeNotifier {
         note: note,
         imageHash: imageHash,
       );
-      entry.result = analysis.result;
+      entry.result = _resolveNutritionResult(analysis.result);
       entry.lastAnalyzedNote = (note ?? '').trim();
       entry.lastAnalyzedFoodName = entry.overrideFoodName ?? '';
       entry.lastAnalyzedAt = DateTime.now().toIso8601String();
@@ -649,6 +649,7 @@ class AppState extends ChangeNotifier {
       suggestion: food.suggestion,
       tier: 'custom',
       source: 'custom',
+      nutritionSource: 'custom',
     );
     entry.lastAnalyzedAt = DateTime.now().toIso8601String();
     entry.lastAnalyzeReason = 'custom_use';
@@ -718,7 +719,7 @@ class AppState extends ChangeNotifier {
       imageHash: _hashBytes(_namePlaceholderBytes),
       lastAnalyzedFoodName: trimmed,
     );
-    entry.result = result;
+    entry.result = _resolveNutritionResult(result);
     entry.lastAnalyzedAt = DateTime.now().toIso8601String();
     entry.lastAnalyzeReason = 'name_only';
     entries.insert(0, entry);
@@ -1759,7 +1760,8 @@ class AppState extends ChangeNotifier {
       entry.labelResult = labelResult;
       entry.updatedAt = DateTime.now().toUtc();
       if (entry.result != null) {
-        entry.result = _applyLabelOverride(entry.result!, labelResult);
+        final custom = _findCustomFoodByName(entry.overrideFoodName);
+        entry.result = _resolveNutritionResult(entry.result!, custom: custom, label: labelResult);
       } else {
         final fallbackName = (entry.overrideFoodName ?? '').trim().isNotEmpty
             ? entry.overrideFoodName!.trim()
@@ -1774,6 +1776,7 @@ class AppState extends ChangeNotifier {
           suggestion: '',
           tier: 'label',
           source: 'label',
+          nutritionSource: 'label',
           confidence: labelResult.confidence,
           isBeverage: labelResult.isBeverage,
         );
@@ -1804,6 +1807,10 @@ class AppState extends ChangeNotifier {
     entry.overrideFoodName = foodName.trim().isEmpty ? null : foodName.trim();
     entry.updatedAt = DateTime.now().toUtc();
     markMealInteraction(entry.mealId ?? entry.id);
+    final custom = _findCustomFoodByName(entry.overrideFoodName);
+    if (entry.result != null) {
+      entry.result = _resolveNutritionResult(entry.result!, custom: custom, label: entry.labelResult);
+    }
     notifyListeners();
     await _store.upsert(entry);
     _scheduleAnalyze(entry, locale, reason: 'name_changed');
@@ -1953,7 +1960,8 @@ class AppState extends ChangeNotifier {
         mealPhotoCount: 1,
         forceReanalyze: force,
       );
-      entry.result = entry.labelResult == null ? res : _applyLabelOverride(res, entry.labelResult!);
+      final custom = _findCustomFoodByName(entry.overrideFoodName);
+      entry.result = _resolveNutritionResult(res, custom: custom, label: entry.labelResult);
       entry.lastAnalyzedNote = noteKey;
       entry.lastAnalyzedFoodName = nameKey;
       entry.lastAnalyzedAt = DateTime.now().toIso8601String();
@@ -2251,6 +2259,9 @@ class AppState extends ChangeNotifier {
           suggestion: result.suggestion,
           tier: result.tier,
           source: result.source,
+          nutritionSource: result.nutritionSource,
+          aiOriginalCalorieRange: result.aiOriginalCalorieRange,
+          aiOriginalMacros: result.aiOriginalMacros == null ? null : _percentMacrosToGrams(result.aiOriginalMacros!),
           costEstimateUsd: result.costEstimateUsd,
           confidence: result.confidence,
           isBeverage: result.isBeverage,
@@ -2347,18 +2358,85 @@ class AppState extends ChangeNotifier {
     return 'nutrition_label: ${parts.join(' | ')}';
   }
 
-  AnalysisResult _applyLabelOverride(AnalysisResult base, LabelResult label) {
-    final calorieRange = label.calorieRange.trim().isNotEmpty ? label.calorieRange : base.calorieRange;
-    final macros = label.macros.isNotEmpty ? label.macros : base.macros;
-    final isBeverage = label.isBeverage ?? base.isBeverage;
+  CustomFood? _findCustomFoodByName(String? name) {
+    final trimmed = name?.trim() ?? '';
+    if (trimmed.isEmpty) return null;
+    for (final item in customFoods) {
+      if (item.name.trim() == trimmed) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  AnalysisResult _resolveNutritionResult(
+    AnalysisResult base, {
+    CustomFood? custom,
+    LabelResult? label,
+  }) {
+    final originalCalories = base.aiOriginalCalorieRange ?? base.calorieRange;
+    final originalMacros = base.aiOriginalMacros ?? base.macros;
+    final isBeverage = base.isBeverage;
+    if (custom != null) {
+      final customName = custom.name.trim();
+      return AnalysisResult(
+        foodName: customName.isEmpty ? base.foodName : customName,
+        calorieRange: custom.calorieRange,
+        macros: Map<String, double>.from(custom.macros),
+        foodItems: base.foodItems,
+        judgementTags: base.judgementTags,
+        dishSummary: custom.summary.trim().isNotEmpty ? custom.summary : base.dishSummary,
+        suggestion: custom.suggestion.trim().isNotEmpty ? custom.suggestion : base.suggestion,
+        tier: base.tier,
+        source: base.source,
+        nutritionSource: 'custom',
+        aiOriginalCalorieRange: originalCalories,
+        aiOriginalMacros: Map<String, double>.from(originalMacros),
+        costEstimateUsd: base.costEstimateUsd,
+        confidence: base.confidence,
+        isBeverage: isBeverage,
+      );
+    }
+    if (label != null) {
+      final calorieRange = label.calorieRange.trim().isNotEmpty ? label.calorieRange : base.calorieRange;
+      final macros = label.macros.isNotEmpty ? label.macros : base.macros;
+      return AnalysisResult(
+        foodName: base.foodName,
+        calorieRange: calorieRange,
+        macros: macros,
+        foodItems: base.foodItems,
+        judgementTags: base.judgementTags,
+        dishSummary: base.dishSummary,
+        suggestion: base.suggestion,
+        tier: base.tier,
+        source: base.source,
+        nutritionSource: 'label',
+        aiOriginalCalorieRange: originalCalories,
+        aiOriginalMacros: Map<String, double>.from(originalMacros),
+        costEstimateUsd: base.costEstimateUsd,
+        confidence: base.confidence,
+        isBeverage: label.isBeverage ?? isBeverage,
+      );
+    }
+    final resolvedSource = base.nutritionSource ??
+        (base.source == 'label'
+            ? 'label'
+            : base.source == 'custom'
+                ? 'custom'
+                : 'ai');
     return AnalysisResult(
       foodName: base.foodName,
-      calorieRange: calorieRange,
-      macros: macros,
+      calorieRange: base.calorieRange,
+      macros: base.macros,
+      foodItems: base.foodItems,
+      judgementTags: base.judgementTags,
       dishSummary: base.dishSummary,
       suggestion: base.suggestion,
       tier: base.tier,
       source: base.source,
+      nutritionSource: resolvedSource,
+      aiOriginalCalorieRange: base.aiOriginalCalorieRange,
+      aiOriginalMacros: base.aiOriginalMacros == null ? null : Map<String, double>.from(base.aiOriginalMacros!),
       costEstimateUsd: base.costEstimateUsd,
       confidence: base.confidence,
       isBeverage: isBeverage,

@@ -8,6 +8,9 @@
   final String suggestion;
   final String tier;
   final String source;
+  final String? nutritionSource;
+  final String? aiOriginalCalorieRange;
+  final Map<String, double>? aiOriginalMacros;
   final double? costEstimateUsd;
   final double? confidence;
   final bool? isBeverage;
@@ -22,6 +25,9 @@
     required this.suggestion,
     required this.tier,
     required this.source,
+    this.nutritionSource,
+    this.aiOriginalCalorieRange,
+    this.aiOriginalMacros,
     this.costEstimateUsd,
     this.confidence,
     this.isBeverage,
@@ -33,6 +39,11 @@
     rawMacros.forEach((key, value) {
       parsedMacros[key.toString()] = _parseMacroValue(value, key.toString());
     });
+    final rawOriginalMacros = (json['ai_original_macros'] as Map?) ?? {};
+    final parsedOriginalMacros = <String, double>{};
+    rawOriginalMacros.forEach((key, value) {
+      parsedOriginalMacros[key.toString()] = _parseMacroValue(value, key.toString());
+    });
     return AnalysisResult(
       foodName: json['food_name'] as String,
       calorieRange: json['calorie_range'] as String,
@@ -43,6 +54,9 @@
       suggestion: json['suggestion'] as String,
       tier: json['tier'] as String,
       source: (json['source'] as String?) ?? 'mock',
+      nutritionSource: json['nutrition_source'] as String?,
+      aiOriginalCalorieRange: json['ai_original_calorie_range'] as String?,
+      aiOriginalMacros: parsedOriginalMacros.isEmpty ? null : parsedOriginalMacros,
       costEstimateUsd: (json['cost_estimate_usd'] as num?)?.toDouble(),
       confidence: (json['confidence'] as num?)?.toDouble(),
       isBeverage: json['is_beverage'] as bool?,
@@ -60,6 +74,9 @@
       'suggestion': suggestion,
       'tier': tier,
       'source': source,
+      'nutrition_source': nutritionSource,
+      'ai_original_calorie_range': aiOriginalCalorieRange,
+      'ai_original_macros': aiOriginalMacros,
       'cost_estimate_usd': costEstimateUsd,
       'confidence': confidence,
       'is_beverage': isBeverage,
