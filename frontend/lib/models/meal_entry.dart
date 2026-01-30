@@ -13,6 +13,8 @@ class MealEntry {
     required this.time,
     required this.type,
     int? portionPercent,
+    this.updatedAt,
+    this.deletedAt,
     this.note,
     this.overrideFoodName,
     this.imageHash,
@@ -32,6 +34,8 @@ class MealEntry {
   DateTime time;
   MealType type;
   int portionPercent;
+  DateTime? updatedAt;
+  DateTime? deletedAt;
   String? mealId;
   String? note;
   String? overrideFoodName;
@@ -98,6 +102,8 @@ class MealEntry {
       'note': note,
       'override_food_name': overrideFoodName,
       'image_hash': imageHash,
+      'updated_at': updatedAt?.toIso8601String(),
+      'deleted_at': deletedAt?.toIso8601String(),
       'last_analyzed_note': lastAnalyzedNote,
       'last_analyzed_food_name': lastAnalyzedFoodName,
       'last_analyzed_at': lastAnalyzedAt,
@@ -118,6 +124,8 @@ class MealEntry {
       time: DateTime.parse(json['time'] as String),
       type: _mealTypeFromString((json['type'] as String?) ?? 'other'),
       portionPercent: (json['portion_percent'] as num?)?.toInt() ?? 100,
+      updatedAt: _parseDate(json['updated_at']),
+      deletedAt: _parseDate(json['deleted_at']),
       note: json['note'] as String?,
       overrideFoodName: json['override_food_name'] as String?,
       imageHash: json['image_hash'] as String?,
@@ -140,5 +148,12 @@ class MealEntry {
       entry.result = AnalysisResult.fromJson(resultJson);
     }
     return entry;
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value);
+    }
+    return null;
   }
 }

@@ -18,7 +18,7 @@ class MealStoreImpl implements MealStore {
     final dbPath = p.join(dir.path, _dbName);
     _db = await openDatabase(
       dbPath,
-      version: 5,
+      version: 6,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table(
@@ -36,7 +36,9 @@ class MealStoreImpl implements MealStore {
             last_analyzed_food_name TEXT,
             image_bytes BLOB NOT NULL,
             result_json TEXT,
-            error TEXT
+            error TEXT,
+            updated_at INTEGER,
+            deleted_at INTEGER
           )
         ''');
       },
@@ -55,6 +57,10 @@ class MealStoreImpl implements MealStore {
         }
         if (oldVersion < 5) {
           await db.execute('ALTER TABLE $_table ADD COLUMN portion_percent INTEGER');
+        }
+        if (oldVersion < 6) {
+          await db.execute('ALTER TABLE $_table ADD COLUMN updated_at INTEGER');
+          await db.execute('ALTER TABLE $_table ADD COLUMN deleted_at INTEGER');
         }
       },
     );
@@ -113,6 +119,8 @@ class MealStoreImpl implements MealStore {
       time: DateTime.fromMillisecondsSinceEpoch(row['time'] as int),
       type: type,
       portionPercent: _portionPercentFromRow(row),
+      updatedAt: _parseEpoch(row['updated_at']),
+      deletedAt: _parseEpoch(row['deleted_at']),
       mealId: row['meal_id'] as String?,
       note: row['note'] as String?,
       overrideFoodName: row['override_food_name'] as String?,
@@ -138,6 +146,8 @@ class MealStoreImpl implements MealStore {
       'note': entry.note,
       'override_food_name': entry.overrideFoodName,
       'image_hash': entry.imageHash,
+      'updated_at': entry.updatedAt?.millisecondsSinceEpoch,
+      'deleted_at': entry.deletedAt?.millisecondsSinceEpoch,
       'last_analyzed_note': entry.lastAnalyzedNote,
       'last_analyzed_food_name': entry.lastAnalyzedFoodName,
       'image_bytes': entry.imageBytes,
@@ -158,6 +168,16 @@ class MealStoreImpl implements MealStore {
     if (percent is int) return percent;
     if (percent is num) return percent.round();
     return _portionPercentFromString(row['portion'] as String?);
+  }
+
+  DateTime? _parseEpoch(Object? value) {
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    if (value is num) {
+      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+    }
+    return null;
   }
 
   int _portionPercentFromString(String? value) {

@@ -59,6 +59,7 @@ class AppState extends ChangeNotifier {
   final Map<String, Map<String, String>> _mealOverrides = {};
   final Map<String, Map<String, String>> _weekOverrides = {};
   final Map<String, String> _meta = {};
+  final Map<String, Map<String, dynamic>> _deletedEntries = {};
   final List<CustomFood> customFoods = [];
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
@@ -442,6 +443,7 @@ class AppState extends ChangeNotifier {
       time: analysis.time,
       type: analysis.mealType,
       portionPercent: 100,
+      updatedAt: DateTime.now().toUtc(),
       mealId: mealId,
       note: note,
       imageHash: _hashBytes(analysis.originalBytes),
@@ -489,6 +491,10 @@ class AppState extends ChangeNotifier {
       }
       if (entry.portionPercent <= 0) {
         entry.portionPercent = 100;
+        changed = true;
+      }
+      if (entry.updatedAt == null) {
+        entry.updatedAt = entry.time.toUtc();
         changed = true;
       }
     }
@@ -602,6 +608,7 @@ class AppState extends ChangeNotifier {
       time: time,
       type: type,
       portionPercent: 100,
+      updatedAt: DateTime.now().toUtc(),
       mealId: mealId,
       imageHash: _hashBytes(food.imageBytes),
     );
@@ -677,6 +684,7 @@ class AppState extends ChangeNotifier {
       time: now,
       type: mealType,
       portionPercent: 100,
+      updatedAt: DateTime.now().toUtc(),
       mealId: mealId,
       imageHash: _hashBytes(_namePlaceholderBytes),
       lastAnalyzedFoodName: trimmed,
@@ -1580,6 +1588,7 @@ class AppState extends ChangeNotifier {
         time: time,
         type: mealType,
         portionPercent: 100,
+        updatedAt: DateTime.now().toUtc(),
         mealId: mealId,
         note: note,
         imageHash: _hashBytes(originalBytes),
@@ -1622,6 +1631,7 @@ class AppState extends ChangeNotifier {
       time: time,
       type: mealType,
       portionPercent: 100,
+      updatedAt: DateTime.now().toUtc(),
       mealId: mealId,
       note: note,
       imageHash: imageHash,
@@ -1649,6 +1659,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> updateEntryNote(MealEntry entry, String note, String locale) async {
     entry.note = note.trim().isEmpty ? null : note.trim();
+    entry.updatedAt = DateTime.now().toUtc();
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     await _store.upsert(entry);
@@ -1662,6 +1673,7 @@ class AppState extends ChangeNotifier {
     entry.time = time;
     entry.type = resolveMealType(time);
     entry.mealId = _assignMealId(time, entry.type);
+    entry.updatedAt = DateTime.now().toUtc();
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     _store.upsert(entry);
@@ -1693,6 +1705,7 @@ class AppState extends ChangeNotifier {
       return;
     }
     entry.portionPercent = next;
+    entry.updatedAt = DateTime.now().toUtc();
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     _store.upsert(entry);
@@ -1715,6 +1728,7 @@ class AppState extends ChangeNotifier {
       entry.labelImageBytes = bytes;
       entry.labelFilename = filename;
       entry.labelResult = labelResult;
+      entry.updatedAt = DateTime.now().toUtc();
       if (entry.result != null) {
         entry.result = _applyLabelOverride(entry.result!, labelResult);
       } else {
@@ -1759,6 +1773,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> updateEntryFoodName(MealEntry entry, String foodName, String locale) async {
     entry.overrideFoodName = foodName.trim().isEmpty ? null : foodName.trim();
+    entry.updatedAt = DateTime.now().toUtc();
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
     await _store.upsert(entry);
@@ -1768,10 +1783,21 @@ class AppState extends ChangeNotifier {
   void removeEntry(MealEntry entry) {
     final mealId = entry.mealId ?? entry.id;
     final date = _dateOnly(entry.time);
+    final now = DateTime.now().toUtc();
+    _deletedEntries[entry.id] = {
+      'id': entry.id,
+      'time': entry.time.toIso8601String(),
+      'type': _mealTypeKey(entry.type),
+      'filename': entry.filename,
+      'deleted_at': now.toIso8601String(),
+      'updated_at': now.toIso8601String(),
+    };
     entries.remove(entry);
     notifyListeners();
     // ignore: discarded_futures
     _store.delete(entry.id);
+    // ignore: discarded_futures
+    _saveOverrides();
 
     final mealKey = _mealKey(mealId);
     if (_mealOverrides.containsKey(mealKey)) {
@@ -1903,6 +1929,7 @@ class AppState extends ChangeNotifier {
       entry.lastAnalyzedFoodName = nameKey;
       entry.lastAnalyzedAt = DateTime.now().toIso8601String();
       entry.lastAnalyzeReason = reason;
+      entry.updatedAt = DateTime.now().toUtc();
     } catch (e) {
       entry.error = e.toString();
     } finally {
@@ -2505,6 +2532,7 @@ class AppState extends ChangeNotifier {
     final meal = overrides['meal'] as Map<String, dynamic>?;
     final week = overrides['week'] as Map<String, dynamic>?;
     final meta = overrides['meta'] as Map<String, dynamic>?;
+    final deleted = overrides['deleted_entries'] as Map<String, dynamic>?;
     if (day != null) {
       day.forEach((key, value) {
         if (value is Map<String, dynamic>) {
@@ -2529,6 +2557,14 @@ class AppState extends ChangeNotifier {
     if (meta != null) {
       meta.forEach((key, value) {
         _meta[key] = value.toString();
+      });
+    }
+    _deletedEntries.clear();
+    if (deleted != null) {
+      deleted.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          _deletedEntries[key] = Map<String, dynamic>.from(value);
+        }
       });
     }
     final custom = overrides['custom_foods'];
@@ -2682,15 +2718,25 @@ class AppState extends ChangeNotifier {
     if (user == null) {
       throw Exception('Supabase not signed in');
     }
-    final fingerprint = _syncFingerprint();
-    final lastFingerprint = _meta['last_sync_fingerprint'];
-    final hasChanges = fingerprint != lastFingerprint;
-    if (!hasChanges) {
-      return false;
-    }
+    final since = _localSyncAt();
+    final entriesToSync = since == null
+        ? entries
+        : entries.where((entry) => entry.updatedAt != null && entry.updatedAt!.isAfter(since)).toList();
+    final foodsToSync = since == null
+        ? customFoods
+        : customFoods.where((food) => food.updatedAt.isAfter(since)).toList();
+    final deletionsToSync = _deletedEntries.values.where((value) {
+      final raw = value['deleted_at'];
+      if (raw is! String || raw.isEmpty) return true;
+      final ts = DateTime.tryParse(raw);
+      if (ts == null) return true;
+      return since == null || ts.isAfter(since);
+    }).toList();
+    final hasChanges = entriesToSync.isNotEmpty || foodsToSync.isNotEmpty || deletionsToSync.isNotEmpty;
+    if (!hasChanges) return false;
     final client = _supabase.client;
     final mealPayloads = <Map<String, dynamic>>[];
-    for (final entry in entries) {
+    for (final entry in entriesToSync) {
       final imageHash = entry.imageHash ?? _hashBytes(entry.imageBytes);
       final imagePath = await _uploadImageIfNeeded(
         bucket: kSupabaseMealImagesBucket,
@@ -2709,11 +2755,22 @@ class AppState extends ChangeNotifier {
       final payload = _mealEntryToRow(entry, user.id, imagePath, labelPath);
       mealPayloads.add(payload);
     }
+    for (final deleted in deletionsToSync) {
+      mealPayloads.add({
+        'id': deleted['id'],
+        'user_id': user.id,
+        'time': deleted['time'],
+        'type': deleted['type'],
+        'filename': deleted['filename'],
+        'deleted_at': deleted['deleted_at'],
+        'updated_at': deleted['updated_at'],
+      });
+    }
     if (mealPayloads.isNotEmpty) {
       await client.from(kSupabaseMealsTable).upsert(mealPayloads);
     }
     final foodPayloads = <Map<String, dynamic>>[];
-    for (final food in customFoods) {
+    for (final food in foodsToSync) {
       final imageHash = _hashBytes(food.imageBytes);
       final imagePath = await _uploadImageIfNeeded(
         bucket: kSupabaseMealImagesBucket,
@@ -2737,7 +2794,15 @@ class AppState extends ChangeNotifier {
     if (foodPayloads.isNotEmpty) {
       await client.from(kSupabaseCustomFoodsTable).upsert(foodPayloads);
     }
-    _meta['last_sync_fingerprint'] = fingerprint;
+    if (deletionsToSync.isNotEmpty) {
+      for (final deleted in deletionsToSync) {
+        final id = deleted['id'];
+        if (id is String) {
+          _deletedEntries.remove(id);
+        }
+      }
+    }
+    _meta['last_sync_fingerprint'] = _syncFingerprint();
     await _saveOverrides();
     return hasChanges;
   }
@@ -2748,10 +2813,14 @@ class AppState extends ChangeNotifier {
       throw Exception('Supabase not signed in');
     }
     final client = _supabase.client;
+    final since = _localSyncAt();
     final existingEntries = {
       for (final entry in entries) entry.id: entry,
     };
-    final rows = await client.from(kSupabaseMealsTable).select().eq('user_id', user.id);
+    final query = client.from(kSupabaseMealsTable).select().eq('user_id', user.id);
+    final rows = since == null
+        ? await query
+        : await query.or('updated_at.gt.${since.toIso8601String()},deleted_at.gt.${since.toIso8601String()}');
     if (rows is List) {
       final remoteIds = <String>{};
       for (final row in rows) {
@@ -2759,6 +2828,18 @@ class AppState extends ChangeNotifier {
         final entryId = row['id'] as String?;
         if (entryId != null) {
           remoteIds.add(entryId);
+        }
+        final deletedAt = row['deleted_at'] as String?;
+        if (deletedAt != null && deletedAt.isNotEmpty) {
+          if (entryId != null) {
+            final index = entries.indexWhere((item) => item.id == entryId);
+            if (index != -1) {
+              entries.removeAt(index);
+              // ignore: discarded_futures
+              _store.delete(entryId);
+            }
+          }
+          continue;
         }
         final existing = entryId == null ? null : existingEntries[entryId];
         final imagePath = row['image_path'] as String?;
@@ -2791,13 +2872,15 @@ class AppState extends ChangeNotifier {
         }
         await _store.upsert(entry);
       }
-      // Remove local entries that no longer exist remotely
-      final toRemove = entries.where((e) => !remoteIds.contains(e.id)).toList();
-      if (toRemove.isNotEmpty) {
-        for (final entry in toRemove) {
-          entries.remove(entry);
-          // ignore: discarded_futures
-          _store.delete(entry.id);
+      if (since == null) {
+        // Remove local entries that no longer exist remotely (full sync only)
+        final toRemove = entries.where((e) => !remoteIds.contains(e.id)).toList();
+        if (toRemove.isNotEmpty) {
+          for (final entry in toRemove) {
+            entries.remove(entry);
+            // ignore: discarded_futures
+            _store.delete(entry.id);
+          }
         }
       }
     }
@@ -2933,6 +3016,17 @@ class AppState extends ChangeNotifier {
         ..write(entry.result?.calorieRange ?? '')
         ..write('|')
         ..write(entry.result?.suggestion ?? '')
+        ..write('|')
+        ..write(entry.updatedAt?.toIso8601String() ?? '')
+        ..write('||');
+    }
+    for (final deleted in _deletedEntries.values) {
+      buffer
+        ..write(deleted['id'] ?? '')
+        ..write('|')
+        ..write(deleted['deleted_at'] ?? '')
+        ..write('|')
+        ..write(deleted['updated_at'] ?? '')
         ..write('||');
     }
     for (final food in customFoods) {
@@ -3022,6 +3116,8 @@ class AppState extends ChangeNotifier {
       'note': entry.note,
       'override_food_name': entry.overrideFoodName,
       'image_hash': entry.imageHash,
+      'updated_at': (entry.updatedAt ?? entry.time.toUtc()).toIso8601String(),
+      'deleted_at': entry.deletedAt?.toIso8601String(),
       'image_path': imagePath,
       'label_image_path': labelPath,
       'result_json': entry.result?.toJson(),
@@ -3045,6 +3141,8 @@ class AppState extends ChangeNotifier {
       time: DateTime.parse(row['time'] as String),
       type: _mealTypeFromKey((row['type'] as String?) ?? 'other'),
       portionPercent: (row['portion_percent'] as num?)?.toInt() ?? 100,
+      updatedAt: row['updated_at'] == null ? null : DateTime.tryParse(row['updated_at'] as String),
+      deletedAt: row['deleted_at'] == null ? null : DateTime.tryParse(row['deleted_at'] as String),
       note: row['note'] as String?,
       overrideFoodName: row['override_food_name'] as String?,
       imageHash: row['image_hash'] as String?,
@@ -3063,6 +3161,7 @@ class AppState extends ChangeNotifier {
     if (labelJson is Map<String, dynamic>) {
       entry.labelResult = LabelResult.fromJson(labelJson);
     }
+    entry.updatedAt ??= entry.time.toUtc();
     return entry;
   }
 
@@ -3097,6 +3196,7 @@ class AppState extends ChangeNotifier {
       'meal': _mealOverrides,
       'week': _weekOverrides,
       'meta': _meta,
+      'deleted_entries': _deletedEntries,
       'custom_foods': customFoods.map((item) => item.toJson()).toList(),
     });
   }
