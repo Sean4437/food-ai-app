@@ -2753,9 +2753,13 @@ class AppState extends ChangeNotifier {
     };
     final rows = await client.from(kSupabaseMealsTable).select().eq('user_id', user.id);
     if (rows is List) {
+      final remoteIds = <String>{};
       for (final row in rows) {
         if (row is! Map<String, dynamic>) continue;
         final entryId = row['id'] as String?;
+        if (entryId != null) {
+          remoteIds.add(entryId);
+        }
         final existing = entryId == null ? null : existingEntries[entryId];
         final imagePath = row['image_path'] as String?;
         final labelPath = row['label_image_path'] as String?;
@@ -2787,16 +2791,29 @@ class AppState extends ChangeNotifier {
         }
         await _store.upsert(entry);
       }
+      // Remove local entries that no longer exist remotely
+      final toRemove = entries.where((e) => !remoteIds.contains(e.id)).toList();
+      if (toRemove.isNotEmpty) {
+        for (final entry in toRemove) {
+          entries.remove(entry);
+          // ignore: discarded_futures
+          _store.delete(entry.id);
+        }
+      }
     }
     final existingFoods = {
       for (final food in customFoods) food.id: food,
     };
     final foodRows = await client.from(kSupabaseCustomFoodsTable).select().eq('user_id', user.id);
     if (foodRows is List) {
+      final remoteFoodIds = <String>{};
       customFoods.clear();
       for (final row in foodRows) {
         if (row is! Map<String, dynamic>) continue;
         final foodId = row['id'] as String?;
+        if (foodId != null) {
+          remoteFoodIds.add(foodId);
+        }
         final existing = foodId == null ? null : existingFoods[foodId];
         final imagePath = row['image_path'] as String?;
         final updatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
@@ -2823,9 +2840,17 @@ class AppState extends ChangeNotifier {
         );
         customFoods.add(food);
       }
+      final toRemove = existingFoods.keys.where((id) => !remoteFoodIds.contains(id)).toList();
+      if (toRemove.isNotEmpty) {
+        for (final id in toRemove) {
+          // keep storage in sync; overrides will be saved below
+          customFoods.removeWhere((food) => food.id == id);
+        }
+      }
       notifyListeners();
       await _saveOverrides();
     }
+    notifyListeners();
   }
 
   void setSyncInProgress(bool value) {
@@ -2855,23 +2880,29 @@ class AppState extends ChangeNotifier {
       return changed;
     }
 
-    if (localSyncAt == null || remoteSyncAt.isAfter(localSyncAt)) {
-      await syncFromSupabase();
-      await _storeLocalSyncAt(remoteSyncAt);
-      final afterFingerprint = _syncFingerprint();
-      return afterFingerprint != beforeFingerprint;
-    }
-
-    if (localSyncAt.isAtSameMomentAs(remoteSyncAt)) {
-      return false;
-    }
-
-    final changed = await syncToSupabase();
-    if (changed) {
+    bool changed = false;
+    // 1) Always push local changes first (if any)
+    final pushed = await syncToSupabase();
+    if (pushed) {
+      changed = true;
       final now = DateTime.now().toUtc();
       await _storeRemoteSyncAt(user.id, now);
       await _storeLocalSyncAt(now);
     }
+
+    // 2) Then pull remote changes
+    final updatedRemoteSyncAt = await _fetchRemoteSyncAt(user.id);
+    final shouldPull = updatedRemoteSyncAt != null &&
+        (localSyncAt == null || updatedRemoteSyncAt.isAfter(localSyncAt));
+    if (shouldPull) {
+      await syncFromSupabase();
+      await _storeLocalSyncAt(updatedRemoteSyncAt!);
+      changed = true;
+    }
+
+    // 3) Update fingerprint after sync to avoid stale "no change" state
+    _meta['last_sync_fingerprint'] = _syncFingerprint();
+    await _saveOverrides();
     return changed;
   }
 
