@@ -34,6 +34,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   bool _finishingProgress = false;
   Timer? _progressTimer;
   Timer? _statusTimer;
+  bool _autoRequested = false;
 
   @override
   void initState() {
@@ -42,7 +43,16 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startCaptureFromCamera());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final app = AppStateScope.of(context);
+    if (app.trialChecked && !_autoRequested) {
+      _autoRequested = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _startCaptureFromCamera());
+    }
   }
 
   
@@ -53,6 +63,40 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     _scanController.dispose();
     _nameController.dispose();
     super.dispose();
+  }
+
+  Widget _skeletonBar(double width, {double height = 12}) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _skeletonBar(140, height: 22),
+        const SizedBox(height: 8),
+        _skeletonBar(220),
+        const SizedBox(height: 16),
+        Container(
+          height: 340,
+          decoration: BoxDecoration(
+            color: Colors.black12.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(24),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _skeletonBar(200),
+        const SizedBox(height: 10),
+        _skeletonBar(180),
+      ],
+    );
   }
 
   Future<void> _startCapture({required ImageSource source}) async {
@@ -730,6 +774,21 @@ Widget _buildAdviceCard(AppLocalizations t) {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final app = AppStateScope.of(context);
+    if (!app.trialChecked) {
+      return AppBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: _buildSkeleton(),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final analysis = _analysis?.result;
     final showPreview = _analysis == null && _previewBytes != null;
