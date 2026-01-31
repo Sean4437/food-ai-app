@@ -337,7 +337,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final locale = Localizations.localeOf(context);
         final summary = report == null ? null : _buildSyncSummary(report, t, locale);
         final message = changed
-            ? (summary == null ? t.syncUpdated : '${t.syncUpdated} · $summary')
+            ? (summary == null ? t.syncSuccess : '${t.syncSuccess} · $summary')
             : t.syncNoChanges;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
@@ -382,10 +382,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (report.pushedMealDeletes > 0) parts.add('刪除餐點 ${report.pushedMealDeletes}');
       if (report.pushedCustomFoods > 0) parts.add('上傳自訂 ${report.pushedCustomFoods}');
       if (report.pushedCustomDeletes > 0) parts.add('刪除自訂 ${report.pushedCustomDeletes}');
+      if (report.pushedSettings > 0) parts.add('上傳設定 ${report.pushedSettings}');
       if (report.pulledMeals > 0) parts.add('下載餐點 ${report.pulledMeals}');
       if (report.pulledMealDeletes > 0) parts.add('下載刪除 ${report.pulledMealDeletes}');
       if (report.pulledCustomFoods > 0) parts.add('下載自訂 ${report.pulledCustomFoods}');
       if (report.pulledCustomDeletes > 0) parts.add('下載自訂刪除 ${report.pulledCustomDeletes}');
+      if (report.pulledSettings > 0) parts.add('下載設定 ${report.pulledSettings}');
       return parts.join('、');
     }
     final parts = <String>[];
@@ -393,10 +395,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (report.pushedMealDeletes > 0) parts.add('delete meals ${report.pushedMealDeletes}');
     if (report.pushedCustomFoods > 0) parts.add('upload custom ${report.pushedCustomFoods}');
     if (report.pushedCustomDeletes > 0) parts.add('delete custom ${report.pushedCustomDeletes}');
+    if (report.pushedSettings > 0) parts.add('upload settings ${report.pushedSettings}');
     if (report.pulledMeals > 0) parts.add('download meals ${report.pulledMeals}');
     if (report.pulledMealDeletes > 0) parts.add('download deleted ${report.pulledMealDeletes}');
     if (report.pulledCustomFoods > 0) parts.add('download custom ${report.pulledCustomFoods}');
     if (report.pulledCustomDeletes > 0) parts.add('download custom deleted ${report.pulledCustomDeletes}');
+    if (report.pulledSettings > 0) parts.add('download settings ${report.pulledSettings}');
     return parts.join(', ');
   }
 

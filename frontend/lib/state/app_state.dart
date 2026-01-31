@@ -3141,6 +3141,9 @@ class AppState extends ChangeNotifier {
         'deleted_at': null,
       };
       await client.from(kSupabaseUserSettingsTable).upsert(settingsPayload).select('user_id');
+      if (report != null) {
+        report.pushedSettings += 1;
+      }
     }
     if (deletionsToSync.isNotEmpty) {
       for (final deleted in deletionsToSync) {
@@ -3192,6 +3195,9 @@ class AppState extends ChangeNotifier {
         _scheduleAutoFinalize();
         _scheduleAutoFinalizeWeek();
         notifyListeners();
+        if (report != null) {
+          report.pulledSettings += 1;
+        }
       }
     }
     final since = _localSyncAt();
@@ -4195,20 +4201,24 @@ class SyncReport {
   int pushedMealDeletes = 0;
   int pushedCustomFoods = 0;
   int pushedCustomDeletes = 0;
+  int pushedSettings = 0;
   int pulledMeals = 0;
   int pulledMealDeletes = 0;
   int pulledCustomFoods = 0;
   int pulledCustomDeletes = 0;
+  int pulledSettings = 0;
 
   bool get hasChanges =>
       pushedMeals > 0 ||
       pushedMealDeletes > 0 ||
       pushedCustomFoods > 0 ||
       pushedCustomDeletes > 0 ||
+      pushedSettings > 0 ||
       pulledMeals > 0 ||
       pulledMealDeletes > 0 ||
       pulledCustomFoods > 0 ||
-      pulledCustomDeletes > 0;
+      pulledCustomDeletes > 0 ||
+      pulledSettings > 0;
 }
 
 class AppStateScope extends InheritedNotifier<AppState> {
