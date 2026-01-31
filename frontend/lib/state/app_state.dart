@@ -566,8 +566,11 @@ class AppState extends ChangeNotifier {
     // Warm plate asset cache on startup (web uses network for assets).
     precachePlateAsset();
     if (isSupabaseSignedIn) {
-      await refreshAccessStatus();
-      await _runAutoSync();
+      // Do not block app startup on network calls.
+      scheduleMicrotask(() async {
+        await refreshAccessStatus();
+        await _runAutoSync();
+      });
     }
     notifyListeners();
   }
