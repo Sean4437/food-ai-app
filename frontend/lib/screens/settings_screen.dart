@@ -17,6 +17,41 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  Widget _skeletonBar(double width, {double height = 12}) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _skeletonBar(120, height: 22),
+        const SizedBox(height: 12),
+        Container(
+          height: 110,
+          decoration: BoxDecoration(
+            color: Colors.black12.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _skeletonBar(180),
+        const SizedBox(height: 8),
+        _skeletonBar(260),
+        const SizedBox(height: 10),
+        _skeletonBar(220),
+        const SizedBox(height: 10),
+        _skeletonBar(200),
+      ],
+    );
+  }
 
   Widget _sectionTitle(BuildContext context, String text) {
     return Padding(
@@ -473,6 +508,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final themeController = ThemeScope.of(context);
     final app = AppStateScope.of(context);
     final profile = app.profile;
+    if (!app.trialChecked) {
+      return AppBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: _buildSkeleton(),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     final plateOptions = <String, String>{
       '日式盤 02': 'assets/plates/plate_Japanese_02.png',
       '日式盤 04': 'assets/plates/plate_Japanese_04.png',

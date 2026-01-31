@@ -98,9 +98,7 @@ class _AuthGateState extends State<AuthGate> {
             // ignore: discarded_futures
             app.refreshAccessStatus();
           }
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const MainShell();
         }
         if (app.trialExpired && !app.isWhitelisted) {
           return const TrialExpiredScreen();

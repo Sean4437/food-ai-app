@@ -26,6 +26,51 @@ class _HomeScreenState extends State<HomeScreen> {
   final Map<DateTime, int> _dateSelectedMeal = {};
   String? _lastPlateAsset;
 
+  Widget _skeletonBar(double width, {double height = 12}) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(8),
+      ),
+    );
+  }
+
+  Widget _buildSkeleton(AppTheme appTheme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: _skeletonBar(140, height: 18)),
+              const SizedBox(width: 12),
+              _skeletonBar(72, height: 22),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _skeletonBar(120),
+          const SizedBox(height: 16),
+          Container(
+            height: 360,
+            decoration: BoxDecoration(
+              color: appTheme.card.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(appTheme.radiusCard),
+            ),
+          ),
+          const SizedBox(height: 14),
+          _skeletonBar(200),
+          const SizedBox(height: 10),
+          _skeletonBar(240),
+          const SizedBox(height: 10),
+          _skeletonBar(180),
+        ],
+      ),
+    );
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -423,6 +468,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final entries = app.entries;
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
+    if (!app.trialChecked) {
+      return AppBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: _buildSkeleton(appTheme),
+          ),
+        ),
+      );
+    }
     final dates = entries
         .map((e) => DateTime(e.time.year, e.time.month, e.time.day))
         .toSet()
