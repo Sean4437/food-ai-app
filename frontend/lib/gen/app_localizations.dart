@@ -2433,12 +2433,6 @@ abstract class AppLocalizations {
   /// **'兩次密碼不一致'**
   String get authPasswordMismatch;
 
-  /// No description provided for @authNicknameRequired.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'請輸入暱稱'**
-  String get authNicknameRequired;
-
   /// No description provided for @authPasswordRule.
   ///
   /// In zh_TW, this message translates to:
@@ -2582,6 +2576,63 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'高蛋白'**
   String get dietTypeHighProtein;
+
+  /// No description provided for @containerSection.
+  String get containerSection;
+
+  /// No description provided for @containerTypeLabel.
+  String get containerTypeLabel;
+
+  /// No description provided for @containerSizeLabel.
+  String get containerSizeLabel;
+
+  /// No description provided for @containerDepthLabel.
+  String get containerDepthLabel;
+
+  /// No description provided for @containerDiameterLabel.
+  String get containerDiameterLabel;
+
+  /// No description provided for @containerCapacityLabel.
+  String get containerCapacityLabel;
+
+  /// No description provided for @containerTypeBowl.
+  String get containerTypeBowl;
+
+  /// No description provided for @containerTypePlate.
+  String get containerTypePlate;
+
+  /// No description provided for @containerTypeBox.
+  String get containerTypeBox;
+
+  /// No description provided for @containerTypeUnknown.
+  String get containerTypeUnknown;
+
+  /// No description provided for @containerSizeSmall.
+  String get containerSizeSmall;
+
+  /// No description provided for @containerSizeMedium.
+  String get containerSizeMedium;
+
+  /// No description provided for @containerSizeLarge.
+  String get containerSizeLarge;
+
+  /// No description provided for @containerSizeCustom.
+  String get containerSizeCustom;
+
+  /// No description provided for @containerDepthShallow.
+  String get containerDepthShallow;
+
+  /// No description provided for @containerDepthMedium.
+  String get containerDepthMedium;
+
+  /// No description provided for @containerDepthDeep.
+  String get containerDepthDeep;
+
+  /// No description provided for @authNicknameRequired.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'請輸入暱稱'**
+  String get authNicknameRequired;
 }
 
 class _AppLocalizationsDelegate

@@ -1210,9 +1210,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authPasswordMismatch => 'Passwords do not match';
 
   @override
-  String get authNicknameRequired => 'Please enter a nickname';
-
-  @override
   String get authPasswordRule =>
       'Password must be at least 8 characters and contain no spaces or Chinese characters';
 
@@ -1286,4 +1283,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dietTypeHighProtein => 'High protein';
+
+  @override
+  String get containerSection => 'Common container';
+
+  @override
+  String get containerTypeLabel => 'Container type';
+
+  @override
+  String get containerSizeLabel => 'Container size';
+
+  @override
+  String get containerDepthLabel => 'Bowl depth';
+
+  @override
+  String get containerDiameterLabel => 'Diameter (cm)';
+
+  @override
+  String get containerCapacityLabel => 'Capacity (ml)';
+
+  @override
+  String get containerTypeBowl => 'Bowl';
+
+  @override
+  String get containerTypePlate => 'Plate';
+
+  @override
+  String get containerTypeBox => 'Bento box';
+
+  @override
+  String get containerTypeUnknown => 'Not specified';
+
+  @override
+  String get containerSizeSmall => 'Small';
+
+  @override
+  String get containerSizeMedium => 'Medium';
+
+  @override
+  String get containerSizeLarge => 'Large';
+
+  @override
+  String get containerSizeCustom => 'Custom';
+
+  @override
+  String get containerDepthShallow => 'Shallow';
+
+  @override
+  String get containerDepthMedium => 'Medium';
+
+  @override
+  String get containerDepthDeep => 'Deep';
+
+  @override
+  String get authNicknameRequired => 'Please enter a nickname';
 }

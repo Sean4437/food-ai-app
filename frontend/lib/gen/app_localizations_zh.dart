@@ -1198,9 +1198,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authPasswordMismatch => '兩次密碼不一致';
 
   @override
-  String get authNicknameRequired => '请输入昵称';
-
-  @override
   String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
 
   @override
@@ -1271,6 +1268,61 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dietTypeHighProtein => '高蛋白';
+
+
+  @override
+  String get containerSection => '常用容器';
+
+  @override
+  String get containerTypeLabel => '容器类型';
+
+  @override
+  String get containerSizeLabel => '容器尺寸';
+
+  @override
+  String get containerDepthLabel => '碗深度';
+
+  @override
+  String get containerDiameterLabel => '直径 (cm)';
+
+  @override
+  String get containerCapacityLabel => '容量 (ml)';
+
+  @override
+  String get containerTypeBowl => '碗';
+
+  @override
+  String get containerTypePlate => '盘';
+
+  @override
+  String get containerTypeBox => '便当盒';
+
+  @override
+  String get containerTypeUnknown => '不指定';
+
+  @override
+  String get containerSizeSmall => '小';
+
+  @override
+  String get containerSizeMedium => '中';
+
+  @override
+  String get containerSizeLarge => '大';
+
+  @override
+  String get containerSizeCustom => '自订';
+
+  @override
+  String get containerDepthShallow => '浅';
+
+  @override
+  String get containerDepthMedium => '中';
+
+  @override
+  String get containerDepthDeep => '深';
+
+  @override
+  String get authNicknameRequired => '请输入昵称';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2467,9 +2519,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authPasswordMismatch => '兩次密碼不一致';
 
   @override
-  String get authNicknameRequired => '請輸入暱稱';
-
-  @override
   String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
 
   @override
@@ -2540,4 +2589,59 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dietTypeHighProtein => '高蛋白';
+
+
+  @override
+  String get containerSection => '常用容器';
+
+  @override
+  String get containerTypeLabel => '容器類型';
+
+  @override
+  String get containerSizeLabel => '容器尺寸';
+
+  @override
+  String get containerDepthLabel => '碗深度';
+
+  @override
+  String get containerDiameterLabel => '直徑 (cm)';
+
+  @override
+  String get containerCapacityLabel => '容量 (ml)';
+
+  @override
+  String get containerTypeBowl => '碗';
+
+  @override
+  String get containerTypePlate => '盤';
+
+  @override
+  String get containerTypeBox => '便當盒';
+
+  @override
+  String get containerTypeUnknown => '不指定';
+
+  @override
+  String get containerSizeSmall => '小';
+
+  @override
+  String get containerSizeMedium => '中';
+
+  @override
+  String get containerSizeLarge => '大';
+
+  @override
+  String get containerSizeCustom => '自訂';
+
+  @override
+  String get containerDepthShallow => '淺';
+
+  @override
+  String get containerDepthMedium => '中';
+
+  @override
+  String get containerDepthDeep => '深';
+
+  @override
+  String get authNicknameRequired => '請輸入暱稱';
 }

@@ -381,6 +381,11 @@ class AppState extends ChangeNotifier {
       mealType: _mealTypeKey(mealType),
       mealPhotoCount: 1,
       analyzeReason: 'quick_capture',
+      containerType: profile.containerType,
+      containerSize: profile.containerSize,
+      containerDepth: profile.containerDepth,
+      containerDiameterCm: profile.containerDiameterCm,
+      containerCapacityMl: profile.containerCapacityMl,
       heightCm: profile.heightCm,
       weightKg: profile.weightKg,
       age: profile.age,
@@ -420,6 +425,11 @@ class AppState extends ChangeNotifier {
       mealType: _mealTypeKey(analysis.mealType),
       mealPhotoCount: 1,
       analyzeReason: 'quick_capture_manual',
+      containerType: profile.containerType,
+      containerSize: profile.containerSize,
+      containerDepth: profile.containerDepth,
+      containerDiameterCm: profile.containerDiameterCm,
+      containerCapacityMl: profile.containerCapacityMl,
       heightCm: profile.heightCm,
       weightKg: profile.weightKg,
       age: profile.age,
@@ -731,11 +741,21 @@ class AppState extends ChangeNotifier {
       mealType: _mealTypeKey(mealType),
       portionPercent: 100,
       adviceMode: 'current_meal',
+      containerType: profile.containerType,
+      containerSize: profile.containerSize,
+      containerDepth: profile.containerDepth,
+      containerDiameterCm: profile.containerDiameterCm,
+      containerCapacityMl: profile.containerCapacityMl,
       profile: {
         'height_cm': profile.heightCm,
         'weight_kg': profile.weightKg,
         'age': profile.age,
         'gender': profile.gender,
+        'container_type': profile.containerType,
+        'container_size': profile.containerSize,
+        'container_depth': profile.containerDepth,
+        'container_diameter_cm': profile.containerDiameterCm,
+        'container_capacity_ml': profile.containerCapacityMl,
         'tone': profile.tone,
         'persona': profile.persona,
         'activity_level': dailyActivityLevel(now),
@@ -1922,6 +1942,11 @@ class AppState extends ChangeNotifier {
       ..name = updated.name
       ..email = updated.email
       ..gender = updated.gender
+      ..containerType = updated.containerType
+      ..containerSize = updated.containerSize
+      ..containerDepth = updated.containerDepth
+      ..containerDiameterCm = updated.containerDiameterCm
+      ..containerCapacityMl = updated.containerCapacityMl
       ..tone = updated.tone
       ..persona = updated.persona
       ..activityLevel = updated.activityLevel
@@ -2021,6 +2046,11 @@ class AppState extends ChangeNotifier {
         labelContext: _buildLabelContext(entry.labelResult),
         portionPercent: entry.portionPercent,
         analyzeReason: reason,
+        containerType: profile.containerType,
+        containerSize: profile.containerSize,
+        containerDepth: profile.containerDepth,
+        containerDiameterCm: profile.containerDiameterCm,
+        containerCapacityMl: profile.containerCapacityMl,
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
         age: profile.age,
@@ -2855,6 +2885,11 @@ class AppState extends ChangeNotifier {
         'weight_kg': profile.weightKg,
         'age': profile.age,
         'gender': profile.gender,
+        'container_type': profile.containerType,
+        'container_size': profile.containerSize,
+        'container_depth': profile.containerDepth,
+        'container_diameter_cm': profile.containerDiameterCm,
+        'container_capacity_ml': profile.containerCapacityMl,
         'diet_type': profile.dietType,
         'diet_note': profile.dietNote,
         'tone': profile.tone,
@@ -3912,6 +3947,11 @@ class AppState extends ChangeNotifier {
       'name': profile.name,
       'email': profile.email,
       'gender': profile.gender,
+      'container_type': profile.containerType,
+      'container_size': profile.containerSize,
+      'container_depth': profile.containerDepth,
+      'container_diameter_cm': profile.containerDiameterCm,
+      'container_capacity_ml': profile.containerCapacityMl,
       'diet_type': profile.dietType,
       'diet_note': profile.dietNote,
       'tone': profile.tone,
@@ -3957,6 +3997,11 @@ class AppState extends ChangeNotifier {
       ..name = (data['name'] as String?) ?? profile.name
       ..email = (data['email'] as String?) ?? profile.email
       ..gender = (data['gender'] as String?) ?? profile.gender
+      ..containerType = (data['container_type'] as String?) ?? profile.containerType
+      ..containerSize = (data['container_size'] as String?) ?? profile.containerSize
+      ..containerDepth = (data['container_depth'] as String?) ?? profile.containerDepth
+      ..containerDiameterCm = _parseInt(data['container_diameter_cm'], profile.containerDiameterCm)
+      ..containerCapacityMl = _parseInt(data['container_capacity_ml'], profile.containerCapacityMl)
       ..dietType = (data['diet_type'] as String?) ?? profile.dietType
       ..dietNote = (data['diet_note'] as String?) ?? profile.dietNote
       ..tone = (data['tone'] as String?) ?? profile.tone
@@ -4152,6 +4197,11 @@ class UserProfile {
     required this.name,
     required this.email,
     required this.gender,
+    required this.containerType,
+    required this.containerSize,
+    required this.containerDepth,
+    required this.containerDiameterCm,
+    required this.containerCapacityMl,
     required this.dietType,
     required this.dietNote,
     required this.tone,
@@ -4194,6 +4244,11 @@ class UserProfile {
   String name;
   String email;
   String gender;
+  String containerType;
+  String containerSize;
+  String containerDepth;
+  int containerDiameterCm;
+  int containerCapacityMl;
   String dietType;
   String dietNote;
   String tone;
@@ -4237,6 +4292,11 @@ class UserProfile {
       name: '小明',
       email: 'xiaoming123@gmail.com',
       gender: 'unspecified',
+      containerType: 'bowl',
+      containerSize: 'medium',
+      containerDepth: 'medium',
+      containerDiameterCm: 14,
+      containerCapacityMl: 0,
       dietType: 'none',
       dietNote: '',
       tone: 'gentle',

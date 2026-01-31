@@ -138,6 +138,11 @@ class NameAnalyzeRequest(BaseModel):
     meal_type: Optional[str] = None
     portion_percent: Optional[int] = None
     advice_mode: Optional[str] = None
+    container_type: Optional[str] = None
+    container_size: Optional[str] = None
+    container_depth: Optional[str] = None
+    container_diameter_cm: Optional[int] = None
+    container_capacity_ml: Optional[int] = None
 
 FREE_DAILY_LIMIT = int(os.getenv("FREE_DAILY_LIMIT", "1"))
 CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
@@ -279,6 +284,11 @@ def _build_prompt(
     context: str | None,
     advice_mode: str | None,
     label_context: str | None,
+    container_type: str | None,
+    container_size: str | None,
+    container_depth: str | None,
+    container_diameter_cm: int | None,
+    container_capacity_ml: int | None,
 ) -> str:
     profile_text = ""
     if profile:
@@ -303,6 +313,22 @@ def _build_prompt(
     if label_context:
         label_text = (
             f"Nutrition label info (must override calorie_range and macros if provided): {label_context}\n"
+        )
+    container_text = ""
+    if (
+        container_type
+        or container_size
+        or container_depth
+        or container_diameter_cm
+        or container_capacity_ml
+    ):
+        container_text = (
+            "Container info (use to estimate portion size): "
+            f"type={container_type or 'unknown'}, "
+            f"size={container_size or 'unknown'}, "
+            f"depth={container_depth or 'unknown'}, "
+            f"diameter_cm={container_diameter_cm or 'unknown'}, "
+            f"capacity_ml={container_capacity_ml or 'unknown'}\n"
         )
     meal_text = ""
     if meal_type:
@@ -368,7 +394,7 @@ def _build_prompt(
             "  \"confidence\": 0.72,\n"
             "  \"is_beverage\": false\n"
             "}\n"
-        ) + profile_text + note_text + context_text + label_text + meal_text
+        ) + profile_text + note_text + context_text + label_text + container_text + meal_text
     suggestion_rule = (
         "- suggestion: next meal guidance, formatted as three lines: Can eat / Avoid / Portion limit\n"
         "- Include concrete food types and portion guidance (e.g. half bowl carbs, palm-sized protein, one bowl veggies)\n"
@@ -417,7 +443,7 @@ def _build_prompt(
         "  \"confidence\": 0.72,\n"
         "  \"is_beverage\": false\n"
         "}\n"
-    ) + profile_text + note_text + context_text + label_text + meal_text
+    ) + profile_text + note_text + context_text + label_text + container_text + meal_text
 
 
 def _build_name_prompt(
@@ -429,6 +455,11 @@ def _build_name_prompt(
     meal_type: str | None,
     context: str | None,
     advice_mode: str | None,
+    container_type: str | None,
+    container_size: str | None,
+    container_depth: str | None,
+    container_diameter_cm: int | None,
+    container_capacity_ml: int | None,
 ) -> str:
     profile_text = ""
     if profile:
@@ -449,6 +480,22 @@ def _build_name_prompt(
     context_text = ""
     if context:
         context_text = f"Recent context (use for suggestions): {context}\n"
+    container_text = ""
+    if (
+        container_type
+        or container_size
+        or container_depth
+        or container_diameter_cm
+        or container_capacity_ml
+    ):
+        container_text = (
+            "Container info (use to estimate portion size): "
+            f"type={container_type or 'unknown'}, "
+            f"size={container_size or 'unknown'}, "
+            f"depth={container_depth or 'unknown'}, "
+            f"diameter_cm={container_diameter_cm or 'unknown'}, "
+            f"capacity_ml={container_capacity_ml or 'unknown'}\n"
+        )
     meal_text = ""
     if meal_type:
         if lang == "zh-TW":
@@ -504,7 +551,7 @@ def _build_name_prompt(
             "  \"confidence\": 0.72,\n"
             "  \"is_beverage\": false\n"
             "}\n"
-        ) + profile_text + note_text + context_text + meal_text
+        ) + profile_text + note_text + context_text + container_text + meal_text
     suggestion_rule = (
         "- suggestion: guidance for how to eat this meal, formatted as three lines: Can eat / Avoid / Portion limit\n"
         "- Reference the recent context and briefly mention the previous meal in the suggestion\n"
@@ -548,7 +595,7 @@ def _build_name_prompt(
         "  \"confidence\": 0.72,\n"
         "  \"is_beverage\": false\n"
         "}\n"
-    ) + profile_text + note_text + context_text + meal_text
+    ) + profile_text + note_text + context_text + container_text + meal_text
 
 
 
@@ -850,6 +897,18 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
                 f"飲食偏好：{diet_type or '未指定'}\n"
                 f"偏好補充：{diet_note or '無'}\n"
             )
+    container_context = ""
+    if profile:
+        ctype = str(profile.get("container_type") or "").strip()
+        csize = str(profile.get("container_size") or "").strip()
+        cdepth = str(profile.get("container_depth") or "").strip()
+        cdiam = profile.get("container_diameter_cm")
+        ccap = profile.get("container_capacity_ml")
+        if ctype or csize or cdepth or cdiam or ccap:
+            container_context = (
+                f"常用容器：{ctype or 'unknown'} / {csize or 'unknown'} / {cdepth or 'unknown'}\n"
+                f"直徑(cm)：{cdiam or 'unknown'} | 容量(ml)：{ccap or 'unknown'}\n"
+            )
     if lang == "zh-TW":
         return (
             "你是營養分析助理。請根據本餐摘要，給出下一餐建議，回傳 JSON。\n"
@@ -872,7 +931,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             "}\n"
             f"本餐：{meal.meal_type} | {meal.calorie_range}\n"
             f"本餐摘要：{summaries}\n"
-            f"{day_context}{intake_context}{last_meal_context}{diet_context}{recent_advice_context}"
+            f"{day_context}{intake_context}{last_meal_context}{diet_context}{container_context}{recent_advice_context}"
         ) + profile_text
     return (
         "You are a nutrition assistant. Based on the meal summary, return JSON advice for the next meal.\n"
@@ -899,7 +958,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
         f"Today total range: {meal.day_calorie_range or 'unknown'}\n"
         f"Meals today: {meal.day_meal_count or 0}\n"
         f"Meal summaries today:\n{day_summaries or '- none'}\n"
-        f"{intake_context}{last_meal_context}{diet_context}{recent_advice_context}"
+        f"{intake_context}{last_meal_context}{diet_context}{container_context}{recent_advice_context}"
     ) + profile_text
 
 
@@ -1117,6 +1176,11 @@ def _analyze_with_openai(
     context: str | None,
     advice_mode: str | None,
     label_context: str | None,
+    container_type: str | None,
+    container_size: str | None,
+    container_depth: str | None,
+    container_diameter_cm: int | None,
+    container_capacity_ml: int | None,
 ) -> Optional[dict]:
     if _client is None:
         return None
@@ -1131,6 +1195,11 @@ def _analyze_with_openai(
         context,
         advice_mode,
         label_context,
+        container_type,
+        container_size,
+        container_depth,
+        container_diameter_cm,
+        container_capacity_ml,
     )
     if food_name:
         prompt += f"\nUser provided food name: {food_name}. Use this as the primary dish name."
@@ -1277,6 +1346,11 @@ async def analyze_image(
     note: Optional[str] = Form(default=None),
     context: Optional[str] = Form(default=None),
     portion_percent: Optional[int] = Form(default=None),
+    container_type: Optional[str] = Form(default=None),
+    container_size: Optional[str] = Form(default=None),
+    container_depth: Optional[str] = Form(default=None),
+    container_diameter_cm: Optional[int] = Form(default=None),
+    container_capacity_ml: Optional[int] = Form(default=None),
     height_cm: Optional[int] = Form(default=None),
     weight_kg: Optional[int] = Form(default=None),
     age: Optional[int] = Form(default=None),
@@ -1325,6 +1399,11 @@ async def analyze_image(
         and portion_is_default
         and advice_mode is None
         and label_context is None
+        and container_type is None
+        and container_size is None
+        and container_depth is None
+        and container_diameter_cm is None
+        and container_capacity_ml is None
     ):
         cache = _load_analysis_cache()
         cached = cache.get(image_hash)
@@ -1374,6 +1453,11 @@ async def analyze_image(
                 context,
                 advice_mode,
                 label_context,
+                container_type,
+                container_size,
+                container_depth,
+                container_diameter_cm,
+                container_capacity_ml,
             )
             if payload and payload.get("result"):
                 usage_data = payload.get("usage") or {}
@@ -1530,6 +1614,11 @@ async def analyze_name(
                 payload.meal_type,
                 payload.context,
                 payload.advice_mode,
+                payload.container_type,
+                payload.container_size,
+                payload.container_depth,
+                payload.container_diameter_cm,
+                payload.container_capacity_ml,
             )
             response = _client.chat.completions.create(
                 model=OPENAI_MODEL,

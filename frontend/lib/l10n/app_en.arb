@@ -479,5 +479,22 @@
   "dietTypeKeto": "Keto",
   "dietTypeLowFat": "Low fat",
   "dietTypeHighProtein": "High protein",
-  "authNicknameRequired": "Please enter a nickname"
+  "authNicknameRequired": "Please enter a nickname",
+  "containerSection": "Common container",
+  "containerTypeLabel": "Container type",
+  "containerSizeLabel": "Container size",
+  "containerDepthLabel": "Bowl depth",
+  "containerDiameterLabel": "Diameter (cm)",
+  "containerCapacityLabel": "Capacity (ml)",
+  "containerTypeBowl": "Bowl",
+  "containerTypePlate": "Plate",
+  "containerTypeBox": "Bento box",
+  "containerTypeUnknown": "Not specified",
+  "containerSizeSmall": "Small",
+  "containerSizeMedium": "Medium",
+  "containerSizeLarge": "Large",
+  "containerSizeCustom": "Custom",
+  "containerDepthShallow": "Shallow",
+  "containerDepthMedium": "Medium",
+  "containerDepthDeep": "Deep"
 }

@@ -567,6 +567,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
           orElse: () => MapEntry(t.genderUnspecified, 'unspecified'),
         )
         .key;
+    final containerTypeOptions = <String, String>{
+      t.containerTypeBowl: 'bowl',
+      t.containerTypePlate: 'plate',
+      t.containerTypeBox: 'box',
+      t.containerTypeUnknown: 'unknown',
+    };
+    final containerSizeOptions = <String, String>{
+      t.containerSizeSmall: 'small',
+      t.containerSizeMedium: 'medium',
+      t.containerSizeLarge: 'large',
+      t.containerSizeCustom: 'custom',
+    };
+    final containerDepthOptions = <String, String>{
+      t.containerDepthShallow: 'shallow',
+      t.containerDepthMedium: 'medium',
+      t.containerDepthDeep: 'deep',
+    };
+    final currentContainerTypeLabel = containerTypeOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.containerType,
+          orElse: () => MapEntry(t.containerTypeUnknown, 'unknown'),
+        )
+        .key;
+    final currentContainerSizeLabel = containerSizeOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.containerSize,
+          orElse: () => MapEntry(t.containerSizeMedium, 'medium'),
+        )
+        .key;
+    final currentContainerDepthLabel = containerDepthOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.containerDepth,
+          orElse: () => MapEntry(t.containerDepthMedium, 'medium'),
+        )
+        .key;
     final dietTypeOptions = <String, String>{
       t.dietTypeNone: 'none',
       t.dietTypeVegetarian: 'vegetarian',
@@ -894,6 +929,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ]),
+                _sectionTitle(context, t.containerSection),
+                _grid2([
+                  _row(
+                    context,
+                    t.containerTypeLabel,
+                    currentContainerTypeLabel,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.containerTypeLabel,
+                      current: currentContainerTypeLabel,
+                      options: containerTypeOptions.keys.toList(),
+                      onSave: (value) => app.updateField(
+                        (p) => p.containerType = containerTypeOptions[value] ?? 'unknown',
+                      ),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.containerSizeLabel,
+                    currentContainerSizeLabel,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.containerSizeLabel,
+                      current: currentContainerSizeLabel,
+                      options: containerSizeOptions.keys.toList(),
+                      onSave: (value) => app.updateField(
+                        (p) => p.containerSize = containerSizeOptions[value] ?? 'medium',
+                      ),
+                    ),
+                  ),
+                ]),
+                if (profile.containerType == 'bowl')
+                  _grid2([
+                    _row(
+                      context,
+                      t.containerDepthLabel,
+                      currentContainerDepthLabel,
+                      onTap: () => _selectOption(
+                        context,
+                        title: t.containerDepthLabel,
+                        current: currentContainerDepthLabel,
+                        options: containerDepthOptions.keys.toList(),
+                        onSave: (value) => app.updateField(
+                          (p) => p.containerDepth = containerDepthOptions[value] ?? 'medium',
+                        ),
+                      ),
+                    ),
+                    _row(
+                      context,
+                      t.containerCapacityLabel,
+                      profile.containerCapacityMl > 0 ? '${profile.containerCapacityMl} ml' : '--',
+                      onTap: () => _editText(
+                        context,
+                        title: t.containerCapacityLabel,
+                        initial: profile.containerCapacityMl > 0 ? profile.containerCapacityMl.toString() : '',
+                        keyboardType: TextInputType.number,
+                        onSave: (value) => app.updateField(
+                          (p) => p.containerCapacityMl = int.tryParse(value) ?? 0,
+                        ),
+                      ),
+                    ),
+                  ]),
+                if (profile.containerSize == 'custom' &&
+                    (profile.containerType == 'bowl' || profile.containerType == 'plate' || profile.containerType == 'box'))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _row(
+                      context,
+                      t.containerDiameterLabel,
+                      profile.containerDiameterCm > 0 ? '${profile.containerDiameterCm} cm' : '--',
+                      onTap: () => _editText(
+                        context,
+                        title: t.containerDiameterLabel,
+                        initial: profile.containerDiameterCm > 0 ? profile.containerDiameterCm.toString() : '',
+                        keyboardType: TextInputType.number,
+                        onSave: (value) => app.updateField(
+                          (p) => p.containerDiameterCm = int.tryParse(value) ?? p.containerDiameterCm,
+                        ),
+                      ),
+                    ),
+                  ),
                 _sectionTitle(context, t.dietPreferenceSection),
                 _grid2([
                   _row(

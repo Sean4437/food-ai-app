@@ -22,6 +22,11 @@ class ApiService {
     String? note,
     String? context,
     int? portionPercent,
+    String? containerType,
+    String? containerSize,
+    String? containerDepth,
+    int? containerDiameterCm,
+    int? containerCapacityMl,
     int? heightCm,
     int? weightKg,
     int? age,
@@ -55,6 +60,21 @@ class ApiService {
     }
     if (portionPercent != null && portionPercent > 0) {
       request.fields['portion_percent'] = portionPercent.toString();
+    }
+    if (containerType != null && containerType.trim().isNotEmpty) {
+      request.fields['container_type'] = containerType.trim();
+    }
+    if (containerSize != null && containerSize.trim().isNotEmpty) {
+      request.fields['container_size'] = containerSize.trim();
+    }
+    if (containerDepth != null && containerDepth.trim().isNotEmpty) {
+      request.fields['container_depth'] = containerDepth.trim();
+    }
+    if (containerDiameterCm != null && containerDiameterCm > 0) {
+      request.fields['container_diameter_cm'] = containerDiameterCm.toString();
+    }
+    if (containerCapacityMl != null && containerCapacityMl > 0) {
+      request.fields['container_capacity_ml'] = containerCapacityMl.toString();
     }
     if (heightCm != null && heightCm > 0) {
       request.fields['height_cm'] = heightCm.toString();
@@ -180,6 +200,11 @@ class ApiService {
     int? portionPercent,
     String? mealType,
     String? adviceMode,
+    String? containerType,
+    String? containerSize,
+    String? containerDepth,
+    int? containerDiameterCm,
+    int? containerCapacityMl,
     Map<String, dynamic>? profile,
   }) async {
     final uri = Uri.parse('$baseUrl/analyze_name');
@@ -191,6 +216,11 @@ class ApiService {
       if (portionPercent != null && portionPercent > 0) 'portion_percent': portionPercent,
       if (mealType != null && mealType.trim().isNotEmpty) 'meal_type': mealType,
       if (adviceMode != null && adviceMode.trim().isNotEmpty) 'advice_mode': adviceMode,
+      if (containerType != null && containerType.trim().isNotEmpty) 'container_type': containerType,
+      if (containerSize != null && containerSize.trim().isNotEmpty) 'container_size': containerSize,
+      if (containerDepth != null && containerDepth.trim().isNotEmpty) 'container_depth': containerDepth,
+      if (containerDiameterCm != null && containerDiameterCm > 0) 'container_diameter_cm': containerDiameterCm,
+      if (containerCapacityMl != null && containerCapacityMl > 0) 'container_capacity_ml': containerCapacityMl,
       if (profile != null) 'profile': profile,
     };
     final response = await http.post(
