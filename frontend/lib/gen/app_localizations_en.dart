@@ -719,6 +719,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adviceStyleSection => 'Advice style';
 
   @override
+  String get dietPreferenceSection => 'Diet preferences';
+
+  @override
+  String get dietTypeLabel => 'Diet type';
+
+  @override
+  String get dietNoteLabel => 'Preference notes';
+
+  @override
+  String get dietTypeNone => 'No restriction';
+
+  @override
+  String get dietTypeVegetarian => 'Lacto-ovo vegetarian';
+
+  @override
+  String get dietTypeVegan => 'Vegan';
+
+  @override
+  String get dietTypePescatarian => 'Pescatarian';
+
+  @override
+  String get dietTypeLowCarb => 'Low carb';
+
+  @override
+  String get dietTypeKeto => 'Keto';
+
+  @override
+  String get dietTypeLowFat => 'Low fat';
+
+  @override
+  String get dietTypeHighProtein => 'High protein';
+
+  @override
   String get toneLabel => 'Tone';
 
   @override

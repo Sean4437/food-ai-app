@@ -504,6 +504,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           orElse: () => MapEntry(t.genderUnspecified, 'unspecified'),
         )
         .key;
+    final dietTypeOptions = <String, String>{
+      t.dietTypeNone: 'none',
+      t.dietTypeVegetarian: 'vegetarian',
+      t.dietTypeVegan: 'vegan',
+      t.dietTypePescatarian: 'pescatarian',
+      t.dietTypeLowCarb: 'low_carb',
+      t.dietTypeKeto: 'keto',
+      t.dietTypeLowFat: 'low_fat',
+      t.dietTypeHighProtein: 'high_protein',
+    };
+    final currentDietTypeLabel = dietTypeOptions.entries
+        .firstWhere(
+          (entry) => entry.value == profile.dietType,
+          orElse: () => MapEntry(t.dietTypeNone, 'none'),
+        )
+        .key;
     final toneOptions = <String, String>{
       t.toneGentle: 'gentle',
       t.toneDirect: 'direct',
@@ -812,6 +828,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       options: exerciseOptions.keys.toList(),
                       onSave: (value) =>
                           app.updateField((p) => p.exerciseSuggestionType = exerciseOptions[value] ?? 'walking'),
+                    ),
+                  ),
+                ]),
+                _sectionTitle(context, t.dietPreferenceSection),
+                _grid2([
+                  _row(
+                    context,
+                    t.dietTypeLabel,
+                    currentDietTypeLabel,
+                    onTap: () => _selectOption(
+                      context,
+                      title: t.dietTypeLabel,
+                      current: currentDietTypeLabel,
+                      options: dietTypeOptions.keys.toList(),
+                      onSave: (value) => app.updateField((p) => p.dietType = dietTypeOptions[value] ?? 'none'),
+                    ),
+                  ),
+                  _row(
+                    context,
+                    t.dietNoteLabel,
+                    profile.dietNote.isEmpty ? '--' : profile.dietNote,
+                    onTap: () => _editText(
+                      context,
+                      title: t.dietNoteLabel,
+                      initial: profile.dietNote,
+                      onSave: (value) => app.updateField((p) => p.dietNote = value.trim()),
                     ),
                   ),
                 ]),

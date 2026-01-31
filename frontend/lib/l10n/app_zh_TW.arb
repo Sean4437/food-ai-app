@@ -467,5 +467,16 @@
         "type": "int"
       }
     }
-  }
+  },
+  "dietPreferenceSection": "飲食偏好",
+  "dietTypeLabel": "飲食類型",
+  "dietNoteLabel": "偏好補充",
+  "dietTypeNone": "不限制",
+  "dietTypeVegetarian": "奶蛋素",
+  "dietTypeVegan": "全素",
+  "dietTypePescatarian": "海鮮素",
+  "dietTypeLowCarb": "低碳",
+  "dietTypeKeto": "生酮",
+  "dietTypeLowFat": "低脂",
+  "dietTypeHighProtein": "高蛋白"
 }

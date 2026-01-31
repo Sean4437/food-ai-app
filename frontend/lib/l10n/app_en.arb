@@ -467,5 +467,16 @@
         "type": "int"
       }
     }
-  }
+  },
+  "dietPreferenceSection": "Diet preferences",
+  "dietTypeLabel": "Diet type",
+  "dietNoteLabel": "Preference notes",
+  "dietTypeNone": "No restriction",
+  "dietTypeVegetarian": "Lacto-ovo vegetarian",
+  "dietTypeVegan": "Vegan",
+  "dietTypePescatarian": "Pescatarian",
+  "dietTypeLowCarb": "Low carb",
+  "dietTypeKeto": "Keto",
+  "dietTypeLowFat": "Low fat",
+  "dietTypeHighProtein": "High protein"
 }

@@ -707,6 +707,40 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get adviceStyleSection => '建議風格';
 
+
+  @override
+  String get dietPreferenceSection => '饮食偏好';
+
+  @override
+  String get dietTypeLabel => '饮食类型';
+
+  @override
+  String get dietNoteLabel => '偏好补充';
+
+  @override
+  String get dietTypeNone => '不限制';
+
+  @override
+  String get dietTypeVegetarian => '奶蛋素';
+
+  @override
+  String get dietTypeVegan => '全素';
+
+  @override
+  String get dietTypePescatarian => '海鲜素';
+
+  @override
+  String get dietTypeLowCarb => '低碳';
+
+  @override
+  String get dietTypeKeto => '生酮';
+
+  @override
+  String get dietTypeLowFat => '低脂';
+
+  @override
+  String get dietTypeHighProtein => '高蛋白';
+
   @override
   String get toneLabel => '建議語氣';
 
@@ -1939,6 +1973,40 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get adviceStyleSection => '建議風格';
+
+
+  @override
+  String get dietPreferenceSection => '飲食偏好';
+
+  @override
+  String get dietTypeLabel => '飲食類型';
+
+  @override
+  String get dietNoteLabel => '偏好補充';
+
+  @override
+  String get dietTypeNone => '不限制';
+
+  @override
+  String get dietTypeVegetarian => '奶蛋素';
+
+  @override
+  String get dietTypeVegan => '全素';
+
+  @override
+  String get dietTypePescatarian => '海鮮素';
+
+  @override
+  String get dietTypeLowCarb => '低碳';
+
+  @override
+  String get dietTypeKeto => '生酮';
+
+  @override
+  String get dietTypeLowFat => '低脂';
+
+  @override
+  String get dietTypeHighProtein => '高蛋白';
 
   @override
   String get toneLabel => '建議語氣';

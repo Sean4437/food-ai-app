@@ -2789,6 +2789,17 @@ class AppState extends ChangeNotifier {
     final mealType = resolveMealType(now);
     final mealDate = _dateOnly(now);
     final dayGroups = mealGroupsForDateAll(mealDate);
+    final daySummary = buildDaySummary(mealDate, t);
+    final consumedKcal = dailyConsumedCalorieMid(mealDate).round();
+    final targetMid = targetCalorieMid(mealDate);
+    final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
+    Map<String, double>? lastMealMacros;
+    if (dayGroups.isNotEmpty) {
+      final lastGroup = dayGroups.first;
+      final lastSummary = buildMealSummary(lastGroup, t);
+      lastMealMacros = lastSummary?.macros;
+    }
+    final recentAdvice = _collectRecentMealAdvice(mealDate, t);
     final dishSummaries = <String>[];
     for (final dayGroup in dayGroups) {
       for (final entry in dayGroup) {
@@ -2830,12 +2841,19 @@ class AppState extends ChangeNotifier {
       'day_calorie_range': _dailyCalorieRangeLabelForDate(mealDate, t),
       'day_meal_count': dayGroups.length,
       'day_meal_summaries': dayMealSummaries,
+      'today_consumed_kcal': consumedKcal > 0 ? consumedKcal : null,
+      'today_remaining_kcal': remainingKcal,
+      'today_macros': daySummary?.macros.isNotEmpty == true ? _roundMacros(daySummary!.macros) : null,
+      'last_meal_macros': lastMealMacros == null || lastMealMacros.isEmpty ? null : _roundMacros(lastMealMacros),
+      'recent_advice': recentAdvice.isEmpty ? null : recentAdvice,
       'lang': locale,
       'profile': {
         'height_cm': profile.heightCm,
         'weight_kg': profile.weightKg,
         'age': profile.age,
         'gender': profile.gender,
+        'diet_type': profile.dietType,
+        'diet_note': profile.dietNote,
         'tone': profile.tone,
         'persona': profile.persona,
         'activity_level': dailyActivityLevel(now),
@@ -2855,6 +2873,41 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       return MealAdvice.defaults(t);
     }
+  }
+
+  Map<String, int> _roundMacros(Map<String, double> macros) {
+    return {
+      'protein': (macros['protein'] ?? 0).round(),
+      'carbs': (macros['carbs'] ?? 0).round(),
+      'fat': (macros['fat'] ?? 0).round(),
+      'sodium': (macros['sodium'] ?? 0).round(),
+    };
+  }
+
+  List<String> _collectRecentMealAdvice(DateTime date, AppLocalizations t) {
+    final defaults = MealAdvice.defaults(t);
+    final items = <String>[];
+    final seen = <String>{};
+    for (int i = 0; i < 7; i++) {
+      final day = date.subtract(Duration(days: i));
+      final groups = mealGroupsForDateAll(day);
+      for (final group in groups) {
+        if (group.isEmpty) continue;
+        final advice = mealAdviceForGroup(group, t);
+        final isDefault = advice.selfCook == defaults.selfCook &&
+            advice.convenience == defaults.convenience &&
+            advice.bento == defaults.bento &&
+            advice.other == defaults.other;
+        if (isDefault) continue;
+        final text =
+            'self_cook:${advice.selfCook} | convenience:${advice.convenience} | bento:${advice.bento} | other:${advice.other}';
+        if (seen.add(text)) {
+          items.add(text);
+        }
+        if (items.length >= 12) return items;
+      }
+    }
+    return items;
   }
 
   Future<void> signUpSupabase(String email, String password) async {
@@ -3851,6 +3904,8 @@ class AppState extends ChangeNotifier {
       'name': profile.name,
       'email': profile.email,
       'gender': profile.gender,
+      'diet_type': profile.dietType,
+      'diet_note': profile.dietNote,
       'tone': profile.tone,
       'persona': profile.persona,
       'activity_level': profile.activityLevel,
@@ -3894,6 +3949,8 @@ class AppState extends ChangeNotifier {
       ..name = (data['name'] as String?) ?? profile.name
       ..email = (data['email'] as String?) ?? profile.email
       ..gender = (data['gender'] as String?) ?? profile.gender
+      ..dietType = (data['diet_type'] as String?) ?? profile.dietType
+      ..dietNote = (data['diet_note'] as String?) ?? profile.dietNote
       ..tone = (data['tone'] as String?) ?? profile.tone
       ..persona = (data['persona'] as String?) ?? profile.persona
       ..activityLevel = (data['activity_level'] as String?) ?? profile.activityLevel
@@ -4087,6 +4144,8 @@ class UserProfile {
     required this.name,
     required this.email,
     required this.gender,
+    required this.dietType,
+    required this.dietNote,
     required this.tone,
     required this.persona,
     required this.activityLevel,
@@ -4127,6 +4186,8 @@ class UserProfile {
   String name;
   String email;
   String gender;
+  String dietType;
+  String dietNote;
   String tone;
   String persona;
   String activityLevel;
@@ -4168,6 +4229,8 @@ class UserProfile {
       name: '小明',
       email: 'xiaoming123@gmail.com',
       gender: 'unspecified',
+      dietType: 'none',
+      dietNote: '',
       tone: 'gentle',
       persona: 'nutritionist',
       activityLevel: 'light',

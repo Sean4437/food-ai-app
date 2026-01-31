@@ -111,6 +111,11 @@ class MealAdviceRequest(BaseModel):
     day_calorie_range: Optional[str] = None
     day_meal_count: Optional[int] = None
     day_meal_summaries: Optional[List[str]] = None
+    today_consumed_kcal: Optional[int] = None
+    today_remaining_kcal: Optional[int] = None
+    today_macros: Optional[dict] = None
+    last_meal_macros: Optional[dict] = None
+    recent_advice: Optional[List[str]] = None
     lang: Optional[str] = None
     profile: Optional[dict] = None
 
@@ -822,6 +827,29 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             f"今日已記錄餐數：{meal.day_meal_count or 0}\n"
             f"今日餐點摘要：\n{day_summaries or '- 無'}\n"
         )
+    intake_context = ""
+    if meal.today_consumed_kcal is not None or meal.today_remaining_kcal is not None or meal.today_macros:
+        intake_context = (
+            f"今日已吃熱量估計：{meal.today_consumed_kcal if meal.today_consumed_kcal is not None else '未知'} kcal\n"
+            f"今日剩餘熱量估計：{meal.today_remaining_kcal if meal.today_remaining_kcal is not None else '未知'} kcal\n"
+            f"今日宏量累計：{meal.today_macros or '未知'}\n"
+        )
+    last_meal_context = ""
+    if meal.last_meal_macros:
+        last_meal_context = f"上一餐宏量：{meal.last_meal_macros}\n"
+    recent_advice_context = ""
+    if meal.recent_advice:
+        recent = "\n".join([f"- {item}" for item in meal.recent_advice if item])
+        recent_advice_context = f"最近 7 天建議（避免重複食物與句型）：\n{recent}\n"
+    diet_context = ""
+    if profile:
+        diet_type = str(profile.get("diet_type") or "").strip()
+        diet_note = str(profile.get("diet_note") or "").strip()
+        if diet_type or diet_note:
+            diet_context = (
+                f"飲食偏好：{diet_type or '未指定'}\n"
+                f"偏好補充：{diet_note or '無'}\n"
+            )
     if lang == "zh-TW":
         return (
             "你是營養分析助理。請根據本餐摘要，給出下一餐建議，回傳 JSON。\n"
@@ -832,6 +860,8 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             "- 避免醫療或診斷字眼；避免精準數值或克數\n"
             "- 需提到上一餐摘要的影響（例如偏油、偏鹹）\n"
             "- 需考量今日累計與已吃內容，避免重複負擔\n"
+            "- 若為晚餐或消夜，建議更清淡、避免夜間加餐或高糖高油\n"
+            "- 若有飲食偏好/禁忌，必須遵守並避免推薦衝突食物\n"
             "JSON 範例：\n"
             "{\n"
             "  \"self_cook\": \"清炒蔬菜＋蒸魚，主食半碗即可\",\n"
@@ -842,7 +872,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             "}\n"
             f"本餐：{meal.meal_type} | {meal.calorie_range}\n"
             f"本餐摘要：{summaries}\n"
-            f"{day_context}"
+            f"{day_context}{intake_context}{last_meal_context}{diet_context}{recent_advice_context}"
         ) + profile_text
     return (
         "You are a nutrition assistant. Based on the meal summary, return JSON advice for the next meal.\n"
@@ -853,6 +883,9 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
         "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
         "- Mention the influence of the previous meal summary\n"
         "- Consider today’s cumulative intake and foods already eaten\n"
+        "- If this is dinner or late-night snack, keep it lighter and avoid late-night extra eating\n"
+        "- Respect dietary preferences or restrictions when present\n"
+        "- Avoid repeating foods or phrasing from the recent advice list if provided\n"
         "JSON example:\n"
         "{\n"
         "  \"self_cook\": \"Steamed fish + veggies, half bowl carbs\",\n"
@@ -866,6 +899,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
         f"Today total range: {meal.day_calorie_range or 'unknown'}\n"
         f"Meals today: {meal.day_meal_count or 0}\n"
         f"Meal summaries today:\n{day_summaries or '- none'}\n"
+        f"{intake_context}{last_meal_context}{diet_context}{recent_advice_context}"
     ) + profile_text
 
 

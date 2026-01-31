@@ -1473,6 +1473,39 @@ abstract class AppLocalizations {
   /// **'建議風格'**
   String get adviceStyleSection;
 
+  /// No description provided for @dietPreferenceSection.
+  String get dietPreferenceSection;
+
+  /// No description provided for @dietTypeLabel.
+  String get dietTypeLabel;
+
+  /// No description provided for @dietNoteLabel.
+  String get dietNoteLabel;
+
+  /// No description provided for @dietTypeNone.
+  String get dietTypeNone;
+
+  /// No description provided for @dietTypeVegetarian.
+  String get dietTypeVegetarian;
+
+  /// No description provided for @dietTypeVegan.
+  String get dietTypeVegan;
+
+  /// No description provided for @dietTypePescatarian.
+  String get dietTypePescatarian;
+
+  /// No description provided for @dietTypeLowCarb.
+  String get dietTypeLowCarb;
+
+  /// No description provided for @dietTypeKeto.
+  String get dietTypeKeto;
+
+  /// No description provided for @dietTypeLowFat.
+  String get dietTypeLowFat;
+
+  /// No description provided for @dietTypeHighProtein.
+  String get dietTypeHighProtein;
+
   /// No description provided for @toneLabel.
   ///
   /// In zh_TW, this message translates to:
