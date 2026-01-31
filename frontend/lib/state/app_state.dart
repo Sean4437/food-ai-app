@@ -3293,10 +3293,13 @@ class AppState extends ChangeNotifier {
     final existingFoods = {
       for (final food in customFoods) food.id: food,
     };
-    final foodRows = await client.from(kSupabaseCustomFoodsTable).select().eq('user_id', user.id);
+    final foodQuery = client.from(kSupabaseCustomFoodsTable).select().eq('user_id', user.id);
+    final foodRows = since == null
+        ? await foodQuery
+        : await foodQuery
+            .or('updated_at.gt.${since.toIso8601String()},deleted_at.gt.${since.toIso8601String()}');
     if (foodRows is List) {
       final remoteFoodIds = <String>{};
-      customFoods.clear();
       for (final row in foodRows) {
         if (row is! Map<String, dynamic>) continue;
         final foodId = row['id'] as String?;
@@ -3344,14 +3347,22 @@ class AppState extends ChangeNotifier {
           createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ?? DateTime.now(),
           updatedAt: DateTime.tryParse(row['updated_at'] as String? ?? '') ?? DateTime.now(),
         );
-        customFoods.add(food);
-        if (report != null) report.pulledCustomFoods += 1;
+        final index = customFoods.indexWhere((item) => item.id == food.id);
+        if (index == -1) {
+          customFoods.add(food);
+          if (report != null) report.pulledCustomFoods += 1;
+        } else {
+          customFoods[index] = food;
+          if (report != null) report.pulledCustomFoods += 1;
+        }
       }
-      final toRemove = existingFoods.keys.where((id) => !remoteFoodIds.contains(id)).toList();
-      if (toRemove.isNotEmpty) {
-        for (final id in toRemove) {
-          // keep storage in sync; overrides will be saved below
-          customFoods.removeWhere((food) => food.id == id);
+      if (since == null) {
+        final toRemove = existingFoods.keys.where((id) => !remoteFoodIds.contains(id)).toList();
+        if (toRemove.isNotEmpty) {
+          for (final id in toRemove) {
+            // keep storage in sync; overrides will be saved below
+            customFoods.removeWhere((food) => food.id == id);
+          }
         }
       }
       notifyListeners();
