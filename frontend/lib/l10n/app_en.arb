@@ -478,5 +478,6 @@
   "dietTypeLowCarb": "Low carb",
   "dietTypeKeto": "Keto",
   "dietTypeLowFat": "Low fat",
-  "dietTypeHighProtein": "High protein"
+  "dietTypeHighProtein": "High protein",
+  "authNicknameRequired": "Please enter a nickname"
 }

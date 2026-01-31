@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+  final _nicknameController = TextEditingController();
   bool _isSignUp = false;
   bool _loading = false;
   bool _showPassword = false;
@@ -63,6 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
+    _nicknameController.dispose();
     super.dispose();
   }
 
@@ -73,6 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirm = _confirmController.text;
+    final nickname = _nicknameController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailRequired)));
       return;
@@ -90,10 +93,14 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authPasswordMismatch)));
       return;
     }
+    if (_isSignUp && nickname.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authNicknameRequired)));
+      return;
+    }
     setState(() => _loading = true);
     try {
       if (_isSignUp) {
-        await app.signUpSupabase(email, password);
+        await app.signUpSupabase(email, password, nickname: nickname);
       } else {
         await app.signInSupabase(email, password);
       }
@@ -208,6 +215,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     if (_isSignUp) ...[
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _nicknameController,
+                        enabled: !_loading,
+                        decoration: InputDecoration(
+                          labelText: t.nicknameLabel,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
                       const SizedBox(height: 10),
                       TextField(
                         controller: _confirmController,

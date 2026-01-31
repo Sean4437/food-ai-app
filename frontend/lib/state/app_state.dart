@@ -2910,14 +2910,19 @@ class AppState extends ChangeNotifier {
     return items;
   }
 
-  Future<void> signUpSupabase(String email, String password) async {
+  Future<void> signUpSupabase(String email, String password, {String? nickname}) async {
     final trimmedEmail = email.trim();
     if (trimmedEmail.isEmpty || password.isEmpty) return;
+    final trimmedNickname = (nickname ?? '').trim();
     await _supabase.client.auth.signUp(
       email: trimmedEmail,
       password: password,
+      data: trimmedNickname.isEmpty ? null : {'nickname': trimmedNickname},
       emailRedirectTo: kSupabaseEmailRedirectUrl,
     );
+    if (trimmedNickname.isNotEmpty) {
+      updateField((p) => p.name = trimmedNickname);
+    }
     _applySupabaseNickname(_supabase.currentUser);
     await refreshAccessStatus();
     notifyListeners();

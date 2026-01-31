@@ -268,6 +268,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final t = AppLocalizations.of(context)!;
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+    final nicknameController = TextEditingController(text: app.profile.name);
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -285,6 +286,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               obscureText: true,
               decoration: InputDecoration(labelText: t.syncPasswordLabel),
             ),
+            if (isSignUp)
+              TextField(
+                controller: nicknameController,
+                decoration: InputDecoration(labelText: t.nicknameLabel),
+              ),
           ],
         ),
         actions: [
@@ -299,10 +305,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (result != true) return;
     final email = emailController.text.trim();
     final password = passwordController.text;
+    final nickname = nicknameController.text.trim();
     if (email.isEmpty || password.isEmpty) return;
     try {
       if (isSignUp) {
-        await app.signUpSupabase(email, password);
+        if (nickname.isEmpty) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authNicknameRequired)));
+          }
+          return;
+        }
+        await app.signUpSupabase(email, password, nickname: nickname);
       } else {
         await app.signInSupabase(email, password);
       }

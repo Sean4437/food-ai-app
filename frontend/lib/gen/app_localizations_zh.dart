@@ -86,7 +86,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get analysisTitle => '餐點分析';
 
   @override
-  String get analysisEmpty => '還沒有餐點分析，先拍一張吧';
+  String get analysisEmpty => '還沒有分析內容，先拍一張吧';
 
   @override
   String get foodNameLabel => '食物名稱';
@@ -338,22 +338,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get optionLightDesc => '清湯、蒸煮、少醬料';
 
   @override
-  String get summaryTitle => '今日摘要';
+  String get summaryTitle => '今日總結';
 
   @override
-  String get summaryEmpty => '今天尚未記錄餐點';
+  String get summaryEmpty => '今天還沒記錄餐點喔';
 
   @override
-  String get summaryOilyCarb => '今天外食偏油、碳水偏多';
+  String get summaryOilyCarb => '今天偏油、碳水也偏多';
 
   @override
-  String get summaryOily => '今天外食偏油';
+  String get summaryOily => '今天偏油';
 
   @override
   String get summaryCarb => '今天碳水偏多';
 
   @override
-  String get summaryProteinOk => '蛋白質尚可，記得補蔬菜';
+  String get summaryProteinOk => '蛋白質 OK，記得補點蔬菜';
 
   @override
   String get summaryNeutral => '今天狀態不錯，繼續保持';
@@ -393,12 +393,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String greetingTitle(String name) {
-    return 'Hi，$name';
+    return '嗨 $name，今天也加油';
   }
 
   @override
   String streakLabel(int count) {
-    return '連續紀錄 第 $count 天';
+    return '已連續紀錄 $count 天';
   }
 
   @override
@@ -411,7 +411,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get latestMealEmpty => '今天還沒記錄餐點喔';
 
   @override
-  String get homeNextMealHint => '點進建議頁，選一個最方便的方案';
+  String get homeNextMealHint => '點進建議頁，挑一個最順手的方案';
 
   @override
   String get logTitle => '紀錄';
@@ -459,12 +459,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String summaryPendingAt(Object time) {
-    return '將於 $time 總結';
+    return '將於 $time 產生總結';
   }
 
   @override
   String weekSummaryPendingAt(Object day, Object time) {
-    return '將於 $day $time 總結';
+    return '將於 $day $time 產生總結';
   }
 
   @override
@@ -477,7 +477,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mealCountEmpty => '尚未分析餐次';
 
   @override
-  String get calorieUnknown => '尚無可用估算';
+  String get calorieUnknown => '目前還沒有估算結果';
 
   @override
   String get portionLabel => '份量';
@@ -507,13 +507,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestTitle => '即拍建議';
 
   @override
-  String get suggestInstantHint => '拍完立即分析，提供這餐吃法建議';
+  String get suggestInstantHint => '拍完馬上分析，給你這餐吃法建議';
 
   @override
   String get suggestInstantStart => '開始拍照';
 
   @override
-  String get suggestInstantRetake => '重新拍照';
+  String get suggestInstantRetake => '重拍';
 
   @override
   String get suggestInstantPickGallery => '從相簿選擇';
@@ -564,7 +564,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantLimit => '建議份量上限';
 
   @override
-  String get suggestInstantMissing => '尚未有分析結果';
+  String get suggestInstantMissing => '還沒有分析結果';
 
   @override
   String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';
@@ -576,7 +576,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestTodayLabel => '今日整體判斷';
 
   @override
-  String get suggestTodayHint => '今天油脂偏高，建議下一餐清淡一點';
+  String get suggestTodayHint => '今天油脂偏高，下一餐清淡一點';
 
   @override
   String get suggestTodayOilyCarb => '今天偏油、碳水也偏多';
@@ -588,7 +588,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestTodayCarb => '今天碳水偏多，下一餐少澱粉';
 
   @override
-  String get suggestTodayOk => '今天狀態 OK，保持就好';
+  String get suggestTodayOk => '今天狀態不錯，保持就好';
 
   @override
   String get logThisMeal => '記錄這餐';
@@ -707,40 +707,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get adviceStyleSection => '建議風格';
 
-
-  @override
-  String get dietPreferenceSection => '饮食偏好';
-
-  @override
-  String get dietTypeLabel => '饮食类型';
-
-  @override
-  String get dietNoteLabel => '偏好补充';
-
-  @override
-  String get dietTypeNone => '不限制';
-
-  @override
-  String get dietTypeVegetarian => '奶蛋素';
-
-  @override
-  String get dietTypeVegan => '全素';
-
-  @override
-  String get dietTypePescatarian => '海鲜素';
-
-  @override
-  String get dietTypeLowCarb => '低碳';
-
-  @override
-  String get dietTypeKeto => '生酮';
-
-  @override
-  String get dietTypeLowFat => '低脂';
-
-  @override
-  String get dietTypeHighProtein => '高蛋白';
-
   @override
   String get toneLabel => '建議語氣';
 
@@ -784,7 +750,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get weeklySummaryDayLabel => '每周總結';
 
   @override
-  String get weekTopMealTitle => '本週熱量最高餐';
+  String get weekTopMealTitle => '本週熱量最高一餐';
 
   @override
   String get recentGuidanceTitle => '近期方針（近 7 天）';
@@ -918,7 +884,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String suggestRemainingLeft(int cal) {
-    return '還可吃 $cal kcal';
+    return '還可以吃 $cal kcal';
   }
 
   @override
@@ -928,7 +894,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String suggestExerciseHint(String exercise, int minutes) {
-    return '建議 $exercise 約 $minutes 分鐘';
+    return '建議做 $exercise 約 $minutes 分鐘';
   }
 
   @override
@@ -1142,22 +1108,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncNow => '同步';
 
   @override
-  String get syncInProgress => '正在同步資料…';
+  String get syncInProgress => '正在努力同步中…';
 
   @override
-  String get syncSuccess => '資料已成功同步';
+  String get syncSuccess => '同步完成囉';
 
   @override
   String get syncUpdated => '更新完成';
 
   @override
-  String get syncNoChanges => '沒有需要同步的變更';
+  String get syncNoChanges => '目前沒有要同步的資料';
 
   @override
   String get syncError => '同步失敗，請稍後再試';
 
   @override
-  String get syncRequireLogin => '請先登入以進行同步';
+  String get syncRequireLogin => '先登入才能同步喔';
 
   @override
   String get syncAuthTitleSignIn => '登入帳號';
@@ -1220,16 +1186,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authForgotPassword => '忘記密碼';
 
   @override
-  String get authSignInSuccess => '已成功登入';
+  String get authSignInSuccess => '登入成功';
 
   @override
-  String get authSignUpSuccess => '帳號已建立';
+  String get authSignUpSuccess => '註冊完成';
 
   @override
-  String get authSignUpVerify => '帳號已建立，請完成信箱驗證';
+  String get authSignUpVerify => '註冊完成，請前往信箱完成驗證';
 
   @override
   String get authPasswordMismatch => '兩次密碼不一致';
+
+  @override
+  String get authNicknameRequired => '请输入昵称';
 
   @override
   String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
@@ -1241,7 +1210,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authResetSent => '重設密碼信已寄出，請查看信箱';
 
   @override
-  String get authResetFailed => '無法寄送重設信，請確認 Email';
+  String get authResetFailed => '重設失敗，請確認 Email 是否正確';
 
   @override
   String get authLoginInvalid => 'Email 或密碼錯誤';
@@ -1256,7 +1225,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authSignUpFailed => '註冊失敗';
 
   @override
-  String get authError => '目前無法登入，請稍後再試';
+  String get authError => '登入失敗，請稍後再試';
 
   @override
   String get trialExpiredTitle => '試用期已結束';
@@ -1269,6 +1238,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get signOut => '登出';
+
+  @override
+  String get dietPreferenceSection => '饮食偏好';
+
+  @override
+  String get dietTypeLabel => '饮食类型';
+
+  @override
+  String get dietNoteLabel => '偏好补充';
+
+  @override
+  String get dietTypeNone => '不限制';
+
+  @override
+  String get dietTypeVegetarian => '奶蛋素';
+
+  @override
+  String get dietTypeVegan => '全素';
+
+  @override
+  String get dietTypePescatarian => '海鲜素';
+
+  @override
+  String get dietTypeLowCarb => '低碳';
+
+  @override
+  String get dietTypeKeto => '生酮';
+
+  @override
+  String get dietTypeLowFat => '低脂';
+
+  @override
+  String get dietTypeHighProtein => '高蛋白';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1353,7 +1355,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get analysisTitle => '餐點分析';
 
   @override
-  String get analysisEmpty => '還沒有餐點分析，先拍一張吧';
+  String get analysisEmpty => '還沒有分析內容，先拍一張吧';
 
   @override
   String get foodNameLabel => '食物名稱';
@@ -1605,22 +1607,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get optionLightDesc => '清湯、蒸煮、少醬料';
 
   @override
-  String get summaryTitle => '今日摘要';
+  String get summaryTitle => '今日總結';
 
   @override
-  String get summaryEmpty => '今天尚未記錄餐點';
+  String get summaryEmpty => '今天還沒記錄餐點喔';
 
   @override
-  String get summaryOilyCarb => '今天外食偏油、碳水偏多';
+  String get summaryOilyCarb => '今天偏油、碳水也偏多';
 
   @override
-  String get summaryOily => '今天外食偏油';
+  String get summaryOily => '今天偏油';
 
   @override
   String get summaryCarb => '今天碳水偏多';
 
   @override
-  String get summaryProteinOk => '蛋白質尚可，記得補蔬菜';
+  String get summaryProteinOk => '蛋白質 OK，記得補點蔬菜';
 
   @override
   String get summaryNeutral => '今天狀態不錯，繼續保持';
@@ -1660,12 +1662,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String greetingTitle(String name) {
-    return 'Hi，$name';
+    return '嗨 $name，今天也加油';
   }
 
   @override
   String streakLabel(int count) {
-    return '連續紀錄 第 $count 天';
+    return '已連續紀錄 $count 天';
   }
 
   @override
@@ -1678,7 +1680,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get latestMealEmpty => '今天還沒記錄餐點喔';
 
   @override
-  String get homeNextMealHint => '點進建議頁，選一個最方便的方案';
+  String get homeNextMealHint => '點進建議頁，挑一個最順手的方案';
 
   @override
   String get logTitle => '紀錄';
@@ -1726,12 +1728,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String summaryPendingAt(Object time) {
-    return '將於 $time 總結';
+    return '將於 $time 產生總結';
   }
 
   @override
   String weekSummaryPendingAt(Object day, Object time) {
-    return '將於 $day $time 總結';
+    return '將於 $day $time 產生總結';
   }
 
   @override
@@ -1744,7 +1746,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get mealCountEmpty => '尚未分析餐次';
 
   @override
-  String get calorieUnknown => '尚無可用估算';
+  String get calorieUnknown => '目前還沒有估算結果';
 
   @override
   String get portionLabel => '份量';
@@ -1774,13 +1776,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestTitle => '即拍建議';
 
   @override
-  String get suggestInstantHint => '拍完立即分析，提供這餐吃法建議';
+  String get suggestInstantHint => '拍完馬上分析，給你這餐吃法建議';
 
   @override
   String get suggestInstantStart => '開始拍照';
 
   @override
-  String get suggestInstantRetake => '重新拍照';
+  String get suggestInstantRetake => '重拍';
 
   @override
   String get suggestInstantPickGallery => '從相簿選擇';
@@ -1831,7 +1833,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantLimit => '建議份量上限';
 
   @override
-  String get suggestInstantMissing => '尚未有分析結果';
+  String get suggestInstantMissing => '還沒有分析結果';
 
   @override
   String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';
@@ -1843,7 +1845,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestTodayLabel => '今日整體判斷';
 
   @override
-  String get suggestTodayHint => '今天油脂偏高，建議下一餐清淡一點';
+  String get suggestTodayHint => '今天油脂偏高，下一餐清淡一點';
 
   @override
   String get suggestTodayOilyCarb => '今天偏油、碳水也偏多';
@@ -1855,7 +1857,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestTodayCarb => '今天碳水偏多，下一餐少澱粉';
 
   @override
-  String get suggestTodayOk => '今天狀態 OK，保持就好';
+  String get suggestTodayOk => '今天狀態不錯，保持就好';
 
   @override
   String get logThisMeal => '記錄這餐';
@@ -1974,40 +1976,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get adviceStyleSection => '建議風格';
 
-
-  @override
-  String get dietPreferenceSection => '飲食偏好';
-
-  @override
-  String get dietTypeLabel => '飲食類型';
-
-  @override
-  String get dietNoteLabel => '偏好補充';
-
-  @override
-  String get dietTypeNone => '不限制';
-
-  @override
-  String get dietTypeVegetarian => '奶蛋素';
-
-  @override
-  String get dietTypeVegan => '全素';
-
-  @override
-  String get dietTypePescatarian => '海鮮素';
-
-  @override
-  String get dietTypeLowCarb => '低碳';
-
-  @override
-  String get dietTypeKeto => '生酮';
-
-  @override
-  String get dietTypeLowFat => '低脂';
-
-  @override
-  String get dietTypeHighProtein => '高蛋白';
-
   @override
   String get toneLabel => '建議語氣';
 
@@ -2051,7 +2019,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get weeklySummaryDayLabel => '每周總結';
 
   @override
-  String get weekTopMealTitle => '本週熱量最高餐';
+  String get weekTopMealTitle => '本週熱量最高一餐';
 
   @override
   String get recentGuidanceTitle => '近期方針（近 7 天）';
@@ -2185,7 +2153,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String suggestRemainingLeft(int cal) {
-    return '還可吃 $cal kcal';
+    return '還可以吃 $cal kcal';
   }
 
   @override
@@ -2195,7 +2163,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String suggestExerciseHint(String exercise, int minutes) {
-    return '建議 $exercise 約 $minutes 分鐘';
+    return '建議做 $exercise 約 $minutes 分鐘';
   }
 
   @override
@@ -2409,22 +2377,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get syncNow => '同步';
 
   @override
-  String get syncInProgress => '正在同步資料…';
+  String get syncInProgress => '正在努力同步中…';
 
   @override
-  String get syncSuccess => '資料已成功同步';
+  String get syncSuccess => '同步完成囉';
 
   @override
   String get syncUpdated => '更新完成';
 
   @override
-  String get syncNoChanges => '沒有需要同步的變更';
+  String get syncNoChanges => '目前沒有要同步的資料';
 
   @override
   String get syncError => '同步失敗，請稍後再試';
 
   @override
-  String get syncRequireLogin => '請先登入以進行同步';
+  String get syncRequireLogin => '先登入才能同步喔';
 
   @override
   String get syncAuthTitleSignIn => '登入帳號';
@@ -2487,16 +2455,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authForgotPassword => '忘記密碼';
 
   @override
-  String get authSignInSuccess => '已成功登入';
+  String get authSignInSuccess => '登入成功';
 
   @override
-  String get authSignUpSuccess => '帳號已建立';
+  String get authSignUpSuccess => '註冊完成';
 
   @override
-  String get authSignUpVerify => '帳號已建立，請完成信箱驗證';
+  String get authSignUpVerify => '註冊完成，請前往信箱完成驗證';
 
   @override
   String get authPasswordMismatch => '兩次密碼不一致';
+
+  @override
+  String get authNicknameRequired => '請輸入暱稱';
 
   @override
   String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
@@ -2508,7 +2479,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authResetSent => '重設密碼信已寄出，請查看信箱';
 
   @override
-  String get authResetFailed => '無法寄送重設信，請確認 Email';
+  String get authResetFailed => '重設失敗，請確認 Email 是否正確';
 
   @override
   String get authLoginInvalid => 'Email 或密碼錯誤';
@@ -2523,7 +2494,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get authSignUpFailed => '註冊失敗';
 
   @override
-  String get authError => '目前無法登入，請稍後再試';
+  String get authError => '登入失敗，請稍後再試';
 
   @override
   String get trialExpiredTitle => '試用期已結束';
@@ -2536,4 +2507,37 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get signOut => '登出';
+
+  @override
+  String get dietPreferenceSection => '飲食偏好';
+
+  @override
+  String get dietTypeLabel => '飲食類型';
+
+  @override
+  String get dietNoteLabel => '偏好補充';
+
+  @override
+  String get dietTypeNone => '不限制';
+
+  @override
+  String get dietTypeVegetarian => '奶蛋素';
+
+  @override
+  String get dietTypeVegan => '全素';
+
+  @override
+  String get dietTypePescatarian => '海鮮素';
+
+  @override
+  String get dietTypeLowCarb => '低碳';
+
+  @override
+  String get dietTypeKeto => '生酮';
+
+  @override
+  String get dietTypeLowFat => '低脂';
+
+  @override
+  String get dietTypeHighProtein => '高蛋白';
 }

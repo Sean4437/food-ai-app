@@ -252,7 +252,7 @@ abstract class AppLocalizations {
   /// No description provided for @analysisEmpty.
   ///
   /// In zh_TW, this message translates to:
-  /// **'還沒有餐點分析，先拍一張吧'**
+  /// **'還沒有分析內容，先拍一張吧'**
   String get analysisEmpty;
 
   /// No description provided for @foodNameLabel.
@@ -756,25 +756,25 @@ abstract class AppLocalizations {
   /// No description provided for @summaryTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今日摘要'**
+  /// **'今日總結'**
   String get summaryTitle;
 
   /// No description provided for @summaryEmpty.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天尚未記錄餐點'**
+  /// **'今天還沒記錄餐點喔'**
   String get summaryEmpty;
 
   /// No description provided for @summaryOilyCarb.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天外食偏油、碳水偏多'**
+  /// **'今天偏油、碳水也偏多'**
   String get summaryOilyCarb;
 
   /// No description provided for @summaryOily.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天外食偏油'**
+  /// **'今天偏油'**
   String get summaryOily;
 
   /// No description provided for @summaryCarb.
@@ -786,7 +786,7 @@ abstract class AppLocalizations {
   /// No description provided for @summaryProteinOk.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蛋白質尚可，記得補蔬菜'**
+  /// **'蛋白質 OK，記得補點蔬菜'**
   String get summaryProteinOk;
 
   /// No description provided for @summaryNeutral.
@@ -864,13 +864,13 @@ abstract class AppLocalizations {
   /// No description provided for @greetingTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'Hi，{name}'**
+  /// **'嗨 {name}，今天也加油'**
   String greetingTitle(String name);
 
   /// No description provided for @streakLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'連續紀錄 第 {count} 天'**
+  /// **'已連續紀錄 {count} 天'**
   String streakLabel(int count);
 
   /// No description provided for @aiSuggest.
@@ -894,7 +894,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeNextMealHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'點進建議頁，選一個最方便的方案'**
+  /// **'點進建議頁，挑一個最順手的方案'**
   String get homeNextMealHint;
 
   /// No description provided for @logTitle.
@@ -984,13 +984,13 @@ abstract class AppLocalizations {
   /// No description provided for @summaryPendingAt.
   ///
   /// In zh_TW, this message translates to:
-  /// **'將於 {time} 總結'**
+  /// **'將於 {time} 產生總結'**
   String summaryPendingAt(Object time);
 
   /// No description provided for @weekSummaryPendingAt.
   ///
   /// In zh_TW, this message translates to:
-  /// **'將於 {day} {time} 總結'**
+  /// **'將於 {day} {time} 產生總結'**
   String weekSummaryPendingAt(Object day, Object time);
 
   /// No description provided for @finalizeDay.
@@ -1014,7 +1014,7 @@ abstract class AppLocalizations {
   /// No description provided for @calorieUnknown.
   ///
   /// In zh_TW, this message translates to:
-  /// **'尚無可用估算'**
+  /// **'目前還沒有估算結果'**
   String get calorieUnknown;
 
   /// No description provided for @portionLabel.
@@ -1074,7 +1074,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'拍完立即分析，提供這餐吃法建議'**
+  /// **'拍完馬上分析，給你這餐吃法建議'**
   String get suggestInstantHint;
 
   /// No description provided for @suggestInstantStart.
@@ -1086,7 +1086,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantRetake.
   ///
   /// In zh_TW, this message translates to:
-  /// **'重新拍照'**
+  /// **'重拍'**
   String get suggestInstantRetake;
 
   /// No description provided for @suggestInstantPickGallery.
@@ -1188,7 +1188,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantMissing.
   ///
   /// In zh_TW, this message translates to:
-  /// **'尚未有分析結果'**
+  /// **'還沒有分析結果'**
   String get suggestInstantMissing;
 
   /// No description provided for @suggestInstantRecentHint.
@@ -1212,7 +1212,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestTodayHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天油脂偏高，建議下一餐清淡一點'**
+  /// **'今天油脂偏高，下一餐清淡一點'**
   String get suggestTodayHint;
 
   /// No description provided for @suggestTodayOilyCarb.
@@ -1236,7 +1236,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestTodayOk.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天狀態 OK，保持就好'**
+  /// **'今天狀態不錯，保持就好'**
   String get suggestTodayOk;
 
   /// No description provided for @logThisMeal.
@@ -1473,39 +1473,6 @@ abstract class AppLocalizations {
   /// **'建議風格'**
   String get adviceStyleSection;
 
-  /// No description provided for @dietPreferenceSection.
-  String get dietPreferenceSection;
-
-  /// No description provided for @dietTypeLabel.
-  String get dietTypeLabel;
-
-  /// No description provided for @dietNoteLabel.
-  String get dietNoteLabel;
-
-  /// No description provided for @dietTypeNone.
-  String get dietTypeNone;
-
-  /// No description provided for @dietTypeVegetarian.
-  String get dietTypeVegetarian;
-
-  /// No description provided for @dietTypeVegan.
-  String get dietTypeVegan;
-
-  /// No description provided for @dietTypePescatarian.
-  String get dietTypePescatarian;
-
-  /// No description provided for @dietTypeLowCarb.
-  String get dietTypeLowCarb;
-
-  /// No description provided for @dietTypeKeto.
-  String get dietTypeKeto;
-
-  /// No description provided for @dietTypeLowFat.
-  String get dietTypeLowFat;
-
-  /// No description provided for @dietTypeHighProtein.
-  String get dietTypeHighProtein;
-
   /// No description provided for @toneLabel.
   ///
   /// In zh_TW, this message translates to:
@@ -1593,7 +1560,7 @@ abstract class AppLocalizations {
   /// No description provided for @weekTopMealTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'本週熱量最高餐'**
+  /// **'本週熱量最高一餐'**
   String get weekTopMealTitle;
 
   /// No description provided for @recentGuidanceTitle.
@@ -1851,7 +1818,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestRemainingLeft.
   ///
   /// In zh_TW, this message translates to:
-  /// **'還可吃 {cal} kcal'**
+  /// **'還可以吃 {cal} kcal'**
   String suggestRemainingLeft(int cal);
 
   /// No description provided for @suggestRemainingOver.
@@ -1863,7 +1830,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestExerciseHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'建議 {exercise} 約 {minutes} 分鐘'**
+  /// **'建議做 {exercise} 約 {minutes} 分鐘'**
   String suggestExerciseHint(String exercise, int minutes);
 
   /// No description provided for @reminderLunchTime.
@@ -2289,13 +2256,13 @@ abstract class AppLocalizations {
   /// No description provided for @syncInProgress.
   ///
   /// In zh_TW, this message translates to:
-  /// **'正在同步資料…'**
+  /// **'正在努力同步中…'**
   String get syncInProgress;
 
   /// No description provided for @syncSuccess.
   ///
   /// In zh_TW, this message translates to:
-  /// **'資料已成功同步'**
+  /// **'同步完成囉'**
   String get syncSuccess;
 
   /// No description provided for @syncUpdated.
@@ -2307,7 +2274,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncNoChanges.
   ///
   /// In zh_TW, this message translates to:
-  /// **'沒有需要同步的變更'**
+  /// **'目前沒有要同步的資料'**
   String get syncNoChanges;
 
   /// No description provided for @syncError.
@@ -2319,7 +2286,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncRequireLogin.
   ///
   /// In zh_TW, this message translates to:
-  /// **'請先登入以進行同步'**
+  /// **'先登入才能同步喔'**
   String get syncRequireLogin;
 
   /// No description provided for @syncAuthTitleSignIn.
@@ -2445,19 +2412,19 @@ abstract class AppLocalizations {
   /// No description provided for @authSignInSuccess.
   ///
   /// In zh_TW, this message translates to:
-  /// **'已成功登入'**
+  /// **'登入成功'**
   String get authSignInSuccess;
 
   /// No description provided for @authSignUpSuccess.
   ///
   /// In zh_TW, this message translates to:
-  /// **'帳號已建立'**
+  /// **'註冊完成'**
   String get authSignUpSuccess;
 
   /// No description provided for @authSignUpVerify.
   ///
   /// In zh_TW, this message translates to:
-  /// **'帳號已建立，請完成信箱驗證'**
+  /// **'註冊完成，請前往信箱完成驗證'**
   String get authSignUpVerify;
 
   /// No description provided for @authPasswordMismatch.
@@ -2465,6 +2432,12 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'兩次密碼不一致'**
   String get authPasswordMismatch;
+
+  /// No description provided for @authNicknameRequired.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'請輸入暱稱'**
+  String get authNicknameRequired;
 
   /// No description provided for @authPasswordRule.
   ///
@@ -2487,7 +2460,7 @@ abstract class AppLocalizations {
   /// No description provided for @authResetFailed.
   ///
   /// In zh_TW, this message translates to:
-  /// **'無法寄送重設信，請確認 Email'**
+  /// **'重設失敗，請確認 Email 是否正確'**
   String get authResetFailed;
 
   /// No description provided for @authLoginInvalid.
@@ -2517,7 +2490,7 @@ abstract class AppLocalizations {
   /// No description provided for @authError.
   ///
   /// In zh_TW, this message translates to:
-  /// **'目前無法登入，請稍後再試'**
+  /// **'登入失敗，請稍後再試'**
   String get authError;
 
   /// No description provided for @trialExpiredTitle.
@@ -2543,6 +2516,72 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'登出'**
   String get signOut;
+
+  /// No description provided for @dietPreferenceSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'飲食偏好'**
+  String get dietPreferenceSection;
+
+  /// No description provided for @dietTypeLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'飲食類型'**
+  String get dietTypeLabel;
+
+  /// No description provided for @dietNoteLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'偏好補充'**
+  String get dietNoteLabel;
+
+  /// No description provided for @dietTypeNone.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'不限制'**
+  String get dietTypeNone;
+
+  /// No description provided for @dietTypeVegetarian.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'奶蛋素'**
+  String get dietTypeVegetarian;
+
+  /// No description provided for @dietTypeVegan.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'全素'**
+  String get dietTypeVegan;
+
+  /// No description provided for @dietTypePescatarian.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'海鮮素'**
+  String get dietTypePescatarian;
+
+  /// No description provided for @dietTypeLowCarb.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'低碳'**
+  String get dietTypeLowCarb;
+
+  /// No description provided for @dietTypeKeto.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'生酮'**
+  String get dietTypeKeto;
+
+  /// No description provided for @dietTypeLowFat.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'低脂'**
+  String get dietTypeLowFat;
+
+  /// No description provided for @dietTypeHighProtein.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'高蛋白'**
+  String get dietTypeHighProtein;
 }
 
 class _AppLocalizationsDelegate

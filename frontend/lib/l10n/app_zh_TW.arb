@@ -478,5 +478,6 @@
   "dietTypeLowCarb": "低碳",
   "dietTypeKeto": "生酮",
   "dietTypeLowFat": "低脂",
-  "dietTypeHighProtein": "高蛋白"
+  "dietTypeHighProtein": "高蛋白",
+  "authNicknameRequired": "請輸入暱稱"
 }

@@ -86,7 +86,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analysisTitle => 'Meal analysis';
 
   @override
-  String get analysisEmpty => 'No analysis yet. Take a photo to start.';
+  String get analysisEmpty => 'No analysis yet — take a photo to start';
 
   @override
   String get foodNameLabel => 'Food name';
@@ -347,10 +347,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get optionLightDesc => 'Soup, steamed foods, less sauce.';
 
   @override
-  String get summaryTitle => 'Today summary';
+  String get summaryTitle => 'Today’s summary';
 
   @override
-  String get summaryEmpty => 'No meals recorded today';
+  String get summaryEmpty => 'No meals recorded today yet';
 
   @override
   String get summaryOilyCarb => 'A bit oily and carb-heavy today';
@@ -359,13 +359,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get summaryOily => 'A bit oily today';
 
   @override
-  String get summaryCarb => 'Carbs are a bit high today';
+  String get summaryCarb => 'Carb-heavy today';
 
   @override
-  String get summaryProteinOk => 'Protein is OK, add veggies if you can';
+  String get summaryProteinOk => 'Protein looks OK — add some veggies';
 
   @override
-  String get summaryNeutral => 'Doing well today. Keep it up.';
+  String get summaryNeutral => 'You’re doing well today, keep it up';
 
   @override
   String get mealsCountLabel => 'Logged';
@@ -402,12 +402,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String greetingTitle(String name) {
-    return 'Hi, $name';
+    return 'Hi $name, you’ve got this';
   }
 
   @override
   String streakLabel(int count) {
-    return 'Streak: day $count';
+    return '$count-day streak';
   }
 
   @override
@@ -420,8 +420,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get latestMealEmpty => 'You haven\'t logged any meals today';
 
   @override
-  String get homeNextMealHint =>
-      'Go to Suggestions and pick the easiest option';
+  String get homeNextMealHint => 'Open Suggestions and pick the easiest option';
 
   @override
   String get logTitle => 'Log';
@@ -469,12 +468,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String summaryPendingAt(Object time) {
-    return 'Summary at $time';
+    return 'Summary will be ready at $time';
   }
 
   @override
   String weekSummaryPendingAt(Object day, Object time) {
-    return 'Summary at $day $time';
+    return 'Weekly summary will be ready on $day at $time';
   }
 
   @override
@@ -487,7 +486,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mealCountEmpty => 'No meals analyzed';
 
   @override
-  String get calorieUnknown => 'Not available yet';
+  String get calorieUnknown => 'Estimate not available yet';
 
   @override
   String get portionLabel => 'Portion';
@@ -517,13 +516,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestTitle => 'Instant Advice';
 
   @override
-  String get suggestInstantHint => 'Snap a photo for immediate guidance.';
+  String get suggestInstantHint => 'Snap a photo and get instant meal tips';
 
   @override
   String get suggestInstantStart => 'Take photo';
 
   @override
-  String get suggestInstantRetake => 'Retake photo';
+  String get suggestInstantRetake => 'Retake';
 
   @override
   String get suggestInstantPickGallery => 'Choose from album';
@@ -544,13 +543,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nameAnalyzeEmpty => 'Enter a food name';
 
   @override
-  String get suggestInstantStepDetect => 'Identifying the meal';
+  String get suggestInstantStepDetect => 'Detecting meal';
 
   @override
-  String get suggestInstantStepEstimate => 'Estimating calories and portion';
+  String get suggestInstantStepEstimate => 'Estimating calories and portions';
 
   @override
-  String get suggestInstantStepAdvice => 'Generating how-to-eat advice';
+  String get suggestInstantStepAdvice => 'Generating tips';
 
   @override
   String get suggestInstantSavePrompt => 'Save this meal?';
@@ -587,7 +586,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestTodayLabel => 'Today\'s status';
 
   @override
-  String get suggestTodayHint => 'A bit oily today, go lighter next meal';
+  String get suggestTodayHint =>
+      'Fat is a bit high today — keep the next meal lighter';
 
   @override
   String get suggestTodayOilyCarb => 'Oily and carb-heavy today';
@@ -599,7 +599,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestTodayCarb => 'Carbs are high today, go lighter on starch';
 
   @override
-  String get suggestTodayOk => 'Status looks OK today';
+  String get suggestTodayOk => 'You’re doing well today — keep it up';
 
   @override
   String get logThisMeal => 'Log this meal';
@@ -719,39 +719,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adviceStyleSection => 'Advice style';
 
   @override
-  String get dietPreferenceSection => 'Diet preferences';
-
-  @override
-  String get dietTypeLabel => 'Diet type';
-
-  @override
-  String get dietNoteLabel => 'Preference notes';
-
-  @override
-  String get dietTypeNone => 'No restriction';
-
-  @override
-  String get dietTypeVegetarian => 'Lacto-ovo vegetarian';
-
-  @override
-  String get dietTypeVegan => 'Vegan';
-
-  @override
-  String get dietTypePescatarian => 'Pescatarian';
-
-  @override
-  String get dietTypeLowCarb => 'Low carb';
-
-  @override
-  String get dietTypeKeto => 'Keto';
-
-  @override
-  String get dietTypeLowFat => 'Low fat';
-
-  @override
-  String get dietTypeHighProtein => 'High protein';
-
-  @override
   String get toneLabel => 'Tone';
 
   @override
@@ -794,13 +761,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weeklySummaryDayLabel => 'Weekly summary';
 
   @override
-  String get weekTopMealTitle => 'Top meal this week';
+  String get weekTopMealTitle => 'Highest-calorie meal this week';
 
   @override
   String get recentGuidanceTitle => 'Recent guidance (last 7 days)';
 
   @override
-  String get weekSummaryTitle => 'This week\'s summary';
+  String get weekSummaryTitle => 'Weekly summary';
 
   @override
   String get nextWeekAdviceTitle => 'Next week advice';
@@ -1153,16 +1120,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncNow => 'Sync now';
 
   @override
-  String get syncInProgress => 'Syncing data…';
+  String get syncInProgress => 'Syncing…';
 
   @override
-  String get syncSuccess => 'All data synced';
+  String get syncSuccess => 'Sync complete';
 
   @override
   String get syncUpdated => 'Update complete';
 
   @override
-  String get syncNoChanges => 'No changes to sync';
+  String get syncNoChanges => 'Nothing to sync right now';
 
   @override
   String get syncError => 'Sync failed. Please try again.';
@@ -1198,7 +1165,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authTitle => 'Welcome to Food AI';
 
   @override
-  String get authSubtitle => 'Sign in to continue using full features';
+  String get authSubtitle => 'Sign in to unlock all features';
 
   @override
   String get authEmailLabel => 'Email';
@@ -1231,7 +1198,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authForgotPassword => 'Forgot password';
 
   @override
-  String get authSignInSuccess => 'You\'re signed in';
+  String get authSignInSuccess => 'Signed in successfully';
 
   @override
   String get authSignUpSuccess => 'Account created';
@@ -1243,6 +1210,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authPasswordMismatch => 'Passwords do not match';
 
   @override
+  String get authNicknameRequired => 'Please enter a nickname';
+
+  @override
   String get authPasswordRule =>
       'Password must be at least 8 characters and contain no spaces or Chinese characters';
 
@@ -1251,12 +1221,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Password must be at least 8 characters and contain no spaces or Chinese characters';
 
   @override
-  String get authResetSent =>
-      'Password reset email has been sent. Please check your inbox.';
+  String get authResetSent => 'Password reset email sent. Check your inbox.';
 
   @override
-  String get authResetFailed =>
-      'Unable to send reset email. Please check your email address.';
+  String get authResetFailed => 'Reset failed. Please check your email.';
 
   @override
   String get authLoginInvalid => 'Email or password is incorrect';
@@ -1271,7 +1239,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignUpFailed => 'Sign up failed';
 
   @override
-  String get authError => 'Unable to sign in. Please try again.';
+  String get authError => 'Sign-in failed. Please try again.';
 
   @override
   String get trialExpiredTitle => 'Trial ended';
@@ -1285,4 +1253,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signOut => 'Sign out';
+
+  @override
+  String get dietPreferenceSection => 'Diet preferences';
+
+  @override
+  String get dietTypeLabel => 'Diet type';
+
+  @override
+  String get dietNoteLabel => 'Preference notes';
+
+  @override
+  String get dietTypeNone => 'No restriction';
+
+  @override
+  String get dietTypeVegetarian => 'Lacto-ovo vegetarian';
+
+  @override
+  String get dietTypeVegan => 'Vegan';
+
+  @override
+  String get dietTypePescatarian => 'Pescatarian';
+
+  @override
+  String get dietTypeLowCarb => 'Low carb';
+
+  @override
+  String get dietTypeKeto => 'Keto';
+
+  @override
+  String get dietTypeLowFat => 'Low fat';
+
+  @override
+  String get dietTypeHighProtein => 'High protein';
 }
