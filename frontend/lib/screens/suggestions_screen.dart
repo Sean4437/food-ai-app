@@ -546,6 +546,30 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
+  Future<void> _addLabelToSavedEntry() async {
+    if (!mounted) return;
+    final entry = _savedEntry;
+    if (entry == null) return;
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+    final app = AppStateScope.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    await app.addLabelToEntry(entry, picked, locale);
+    if (!mounted) return;
+    if (_analysis != null && entry.result != null) {
+      setState(() {
+        _analysis = QuickCaptureAnalysis(
+          file: _analysis!.file,
+          originalBytes: _analysis!.originalBytes,
+          imageBytes: _analysis!.imageBytes,
+          time: _analysis!.time,
+          mealType: _analysis!.mealType,
+          result: entry.result!,
+        );
+      });
+    }
+  }
+
   Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
     final lines = suggestion
@@ -1135,6 +1159,14 @@ Widget _buildAdviceCard(AppLocalizations t) {
                                 padding: const EdgeInsets.all(8),
                                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                               ),
+                              if (_savedEntry != null)
+                                IconButton(
+                                  onPressed: _addLabelToSavedEntry,
+                                  icon: const Icon(Icons.receipt_long, size: 18),
+                                  tooltip: t.addLabel,
+                                  padding: const EdgeInsets.all(8),
+                                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                                ),
                               if (_savedEntry != null)
                                 IconButton(
                                   onPressed: _deleteSavedEntry,
