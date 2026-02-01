@@ -598,6 +598,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       t.containerTypeBowl: 'bowl',
       t.containerTypePlate: 'plate',
       t.containerTypeBox: 'box',
+      t.containerTypeCup: 'cup',
       t.containerTypeUnknown: 'unknown',
     };
     final containerSizeOptions = <String, String>{

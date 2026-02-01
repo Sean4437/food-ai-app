@@ -1315,6 +1315,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get containerTypeBox => 'Bento box';
 
   @override
+  String get containerTypeCup => 'Cup';
+
+  @override
   String get containerTypeUnknown => 'Not specified';
 
   @override
@@ -1325,6 +1328,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get containerSizeLarge => 'Large';
+
+  @override
+  String get containerSizeStandard => 'Standard';
 
   @override
   String get containerSizeCustom => 'Custom';

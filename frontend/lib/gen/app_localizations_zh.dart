@@ -1300,6 +1300,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get containerTypeBox => '便当盒';
 
   @override
+  String get containerTypeCup => '杯';
+
+  @override
   String get containerTypeUnknown => '不指定';
 
   @override
@@ -1310,6 +1313,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get containerSizeLarge => '大';
+
+  @override
+  String get containerSizeStandard => '标准';
 
   @override
   String get containerSizeCustom => '自订';
@@ -2620,6 +2626,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get containerTypeBox => '便當盒';
 
   @override
+  String get containerTypeCup => '杯';
+
+  @override
   String get containerTypeUnknown => '不指定';
 
   @override
@@ -2630,6 +2639,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get containerSizeLarge => '大';
+
+  @override
+  String get containerSizeStandard => '標準';
 
   @override
   String get containerSizeCustom => '自訂';

@@ -28,6 +28,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   String? _error;
   bool _showSaveActions = false;
   bool _hideFloatingCard = false;
+  MealEntry? _savedEntry;
+  int _portionPercent = 100;
+  String? _containerType;
+  String? _containerSize;
   late final AnimationController _scanController;
   double _progressValue = 0;
   int _statusIndex = 0;
@@ -63,6 +67,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _instantAdvice = null;
       _previewBytes = null;
       _showSaveActions = false;
+      _savedEntry = null;
+      _portionPercent = 100;
+      _containerType = null;
+      _containerSize = null;
     });
     final file = await _picker.pickImage(source: source);
     if (!mounted) return;
@@ -84,7 +92,17 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         historyContext: historyContext.isEmpty ? null : historyContext,
       );
       if (!mounted) return;
+      if (analysis == null) {
+        setState(() {
+          _error = AppLocalizations.of(context)!.analyzeFailed;
+          _loading = false;
+          _previewBytes = null;
+        });
+        return;
+      }
       _analysis = analysis;
+      _savedEntry = null;
+      _applyAnalysisDefaults(analysis.result);
       _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
@@ -126,6 +144,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _instantAdvice = null;
       _previewBytes = null;
       _showSaveActions = false;
+      _savedEntry = null;
     });
     _startSmartProgress();
     try {
@@ -154,10 +173,16 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     if (_analysis == null) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    await app.saveQuickCapture(_analysis!);
+    final saved = await app.saveQuickCapture(
+      _analysis!,
+      portionPercent: _portionPercent,
+      containerType: _containerType,
+      containerSize: _containerSize,
+    );
     if (!mounted) return;
     setState(() {
       _showSaveActions = false;
+      _savedEntry = saved;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(t.logSuccess)),
@@ -198,9 +223,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         locale,
         historyContext: historyContext.isEmpty ? null : historyContext,
         foodName: result.trim(),
+        containerType: _containerType,
+        containerSize: _containerSize,
       );
       if (!mounted) return;
       _analysis = updated;
+      _savedEntry = null;
+      _applyAnalysisDefaults(updated.result);
       _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
@@ -572,6 +601,139 @@ Widget _buildAdviceCard(AppLocalizations t) {
     );
   }
 
+  List<String> _normalizeContainerSelection(String? type, String? size) {
+    final rawType = (type ?? '').trim().toLowerCase();
+    final rawSize = (size ?? '').trim().toLowerCase();
+    const validTypes = {'bowl', 'plate', 'box', 'cup', 'unknown'};
+    const validSizes = {'small', 'medium', 'large', 'none'};
+    var nextType = validTypes.contains(rawType) ? rawType : 'unknown';
+    var nextSize = validSizes.contains(rawSize) ? rawSize : 'none';
+    if (nextType == 'plate' || nextType == 'box' || nextType == 'unknown') {
+      nextSize = 'none';
+    }
+    if ((nextType == 'bowl' || nextType == 'cup') && nextSize == 'none') {
+      nextSize = 'medium';
+    }
+    return [nextType, nextSize];
+  }
+
+  void _applyAnalysisDefaults(AnalysisResult result) {
+    final normalized = _normalizeContainerSelection(result.containerGuessType, result.containerGuessSize);
+    _portionPercent = 100;
+    _containerType = normalized[0];
+    _containerSize = normalized[1];
+  }
+
+  void _updatePortionPercent(int value) {
+    final next = value.clamp(10, 200).toInt();
+    setState(() {
+      _portionPercent = next;
+    });
+    if (_savedEntry != null) {
+      final app = AppStateScope.of(context);
+      app.updateEntryPortionPercent(_savedEntry!, next);
+    }
+  }
+
+  void _updateContainerType(String value) {
+    final normalized = _normalizeContainerSelection(value, _containerSize);
+    setState(() {
+      _containerType = normalized[0];
+      _containerSize = normalized[1];
+    });
+    if (_savedEntry != null) {
+      final app = AppStateScope.of(context);
+      app.updateEntryContainer(_savedEntry!, _containerType, _containerSize);
+    }
+  }
+
+  void _updateContainerSize(String value) {
+    final normalized = _normalizeContainerSelection(_containerType, value);
+    setState(() {
+      _containerType = normalized[0];
+      _containerSize = normalized[1];
+    });
+    if (_savedEntry != null) {
+      final app = AppStateScope.of(context);
+      app.updateEntryContainer(_savedEntry!, _containerType, _containerSize);
+    }
+  }
+
+  Widget _buildChipGroup({
+    required List<MapEntry<String, String>> options,
+    required String value,
+    required ValueChanged<String> onSelected,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final option in options)
+          ChoiceChip(
+            label: Text(option.key),
+            selected: option.value == value,
+            onSelected: (_) => onSelected(option.value),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPortionContainerSection(AppLocalizations t) {
+    final theme = Theme.of(context);
+    final normalized = _normalizeContainerSelection(_containerType, _containerSize);
+    final currentType = normalized[0];
+    final currentSize = normalized[1];
+    final typeOptions = <MapEntry<String, String>>[
+      MapEntry(t.containerTypeBowl, 'bowl'),
+      MapEntry(t.containerTypePlate, 'plate'),
+      MapEntry(t.containerTypeBox, 'box'),
+      MapEntry(t.containerTypeCup, 'cup'),
+      MapEntry(t.containerTypeUnknown, 'unknown'),
+    ];
+    final sizeOptions = (currentType == 'bowl' || currentType == 'cup')
+        ? <MapEntry<String, String>>[
+            MapEntry(t.containerSizeSmall, 'small'),
+            MapEntry(t.containerSizeMedium, 'medium'),
+            MapEntry(t.containerSizeLarge, 'large'),
+          ]
+        : <MapEntry<String, String>>[
+            MapEntry(t.containerSizeStandard, 'none'),
+          ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(t.portionLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        Text('${_portionPercent}%', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 8,
+            activeTrackColor: theme.colorScheme.primary,
+            inactiveTrackColor: theme.colorScheme.primary.withOpacity(0.2),
+            thumbColor: theme.colorScheme.primary,
+            overlayColor: theme.colorScheme.primary.withOpacity(0.12),
+          ),
+          child: Slider(
+            value: _portionPercent.toDouble(),
+            min: 10,
+            max: 200,
+            divisions: 19,
+            label: '${_portionPercent}%',
+            onChanged: (value) => _updatePortionPercent(value.round()),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(t.containerTypeLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        _buildChipGroup(options: typeOptions, value: currentType, onSelected: _updateContainerType),
+        const SizedBox(height: 12),
+        Text(t.containerSizeLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        _buildChipGroup(options: sizeOptions, value: currentSize, onSelected: _updateContainerSize),
+      ],
+    );
+  }
+
   Widget _buildInstantAdviceFromModel(AppLocalizations t, MealAdvice advice) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,6 +779,8 @@ Widget _buildAdviceCard(AppLocalizations t) {
         Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         _buildAdviceCard(t),
+        const SizedBox(height: 14),
+        _buildPortionContainerSection(t),
         if (_showSaveActions) ...[
           const SizedBox(height: 14),
           Text(t.suggestInstantSavePrompt, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),

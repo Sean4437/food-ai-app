@@ -2637,6 +2637,12 @@ abstract class AppLocalizations {
   /// **'便當盒'**
   String get containerTypeBox;
 
+  /// No description provided for @containerTypeCup.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'杯'**
+  String get containerTypeCup;
+
   /// No description provided for @containerTypeUnknown.
   ///
   /// In zh_TW, this message translates to:
@@ -2660,6 +2666,12 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'大'**
   String get containerSizeLarge;
+
+  /// No description provided for @containerSizeStandard.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'標準'**
+  String get containerSizeStandard;
 
   /// No description provided for @containerSizeCustom.
   ///

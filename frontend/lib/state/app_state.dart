@@ -413,8 +413,12 @@ class AppState extends ChangeNotifier {
     String locale, {
     String? historyContext,
     String? foodName,
+    String? containerType,
+    String? containerSize,
   }) async {
     final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
+    final selectedContainerType = containerType ?? profile.containerType;
+    final selectedContainerSize = containerSize ?? profile.containerSize;
     final result = await _api.analyzeImage(
       analysis.imageBytes,
       filename,
@@ -425,8 +429,8 @@ class AppState extends ChangeNotifier {
       mealType: _mealTypeKey(analysis.mealType),
       mealPhotoCount: 1,
       analyzeReason: 'quick_capture_manual',
-      containerType: profile.containerType,
-      containerSize: profile.containerSize,
+      containerType: selectedContainerType,
+      containerSize: selectedContainerSize,
       containerDepth: profile.containerDepth,
       containerDiameterCm: profile.containerDiameterCm,
       containerCapacityMl: profile.containerCapacityMl,
@@ -456,6 +460,9 @@ class AppState extends ChangeNotifier {
     QuickCaptureAnalysis analysis, {
     String? note,
     MealEntry? existing,
+    int? portionPercent,
+    String? containerType,
+    String? containerSize,
   }) async {
     final now = DateTime.now().toUtc();
     final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
@@ -469,6 +476,9 @@ class AppState extends ChangeNotifier {
         type: analysis.mealType,
         note: note,
         imageHash: imageHash,
+        portionPercent: portionPercent ?? existing.portionPercent,
+        containerType: containerType ?? existing.containerType,
+        containerSize: containerSize ?? existing.containerSize,
         result: _resolveNutritionResult(analysis.result),
         updatedAt: now,
         lastAnalyzedNote: (note ?? '').trim(),
@@ -491,7 +501,9 @@ class AppState extends ChangeNotifier {
         filename: filename,
         time: analysis.time,
         type: analysis.mealType,
-        portionPercent: 100,
+        portionPercent: portionPercent ?? 100,
+        containerType: containerType,
+        containerSize: containerSize,
         updatedAt: now,
         mealId: mealId,
         note: note,
@@ -1827,6 +1839,20 @@ class AppState extends ChangeNotifier {
     _store.upsert(entry);
   }
 
+  void updateEntryContainer(MealEntry entry, String? type, String? size) {
+    final nextType = (type ?? '').trim().isEmpty ? null : type!.trim();
+    final nextSize = (size ?? '').trim().isEmpty ? null : size!.trim();
+    if (nextType == entry.containerType && nextSize == entry.containerSize) {
+      return;
+    }
+    entry.containerType = nextType;
+    entry.containerSize = nextSize;
+    entry.updatedAt = DateTime.now().toUtc();
+    markMealInteraction(entry.mealId ?? entry.id);
+    notifyListeners();
+    _store.upsert(entry);
+  }
+
   Future<void> addLabelToEntry(MealEntry entry, XFile file, String locale) async {
     entry.loading = true;
     entry.error = null;
@@ -2036,6 +2062,8 @@ class AppState extends ChangeNotifier {
 
     try {
       final mealTypeKey = _mealTypeKey(entry.type);
+      final containerType = entry.containerType ?? profile.containerType;
+      final containerSize = entry.containerSize ?? profile.containerSize;
       final AnalysisResult res = await _api.analyzeImage(
         entry.imageBytes,
         entry.filename,
@@ -2046,8 +2074,8 @@ class AppState extends ChangeNotifier {
         labelContext: _buildLabelContext(entry.labelResult),
         portionPercent: entry.portionPercent,
         analyzeReason: reason,
-        containerType: profile.containerType,
-        containerSize: profile.containerSize,
+        containerType: containerType,
+        containerSize: containerSize,
         containerDepth: profile.containerDepth,
         containerDiameterCm: profile.containerDiameterCm,
         containerCapacityMl: profile.containerCapacityMl,
@@ -3691,6 +3719,8 @@ class AppState extends ChangeNotifier {
       'type': _mealTypeKey(entry.type),
       'filename': entry.filename,
       'portion_percent': entry.portionPercent,
+      'container_type': entry.containerType,
+      'container_size': entry.containerSize,
       'meal_id': entry.mealId,
       'note': entry.note,
       'override_food_name': entry.overrideFoodName,
@@ -3720,6 +3750,8 @@ class AppState extends ChangeNotifier {
       time: DateTime.parse(row['time'] as String),
       type: _mealTypeFromKey((row['type'] as String?) ?? 'other'),
       portionPercent: (row['portion_percent'] as num?)?.toInt() ?? 100,
+      containerType: row['container_type'] as String?,
+      containerSize: row['container_size'] as String?,
       updatedAt: row['updated_at'] == null ? null : DateTime.tryParse(row['updated_at'] as String),
       deletedAt: row['deleted_at'] == null ? null : DateTime.tryParse(row['deleted_at'] as String),
       note: row['note'] as String?,

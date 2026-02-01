@@ -18,7 +18,7 @@ class MealStoreImpl implements MealStore {
     final dbPath = p.join(dir.path, _dbName);
     _db = await openDatabase(
       dbPath,
-      version: 6,
+      version: 7,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table(
@@ -27,6 +27,8 @@ class MealStoreImpl implements MealStore {
             type TEXT NOT NULL,
             portion TEXT,
             portion_percent INTEGER,
+            container_type TEXT,
+            container_size TEXT,
             meal_id TEXT,
             filename TEXT NOT NULL,
             note TEXT,
@@ -61,6 +63,10 @@ class MealStoreImpl implements MealStore {
         if (oldVersion < 6) {
           await db.execute('ALTER TABLE $_table ADD COLUMN updated_at INTEGER');
           await db.execute('ALTER TABLE $_table ADD COLUMN deleted_at INTEGER');
+        }
+        if (oldVersion < 7) {
+          await db.execute('ALTER TABLE $_table ADD COLUMN container_type TEXT');
+          await db.execute('ALTER TABLE $_table ADD COLUMN container_size TEXT');
         }
       },
     );
@@ -119,6 +125,8 @@ class MealStoreImpl implements MealStore {
       time: DateTime.fromMillisecondsSinceEpoch(row['time'] as int),
       type: type,
       portionPercent: _portionPercentFromRow(row),
+      containerType: row['container_type'] as String?,
+      containerSize: row['container_size'] as String?,
       updatedAt: _parseEpoch(row['updated_at']),
       deletedAt: _parseEpoch(row['deleted_at']),
       mealId: row['meal_id'] as String?,
@@ -141,6 +149,8 @@ class MealStoreImpl implements MealStore {
       'type': entry.type.name,
       'portion': _portionStringFromPercent(entry.portionPercent),
       'portion_percent': entry.portionPercent,
+      'container_type': entry.containerType,
+      'container_size': entry.containerSize,
       'meal_id': entry.mealId,
       'filename': entry.filename,
       'note': entry.note,

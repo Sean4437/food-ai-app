@@ -13,6 +13,8 @@ class MealEntry {
     required this.time,
     required this.type,
     int? portionPercent,
+    this.containerType,
+    this.containerSize,
     this.updatedAt,
     this.deletedAt,
     this.note,
@@ -34,6 +36,8 @@ class MealEntry {
   DateTime time;
   MealType type;
   int portionPercent;
+  String? containerType;
+  String? containerSize;
   DateTime? updatedAt;
   DateTime? deletedAt;
   String? mealId;
@@ -57,6 +61,8 @@ class MealEntry {
     DateTime? time,
     MealType? type,
     int? portionPercent,
+    String? containerType,
+    String? containerSize,
     DateTime? updatedAt,
     DateTime? deletedAt,
     String? note,
@@ -81,6 +87,8 @@ class MealEntry {
       time: time ?? this.time,
       type: type ?? this.type,
       portionPercent: portionPercent ?? this.portionPercent,
+      containerType: containerType ?? this.containerType,
+      containerSize: containerSize ?? this.containerSize,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
       note: note ?? this.note,
@@ -148,6 +156,8 @@ class MealEntry {
       'time': time.toIso8601String(),
       'type': _mealTypeToString(type),
       'portion_percent': portionPercent,
+      'container_type': containerType,
+      'container_size': containerSize,
       'meal_id': mealId,
       'note': note,
       'override_food_name': overrideFoodName,
@@ -174,6 +184,8 @@ class MealEntry {
       time: DateTime.parse(json['time'] as String),
       type: _mealTypeFromString((json['type'] as String?) ?? 'other'),
       portionPercent: (json['portion_percent'] as num?)?.toInt() ?? 100,
+      containerType: json['container_type'] as String?,
+      containerSize: json['container_size'] as String?,
       updatedAt: _parseDate(json['updated_at']),
       deletedAt: _parseDate(json['deleted_at']),
       note: json['note'] as String?,
