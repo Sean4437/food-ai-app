@@ -522,7 +522,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantStart => 'Take photo';
 
   @override
-  String get suggestInstantRetake => 'Retake';
+  String get suggestInstantRetake => 'Take next';
 
   @override
   String get suggestInstantPickGallery => 'Choose from album';
@@ -1285,6 +1285,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dietTypeHighProtein => 'High protein';
 
   @override
+  String get authNicknameRequired => 'Please enter a nickname';
+
+  @override
   String get containerSection => 'Common container';
 
   @override
@@ -1334,7 +1337,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get containerDepthDeep => 'Deep';
-
-  @override
-  String get authNicknameRequired => 'Please enter a nickname';
 }

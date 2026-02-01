@@ -513,7 +513,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantStart => '開始拍照';
 
   @override
-  String get suggestInstantRetake => '重拍';
+  String get suggestInstantRetake => '拍下一張';
 
   @override
   String get suggestInstantPickGallery => '從相簿選擇';
@@ -1269,6 +1269,8 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get dietTypeHighProtein => '高蛋白';
 
+  @override
+  String get authNicknameRequired => '请输入昵称';
 
   @override
   String get containerSection => '常用容器';
@@ -1320,9 +1322,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get containerDepthDeep => '深';
-
-  @override
-  String get authNicknameRequired => '请输入昵称';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1834,7 +1833,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantStart => '開始拍照';
 
   @override
-  String get suggestInstantRetake => '重拍';
+  String get suggestInstantRetake => '拍下一張';
 
   @override
   String get suggestInstantPickGallery => '從相簿選擇';
@@ -2590,6 +2589,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get dietTypeHighProtein => '高蛋白';
 
+  @override
+  String get authNicknameRequired => '請輸入暱稱';
 
   @override
   String get containerSection => '常用容器';
@@ -2641,7 +2642,4 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get containerDepthDeep => '深';
-
-  @override
-  String get authNicknameRequired => '請輸入暱稱';
 }

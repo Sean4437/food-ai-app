@@ -5,8 +5,8 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:math' as math;
 import '../state/app_state.dart';
-import '../models/custom_food.dart';
 import '../models/analysis_result.dart';
+import '../models/custom_food.dart';
 import '../models/meal_entry.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/app_background.dart';
@@ -26,15 +26,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   Uint8List? _previewBytes;
   bool _loading = false;
   String? _error;
-  MealEntry? _savedEntry;
-  final TextEditingController _nameController = TextEditingController();
+  bool _showSaveActions = false;
   late final AnimationController _scanController;
   double _progressValue = 0;
   int _statusIndex = 0;
   bool _finishingProgress = false;
   Timer? _progressTimer;
   Timer? _statusTimer;
-  bool _autoRequested = false;
 
   @override
   void initState() {
@@ -43,16 +41,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final app = AppStateScope.of(context);
-    if (app.trialChecked && !_autoRequested) {
-      _autoRequested = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _startCaptureFromCamera());
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startCaptureFromCamera());
   }
 
   
@@ -61,42 +50,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     _progressTimer?.cancel();
     _statusTimer?.cancel();
     _scanController.dispose();
-    _nameController.dispose();
     super.dispose();
-  }
-
-  Widget _skeletonBar(double width, {double height = 12}) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.black12,
-        borderRadius: BorderRadius.circular(8),
-      ),
-    );
-  }
-
-  Widget _buildSkeleton() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _skeletonBar(140, height: 22),
-        const SizedBox(height: 8),
-        _skeletonBar(220),
-        const SizedBox(height: 16),
-        Container(
-          height: 340,
-          decoration: BoxDecoration(
-            color: Colors.black12.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(24),
-          ),
-        ),
-        const SizedBox(height: 16),
-        _skeletonBar(200),
-        const SizedBox(height: 10),
-        _skeletonBar(180),
-      ],
-    );
   }
 
   Future<void> _startCapture({required ImageSource source}) async {
@@ -107,7 +61,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _analysis = null;
       _instantAdvice = null;
       _previewBytes = null;
-      _savedEntry = null;
+      _showSaveActions = false;
     });
     final file = await _picker.pickImage(source: source);
     if (!mounted) return;
@@ -119,7 +73,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _previewBytes = preview;
     });
     _startSmartProgress();
-    final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final historyContext = app.buildAiContext();
@@ -130,23 +83,16 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         historyContext: historyContext.isEmpty ? null : historyContext,
       );
       if (!mounted) return;
-      if (analysis == null) {
-        throw Exception(t.analyzeFailed);
-      }
       _analysis = analysis;
       _instantAdvice = null;
       _previewBytes = null;
-      final saved = await app.saveQuickCapture(analysis);
-      _savedEntry = saved;
+      _showSaveActions = true;
       _completeSmartProgress(() {
         if (!mounted) return;
         setState(() {
           _loading = false;
         });
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.logSuccess)),
-      );
     } catch (err) {
       if (!mounted) return;
       _stopSmartProgress();
@@ -177,7 +123,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _analysis = null;
       _instantAdvice = null;
       _previewBytes = null;
-      _savedEntry = null;
+      _showSaveActions = false;
     });
     _startSmartProgress();
     try {
@@ -202,102 +148,18 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     }
   }
 
-  Future<void> _submitNameAnalysis() async {
+  Future<void> _saveIfNeeded() async {
+    if (_analysis == null) return;
+    final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    await app.saveQuickCapture(_analysis!);
     if (!mounted) return;
-    final name = _nameController.text.trim();
-    final t = AppLocalizations.of(context)!;
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.nameAnalyzeEmpty)),
-      );
-      return;
-    }
-    final app = AppStateScope.of(context);
-    final locale = Localizations.localeOf(context).toLanguageTag();
     setState(() {
-      _loading = true;
-      _error = null;
-      _analysis = null;
-      _instantAdvice = null;
-      _previewBytes = null;
-      _savedEntry = null;
+      _showSaveActions = false;
     });
-    _startSmartProgress();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(t.nameAnalyzeStart)),
+      SnackBar(content: Text(t.logSuccess)),
     );
-    final historyContext = app.buildAiContext();
-    try {
-      final entry = await app.analyzeNameAndSave(
-        name,
-        locale,
-        historyContext: historyContext.isEmpty ? null : historyContext,
-      );
-      if (!mounted) return;
-      final result = entry.result;
-      if (result == null) {
-        throw Exception('Missing analysis result');
-      }
-      final file = XFile.fromData(
-        entry.imageBytes,
-        name: entry.filename,
-        mimeType: 'image/png',
-      );
-      _analysis = QuickCaptureAnalysis(
-        file: file,
-        originalBytes: entry.imageBytes,
-        imageBytes: entry.imageBytes,
-        time: entry.time,
-        mealType: entry.type,
-        result: result,
-      );
-      _savedEntry = entry;
-      _nameController.clear();
-      _completeSmartProgress(() {
-        if (!mounted) return;
-        setState(() {
-          _loading = false;
-        });
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.logSuccess)),
-      );
-    } catch (err) {
-      if (!mounted) return;
-      _stopSmartProgress();
-      setState(() {
-        _error = err.toString();
-        _loading = false;
-        _previewBytes = null;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${t.analyzeFailed}: $err')),
-      );
-    }
-  }
-
-  Future<void> _deleteSavedEntry() async {
-    final entry = _savedEntry;
-    if (entry == null || !mounted) return;
-    final t = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.delete),
-        content: Text(t.deleteConfirm),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.delete)),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    final app = AppStateScope.of(context);
-    app.removeEntry(entry);
-    setState(() {
-      _savedEntry = null;
-      _analysis = null;
-    });
   }
 
   Future<void> _editFoodName() async {
@@ -339,17 +201,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _analysis = updated;
       _instantAdvice = null;
       _previewBytes = null;
-      final saved = await app.saveQuickCapture(updated, existing: _savedEntry);
-      _savedEntry = saved;
+      _showSaveActions = true;
       _completeSmartProgress(() {
         if (!mounted) return;
         setState(() {
           _loading = false;
         });
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.logSuccess)),
-      );
     } catch (err) {
       if (!mounted) return;
       _stopSmartProgress();
@@ -546,30 +404,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
-  Future<void> _addLabelToSavedEntry() async {
-    if (!mounted) return;
-    final entry = _savedEntry;
-    if (entry == null) return;
-    final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-    final app = AppStateScope.of(context);
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    await app.addLabelToEntry(entry, picked, locale);
-    if (!mounted) return;
-    if (_analysis != null && entry.result != null) {
-      setState(() {
-        _analysis = QuickCaptureAnalysis(
-          file: _analysis!.file,
-          originalBytes: _analysis!.originalBytes,
-          imageBytes: _analysis!.imageBytes,
-          time: _analysis!.time,
-          mealType: _analysis!.mealType,
-          result: entry.result!,
-        );
-      });
-    }
-  }
-
   Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
     final lines = suggestion
@@ -750,46 +584,63 @@ Widget _buildAdviceCard(AppLocalizations t) {
     );
   }
 
-  Widget? _buildRemainingCalories(
-    AppLocalizations t,
-    AppState app,
-    AnalysisResult analysis,
-    DateTime analysisTime, {
-    String? excludeEntryId,
-  }) {
-    final targetMid = app.targetCalorieMid(analysisTime);
-    final mealMid = app.calorieRangeMid(analysis.calorieRange);
-    if (targetMid == null || mealMid == null) return null;
-    final consumedMid = app.dailyConsumedCalorieMid(analysisTime, excludeEntryId: excludeEntryId);
-    final remaining = targetMid - consumedMid - mealMid;
-    final remainingAbs = remaining.abs().round();
-    final remainingText =
-        remaining >= 0 ? t.suggestRemainingLeft(remainingAbs) : t.suggestRemainingOver(remainingAbs);
-    final exerciseType = app.profile.exerciseSuggestionType;
-    final exerciseMinutes = remaining < 0
-        ? app.exerciseMinutesForCalories(remainingAbs.toDouble(), exerciseType)
-        : null;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(remainingText, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-          if (exerciseMinutes != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
+  Widget _buildAnalysisCardContent(AppLocalizations t, AnalysisResult analysis) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
               child: Text(
-                t.suggestExerciseHint(app.exerciseLabel(exerciseType, t), exerciseMinutes),
-                style: AppTextStyles.body(context).copyWith(color: Colors.black87),
+                analysis.foodName,
+                style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
               ),
             ),
+            IconButton(
+              onPressed: _editFoodName,
+              icon: const Icon(Icons.edit, size: 18),
+              tooltip: t.editFoodName,
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '${analysis.calorieRange} ${t.estimated}',
+          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+        ),
+        const SizedBox(height: 12),
+        Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        _buildAdviceCard(t),
+        if (_showSaveActions) ...[
+          const SizedBox(height: 14),
+          Text(t.suggestInstantSavePrompt, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() => _showSaveActions = false);
+                  },
+                  child: Text(t.suggestInstantSkipSave),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _saveIfNeeded,
+                  child: Text(t.suggestInstantSave),
+                ),
+              ),
+            ],
+          ),
         ],
-      ),
+        const SizedBox(height: 12),
+        Text(t.suggestInstantRecentHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+      ],
     );
   }
 
@@ -798,40 +649,19 @@ Widget _buildAdviceCard(AppLocalizations t) {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final app = AppStateScope.of(context);
-    if (!app.trialChecked) {
-      return AppBackground(
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: _buildSkeleton(),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final analysis = _analysis?.result;
+    final showFloatingCard = analysis != null;
     final showPreview = _analysis == null && _previewBytes != null;
-    final remainingWidget = analysis == null
-        ? null
-        : _buildRemainingCalories(
-            t,
-            app,
-            analysis,
-            _analysis!.time,
-            excludeEntryId: _savedEntry?.id,
-          );
     final media = MediaQuery.of(context);
     final cardWidth = (media.size.width - 32).clamp(280.0, 340.0);
+    final cardHeight = (media.size.height * 0.7).clamp(420.0, 620.0);
     final innerWidth = (cardWidth - 20).clamp(260.0, 320.0);
-    final plateSize = (cardWidth * 0.72).clamp(180.0, 240.0);
+    final innerHeight = (cardHeight - 16).clamp(380.0, 600.0);
+    final plateSize = (cardHeight * 0.42).clamp(180.0, 250.0);
     final imageSize = (plateSize * 0.72).clamp(140.0, 200.0);
     final buttonWidth = (cardWidth * 0.7).clamp(160.0, 220.0);
-    final contentVerticalPadding = 28.0;
+    final contentVerticalPadding = (cardHeight * 0.1).clamp(24.0, 60.0);
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -842,362 +672,368 @@ Widget _buildAdviceCard(AppLocalizations t) {
           surfaceTintColor: Colors.transparent,
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                    Text(
-                      t.suggestTitle,
-                      style: AppTextStyles.title1(context),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      t.suggestInstantHint,
-                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    Center(
-                      child: SizedBox(
-                        width: cardWidth,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Positioned.fill(
-                              child: IgnorePointer(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.22),
-                                    borderRadius: BorderRadius.circular(28),
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                          padding: EdgeInsets.fromLTRB(16, 16, 16, showFloatingCard ? 260 : 16),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 420),
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                  Text(
+                                    t.suggestTitle,
+                                    style: AppTextStyles.title1(context),
+                                    textAlign: TextAlign.center,
                                   ),
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.center,
-                              child: Container(
-                                width: innerWidth,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.4),
-                                  borderRadius: BorderRadius.circular(26),
-                                ),
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(vertical: contentVerticalPadding),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                            if (_analysis != null || showPreview)
-                              Center(
-                                child: SizedBox(
-                                  width: plateSize,
-                                  height: plateSize,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      AnimatedOpacity(
-                                        opacity: _loading ? _progressValue.clamp(0.0, 1.0) : 1.0,
-                                        duration: const Duration(milliseconds: 200),
-                                        child: PlatePhoto(
-                                          imageBytes: _analysis?.imageBytes ?? _previewBytes!,
-                                          plateAsset: plateAsset,
-                                          plateSize: plateSize,
-                                          imageSize: imageSize,
-                                          tilt: 0,
-                                        ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    t.suggestInstantHint,
+                                    style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Center(
+                                    child: SizedBox(
+                                      width: cardWidth,
+                                      height: cardHeight,
+                                      child: Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          IgnorePointer(
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(0.22),
+                                                borderRadius: BorderRadius.circular(28),
+                                              ),
+                                            ),
+                                          ),
+                                          Align(
+                                            alignment: Alignment.center,
+                                            child: Container(
+                                              width: innerWidth,
+                                              height: innerHeight,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(0.4),
+                                                borderRadius: BorderRadius.circular(26),
+                                              ),
+                                              child: Padding(
+                                                padding: EdgeInsets.symmetric(vertical: contentVerticalPadding),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                  children: [
+                                          if (_analysis != null || showPreview)
+                                            Center(
+                                              child: SizedBox(
+                                                width: plateSize,
+                                                height: plateSize,
+                                                child: Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
+                                                    AnimatedOpacity(
+                                                      opacity: _loading ? _progressValue.clamp(0.0, 1.0) : 1.0,
+                                                      duration: const Duration(milliseconds: 200),
+                                                      child: PlatePhoto(
+                                                        imageBytes: _analysis?.imageBytes ?? _previewBytes!,
+                                                        plateAsset: plateAsset,
+                                                        plateSize: plateSize,
+                                                        imageSize: imageSize,
+                                                        tilt: 0,
+                                                      ),
+                                                    ),
+                                                    if (_loading) _buildScanOverlay(plateSize),
+                                                  ],
+                                                ),
+                                              ),
+                                            )
+                                            else
+                                              Center(
+                                                child: SizedBox(
+                                                  width: plateSize,
+                                                  height: plateSize,
+                                                  child: Stack(
+                                                    alignment: Alignment.center,
+                                                    children: [
+                                                    Container(
+                                                      decoration: BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: Colors.black.withOpacity(0.12),
+                                                            blurRadius: 26,
+                                                            offset: const Offset(0, 16),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    Image.asset(plateAsset, fit: BoxFit.contain),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          const SizedBox(height: 16),
+                                          if (_loading)
+                                            Builder(builder: (context) {
+                                              final steps = [
+                                                t.suggestInstantStepDetect,
+                                                t.suggestInstantStepEstimate,
+                                                t.suggestInstantStepAdvice,
+                                              ];
+                                              final statusText = steps[_statusIndex % steps.length];
+                                              final percent = (_progressValue * 100).clamp(0, 100).round();
+                                              return Column(
+                                                children: [
+                                                  Text(
+                                                    '$percent%',
+                                                    style: AppTextStyles.body(context).copyWith(
+                                                      fontWeight: FontWeight.w600,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    statusText,
+                                                    style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                                                  ),
+                                                ],
+                                              );
+                                            })
+                                          else if (_error != null)
+                                            Text(_error!, style: AppTextStyles.caption(context).copyWith(color: Colors.redAccent))
+                                          else
+                                            Center(
+                                              child: SizedBox(
+                                                width: buttonWidth,
+                                                child: ElevatedButton.icon(
+                                                  onPressed: _startCaptureFromCamera,
+                                                  icon: const Icon(Icons.camera_alt, color: Colors.white),
+                                                  label: Text(
+                                                    _analysis == null ? t.suggestInstantStart : t.suggestInstantRetake,
+                                                    style: const TextStyle(fontWeight: FontWeight.w700),
+                                                  ),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: theme.colorScheme.primary,
+                                                    foregroundColor: Colors.white,
+                                                    side: BorderSide(color: theme.colorScheme.primary),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          const SizedBox(height: 10),
+                                          Center(
+                                            child: SizedBox(
+                                              width: buttonWidth,
+                                              child: OutlinedButton.icon(
+                                                onPressed: _startCaptureFromGallery,
+                                                icon: Icon(Icons.photo_library_outlined, size: 18, color: theme.colorScheme.primary),
+                                                label: Text(t.suggestInstantPickGallery, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: theme.colorScheme.primary,
+                                                  side: BorderSide(color: theme.colorScheme.primary),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Center(
+                                            child: SizedBox(
+                                              width: buttonWidth,
+                                              child: OutlinedButton.icon(
+                                                onPressed: _requestNowAdvice,
+                                                icon: Icon(Icons.restaurant_menu, size: 18, color: theme.colorScheme.primary),
+                                                label: Text(t.suggestInstantNowEat, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: theme.colorScheme.primary,
+                                                  side: BorderSide(color: theme.colorScheme.primary),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Center(
+                                            child: SizedBox(
+                                              width: buttonWidth,
+                                              child: OutlinedButton.icon(
+                                                onPressed: _useCustomFood,
+                                                icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
+                                                label: Text(
+                                                  '${t.customUse} - ${app.customFoods.length}${t.customCountUnit}',
+                                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                                ),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: theme.colorScheme.primary,
+                                                  side: BorderSide(color: theme.colorScheme.primary),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      if (_loading) _buildScanOverlay(plateSize),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                              )
-                              else
-                                Center(
-                                  child: SizedBox(
-                                    width: plateSize,
-                                    height: plateSize,
-                                    child: Stack(
-                                      alignment: Alignment.center,
+                                  const SizedBox(height: 12),
+                                  if (_instantAdvice != null)
+                                    Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(18),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.05),
+                                            blurRadius: 14,
+                                            offset: const Offset(0, 10),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  t.suggestInstantNowEat,
+                                                  style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                                                ),
+                                              ),
+                                              IconButton(
+                                                onPressed: () => setState(() => _instantAdvice = null),
+                                                icon: const Icon(Icons.close, size: 18),
+                                                tooltip: t.cancel,
+                                                padding: const EdgeInsets.all(6),
+                                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          _buildInstantAdviceFromModel(t, _instantAdvice!),
+                                        ],
+                                      ),
+                                    ),
+                                  if (_instantAdvice != null) const SizedBox(height: 12),
+                                if (analysis != null && !showFloatingCard)
+                                  Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(18),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 14,
+                                          offset: const Offset(0, 10),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.12),
-                                              blurRadius: 26,
-                                              offset: const Offset(0, 16),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                analysis.foodName,
+                                                style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                                              ),
+                                            ),
+                                            IconButton(
+                                              onPressed: _editFoodName,
+                                              icon: const Icon(Icons.edit, size: 18),
+                                              tooltip: t.editFoodName,
+                                              padding: const EdgeInsets.all(8),
+                                              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                                             ),
                                           ],
                                         ),
-                                      ),
-                                      Image.asset(plateAsset, fit: BoxFit.contain),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            const SizedBox(height: 16),
-                            if (_loading)
-                              Builder(builder: (context) {
-                                final steps = [
-                                  t.suggestInstantStepDetect,
-                                  t.suggestInstantStepEstimate,
-                                  t.suggestInstantStepAdvice,
-                                ];
-                                final statusText = steps[_statusIndex % steps.length];
-                                final percent = (_progressValue * 100).clamp(0, 100).round();
-                                return Column(
-                                  children: [
-                                    Text(
-                                      '$percent%',
-                                      style: AppTextStyles.body(context).copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      statusText,
-                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                                    ),
-                                  ],
-                                );
-                              })
-                            else if (_error != null)
-                              Text(_error!, style: AppTextStyles.caption(context).copyWith(color: Colors.redAccent))
-                            else
-                              Center(
-                                child: SizedBox(
-                                  width: buttonWidth,
-                                  child: ElevatedButton.icon(
-                                    onPressed: _startCaptureFromCamera,
-                                    icon: const Icon(Icons.camera_alt, color: Colors.white),
-                                    label: Text(
-                                      _analysis == null ? t.suggestInstantStart : t.suggestInstantRetake,
-                                      style: const TextStyle(fontWeight: FontWeight.w700),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: theme.colorScheme.primary,
-                                      foregroundColor: Colors.white,
-                                      side: BorderSide(color: theme.colorScheme.primary),
+                                        const SizedBox(height: 6),
+                                        Text('${analysis.calorieRange} ${t.estimated}', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                                        const SizedBox(height: 12),
+                                        Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 8),
+                                        _buildAdviceCard(t),
+                                        if (_showSaveActions) ...[
+                                          const SizedBox(height: 14),
+                                          Text(t.suggestInstantSavePrompt, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: OutlinedButton(
+                                                  onPressed: () {
+                                                    setState(() => _showSaveActions = false);
+                                                  },
+                                                  child: Text(t.suggestInstantSkipSave),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: ElevatedButton(
+                                                  onPressed: _saveIfNeeded,
+                                                  child: Text(t.suggestInstantSave),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                        const SizedBox(height: 12),
+                                        Text(t.suggestInstantRecentHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              ),
-                            const SizedBox(height: 10),
-                            Center(
-                              child: SizedBox(
-                                width: buttonWidth,
-                                child: OutlinedButton.icon(
-                                  onPressed: _startCaptureFromGallery,
-                                  icon: Icon(Icons.photo_library_outlined, size: 18, color: theme.colorScheme.primary),
-                                  label: Text(t.suggestInstantPickGallery, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: theme.colorScheme.primary,
-                                    side: BorderSide(color: theme.colorScheme.primary),
-                                  ),
-                                ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            Center(
-                              child: SizedBox(
-                                width: buttonWidth,
-                                child: OutlinedButton.icon(
-                                  onPressed: _requestNowAdvice,
-                                  icon: Icon(Icons.restaurant_menu, size: 18, color: theme.colorScheme.primary),
-                                  label: Text(t.suggestInstantNowEat, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: theme.colorScheme.primary,
-                                    side: BorderSide(color: theme.colorScheme.primary),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Center(
-                              child: SizedBox(
-                                width: buttonWidth,
-                                child: OutlinedButton.icon(
-                                  onPressed: _useCustomFood,
-                                  icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
-                                  label: Text(
-                                    '${t.customUse} - ${app.customFoods.length}${t.customCountUnit}',
-                                    style: const TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: theme.colorScheme.primary,
-                                    side: BorderSide(color: theme.colorScheme.primary),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Center(
-                              child: SizedBox(
-                                width: buttonWidth,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    TextField(
-                                      controller: _nameController,
-                                      enabled: !_loading,
-                                      textInputAction: TextInputAction.done,
-                                      onSubmitted: (_) => _submitNameAnalysis(),
-                                      decoration: InputDecoration(
-                                        labelText: t.foodNameLabel,
-                                        hintText: t.suggestInstantNameHint,
-                                        isDense: true,
-                                        filled: true,
-                                        fillColor: Colors.white.withOpacity(0.85),
-                                        border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    OutlinedButton.icon(
-                                      onPressed: _loading ? null : _submitNameAnalysis,
-                                      icon: const Icon(Icons.search, size: 18),
-                                      label: Text(
-                                        t.suggestInstantNameSubmit,
-                                        style: const TextStyle(fontWeight: FontWeight.w600),
-                                      ),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: theme.colorScheme.primary,
-                                        side: BorderSide(color: theme.colorScheme.primary),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (_instantAdvice != null)
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 14,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    t.suggestInstantNowEat,
-                                    style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => setState(() => _instantAdvice = null),
-                                  icon: const Icon(Icons.close, size: 18),
-                                  tooltip: t.cancel,
-                                  padding: const EdgeInsets.all(6),
-                                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            _buildInstantAdviceFromModel(t, _instantAdvice!),
-                          ],
-                        ),
-                      ),
-                    if (_instantAdvice != null) const SizedBox(height: 12),
-                  if (analysis != null)
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 14,
-                            offset: const Offset(0, 10),
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  analysis.foodName,
-                                  style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: _editFoodName,
-                                icon: const Icon(Icons.edit, size: 18),
-                                tooltip: t.editFoodName,
-                                padding: const EdgeInsets.all(8),
-                                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                              ),
-                              if (_savedEntry != null)
-                                IconButton(
-                                  onPressed: _addLabelToSavedEntry,
-                                  icon: const Icon(Icons.receipt_long, size: 18),
-                                  tooltip: t.addLabel,
-                                  padding: const EdgeInsets.all(8),
-                                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                                ),
-                              if (_savedEntry != null)
-                                IconButton(
-                                  onPressed: _deleteSavedEntry,
-                                  icon: const Icon(Icons.delete_outline, size: 18),
-                                  tooltip: t.delete,
-                                  padding: const EdgeInsets.all(8),
-                                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text('${analysis.calorieRange} ${t.estimated}', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                          if (remainingWidget != null) ...[
-                            const SizedBox(height: 12),
-                            remainingWidget,
-                          ],
-                          const SizedBox(height: 12),
-                          Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 8),
-                          _buildAdviceCard(t),
-                          const SizedBox(height: 10),
-                          Text(t.suggestAutoSaved, style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
-                          const SizedBox(height: 12),
-                          Text(t.suggestInstantRecentHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
-                        ],
-                      ),
+                        ),
+              if (showFloatingCard)
+                DraggableScrollableSheet(
+                  initialChildSize: 0.45,
+                  minChildSize: 0.3,
+                  maxChildSize: 0.88,
+                  builder: (context, controller) => Container(
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(22), bottom: Radius.circular(22)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 22,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        Container(
+                          width: 44,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.black12,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            controller: controller,
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: _buildAnalysisCardContent(t, analysis!),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
+            ],
           ),
         ),
       ),

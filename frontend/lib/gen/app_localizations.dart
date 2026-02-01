@@ -1086,7 +1086,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantRetake.
   ///
   /// In zh_TW, this message translates to:
-  /// **'重拍'**
+  /// **'拍下一張'**
   String get suggestInstantRetake;
 
   /// No description provided for @suggestInstantPickGallery.
@@ -2577,62 +2577,113 @@ abstract class AppLocalizations {
   /// **'高蛋白'**
   String get dietTypeHighProtein;
 
-  /// No description provided for @containerSection.
-  String get containerSection;
-
-  /// No description provided for @containerTypeLabel.
-  String get containerTypeLabel;
-
-  /// No description provided for @containerSizeLabel.
-  String get containerSizeLabel;
-
-  /// No description provided for @containerDepthLabel.
-  String get containerDepthLabel;
-
-  /// No description provided for @containerDiameterLabel.
-  String get containerDiameterLabel;
-
-  /// No description provided for @containerCapacityLabel.
-  String get containerCapacityLabel;
-
-  /// No description provided for @containerTypeBowl.
-  String get containerTypeBowl;
-
-  /// No description provided for @containerTypePlate.
-  String get containerTypePlate;
-
-  /// No description provided for @containerTypeBox.
-  String get containerTypeBox;
-
-  /// No description provided for @containerTypeUnknown.
-  String get containerTypeUnknown;
-
-  /// No description provided for @containerSizeSmall.
-  String get containerSizeSmall;
-
-  /// No description provided for @containerSizeMedium.
-  String get containerSizeMedium;
-
-  /// No description provided for @containerSizeLarge.
-  String get containerSizeLarge;
-
-  /// No description provided for @containerSizeCustom.
-  String get containerSizeCustom;
-
-  /// No description provided for @containerDepthShallow.
-  String get containerDepthShallow;
-
-  /// No description provided for @containerDepthMedium.
-  String get containerDepthMedium;
-
-  /// No description provided for @containerDepthDeep.
-  String get containerDepthDeep;
-
   /// No description provided for @authNicknameRequired.
   ///
   /// In zh_TW, this message translates to:
   /// **'請輸入暱稱'**
   String get authNicknameRequired;
+
+  /// No description provided for @containerSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'常用容器'**
+  String get containerSection;
+
+  /// No description provided for @containerTypeLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'容器類型'**
+  String get containerTypeLabel;
+
+  /// No description provided for @containerSizeLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'容器尺寸'**
+  String get containerSizeLabel;
+
+  /// No description provided for @containerDepthLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'碗深度'**
+  String get containerDepthLabel;
+
+  /// No description provided for @containerDiameterLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'直徑 (cm)'**
+  String get containerDiameterLabel;
+
+  /// No description provided for @containerCapacityLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'容量 (ml)'**
+  String get containerCapacityLabel;
+
+  /// No description provided for @containerTypeBowl.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'碗'**
+  String get containerTypeBowl;
+
+  /// No description provided for @containerTypePlate.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'盤'**
+  String get containerTypePlate;
+
+  /// No description provided for @containerTypeBox.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'便當盒'**
+  String get containerTypeBox;
+
+  /// No description provided for @containerTypeUnknown.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'不指定'**
+  String get containerTypeUnknown;
+
+  /// No description provided for @containerSizeSmall.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'小'**
+  String get containerSizeSmall;
+
+  /// No description provided for @containerSizeMedium.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'中'**
+  String get containerSizeMedium;
+
+  /// No description provided for @containerSizeLarge.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'大'**
+  String get containerSizeLarge;
+
+  /// No description provided for @containerSizeCustom.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'自訂'**
+  String get containerSizeCustom;
+
+  /// No description provided for @containerDepthShallow.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'淺'**
+  String get containerDepthShallow;
+
+  /// No description provided for @containerDepthMedium.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'中'**
+  String get containerDepthMedium;
+
+  /// No description provided for @containerDepthDeep.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'深'**
+  String get containerDepthDeep;
 }
 
 class _AppLocalizationsDelegate
