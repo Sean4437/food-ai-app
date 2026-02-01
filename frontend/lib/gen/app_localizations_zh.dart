@@ -567,6 +567,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantMissing => '還沒有分析結果';
 
   @override
+  String get suggestInstantAdjustedHint => '已依份量調整顯示';
+
+  @override
+  String get suggestInstantReestimate => '重新估算';
+
+  @override
   String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';
 
   @override
@@ -1891,6 +1897,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get suggestInstantMissing => '還沒有分析結果';
+
+  @override
+  String get suggestInstantAdjustedHint => '已依份量調整顯示';
+
+  @override
+  String get suggestInstantReestimate => '重新估算';
 
   @override
   String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';

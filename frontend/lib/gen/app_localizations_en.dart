@@ -576,6 +576,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantMissing => 'No analysis yet';
 
   @override
+  String get suggestInstantAdjustedHint => 'Adjusted for portion size';
+
+  @override
+  String get suggestInstantReestimate => 'Re-estimate';
+
+  @override
   String get suggestInstantRecentHint =>
       'Advice uses the last 7 days and the previous meal';
 

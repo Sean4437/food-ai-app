@@ -196,6 +196,8 @@
   "suggestInstantAvoid": "Avoid",
   "suggestInstantLimit": "Portion limit",
   "suggestInstantMissing": "No analysis yet",
+  "suggestInstantAdjustedHint": "Adjusted for portion size",
+  "suggestInstantReestimate": "Re-estimate",
   "suggestInstantRecentHint": "Advice uses the last 7 days and the previous meal",
   "suggestAutoSaved": "Saved automatically",
   "suggestTodayLabel": "Today's status",

@@ -1191,6 +1191,18 @@ abstract class AppLocalizations {
   /// **'還沒有分析結果'**
   String get suggestInstantMissing;
 
+  /// No description provided for @suggestInstantAdjustedHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已依份量調整顯示'**
+  String get suggestInstantAdjustedHint;
+
+  /// No description provided for @suggestInstantReestimate.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重新估算'**
+  String get suggestInstantReestimate;
+
   /// No description provided for @suggestInstantRecentHint.
   ///
   /// In zh_TW, this message translates to:

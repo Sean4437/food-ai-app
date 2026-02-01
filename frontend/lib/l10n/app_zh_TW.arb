@@ -196,6 +196,8 @@
   "suggestInstantAvoid": "不建議吃",
   "suggestInstantLimit": "建議份量上限",
   "suggestInstantMissing": "還沒有分析結果",
+  "suggestInstantAdjustedHint": "已依份量調整顯示",
+  "suggestInstantReestimate": "重新估算",
   "suggestInstantRecentHint": "建議已參考最近 7 天與上一餐",
   "suggestAutoSaved": "已自動儲存",
   "suggestTodayLabel": "今日整體判斷",

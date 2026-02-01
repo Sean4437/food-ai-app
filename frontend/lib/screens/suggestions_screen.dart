@@ -734,6 +734,110 @@ Widget _buildAdviceCard(AppLocalizations t) {
     );
   }
 
+  String _scaledCalorieRangeText(String raw, int portionPercent) {
+    final percent = portionPercent.clamp(10, 200) / 100.0;
+    final hasKcal = raw.toLowerCase().contains('kcal');
+    final match = RegExp(r'(\\d+)\\s*-\\s*(\\d+)').firstMatch(raw);
+    if (match != null) {
+      final low = int.tryParse(match.group(1) ?? '');
+      final high = int.tryParse(match.group(2) ?? '');
+      if (low != null && high != null) {
+        final scaledLow = (low * percent).round();
+        final scaledHigh = (high * percent).round();
+        return hasKcal ? '$scaledLow-$scaledHigh kcal' : '$scaledLow-$scaledHigh';
+      }
+    }
+    final single = RegExp(r'(\\d+)').firstMatch(raw);
+    if (single != null) {
+      final value = int.tryParse(single.group(1) ?? '');
+      if (value != null) {
+        final scaled = (value * percent).round();
+        return hasKcal ? '$scaled kcal' : '$scaled';
+      }
+    }
+    return raw;
+  }
+
+  String _macroDisplayValue(String key, double value, int portionPercent) {
+    final percent = portionPercent.clamp(10, 200) / 100.0;
+    final scaled = value * percent;
+    if (key == 'sodium') {
+      return '${scaled.round()}mg';
+    }
+    return '${scaled.round()}g';
+  }
+
+  Widget _buildMacroRow(AppLocalizations t, String label, String value) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(label, style: AppTextStyles.caption(context).copyWith(color: Colors.black87)),
+        ),
+        Text(value, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+      ],
+    );
+  }
+
+  Widget _buildMacroSection(AppLocalizations t, AnalysisResult analysis) {
+    final macros = analysis.macros;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(t.macroLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        _buildMacroRow(t, t.protein, _macroDisplayValue('protein', macros['protein'] ?? 0, _portionPercent)),
+        _buildMacroRow(t, t.carbs, _macroDisplayValue('carbs', macros['carbs'] ?? 0, _portionPercent)),
+        _buildMacroRow(t, t.fat, _macroDisplayValue('fat', macros['fat'] ?? 0, _portionPercent)),
+        _buildMacroRow(t, t.sodium, _macroDisplayValue('sodium', macros['sodium'] ?? 0, _portionPercent)),
+      ],
+    );
+  }
+
+  Future<void> _reanalyzeWithAdjustments() async {
+    if (_analysis == null) return;
+    if (!mounted) return;
+    final app = AppStateScope.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final historyContext = app.buildAiContext();
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    _startSmartProgress();
+    try {
+      final updated = await app.reanalyzeQuickCapture(
+        _analysis!,
+        locale,
+        historyContext: historyContext.isEmpty ? null : historyContext,
+        foodName: _analysis!.result.foodName,
+        containerType: _containerType,
+        containerSize: _containerSize,
+        portionPercent: _portionPercent,
+      );
+      if (!mounted) return;
+      _analysis = updated;
+      _savedEntry = null;
+      _applyAnalysisDefaults(updated.result);
+      _hideFloatingCard = false;
+      _instantAdvice = null;
+      _previewBytes = null;
+      _showSaveActions = true;
+      _completeSmartProgress(() {
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+        });
+      });
+    } catch (err) {
+      if (!mounted) return;
+      _stopSmartProgress();
+      setState(() {
+        _error = err.toString();
+        _loading = false;
+      });
+    }
+  }
+
   Widget _buildInstantAdviceFromModel(AppLocalizations t, MealAdvice advice) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -750,6 +854,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
   }
 
   Widget _buildAnalysisCardContent(AppLocalizations t, AnalysisResult analysis) {
+    final adjustedRange = _scaledCalorieRangeText(analysis.calorieRange, _portionPercent);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -772,8 +877,13 @@ Widget _buildAdviceCard(AppLocalizations t) {
         ),
         const SizedBox(height: 6),
         Text(
-          '${analysis.calorieRange} ${t.estimated}',
+          '${adjustedRange} ${t.estimated}',
           style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          t.suggestInstantAdjustedHint,
+          style: AppTextStyles.caption(context).copyWith(color: Colors.black45),
         ),
         const SizedBox(height: 12),
         Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
@@ -781,6 +891,16 @@ Widget _buildAdviceCard(AppLocalizations t) {
         _buildAdviceCard(t),
         const SizedBox(height: 14),
         _buildPortionContainerSection(t),
+        const SizedBox(height: 12),
+        _buildMacroSection(t, analysis),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _loading ? null : _reanalyzeWithAdjustments,
+            child: Text(t.suggestInstantReestimate),
+          ),
+        ),
         if (_showSaveActions) ...[
           const SizedBox(height: 14),
           Text(t.suggestInstantSavePrompt, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),

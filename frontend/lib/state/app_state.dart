@@ -415,6 +415,7 @@ class AppState extends ChangeNotifier {
     String? foodName,
     String? containerType,
     String? containerSize,
+    int? portionPercent,
   }) async {
     final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
     final selectedContainerType = containerType ?? profile.containerType;
@@ -426,6 +427,7 @@ class AppState extends ChangeNotifier {
       lang: locale,
       context: historyContext,
       foodName: foodName,
+      portionPercent: portionPercent,
       mealType: _mealTypeKey(analysis.mealType),
       mealPhotoCount: 1,
       analyzeReason: 'quick_capture_manual',
