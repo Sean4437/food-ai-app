@@ -27,6 +27,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   bool _loading = false;
   String? _error;
   bool _showSaveActions = false;
+  bool _hideFloatingCard = false;
   late final AnimationController _scanController;
   double _progressValue = 0;
   int _statusIndex = 0;
@@ -84,6 +85,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       );
       if (!mounted) return;
       _analysis = analysis;
+      _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
       _showSaveActions = true;
@@ -199,6 +201,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       );
       if (!mounted) return;
       _analysis = updated;
+      _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
       _showSaveActions = true;
@@ -651,7 +654,7 @@ Widget _buildAdviceCard(AppLocalizations t) {
     final app = AppStateScope.of(context);
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final analysis = _analysis?.result;
-    final showFloatingCard = analysis != null;
+    final showFloatingCard = analysis != null && !_hideFloatingCard;
     final showPreview = _analysis == null && _previewBytes != null;
     final media = MediaQuery.of(context);
     final cardWidth = (media.size.width - 32).clamp(280.0, 340.0);
@@ -1022,6 +1025,18 @@ Widget _buildAdviceCard(AppLocalizations t) {
                           ),
                         ),
                         const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Spacer(),
+                            IconButton(
+                              onPressed: () => setState(() => _hideFloatingCard = true),
+                              icon: const Icon(Icons.close, size: 18),
+                              tooltip: t.cancel,
+                              padding: const EdgeInsets.all(6),
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                          ],
+                        ),
                         Expanded(
                           child: SingleChildScrollView(
                             controller: controller,
