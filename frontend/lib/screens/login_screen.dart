@@ -29,8 +29,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isValidPassword(String value) {
     if (value.length < 8) return false;
-    if (value.contains(RegExp(r'\\s'))) return false;
-    if (value.contains(RegExp(r'[\\u4e00-\\u9fff\\u3400-\\u4dbf\\uf900-\\ufaff]'))) return false;
+    if (value.contains(RegExp(r'\s'))) return false;
+    if (value.contains(RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]'))) return false;
     return true;
   }
 
