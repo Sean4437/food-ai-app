@@ -822,7 +822,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         .replaceAll('~', '-')
         .replaceAll('\u2013', '-') // en dash
         .replaceAll('\u2014', '-'); // em dash
-    final match = RegExp(r'(\\d+)\\s*-\\s*(\\d+)').firstMatch(normalized);
+    final match = RegExp(r'(\d+)\s*-\s*(\d+)').firstMatch(normalized);
     if (match != null) {
       final low = int.tryParse(match.group(1) ?? '');
       final high = int.tryParse(match.group(2) ?? '');
@@ -832,7 +832,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         return hasKcal ? '$scaledLow-$scaledHigh kcal' : '$scaledLow-$scaledHigh';
       }
     }
-    final single = RegExp(r'(\\d+)').firstMatch(normalized);
+    final single = RegExp(r'(\d+)').firstMatch(normalized);
     if (single != null) {
       final value = int.tryParse(single.group(1) ?? '');
       if (value != null) {
@@ -918,7 +918,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         .replaceAll('~', '-')
         .replaceAll('\u2013', '-')
         .replaceAll('\u2014', '-');
-    final match = RegExp(r'(\\d+)\\s*-\\s*(\\d+)').firstMatch(normalized);
+    final match = RegExp(r'(\d+)\s*-\s*(\d+)').firstMatch(normalized);
     if (match != null) {
       final low = double.tryParse(match.group(1) ?? '');
       final high = double.tryParse(match.group(2) ?? '');
@@ -928,7 +928,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         return ((low + high) / 2) * factor;
       }
     }
-    final single = RegExp(r'(\\d+)').firstMatch(normalized);
+    final single = RegExp(r'(\d+)').firstMatch(normalized);
     if (single != null) {
       final value = double.tryParse(single.group(1) ?? '');
       if (value != null) {
