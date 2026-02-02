@@ -3005,6 +3005,16 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> resendVerificationEmail(String email) async {
+    final trimmedEmail = email.trim();
+    if (trimmedEmail.isEmpty) return;
+    await _supabase.client.auth.resend(
+      type: OtpType.signup,
+      email: trimmedEmail,
+      emailRedirectTo: kSupabaseEmailRedirectUrl,
+    );
+  }
+
   Future<void> signOutSupabase() async {
     await _supabase.client.auth.signOut();
     await refreshAccessStatus();

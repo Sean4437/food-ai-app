@@ -1204,6 +1204,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authSignUpVerify => '註冊完成，請前往信箱完成驗證';
 
   @override
+  String get authEmailNotVerified => '此 Email 尚未驗證，請先完成信箱驗證';
+
+  @override
+  String get authVerifyTitle => '請驗證信箱';
+
+  @override
+  String authVerifyBody(String email) {
+    return '我們已寄送驗證信到 $email，請在 1-3 分鐘內查看，也請檢查垃圾郵件/促銷匣。';
+  }
+
+  @override
+  String get authResend => '重新寄送驗證信';
+
+  @override
+  String authResendCooldown(int seconds) {
+    return '重新寄送（${seconds}s）';
+  }
+
+  @override
+  String get authResendSent => '驗證信已重新寄出';
+
+  @override
+  String get authResendFailed => '重新寄送失敗，請稍後再試';
+
+  @override
+  String get authTooManyAttempts => '請稍後再試';
+
+  @override
   String get authPasswordMismatch => '兩次密碼不一致';
 
   @override
@@ -2537,6 +2565,34 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get authSignUpVerify => '註冊完成，請前往信箱完成驗證';
+
+  @override
+  String get authEmailNotVerified => '此 Email 尚未驗證，請先完成信箱驗證';
+
+  @override
+  String get authVerifyTitle => '請驗證信箱';
+
+  @override
+  String authVerifyBody(String email) {
+    return '我們已寄送驗證信到 $email，請在 1-3 分鐘內查看，也請檢查垃圾郵件/促銷匣。';
+  }
+
+  @override
+  String get authResend => '重新寄送驗證信';
+
+  @override
+  String authResendCooldown(int seconds) {
+    return '重新寄送（${seconds}s）';
+  }
+
+  @override
+  String get authResendSent => '驗證信已重新寄出';
+
+  @override
+  String get authResendFailed => '重新寄送失敗，請稍後再試';
+
+  @override
+  String get authTooManyAttempts => '請稍後再試';
 
   @override
   String get authPasswordMismatch => '兩次密碼不一致';

@@ -2445,6 +2445,54 @@ abstract class AppLocalizations {
   /// **'註冊完成，請前往信箱完成驗證'**
   String get authSignUpVerify;
 
+  /// No description provided for @authEmailNotVerified.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'此 Email 尚未驗證，請先完成信箱驗證'**
+  String get authEmailNotVerified;
+
+  /// No description provided for @authVerifyTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'請驗證信箱'**
+  String get authVerifyTitle;
+
+  /// No description provided for @authVerifyBody.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'我們已寄送驗證信到 {email}，請在 1-3 分鐘內查看，也請檢查垃圾郵件/促銷匣。'**
+  String authVerifyBody(String email);
+
+  /// No description provided for @authResend.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重新寄送驗證信'**
+  String get authResend;
+
+  /// No description provided for @authResendCooldown.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重新寄送（{seconds}s）'**
+  String authResendCooldown(int seconds);
+
+  /// No description provided for @authResendSent.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'驗證信已重新寄出'**
+  String get authResendSent;
+
+  /// No description provided for @authResendFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重新寄送失敗，請稍後再試'**
+  String get authResendFailed;
+
+  /// No description provided for @authTooManyAttempts.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'請稍後再試'**
+  String get authTooManyAttempts;
+
   /// No description provided for @authPasswordMismatch.
   ///
   /// In zh_TW, this message translates to:

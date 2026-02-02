@@ -443,6 +443,28 @@
   "authSignInSuccess": "Signed in successfully",
   "authSignUpSuccess": "Account created",
   "authSignUpVerify": "Account created. Please verify your email.",
+  "authEmailNotVerified": "Email not verified yet. Please confirm your email first.",
+  "authVerifyTitle": "Verify your email",
+  "authVerifyBody": "We sent a verification email to {email}. Please check your inbox in 1–3 minutes and also check spam/promotions.",
+  "@authVerifyBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authResend": "Resend verification email",
+  "authResendCooldown": "Resend ({seconds}s)",
+  "@authResendCooldown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "authResendSent": "Verification email resent",
+  "authResendFailed": "Resend failed. Please try again.",
+  "authTooManyAttempts": "Please wait and try again.",
   "authPasswordMismatch": "Passwords do not match",
   "authPasswordRule": "Password must be at least 8 characters and contain no spaces or Chinese characters",
   "authPasswordInvalid": "Password must be at least 8 characters and contain no spaces or Chinese characters",

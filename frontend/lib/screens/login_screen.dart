@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../design/text_styles.dart';
 import '../widgets/app_background.dart';
@@ -20,6 +21,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   bool _showPassword = false;
   bool _showConfirm = false;
+  bool _showVerifyPanel = false;
+  int _resendCooldown = 0;
+  DateTime? _lastAuthAttempt;
+  Timer? _resendTimer;
 
   bool _isValidEmail(String value) {
     final email = value.trim();
@@ -47,6 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final text = err.toString();
     final lower = text.toLowerCase();
     if (_isNetworkError(text)) return t.authNetworkError;
+    if (lower.contains('email not confirmed') || lower.contains('confirm your email')) {
+      return t.authEmailNotVerified;
+    }
     if (isSignUp) {
       if (lower.contains('already registered') || lower.contains('already exists') || lower.contains('user exists')) {
         return t.authEmailExists;
@@ -65,6 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     _confirmController.dispose();
     _nicknameController.dispose();
+    _resendTimer?.cancel();
     super.dispose();
   }
 
@@ -72,6 +81,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_loading) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
+    if (_lastAuthAttempt != null &&
+        DateTime.now().difference(_lastAuthAttempt!) < const Duration(seconds: 2)) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authTooManyAttempts)));
+      return;
+    }
+    _lastAuthAttempt = DateTime.now();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirm = _confirmController.text;
@@ -107,11 +122,67 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         final message = _isSignUp ? t.authSignUpVerify : t.authSignInSuccess;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        if (_isSignUp) {
+          setState(() {
+            _showVerifyPanel = true;
+            _resendCooldown = 30;
+          });
+          _startResendCooldown();
+        }
       }
     } catch (err) {
       if (mounted) {
         final message = _formatAuthError(err, t, isSignUp: _isSignUp);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        if (!_isSignUp && message == t.authEmailNotVerified) {
+          setState(() {
+            _showVerifyPanel = true;
+            _resendCooldown = 0;
+          });
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _startResendCooldown() {
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_resendCooldown <= 0) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _resendCooldown -= 1);
+    });
+  }
+
+  Future<void> _resendVerification() async {
+    if (_loading || _resendCooldown > 0) return;
+    final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !_isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailInvalid)));
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await app.resendVerificationEmail(email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authResendSent)));
+      setState(() {
+        _showVerifyPanel = true;
+        _resendCooldown = 30;
+      });
+      _startResendCooldown();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authResendFailed)));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -268,6 +339,46 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _loading ? null : _resetPassword,
                       child: Text(t.authForgotPassword),
                     ),
+                    if (_showVerifyPanel) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.black12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t.authVerifyTitle,
+                              style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              t.authVerifyBody(_emailController.text.trim()),
+                              style: AppTextStyles.caption(context).copyWith(color: Colors.black54, height: 1.4),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: _loading || _resendCooldown > 0 ? null : _resendVerification,
+                                    child: Text(
+                                      _resendCooldown > 0
+                                          ? t.authResendCooldown(_resendCooldown)
+                                          : t.authResend,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

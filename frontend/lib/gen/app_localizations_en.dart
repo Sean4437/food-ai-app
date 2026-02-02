@@ -1217,6 +1217,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignUpVerify => 'Account created. Please verify your email.';
 
   @override
+  String get authEmailNotVerified =>
+      'Email not verified yet. Please confirm your email first.';
+
+  @override
+  String get authVerifyTitle => 'Verify your email';
+
+  @override
+  String authVerifyBody(String email) {
+    return 'We sent a verification email to $email. Please check your inbox in 1–3 minutes and also check spam/promotions.';
+  }
+
+  @override
+  String get authResend => 'Resend verification email';
+
+  @override
+  String authResendCooldown(int seconds) {
+    return 'Resend (${seconds}s)';
+  }
+
+  @override
+  String get authResendSent => 'Verification email resent';
+
+  @override
+  String get authResendFailed => 'Resend failed. Please try again.';
+
+  @override
+  String get authTooManyAttempts => 'Please wait and try again.';
+
+  @override
   String get authPasswordMismatch => 'Passwords do not match';
 
   @override

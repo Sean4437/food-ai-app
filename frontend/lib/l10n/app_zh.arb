@@ -443,6 +443,28 @@
   "authSignInSuccess": "登入成功",
   "authSignUpSuccess": "註冊完成",
   "authSignUpVerify": "註冊完成，請前往信箱完成驗證",
+  "authEmailNotVerified": "此 Email 尚未驗證，請先完成信箱驗證",
+  "authVerifyTitle": "請驗證信箱",
+  "authVerifyBody": "我們已寄送驗證信到 {email}，請在 1-3 分鐘內查看，也請檢查垃圾郵件/促銷匣。",
+  "@authVerifyBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authResend": "重新寄送驗證信",
+  "authResendCooldown": "重新寄送（{seconds}s）",
+  "@authResendCooldown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "authResendSent": "驗證信已重新寄出",
+  "authResendFailed": "重新寄送失敗，請稍後再試",
+  "authTooManyAttempts": "請稍後再試",
   "authPasswordMismatch": "兩次密碼不一致",
   "authPasswordRule": "密碼至少 8 碼，且不可含空白或中文",
   "authPasswordInvalid": "密碼需至少 8 碼，且不可含空白或中文",
