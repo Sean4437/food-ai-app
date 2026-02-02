@@ -9,6 +9,7 @@ import '../models/analysis_result.dart';
 import '../models/custom_food.dart';
 import '../models/meal_entry.dart';
 import '../widgets/plate_photo.dart';
+import '../widgets/nutrition_chart.dart';
 import '../widgets/app_background.dart';
 import '../design/text_styles.dart';
 
@@ -881,117 +882,62 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     }
   }
 
-  double _ratioFromPercent(double value) {
-    final safe = value.clamp(0, 100).toDouble();
-    return safe / 100.0;
-  }
-
-  Widget _nutrientValue(
-    BuildContext context,
-    String key,
-    String label,
-    double grams,
-    double ratio,
-    IconData icon,
-    Color color,
-  ) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 6),
-        Text(
-          '$label ${_macroDisplayValue(key, grams, _portionPercent)}',
-          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-        ),
-      ],
-    );
-  }
-
   Widget _buildMacroSection(AppLocalizations t, AnalysisResult analysis) {
-    final app = AppStateScope.of(context);
-    final macros = analysis.macros;
-    final protein = macros['protein'] ?? 0;
-    final carbs = macros['carbs'] ?? 0;
-    final fat = macros['fat'] ?? 0;
-    final sodium = macros['sodium'] ?? 0;
-    final proteinRatio = _ratioFromPercent(app.macroPercentFromResult(analysis, 'protein'));
-    final carbsRatio = _ratioFromPercent(app.macroPercentFromResult(analysis, 'carbs'));
-    final fatRatio = _ratioFromPercent(app.macroPercentFromResult(analysis, 'fat'));
-    final sodiumRatio = _ratioFromPercent(app.macroPercentFromResult(analysis, 'sodium'));
-    final values = [proteinRatio, carbsRatio, fatRatio, sodiumRatio];
-
+    final adjusted = _scaledMacros(analysis.macros);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(t.macroLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        SizedBox(
-          height: 150,
-          child: CustomPaint(
-            painter: _RadarPainter(values),
-            child: Center(
-              child: SizedBox(
-                width: 120,
-                height: 120,
-                child: Stack(
-                  children: [
-                    Align(
-                      alignment: const Alignment(0, -1.05),
-                      child: _nutrientValue(
-                        context,
-                        'protein',
-                        t.protein,
-                        protein,
-                        proteinRatio,
-                        Icons.eco,
-                        const Color(0xFF7FCB99),
-                      ),
-                    ),
-                    Align(
-                      alignment: const Alignment(1.05, 0.1),
-                      child: _nutrientValue(
-                        context,
-                        'carbs',
-                        t.carbs,
-                        carbs,
-                        carbsRatio,
-                        Icons.grass,
-                        const Color(0xFFF1BE4B),
-                      ),
-                    ),
-                    Align(
-                      alignment: const Alignment(0, 1.05),
-                      child: _nutrientValue(
-                        context,
-                        'fat',
-                        t.fat,
-                        fat,
-                        fatRatio,
-                        Icons.local_pizza,
-                        const Color(0xFFF08A7C),
-                      ),
-                    ),
-                    Align(
-                      alignment: const Alignment(-1.05, 0.1),
-                      child: _nutrientValue(
-                        context,
-                        'sodium',
-                        t.sodium,
-                        sodium,
-                        sodiumRatio,
-                        Icons.opacity,
-                        const Color(0xFF8AB4F8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+        NutritionChart(
+          macros: adjusted,
+          style: NutritionChartStyle.donut,
+          t: t,
+          valueMode: NutritionValueMode.amount,
+          calories: _calorieMidValue(_overrideCalorieRange ?? analysis.calorieRange),
         ),
       ],
     );
+  }
+
+  Map<String, double> _scaledMacros(Map<String, double> macros) {
+    final percent = _portionPercent.clamp(10, 200) / 100.0;
+    final factor = percent * _containerSizeFactor() * _containerTypeFactor();
+    return {
+      'protein': (macros['protein'] ?? 0) * factor,
+      'carbs': (macros['carbs'] ?? 0) * factor,
+      'fat': (macros['fat'] ?? 0) * factor,
+      'sodium': (macros['sodium'] ?? 0) * factor,
+    };
+  }
+
+  double? _calorieMidValue(String? rangeText) {
+    if (rangeText == null || rangeText.trim().isEmpty) return null;
+    final normalized = rangeText
+        .replaceAll('\uFF5E', '-')
+        .replaceAll('~', '-')
+        .replaceAll('\u2013', '-')
+        .replaceAll('\u2014', '-');
+    final match = RegExp(r'(\\d+)\\s*-\\s*(\\d+)').firstMatch(normalized);
+    if (match != null) {
+      final low = double.tryParse(match.group(1) ?? '');
+      final high = double.tryParse(match.group(2) ?? '');
+      if (low != null && high != null) {
+        final percent = _portionPercent.clamp(10, 200) / 100.0;
+        final factor = percent * _containerSizeFactor() * _containerTypeFactor();
+        return ((low + high) / 2) * factor;
+      }
+    }
+    final single = RegExp(r'(\\d+)').firstMatch(normalized);
+    if (single != null) {
+      final value = double.tryParse(single.group(1) ?? '');
+      if (value != null) {
+        final percent = _portionPercent.clamp(10, 200) / 100.0;
+        final factor = percent * _containerSizeFactor() * _containerTypeFactor();
+        return value * factor;
+      }
+    }
+    return null;
   }
 
   Future<void> _reanalyzeWithAdjustments() async {
@@ -1500,71 +1446,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   }
 }
 
-class _RadarPainter extends CustomPainter {
-  _RadarPainter(this.values);
-
-  final List<double> values;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) * 0.32;
-    final axes = values.length;
-    final gridPaint = Paint()
-      ..color = const Color(0xFFE6E9F2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    final shapePaint = Paint()
-      ..color = const Color(0xFFB5D8C6).withOpacity(0.6)
-      ..style = PaintingStyle.fill;
-    final linePaint = Paint()
-      ..color = const Color(0xFFB5D8C6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    for (int i = 1; i <= 5; i++) {
-      final r = radius * (i / 5);
-      final path = Path();
-      for (int j = 0; j < axes; j++) {
-        final angle = (2 * math.pi / axes) * j - math.pi / 2;
-        final point = Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
-        if (j == 0) {
-          path.moveTo(point.dx, point.dy);
-        } else {
-          path.lineTo(point.dx, point.dy);
-        }
-      }
-      path.close();
-      canvas.drawPath(path, gridPaint);
-    }
-
-    final dataPath = Path();
-    for (int j = 0; j < axes; j++) {
-      final angle = (2 * math.pi / axes) * j - math.pi / 2;
-      final point = Offset(
-        center.dx + radius * values[j] * math.cos(angle),
-        center.dy + radius * values[j] * math.sin(angle),
-      );
-      if (j == 0) {
-        dataPath.moveTo(point.dx, point.dy);
-      } else {
-        dataPath.lineTo(point.dx, point.dy);
-      }
-    }
-    dataPath.close();
-    canvas.drawPath(dataPath, shapePaint);
-    canvas.drawPath(dataPath, linePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _RadarPainter oldDelegate) {
-    if (oldDelegate.values.length != values.length) return true;
-    for (int i = 0; i < values.length; i++) {
-      if (oldDelegate.values[i] != values[i]) return true;
-    }
-    return false;
-  }
-}
 
 class _ProgressArcPainter extends CustomPainter {
   _ProgressArcPainter({
