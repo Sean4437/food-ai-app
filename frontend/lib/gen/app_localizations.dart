@@ -1215,12 +1215,6 @@ abstract class AppLocalizations {
   /// **'這不是食物，請重拍。若現在不打算吃東西，也歡迎之後肚子餓再使用。'**
   String get suggestInstantNonFood;
 
-  /// No description provided for @suggestInstantAdjustedHint.
-  ///
-  /// In zh_TW, this message translates to:
-  /// **'已依份量調整顯示'**
-  String get suggestInstantAdjustedHint;
-
   /// No description provided for @suggestInstantReestimate.
   ///
   /// In zh_TW, this message translates to:

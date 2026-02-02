@@ -605,10 +605,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     const validSizes = {'small', 'medium', 'large', 'none'};
     var nextType = validTypes.contains(rawType) ? rawType : 'unknown';
     var nextSize = validSizes.contains(rawSize) ? rawSize : 'none';
-    if (nextType == 'plate' || nextType == 'box' || nextType == 'unknown') {
-      nextSize = 'none';
-    }
-    if ((nextType == 'bowl' || nextType == 'cup') && nextSize == 'none') {
+    if (nextSize == 'none') {
       nextSize = 'medium';
     }
     return [nextType, nextSize];
@@ -675,27 +672,42 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
+  Widget _buildIconChipGroup({
+    required List<MapEntry<IconData, String>> options,
+    required String value,
+    required ValueChanged<String> onSelected,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final option in options)
+          ChoiceChip(
+            label: Icon(option.key, size: 18),
+            selected: option.value == value,
+            onSelected: (_) => onSelected(option.value),
+          ),
+      ],
+    );
+  }
+
   Widget _buildPortionContainerSection(AppLocalizations t) {
     final theme = Theme.of(context);
     final normalized = _normalizeContainerSelection(_containerType, _containerSize);
     final currentType = normalized[0];
     final currentSize = normalized[1];
-    final typeOptions = <MapEntry<String, String>>[
-      MapEntry(t.containerTypeBowl, 'bowl'),
-      MapEntry(t.containerTypePlate, 'plate'),
-      MapEntry(t.containerTypeBox, 'box'),
-      MapEntry(t.containerTypeCup, 'cup'),
-      MapEntry(t.containerTypeUnknown, 'unknown'),
+    final typeOptions = <MapEntry<IconData, String>>[
+      MapEntry(Icons.ramen_dining, 'bowl'),
+      MapEntry(Icons.restaurant, 'plate'),
+      MapEntry(Icons.lunch_dining, 'box'),
+      MapEntry(Icons.local_cafe, 'cup'),
+      MapEntry(Icons.help_outline, 'unknown'),
     ];
-    final sizeOptions = (currentType == 'bowl' || currentType == 'cup')
-        ? <MapEntry<String, String>>[
-            MapEntry(t.containerSizeSmall, 'small'),
-            MapEntry(t.containerSizeMedium, 'medium'),
-            MapEntry(t.containerSizeLarge, 'large'),
-          ]
-        : <MapEntry<String, String>>[
-            MapEntry(t.containerSizeStandard, 'none'),
-          ];
+    final sizeOptions = <MapEntry<String, String>>[
+      MapEntry(t.containerSizeSmall, 'small'),
+      MapEntry(t.containerSizeMedium, 'medium'),
+      MapEntry(t.containerSizeLarge, 'large'),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -724,12 +736,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                 ),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
+        ],
+      ),
+      const SizedBox(height: 12),
         Text(t.containerTypeLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        _buildChipGroup(options: typeOptions, value: currentType, onSelected: _updateContainerType),
+        _buildIconChipGroup(options: typeOptions, value: currentType, onSelected: _updateContainerType),
         const SizedBox(height: 12),
         Text(t.containerSizeLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
@@ -740,22 +752,25 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   String _scaledCalorieRangeText(String raw, int portionPercent) {
     final percent = portionPercent.clamp(10, 200) / 100.0;
+    final sizeFactor = _containerSizeFactor();
+    final factor = percent * sizeFactor;
     final hasKcal = raw.toLowerCase().contains('kcal');
-    final match = RegExp(r'(\\d+)\\s*-\\s*(\\d+)').firstMatch(raw);
+    final normalized = raw.replaceAll('～', '-').replaceAll('~', '-').replaceAll('–', '-').replaceAll('—', '-');
+    final match = RegExp(r'(\\d+)\\s*-\\s*(\\d+)').firstMatch(normalized);
     if (match != null) {
       final low = int.tryParse(match.group(1) ?? '');
       final high = int.tryParse(match.group(2) ?? '');
       if (low != null && high != null) {
-        final scaledLow = (low * percent).round();
-        final scaledHigh = (high * percent).round();
+        final scaledLow = (low * factor).round();
+        final scaledHigh = (high * factor).round();
         return hasKcal ? '$scaledLow-$scaledHigh kcal' : '$scaledLow-$scaledHigh';
       }
     }
-    final single = RegExp(r'(\\d+)').firstMatch(raw);
+    final single = RegExp(r'(\\d+)').firstMatch(normalized);
     if (single != null) {
       final value = int.tryParse(single.group(1) ?? '');
       if (value != null) {
-        final scaled = (value * percent).round();
+        final scaled = (value * factor).round();
         return hasKcal ? '$scaled kcal' : '$scaled';
       }
     }
@@ -764,11 +779,25 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   String _macroDisplayValue(String key, double value, int portionPercent) {
     final percent = portionPercent.clamp(10, 200) / 100.0;
-    final scaled = value * percent;
+    final sizeFactor = _containerSizeFactor();
+    final scaled = value * percent * sizeFactor;
     if (key == 'sodium') {
       return '${scaled.round()}mg';
     }
     return '${scaled.round()}g';
+  }
+
+  double _containerSizeFactor() {
+    final size = (_containerSize ?? '').toLowerCase();
+    switch (size) {
+      case 'small':
+        return 0.85;
+      case 'large':
+        return 1.15;
+      case 'medium':
+      default:
+        return 1.0;
+    }
   }
 
   double _ratioFromPercent(double value) {
@@ -989,11 +1018,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         Text(
           '${adjustedRange} ${t.estimated}',
           style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700, color: Colors.black87),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          t.suggestInstantAdjustedHint,
-          style: AppTextStyles.caption(context).copyWith(color: Colors.black45),
         ),
         const SizedBox(height: 12),
         Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),

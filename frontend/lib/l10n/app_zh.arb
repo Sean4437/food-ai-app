@@ -200,7 +200,6 @@
   "suggestInstantLimitInline": "建议分量上限",
   "suggestInstantMissing": "還沒有分析結果",
   "suggestInstantNonFood": "这不是食物，请重拍。若现在不打算吃东西，也欢迎之后肚子饿再使用。",
-  "suggestInstantAdjustedHint": "已依份量調整顯示",
   "suggestInstantReestimate": "重新估算",
   "suggestInstantRecentHint": "建議已參考最近 7 天與上一餐",
   "suggestAutoSaved": "已自動儲存",

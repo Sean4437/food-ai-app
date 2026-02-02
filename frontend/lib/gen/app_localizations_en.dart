@@ -589,9 +589,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'This doesn\'t look like food. Please retake. If you\'re not planning to eat now, feel free to use the app when you\'re hungry.';
 
   @override
-  String get suggestInstantAdjustedHint => 'Adjusted for portion size';
-
-  @override
   String get suggestInstantReestimate => 'Re-estimate';
 
   @override
