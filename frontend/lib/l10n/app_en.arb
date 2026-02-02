@@ -196,7 +196,7 @@
   "suggestInstantAvoid": "Avoid",
   "suggestInstantLimit": "Portion limit",
   "suggestInstantMissing": "No analysis yet",
-  "suggestInstantNonFood": "This is not food. Please retake.",
+  "suggestInstantNonFood": "This doesn\u0027t look like food. Please retake. If you\u0027re not planning to eat now, feel free to use the app when you\u0027re hungry.",
   "suggestInstantAdjustedHint": "Adjusted for portion size",
   "suggestInstantReestimate": "Re-estimate",
   "suggestInstantRecentHint": "Advice uses the last 7 days and the previous meal",

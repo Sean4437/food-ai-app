@@ -576,7 +576,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantMissing => 'No analysis yet';
 
   @override
-  String get suggestInstantNonFood => 'This is not food. Please retake.';
+  String get suggestInstantNonFood =>
+      'This doesn\'t look like food. Please retake. If you\'re not planning to eat now, feel free to use the app when you\'re hungry.';
 
   @override
   String get suggestInstantAdjustedHint => 'Adjusted for portion size';
