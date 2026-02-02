@@ -200,6 +200,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calorieLabel => 'Calorie range';
 
   @override
+  String get editCalorieTitle => 'Edit calories';
+
+  @override
+  String get editCalorieHint => 'e.g. 450-600 kcal';
+
+  @override
+  String get editCalorieClear => 'Clear';
+
+  @override
   String get macroLabel => 'Macros';
 
   @override

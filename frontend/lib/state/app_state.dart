@@ -340,7 +340,7 @@ class AppState extends ChangeNotifier {
     bool hasRange = false;
     for (final entry in entriesForDate(date)) {
       if (excludeEntryId != null && entry.id == excludeEntryId) continue;
-      final range = _parseCalorieRange(entry.result?.calorieRange);
+      final range = _parseCalorieRange(entry.overrideCalorieRange ?? entry.result?.calorieRange);
       if (range == null) continue;
       final weight = _portionWeight(entry.portionPercent);
       final mid = ((range[0] + range[1]) / 2) * weight;
@@ -465,6 +465,7 @@ class AppState extends ChangeNotifier {
     int? portionPercent,
     String? containerType,
     String? containerSize,
+    String? overrideCalorieRange,
   }) async {
     final now = DateTime.now().toUtc();
     final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
@@ -481,6 +482,7 @@ class AppState extends ChangeNotifier {
         portionPercent: portionPercent ?? existing.portionPercent,
         containerType: containerType ?? existing.containerType,
         containerSize: containerSize ?? existing.containerSize,
+        overrideCalorieRange: overrideCalorieRange ?? existing.overrideCalorieRange,
         result: _resolveNutritionResult(analysis.result),
         updatedAt: now,
         lastAnalyzedNote: (note ?? '').trim(),
@@ -506,6 +508,7 @@ class AppState extends ChangeNotifier {
         portionPercent: portionPercent ?? 100,
         containerType: containerType,
         containerSize: containerSize,
+        overrideCalorieRange: overrideCalorieRange,
         updatedAt: now,
         mealId: mealId,
         note: note,
@@ -836,7 +839,7 @@ class AppState extends ChangeNotifier {
   }
 
   String entryCalorieRangeLabel(MealEntry entry, AppLocalizations t) {
-    final baseRange = entry.result?.calorieRange ?? '';
+    final baseRange = entry.overrideCalorieRange ?? entry.result?.calorieRange ?? '';
     final parsed = _parseCalorieRange(baseRange);
     if (parsed == null) return t.calorieUnknown;
     final weight = _portionWeight(entry.portionPercent);
@@ -1627,7 +1630,7 @@ class AppState extends ChangeNotifier {
       if (result == null) continue;
       final weight = _portionWeight(entry.portionPercent);
       totalWeight += weight;
-      final range = _parseCalorieRange(result.calorieRange);
+      final range = _parseCalorieRange(entry.overrideCalorieRange ?? result.calorieRange);
       if (range != null) {
         minSum += range[0] * weight;
         maxSum += range[1] * weight;
@@ -1667,7 +1670,7 @@ class AppState extends ChangeNotifier {
       if (result == null) continue;
       final weight = _portionWeight(entry.portionPercent);
       totalWeight += weight;
-      final range = _parseCalorieRange(result.calorieRange);
+      final range = _parseCalorieRange(entry.overrideCalorieRange ?? result.calorieRange);
       if (range != null) {
         minSum += range[0] * weight;
         maxSum += range[1] * weight;
@@ -1849,6 +1852,19 @@ class AppState extends ChangeNotifier {
     }
     entry.containerType = nextType;
     entry.containerSize = nextSize;
+    entry.updatedAt = DateTime.now().toUtc();
+    markMealInteraction(entry.mealId ?? entry.id);
+    notifyListeners();
+    _store.upsert(entry);
+  }
+
+  void updateEntryCalorieOverride(MealEntry entry, String? range) {
+    final cleaned = (range ?? '').trim();
+    final next = cleaned.isEmpty ? null : cleaned;
+    if (next == entry.overrideCalorieRange) {
+      return;
+    }
+    entry.overrideCalorieRange = next;
     entry.updatedAt = DateTime.now().toUtc();
     markMealInteraction(entry.mealId ?? entry.id);
     notifyListeners();
@@ -3731,6 +3747,7 @@ class AppState extends ChangeNotifier {
       'type': _mealTypeKey(entry.type),
       'filename': entry.filename,
       'portion_percent': entry.portionPercent,
+      'override_calorie_range': entry.overrideCalorieRange,
       'container_type': entry.containerType,
       'container_size': entry.containerSize,
       'meal_id': entry.mealId,
@@ -3762,6 +3779,7 @@ class AppState extends ChangeNotifier {
       time: DateTime.parse(row['time'] as String),
       type: _mealTypeFromKey((row['type'] as String?) ?? 'other'),
       portionPercent: (row['portion_percent'] as num?)?.toInt() ?? 100,
+      overrideCalorieRange: row['override_calorie_range'] as String?,
       containerType: row['container_type'] as String?,
       containerSize: row['container_size'] as String?,
       updatedAt: row['updated_at'] == null ? null : DateTime.tryParse(row['updated_at'] as String),

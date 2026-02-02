@@ -32,6 +32,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   int _portionPercent = 100;
   String? _containerType;
   String? _containerSize;
+  String? _overrideCalorieRange;
   late final AnimationController _scanController;
   double _progressValue = 0;
   int _statusIndex = 0;
@@ -71,6 +72,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _portionPercent = 100;
       _containerType = null;
       _containerSize = null;
+      _overrideCalorieRange = null;
     });
     final file = await _picker.pickImage(source: source);
     if (!mounted) return;
@@ -179,6 +181,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       portionPercent: _portionPercent,
       containerType: _containerType,
       containerSize: _containerSize,
+      overrideCalorieRange: _overrideCalorieRange,
     );
     if (!mounted) return;
     setState(() {
@@ -616,6 +619,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     _portionPercent = 100;
     _containerType = normalized[0];
     _containerSize = normalized[1];
+    _overrideCalorieRange = null;
   }
 
   void _updatePortionPercent(int value) {
@@ -650,6 +654,44 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     if (_savedEntry != null) {
       final app = AppStateScope.of(context);
       app.updateEntryContainer(_savedEntry!, _containerType, _containerSize);
+    }
+  }
+
+  Future<void> _editCalorieRange() async {
+    final t = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '');
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.editCalorieTitle),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(hintText: t.editCalorieHint),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(''),
+            child: Text(t.editCalorieClear),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(t.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: Text(t.save),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || result == null) return;
+    final next = result.trim();
+    setState(() {
+      _overrideCalorieRange = next.isEmpty ? null : next;
+    });
+    if (_savedEntry != null) {
+      final app = AppStateScope.of(context);
+      app.updateEntryCalorieOverride(_savedEntry!, _overrideCalorieRange);
     }
   }
 
@@ -753,7 +795,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   String _scaledCalorieRangeText(String raw, int portionPercent) {
     final percent = portionPercent.clamp(10, 200) / 100.0;
     final sizeFactor = _containerSizeFactor();
-    final factor = percent * sizeFactor;
+    final factor = percent * sizeFactor * _containerTypeFactor();
     final hasKcal = raw.toLowerCase().contains('kcal');
     final normalized = raw.replaceAll('～', '-').replaceAll('~', '-').replaceAll('–', '-').replaceAll('—', '-');
     final match = RegExp(r'(\\d+)\\s*-\\s*(\\d+)').firstMatch(normalized);
@@ -780,7 +822,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   String _macroDisplayValue(String key, double value, int portionPercent) {
     final percent = portionPercent.clamp(10, 200) / 100.0;
     final sizeFactor = _containerSizeFactor();
-    final scaled = value * percent * sizeFactor;
+    final scaled = value * percent * sizeFactor * _containerTypeFactor();
     if (key == 'sodium') {
       return '${scaled.round()}mg';
     }
@@ -795,6 +837,22 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       case 'large':
         return 1.15;
       case 'medium':
+      default:
+        return 1.0;
+    }
+  }
+
+  double _containerTypeFactor() {
+    final type = (_containerType ?? '').toLowerCase();
+    switch (type) {
+      case 'plate':
+        return 1.1;
+      case 'box':
+        return 1.05;
+      case 'cup':
+        return 0.9;
+      case 'bowl':
+      case 'unknown':
       default:
         return 1.0;
     }
@@ -992,7 +1050,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         ],
       );
     }
-    final adjustedRange = _scaledCalorieRangeText(analysis.calorieRange, _portionPercent);
+    final baseRange = _overrideCalorieRange ?? analysis.calorieRange;
+    final adjustedRange = _scaledCalorieRangeText(baseRange, _portionPercent);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1015,9 +1074,22 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           ],
         ),
         const SizedBox(height: 6),
-        Text(
-          '${adjustedRange} ${t.estimated}',
-          style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700, color: Colors.black87),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${adjustedRange} ${t.estimated}',
+                style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700, color: Colors.black87),
+              ),
+            ),
+            IconButton(
+              onPressed: _editCalorieRange,
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              tooltip: t.editCalorieTitle,
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),

@@ -18,7 +18,7 @@ class MealStoreImpl implements MealStore {
     final dbPath = p.join(dir.path, _dbName);
     _db = await openDatabase(
       dbPath,
-      version: 7,
+      version: 8,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table(
@@ -29,6 +29,7 @@ class MealStoreImpl implements MealStore {
             portion_percent INTEGER,
             container_type TEXT,
             container_size TEXT,
+            override_calorie_range TEXT,
             meal_id TEXT,
             filename TEXT NOT NULL,
             note TEXT,
@@ -67,6 +68,9 @@ class MealStoreImpl implements MealStore {
         if (oldVersion < 7) {
           await db.execute('ALTER TABLE $_table ADD COLUMN container_type TEXT');
           await db.execute('ALTER TABLE $_table ADD COLUMN container_size TEXT');
+        }
+        if (oldVersion < 8) {
+          await db.execute('ALTER TABLE $_table ADD COLUMN override_calorie_range TEXT');
         }
       },
     );
@@ -125,6 +129,7 @@ class MealStoreImpl implements MealStore {
       time: DateTime.fromMillisecondsSinceEpoch(row['time'] as int),
       type: type,
       portionPercent: _portionPercentFromRow(row),
+      overrideCalorieRange: row['override_calorie_range'] as String?,
       containerType: row['container_type'] as String?,
       containerSize: row['container_size'] as String?,
       updatedAt: _parseEpoch(row['updated_at']),
@@ -151,6 +156,7 @@ class MealStoreImpl implements MealStore {
       'portion_percent': entry.portionPercent,
       'container_type': entry.containerType,
       'container_size': entry.containerSize,
+      'override_calorie_range': entry.overrideCalorieRange,
       'meal_id': entry.mealId,
       'filename': entry.filename,
       'note': entry.note,

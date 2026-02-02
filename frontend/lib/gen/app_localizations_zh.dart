@@ -197,6 +197,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get calorieLabel => '熱量區間';
 
   @override
+  String get editCalorieTitle => '編輯熱量';
+
+  @override
+  String get editCalorieHint => '例如 450-600 kcal';
+
+  @override
+  String get editCalorieClear => '清除';
+
+  @override
   String get macroLabel => '三大營養';
 
   @override
@@ -1564,6 +1573,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get calorieLabel => '熱量區間';
+
+  @override
+  String get editCalorieTitle => '編輯熱量';
+
+  @override
+  String get editCalorieHint => '例如 450-600 kcal';
+
+  @override
+  String get editCalorieClear => '清除';
 
   @override
   String get macroLabel => '三大營養';

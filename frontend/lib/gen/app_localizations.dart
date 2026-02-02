@@ -471,6 +471,24 @@ abstract class AppLocalizations {
   /// **'熱量區間'**
   String get calorieLabel;
 
+  /// No description provided for @editCalorieTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'編輯熱量'**
+  String get editCalorieTitle;
+
+  /// No description provided for @editCalorieHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'例如 450-600 kcal'**
+  String get editCalorieHint;
+
+  /// No description provided for @editCalorieClear.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'清除'**
+  String get editCalorieClear;
+
   /// No description provided for @macroLabel.
   ///
   /// In zh_TW, this message translates to:
