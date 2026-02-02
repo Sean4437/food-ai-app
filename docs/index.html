@@ -45,6 +45,15 @@
       });
     }
   </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // Cache-bust flutter bootstrap/main.js when users still have old caches.
+    (function () {
+      var buildId = "20260202-3";
+      var script = document.createElement("script");
+      script.src = "flutter_bootstrap.js?v=" + buildId;
+      script.async = true;
+      document.body.appendChild(script);
+    })();
+  </script>
 </body>
 </html>
