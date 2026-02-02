@@ -573,6 +573,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantLimit => 'Portion limit';
 
   @override
+  String get suggestInstantCanEatInline => 'How to eat';
+
+  @override
+  String get suggestInstantRiskInline => 'Possible concerns';
+
+  @override
+  String get suggestInstantLimitInline => 'Portion limit';
+
+  @override
   String get suggestInstantMissing => 'No analysis yet';
 
   @override

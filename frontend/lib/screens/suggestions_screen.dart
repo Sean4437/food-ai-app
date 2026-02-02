@@ -568,7 +568,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     });
   }
 
-Widget _buildAdviceCard(AppLocalizations t) {
+  Widget _buildAdviceCard(AppLocalizations t) {
     if (_analysis == null) {
       return Text(t.suggestInstantMissing, style: AppTextStyles.caption(context).copyWith(color: Colors.black54));
     }
@@ -577,16 +577,12 @@ Widget _buildAdviceCard(AppLocalizations t) {
     if (sections.isEmpty) {
       return Text(suggestion, style: AppTextStyles.caption(context).copyWith(color: Colors.black87, height: 1.4));
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _adviceRow(t.suggestInstantCanEat, sections['can']),
-        const SizedBox(height: 8),
-        _adviceRow(t.suggestInstantAvoid, sections['avoid']),
-        const SizedBox(height: 8),
-        _adviceRow(t.suggestInstantLimit, sections['limit']),
-      ],
-    );
+    final canText = sections['can'] ?? '-';
+    final avoidText = sections['avoid'] ?? '-';
+    final limitText = sections['limit'] ?? '-';
+    final combined =
+        '${t.suggestInstantCanEatInline}：$canText，${t.suggestInstantRiskInline}：$avoidText，${t.suggestInstantLimitInline}：$limitText';
+    return Text(combined, style: AppTextStyles.caption(context).copyWith(color: Colors.black87, height: 1.4));
   }
 
   Widget _adviceRow(String title, String? value) {
@@ -705,23 +701,30 @@ Widget _buildAdviceCard(AppLocalizations t) {
       children: [
         Text(t.portionLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        Text('${_portionPercent}%', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            trackHeight: 8,
-            activeTrackColor: theme.colorScheme.primary,
-            inactiveTrackColor: theme.colorScheme.primary.withOpacity(0.2),
-            thumbColor: theme.colorScheme.primary,
-            overlayColor: theme.colorScheme.primary.withOpacity(0.12),
-          ),
-          child: Slider(
-            value: _portionPercent.toDouble(),
-            min: 10,
-            max: 200,
-            divisions: 19,
-            label: '${_portionPercent}%',
-            onChanged: (value) => _updatePortionPercent(value.round()),
-          ),
+        Row(
+          children: [
+            Text('${_portionPercent}%', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 6,
+                  activeTrackColor: theme.colorScheme.primary,
+                  inactiveTrackColor: theme.colorScheme.primary.withOpacity(0.2),
+                  thumbColor: theme.colorScheme.primary,
+                  overlayColor: theme.colorScheme.primary.withOpacity(0.12),
+                ),
+                child: Slider(
+                  value: _portionPercent.toDouble(),
+                  min: 10,
+                  max: 200,
+                  divisions: 19,
+                  label: '${_portionPercent}%',
+                  onChanged: (value) => _updatePortionPercent(value.round()),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Text(t.containerTypeLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
@@ -768,28 +771,115 @@ Widget _buildAdviceCard(AppLocalizations t) {
     return '${scaled.round()}g';
   }
 
-  Widget _buildMacroRow(AppLocalizations t, String label, String value) {
+  double _ratioFromPercent(double value) {
+    final safe = value.clamp(0, 100).toDouble();
+    return safe / 100.0;
+  }
+
+  Widget _nutrientValue(
+    BuildContext context,
+    String key,
+    String label,
+    double grams,
+    double ratio,
+    IconData icon,
+    Color color,
+  ) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Text(label, style: AppTextStyles.caption(context).copyWith(color: Colors.black87)),
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 6),
+        Text(
+          '$label ${_macroDisplayValue(key, grams, _portionPercent)}',
+          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
         ),
-        Text(value, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
       ],
     );
   }
 
   Widget _buildMacroSection(AppLocalizations t, AnalysisResult analysis) {
+    final app = AppStateScope.of(context);
     final macros = analysis.macros;
+    final protein = macros['protein'] ?? 0;
+    final carbs = macros['carbs'] ?? 0;
+    final fat = macros['fat'] ?? 0;
+    final sodium = macros['sodium'] ?? 0;
+    final proteinRatio = _ratioFromPercent(app.macroPercentFromResult(analysis, 'protein'));
+    final carbsRatio = _ratioFromPercent(app.macroPercentFromResult(analysis, 'carbs'));
+    final fatRatio = _ratioFromPercent(app.macroPercentFromResult(analysis, 'fat'));
+    final sodiumRatio = _ratioFromPercent(app.macroPercentFromResult(analysis, 'sodium'));
+    final values = [proteinRatio, carbsRatio, fatRatio, sodiumRatio];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(t.macroLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        _buildMacroRow(t, t.protein, _macroDisplayValue('protein', macros['protein'] ?? 0, _portionPercent)),
-        _buildMacroRow(t, t.carbs, _macroDisplayValue('carbs', macros['carbs'] ?? 0, _portionPercent)),
-        _buildMacroRow(t, t.fat, _macroDisplayValue('fat', macros['fat'] ?? 0, _portionPercent)),
-        _buildMacroRow(t, t.sodium, _macroDisplayValue('sodium', macros['sodium'] ?? 0, _portionPercent)),
+        SizedBox(
+          height: 150,
+          child: CustomPaint(
+            painter: _RadarPainter(values),
+            child: Center(
+              child: SizedBox(
+                width: 120,
+                height: 120,
+                child: Stack(
+                  children: [
+                    Align(
+                      alignment: const Alignment(0, -1.05),
+                      child: _nutrientValue(
+                        context,
+                        'protein',
+                        t.protein,
+                        protein,
+                        proteinRatio,
+                        Icons.eco,
+                        const Color(0xFF7FCB99),
+                      ),
+                    ),
+                    Align(
+                      alignment: const Alignment(1.05, 0.1),
+                      child: _nutrientValue(
+                        context,
+                        'carbs',
+                        t.carbs,
+                        carbs,
+                        carbsRatio,
+                        Icons.grass,
+                        const Color(0xFFF1BE4B),
+                      ),
+                    ),
+                    Align(
+                      alignment: const Alignment(0, 1.05),
+                      child: _nutrientValue(
+                        context,
+                        'fat',
+                        t.fat,
+                        fat,
+                        fatRatio,
+                        Icons.local_pizza,
+                        const Color(0xFFF08A7C),
+                      ),
+                    ),
+                    Align(
+                      alignment: const Alignment(-1.05, 0.1),
+                      child: _nutrientValue(
+                        context,
+                        'sodium',
+                        t.sodium,
+                        sodium,
+                        sodiumRatio,
+                        Icons.opacity,
+                        const Color(0xFF8AB4F8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -879,12 +969,6 @@ Widget _buildAdviceCard(AppLocalizations t) {
       children: [
         Row(
           children: [
-            Expanded(
-              child: Text(
-                analysis.foodName,
-                style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
-              ),
-            ),
             IconButton(
               onPressed: _editFoodName,
               icon: const Icon(Icons.edit, size: 18),
@@ -892,12 +976,19 @@ Widget _buildAdviceCard(AppLocalizations t) {
               padding: const EdgeInsets.all(8),
               constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                analysis.foodName,
+                style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 6),
         Text(
           '${adjustedRange} ${t.estimated}',
-          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+          style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700, color: Colors.black87),
         ),
         const SizedBox(height: 4),
         Text(
@@ -908,18 +999,6 @@ Widget _buildAdviceCard(AppLocalizations t) {
         Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         _buildAdviceCard(t),
-        const SizedBox(height: 14),
-        _buildPortionContainerSection(t),
-        const SizedBox(height: 12),
-        _buildMacroSection(t, analysis),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: _loading ? null : _reanalyzeWithAdjustments,
-            child: Text(t.suggestInstantReestimate),
-          ),
-        ),
         if (_showSaveActions) ...[
           const SizedBox(height: 14),
           Text(t.suggestInstantSavePrompt, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
@@ -944,6 +1023,18 @@ Widget _buildAdviceCard(AppLocalizations t) {
             ],
           ),
         ],
+        const SizedBox(height: 14),
+        _buildPortionContainerSection(t),
+        const SizedBox(height: 12),
+        _buildMacroSection(t, analysis),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _loading ? null : _reanalyzeWithAdjustments,
+            child: Text(t.suggestInstantReestimate),
+          ),
+        ),
         const SizedBox(height: 12),
         Text(t.suggestInstantRecentHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
       ],
@@ -1287,6 +1378,72 @@ Widget _buildAdviceCard(AppLocalizations t) {
         ),
       ),
     );
+  }
+}
+
+class _RadarPainter extends CustomPainter {
+  _RadarPainter(this.values);
+
+  final List<double> values;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) * 0.32;
+    final axes = values.length;
+    final gridPaint = Paint()
+      ..color = const Color(0xFFE6E9F2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final shapePaint = Paint()
+      ..color = const Color(0xFFB5D8C6).withOpacity(0.6)
+      ..style = PaintingStyle.fill;
+    final linePaint = Paint()
+      ..color = const Color(0xFFB5D8C6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    for (int i = 1; i <= 5; i++) {
+      final r = radius * (i / 5);
+      final path = Path();
+      for (int j = 0; j < axes; j++) {
+        final angle = (2 * math.pi / axes) * j - math.pi / 2;
+        final point = Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
+        if (j == 0) {
+          path.moveTo(point.dx, point.dy);
+        } else {
+          path.lineTo(point.dx, point.dy);
+        }
+      }
+      path.close();
+      canvas.drawPath(path, gridPaint);
+    }
+
+    final dataPath = Path();
+    for (int j = 0; j < axes; j++) {
+      final angle = (2 * math.pi / axes) * j - math.pi / 2;
+      final point = Offset(
+        center.dx + radius * values[j] * math.cos(angle),
+        center.dy + radius * values[j] * math.sin(angle),
+      );
+      if (j == 0) {
+        dataPath.moveTo(point.dx, point.dy);
+      } else {
+        dataPath.lineTo(point.dx, point.dy);
+      }
+    }
+    dataPath.close();
+    canvas.drawPath(dataPath, shapePaint);
+    canvas.drawPath(dataPath, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RadarPainter oldDelegate) {
+    if (oldDelegate.values.length != values.length) return true;
+    for (int i = 0; i < values.length; i++) {
+      if (oldDelegate.values[i] != values[i]) return true;
+    }
+    return false;
   }
 }
 

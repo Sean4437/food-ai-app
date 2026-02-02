@@ -564,6 +564,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantLimit => '建議份量上限';
 
   @override
+  String get suggestInstantCanEatInline => '可以怎么吃';
+
+  @override
+  String get suggestInstantRiskInline => '可能会有的问题';
+
+  @override
+  String get suggestInstantLimitInline => '建议分量上限';
+
+  @override
   String get suggestInstantMissing => '還沒有分析結果';
 
   @override
@@ -1925,6 +1934,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get suggestInstantLimit => '建議份量上限';
+
+  @override
+  String get suggestInstantCanEatInline => '可以怎麼吃';
+
+  @override
+  String get suggestInstantRiskInline => '可能會有的問題';
+
+  @override
+  String get suggestInstantLimitInline => '建議分量上限';
 
   @override
   String get suggestInstantMissing => '還沒有分析結果';

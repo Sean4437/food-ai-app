@@ -1185,6 +1185,24 @@ abstract class AppLocalizations {
   /// **'建議份量上限'**
   String get suggestInstantLimit;
 
+  /// No description provided for @suggestInstantCanEatInline.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'可以怎麼吃'**
+  String get suggestInstantCanEatInline;
+
+  /// No description provided for @suggestInstantRiskInline.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'可能會有的問題'**
+  String get suggestInstantRiskInline;
+
+  /// No description provided for @suggestInstantLimitInline.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'建議分量上限'**
+  String get suggestInstantLimitInline;
+
   /// No description provided for @suggestInstantMissing.
   ///
   /// In zh_TW, this message translates to:
