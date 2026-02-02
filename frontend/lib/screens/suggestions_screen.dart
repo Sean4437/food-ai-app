@@ -33,6 +33,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   String? _containerType;
   String? _containerSize;
   String? _overrideCalorieRange;
+  String? _displayCalorieRange;
   late final AnimationController _scanController;
   double _progressValue = 0;
   int _statusIndex = 0;
@@ -73,6 +74,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _containerType = null;
       _containerSize = null;
       _overrideCalorieRange = null;
+      _displayCalorieRange = null;
     });
     final file = await _picker.pickImage(source: source);
     if (!mounted) return;
@@ -620,12 +622,17 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     _containerType = normalized[0];
     _containerSize = normalized[1];
     _overrideCalorieRange = null;
+    _displayCalorieRange = _scaledCalorieRangeText(result.calorieRange, _portionPercent);
   }
 
   void _updatePortionPercent(int value) {
     final next = value.clamp(10, 200).toInt();
     setState(() {
       _portionPercent = next;
+      _displayCalorieRange = _scaledCalorieRangeText(
+        _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '',
+        _portionPercent,
+      );
     });
     if (_savedEntry != null) {
       final app = AppStateScope.of(context);
@@ -638,6 +645,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     setState(() {
       _containerType = normalized[0];
       _containerSize = normalized[1];
+      _displayCalorieRange = _scaledCalorieRangeText(
+        _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '',
+        _portionPercent,
+      );
     });
     if (_savedEntry != null) {
       final app = AppStateScope.of(context);
@@ -650,6 +661,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     setState(() {
       _containerType = normalized[0];
       _containerSize = normalized[1];
+      _displayCalorieRange = _scaledCalorieRangeText(
+        _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '',
+        _portionPercent,
+      );
     });
     if (_savedEntry != null) {
       final app = AppStateScope.of(context);
@@ -688,6 +703,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     final next = result.trim();
     setState(() {
       _overrideCalorieRange = next.isEmpty ? null : next;
+      _displayCalorieRange = _scaledCalorieRangeText(
+        _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '',
+        _portionPercent,
+      );
     });
     if (_savedEntry != null) {
       final app = AppStateScope.of(context);
@@ -797,7 +816,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     final sizeFactor = _containerSizeFactor();
     final factor = percent * sizeFactor * _containerTypeFactor();
     final hasKcal = raw.toLowerCase().contains('kcal');
-    final normalized = raw.replaceAll('～', '-').replaceAll('~', '-').replaceAll('–', '-').replaceAll('—', '-');
+    final normalized = raw
+        .replaceAll('\uFF5E', '-') // fullwidth tilde
+        .replaceAll('~', '-')
+        .replaceAll('\u2013', '-') // en dash
+        .replaceAll('\u2014', '-'); // em dash
     final match = RegExp(r'(\\d+)\\s*-\\s*(\\d+)').firstMatch(normalized);
     if (match != null) {
       final low = int.tryParse(match.group(1) ?? '');
@@ -1051,7 +1074,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       );
     }
     final baseRange = _overrideCalorieRange ?? analysis.calorieRange;
-    final adjustedRange = _scaledCalorieRangeText(baseRange, _portionPercent);
+    final adjustedRange = _displayCalorieRange ?? _scaledCalorieRangeText(baseRange, _portionPercent);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
