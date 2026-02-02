@@ -47,6 +47,8 @@ class AnalysisResult(BaseModel):
     cost_estimate_usd: Optional[float] = None
     confidence: Optional[float] = None
     is_beverage: Optional[bool] = None
+    is_food: Optional[bool] = None
+    non_food_reason: Optional[str] = None
     debug_reason: Optional[str] = None
     container_guess_type: Optional[str] = None
     container_guess_size: Optional[str] = None
@@ -419,6 +421,8 @@ def _build_prompt(
             f"{suggestion_rule}"
             "- confidence: 0 到 1 的信心分數\n"
             "- is_beverage: 是否為飲料（true/false）\n"
+            "- is_food: 是否為食物（true/false；若不是食物請填 false）\n"
+            "- non_food_reason: 若不是食物，簡短原因\n"
             "- container_guess_type: 容器推測類型（bowl/plate/box/cup/unknown）\n"
             "- container_guess_size: 容器推測尺寸（small/medium/large/none）\n"
             "- 若為盤/盒/unknown，尺寸請用 none；若為飲料優先用 cup\n"
@@ -438,6 +442,8 @@ def _build_prompt(
             f"{suggestion_example}"
             "  \"confidence\": 0.72,\n"
             "  \"is_beverage\": false,\n"
+            "  \"is_food\": true,\n"
+            "  \"non_food_reason\": \"\",\n"
             "  \"container_guess_type\": \"bowl\",\n"
             "  \"container_guess_size\": \"medium\"\n"
             "}\n"
@@ -473,6 +479,8 @@ def _build_prompt(
         f"{suggestion_rule}"
         "- confidence: 0 to 1 confidence score\n"
         "- is_beverage: true/false\n"
+        "- is_food: true/false (set false if not food)\n"
+        "- non_food_reason: brief reason if not food\n"
         "- container_guess_type: container type guess (bowl/plate/box/cup/unknown)\n"
         "- container_guess_size: container size guess (small/medium/large/none)\n"
         "- If plate/box/unknown, size must be none; if beverage, prefer cup\n"
@@ -492,6 +500,8 @@ def _build_prompt(
         f"{suggestion_example}"
         "  \"confidence\": 0.72,\n"
         "  \"is_beverage\": false,\n"
+        "  \"is_food\": true,\n"
+        "  \"non_food_reason\": \"\",\n"
         "  \"container_guess_type\": \"bowl\",\n"
         "  \"container_guess_size\": \"medium\"\n"
         "}\n"
@@ -590,6 +600,8 @@ def _build_name_prompt(
             f"{suggestion_rule}"
             "- confidence: 0 到 1 的信心分數\n"
             "- is_beverage: 是否為飲料（true/false）\n"
+            "- is_food: 是否為食物（true/false；若不是食物請填 false）\n"
+            "- non_food_reason: 若不是食物，簡短原因\n"
             "- container_guess_type: 容器推測類型（bowl/plate/box/cup/unknown）\n"
             "- container_guess_size: 容器推測尺寸（small/medium/large/none）\n"
             "- 若為盤/盒/unknown，尺寸請用 none；若為飲料優先用 cup\n"
@@ -605,6 +617,8 @@ def _build_name_prompt(
             f"{suggestion_example}"
             "  \"confidence\": 0.72,\n"
             "  \"is_beverage\": false,\n"
+            "  \"is_food\": true,\n"
+            "  \"non_food_reason\": \"\",\n"
             "  \"container_guess_type\": \"bowl\",\n"
             "  \"container_guess_size\": \"medium\"\n"
             "}\n"
@@ -639,6 +653,8 @@ def _build_name_prompt(
         f"{suggestion_rule}"
         "- confidence: 0 to 1\n"
         "- is_beverage: true/false\n"
+        "- is_food: true/false (set false if not food)\n"
+        "- non_food_reason: brief reason if not food\n"
         "- container_guess_type: container type guess (bowl/plate/box/cup/unknown)\n"
         "- container_guess_size: container size guess (small/medium/large/none)\n"
         "- If plate/box/unknown, size must be none; if beverage, prefer cup\n"
@@ -654,6 +670,8 @@ def _build_name_prompt(
         f"{suggestion_example}"
         "  \"confidence\": 0.72,\n"
         "  \"is_beverage\": false,\n"
+        "  \"is_food\": true,\n"
+        "  \"non_food_reason\": \"\",\n"
         "  \"container_guess_type\": \"bowl\",\n"
         "  \"container_guess_size\": \"medium\"\n"
         "}\n"
@@ -1291,6 +1309,10 @@ def _analyze_with_openai(
         return None
     is_beverage = _parse_is_beverage(data)
     data["is_beverage"] = is_beverage
+    is_food = _parse_is_food(data)
+    data["is_food"] = is_food
+    if not is_food:
+        data["non_food_reason"] = str(data.get("non_food_reason") or "").strip()
     data["macros"] = _normalize_macros(data, lang)
     data["calorie_range"] = _normalize_calorie_range(
         data.get("calorie_range", ""),
@@ -1352,6 +1374,19 @@ def _parse_is_beverage(data: dict) -> bool:
     if isinstance(raw_flag, str):
         return raw_flag.strip().lower() == "true"
     return False
+
+
+def _parse_is_food(data: dict) -> bool:
+    raw = data.get("is_food")
+    if isinstance(raw, bool):
+        return raw
+    if isinstance(raw, str):
+        lower = raw.strip().lower()
+        if lower in ("true", "yes", "y", "1"):
+            return True
+        if lower in ("false", "no", "n", "0"):
+            return False
+    return True
 
 
 def _analyze_label_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
@@ -1484,6 +1519,8 @@ async def analyze_image(
                 tier="cached",
                 source="cache",
                 cost_estimate_usd=None,
+                is_food=cached_result.get("is_food", True),
+                non_food_reason=cached_result.get("non_food_reason"),
                 container_guess_type=container_guess_type,
                 container_guess_size=container_guess_size,
             )
@@ -1558,6 +1595,8 @@ async def analyze_image(
                         "judgement_tags": payload["result"].get("judgement_tags") or [],
                         "dish_summary": payload["result"].get("dish_summary", ""),
                         "suggestion": payload["result"]["suggestion"],
+                        "is_food": payload["result"].get("is_food", True),
+                        "non_food_reason": payload["result"].get("non_food_reason"),
                         "container_guess_type": container_guess_type,
                         "container_guess_size": container_guess_size,
                     },
@@ -1576,6 +1615,8 @@ async def analyze_image(
                     cost_estimate_usd=cost_estimate,
                     confidence=payload["result"].get("confidence"),
                     is_beverage=payload["result"].get("is_beverage"),
+                    is_food=payload["result"].get("is_food", True),
+                    non_food_reason=payload["result"].get("non_food_reason"),
                     container_guess_type=container_guess_type,
                     container_guess_size=container_guess_size,
                     debug_reason=None,
@@ -1641,6 +1682,8 @@ async def analyze_image(
         cost_estimate_usd=None,
         confidence=0.35,
         is_beverage=False,
+        is_food=True,
+        non_food_reason=None,
         container_guess_type=container_guess_type,
         container_guess_size=container_guess_size,
         debug_reason=debug_reason,
@@ -1668,6 +1711,8 @@ async def analyze_name(
             cost_estimate_usd=None,
             confidence=0.0,
             is_beverage=False,
+            is_food=True,
+            non_food_reason=None,
             container_guess_type=container_guess_type,
             container_guess_size=container_guess_size,
             debug_reason="missing_food_name",
@@ -1734,6 +1779,10 @@ async def analyze_name(
                 _increment_daily_count()
                 is_beverage = _parse_is_beverage(data)
                 data["is_beverage"] = is_beverage
+                is_food = _parse_is_food(data)
+                data["is_food"] = is_food
+                if not is_food:
+                    data["non_food_reason"] = str(data.get("non_food_reason") or "").strip()
                 normalized_macros = _normalize_macros(data, use_lang)
                 calorie_range = _normalize_calorie_range(
                     data.get("calorie_range", ""),
@@ -1754,6 +1803,8 @@ async def analyze_name(
                     cost_estimate_usd=cost_estimate,
                     confidence=data.get("confidence"),
                     is_beverage=is_beverage,
+                    is_food=data.get("is_food", True),
+                    non_food_reason=data.get("non_food_reason"),
                     container_guess_type=container_guess_type,
                     container_guess_size=container_guess_size,
                     debug_reason=None,
@@ -1807,6 +1858,8 @@ async def analyze_name(
         cost_estimate_usd=None,
         confidence=0.35,
         is_beverage=False,
+        is_food=True,
+        non_food_reason=None,
         container_guess_type=container_guess_type,
         container_guess_size=container_guess_size,
         debug_reason=debug_reason,

@@ -14,6 +14,8 @@
   final double? costEstimateUsd;
   final double? confidence;
   final bool? isBeverage;
+  final bool? isFood;
+  final String? nonFoodReason;
   final String? containerGuessType;
   final String? containerGuessSize;
 
@@ -33,6 +35,8 @@
     this.costEstimateUsd,
     this.confidence,
     this.isBeverage,
+    this.isFood,
+    this.nonFoodReason,
     this.containerGuessType,
     this.containerGuessSize,
   });
@@ -64,6 +68,8 @@
       costEstimateUsd: (json['cost_estimate_usd'] as num?)?.toDouble(),
       confidence: (json['confidence'] as num?)?.toDouble(),
       isBeverage: json['is_beverage'] as bool?,
+      isFood: json['is_food'] as bool?,
+      nonFoodReason: json['non_food_reason'] as String?,
       containerGuessType: json['container_guess_type'] as String?,
       containerGuessSize: json['container_guess_size'] as String?,
     );
@@ -86,6 +92,8 @@
       'cost_estimate_usd': costEstimateUsd,
       'confidence': confidence,
       'is_beverage': isBeverage,
+      'is_food': isFood,
+      'non_food_reason': nonFoodReason,
       'container_guess_type': containerGuessType,
       'container_guess_size': containerGuessSize,
     };

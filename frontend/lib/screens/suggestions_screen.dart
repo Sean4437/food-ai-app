@@ -106,7 +106,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = true;
+      _showSaveActions = analysis.result.isFood != false;
       _completeSmartProgress(() {
         if (!mounted) return;
         setState(() {
@@ -171,6 +171,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   Future<void> _saveIfNeeded() async {
     if (_analysis == null) return;
+    if (_analysis!.result.isFood == false) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final saved = await app.saveQuickCapture(
@@ -233,7 +234,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = true;
+      _showSaveActions = updated.result.isFood != false;
       _completeSmartProgress(() {
         if (!mounted) return;
         setState(() {
@@ -854,6 +855,24 @@ Widget _buildAdviceCard(AppLocalizations t) {
   }
 
   Widget _buildAnalysisCardContent(AppLocalizations t, AnalysisResult analysis) {
+    if (analysis.isFood == false) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            t.suggestInstantNonFood,
+            style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+          ),
+          if ((analysis.nonFoodReason ?? '').trim().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              analysis.nonFoodReason!.trim(),
+              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+            ),
+          ],
+        ],
+      );
+    }
     final adjustedRange = _scaledCalorieRangeText(analysis.calorieRange, _portionPercent);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

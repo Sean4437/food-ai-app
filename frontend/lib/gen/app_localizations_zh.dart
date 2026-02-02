@@ -567,6 +567,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantMissing => '還沒有分析結果';
 
   @override
+  String get suggestInstantNonFood => '這不是食物，請重拍';
+
+  @override
   String get suggestInstantAdjustedHint => '已依份量調整顯示';
 
   @override
@@ -1897,6 +1900,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get suggestInstantMissing => '還沒有分析結果';
+
+  @override
+  String get suggestInstantNonFood => '這不是食物，請重拍';
 
   @override
   String get suggestInstantAdjustedHint => '已依份量調整顯示';

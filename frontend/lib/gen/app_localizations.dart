@@ -1191,6 +1191,12 @@ abstract class AppLocalizations {
   /// **'還沒有分析結果'**
   String get suggestInstantMissing;
 
+  /// No description provided for @suggestInstantNonFood.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'這不是食物，請重拍'**
+  String get suggestInstantNonFood;
+
   /// No description provided for @suggestInstantAdjustedHint.
   ///
   /// In zh_TW, this message translates to:
