@@ -90,6 +90,7 @@ class WeekSummaryInput(BaseModel):
     calorie_range: str
     day_summary: str
     meal_count: int
+    meal_entry_count: Optional[int] = None
     day_meal_summaries: Optional[List[str]] = None
 
 
@@ -883,7 +884,11 @@ def _build_week_prompt(lang: str, profile: dict | None, days: List[WeekSummaryIn
     day_lines = []
     for day in days:
         summary = day.day_summary or "no summary"
-        line = f"- {day.date}: {day.calorie_range} | {summary} | meals={day.meal_count}"
+        entry_count = day.meal_entry_count or day.meal_count
+        if lang == "zh-TW":
+            line = f"- {day.date}: {day.calorie_range} | {summary} | 餐數={day.meal_count}，記錄={entry_count}"
+        else:
+            line = f"- {day.date}: {day.calorie_range} | {summary} | meals={day.meal_count}, entries={entry_count}"
         if day.day_meal_summaries:
             meal_text = "; ".join([s for s in day.day_meal_summaries if s])
             if meal_text:

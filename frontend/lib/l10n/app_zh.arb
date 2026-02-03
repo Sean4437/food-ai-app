@@ -65,6 +65,7 @@
   "dietitianFatHigh": "油脂偏高，下一餐清淡少油。",
   "dietitianCarbHigh": "碳水偏多，主食減量。",
   "dietitianSodiumHigh": "鈉含量偏高，減少湯底與加工品。",
+  "multiItemsLabel": "多品项",
   "goalAdviceLoseFat": "以減脂為目標，下一餐以蛋白質與蔬菜為主。",
   "goalAdviceMaintain": "以維持為主，注意份量與均衡。",
   "overallLabel": "整體判斷",

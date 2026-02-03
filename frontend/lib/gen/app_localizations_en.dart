@@ -186,6 +186,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sodium is high. Cut broth and processed foods.';
 
   @override
+  String get multiItemsLabel => 'Multiple items';
+
+  @override
   String get goalAdviceLoseFat =>
       'For fat loss, prioritize protein and vegetables next meal.';
 

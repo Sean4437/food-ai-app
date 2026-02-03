@@ -953,20 +953,32 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   double? _recentMealAverage(AppState app, {MealType? mealType}) {
     final cutoff = DateTime.now().subtract(const Duration(days: 7));
-    final values = <double>[];
+    final groups = <String, List<MealEntry>>{};
     for (final entry in app.entries) {
       if (entry.time.isBefore(cutoff)) continue;
       if (mealType != null && entry.type != mealType) continue;
-      final baseRange = entry.overrideCalorieRange ?? entry.labelResult?.calorieRange ?? entry.result?.calorieRange;
-      final mid = _rangeMidValue(baseRange);
-      if (mid == null) continue;
-      final portion = entry.portionPercent.clamp(10, 200) / 100.0;
-      final factor = portion * _containerSizeFactorFor(entry.containerSize) * _containerTypeFactorFor(entry.containerType);
-      values.add(mid * factor);
+      final key = entry.mealId ?? entry.id;
+      groups.putIfAbsent(key, () => []).add(entry);
     }
-    if (values.isEmpty) return null;
-    final sum = values.fold<double>(0, (acc, v) => acc + v);
-    return sum / values.length;
+    if (groups.isEmpty) return null;
+    final mealTotals = <double>[];
+    for (final group in groups.values) {
+      double total = 0;
+      for (final entry in group) {
+        final baseRange = entry.overrideCalorieRange ?? entry.labelResult?.calorieRange ?? entry.result?.calorieRange;
+        final mid = _rangeMidValue(baseRange);
+        if (mid == null) continue;
+        final portion = entry.portionPercent.clamp(10, 200) / 100.0;
+        final factor = portion * _containerSizeFactorFor(entry.containerSize) * _containerTypeFactorFor(entry.containerType);
+        total += mid * factor;
+      }
+      if (total > 0) {
+        mealTotals.add(total);
+      }
+    }
+    if (mealTotals.isEmpty) return null;
+    final sum = mealTotals.fold<double>(0, (acc, v) => acc + v);
+    return sum / mealTotals.length;
   }
 
   Widget _buildEnergyBar(AppState app, AppLocalizations t, AnalysisResult analysis) {

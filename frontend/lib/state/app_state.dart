@@ -1037,6 +1037,11 @@ class AppState extends ChangeNotifier {
           dishSummaries.add(fallback);
         }
       }
+      if (dishSummaries.length > 3) {
+        dishSummaries
+          ..clear()
+          ..add(t.multiItemsLabel);
+      }
       meals.add({
         'meal_type': _mealTypeKey(group.first.type),
         'calorie_range': summary?.calorieRange ?? '',
@@ -1146,6 +1151,11 @@ class AppState extends ChangeNotifier {
             dishSummaries.add(fallback);
           }
         }
+        if (dishSummaries.length > 3) {
+          dishSummaries
+            ..clear()
+            ..add(t.multiItemsLabel);
+        }
         final label = _mealTypeLabel(group.first.type, t);
         final rangeText = summary?.calorieRange ?? t.calorieUnknown;
         final dishText = dishSummaries.isEmpty ? '' : dishSummaries.join(' / ');
@@ -1158,7 +1168,8 @@ class AppState extends ChangeNotifier {
         'date': '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}',
         'calorie_range': daySummary.calorieRange,
         'day_summary': daySummary.advice,
-        'meal_count': entriesFor.length,
+        'meal_count': groups.length,
+        'meal_entry_count': entriesFor.length,
         'day_meal_summaries': dayMealSummaries,
       });
     }
@@ -1277,6 +1288,7 @@ class AppState extends ChangeNotifier {
         final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
         if (fallback.isNotEmpty) dishSummaries.add(fallback);
       }
+      final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
       final dayMealSummaries = <String>[];
       for (final dayGroup in dayGroups) {
         if (dayGroup.isEmpty) continue;
@@ -1293,7 +1305,8 @@ class AppState extends ChangeNotifier {
         }
         final label = _mealTypeLabel(dayGroup.first.type, t);
         final rangeText = daySummary?.calorieRange ?? t.calorieUnknown;
-        final dishText = dayDishSummaries.isEmpty ? '' : dayDishSummaries.join(' / ');
+        final collapsedDaySummaries = _collapseDishSummaries(dayDishSummaries, t);
+        final dishText = collapsedDaySummaries.isEmpty ? '' : collapsedDaySummaries.join(' / ');
         final parts = <String>[label];
         if (rangeText.isNotEmpty) parts.add(rangeText);
         if (dishText.isNotEmpty) parts.add(dishText);
@@ -1302,7 +1315,7 @@ class AppState extends ChangeNotifier {
       final payload = {
         'meal_type': _mealTypeKey(group.first.type),
         'calorie_range': summary?.calorieRange ?? '',
-        'dish_summaries': dishSummaries,
+        'dish_summaries': collapsedSummaries,
         'day_calorie_range': _dailyCalorieRangeLabelForDate(mealDate, t),
         'day_meal_count': dayGroups.length,
         'day_meal_summaries': dayMealSummaries,
@@ -2748,6 +2761,13 @@ class AppState extends ChangeNotifier {
     return summaries.take(2).join('、');
   }
 
+  List<String> _collapseDishSummaries(List<String> items, AppLocalizations t, {int maxItems = 3}) {
+    if (items.length > maxItems) {
+      return [t.multiItemsLabel];
+    }
+    return items;
+  }
+
   String _newId() {
     final seed = DateTime.now().microsecondsSinceEpoch;
     final rand = Random().nextInt(1 << 31);
@@ -2891,6 +2911,7 @@ class AppState extends ChangeNotifier {
         if (fallback.isNotEmpty) dishSummaries.add(fallback);
       }
     }
+    final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
     final dayMealSummaries = <String>[];
     for (final dayGroup in dayGroups) {
       if (dayGroup.isEmpty) continue;
@@ -2907,7 +2928,8 @@ class AppState extends ChangeNotifier {
       }
       final label = _mealTypeLabel(dayGroup.first.type, t);
       final rangeText = daySummary?.calorieRange ?? t.calorieUnknown;
-      final dishText = dayDishSummaries.isEmpty ? '' : dayDishSummaries.join(' / ');
+      final collapsedDaySummaries = _collapseDishSummaries(dayDishSummaries, t);
+      final dishText = collapsedDaySummaries.isEmpty ? '' : collapsedDaySummaries.join(' / ');
       final parts = <String>[label];
       if (rangeText.isNotEmpty) parts.add(rangeText);
       if (dishText.isNotEmpty) parts.add(dishText);
@@ -2916,7 +2938,7 @@ class AppState extends ChangeNotifier {
     final payload = {
       'meal_type': _mealTypeKey(mealType),
       'calorie_range': '',
-      'dish_summaries': dishSummaries,
+      'dish_summaries': collapsedSummaries,
       'day_calorie_range': _dailyCalorieRangeLabelForDate(mealDate, t),
       'day_meal_count': dayGroups.length,
       'day_meal_summaries': dayMealSummaries,

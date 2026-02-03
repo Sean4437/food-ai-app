@@ -65,6 +65,7 @@
   "dietitianFatHigh": "Fat is high. Go lighter next meal.",
   "dietitianCarbHigh": "Carbs are high. Reduce starch.",
   "dietitianSodiumHigh": "Sodium is high. Cut broth and processed foods.",
+  "multiItemsLabel": "Multiple items",
   "goalAdviceLoseFat": "For fat loss, prioritize protein and vegetables next meal.",
   "goalAdviceMaintain": "For maintenance, keep portions and balance in check.",
   "overallLabel": "Overall",

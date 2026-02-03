@@ -185,6 +185,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dietitianSodiumHigh => '鈉含量偏高，減少湯底與加工品。';
 
   @override
+  String get multiItemsLabel => '多品项';
+
+  @override
   String get goalAdviceLoseFat => '以減脂為目標，下一餐以蛋白質與蔬菜為主。';
 
   @override
@@ -1567,6 +1570,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dietitianSodiumHigh => '鈉含量偏高，減少湯底與加工品。';
+
+  @override
+  String get multiItemsLabel => '多品項';
 
   @override
   String get goalAdviceLoseFat => '以減脂為目標，下一餐以蛋白質與蔬菜為主。';

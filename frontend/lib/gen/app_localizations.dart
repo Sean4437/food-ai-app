@@ -447,6 +447,12 @@ abstract class AppLocalizations {
   /// **'鈉含量偏高，減少湯底與加工品。'**
   String get dietitianSodiumHigh;
 
+  /// No description provided for @multiItemsLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'多品項'**
+  String get multiItemsLabel;
+
   /// No description provided for @goalAdviceLoseFat.
   ///
   /// In zh_TW, this message translates to:
