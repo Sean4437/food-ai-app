@@ -1049,7 +1049,11 @@ class AppState extends ChangeNotifier {
           dishSummaries.add(summaryText);
         }
       }
-      final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
+      final collapsedSummaries = _appendSmallPortionSuffixToList(
+        _collapseDishSummaries(dishSummaries, t),
+        group,
+        t,
+      );
       meals.add({
         'meal_type': _mealTypeKey(group.first.type),
         'calorie_range': summary?.calorieRange ?? '',
@@ -1155,7 +1159,11 @@ class AppState extends ChangeNotifier {
             dishSummaries.add(summaryText);
           }
         }
-        final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
+        final collapsedSummaries = _appendSmallPortionSuffixToList(
+          _collapseDishSummaries(dishSummaries, t),
+          group,
+          t,
+        );
         final label = _mealTypeLabel(group.first.type, t);
         final rangeText = summary?.calorieRange ?? t.calorieUnknown;
         final dishText = collapsedSummaries.isEmpty ? '' : collapsedSummaries.join(' / ');
@@ -1286,7 +1294,11 @@ class AppState extends ChangeNotifier {
           dishSummaries.add(summaryText);
         }
       }
-      final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
+      final collapsedSummaries = _appendSmallPortionSuffixToList(
+        _collapseDishSummaries(dishSummaries, t),
+        group,
+        t,
+      );
       final dayMealSummaries = <String>[];
       for (final dayGroup in mealGroups) {
         if (dayGroup.isEmpty) continue;
@@ -1300,7 +1312,11 @@ class AppState extends ChangeNotifier {
         }
         final label = _mealTypeLabel(dayGroup.first.type, t);
         final rangeText = daySummary?.calorieRange ?? t.calorieUnknown;
-        final collapsedDaySummaries = _collapseDishSummaries(dayDishSummaries, t);
+        final collapsedDaySummaries = _appendSmallPortionSuffixToList(
+          _collapseDishSummaries(dayDishSummaries, t),
+          dayGroup,
+          t,
+        );
         final dishText = collapsedDaySummaries.isEmpty ? '' : collapsedDaySummaries.join(' / ');
         final parts = <String>[label];
         if (rangeText.isNotEmpty) parts.add(rangeText);
@@ -2787,15 +2803,47 @@ class AppState extends ChangeNotifier {
     return entry.portionPercent <= _kSmallPortionThreshold;
   }
 
-  String _portionNoteSeparator(AppLocalizations t) {
-    return t.localeName.startsWith('en') ? ', ' : '，';
+  bool _shouldShowSmallPortionNoteForGroup(List<MealEntry> group, {double ratio = 0.5}) {
+    if (group.isEmpty) return false;
+    int total = 0;
+    int small = 0;
+    for (final entry in group) {
+      total += 1;
+      if (_isSmallPortion(entry)) {
+        small += 1;
+      }
+    }
+    if (total == 0) return false;
+    return (small / total) >= ratio;
   }
 
-  String _applyPortionNote(String text, MealEntry entry, AppLocalizations t) {
+  String _appendSmallPortionSuffix(String text, List<MealEntry> group, AppLocalizations t) {
     final trimmed = text.trim();
-    if (trimmed.isEmpty || !_isSmallPortion(entry)) return trimmed;
+    if (trimmed.isEmpty) return trimmed;
+    if (!_shouldShowSmallPortionNoteForGroup(group)) return trimmed;
     if (trimmed.contains(t.smallPortionNote)) return trimmed;
-    return '${t.smallPortionNote}${_portionNoteSeparator(t)}$trimmed';
+    if (t.localeName.startsWith('en')) {
+      return '$trimmed (${t.smallPortionNote})';
+    }
+    return '$trimmed（${t.smallPortionNote}）';
+  }
+
+  List<String> _appendSmallPortionSuffixToList(
+    List<String> items,
+    List<MealEntry> group,
+    AppLocalizations t,
+  ) {
+    if (items.isEmpty) return items;
+    if (!_shouldShowSmallPortionNoteForGroup(group)) return items;
+    final updated = List<String>.from(items);
+    final lastIndex = updated.length - 1;
+    if (updated[lastIndex].contains(t.smallPortionNote)) return updated;
+    if (t.localeName.startsWith('en')) {
+      updated[lastIndex] = '${updated[lastIndex]} (${t.smallPortionNote})';
+    } else {
+      updated[lastIndex] = '${updated[lastIndex]}（${t.smallPortionNote}）';
+    }
+    return updated;
   }
 
   bool _isBeverageGroup(List<MealEntry> group) {
@@ -2818,11 +2866,11 @@ class AppState extends ChangeNotifier {
   String? _entryDishSummary(MealEntry entry, AppLocalizations t) {
     final summaryText = entry.result?.dishSummary?.trim();
     if (summaryText != null && summaryText.isNotEmpty) {
-      return _applyPortionNote(summaryText, entry, t);
+      return summaryText;
     }
     final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? '';
     if (fallback.trim().isEmpty) return null;
-    return _applyPortionNote(fallback.trim(), entry, t);
+    return fallback.trim();
   }
 
   String _buildMealDishSummary(List<MealEntry> group, AppLocalizations t) {
@@ -2838,9 +2886,12 @@ class AppState extends ChangeNotifier {
     if (summaries.isEmpty) return '';
     final collapsed = _collapseDishSummaries(summaries, t);
     if (collapsed.isEmpty) return '';
-    if (collapsed.length == 1) return collapsed.first;
+    if (collapsed.length == 1) {
+      return _appendSmallPortionSuffix(collapsed.first, group, t);
+    }
     final joiner = t.localeName.startsWith('en') ? ', ' : '、';
-    return collapsed.join(joiner);
+    final combined = collapsed.join(joiner);
+    return _appendSmallPortionSuffix(combined, group, t);
   }
 
   List<String> _collapseDishSummaries(List<String> items, AppLocalizations t, {int maxItems = 3}) {
@@ -3020,7 +3071,11 @@ class AppState extends ChangeNotifier {
       }
       final label = _mealTypeLabel(dayGroup.first.type, t);
       final rangeText = daySummary?.calorieRange ?? t.calorieUnknown;
-      final collapsedDaySummaries = _collapseDishSummaries(dayDishSummaries, t);
+      final collapsedDaySummaries = _appendSmallPortionSuffixToList(
+        _collapseDishSummaries(dayDishSummaries, t),
+        dayGroup,
+        t,
+      );
       final dishText = collapsedDaySummaries.isEmpty ? '' : collapsedDaySummaries.join(' / ');
       final parts = <String>[label];
       if (rangeText.isNotEmpty) parts.add(rangeText);
