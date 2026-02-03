@@ -819,6 +819,18 @@ abstract class AppLocalizations {
   /// **'今天狀態不錯，繼續保持'**
   String get summaryNeutral;
 
+  /// No description provided for @summaryBeverageOnly.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'今天只記錄了飲料'**
+  String get summaryBeverageOnly;
+
+  /// No description provided for @includesBeverages.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'含飲料'**
+  String get includesBeverages;
+
   /// No description provided for @smallPortionNote.
   ///
   /// In zh_TW, this message translates to:

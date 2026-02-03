@@ -829,6 +829,33 @@ class AppState extends ChangeNotifier {
     return list.isNotEmpty ? list.first : null;
   }
 
+  MealEntry? latestNonBeverageEntryForDate(DateTime date) {
+    final list = entriesForDate(date);
+    for (final entry in list) {
+      final result = entry.result;
+      if (result == null) continue;
+      if (result.isBeverage == true) continue;
+      return entry;
+    }
+    return null;
+  }
+
+  MealEntry? get latestNonBeverageEntryForSelectedDate {
+    return latestNonBeverageEntryForDate(_selectedDate);
+  }
+
+  bool hasBeverageEntriesForDate(DateTime date) {
+    return entriesForDate(date).any((entry) => entry.result?.isBeverage == true);
+  }
+
+  bool hasNonBeverageEntriesForDate(DateTime date) {
+    return entriesForDate(date).any((entry) => entry.result == null || entry.result?.isBeverage != true);
+  }
+
+  bool _isBeverageOnlyDay(DateTime date) {
+    return hasBeverageEntriesForDate(date) && !hasNonBeverageEntriesForDate(date);
+  }
+
   void setSelectedDate(DateTime date) {
     _selectedDate = _dateOnly(date);
     notifyListeners();
@@ -924,8 +951,11 @@ class AppState extends ChangeNotifier {
   }
 
   String todayStatusLabel(AppLocalizations t) {
-    final entry = latestEntryForSelectedDate;
-    if (entry == null || entry.result == null) return t.suggestTodayHint;
+    final entry = latestNonBeverageEntryForSelectedDate;
+    if (entry == null || entry.result == null) {
+      if (_isBeverageOnlyDay(_selectedDate)) return t.summaryBeverageOnly;
+      return t.suggestTodayHint;
+    }
     final fat = macroPercentFromResult(entry.result!, 'fat');
     final carbs = macroPercentFromResult(entry.result!, 'carbs');
     final oily = _isHigh(fat);
@@ -937,8 +967,11 @@ class AppState extends ChangeNotifier {
   }
 
   String todaySummary(AppLocalizations t) {
-    final entry = latestEntryForSelectedDate;
-    if (entry == null || entry.result == null) return t.summaryEmpty;
+    final entry = latestNonBeverageEntryForSelectedDate;
+    if (entry == null || entry.result == null) {
+      if (_isBeverageOnlyDay(_selectedDate)) return t.summaryBeverageOnly;
+      return t.summaryEmpty;
+    }
     final fat = macroPercentFromResult(entry.result!, 'fat');
     final protein = macroPercentFromResult(entry.result!, 'protein');
     final carbs = macroPercentFromResult(entry.result!, 'carbs');
@@ -995,9 +1028,14 @@ class AppState extends ChangeNotifier {
     if (!isDailySummaryReady(date)) return dailySummaryPendingText(t);
     final dayEntries = entriesForDate(date);
     if (dayEntries.isEmpty) return t.summaryEmpty;
-    final fatScore = _aggregateMacroScore(dayEntries, 'fat', t);
-    final carbScore = _aggregateMacroScore(dayEntries, 'carbs', t);
-    final proteinScore = _aggregateMacroScore(dayEntries, 'protein', t);
+    final nonBeverageEntries =
+        dayEntries.where((entry) => entry.result != null && entry.result?.isBeverage != true).toList();
+    if (nonBeverageEntries.isEmpty) {
+      return _isBeverageOnlyDay(date) ? t.summaryBeverageOnly : t.summaryEmpty;
+    }
+    final fatScore = _aggregateMacroScore(nonBeverageEntries, 'fat', t);
+    final carbScore = _aggregateMacroScore(nonBeverageEntries, 'carbs', t);
+    final proteinScore = _aggregateMacroScore(nonBeverageEntries, 'protein', t);
     final oily = fatScore >= 2.4;
     final carbHigh = carbScore >= 2.4;
     final proteinOk = proteinScore >= 2.0;
@@ -1013,6 +1051,7 @@ class AppState extends ChangeNotifier {
     final manual = override?['tomorrow_advice'];
     if (manual != null && manual.trim().isNotEmpty) return manual;
     if (!isDailySummaryReady(date)) return dailySummaryPendingText(t);
+    if (_isBeverageOnlyDay(date)) return t.nextMealHint;
     final summary = buildDaySummary(date, t);
     return summary?.advice ?? t.nextMealHint;
   }
@@ -1039,6 +1078,17 @@ class AppState extends ChangeNotifier {
     final groups = mealGroupsForDateAll(date);
     if (groups.isEmpty) return;
     final mealGroups = _nonBeverageGroups(groups);
+    if (mealGroups.isEmpty) {
+      await updateDayOverride(
+        date,
+        summary: t.summaryBeverageOnly,
+        tomorrowAdvice: t.nextMealHint,
+      );
+      _meta[_dayLockKey(date)] = 'true';
+      await _saveOverrides();
+      await _maybeFinalizeWeekForDate(date, locale, t);
+      return;
+    }
     final meals = <Map<String, dynamic>>[];
     for (final group in mealGroups) {
       final summary = buildMealSummary(group, t);
@@ -2106,6 +2156,7 @@ class AppState extends ChangeNotifier {
       final mealTypeKey = _mealTypeKey(entry.type);
       final containerType = entry.containerType ?? profile.containerType;
       final containerSize = entry.containerSize ?? profile.containerSize;
+      final photoContext = _mealPhotoContext(entry, locale);
       final AnalysisResult res = await _api.analyzeImage(
         entry.imageBytes,
         entry.filename,
@@ -2113,6 +2164,7 @@ class AppState extends ChangeNotifier {
         lang: locale,
         foodName: entry.overrideFoodName,
         note: entry.note,
+        context: photoContext,
         labelContext: _buildLabelContext(entry.labelResult),
         portionPercent: entry.portionPercent,
         analyzeReason: reason,
@@ -2695,6 +2747,18 @@ class AppState extends ChangeNotifier {
       default:
         return 1.0;
     }
+  }
+
+  String? _mealPhotoContext(MealEntry entry, String locale) {
+    final mealId = entry.mealId ?? entry.id;
+    final group = entriesForMealId(mealId);
+    if (group.length <= 1) return null;
+    final count = group.length;
+    final isZh = locale.toLowerCase().startsWith('zh');
+    if (isZh) {
+      return '此餐共有 $count 張照片，請視為同一餐並保持前後一致。';
+    }
+    return 'This meal has $count photos. Treat them as one meal and keep advice consistent.';
   }
 
   double _containerTypeFactorFor(String? type) {

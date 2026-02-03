@@ -380,6 +380,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get summaryNeutral => 'You’re doing well today, keep it up';
 
   @override
+  String get summaryBeverageOnly => 'Only beverages recorded today';
+
+  @override
+  String get includesBeverages => 'incl. beverages';
+
+  @override
   String get smallPortionNote => 'Small portion';
 
   @override

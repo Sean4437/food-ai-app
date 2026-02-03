@@ -10,8 +10,15 @@ import '../design/text_styles.dart';
 class SummaryScreen extends StatelessWidget {
   const SummaryScreen({super.key});
 
-  String _summaryText(AppState app, AppLocalizations t, MealEntry? entry) {
-    if (entry == null || entry.result == null) return t.summaryEmpty;
+  String _summaryText(
+    AppState app,
+    AppLocalizations t,
+    MealEntry? entry, {
+    required bool beverageOnly,
+  }) {
+    if (entry == null || entry.result == null) {
+      return beverageOnly ? t.summaryBeverageOnly : t.summaryEmpty;
+    }
     final fat = app.macroPercentFromResult(entry.result!, 'fat');
     final protein = app.macroPercentFromResult(entry.result!, 'protein');
     final carbs = app.macroPercentFromResult(entry.result!, 'carbs');
@@ -60,11 +67,17 @@ class SummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    final entry = app.latestEntryForSelectedDate;
+    final entry = app.latestNonBeverageEntryForSelectedDate;
     final entries = app.entriesForSelectedDate;
     final groupsByType = app.mealGroupsByTypeForDate(app.selectedDate);
     final totalMeals = app.mealGroupsForDateAll(app.selectedDate).where((g) => !app.isBeverageGroup(g)).length;
     final entryCount = entries.length;
+    final hasBeverageEntries = app.hasBeverageEntriesForDate(app.selectedDate);
+    final beverageOnly = hasBeverageEntries && !app.hasNonBeverageEntriesForDate(app.selectedDate);
+    final summaryLine = StringBuffer('${t.mealsCountLabel} $totalMeals ${t.mealsLabel} · ${t.itemsCount(entryCount)}');
+    if (hasBeverageEntries) {
+      summaryLine.write('（${t.includesBeverages}）');
+    }
     final breakfast = groupsByType[MealType.breakfast]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
     final brunch = groupsByType[MealType.brunch]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
     final lunch = groupsByType[MealType.lunch]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
@@ -138,11 +151,14 @@ class SummaryScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${t.mealsCountLabel} $totalMeals ${t.mealsLabel} · ${t.itemsCount(entryCount)}',
+                          summaryLine.toString(),
                           style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 6),
-                        Text(_summaryText(app, t, entry), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                        Text(
+                          _summaryText(app, t, entry, beverageOnly: beverageOnly),
+                          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                        ),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 10,

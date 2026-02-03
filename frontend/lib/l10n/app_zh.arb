@@ -127,6 +127,8 @@
   "summaryCarb": "今天碳水偏多",
   "summaryProteinOk": "蛋白質 OK，記得補點蔬菜",
   "summaryNeutral": "今天狀態不錯，繼續保持",
+  "summaryBeverageOnly": "今天只記錄了飲料",
+  "includesBeverages": "含飲料",
   "smallPortionNote": "份量不多",
   "mealsCountLabel": "已記錄",
   "mealsLabel": "餐",

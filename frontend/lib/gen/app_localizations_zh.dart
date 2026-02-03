@@ -371,6 +371,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get summaryNeutral => '今天狀態不錯，繼續保持';
 
   @override
+  String get summaryBeverageOnly => '今天只記錄了飲料';
+
+  @override
+  String get includesBeverages => '含飲料';
+
+  @override
   String get smallPortionNote => '份量不多';
 
   @override
@@ -1771,6 +1777,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get summaryNeutral => '今天狀態不錯，繼續保持';
+
+  @override
+  String get summaryBeverageOnly => '今天只記錄了飲料';
+
+  @override
+  String get includesBeverages => '含飲料';
 
   @override
   String get smallPortionNote => '份量不多';

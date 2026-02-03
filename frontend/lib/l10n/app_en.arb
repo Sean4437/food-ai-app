@@ -127,6 +127,8 @@
   "summaryCarb": "Carb-heavy today",
   "summaryProteinOk": "Protein looks OK — add some veggies",
   "summaryNeutral": "You’re doing well today, keep it up",
+  "summaryBeverageOnly": "Only beverages recorded today",
+  "includesBeverages": "incl. beverages",
   "smallPortionNote": "Small portion",
   "mealsCountLabel": "Logged",
   "mealsLabel": "meals",
