@@ -570,10 +570,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantCanEat => '可以吃';
 
   @override
+  String get suggestInstantCanDrink => '可以喝';
+
+  @override
   String get suggestInstantAvoid => '不建議吃';
 
   @override
+  String get suggestInstantAvoidDrink => '不建议喝';
+
+  @override
   String get suggestInstantLimit => '建议份量';
+
+  @override
+  String get suggestInstantDrinkLimit => '建议份量';
+
+  @override
+  String get suggestInstantDrinkAdviceTitle => '这杯饮料怎么喝比较好';
 
   @override
   String get suggestInstantCanEatInline => '可以怎么吃';
@@ -1957,10 +1969,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantCanEat => '可以吃';
 
   @override
+  String get suggestInstantCanDrink => '可以喝';
+
+  @override
   String get suggestInstantAvoid => '不建議吃';
 
   @override
+  String get suggestInstantAvoidDrink => '不建議喝';
+
+  @override
   String get suggestInstantLimit => '建議份量';
+
+  @override
+  String get suggestInstantDrinkLimit => '建議份量';
+
+  @override
+  String get suggestInstantDrinkAdviceTitle => '這杯飲料怎麼喝比較好';
 
   @override
   String get suggestInstantCanEatInline => '可以怎麼吃';

@@ -1197,17 +1197,41 @@ abstract class AppLocalizations {
   /// **'可以吃'**
   String get suggestInstantCanEat;
 
+  /// No description provided for @suggestInstantCanDrink.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'可以喝'**
+  String get suggestInstantCanDrink;
+
   /// No description provided for @suggestInstantAvoid.
   ///
   /// In zh_TW, this message translates to:
   /// **'不建議吃'**
   String get suggestInstantAvoid;
 
+  /// No description provided for @suggestInstantAvoidDrink.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'不建議喝'**
+  String get suggestInstantAvoidDrink;
+
   /// No description provided for @suggestInstantLimit.
   ///
   /// In zh_TW, this message translates to:
   /// **'建議份量'**
   String get suggestInstantLimit;
+
+  /// No description provided for @suggestInstantDrinkLimit.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'建議份量'**
+  String get suggestInstantDrinkLimit;
+
+  /// No description provided for @suggestInstantDrinkAdviceTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'這杯飲料怎麼喝比較好'**
+  String get suggestInstantDrinkAdviceTitle;
 
   /// No description provided for @suggestInstantCanEatInline.
   ///

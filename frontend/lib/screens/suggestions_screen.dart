@@ -451,11 +451,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         .where((e) => e.isNotEmpty);
     for (final line in lines) {
       final lower = line.toLowerCase();
-      if (_startsWithAny(line, ['可以吃', '建議吃', '適合吃', '可吃', '可以怎麼吃']) || lower.startsWith('can eat')) {
+      if (_startsWithAny(line, ['可以吃', '建議吃', '適合吃', '可吃', '可以怎麼吃', '可以喝', '建議喝', '適合喝', '可喝', '可以怎麼喝']) || lower.startsWith('can eat') || lower.startsWith('can drink')) {
         sections['can'] = _splitAdviceValue(line);
         continue;
       }
-      if (_startsWithAny(line, ['不建議吃', '避免', '不推薦']) || lower.startsWith('avoid')) {
+      if (_startsWithAny(line, ['不建議吃', '避免', '不推薦', '不建議喝']) || lower.startsWith('avoid')) {
         sections['avoid'] = _splitAdviceValue(line);
         continue;
       }
@@ -530,16 +530,24 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       '適合吃',
       '可吃',
       '可以怎麼吃',
+      '可以喝',
+      '建議喝',
+      '適合喝',
+      '可喝',
+      '可以怎麼喝',
       '不建議吃',
       '避免',
       '不推薦',
+      '不建議喝',
       '建議份量',
       '建議份量上限',
       '份量上限',
       '上限',
       'can eat',
       'good choices',
+      'can drink',
       'avoid',
+      'avoid drinking',
       'portion limit',
       'suggested portion',
     ];
@@ -663,14 +671,18 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     final canText = (sections['can'] ?? '').trim();
     final avoidText = (sections['avoid'] ?? '').trim();
     final limitText = (sections['limit'] ?? '').trim();
+    final isDrink = _analysis?.result.isBeverage == true;
+    final canLabel = isDrink ? t.suggestInstantCanDrink : t.suggestInstantCanEat;
+    final avoidLabel = isDrink ? t.suggestInstantAvoidDrink : t.suggestInstantAvoid;
+    final limitLabel = isDrink ? t.suggestInstantDrinkLimit : t.suggestInstantLimit;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _adviceRow(t.suggestInstantCanEat, canText.isEmpty ? '-' : canText),
+        _adviceRow(canLabel, canText.isEmpty ? '-' : canText),
         const SizedBox(height: 8),
-        _adviceRow(t.suggestInstantAvoid, avoidText.isEmpty ? '-' : avoidText),
+        _adviceRow(avoidLabel, avoidText.isEmpty ? '-' : avoidText),
         const SizedBox(height: 8),
-        _adviceRow(t.suggestInstantLimit, limitText.isEmpty ? '-' : limitText),
+        _adviceRow(limitLabel, limitText.isEmpty ? '-' : limitText),
       ],
     );
   }
@@ -1321,7 +1333,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         const SizedBox(height: 8),
         _buildEnergyBar(app, t, analysis),
         const SizedBox(height: 12),
-        Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          analysis.isBeverage == true ? t.suggestInstantDrinkAdviceTitle : t.suggestInstantAdviceTitle,
+          style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         _buildAdviceCard(t),
         if (_showSaveActions) ...[

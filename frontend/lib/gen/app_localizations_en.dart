@@ -579,10 +579,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantCanEat => 'Good choices';
 
   @override
+  String get suggestInstantCanDrink => 'Can drink';
+
+  @override
   String get suggestInstantAvoid => 'Avoid';
 
   @override
+  String get suggestInstantAvoidDrink => 'Avoid drinking';
+
+  @override
   String get suggestInstantLimit => 'Suggested portion';
+
+  @override
+  String get suggestInstantDrinkLimit => 'Suggested amount';
+
+  @override
+  String get suggestInstantDrinkAdviceTitle => 'How to drink this beverage';
 
   @override
   String get suggestInstantCanEatInline => 'How to eat';
