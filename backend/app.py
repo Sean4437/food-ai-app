@@ -303,6 +303,24 @@ def _normalize_container_guess(data: dict | None) -> tuple[str, str]:
     return (raw_type, raw_size)
 
 
+def _meal_type_label(meal_type: str | None, lang: str) -> str | None:
+    if not meal_type:
+        return None
+    key = str(meal_type).strip().lower()
+    if lang == "zh-TW":
+        mapping = {
+            "breakfast": "早餐",
+            "brunch": "早午餐",
+            "lunch": "午餐",
+            "afternoon_tea": "下午茶",
+            "dinner": "晚餐",
+            "late_snack": "消夜",
+            "other": "其他",
+        }
+        return mapping.get(key, meal_type)
+    return meal_type
+
+
 def _parse_json(text: str) -> Optional[dict]:
     try:
         return json.loads(text)
@@ -377,13 +395,15 @@ def _build_prompt(
         )
     meal_text = ""
     if meal_type:
+        meal_key = str(meal_type).strip().lower()
+        meal_label = _meal_type_label(meal_type, lang) or meal_type
         if lang == "zh-TW":
-            meal_text = f"餐次：{meal_type}\n"
-            if meal_type in ("dinner", "late_snack"):
+            meal_text = f"餐次：{meal_label}\n"
+            if meal_key in ("dinner", "late_snack"):
                 meal_text += "若為晚餐或消夜，建議提醒避免夜間加餐。\n"
         else:
-            meal_text = f"Meal type: {meal_type}\n"
-            if meal_type in ("dinner", "late_snack"):
+            meal_text = f"Meal type: {meal_label}\n"
+            if meal_key in ("dinner", "late_snack"):
                 meal_text += "If this is dinner or a late-night snack, suggest avoiding additional late-night eating.\n"
     if meal_photo_count and meal_photo_count > 1:
         if lang == "zh-TW":
@@ -401,7 +421,7 @@ def _build_prompt(
         if advice_mode == "current_meal":
             suggestion_rule = (
                 "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：可以吃 / 不建議吃 / 份量上限\n"
-                "- 需要參考 recent context 並用一句話提到上一餐\n"
+                "- 若 recent context 有上一餐資訊，請簡短提到；若沒有可省略\n"
             )
             suggestion_example = (
                 "  \"suggestion\": \"可以吃：蔬菜多一點、保留瘦肉\\n不建議吃：湯底與加工配料\\n份量上限：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
@@ -463,7 +483,7 @@ def _build_prompt(
     if advice_mode == "current_meal":
         suggestion_rule = (
             "- suggestion: guidance for how to eat this meal, formatted as three lines: Can eat / Avoid / Portion limit\n"
-            "- Reference the recent context and briefly mention the previous meal in the suggestion\n"
+            "- If recent context includes previous meal info, mention it briefly; otherwise omit\n"
         )
         suggestion_example = (
             "  \"suggestion\": \"Can eat: more veggies, keep lean protein\\nAvoid: broth and processed sides\\nPortion limit: half bowl carbs, palm-sized protein (previous meal was heavier, so keep it light)\",\n"
@@ -569,18 +589,20 @@ def _build_name_prompt(
         )
     meal_text = ""
     if meal_type:
+        meal_key = str(meal_type).strip().lower()
+        meal_label = _meal_type_label(meal_type, lang) or meal_type
         if lang == "zh-TW":
-            meal_text = f"餐次：{meal_type}\n"
-            if meal_type in ("dinner", "late_snack"):
+            meal_text = f"餐次：{meal_label}\n"
+            if meal_key in ("dinner", "late_snack"):
                 meal_text += "若為晚餐或消夜，建議提醒避免夜間加餐。\n"
         else:
-            meal_text = f"Meal type: {meal_type}\n"
-            if meal_type in ("dinner", "late_snack"):
+            meal_text = f"Meal type: {meal_label}\n"
+            if meal_key in ("dinner", "late_snack"):
                 meal_text += "If this is dinner or a late-night snack, suggest avoiding additional late-night eating.\n"
     if lang == "zh-TW":
         suggestion_rule = (
             "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：可以吃 / 不建議吃 / 份量上限\n"
-            "- 需要參考 recent context 並用一句話提到上一餐\n"
+            "- 若 recent context 有上一餐資訊，請簡短提到；若沒有可省略\n"
         )
         suggestion_example = (
             "  \"suggestion\": \"可以吃：蔬菜多一點、保留瘦肉\\n不建議吃：湯底與加工配料\\n份量上限：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
@@ -638,7 +660,7 @@ def _build_name_prompt(
         ) + profile_text + note_text + context_text + container_text + meal_text
     suggestion_rule = (
         "- suggestion: guidance for how to eat this meal, formatted as three lines: Can eat / Avoid / Portion limit\n"
-        "- Reference the recent context and briefly mention the previous meal in the suggestion\n"
+        "- If recent context includes previous meal info, mention it briefly; otherwise omit\n"
     )
     suggestion_example = (
         "  \"suggestion\": \"Can eat: more veggies, keep lean protein\\nAvoid: broth and processed sides\\nPortion limit: half bowl carbs, palm-sized protein (previous meal was heavier, so keep it light)\",\n"
@@ -827,8 +849,13 @@ def _build_day_prompt(
         )
     meal_lines = []
     for meal in meals:
-        summaries = "; ".join(meal.dish_summaries) if meal.dish_summaries else "no dish summary"
-        meal_lines.append(f"- {meal.meal_type}: {meal.calorie_range} | {summaries}")
+        label = _meal_type_label(meal.meal_type, lang) or meal.meal_type
+        if lang == "zh-TW":
+            summaries = "；".join(meal.dish_summaries) if meal.dish_summaries else "無摘要"
+            meal_lines.append(f"- {label}：{meal.calorie_range}｜{summaries}")
+        else:
+            summaries = "; ".join(meal.dish_summaries) if meal.dish_summaries else "no summary"
+            meal_lines.append(f"- {label}: {meal.calorie_range} | {summaries}")
     meal_block = "\n".join(meal_lines)
     if lang == "zh-TW":
         return (
@@ -883,16 +910,16 @@ def _build_week_prompt(lang: str, profile: dict | None, days: List[WeekSummaryIn
         )
     day_lines = []
     for day in days:
-        summary = day.day_summary or "no summary"
+        summary = day.day_summary or ("無摘要" if lang == "zh-TW" else "no summary")
         entry_count = day.meal_entry_count or day.meal_count
         if lang == "zh-TW":
             line = f"- {day.date}: {day.calorie_range} | {summary} | 餐數={day.meal_count}，記錄={entry_count}"
         else:
             line = f"- {day.date}: {day.calorie_range} | {summary} | meals={day.meal_count}, entries={entry_count}"
         if day.day_meal_summaries:
-            meal_text = "; ".join([s for s in day.day_meal_summaries if s])
+            meal_text = "；".join([s for s in day.day_meal_summaries if s]) if lang == "zh-TW" else "; ".join([s for s in day.day_meal_summaries if s])
             if meal_text:
-                line += f" | details: {meal_text}"
+                line += f" | 餐次細節：{meal_text}" if lang == "zh-TW" else f" | details: {meal_text}"
         day_lines.append(line)
     day_block = "\n".join(day_lines)
     if lang == "zh-TW":
@@ -964,7 +991,9 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             f"{persona_line}{tone_line}"
             "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
         )
-    summaries = "; ".join(meal.dish_summaries) if meal.dish_summaries else "no dish summary"
+    summaries = (
+        "；".join(meal.dish_summaries) if meal.dish_summaries else ("無摘要" if lang == "zh-TW" else "no summary")
+    )
     day_summaries = ""
     if meal.day_meal_summaries:
         day_summaries = "\n".join([f"- {item}" for item in meal.day_meal_summaries if item])
@@ -1030,7 +1059,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             "  \"other\": \"清湯＋蔬菜＋瘦肉，避免油炸\",\n"
             "  \"confidence\": 0.7\n"
             "}\n"
-            f"本餐：{meal.meal_type} | {meal.calorie_range}\n"
+            f"本餐：{_meal_type_label(meal.meal_type, lang) or meal.meal_type} | {meal.calorie_range}\n"
             f"本餐摘要：{summaries}\n"
             f"{day_context}{intake_context}{last_meal_context}{diet_context}{container_context}{recent_advice_context}"
         ) + profile_text
@@ -1054,7 +1083,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
         "  \"other\": \"Clear soup + veggies + lean protein\",\n"
         "  \"confidence\": 0.7\n"
         "}\n"
-        f"Meal: {meal.meal_type} | {meal.calorie_range}\n"
+        f"Meal: {_meal_type_label(meal.meal_type, lang) or meal.meal_type} | {meal.calorie_range}\n"
         f"Meal summary: {summaries}\n"
         f"Today total range: {meal.day_calorie_range or 'unknown'}\n"
         f"Meals today: {meal.day_meal_count or 0}\n"
