@@ -342,7 +342,7 @@ class AppState extends ChangeNotifier {
       if (excludeEntryId != null && entry.id == excludeEntryId) continue;
       final range = _parseCalorieRange(entry.overrideCalorieRange ?? entry.result?.calorieRange);
       if (range == null) continue;
-      final weight = _portionWeight(entry.portionPercent);
+      final weight = _entryPortionFactor(entry);
       final mid = ((range[0] + range[1]) / 2) * weight;
       sum += mid;
       hasRange = true;
@@ -842,10 +842,18 @@ class AppState extends ChangeNotifier {
     final baseRange = entry.overrideCalorieRange ?? entry.result?.calorieRange ?? '';
     final parsed = _parseCalorieRange(baseRange);
     if (parsed == null) return t.calorieUnknown;
-    final weight = _portionWeight(entry.portionPercent);
+    final weight = _entryPortionFactor(entry);
     final minVal = (parsed[0] * weight).round();
     final maxVal = (parsed[1] * weight).round();
     return '$minVal-$maxVal kcal';
+  }
+
+  double? entryCalorieMid(MealEntry entry) {
+    final baseRange = entry.overrideCalorieRange ?? entry.result?.calorieRange;
+    final parsed = _parseCalorieRange(baseRange);
+    if (parsed == null) return null;
+    final weight = _entryPortionFactor(entry);
+    return ((parsed[0] + parsed[1]) / 2) * weight;
   }
 
   String _dailyCalorieRangeLabelForDate(DateTime date, AppLocalizations t) {
@@ -1641,7 +1649,7 @@ class AppState extends ChangeNotifier {
     for (final entry in group) {
       final result = entry.result;
       if (result == null) continue;
-      final weight = _portionWeight(entry.portionPercent);
+      final weight = _entryPortionFactor(entry);
       totalWeight += weight;
       final range = _parseCalorieRange(entry.overrideCalorieRange ?? result.calorieRange);
       if (range != null) {
@@ -1661,7 +1669,7 @@ class AppState extends ChangeNotifier {
       'fat': fatSum,
       'sodium': sodiumSum,
     };
-    final dishSummary = _buildMealDishSummary(group);
+    final dishSummary = _buildMealDishSummary(group, t);
     final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
     final advice = dishSummary.isNotEmpty ? dishSummary : _buildMealAdvice(macros, calorieRange, t);
     return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
@@ -1681,7 +1689,7 @@ class AppState extends ChangeNotifier {
     for (final entry in dayEntries) {
       final result = entry.result;
       if (result == null) continue;
-      final weight = _portionWeight(entry.portionPercent);
+      final weight = _entryPortionFactor(entry);
       totalWeight += weight;
       final range = _parseCalorieRange(entry.overrideCalorieRange ?? result.calorieRange);
       if (range != null) {
@@ -2460,7 +2468,7 @@ class AppState extends ChangeNotifier {
     for (final entry in dayEntries) {
       final result = entry.result;
       if (result == null) continue;
-      final weight = _portionWeight(entry.portionPercent);
+      final weight = _entryPortionFactor(entry);
       final calories = calorieRangeMid(result.calorieRange);
       totalWeight += weight;
       final percent = _macroPercentFromGramsValue(
@@ -2483,7 +2491,7 @@ class AppState extends ChangeNotifier {
     for (final entry in dayEntries) {
       final result = entry.result;
       if (result == null) continue;
-      final weight = _portionWeight(entry.portionPercent);
+      final weight = _entryPortionFactor(entry);
       totalWeight += weight;
       gramsSum += (result.macros[key] ?? 0) * weight;
       final calories = calorieRangeMid(result.calorieRange);
@@ -2664,6 +2672,44 @@ class AppState extends ChangeNotifier {
     return safe / 100.0;
   }
 
+  double _entryPortionFactor(MealEntry entry) {
+    final portion = _portionWeight(entry.portionPercent);
+    final sizeRaw = (entry.containerSize ?? '').trim();
+    final typeRaw = (entry.containerType ?? '').trim();
+    final size = sizeRaw.isEmpty ? profile.containerSize : sizeRaw;
+    final type = typeRaw.isEmpty ? profile.containerType : typeRaw;
+    return portion * _containerSizeFactorFor(size) * _containerTypeFactorFor(type);
+  }
+
+  double _containerSizeFactorFor(String? size) {
+    final value = (size ?? '').toLowerCase();
+    switch (value) {
+      case 'small':
+        return 0.85;
+      case 'large':
+        return 1.15;
+      case 'medium':
+      default:
+        return 1.0;
+    }
+  }
+
+  double _containerTypeFactorFor(String? type) {
+    final value = (type ?? '').toLowerCase();
+    switch (value) {
+      case 'plate':
+        return 1.1;
+      case 'box':
+        return 1.05;
+      case 'cup':
+        return 0.9;
+      case 'bowl':
+      case 'unknown':
+      default:
+        return 1.0;
+    }
+  }
+
   Future<void> _reassignMealTypesForAllEntries() async {
     if (entries.isEmpty) return;
     final affectedMealIds = <String>{};
@@ -2705,7 +2751,7 @@ class AppState extends ChangeNotifier {
   Map<String, double> scaledMacrosForEntry(MealEntry entry) {
     final macros = entry.result?.macros;
     if (macros == null) return {};
-    final weight = _portionWeight(entry.portionPercent);
+    final weight = _entryPortionFactor(entry);
     return {
       'protein': (macros['protein'] ?? 0) * weight,
       'carbs': (macros['carbs'] ?? 0) * weight,
@@ -2750,15 +2796,19 @@ class AppState extends ChangeNotifier {
     return '${t.dietitianPrefix}$line ${goalHint}';
   }
 
-  String _buildMealDishSummary(List<MealEntry> group) {
-    final summaries = <String>{};
+  String _buildMealDishSummary(List<MealEntry> group, AppLocalizations t) {
+    final summaries = <String>[];
+    final seen = <String>{};
     for (final entry in group) {
       final text = entry.result?.dishSummary?.trim();
       if (text == null || text.isEmpty) continue;
-      summaries.add(text);
+      if (seen.add(text)) {
+        summaries.add(text);
+      }
     }
     if (summaries.isEmpty) return '';
-    return summaries.take(2).join('、');
+    if (summaries.length > 3) return t.multiItemsLabel;
+    return summaries.join('、');
   }
 
   List<String> _collapseDishSummaries(List<String> items, AppLocalizations t, {int maxItems = 3}) {

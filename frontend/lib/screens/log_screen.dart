@@ -117,11 +117,8 @@ class _LogScreenState extends State<LogScreen> {
     return [min, max];
   }
 
-  double? _entryCalorieMid(MealEntry entry) {
-    final range = _parseCalorieRange(entry.result?.calorieRange ?? '');
-    if (range == null) return null;
-    final weight = (entry.portionPercent) / 100.0;
-    return ((range[0] + range[1]) / 2.0) * weight;
+  double? _entryCalorieMid(AppState app, MealEntry entry) {
+    return app.entryCalorieMid(entry);
   }
 
   MealEntry? _topMealLast7Days(AppState app) {
@@ -131,7 +128,7 @@ class _LogScreenState extends State<LogScreen> {
     double bestScore = -1;
     for (final entry in app.entries) {
       if (entry.time.isBefore(cutoff)) continue;
-      final score = _entryCalorieMid(entry);
+      final score = _entryCalorieMid(app, entry);
       if (score == null) continue;
       if (score > bestScore) {
         bestScore = score;
@@ -202,7 +199,7 @@ class _LogScreenState extends State<LogScreen> {
     }
 
     final title = _entryTitle(entry, t);
-    final mid = _entryCalorieMid(entry);
+    final mid = _entryCalorieMid(app, entry);
     final kcalText = mid == null ? t.calorieUnknown : '${mid.round()} kcal';
     final dateLabel = '${entry.time.month}/${entry.time.day}';
     final mealLabel = _mealLabel(entry.type, t);

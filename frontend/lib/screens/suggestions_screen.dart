@@ -632,7 +632,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     _containerType = normalized[0];
     _containerSize = normalized[1];
     _overrideCalorieRange = null;
-    _displayCalorieRange = _scaledCalorieRangeText(result.calorieRange, _portionPercent);
+    _displayCalorieRange = _scaledCalorieRangeText(
+      result.calorieRange,
+      _portionPercent,
+      containerType: _containerType,
+      containerSize: _containerSize,
+    );
   }
 
   void _updatePortionPercent(int value) {
@@ -642,6 +647,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _displayCalorieRange = _scaledCalorieRangeText(
         _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '',
         _portionPercent,
+        containerType: _containerType,
+        containerSize: _containerSize,
       );
     });
     if (_savedEntry != null) {
@@ -658,6 +665,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _displayCalorieRange = _scaledCalorieRangeText(
         _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '',
         _portionPercent,
+        containerType: _containerType,
+        containerSize: _containerSize,
       );
     });
     if (_savedEntry != null) {
@@ -674,6 +683,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _displayCalorieRange = _scaledCalorieRangeText(
         _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '',
         _portionPercent,
+        containerType: _containerType,
+        containerSize: _containerSize,
       );
     });
     if (_savedEntry != null) {
@@ -716,6 +727,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _displayCalorieRange = _scaledCalorieRangeText(
         _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '',
         _portionPercent,
+        containerType: _containerType,
+        containerSize: _containerSize,
       );
     });
     if (_savedEntry != null) {
@@ -830,10 +843,16 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
-  String _scaledCalorieRangeText(String raw, int portionPercent) {
+  String _scaledCalorieRangeText(
+    String raw,
+    int portionPercent, {
+    String? containerType,
+    String? containerSize,
+  }) {
     final percent = portionPercent.clamp(10, 200) / 100.0;
-    final sizeFactor = _containerSizeFactor();
-    final factor = percent * sizeFactor * _containerTypeFactor();
+    final sizeFactor = _containerSizeFactorFor(containerSize ?? _containerSize);
+    final typeFactor = _containerTypeFactorFor(containerType ?? _containerType);
+    final factor = percent * sizeFactor * typeFactor;
     final hasKcal = raw.toLowerCase().contains('kcal');
     final normalized = raw
         .replaceAll('\uFF5E', '-') // fullwidth tilde
@@ -1184,7 +1203,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       );
     }
     final baseRange = _overrideCalorieRange ?? analysis.calorieRange;
-    final adjustedRange = _displayCalorieRange ?? _scaledCalorieRangeText(baseRange, _portionPercent);
+    final adjustedRange = _displayCalorieRange ??
+        _scaledCalorieRangeText(
+          baseRange,
+          _portionPercent,
+          containerType: _containerType,
+          containerSize: _containerSize,
+        );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
