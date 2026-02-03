@@ -443,24 +443,30 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
-    Map<String, String> _parseAdviceSections(String suggestion) {
+  Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
     final lines = suggestion
         .split(RegExp(r'[\r\n]+'))
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty);
     for (final line in lines) {
-      final lower = line.toLowerCase();
-      if (_startsWithAny(line, ['可以吃', '建議吃', '適合吃', '可吃', '可以怎麼吃', '可以喝', '建議喝', '適合喝', '可喝', '可以怎麼喝']) || lower.startsWith('can eat') || lower.startsWith('can drink')) {
-        sections['can'] = _splitAdviceValue(line);
+      final normalized = _normalizeAdviceLine(line);
+      final lower = normalized.toLowerCase();
+      if (_startsWithAny(normalized, ['可以吃', '建議吃', '適合吃', '可吃', '可以怎麼吃', '可以喝', '建議喝', '適合喝', '可喝', '可以怎麼喝']) ||
+          lower.startsWith('can eat') ||
+          lower.startsWith('can drink')) {
+        sections['can'] = _splitAdviceValue(normalized);
         continue;
       }
-      if (_startsWithAny(line, ['不建議吃', '避免', '不推薦', '不建議喝']) || lower.startsWith('avoid')) {
-        sections['avoid'] = _splitAdviceValue(line);
+      if (_startsWithAny(normalized, ['不建議吃', '避免', '不推薦', '不建議喝', '少吃', '少喝', '避免吃', '避免喝']) ||
+          lower.startsWith('avoid')) {
+        sections['avoid'] = _splitAdviceValue(normalized);
         continue;
       }
-      if (_startsWithAny(line, ['建議份量', '建議份量上限', '份量上限', '上限']) || lower.startsWith('portion') || lower.startsWith('limit')) {
-        sections['limit'] = _splitAdviceValue(line);
+      if (_startsWithAny(normalized, ['建議份量', '建議份量上限', '份量上限', '上限', '份量建議']) ||
+          lower.startsWith('portion') ||
+          lower.startsWith('limit')) {
+        sections['limit'] = _splitAdviceValue(normalized);
         continue;
       }
     }
@@ -474,8 +480,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     return false;
   }
 
+  String _normalizeAdviceLine(String line) {
+    var cleaned = line.trimLeft();
+    cleaned = cleaned.replaceFirst(RegExp(r'^[•\-\–—*]+\s*'), '');
+    cleaned = cleaned.replaceFirst(RegExp(r'^(\d+|[一二三四五六七八九十]+)[、.)]\s*'), '');
+    return cleaned.trim();
+  }
+
   String _splitAdviceValue(String line) {
-    for (final separator in ['：', ':', '-', '—', '–']) {
+    for (final separator in ['：', ':', ' - ', '-', '—', '–', '－']) {
       if (line.contains(separator)) {
         return line.split(separator).last.trim();
       }
@@ -500,7 +513,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     }
     if (parts.length < 2) {
       parts = cleaned
-          .split('，')
+          .split(RegExp(r'[，、]+'))
           .map((e) => e.trim())
           .where((e) => e.isNotEmpty)
           .toList();
@@ -523,7 +536,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   }
 
   String _stripAdviceLabel(String text) {
-    var result = text.trim();
+    var result = _normalizeAdviceLine(text);
     const prefixes = [
       '可以吃',
       '建議吃',
@@ -539,10 +552,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       '避免',
       '不推薦',
       '不建議喝',
+      '少吃',
+      '少喝',
+      '避免吃',
+      '避免喝',
       '建議份量',
       '建議份量上限',
       '份量上限',
       '上限',
+      '份量建議',
       'can eat',
       'good choices',
       'can drink',
@@ -550,6 +568,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       'avoid drinking',
       'portion limit',
       'suggested portion',
+      'portion',
+      'limit',
     ];
     for (final prefix in prefixes) {
       if (result.toLowerCase().startsWith(prefix)) {
@@ -557,7 +577,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         break;
       }
     }
-    result = result.replaceFirst(RegExp(r'^[:：—–-]+'), '').trim();
+    result = result.replaceFirst(RegExp(r'^[:：—–\-]+'), '').trim();
     return result;
   }
 
