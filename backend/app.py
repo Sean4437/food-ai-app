@@ -1307,12 +1307,7 @@ def _analyze_with_openai(
     required = {"food_name", "calorie_range", "macros", "suggestion"}
     if not required.issubset(set(data.keys())):
         return None
-    is_beverage = _parse_is_beverage(data)
-    data["is_beverage"] = is_beverage
-    is_food = _parse_is_food(data)
-    data["is_food"] = is_food
-    if not is_food:
-        data["non_food_reason"] = str(data.get("non_food_reason") or "").strip()
+    is_beverage, is_food = _coerce_food_flags(data)
     data["macros"] = _normalize_macros(data, lang)
     data["calorie_range"] = _normalize_calorie_range(
         data.get("calorie_range", ""),
@@ -1387,6 +1382,27 @@ def _parse_is_food(data: dict) -> bool:
         if lower in ("false", "no", "n", "0"):
             return False
     return True
+
+
+def _coerce_food_flags(data: dict) -> tuple[bool, bool]:
+    if not isinstance(data, dict):
+        return False, True
+    is_beverage = _parse_is_beverage(data)
+    is_food = _parse_is_food(data)
+    non_food_reason = str(data.get("non_food_reason") or "").strip()
+    if not is_beverage and not is_food and non_food_reason:
+        lower = non_food_reason.lower()
+        if "飲" in non_food_reason or "drink" in lower or "beverage" in lower:
+            is_beverage = True
+    if is_beverage:
+        is_food = True
+        non_food_reason = ""
+    elif is_food:
+        non_food_reason = ""
+    data["is_beverage"] = is_beverage
+    data["is_food"] = is_food
+    data["non_food_reason"] = non_food_reason
+    return is_beverage, is_food
 
 
 def _analyze_label_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
@@ -1507,6 +1523,7 @@ async def analyze_image(
         if isinstance(cached, dict) and isinstance(cached.get("result"), dict):
             logging.info("Analyze cache hit reason=%s hash=%s", analyze_reason, image_hash[:8])
             cached_result = cached["result"]
+            is_beverage, is_food = _coerce_food_flags(cached_result)
             container_guess_type, container_guess_size = _normalize_container_guess(cached_result)
             return AnalysisResult(
                 food_name=cached_result.get("food_name", ""),
@@ -1519,7 +1536,8 @@ async def analyze_image(
                 tier="cached",
                 source="cache",
                 cost_estimate_usd=None,
-                is_food=cached_result.get("is_food", True),
+                is_beverage=is_beverage,
+                is_food=is_food,
                 non_food_reason=cached_result.get("non_food_reason"),
                 container_guess_type=container_guess_type,
                 container_guess_size=container_guess_size,
@@ -1583,6 +1601,7 @@ async def analyze_image(
                 final_name = food_name or payload["result"]["food_name"]
                 _increment_daily_count()
                 cache = _load_analysis_cache()
+                is_beverage, is_food = _coerce_food_flags(payload["result"])
                 normalized_macros = _normalize_macros(payload["result"], use_lang)
                 container_guess_type, container_guess_size = _normalize_container_guess(payload["result"])
                 cache[image_hash] = {
@@ -1595,6 +1614,7 @@ async def analyze_image(
                         "judgement_tags": payload["result"].get("judgement_tags") or [],
                         "dish_summary": payload["result"].get("dish_summary", ""),
                         "suggestion": payload["result"]["suggestion"],
+                        "is_beverage": payload["result"].get("is_beverage"),
                         "is_food": payload["result"].get("is_food", True),
                         "non_food_reason": payload["result"].get("non_food_reason"),
                         "container_guess_type": container_guess_type,
@@ -1614,8 +1634,8 @@ async def analyze_image(
                     source="ai",
                     cost_estimate_usd=cost_estimate,
                     confidence=payload["result"].get("confidence"),
-                    is_beverage=payload["result"].get("is_beverage"),
-                    is_food=payload["result"].get("is_food", True),
+                    is_beverage=is_beverage,
+                    is_food=is_food,
                     non_food_reason=payload["result"].get("non_food_reason"),
                     container_guess_type=container_guess_type,
                     container_guess_size=container_guess_size,
@@ -1777,12 +1797,7 @@ async def analyze_name(
                     }
                 )
                 _increment_daily_count()
-                is_beverage = _parse_is_beverage(data)
-                data["is_beverage"] = is_beverage
-                is_food = _parse_is_food(data)
-                data["is_food"] = is_food
-                if not is_food:
-                    data["non_food_reason"] = str(data.get("non_food_reason") or "").strip()
+                is_beverage, is_food = _coerce_food_flags(data)
                 normalized_macros = _normalize_macros(data, use_lang)
                 calorie_range = _normalize_calorie_range(
                     data.get("calorie_range", ""),
