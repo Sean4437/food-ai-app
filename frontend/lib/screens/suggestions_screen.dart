@@ -971,47 +971,36 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     final currentRatio = (current / max).clamp(0.0, 1.0);
     const okColor = Color(0xFF7FCF9A);
     const highColor = Color(0xFFF4B183);
+    const barHeight = 24.0;
+    const indicatorSize = 14.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
-            final leftWidth = width * acceptRatio;
-            final indicatorLeft = (width * currentRatio).clamp(0.0, width - 10);
+            final indicatorLeft = (width * currentRatio).clamp(0.0, width - indicatorSize);
             return SizedBox(
-              height: 12,
+              height: barHeight,
               child: Stack(
                 children: [
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: leftWidth,
-                        child: Container(
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: okColor,
-                            borderRadius: const BorderRadius.horizontal(left: Radius.circular(6)),
-                          ),
-                        ),
+                  Container(
+                    height: barHeight,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [okColor, highColor],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
                       ),
-                      Expanded(
-                        child: Container(
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: highColor,
-                            borderRadius: BorderRadius.horizontal(right: Radius.circular(6)),
-                          ),
-                        ),
-                      ),
-                    ],
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
                   ),
                   Positioned(
                     left: indicatorLeft,
-                    top: 0,
+                    top: (barHeight - indicatorSize) / 2,
                     child: Container(
-                      width: 10,
-                      height: 10,
+                      width: indicatorSize,
+                      height: indicatorSize,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         border: Border.all(color: Colors.black12),
