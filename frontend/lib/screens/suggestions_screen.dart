@@ -744,7 +744,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   }
 
   Widget _buildIconChipGroup({
-    required List<MapEntry<IconData, String>> options,
+    required List<_IconChipOption> options,
     required String value,
     required ValueChanged<String> onSelected,
   }) {
@@ -754,9 +754,18 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       children: [
         for (final option in options)
           ChoiceChip(
-            label: Icon(option.key, size: 18),
+            label: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(option.icon, size: 20),
+                const SizedBox(height: 2),
+                Text(option.label),
+              ],
+            ),
             selected: option.value == value,
             onSelected: (_) => onSelected(option.value),
+            labelStyle: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600),
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
           ),
       ],
     );
@@ -767,12 +776,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     final normalized = _normalizeContainerSelection(_containerType, _containerSize);
     final currentType = normalized[0];
     final currentSize = normalized[1];
-    final typeOptions = <MapEntry<IconData, String>>[
-      MapEntry(Icons.ramen_dining, 'bowl'),
-      MapEntry(Icons.restaurant, 'plate'),
-      MapEntry(Icons.lunch_dining, 'box'),
-      MapEntry(Icons.local_cafe, 'cup'),
-      MapEntry(Icons.help_outline, 'unknown'),
+    final typeOptions = <_IconChipOption>[
+      _IconChipOption(icon: Icons.ramen_dining, value: 'bowl', label: t.containerTypeBowl),
+      _IconChipOption(icon: Icons.dinner_dining, value: 'plate', label: t.containerTypePlate),
+      _IconChipOption(icon: Icons.takeout_dining, value: 'box', label: t.containerTypeBox),
+      _IconChipOption(icon: Icons.local_cafe, value: 'cup', label: t.containerTypeCup),
+      _IconChipOption(icon: Icons.help_outline, value: 'unknown', label: t.containerTypeUnknown),
     ];
     final sizeOptions = <MapEntry<String, String>>[
       MapEntry(t.containerSizeSmall, 'small'),
@@ -1583,6 +1592,18 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       ),
     );
   }
+}
+
+class _IconChipOption {
+  const _IconChipOption({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
 }
 
 
