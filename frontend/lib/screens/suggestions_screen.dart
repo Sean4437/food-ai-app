@@ -459,7 +459,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         sections['avoid'] = _splitAdviceValue(line);
         continue;
       }
-      if (_startsWithAny(line, ['\u5efa\u8b70\u4efd\u91cf\u4e0a\u9650', '\u4efd\u91cf\u4e0a\u9650', '\u4e0a\u9650']) || lower.startsWith('portion') || lower.startsWith('limit')) {
+      if (_startsWithAny(line, ['\u5efa\u8b70\u4efd\u91cf', '\u5efa\u8b70\u4efd\u91cf\u4e0a\u9650', '\u4efd\u91cf\u4e0a\u9650', '\u4e0a\u9650']) || lower.startsWith('portion') || lower.startsWith('limit')) {
         sections['limit'] = _splitAdviceValue(line);
         continue;
       }
@@ -583,11 +583,20 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     if (sections.isEmpty) {
       return Text(suggestion, style: AppTextStyles.caption(context).copyWith(color: Colors.black87, height: 1.4));
     }
-    final canText = sections['can'] ?? '-';
-    final avoidText = sections['avoid'] ?? '-';
-    final limitText = sections['limit'] ?? '-';
-    final combined =
-        '${t.suggestInstantCanEatInline}：$canText，${t.suggestInstantRiskInline}：$avoidText，${t.suggestInstantLimitInline}：$limitText';
+    final canText = (sections['can'] ?? '').trim();
+    final avoidText = (sections['avoid'] ?? '').trim();
+    final limitText = (sections['limit'] ?? '').trim();
+    final parts = <String>[];
+    if (canText.isNotEmpty && canText != '-') {
+      parts.add(canText);
+    }
+    if (avoidText.isNotEmpty && avoidText != '-') {
+      parts.add(avoidText);
+    }
+    if (limitText.isNotEmpty && limitText != '-') {
+      parts.add('${t.suggestInstantLimitInline}：$limitText');
+    }
+    final combined = parts.isEmpty ? suggestion : parts.join('，');
     return Text(combined, style: AppTextStyles.caption(context).copyWith(color: Colors.black87, height: 1.4));
   }
 
@@ -882,6 +891,151 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     }
   }
 
+  double _containerSizeFactorFor(String? size) {
+    final value = (size ?? '').toLowerCase();
+    switch (value) {
+      case 'small':
+        return 0.85;
+      case 'large':
+        return 1.15;
+      case 'medium':
+      default:
+        return 1.0;
+    }
+  }
+
+  double _containerTypeFactorFor(String? type) {
+    final value = (type ?? '').toLowerCase();
+    switch (value) {
+      case 'plate':
+        return 1.1;
+      case 'box':
+        return 1.05;
+      case 'cup':
+        return 0.9;
+      case 'bowl':
+      case 'unknown':
+      default:
+        return 1.0;
+    }
+  }
+
+  double? _rangeMidValue(String? rangeText) {
+    if (rangeText == null || rangeText.trim().isEmpty) return null;
+    final normalized = rangeText
+        .replaceAll('\uFF5E', '-')
+        .replaceAll('~', '-')
+        .replaceAll('\u2013', '-')
+        .replaceAll('\u2014', '-');
+    final match = RegExp(r'(\d+)\s*-\s*(\d+)').firstMatch(normalized);
+    if (match != null) {
+      final low = double.tryParse(match.group(1) ?? '');
+      final high = double.tryParse(match.group(2) ?? '');
+      if (low != null && high != null) {
+        return (low + high) / 2;
+      }
+    }
+    final single = RegExp(r'(\d+)').firstMatch(normalized);
+    if (single != null) {
+      return double.tryParse(single.group(1) ?? '');
+    }
+    return null;
+  }
+
+  double? _recentMealAverage(AppState app, {MealType? mealType}) {
+    final cutoff = DateTime.now().subtract(const Duration(days: 7));
+    final values = <double>[];
+    for (final entry in app.entries) {
+      if (entry.time.isBefore(cutoff)) continue;
+      if (mealType != null && entry.type != mealType) continue;
+      final baseRange = entry.overrideCalorieRange ?? entry.labelResult?.calorieRange ?? entry.result?.calorieRange;
+      final mid = _rangeMidValue(baseRange);
+      if (mid == null) continue;
+      final portion = entry.portionPercent.clamp(10, 200) / 100.0;
+      final factor = portion * _containerSizeFactorFor(entry.containerSize) * _containerTypeFactorFor(entry.containerType);
+      values.add(mid * factor);
+    }
+    if (values.isEmpty) return null;
+    final sum = values.fold<double>(0, (acc, v) => acc + v);
+    return sum / values.length;
+  }
+
+  Widget _buildEnergyBar(AppState app, AppLocalizations t, AnalysisResult analysis) {
+    final current = _calorieMidValue(_overrideCalorieRange ?? analysis.calorieRange);
+    if (current == null || current <= 0) return const SizedBox.shrink();
+    final mealType = app.resolveMealType(DateTime.now());
+    final avg = _recentMealAverage(app, mealType: mealType) ?? _recentMealAverage(app);
+    if (avg == null || avg <= 0) return const SizedBox.shrink();
+    final max = math.max(avg * 1.6, avg + 200);
+    final acceptRatio = (avg / max).clamp(0.05, 0.95);
+    final currentRatio = (current / max).clamp(0.0, 1.0);
+    const okColor = Color(0xFF7FCF9A);
+    const highColor = Color(0xFFF4B183);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final leftWidth = width * acceptRatio;
+            final indicatorLeft = (width * currentRatio).clamp(0.0, width - 10);
+            return SizedBox(
+              height: 12,
+              child: Stack(
+                children: [
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: leftWidth,
+                        child: Container(
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: okColor,
+                            borderRadius: const BorderRadius.horizontal(left: Radius.circular(6)),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: highColor,
+                            borderRadius: BorderRadius.horizontal(right: Radius.circular(6)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    left: indicatorLeft,
+                    top: 0,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.black12),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Text(t.suggestInstantEnergyOk, style: AppTextStyles.caption(context).copyWith(color: okColor)),
+            const Spacer(),
+            Text(t.suggestInstantEnergyHigh, style: AppTextStyles.caption(context).copyWith(color: highColor)),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildMacroSection(AppLocalizations t, AnalysisResult analysis) {
     final adjusted = _scaledMacros(analysis.macros);
     return Column(
@@ -1000,7 +1154,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
-  Widget _buildAnalysisCardContent(AppLocalizations t, AnalysisResult analysis) {
+  Widget _buildAnalysisCardContent(AppLocalizations t, AppState app, AnalysisResult analysis) {
     if (analysis.isFood == false) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1060,6 +1214,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        _buildEnergyBar(app, t, analysis),
         const SizedBox(height: 12),
         Text(t.suggestInstantAdviceTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
@@ -1431,7 +1587,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                           child: SingleChildScrollView(
                             controller: controller,
                             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            child: _buildAnalysisCardContent(t, analysis!),
+                            child: _buildAnalysisCardContent(t, app, analysis!),
                           ),
                         ),
                       ],

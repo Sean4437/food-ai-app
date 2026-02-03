@@ -1182,7 +1182,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantAdviceTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'這一餐怎麼吃比較好'**
+  /// **'這一道菜怎麼吃比較好'**
   String get suggestInstantAdviceTitle;
 
   /// No description provided for @suggestInstantCanEat.
@@ -1200,7 +1200,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantLimit.
   ///
   /// In zh_TW, this message translates to:
-  /// **'建議份量上限'**
+  /// **'建議份量'**
   String get suggestInstantLimit;
 
   /// No description provided for @suggestInstantCanEatInline.
@@ -1218,8 +1218,20 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantLimitInline.
   ///
   /// In zh_TW, this message translates to:
-  /// **'建議分量上限'**
+  /// **'建議份量'**
   String get suggestInstantLimitInline;
+
+  /// No description provided for @suggestInstantEnergyOk.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'可接受'**
+  String get suggestInstantEnergyOk;
+
+  /// No description provided for @suggestInstantEnergyHigh.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'偏高'**
+  String get suggestInstantEnergyHigh;
 
   /// No description provided for @suggestInstantMissing.
   ///

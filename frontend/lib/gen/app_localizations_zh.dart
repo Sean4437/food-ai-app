@@ -561,7 +561,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantSkipSave => '先不儲存';
 
   @override
-  String get suggestInstantAdviceTitle => '這一餐怎麼吃比較好';
+  String get suggestInstantAdviceTitle => '这道菜怎么吃比较好';
 
   @override
   String get suggestInstantCanEat => '可以吃';
@@ -570,7 +570,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantAvoid => '不建議吃';
 
   @override
-  String get suggestInstantLimit => '建議份量上限';
+  String get suggestInstantLimit => '建议份量';
 
   @override
   String get suggestInstantCanEatInline => '可以怎么吃';
@@ -579,7 +579,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantRiskInline => '可能会有的问题';
 
   @override
-  String get suggestInstantLimitInline => '建议分量上限';
+  String get suggestInstantLimitInline => '建议份量';
+
+  @override
+  String get suggestInstantEnergyOk => '可接受';
+
+  @override
+  String get suggestInstantEnergyHigh => '偏高';
 
   @override
   String get suggestInstantMissing => '還沒有分析結果';
@@ -1939,7 +1945,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantSkipSave => '先不儲存';
 
   @override
-  String get suggestInstantAdviceTitle => '這一餐怎麼吃比較好';
+  String get suggestInstantAdviceTitle => '這一道菜怎麼吃比較好';
 
   @override
   String get suggestInstantCanEat => '可以吃';
@@ -1948,7 +1954,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantAvoid => '不建議吃';
 
   @override
-  String get suggestInstantLimit => '建議份量上限';
+  String get suggestInstantLimit => '建議份量';
 
   @override
   String get suggestInstantCanEatInline => '可以怎麼吃';
@@ -1957,7 +1963,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantRiskInline => '可能會有的問題';
 
   @override
-  String get suggestInstantLimitInline => '建議分量上限';
+  String get suggestInstantLimitInline => '建議份量';
+
+  @override
+  String get suggestInstantEnergyOk => '可接受';
+
+  @override
+  String get suggestInstantEnergyHigh => '偏高';
 
   @override
   String get suggestInstantMissing => '還沒有分析結果';

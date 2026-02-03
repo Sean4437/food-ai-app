@@ -570,7 +570,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantSkipSave => 'Not now';
 
   @override
-  String get suggestInstantAdviceTitle => 'How to eat this meal better';
+  String get suggestInstantAdviceTitle => 'How to eat this dish better';
 
   @override
   String get suggestInstantCanEat => 'Good choices';
@@ -579,7 +579,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantAvoid => 'Avoid';
 
   @override
-  String get suggestInstantLimit => 'Portion limit';
+  String get suggestInstantLimit => 'Suggested portion';
 
   @override
   String get suggestInstantCanEatInline => 'How to eat';
@@ -588,7 +588,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantRiskInline => 'Possible concerns';
 
   @override
-  String get suggestInstantLimitInline => 'Portion limit';
+  String get suggestInstantLimitInline => 'Suggested portion';
+
+  @override
+  String get suggestInstantEnergyOk => 'Acceptable';
+
+  @override
+  String get suggestInstantEnergyHigh => 'High';
 
   @override
   String get suggestInstantMissing => 'No analysis yet';
