@@ -63,14 +63,14 @@ class SummaryScreen extends StatelessWidget {
     final entry = app.latestEntryForSelectedDate;
     final entries = app.entriesForSelectedDate;
     final groupsByType = app.mealGroupsByTypeForDate(app.selectedDate);
-    final totalMeals = app.mealGroupsForDateAll(app.selectedDate).length;
+    final totalMeals = app.mealGroupsForDateAll(app.selectedDate).where((g) => !app.isBeverageGroup(g)).length;
     final entryCount = entries.length;
-    final breakfast = groupsByType[MealType.breakfast]?.length ?? 0;
-    final brunch = groupsByType[MealType.brunch]?.length ?? 0;
-    final lunch = groupsByType[MealType.lunch]?.length ?? 0;
-    final afternoonTea = groupsByType[MealType.afternoonTea]?.length ?? 0;
-    final dinner = groupsByType[MealType.dinner]?.length ?? 0;
-    final lateSnack = groupsByType[MealType.lateSnack]?.length ?? 0;
+    final breakfast = groupsByType[MealType.breakfast]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
+    final brunch = groupsByType[MealType.brunch]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
+    final lunch = groupsByType[MealType.lunch]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
+    final afternoonTea = groupsByType[MealType.afternoonTea]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
+    final dinner = groupsByType[MealType.dinner]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
+    final lateSnack = groupsByType[MealType.lateSnack]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
     final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
     final selectedDate = app.selectedDate;
 

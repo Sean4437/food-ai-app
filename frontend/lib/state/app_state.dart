@@ -138,16 +138,18 @@ class AppState extends ChangeNotifier {
     final carbs = _aggregateMacroPercentPlain(recent, 'carbs').round();
     final fat = _aggregateMacroPercentPlain(recent, 'fat').round();
     final sodium = _aggregateMacroPercentPlain(recent, 'sodium').round();
-    final recentMealIds = <String>{};
+    final recentGroups = <String, List<MealEntry>>{};
     for (final entry in recent) {
-      recentMealIds.add(entry.mealId ?? entry.id);
+      final key = entry.mealId ?? entry.id;
+      recentGroups.putIfAbsent(key, () => []).add(entry);
     }
+    final recentMealCount = recentGroups.values.where((group) => !_isBeverageGroup(group)).length;
     return [
       'last_meal_type=${_mealTypeKey(last.type)}',
       'last_meal_name=$lastName',
       if (lastSummary.trim().isNotEmpty) 'last_meal_summary=$lastSummary',
       'recent_7d_macros=protein:$protein, carbs:$carbs, fat:$fat, sodium:$sodium',
-      'recent_7d_meal_count=${recentMealIds.length}',
+      'recent_7d_meal_count=$recentMealCount',
     ].join('\n');
   }
 
@@ -1036,8 +1038,9 @@ class AppState extends ChangeNotifier {
   Future<void> finalizeDay(DateTime date, String locale, AppLocalizations t) async {
     final groups = mealGroupsForDateAll(date);
     if (groups.isEmpty) return;
+    final mealGroups = _nonBeverageGroups(groups);
     final meals = <Map<String, dynamic>>[];
-    for (final group in groups) {
+    for (final group in mealGroups) {
       final summary = buildMealSummary(group, t);
       final dishSummaries = <String>[];
       for (final entry in group) {
@@ -1062,7 +1065,7 @@ class AppState extends ChangeNotifier {
         'lang': locale,
         'meals': meals,
         'day_calorie_range': _dailyCalorieRangeLabelForDate(date, t),
-        'day_meal_count': groups.length,
+        'day_meal_count': mealGroups.length,
         'profile': {
           'height_cm': profile.heightCm,
           'weight_kg': profile.weightKg,
@@ -1144,8 +1147,9 @@ class AppState extends ChangeNotifier {
       if (daySummary == null) continue;
       final entriesFor = entriesForDate(day);
       final groups = mealGroupsForDateAll(day);
+      final mealGroups = _nonBeverageGroups(groups);
       final dayMealSummaries = <String>[];
-      for (final group in groups) {
+      for (final group in mealGroups) {
         if (group.isEmpty) continue;
         final summary = buildMealSummary(group, t);
         final dishSummaries = <String>[];
@@ -1172,7 +1176,7 @@ class AppState extends ChangeNotifier {
         'date': '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}',
         'calorie_range': daySummary.calorieRange,
         'day_summary': daySummary.advice,
-        'meal_count': groups.length,
+        'meal_count': mealGroups.length,
         'meal_entry_count': entriesFor.length,
         'day_meal_summaries': dayMealSummaries,
       });
@@ -1281,6 +1285,7 @@ class AppState extends ChangeNotifier {
         return;
       }
       final dayGroups = mealGroupsForDateAll(mealDate);
+      final mealGroups = _nonBeverageGroups(dayGroups);
       final summary = buildMealSummary(group, t);
       final dishSummaries = <String>[];
       for (final entry in group) {
@@ -1291,7 +1296,7 @@ class AppState extends ChangeNotifier {
       }
       final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
       final dayMealSummaries = <String>[];
-      for (final dayGroup in dayGroups) {
+      for (final dayGroup in mealGroups) {
         if (dayGroup.isEmpty) continue;
         final daySummary = buildMealSummary(dayGroup, t);
         final dayDishSummaries = <String>[];
@@ -1315,7 +1320,7 @@ class AppState extends ChangeNotifier {
         'calorie_range': summary?.calorieRange ?? '',
         'dish_summaries': collapsedSummaries,
         'day_calorie_range': _dailyCalorieRangeLabelForDate(mealDate, t),
-        'day_meal_count': dayGroups.length,
+        'day_meal_count': mealGroups.length,
         'day_meal_summaries': dayMealSummaries,
         'lang': locale,
         'profile': {
@@ -2803,6 +2808,23 @@ class AppState extends ChangeNotifier {
     return '${t.smallPortionNote}${_portionNoteSeparator(t)}$trimmed';
   }
 
+  bool _isBeverageGroup(List<MealEntry> group) {
+    bool hasResult = false;
+    for (final entry in group) {
+      final result = entry.result;
+      if (result == null) return false;
+      hasResult = true;
+      if (result.isBeverage != true) return false;
+    }
+    return hasResult;
+  }
+
+  bool isBeverageGroup(List<MealEntry> group) => _isBeverageGroup(group);
+
+  List<List<MealEntry>> _nonBeverageGroups(Iterable<List<MealEntry>> groups) {
+    return groups.where((group) => !_isBeverageGroup(group)).toList();
+  }
+
   String? _entryDishSummary(MealEntry entry, AppLocalizations t) {
     final summaryText = entry.result?.dishSummary?.trim();
     if (summaryText != null && summaryText.isNotEmpty) {
@@ -2955,19 +2977,20 @@ class AppState extends ChangeNotifier {
     final mealType = resolveMealType(now);
     final mealDate = _dateOnly(now);
     final dayGroups = mealGroupsForDateAll(mealDate);
+    final mealGroups = _nonBeverageGroups(dayGroups);
     final daySummary = buildDaySummary(mealDate, t);
     final consumedKcal = dailyConsumedCalorieMid(mealDate).round();
     final targetMid = targetCalorieMid(mealDate);
     final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
     Map<String, double>? lastMealMacros;
-    if (dayGroups.isNotEmpty) {
-      final lastGroup = dayGroups.first;
+    if (mealGroups.isNotEmpty) {
+      final lastGroup = mealGroups.first;
       final lastSummary = buildMealSummary(lastGroup, t);
       lastMealMacros = lastSummary?.macros;
     }
     final recentAdvice = _collectRecentMealAdvice(mealDate, t);
     final dishSummaries = <String>[];
-    for (final dayGroup in dayGroups) {
+    for (final dayGroup in mealGroups) {
       for (final entry in dayGroup) {
         final summaryText = _entryDishSummary(entry, t);
         if (summaryText != null && summaryText.isNotEmpty) {
@@ -2977,7 +3000,7 @@ class AppState extends ChangeNotifier {
     }
     final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
     final dayMealSummaries = <String>[];
-    for (final dayGroup in dayGroups) {
+    for (final dayGroup in mealGroups) {
       if (dayGroup.isEmpty) continue;
       final daySummary = buildMealSummary(dayGroup, t);
       final dayDishSummaries = <String>[];
@@ -3001,7 +3024,7 @@ class AppState extends ChangeNotifier {
       'calorie_range': '',
       'dish_summaries': collapsedSummaries,
       'day_calorie_range': _dailyCalorieRangeLabelForDate(mealDate, t),
-      'day_meal_count': dayGroups.length,
+      'day_meal_count': mealGroups.length,
       'day_meal_summaries': dayMealSummaries,
       'today_consumed_kcal': consumedKcal > 0 ? consumedKcal : null,
       'today_remaining_kcal': remainingKcal,
