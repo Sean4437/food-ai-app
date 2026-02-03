@@ -1049,15 +1049,11 @@ class AppState extends ChangeNotifier {
           dishSummaries.add(summaryText);
         }
       }
-      if (dishSummaries.length > 3) {
-        dishSummaries
-          ..clear()
-          ..add(t.multiItemsLabel);
-      }
+      final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
       meals.add({
         'meal_type': _mealTypeKey(group.first.type),
         'calorie_range': summary?.calorieRange ?? '',
-        'dish_summaries': dishSummaries,
+        'dish_summaries': collapsedSummaries,
       });
     }
       final payload = {
@@ -1159,14 +1155,10 @@ class AppState extends ChangeNotifier {
             dishSummaries.add(summaryText);
           }
         }
-        if (dishSummaries.length > 3) {
-          dishSummaries
-            ..clear()
-            ..add(t.multiItemsLabel);
-        }
+        final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
         final label = _mealTypeLabel(group.first.type, t);
         final rangeText = summary?.calorieRange ?? t.calorieUnknown;
-        final dishText = dishSummaries.isEmpty ? '' : dishSummaries.join(' / ');
+        final dishText = collapsedSummaries.isEmpty ? '' : collapsedSummaries.join(' / ');
         final parts = <String>[label];
         if (rangeText.isNotEmpty) parts.add(rangeText);
         if (dishText.isNotEmpty) parts.add(dishText);
@@ -1666,9 +1658,7 @@ class AppState extends ChangeNotifier {
     };
     final dishSummary = _buildMealDishSummary(group, t);
     final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
-    final advice = (dishSummary.isNotEmpty && dishSummary != t.multiItemsLabel)
-        ? dishSummary
-        : _buildMealAdvice(macros, calorieRange, t);
+    final advice = dishSummary.isNotEmpty ? dishSummary : _buildMealAdvice(macros, calorieRange, t);
     return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
   }
 
@@ -2846,15 +2836,33 @@ class AppState extends ChangeNotifier {
       }
     }
     if (summaries.isEmpty) return '';
-    if (summaries.length > 3) return t.multiItemsLabel;
-    return summaries.join('、');
+    final collapsed = _collapseDishSummaries(summaries, t);
+    if (collapsed.isEmpty) return '';
+    if (collapsed.length == 1) return collapsed.first;
+    final joiner = t.localeName.startsWith('en') ? ', ' : '、';
+    return collapsed.join(joiner);
   }
 
   List<String> _collapseDishSummaries(List<String> items, AppLocalizations t, {int maxItems = 3}) {
-    if (items.length > maxItems) {
-      return [t.multiItemsLabel];
+    final cleaned = <String>[];
+    final seen = <String>{};
+    for (final item in items) {
+      final text = item.trim();
+      if (text.isEmpty) continue;
+      if (seen.add(text)) {
+        cleaned.add(text);
+      }
     }
-    return items;
+    if (cleaned.isEmpty) return [];
+    if (cleaned.length <= maxItems) {
+      return cleaned;
+    }
+    final shown = cleaned.take(maxItems).toList();
+    final total = cleaned.length;
+    final joiner = t.localeName.startsWith('en') ? ', ' : '、';
+    final prefix = shown.join(joiner);
+    final suffix = t.localeName.startsWith('en') ? '... + $total items' : '...等${total}道';
+    return ['$prefix$suffix'];
   }
 
   String _newId() {
