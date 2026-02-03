@@ -426,6 +426,7 @@ def _build_prompt(
             "- container_guess_type: 容器推測類型（bowl/plate/box/cup/unknown）\n"
             "- container_guess_size: 容器推測尺寸（small/medium/large/none）\n"
             "- 若為盤/盒/unknown，尺寸請用 none；若為飲料優先用 cup\n"
+            "- 湯/粥/冰品/零食皆算食物\n"
             "- 酒精飲料（啤酒/紅酒/調酒）屬於飲料，也算食物\n"
             "- 保健品/藥品/維他命不算食物，is_food 請填 false\n"
             "- 醬料/抹醬/油脂若可食，需計入熱量\n"
@@ -487,6 +488,7 @@ def _build_prompt(
         "- container_guess_type: container type guess (bowl/plate/box/cup/unknown)\n"
         "- container_guess_size: container size guess (small/medium/large/none)\n"
         "- If plate/box/unknown, size must be none; if beverage, prefer cup\n"
+        "- Soup/porridge/ice desserts/snacks are food\n"
         "- Alcoholic drinks (beer/wine/cocktails) are beverages and count as food\n"
         "- Supplements/medicine/vitamins are not food; set is_food=false\n"
         "- Edible sauces/spreads/oils should be counted toward calories\n"
@@ -611,6 +613,7 @@ def _build_name_prompt(
             "- container_guess_type: 容器推測類型（bowl/plate/box/cup/unknown）\n"
             "- container_guess_size: 容器推測尺寸（small/medium/large/none）\n"
             "- 若為盤/盒/unknown，尺寸請用 none；若為飲料優先用 cup\n"
+            "- 湯/粥/冰品/零食皆算食物\n"
             "- 酒精飲料（啤酒/紅酒/調酒）屬於飲料，也算食物\n"
             "- 保健品/藥品/維他命不算食物，is_food 請填 false\n"
             "- 醬料/抹醬/油脂若可食，需計入熱量\n"
@@ -667,6 +670,7 @@ def _build_name_prompt(
         "- container_guess_type: container type guess (bowl/plate/box/cup/unknown)\n"
         "- container_guess_size: container size guess (small/medium/large/none)\n"
         "- If plate/box/unknown, size must be none; if beverage, prefer cup\n"
+        "- Soup/porridge/ice desserts/snacks are food\n"
         "- Alcoholic drinks (beer/wine/cocktails) are beverages and count as food\n"
         "- Supplements/medicine/vitamins are not food; set is_food=false\n"
         "- Edible sauces/spreads/oils should be counted toward calories\n"
@@ -1402,6 +1406,9 @@ def _coerce_food_flags(data: dict) -> tuple[bool, bool]:
     is_beverage = _parse_is_beverage(data)
     is_food = _parse_is_food(data)
     non_food_reason = str(data.get("non_food_reason") or "").strip()
+    name_hint = f"{data.get('food_name') or ''} {data.get('label_name') or ''}".strip()
+    name_lower = name_hint.lower()
+    name_has = lambda token: token in name_hint or token in name_lower
     if not is_beverage and not is_food and non_food_reason:
         lower = non_food_reason.lower()
         if (
@@ -1415,6 +1422,23 @@ def _coerce_food_flags(data: dict) -> tuple[bool, bool]:
             or "cocktail" in lower
         ):
             is_beverage = True
+    if not is_food and not is_beverage and (
+        name_has("湯")
+        or name_has("粥")
+        or name_has("冰")
+        or name_has("雪糕")
+        or name_has("冰淇淋")
+        or name_has("刨冰")
+        or name_has("零食")
+        or name_has("餅乾")
+        or name_has("點心")
+        or name_has("snack")
+        or name_has("soup")
+        or name_has("porridge")
+        or name_has("congee")
+        or name_has("ice cream")
+    ):
+        is_food = True
     if is_beverage:
         is_food = True
         non_food_reason = ""
