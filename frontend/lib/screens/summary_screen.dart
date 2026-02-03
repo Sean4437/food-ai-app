@@ -62,13 +62,15 @@ class SummaryScreen extends StatelessWidget {
     final app = AppStateScope.of(context);
     final entry = app.latestEntryForSelectedDate;
     final entries = app.entriesForSelectedDate;
-    final totalMeals = entries.length;
-    final breakfast = entries.where((e) => e.type == MealType.breakfast).length;
-    final brunch = entries.where((e) => e.type == MealType.brunch).length;
-    final lunch = entries.where((e) => e.type == MealType.lunch).length;
-    final afternoonTea = entries.where((e) => e.type == MealType.afternoonTea).length;
-    final dinner = entries.where((e) => e.type == MealType.dinner).length;
-    final lateSnack = entries.where((e) => e.type == MealType.lateSnack).length;
+    final groupsByType = app.mealGroupsByTypeForDate(app.selectedDate);
+    final totalMeals = app.mealGroupsForDateAll(app.selectedDate).length;
+    final entryCount = entries.length;
+    final breakfast = groupsByType[MealType.breakfast]?.length ?? 0;
+    final brunch = groupsByType[MealType.brunch]?.length ?? 0;
+    final lunch = groupsByType[MealType.lunch]?.length ?? 0;
+    final afternoonTea = groupsByType[MealType.afternoonTea]?.length ?? 0;
+    final dinner = groupsByType[MealType.dinner]?.length ?? 0;
+    final lateSnack = groupsByType[MealType.lateSnack]?.length ?? 0;
     final dateFormatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
     final selectedDate = app.selectedDate;
 
@@ -135,7 +137,10 @@ class SummaryScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${t.mealsCountLabel} $totalMeals ${t.mealsLabel}', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                        Text(
+                          '${t.mealsCountLabel} $totalMeals ${t.mealsLabel} · ${t.itemsCount(entryCount)}',
+                          style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                        ),
                         const SizedBox(height: 6),
                         Text(_summaryText(app, t, entry), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                         const SizedBox(height: 12),

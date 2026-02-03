@@ -136,12 +136,16 @@ class AppState extends ChangeNotifier {
     final carbs = _aggregateMacroPercentPlain(recent, 'carbs').round();
     final fat = _aggregateMacroPercentPlain(recent, 'fat').round();
     final sodium = _aggregateMacroPercentPlain(recent, 'sodium').round();
+    final recentMealIds = <String>{};
+    for (final entry in recent) {
+      recentMealIds.add(entry.mealId ?? entry.id);
+    }
     return [
       'last_meal_type=${_mealTypeKey(last.type)}',
       'last_meal_name=$lastName',
       if (lastSummary.trim().isNotEmpty) 'last_meal_summary=$lastSummary',
       'recent_7d_macros=protein:$protein, carbs:$carbs, fat:$fat, sodium:$sodium',
-      'recent_7d_meal_count=${recent.length}',
+      'recent_7d_meal_count=${recentMealIds.length}',
     ].join('\n');
   }
 
