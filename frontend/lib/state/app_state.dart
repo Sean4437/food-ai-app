@@ -35,6 +35,7 @@ const double _kMacroBaselineProteinG = 30;
 const double _kMacroBaselineCarbsG = 80;
 const double _kMacroBaselineFatG = 25;
 const double _kMacroBaselineSodiumMg = 2300;
+const int _kSmallPortionThreshold = 35;
 const String _kNamePlaceholderBase64 =
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/Pi3n1wAAAABJRU5ErkJggg==';
 
@@ -131,7 +132,8 @@ class AppState extends ChangeNotifier {
     recent.sort((a, b) => b.time.compareTo(a.time));
     final last = recent.first;
     final lastName = last.overrideFoodName ?? last.result?.foodName ?? last.filename;
-    final lastSummary = last.result?.dishSummary ?? '';
+    final t = lookupAppLocalizations(_localeFromProfile());
+    final lastSummary = _entryDishSummary(last, t) ?? '';
     final protein = _aggregateMacroPercentPlain(recent, 'protein').round();
     final carbs = _aggregateMacroPercentPlain(recent, 'carbs').round();
     final fat = _aggregateMacroPercentPlain(recent, 'fat').round();
@@ -1039,14 +1041,9 @@ class AppState extends ChangeNotifier {
       final summary = buildMealSummary(group, t);
       final dishSummaries = <String>[];
       for (final entry in group) {
-        final summaryText = entry.result?.dishSummary?.trim();
+        final summaryText = _entryDishSummary(entry, t);
         if (summaryText != null && summaryText.isNotEmpty) {
           dishSummaries.add(summaryText);
-          continue;
-        }
-        final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? '';
-        if (fallback.isNotEmpty) {
-          dishSummaries.add(fallback);
         }
       }
       if (dishSummaries.length > 3) {
@@ -1153,14 +1150,9 @@ class AppState extends ChangeNotifier {
         final summary = buildMealSummary(group, t);
         final dishSummaries = <String>[];
         for (final entry in group) {
-          final summaryText = entry.result?.dishSummary?.trim();
+          final summaryText = _entryDishSummary(entry, t);
           if (summaryText != null && summaryText.isNotEmpty) {
             dishSummaries.add(summaryText);
-            continue;
-          }
-          final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? '';
-          if (fallback.isNotEmpty) {
-            dishSummaries.add(fallback);
           }
         }
         if (dishSummaries.length > 3) {
@@ -1292,13 +1284,10 @@ class AppState extends ChangeNotifier {
       final summary = buildMealSummary(group, t);
       final dishSummaries = <String>[];
       for (final entry in group) {
-        final summaryText = entry.result?.dishSummary?.trim();
+        final summaryText = _entryDishSummary(entry, t);
         if (summaryText != null && summaryText.isNotEmpty) {
           dishSummaries.add(summaryText);
-          continue;
         }
-        final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
-        if (fallback.isNotEmpty) dishSummaries.add(fallback);
       }
       final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
       final dayMealSummaries = <String>[];
@@ -1307,13 +1296,10 @@ class AppState extends ChangeNotifier {
         final daySummary = buildMealSummary(dayGroup, t);
         final dayDishSummaries = <String>[];
         for (final entry in dayGroup) {
-          final summaryText = entry.result?.dishSummary?.trim();
+          final summaryText = _entryDishSummary(entry, t);
           if (summaryText != null && summaryText.isNotEmpty) {
             dayDishSummaries.add(summaryText);
-            continue;
           }
-          final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
-          if (fallback.isNotEmpty) dayDishSummaries.add(fallback);
         }
         final label = _mealTypeLabel(dayGroup.first.type, t);
         final rangeText = daySummary?.calorieRange ?? t.calorieUnknown;
@@ -2802,11 +2788,36 @@ class AppState extends ChangeNotifier {
     return '${t.dietitianPrefix}$line ${goalHint}';
   }
 
+  bool _isSmallPortion(MealEntry entry) {
+    return entry.portionPercent <= _kSmallPortionThreshold;
+  }
+
+  String _portionNoteSeparator(AppLocalizations t) {
+    return t.localeName.startsWith('en') ? ', ' : '，';
+  }
+
+  String _applyPortionNote(String text, MealEntry entry, AppLocalizations t) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty || !_isSmallPortion(entry)) return trimmed;
+    if (trimmed.contains(t.smallPortionNote)) return trimmed;
+    return '${t.smallPortionNote}${_portionNoteSeparator(t)}$trimmed';
+  }
+
+  String? _entryDishSummary(MealEntry entry, AppLocalizations t) {
+    final summaryText = entry.result?.dishSummary?.trim();
+    if (summaryText != null && summaryText.isNotEmpty) {
+      return _applyPortionNote(summaryText, entry, t);
+    }
+    final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? '';
+    if (fallback.trim().isEmpty) return null;
+    return _applyPortionNote(fallback.trim(), entry, t);
+  }
+
   String _buildMealDishSummary(List<MealEntry> group, AppLocalizations t) {
     final summaries = <String>[];
     final seen = <String>{};
     for (final entry in group) {
-      final text = entry.result?.dishSummary?.trim();
+      final text = _entryDishSummary(entry, t);
       if (text == null || text.isEmpty) continue;
       if (seen.add(text)) {
         summaries.add(text);
@@ -2958,13 +2969,10 @@ class AppState extends ChangeNotifier {
     final dishSummaries = <String>[];
     for (final dayGroup in dayGroups) {
       for (final entry in dayGroup) {
-        final summaryText = entry.result?.dishSummary?.trim();
+        final summaryText = _entryDishSummary(entry, t);
         if (summaryText != null && summaryText.isNotEmpty) {
           dishSummaries.add(summaryText);
-          continue;
         }
-        final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
-        if (fallback.isNotEmpty) dishSummaries.add(fallback);
       }
     }
     final collapsedSummaries = _collapseDishSummaries(dishSummaries, t);
@@ -2974,13 +2982,10 @@ class AppState extends ChangeNotifier {
       final daySummary = buildMealSummary(dayGroup, t);
       final dayDishSummaries = <String>[];
       for (final entry in dayGroup) {
-        final summaryText = entry.result?.dishSummary?.trim();
+        final summaryText = _entryDishSummary(entry, t);
         if (summaryText != null && summaryText.isNotEmpty) {
           dayDishSummaries.add(summaryText);
-          continue;
         }
-        final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
-        if (fallback.isNotEmpty) dayDishSummaries.add(fallback);
       }
       final label = _mealTypeLabel(dayGroup.first.type, t);
       final rangeText = daySummary?.calorieRange ?? t.calorieUnknown;

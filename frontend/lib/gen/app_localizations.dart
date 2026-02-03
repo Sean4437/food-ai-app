@@ -819,6 +819,12 @@ abstract class AppLocalizations {
   /// **'今天狀態不錯，繼續保持'**
   String get summaryNeutral;
 
+  /// No description provided for @smallPortionNote.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'份量不多'**
+  String get smallPortionNote;
+
   /// No description provided for @mealsCountLabel.
   ///
   /// In zh_TW, this message translates to:
