@@ -443,7 +443,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
-  Map<String, String> _parseAdviceSections(String suggestion) {
+    Map<String, String> _parseAdviceSections(String suggestion) {
     final sections = <String, String>{};
     final lines = suggestion
         .split(RegExp(r'[\r\n]+'))
@@ -451,15 +451,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         .where((e) => e.isNotEmpty);
     for (final line in lines) {
       final lower = line.toLowerCase();
-      if (_startsWithAny(line, ['\u53ef\u4ee5\u5403', '\u5efa\u8b70\u5403', '\u9069\u5408\u5403', '\u53ef\u5403']) || lower.startsWith('can eat')) {
+      if (_startsWithAny(line, ['可以吃', '建議吃', '適合吃', '可吃', '可以怎麼吃']) || lower.startsWith('can eat')) {
         sections['can'] = _splitAdviceValue(line);
         continue;
       }
-      if (_startsWithAny(line, ['\u4e0d\u5efa\u8b70\u5403', '\u907f\u514d', '\u4e0d\u63a8\u85a6']) || lower.startsWith('avoid')) {
+      if (_startsWithAny(line, ['不建議吃', '避免', '不推薦']) || lower.startsWith('avoid')) {
         sections['avoid'] = _splitAdviceValue(line);
         continue;
       }
-      if (_startsWithAny(line, ['\u5efa\u8b70\u4efd\u91cf', '\u5efa\u8b70\u4efd\u91cf\u4e0a\u9650', '\u4efd\u91cf\u4e0a\u9650', '\u4e0a\u9650']) || lower.startsWith('portion') || lower.startsWith('limit')) {
+      if (_startsWithAny(line, ['建議份量', '建議份量上限', '份量上限', '上限']) || lower.startsWith('portion') || lower.startsWith('limit')) {
         sections['limit'] = _splitAdviceValue(line);
         continue;
       }
@@ -475,12 +475,82 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   }
 
   String _splitAdviceValue(String line) {
-    for (final separator in ['\uFF1A', ':', '-', '\u2014', '\u2013']) {
+    for (final separator in ['：', ':', '-', '—', '–']) {
       if (line.contains(separator)) {
         return line.split(separator).last.trim();
       }
     }
     return line.trim();
+  }
+
+  Map<String, String> _fallbackAdviceSections(String suggestion) {
+    final cleaned = suggestion.trim();
+    if (cleaned.isEmpty) return {};
+    List<String> parts = cleaned
+        .split(RegExp(r'[\r\n]+'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (parts.length < 2) {
+      parts = cleaned
+          .split(RegExp(r'[。；;]+'))
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    if (parts.length < 2) {
+      parts = cleaned
+          .split('，')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    if (parts.isEmpty) return {};
+    String? getPart(int index) {
+      if (index >= parts.length) return '';
+      return _cleanAdviceSegment(parts[index]);
+    }
+    return {
+      'can': getPart(0) ?? '',
+      'avoid': getPart(1) ?? '',
+      'limit': getPart(2) ?? '',
+    };
+  }
+
+  String _cleanAdviceSegment(String text) {
+    final value = _splitAdviceValue(text);
+    return _stripAdviceLabel(value);
+  }
+
+  String _stripAdviceLabel(String text) {
+    var result = text.trim();
+    const prefixes = [
+      '可以吃',
+      '建議吃',
+      '適合吃',
+      '可吃',
+      '可以怎麼吃',
+      '不建議吃',
+      '避免',
+      '不推薦',
+      '建議份量',
+      '建議份量上限',
+      '份量上限',
+      '上限',
+      'can eat',
+      'good choices',
+      'avoid',
+      'portion limit',
+      'suggested portion',
+    ];
+    for (final prefix in prefixes) {
+      if (result.toLowerCase().startsWith(prefix)) {
+        result = result.substring(prefix.length).trim();
+        break;
+      }
+    }
+    result = result.replaceFirst(RegExp(r'^[:：—–-]+'), '').trim();
+    return result;
   }
 
   Widget _buildScanOverlay(double size) {
@@ -578,26 +648,31 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     if (_analysis == null) {
       return Text(t.suggestInstantMissing, style: AppTextStyles.caption(context).copyWith(color: Colors.black54));
     }
-    final suggestion = _analysis!.result.suggestion;
-    final sections = _parseAdviceSections(suggestion);
-    if (sections.isEmpty) {
-      return Text(suggestion, style: AppTextStyles.caption(context).copyWith(color: Colors.black87, height: 1.4));
+    final suggestion = _analysis!.result.suggestion.trim();
+    if (suggestion.isEmpty) {
+      return Text(t.suggestInstantMissing, style: AppTextStyles.caption(context).copyWith(color: Colors.black54));
+    }
+    var sections = _parseAdviceSections(suggestion);
+    if (sections.length < 3) {
+      final fallback = _fallbackAdviceSections(suggestion);
+      sections = {
+        ...fallback,
+        ...sections,
+      };
     }
     final canText = (sections['can'] ?? '').trim();
     final avoidText = (sections['avoid'] ?? '').trim();
     final limitText = (sections['limit'] ?? '').trim();
-    final parts = <String>[];
-    if (canText.isNotEmpty && canText != '-') {
-      parts.add(canText);
-    }
-    if (avoidText.isNotEmpty && avoidText != '-') {
-      parts.add(avoidText);
-    }
-    if (limitText.isNotEmpty && limitText != '-') {
-      parts.add('${t.suggestInstantLimitInline}：$limitText');
-    }
-    final combined = parts.isEmpty ? suggestion : parts.join('，');
-    return Text(combined, style: AppTextStyles.caption(context).copyWith(color: Colors.black87, height: 1.4));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _adviceRow(t.suggestInstantCanEat, canText.isEmpty ? '-' : canText),
+        const SizedBox(height: 8),
+        _adviceRow(t.suggestInstantAvoid, avoidText.isEmpty ? '-' : avoidText),
+        const SizedBox(height: 8),
+        _adviceRow(t.suggestInstantLimit, limitText.isEmpty ? '-' : limitText),
+      ],
+    );
   }
 
   Widget _adviceRow(String title, String? value) {
