@@ -129,6 +129,21 @@
   "summaryNeutral": "You’re doing well today, keep it up",
   "summaryBeverageOnly": "Only beverages recorded today",
   "includesBeverages": "incl. beverages",
+  "proteinIntakeTodayLabel": "Protein today",
+  "proteinIntakeFormat": "Consumed {consumed}g / Target {min}-{max}g",
+  "@proteinIntakeFormat": {
+    "placeholders": {
+      "consumed": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "smallPortionNote": "Small portion",
   "mealsCountLabel": "Logged",
   "mealsLabel": "meals",

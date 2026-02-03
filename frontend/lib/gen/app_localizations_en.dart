@@ -386,6 +386,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get includesBeverages => 'incl. beverages';
 
   @override
+  String get proteinIntakeTodayLabel => 'Protein today';
+
+  @override
+  String proteinIntakeFormat(int consumed, int min, int max) {
+    return 'Consumed ${consumed}g / Target $min-${max}g';
+  }
+
+  @override
   String get smallPortionNote => 'Small portion';
 
   @override

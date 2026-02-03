@@ -78,6 +78,8 @@ class SummaryScreen extends StatelessWidget {
     if (hasBeverageEntries) {
       summaryLine.write('（${t.includesBeverages}）');
     }
+    final proteinRange = app.proteinTargetRangeGrams();
+    final proteinConsumed = app.dailyProteinConsumedGrams(app.selectedDate).round();
     final breakfast = groupsByType[MealType.breakfast]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
     final brunch = groupsByType[MealType.brunch]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
     final lunch = groupsByType[MealType.lunch]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
@@ -159,6 +161,22 @@ class SummaryScreen extends StatelessWidget {
                           _summaryText(app, t, entry, beverageOnly: beverageOnly),
                           style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                         ),
+                        if (proteinRange != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            t.proteinIntakeTodayLabel,
+                            style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            t.proteinIntakeFormat(
+                              app.dailyProteinConsumedGrams(app.selectedDate).round(),
+                              proteinRange[0],
+                              proteinRange[1],
+                            ),
+                            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 10,

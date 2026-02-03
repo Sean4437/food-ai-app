@@ -377,6 +377,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get includesBeverages => '含飲料';
 
   @override
+  String get proteinIntakeTodayLabel => '今日蛋白質';
+
+  @override
+  String proteinIntakeFormat(int consumed, int min, int max) {
+    return '已攝取 ${consumed}g / 目標 $min-${max}g';
+  }
+
+  @override
   String get smallPortionNote => '份量不多';
 
   @override
@@ -1783,6 +1791,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get includesBeverages => '含飲料';
+
+  @override
+  String get proteinIntakeTodayLabel => '今日蛋白質';
+
+  @override
+  String proteinIntakeFormat(int consumed, int min, int max) {
+    return '已攝取 ${consumed}g / 目標 $min-${max}g';
+  }
 
   @override
   String get smallPortionNote => '份量不多';

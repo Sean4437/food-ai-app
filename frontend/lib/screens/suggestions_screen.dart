@@ -1317,6 +1317,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           containerType: _containerType,
           containerSize: _containerSize,
         );
+    final proteinRange = app.proteinTargetRangeGrams();
+    final proteinConsumed = app.dailyProteinConsumedGrams((_analysis?.time ?? DateTime.now())).round();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1352,6 +1354,22 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         ),
         const SizedBox(height: 8),
         _buildEnergyBar(app, t, analysis),
+        if (proteinRange != null) ...[
+          const SizedBox(height: 10),
+          Text(
+            t.proteinIntakeTodayLabel,
+            style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            t.proteinIntakeFormat(
+              proteinConsumed,
+              proteinRange[0],
+              proteinRange[1],
+            ),
+            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+          ),
+        ],
         const SizedBox(height: 12),
         Text(
           analysis.isBeverage == true ? t.suggestInstantDrinkAdviceTitle : t.suggestInstantAdviceTitle,

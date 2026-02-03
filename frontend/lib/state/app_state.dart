@@ -829,6 +829,27 @@ class AppState extends ChangeNotifier {
     return list.isNotEmpty ? list.first : null;
   }
 
+  List<int>? proteinTargetRangeGrams() {
+    final weight = profile.weightKg;
+    if (weight <= 0) return null;
+    final min = (weight * 0.8).round();
+    final max = (weight * 1.2).round();
+    if (min <= 0 || max <= 0) return null;
+    return [min, max];
+  }
+
+  double dailyProteinConsumedGrams(DateTime date, {bool excludeBeverages = false}) {
+    double sum = 0;
+    for (final entry in entriesForDate(date)) {
+      final result = entry.result;
+      if (result == null) continue;
+      if (excludeBeverages && result.isBeverage == true) continue;
+      final weight = _entryPortionFactor(entry);
+      sum += (result.macros['protein'] ?? 0) * weight;
+    }
+    return sum;
+  }
+
   MealEntry? latestNonBeverageEntryForDate(DateTime date) {
     final list = entriesForDate(date);
     for (final entry in list) {

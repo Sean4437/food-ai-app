@@ -129,6 +129,21 @@
   "summaryNeutral": "今天狀態不錯，繼續保持",
   "summaryBeverageOnly": "今天只記錄了飲料",
   "includesBeverages": "含飲料",
+  "proteinIntakeTodayLabel": "今日蛋白質",
+  "proteinIntakeFormat": "已攝取 {consumed}g / 目標 {min}-{max}g",
+  "@proteinIntakeFormat": {
+    "placeholders": {
+      "consumed": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "smallPortionNote": "份量不多",
   "mealsCountLabel": "已記錄",
   "mealsLabel": "餐",

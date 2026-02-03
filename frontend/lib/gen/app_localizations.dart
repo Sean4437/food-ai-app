@@ -831,6 +831,18 @@ abstract class AppLocalizations {
   /// **'含飲料'**
   String get includesBeverages;
 
+  /// No description provided for @proteinIntakeTodayLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'今日蛋白質'**
+  String get proteinIntakeTodayLabel;
+
+  /// No description provided for @proteinIntakeFormat.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已攝取 {consumed}g / 目標 {min}-{max}g'**
+  String proteinIntakeFormat(int consumed, int min, int max);
+
   /// No description provided for @smallPortionNote.
   ///
   /// In zh_TW, this message translates to:
