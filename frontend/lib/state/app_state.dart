@@ -1671,7 +1671,9 @@ class AppState extends ChangeNotifier {
     };
     final dishSummary = _buildMealDishSummary(group, t);
     final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
-    final advice = dishSummary.isNotEmpty ? dishSummary : _buildMealAdvice(macros, calorieRange, t);
+    final advice = (dishSummary.isNotEmpty && dishSummary != t.multiItemsLabel)
+        ? dishSummary
+        : _buildMealAdvice(macros, calorieRange, t);
     return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
   }
 
