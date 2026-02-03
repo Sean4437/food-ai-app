@@ -426,6 +426,9 @@ def _build_prompt(
             "- container_guess_type: 容器推測類型（bowl/plate/box/cup/unknown）\n"
             "- container_guess_size: 容器推測尺寸（small/medium/large/none）\n"
             "- 若為盤/盒/unknown，尺寸請用 none；若為飲料優先用 cup\n"
+            "- 酒精飲料（啤酒/紅酒/調酒）屬於飲料，也算食物\n"
+            "- 保健品/藥品/維他命不算食物，is_food 請填 false\n"
+            "- 醬料/抹醬/油脂若可食，需計入熱量\n"
             "- 飲料規則：若為飲料，protein/fat 請偏低（約 <= 3g），熱量偏低；含糖可提升 carbs\n"
             "- 若使用者提供 food_name，必須優先採用\n"
             "- 若提供 nutrition label info，必須使用其 calorie_range 與 macros\n"
@@ -484,6 +487,9 @@ def _build_prompt(
         "- container_guess_type: container type guess (bowl/plate/box/cup/unknown)\n"
         "- container_guess_size: container size guess (small/medium/large/none)\n"
         "- If plate/box/unknown, size must be none; if beverage, prefer cup\n"
+        "- Alcoholic drinks (beer/wine/cocktails) are beverages and count as food\n"
+        "- Supplements/medicine/vitamins are not food; set is_food=false\n"
+        "- Edible sauces/spreads/oils should be counted toward calories\n"
         "- Beverage rule: if beverage, protein/fat should be low (around <= 3g); calories should be low; sugary drinks may increase carbs\n"
         "- If user provides food_name, it must be used as the primary name\n"
         "- If nutrition label info is provided, you must use its calorie_range and macros\n"
@@ -605,6 +611,9 @@ def _build_name_prompt(
             "- container_guess_type: 容器推測類型（bowl/plate/box/cup/unknown）\n"
             "- container_guess_size: 容器推測尺寸（small/medium/large/none）\n"
             "- 若為盤/盒/unknown，尺寸請用 none；若為飲料優先用 cup\n"
+            "- 酒精飲料（啤酒/紅酒/調酒）屬於飲料，也算食物\n"
+            "- 保健品/藥品/維他命不算食物，is_food 請填 false\n"
+            "- 醬料/抹醬/油脂若可食，需計入熱量\n"
             "- 飲料規則：若為飲料，protein/fat 請偏低（約 <= 3g），熱量偏低；含糖可提升 carbs\n"
             "JSON 範例：\n"
             "{\n"
@@ -658,6 +667,9 @@ def _build_name_prompt(
         "- container_guess_type: container type guess (bowl/plate/box/cup/unknown)\n"
         "- container_guess_size: container size guess (small/medium/large/none)\n"
         "- If plate/box/unknown, size must be none; if beverage, prefer cup\n"
+        "- Alcoholic drinks (beer/wine/cocktails) are beverages and count as food\n"
+        "- Supplements/medicine/vitamins are not food; set is_food=false\n"
+        "- Edible sauces/spreads/oils should be counted toward calories\n"
         "- Beverage rule: if beverage, protein/fat should be low (around <= 3g); calories should be low; sugary drinks may increase carbs\n"
         "JSON example:\n"
         "{\n"
@@ -1392,7 +1404,16 @@ def _coerce_food_flags(data: dict) -> tuple[bool, bool]:
     non_food_reason = str(data.get("non_food_reason") or "").strip()
     if not is_beverage and not is_food and non_food_reason:
         lower = non_food_reason.lower()
-        if "飲" in non_food_reason or "drink" in lower or "beverage" in lower:
+        if (
+            "飲" in non_food_reason
+            or "酒" in non_food_reason
+            or "drink" in lower
+            or "beverage" in lower
+            or "alcohol" in lower
+            or "beer" in lower
+            or "wine" in lower
+            or "cocktail" in lower
+        ):
             is_beverage = True
     if is_beverage:
         is_food = True
