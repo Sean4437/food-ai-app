@@ -20,7 +20,7 @@ import '../config/supabase_config.dart';
 import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
 
-const String kDefaultApiBaseUrl = 'https://effectively-wild-oecd-weddings.trycloudflare.com';
+const String kDefaultApiBaseUrl = 'https://pharmacy-little-fever-attacked.trycloudflare.com';
 const List<String> kDeprecatedApiBaseUrls = [
   'https://sussex-oscar-southern-scanning.trycloudflare.com',
 ];
