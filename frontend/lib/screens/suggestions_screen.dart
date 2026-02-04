@@ -716,11 +716,20 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
+  String _labelWithColon(String title) {
+    final trimmed = title.trimRight();
+    if (trimmed.endsWith('：') || trimmed.endsWith(':')) {
+      return trimmed;
+    }
+    return '$trimmed：';
+  }
+
   Widget _adviceRow(String title, String? value) {
+    final displayTitle = _labelWithColon(title);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        Text(displayTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(width: 8),
         Expanded(
           child: Text(value ?? '-', style: AppTextStyles.caption(context).copyWith(color: Colors.black87, height: 1.4)),
