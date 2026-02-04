@@ -206,7 +206,6 @@ class _LogScreenState extends State<LogScreen> {
     final mealLabel = _mealLabel(entry.type, t);
 
     return Container(
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -218,33 +217,45 @@ class _LogScreenState extends State<LogScreen> {
           ),
         ],
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(t.logTopMealTitle, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                  const SizedBox(height: 6),
-                  Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  Text(kcalText, style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _chip(mealLabel),
-                      _chip(t.logRecentDaysTag(dateLabel)),
+                      Text(t.logTopMealTitle, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                      const SizedBox(height: 6),
+                      Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      Text(kcalText, style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        children: [
+                          _chip(mealLabel),
+                          _chip(t.logRecentDaysTag(dateLabel)),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            _squarePhoto(entry.imageBytes, radius: 12, fallbackSize: 72),
-          ],
+              _squarePhoto(
+                entry.imageBytes,
+                fallbackSize: 72,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(18),
+                  bottomRight: Radius.circular(18),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -261,7 +272,13 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
-  Widget _squarePhoto(Uint8List bytes, {required double radius, required double fallbackSize}) {
+  Widget _squarePhoto(
+    Uint8List bytes, {
+    BorderRadius? borderRadius,
+    double radius = 0,
+    required double fallbackSize,
+  }) {
+    final resolvedRadius = borderRadius ?? BorderRadius.circular(radius);
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = constraints.maxHeight.isFinite ? constraints.maxHeight : fallbackSize;
@@ -269,7 +286,7 @@ class _LogScreenState extends State<LogScreen> {
           width: size,
           height: size,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(radius),
+            borderRadius: resolvedRadius,
             child: Image.memory(bytes, fit: BoxFit.cover),
           ),
         );
@@ -427,7 +444,6 @@ class _LogScreenState extends State<LogScreen> {
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -439,38 +455,56 @@ class _LogScreenState extends State<LogScreen> {
             ),
           ],
         ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _squarePhoto(entry.imageBytes, radius: 10, fallbackSize: 56),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(_timeLabel(entry.time), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(summary, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                      ),
-                      Text(calorie, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                    ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _squarePhoto(
+                  entry.imageBytes,
+                  fallbackSize: 56,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
                   ),
-                  if (tags.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(tags.join(' · '), style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
-                  ],
-                ],
-              ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              _timeLabel(entry.time),
+                              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                summary,
+                                style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            Text(calorie, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                          ],
+                        ),
+                        if (tags.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(tags.join(' · '), style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _mealSection(BuildContext context, AppState app, MealType type, List<List<MealEntry>> groups) {
