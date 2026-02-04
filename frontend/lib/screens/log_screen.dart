@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../state/app_state.dart';
@@ -217,34 +218,34 @@ class _LogScreenState extends State<LogScreen> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(t.logTopMealTitle, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                const SizedBox(height: 6),
-                Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                Text(kcalText, style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  children: [
-                    _chip(mealLabel),
-                    _chip(t.logRecentDaysTag(dateLabel)),
-                  ],
-                ),
-              ],
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.logTopMealTitle, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                  const SizedBox(height: 6),
+                  Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Text(kcalText, style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    children: [
+                      _chip(mealLabel),
+                      _chip(t.logRecentDaysTag(dateLabel)),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.memory(entry.imageBytes, width: 72, height: 72, fit: BoxFit.cover),
-          ),
-        ],
+            const SizedBox(width: 10),
+            _squarePhoto(entry.imageBytes, radius: 12, fallbackSize: 72),
+          ],
+        ),
       ),
     );
   }
@@ -257,6 +258,22 @@ class _LogScreenState extends State<LogScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(text, style: const TextStyle(fontSize: 12, color: Color(0xFF3C6F5B), fontWeight: FontWeight.w600)),
+    );
+  }
+
+  Widget _squarePhoto(Uint8List bytes, {required double radius, required double fallbackSize}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = constraints.maxHeight.isFinite ? constraints.maxHeight : fallbackSize;
+        return SizedBox(
+          width: size,
+          height: size,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(radius),
+            child: Image.memory(bytes, fit: BoxFit.cover),
+          ),
+        );
+      },
     );
   }
 
@@ -422,18 +439,11 @@ class _LogScreenState extends State<LogScreen> {
             ),
           ],
         ),
+      child: IntrinsicHeight(
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.memory(
-                entry.imageBytes,
-                width: 56,
-                height: 56,
-                fit: BoxFit.cover,
-              ),
-            ),
+            _squarePhoto(entry.imageBytes, radius: 10, fallbackSize: 56),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -459,7 +469,8 @@ class _LogScreenState extends State<LogScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _mealSection(BuildContext context, AppState app, MealType type, List<List<MealEntry>> groups) {
