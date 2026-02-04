@@ -3347,6 +3347,28 @@ class AppState extends ChangeNotifier {
         foodsToSync.add(food);
       }
     }
+    if (since != null) {
+      final remoteMealIds = await _fetchRemoteIds(kSupabaseMealsTable, user.id);
+      if (remoteMealIds != null) {
+        final existingIds = entriesToSync.map((e) => e.id).toSet();
+        for (final entry in entries) {
+          if (entry.id.isEmpty) continue;
+          if (!remoteMealIds.contains(entry.id) && !existingIds.contains(entry.id)) {
+            entriesToSync.add(entry);
+          }
+        }
+      }
+      final remoteFoodIds = await _fetchRemoteIds(kSupabaseCustomFoodsTable, user.id);
+      if (remoteFoodIds != null) {
+        final existingIds = foodsToSync.map((f) => f.id).toSet();
+        for (final food in customFoods) {
+          if (food.id.isEmpty) continue;
+          if (!remoteFoodIds.contains(food.id) && !existingIds.contains(food.id)) {
+            foodsToSync.add(food);
+          }
+        }
+      }
+    }
     final deletionsToSync = _deletedEntries.values.where((value) {
       final raw = value['deleted_at'];
       if (raw is! String || raw.isEmpty) return true;
@@ -3951,6 +3973,26 @@ class AppState extends ChangeNotifier {
     if (row is! Map<String, dynamic>) return null;
     final raw = row['updated_at'] as String?;
     return raw == null || raw.isEmpty ? null : DateTime.tryParse(raw);
+  }
+
+  Future<Set<String>?> _fetchRemoteIds(String table, String userId) async {
+    try {
+      final rows = await _supabase.client
+          .from(table)
+          .select('id')
+          .eq('user_id', userId)
+          .limit(10000);
+      if (rows is! List) return null;
+      final ids = <String>{};
+      for (final row in rows) {
+        if (row is Map && row['id'] != null) {
+          ids.add(row['id'].toString());
+        }
+      }
+      return ids;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _storeRemoteSyncAt(String userId, DateTime time) async {
