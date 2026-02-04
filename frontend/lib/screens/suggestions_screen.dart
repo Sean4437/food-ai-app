@@ -455,18 +455,18 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       if (_startsWithAny(normalized, ['可以吃', '建議吃', '適合吃', '可吃', '可以怎麼吃', '可以喝', '建議喝', '適合喝', '可喝', '可以怎麼喝']) ||
           lower.startsWith('can eat') ||
           lower.startsWith('can drink')) {
-        sections['can'] = _splitAdviceValue(normalized);
+        sections['can'] = _cleanAdviceValue(_splitAdviceValue(normalized), 'can');
         continue;
       }
       if (_startsWithAny(normalized, ['不建議吃', '避免', '不推薦', '不建議喝', '少吃', '少喝', '避免吃', '避免喝']) ||
           lower.startsWith('avoid')) {
-        sections['avoid'] = _splitAdviceValue(normalized);
+        sections['avoid'] = _cleanAdviceValue(_splitAdviceValue(normalized), 'avoid');
         continue;
       }
       if (_startsWithAny(normalized, ['建議份量', '建議份量上限', '份量上限', '上限', '份量建議']) ||
           lower.startsWith('portion') ||
           lower.startsWith('limit')) {
-        sections['limit'] = _splitAdviceValue(normalized);
+        sections['limit'] = _cleanAdviceValue(_splitAdviceValue(normalized), 'limit');
         continue;
       }
     }
@@ -519,20 +519,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           .toList();
     }
     if (parts.isEmpty) return {};
-    String? getPart(int index) {
-      if (index >= parts.length) return '';
-      return _cleanAdviceSegment(parts[index]);
-    }
     return {
-      'can': getPart(0) ?? '',
-      'avoid': getPart(1) ?? '',
-      'limit': getPart(2) ?? '',
+      'can': parts.isNotEmpty ? _cleanAdviceValue(parts[0], 'can') : '',
+      'avoid': parts.length > 1 ? _cleanAdviceValue(parts[1], 'avoid') : '',
+      'limit': parts.length > 2 ? _cleanAdviceValue(parts[2], 'limit') : '',
     };
-  }
-
-  String _cleanAdviceSegment(String text) {
-    final value = _splitAdviceValue(text);
-    return _stripAdviceLabel(value);
   }
 
   String _stripAdviceLabel(String text) {
@@ -579,6 +570,24 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     }
     result = result.replaceFirst(RegExp(r'^[:：—–\-]+'), '').trim();
     return result;
+  }
+
+  String _cleanAdviceValue(String value, String key) {
+    var cleaned = _stripAdviceLabel(value);
+    cleaned = cleaned.replaceFirst(RegExp(r'^[、，,;；]+'), '').trim();
+    if (key == 'can') {
+      cleaned = cleaned.replaceFirst(
+        RegExp(r'^(可以|建議|適合)?\s*(搭配|配|加點|加入|多搭配|多加)\s*'),
+        '',
+      );
+    }
+    if (key == 'avoid') {
+      cleaned = cleaned.replaceFirst(RegExp(r'^(避免|不建議|不推薦|少|盡量少|盡量避免)\s*'), '');
+    }
+    if (key == 'limit') {
+      cleaned = cleaned.replaceFirst(RegExp(r'^(份量|份量上限|建議份量|上限|控制在)\s*'), '');
+    }
+    return cleaned.trim();
   }
 
   Widget _buildScanOverlay(double size) {
