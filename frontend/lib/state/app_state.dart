@@ -561,6 +561,7 @@ class AppState extends ChangeNotifier {
     if (profileMap != null) {
       _applyProfile(profileMap);
     }
+    _forceFixedApiBaseUrl();
     final didMigrateApi = _migrateApiBaseUrlIfNeeded();
     bool profileChanged = false;
     if (profile.nutritionValueMode != 'amount') {
@@ -1553,9 +1554,15 @@ class AppState extends ChangeNotifier {
     return false;
   }
 
+  void _forceFixedApiBaseUrl() {
+    if (profile.apiBaseUrl != kDefaultApiBaseUrl) {
+      profile.apiBaseUrl = kDefaultApiBaseUrl;
+    }
+    _api = ApiService(baseUrl: kDefaultApiBaseUrl);
+  }
+
   void updateApiBaseUrl(String url) {
-    final normalized = _normalizeApiBaseUrl(url);
-    _api = ApiService(baseUrl: normalized);
+    _forceFixedApiBaseUrl();
     notifyListeners();
   }
 
@@ -4407,7 +4414,6 @@ class AppState extends ChangeNotifier {
       ..lateSnackStart = _parseTime(data['late_snack_start'] as String?, profile.lateSnackStart)
       ..lateSnackEnd = _parseTime(data['late_snack_end'] as String?, profile.lateSnackEnd)
       ..language = (data['language'] as String?) ?? profile.language
-      ..apiBaseUrl = (data['api_base_url'] as String?) ?? profile.apiBaseUrl
       ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset
       ..themeAsset = (data['theme_asset'] as String?) ?? profile.themeAsset
       ..textScale = (data['text_scale'] as num?)?.toDouble() ?? profile.textScale

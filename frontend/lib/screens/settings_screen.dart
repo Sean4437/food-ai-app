@@ -18,6 +18,17 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final app = AppStateScope.of(context);
+      // ignore: discarded_futures
+      app.refreshApiBaseUrlFromRemote();
+    });
+  }
+
   Widget _skeletonBar(double width, {double height = 12}) {
     return Container(
       width: width,
@@ -248,8 +259,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
     if (result != null && result.isNotEmpty) {
-      app.updateField((p) => p.apiBaseUrl = result);
-      app.updateApiBaseUrl(result);
+      await app.updateApiBaseUrl(result);
     }
   }
 

@@ -1218,13 +1218,13 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantAdviceTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'這一道菜怎麼吃比較好'**
+  /// **'這份食物怎麼吃比較好'**
   String get suggestInstantAdviceTitle;
 
   /// No description provided for @suggestInstantCanEat.
   ///
   /// In zh_TW, this message translates to:
-  /// **'可以吃'**
+  /// **'搭配'**
   String get suggestInstantCanEat;
 
   /// No description provided for @suggestInstantCanDrink.
@@ -1236,7 +1236,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantAvoid.
   ///
   /// In zh_TW, this message translates to:
-  /// **'不建議吃'**
+  /// **'不建議'**
   String get suggestInstantAvoid;
 
   /// No description provided for @suggestInstantAvoidDrink.
