@@ -892,14 +892,24 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       children: [
         for (final option in options)
           ChoiceChip(
-            label: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _iconChipGlyph(option),
-                const SizedBox(height: 2),
-                Text(option.label),
-              ],
-            ),
+            label: option.showLabel
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _iconChipGlyph(option),
+                      const SizedBox(height: 2),
+                      Text(option.label),
+                    ],
+                  )
+                : Semantics(
+                    label: option.label,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _iconChipGlyph(option),
+                      ],
+                    ),
+                  ),
             selected: option.value == value,
             onSelected: (_) => onSelected(option.value),
             labelStyle: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600),
@@ -928,11 +938,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     final currentType = normalized[0];
     final currentSize = normalized[1];
     final typeOptions = <_IconChipOption>[
-      _IconChipOption(emoji: '🍜', value: 'bowl', label: t.containerTypeBowl),
-      _IconChipOption(emoji: '🍽️', value: 'plate', label: t.containerTypePlate),
-      _IconChipOption(emoji: '🍱', value: 'box', label: t.containerTypeBox),
-      _IconChipOption(emoji: '🥤', value: 'cup', label: t.containerTypeCup),
-      _IconChipOption(emoji: '❓', value: 'unknown', label: t.containerTypeUnknown),
+      _IconChipOption(emoji: '🍜', value: 'bowl', label: t.containerTypeBowl, showLabel: false),
+      _IconChipOption(emoji: '🍽️', value: 'plate', label: t.containerTypePlate, showLabel: false),
+      _IconChipOption(emoji: '🍱', value: 'box', label: t.containerTypeBox, showLabel: false),
+      _IconChipOption(emoji: '🥤', value: 'cup', label: t.containerTypeCup, showLabel: false),
+      _IconChipOption(emoji: '❓', value: 'unknown', label: t.containerTypeUnknown, showLabel: false),
     ];
     final sizeOptions = <MapEntry<String, String>>[
       MapEntry(t.containerSizeSmall, 'small'),
@@ -1796,12 +1806,14 @@ class _IconChipOption {
     this.emoji,
     required this.value,
     required this.label,
+    this.showLabel = true,
   });
 
   final IconData? icon;
   final String? emoji;
   final String value;
   final String label;
+  final bool showLabel;
 }
 
 
