@@ -10,7 +10,6 @@ import asyncio
 import base64
 import json
 import os
-import random
 import uuid
 import hashlib
 from datetime import datetime, timezone, timedelta
@@ -182,38 +181,8 @@ ANALYSIS_CACHE_MAX = int(os.getenv("ANALYSIS_CACHE_MAX", "5000"))
 USAGE_LOG_TTL_DAYS = int(os.getenv("USAGE_LOG_TTL_DAYS", "90"))
 USAGE_LOG_MAX = int(os.getenv("USAGE_LOG_MAX", "10000"))
 
-_fake_foods = {
-    "zh-TW": [
-        "烤雞沙拉",
-        "牛肉蓋飯",
-        "蔬菜炒食",
-        "番茄義大利麵",
-        "壽司組合",
-    ],
-    "en": [
-        "Grilled Chicken Salad",
-        "Beef Rice Bowl",
-        "Vegetable Stir-fry",
-        "Pasta with Tomato Sauce",
-        "Sushi Combo",
-    ],
-}
+_supported_langs = {"zh-TW", "en"}
 
-_fake_suggestions = {
-    "zh-TW": [
-        "下一餐建議：燙青菜＋雞胸/豆腐，主食半碗即可。",
-        "下一餐建議：清湯＋蔬菜＋蛋白質（茶葉蛋/無糖豆漿）。",
-        "下一餐建議：水果或無糖優格，搭配一份蔬菜沙拉。",
-    ],
-    "en": [
-        "Next meal: vegetables + lean protein (e.g., chicken/tofu), smaller carbs.",
-        "Next meal: clear soup + veggies + protein (egg, yogurt, or soy milk).",
-        "Next meal: fruit or plain yogurt with a side salad.",
-    ],
-}
-
-_fake_macro_choices_g = [8, 15, 25, 35, 45]
-_fake_sodium_choices_mg = [120, 250, 450, 700, 950]
 
 
 def _macro_level_to_percent(value: str) -> int:
@@ -346,6 +315,9 @@ def _build_prompt(
     meal_photo_count: int | None,
     context: str | None,
     advice_mode: str | None,
+    today_consumed_kcal: int | None,
+    today_remaining_kcal: int | None,
+    today_protein_g: int | None,
     label_context: str | None,
     container_type: str | None,
     container_size: str | None,
@@ -372,6 +344,26 @@ def _build_prompt(
     context_text = ""
     if context:
         context_text = f"Recent context (use for suggestions): {context}\n"
+    intake_text = ""
+    if today_consumed_kcal is not None or today_remaining_kcal is not None or today_protein_g is not None:
+        if lang == "zh-TW":
+            parts = []
+            if today_consumed_kcal is not None:
+                parts.append(f"今日已吃熱量估計：{today_consumed_kcal} kcal")
+            if today_remaining_kcal is not None:
+                parts.append(f"今日剩餘熱量估計：{today_remaining_kcal} kcal")
+            if today_protein_g is not None:
+                parts.append(f"今日已吃蛋白質：{today_protein_g} g")
+            intake_text = "今日累積資訊（用於調整建議，避免直接引用數字）：\n" + "；".join(parts) + "\n"
+        else:
+            parts = []
+            if today_consumed_kcal is not None:
+                parts.append(f"Today's consumed kcal: {today_consumed_kcal}")
+            if today_remaining_kcal is not None:
+                parts.append(f"Today's remaining kcal: {today_remaining_kcal}")
+            if today_protein_g is not None:
+                parts.append(f"Today's protein grams: {today_protein_g}")
+            intake_text = "Today's intake (use to adjust suggestions; do not repeat exact numbers):\n" + "; ".join(parts) + "\n"
     label_text = ""
     if label_context:
         label_text = (
@@ -412,19 +404,21 @@ def _build_prompt(
             meal_text += f"This meal has {meal_photo_count} photos; summarize at the whole-meal level.\n"
     if lang == "zh-TW":
         suggestion_rule = (
-            "- suggestion: 針對下一餐的建議，輸出三行格式：可以吃 / 不建議吃 / 份量上限\n"
+            "- suggestion: 針對下一餐的建議，輸出三行格式：搭配 / 不建議 / 建議份量\n"
             "- 需包含具體食物類型與份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
+            "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「搭配/避免/份量」開頭\n"
         )
         suggestion_example = (
-            "  \"suggestion\": \"可以吃：清淡蛋白質與蔬菜\\n不建議吃：油炸與高糖飲品\\n份量上限：主食半碗、蛋白質一掌\",\n"
+            "  \"suggestion\": \"搭配：蔬菜多一點、清淡蛋白質\\n不建議：油炸或高糖飲品\\n建議份量：主食半碗、蛋白質一掌\",\n"
         )
         if advice_mode == "current_meal":
             suggestion_rule = (
-                "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：可以吃 / 不建議吃 / 份量上限\n"
+                "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：搭配 / 不建議 / 建議份量\n"
                 "- 若 recent context 有上一餐資訊，請簡短提到；若沒有可省略\n"
+                "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「搭配/避免/份量」開頭\n"
             )
             suggestion_example = (
-                "  \"suggestion\": \"可以吃：蔬菜多一點、保留瘦肉\\n不建議吃：湯底與加工配料\\n份量上限：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
+                "  \"suggestion\": \"搭配：蔬菜多一點，肉量減少\\n不建議：湯底與加工配料\\n建議份量：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
             )
         return (
             "你是營養分析助理。請根據照片判斷餐點內容，回傳 JSON。\n"
@@ -472,21 +466,23 @@ def _build_prompt(
             "  \"container_guess_type\": \"bowl\",\n"
             "  \"container_guess_size\": \"medium\"\n"
             "}\n"
-        ) + profile_text + note_text + context_text + label_text + container_text + meal_text
+        ) + profile_text + note_text + context_text + intake_text + label_text + container_text + meal_text
     suggestion_rule = (
         "- suggestion: next meal guidance, formatted as three lines: Can eat / Avoid / Portion limit\n"
         "- Include concrete food types and portion guidance (e.g. half bowl carbs, palm-sized protein, one bowl veggies)\n"
+        "- After each label, write a natural phrase that reads smoothly; do not repeat 'can/avoid/portion' or start with 'avoid/portion'\n"
     )
     suggestion_example = (
-        "  \"suggestion\": \"Can eat: lean protein + veggies\\nAvoid: fried foods and sugary drinks\\nPortion limit: half bowl carbs, palm-sized protein\",\n"
+        "  \"suggestion\": \"Can eat: more veggies and lean protein\\nAvoid: fried foods or sugary drinks\\nPortion limit: half bowl carbs, palm-sized protein\",\n"
     )
     if advice_mode == "current_meal":
         suggestion_rule = (
             "- suggestion: guidance for how to eat this meal, formatted as three lines: Can eat / Avoid / Portion limit\n"
             "- If recent context includes previous meal info, mention it briefly; otherwise omit\n"
+            "- After each label, write a natural phrase that reads smoothly; do not repeat 'can/avoid/portion' or start with 'avoid/portion'\n"
         )
         suggestion_example = (
-            "  \"suggestion\": \"Can eat: more veggies, keep lean protein\\nAvoid: broth and processed sides\\nPortion limit: half bowl carbs, palm-sized protein (previous meal was heavier, so keep it light)\",\n"
+            "  \"suggestion\": \"Can eat: more veggies and lean protein\\nAvoid: broth and processed sides\\nPortion limit: half bowl carbs, palm-sized protein (previous meal was heavier, so keep it light)\",\n"
         )
     return (
         "You are a nutrition assistant. Analyze the meal image and return JSON.\n"
@@ -534,7 +530,7 @@ def _build_prompt(
         "  \"container_guess_type\": \"bowl\",\n"
         "  \"container_guess_size\": \"medium\"\n"
         "}\n"
-    ) + profile_text + note_text + context_text + label_text + container_text + meal_text
+    ) + profile_text + note_text + context_text + intake_text + label_text + container_text + meal_text
 
 
 def _build_name_prompt(
@@ -601,19 +597,21 @@ def _build_name_prompt(
                 meal_text += "If this is dinner or a late-night snack, suggest avoiding additional late-night eating.\n"
     if lang == "zh-TW":
         suggestion_rule = (
-            "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：可以吃 / 不建議吃 / 份量上限\n"
+            "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：搭配 / 不建議 / 建議份量\n"
             "- 若 recent context 有上一餐資訊，請簡短提到；若沒有可省略\n"
+            "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「搭配/避免/份量」開頭\n"
         )
         suggestion_example = (
-            "  \"suggestion\": \"可以吃：蔬菜多一點、保留瘦肉\\n不建議吃：湯底與加工配料\\n份量上限：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
+            "  \"suggestion\": \"搭配：蔬菜多一點，肉量減少\\n不建議：湯底與加工配料\\n建議份量：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
         )
         if advice_mode != "current_meal":
             suggestion_rule = (
-                "- suggestion: 針對下一餐的建議，輸出三行格式：可以吃 / 不建議吃 / 份量上限\n"
+                "- suggestion: 針對下一餐的建議，輸出三行格式：搭配 / 不建議 / 建議份量\n"
                 "- 需包含具體食物類型與份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
+                "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「搭配/避免/份量」開頭\n"
             )
             suggestion_example = (
-                "  \"suggestion\": \"可以吃：清淡蛋白質與蔬菜\\n不建議吃：油炸與高糖飲品\\n份量上限：主食半碗、蛋白質一掌\",\n"
+                "  \"suggestion\": \"搭配：蔬菜多一點、清淡蛋白質\\n不建議：油炸或高糖飲品\\n建議份量：主食半碗、蛋白質一掌\",\n"
             )
         return (
             "你是營養分析助理。請根據食物名稱估算內容，回傳 JSON。\n"
@@ -661,17 +659,19 @@ def _build_name_prompt(
     suggestion_rule = (
         "- suggestion: guidance for how to eat this meal, formatted as three lines: Can eat / Avoid / Portion limit\n"
         "- If recent context includes previous meal info, mention it briefly; otherwise omit\n"
+        "- After each label, write a natural phrase that reads smoothly; do not repeat 'can/avoid/portion' or start with 'avoid/portion'\n"
     )
     suggestion_example = (
-        "  \"suggestion\": \"Can eat: more veggies, keep lean protein\\nAvoid: broth and processed sides\\nPortion limit: half bowl carbs, palm-sized protein (previous meal was heavier, so keep it light)\",\n"
+        "  \"suggestion\": \"Can eat: more veggies and lean protein\\nAvoid: broth and processed sides\\nPortion limit: half bowl carbs, palm-sized protein (previous meal was heavier, so keep it light)\",\n"
     )
     if advice_mode != "current_meal":
         suggestion_rule = (
             "- suggestion: next meal guidance, formatted as three lines: Can eat / Avoid / Portion limit\n"
             "- Include concrete food types and portion guidance (e.g. half bowl carbs, palm-sized protein, one bowl veggies)\n"
+            "- After each label, write a natural phrase that reads smoothly; do not repeat 'can/avoid/portion' or start with 'avoid/portion'\n"
         )
         suggestion_example = (
-            "  \"suggestion\": \"Can eat: lean protein + veggies\\nAvoid: fried foods and sugary drinks\\nPortion limit: half bowl carbs, palm-sized protein\",\n"
+            "  \"suggestion\": \"Can eat: more veggies and lean protein\\nAvoid: fried foods or sugary drinks\\nPortion limit: half bowl carbs, palm-sized protein\",\n"
         )
     return (
         "You are a nutrition assistant. Estimate based on food name and return JSON.\n"
@@ -960,24 +960,7 @@ def _build_week_prompt(lang: str, profile: dict | None, days: List[WeekSummaryIn
 
 
 def _fallback_week_summary(lang: str, days: List[WeekSummaryInput]) -> dict:
-    text = " ".join([day.day_summary for day in days if day.day_summary])
-    oily = any(word in text for word in ["炸", "油", "酥", "奶油", "fried", "oily"])
-    salty = any(word in text for word in ["鹹", "鈉", "鹽", "salty", "sodium"])
-    if lang == "zh-TW":
-        if oily and salty:
-            return {"week_summary": "油脂與鹽分偏高，注意清淡", "next_week_advice": "下週以清湯、蔬菜與瘦蛋白為主", "confidence": 0.5}
-        if oily:
-            return {"week_summary": "油脂偏高，整體尚可", "next_week_advice": "下週以清淡蛋白質與蔬菜為主", "confidence": 0.5}
-        if salty:
-            return {"week_summary": "鹽分略多，注意水分與清淡", "next_week_advice": "下週以清湯蔬菜搭配瘦蛋白", "confidence": 0.5}
-        return {"week_summary": "整體均衡，維持即可", "next_week_advice": "下週以蛋白質與蔬菜為主", "confidence": 0.5}
-    if oily and salty:
-        return {"week_summary": "Higher fat and sodium this week", "next_week_advice": "Next week: lean protein + veggies", "confidence": 0.5}
-    if oily:
-        return {"week_summary": "Fat intake a bit high", "next_week_advice": "Next week: lighter protein and veggies", "confidence": 0.5}
-    if salty:
-        return {"week_summary": "Sodium a bit high", "next_week_advice": "Next week: clear soup + veggies", "confidence": 0.5}
-    return {"week_summary": "Overall balanced", "next_week_advice": "Next week: lean protein + veggies", "confidence": 0.5}
+    raise RuntimeError("fallback_disabled")
 
 def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceRequest) -> str:
     profile_text = ""
@@ -1093,21 +1076,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
 
 
 def _fallback_meal_advice(lang: str) -> dict:
-    if lang == "zh-TW":
-        return {
-            "self_cook": "清炒蔬菜＋蒸魚，主食半碗即可",
-            "convenience": "沙拉＋無糖豆漿，主食半碗",
-            "bento": "少飯、加青菜、選清淡蛋白",
-            "other": "清湯＋蔬菜＋瘦肉，避免油炸",
-            "confidence": 0.5,
-        }
-    return {
-        "self_cook": "Steamed fish + veggies, half bowl carbs",
-        "convenience": "Salad + unsweetened soy milk, half bowl carbs",
-        "bento": "Less rice, more veggies, lean protein",
-        "other": "Clear soup + veggies + lean protein",
-        "confidence": 0.5,
-    }
+    raise RuntimeError("fallback_disabled")
 
 def _build_label_prompt(lang: str) -> str:
     if lang == "zh-TW":
@@ -1152,24 +1121,7 @@ def _build_label_prompt(lang: str) -> str:
 
 
 def _fallback_day_summary(lang: str, meals: List[MealSummaryInput]) -> dict:
-    dish_text = " ".join([item for meal in meals for item in (meal.dish_summaries or [])])
-    oily = any(word in dish_text for word in ["炸", "油", "酥", "奶油", "fried", "oily"])
-    salty = any(word in dish_text for word in ["鹹", "鈉", "鹽", "salty", "sodium"])
-    if lang == "zh-TW":
-        if oily and salty:
-            return {"day_summary": "油脂與鹽分偏高，注意清淡", "tomorrow_advice": "明天以清湯、蔬菜與瘦蛋白為主", "confidence": 0.5}
-        if oily:
-            return {"day_summary": "油脂偏高，整體尚可", "tomorrow_advice": "明天以清淡蛋白質與蔬菜為主", "confidence": 0.5}
-        if salty:
-            return {"day_summary": "鹽分略多，注意水分與清淡", "tomorrow_advice": "明天以清湯蔬菜搭配瘦蛋白", "confidence": 0.5}
-        return {"day_summary": "整體均衡，維持即可", "tomorrow_advice": "明天以蛋白質與蔬菜為主", "confidence": 0.5}
-    if oily and salty:
-        return {"day_summary": "Higher fat and sodium today", "tomorrow_advice": "Tomorrow: lean protein + veggies", "confidence": 0.5}
-    if oily:
-        return {"day_summary": "Fat intake a bit high", "tomorrow_advice": "Tomorrow: lighter protein and veggies", "confidence": 0.5}
-    if salty:
-        return {"day_summary": "Sodium a bit high", "tomorrow_advice": "Tomorrow: clear soup + veggies", "confidence": 0.5}
-    return {"day_summary": "Overall balanced", "tomorrow_advice": "Tomorrow: lean protein + veggies", "confidence": 0.5}
+    raise RuntimeError("fallback_disabled")
 
 
 def _estimate_cost_usd(input_tokens: int, output_tokens: int) -> float:
@@ -1287,6 +1239,15 @@ def _should_use_ai() -> bool:
     return int(counts.get(today, 0)) < FREE_DAILY_LIMIT
 
 
+def _ensure_ai_available() -> None:
+    if not CALL_REAL_AI:
+        raise HTTPException(status_code=503, detail="ai_disabled")
+    if _client is None:
+        raise HTTPException(status_code=503, detail="ai_not_configured")
+    if not _should_use_ai():
+        raise HTTPException(status_code=429, detail="ai_quota_exceeded")
+
+
 def _increment_daily_count() -> None:
     counts = _load_daily_counts()
     today = datetime.now(timezone.utc).date().isoformat()
@@ -1305,6 +1266,9 @@ def _analyze_with_openai(
     meal_photo_count: int | None,
     context: str | None,
     advice_mode: str | None,
+    today_consumed_kcal: int | None,
+    today_remaining_kcal: int | None,
+    today_protein_g: int | None,
     label_context: str | None,
     container_type: str | None,
     container_size: str | None,
@@ -1324,6 +1288,9 @@ def _analyze_with_openai(
         meal_photo_count,
         context,
         advice_mode,
+        today_consumed_kcal,
+        today_remaining_kcal,
+        today_protein_g,
         label_context,
         container_type,
         container_size,
@@ -1553,6 +1520,9 @@ async def analyze_image(
     target_calorie_range: Optional[str] = Form(default=None),
     goal: Optional[str] = Form(default=None),
     plan_speed: Optional[str] = Form(default=None),
+    today_consumed_kcal: Optional[int] = Form(default=None),
+    today_remaining_kcal: Optional[int] = Form(default=None),
+    today_protein_g: Optional[int] = Form(default=None),
     meal_type: Optional[str] = Form(default=None),
     meal_photo_count: Optional[int] = Form(default=None),
     advice_mode: Optional[str] = Form(default=None),
@@ -1564,7 +1534,7 @@ async def analyze_image(
     image_hash = _hash_image(image_bytes)
 
     use_lang = lang or DEFAULT_LANG
-    if use_lang not in _fake_foods:
+    if use_lang not in _supported_langs:
         use_lang = "zh-TW"
 
     force_reanalyze_flag = False
@@ -1596,6 +1566,9 @@ async def analyze_image(
         and container_depth is None
         and container_diameter_cm is None
         and container_capacity_ml is None
+        and today_consumed_kcal is None
+        and today_remaining_kcal is None
+        and today_protein_g is None
     ):
         cache = _load_analysis_cache()
         cached = cache.get(image_hash)
@@ -1622,7 +1595,7 @@ async def analyze_image(
                 container_guess_size=container_guess_size,
             )
 
-    use_ai = _should_use_ai()
+    _ensure_ai_available()
     profile = {
         "height_cm": height_cm,
         "weight_kg": weight_kg,
@@ -1637,156 +1610,99 @@ async def analyze_image(
     }
     profile = {k: v for k, v in profile.items() if v not in (None, "", 0)}
 
-    if use_ai and _client is not None:
-        try:
-            payload = await asyncio.to_thread(
-                _analyze_with_openai,
-                image_bytes,
-                use_lang,
-                food_name,
-                profile,
-                note,
-                portion_percent,
-                meal_type,
-                meal_photo_count,
-                context,
-                advice_mode,
-                label_context,
-                container_type,
-                container_size,
-                container_depth,
-                container_diameter_cm,
-                container_capacity_ml,
-            )
-            if payload and payload.get("result"):
-                usage_data = payload.get("usage") or {}
-                input_tokens = int(usage_data.get("input_tokens") or 0)
-                output_tokens = int(usage_data.get("output_tokens") or 0)
-                cost_estimate = _estimate_cost_usd(input_tokens, output_tokens) if usage_data else None
-                _append_usage(
-                    {
-                        "id": str(uuid.uuid4()),
-                        "created_at": datetime.now(timezone.utc).isoformat(),
-                        "model": OPENAI_MODEL,
-                        "lang": use_lang,
-                        "source": "ai",
-                        "input_tokens": input_tokens,
-                        "output_tokens": output_tokens,
-                        "total_tokens": int(usage_data.get("total_tokens") or 0),
-                        "cost_estimate_usd": cost_estimate,
-                        "image_bytes": len(image_bytes),
-                    }
-                )
-                final_name = food_name or payload["result"]["food_name"]
-                _increment_daily_count()
-                cache = _load_analysis_cache()
-                is_beverage, is_food = _coerce_food_flags(payload["result"])
-                normalized_macros = _normalize_macros(payload["result"], use_lang)
-                container_guess_type, container_guess_size = _normalize_container_guess(payload["result"])
-                cache[image_hash] = {
-                    "saved_at": datetime.now(timezone.utc).isoformat(),
-                    "result": {
-                        "food_name": final_name,
-                        "calorie_range": payload["result"]["calorie_range"],
-                        "macros": normalized_macros,
-                        "food_items": payload["result"].get("food_items") or [],
-                        "judgement_tags": payload["result"].get("judgement_tags") or [],
-                        "dish_summary": payload["result"].get("dish_summary", ""),
-                        "suggestion": payload["result"]["suggestion"],
-                        "is_beverage": payload["result"].get("is_beverage"),
-                        "is_food": payload["result"].get("is_food", True),
-                        "non_food_reason": payload["result"].get("non_food_reason"),
-                        "container_guess_type": container_guess_type,
-                        "container_guess_size": container_guess_size,
-                    },
-                }
-                _save_analysis_cache(cache)
-                return AnalysisResult(
-                    food_name=final_name,
-                    calorie_range=payload["result"]["calorie_range"],
-                    macros=normalized_macros,
-                    food_items=payload["result"].get("food_items") or [],
-                    judgement_tags=payload["result"].get("judgement_tags") or [],
-                    dish_summary=payload["result"].get("dish_summary", ""),
-                    suggestion=payload["result"]["suggestion"],
-                    tier=tier,
-                    source="ai",
-                    cost_estimate_usd=cost_estimate,
-                    confidence=payload["result"].get("confidence"),
-                    is_beverage=is_beverage,
-                    is_food=is_food,
-                    non_food_reason=payload["result"].get("non_food_reason"),
-                    container_guess_type=container_guess_type,
-                    container_guess_size=container_guess_size,
-                    debug_reason=None,
-                )
-        except Exception as exc:
-            global _last_ai_error
-            _last_ai_error = str(exc)
-            logging.exception("AI analyze failed: %s", exc)
-
-    if CALL_REAL_AI and _client is None:
-        logging.warning("CALL_REAL_AI is true but API_KEY is missing.")
-
-    if CALL_REAL_AI and not use_ai:
-        tier = "lite"
-
-    chosen_name = food_name or random.choice(_fake_foods[use_lang])
-    calorie_range = random.choice(["350-450 kcal", "450-600 kcal", "600-800 kcal"])
-    calorie_range = _normalize_calorie_range(calorie_range, is_beverage=False, tighten=True)
-    macros = {
-        "protein": float(random.choice(_fake_macro_choices_g)),
-        "carbs": float(random.choice(_fake_macro_choices_g)),
-        "fat": float(random.choice(_fake_macro_choices_g)),
-        "sodium": float(random.choice(_fake_sodium_choices_mg)),
-    }
-    if use_lang == "zh-TW":
-        judgement_tags = random.sample(["偏油", "清淡", "碳水偏多", "蛋白不足"], k=2)
-    else:
-        judgement_tags = random.sample(["Heavier oil", "Light", "Higher carbs", "Low protein"], k=2)
-    suggestion = (
-        "可以吃：清淡蛋白質與蔬菜\n"
-        "不建議吃：油炸與高糖飲品\n"
-        "份量上限：主食半碗、蛋白質一掌"
-    )
-    if advice_mode == "current_meal":
-        if use_lang == "zh-TW":
-            suggestion = (
-                "可以吃：保留蔬菜與瘦肉\n"
-                "不建議吃：湯底與加工配料\n"
-                "份量上限：主食半碗、蛋白質一掌"
-            )
-        else:
-            suggestion = (
-                "Can eat: keep veggies and lean protein\n"
-                "Avoid: broth and processed sides\n"
-                "Portion limit: half bowl carbs, palm-sized protein"
-            )
-
-    debug_reason = None
-    if CALL_REAL_AI and RETURN_AI_ERROR:
-        debug_reason = _last_ai_error or "ai_failed_unknown"
-    logging.info("Analyze mock result reason=%s", analyze_reason)
-    container_guess_type, container_guess_size = _normalize_container_guess(None)
-    return AnalysisResult(
-        food_name=chosen_name,
-        calorie_range=calorie_range,
-        macros=macros,
-        food_items=[chosen_name],
-        judgement_tags=judgement_tags,
-        dish_summary="",
-        suggestion=suggestion,
-        tier=tier,
-        source="mock",
-        cost_estimate_usd=None,
-        confidence=0.35,
-        is_beverage=False,
-        is_food=True,
-        non_food_reason=None,
-        container_guess_type=container_guess_type,
-        container_guess_size=container_guess_size,
-        debug_reason=debug_reason,
-    )
+    try:
+        payload = await asyncio.to_thread(
+            _analyze_with_openai,
+            image_bytes,
+            use_lang,
+            food_name,
+            profile,
+            note,
+            portion_percent,
+            meal_type,
+            meal_photo_count,
+            context,
+            advice_mode,
+            today_consumed_kcal,
+            today_remaining_kcal,
+            today_protein_g,
+            label_context,
+            container_type,
+            container_size,
+            container_depth,
+            container_diameter_cm,
+            container_capacity_ml,
+        )
+        if not payload or not payload.get("result"):
+            raise HTTPException(status_code=502, detail="ai_invalid_response")
+        usage_data = payload.get("usage") or {}
+        input_tokens = int(usage_data.get("input_tokens") or 0)
+        output_tokens = int(usage_data.get("output_tokens") or 0)
+        cost_estimate = _estimate_cost_usd(input_tokens, output_tokens) if usage_data else None
+        _append_usage(
+            {
+                "id": str(uuid.uuid4()),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "model": OPENAI_MODEL,
+                "lang": use_lang,
+                "source": "ai",
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": int(usage_data.get("total_tokens") or 0),
+                "cost_estimate_usd": cost_estimate,
+                "image_bytes": len(image_bytes),
+            }
+        )
+        final_name = food_name or payload["result"]["food_name"]
+        _increment_daily_count()
+        cache = _load_analysis_cache()
+        is_beverage, is_food = _coerce_food_flags(payload["result"])
+        normalized_macros = _normalize_macros(payload["result"], use_lang)
+        container_guess_type, container_guess_size = _normalize_container_guess(payload["result"])
+        cache[image_hash] = {
+            "saved_at": datetime.now(timezone.utc).isoformat(),
+            "result": {
+                "food_name": final_name,
+                "calorie_range": payload["result"]["calorie_range"],
+                "macros": normalized_macros,
+                "food_items": payload["result"].get("food_items") or [],
+                "judgement_tags": payload["result"].get("judgement_tags") or [],
+                "dish_summary": payload["result"].get("dish_summary", ""),
+                "suggestion": payload["result"]["suggestion"],
+                "is_beverage": payload["result"].get("is_beverage"),
+                "is_food": payload["result"].get("is_food", True),
+                "non_food_reason": payload["result"].get("non_food_reason"),
+                "container_guess_type": container_guess_type,
+                "container_guess_size": container_guess_size,
+            },
+        }
+        _save_analysis_cache(cache)
+        return AnalysisResult(
+            food_name=final_name,
+            calorie_range=payload["result"]["calorie_range"],
+            macros=normalized_macros,
+            food_items=payload["result"].get("food_items") or [],
+            judgement_tags=payload["result"].get("judgement_tags") or [],
+            dish_summary=payload["result"].get("dish_summary", ""),
+            suggestion=payload["result"]["suggestion"],
+            tier=tier,
+            source="ai",
+            cost_estimate_usd=cost_estimate,
+            confidence=payload["result"].get("confidence"),
+            is_beverage=is_beverage,
+            is_food=is_food,
+            non_food_reason=payload["result"].get("non_food_reason"),
+            container_guess_type=container_guess_type,
+            container_guess_size=container_guess_size,
+            debug_reason=None,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        global _last_ai_error
+        _last_ai_error = str(exc)
+        logging.exception("AI analyze failed: %s", exc)
+        raise HTTPException(status_code=502, detail="ai_failed")
 
 
 @app.post("/analyze_name", response_model=AnalysisResult)
@@ -1796,168 +1712,101 @@ async def analyze_name(
 ):
     raw_name = (payload.food_name or "").strip()
     if not raw_name:
-        container_guess_type, container_guess_size = _normalize_container_guess(None)
-        return AnalysisResult(
-            food_name="",
-            calorie_range="",
-            macros=_normalize_macros({}, DEFAULT_LANG),
-            food_items=[],
-            judgement_tags=[],
-            dish_summary="",
-            suggestion="",
-            tier="name",
-            source="mock",
-            cost_estimate_usd=None,
-            confidence=0.0,
-            is_beverage=False,
-            is_food=True,
-            non_food_reason=None,
-            container_guess_type=container_guess_type,
-            container_guess_size=container_guess_size,
-            debug_reason="missing_food_name",
-        )
+        raise HTTPException(status_code=400, detail="missing_food_name")
 
     use_lang = payload.lang or DEFAULT_LANG
-    if use_lang not in _fake_foods:
+    if use_lang not in _supported_langs:
         use_lang = "zh-TW"
 
-    use_ai = _should_use_ai()
+    _ensure_ai_available()
     profile = payload.profile or {}
-    if use_ai and _client is not None:
-        try:
-            prompt = _build_name_prompt(
-                use_lang,
-                profile,
-                raw_name,
-                payload.note,
-                payload.portion_percent,
-                payload.meal_type,
-                payload.context,
-                payload.advice_mode,
-                payload.container_type,
-                payload.container_size,
-                payload.container_depth,
-                payload.container_diameter_cm,
-                payload.container_capacity_ml,
-            )
-            response = _client.chat.completions.create(
-                model=OPENAI_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
-            )
-            text = response.choices[0].message.content or ""
-            data = _parse_json(text)
-            if isinstance(data, dict) and "food_name" in data and "calorie_range" in data:
-                usage = response.usage
-                usage_data = None
-                if usage is not None:
-                    usage_data = {
-                        "input_tokens": usage.prompt_tokens,
-                        "output_tokens": usage.completion_tokens,
-                        "total_tokens": usage.total_tokens,
-                    }
-                cost_estimate = None
-                if usage_data is not None:
-                    cost_estimate = _estimate_cost_usd(
-                        int(usage_data.get("input_tokens") or 0),
-                        int(usage_data.get("output_tokens") or 0),
-                    )
-                _append_usage(
-                    {
-                        "id": str(uuid.uuid4()),
-                        "created_at": datetime.now(timezone.utc).isoformat(),
-                        "model": OPENAI_MODEL,
-                        "lang": use_lang,
-                        "source": "name",
-                        "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
-                        "output_tokens": int(usage_data.get("output_tokens") or 0) if usage_data else 0,
-                        "total_tokens": int(usage_data.get("total_tokens") or 0) if usage_data else 0,
-                        "cost_estimate_usd": cost_estimate,
-                    }
-                )
-                _increment_daily_count()
-                is_beverage, is_food = _coerce_food_flags(data)
-                normalized_macros = _normalize_macros(data, use_lang)
-                calorie_range = _normalize_calorie_range(
-                    data.get("calorie_range", ""),
-                    is_beverage=is_beverage,
-                    tighten=False,
-                )
-                container_guess_type, container_guess_size = _normalize_container_guess(data)
-                return AnalysisResult(
-                    food_name=raw_name or data.get("food_name", ""),
-                    calorie_range=calorie_range,
-                    macros=normalized_macros,
-                    food_items=data.get("food_items") or [],
-                    judgement_tags=data.get("judgement_tags") or [],
-                    dish_summary=data.get("dish_summary", ""),
-                    suggestion=data.get("suggestion", ""),
-                    tier="name",
-                    source="ai",
-                    cost_estimate_usd=cost_estimate,
-                    confidence=data.get("confidence"),
-                    is_beverage=is_beverage,
-                    is_food=data.get("is_food", True),
-                    non_food_reason=data.get("non_food_reason"),
-                    container_guess_type=container_guess_type,
-                    container_guess_size=container_guess_size,
-                    debug_reason=None,
-                )
-        except Exception as exc:
-            global _last_ai_error
-            _last_ai_error = str(exc)
-            logging.exception("Name analyze failed: %s", exc)
-
-    if CALL_REAL_AI and _client is None:
-        logging.warning("CALL_REAL_AI is true but API_KEY is missing.")
-
-    chosen_name = raw_name or random.choice(_fake_foods[use_lang])
-    calorie_range = random.choice(["300-420 kcal", "420-580 kcal", "580-760 kcal"])
-    calorie_range = _normalize_calorie_range(calorie_range, is_beverage=False, tighten=True)
-    macros = {
-        "protein": float(random.choice(_fake_macro_choices_g)),
-        "carbs": float(random.choice(_fake_macro_choices_g)),
-        "fat": float(random.choice(_fake_macro_choices_g)),
-        "sodium": float(random.choice(_fake_sodium_choices_mg)),
-    }
-    if use_lang == "zh-TW":
-        judgement_tags = random.sample(["偏油", "清淡", "碳水偏多", "蛋白不足"], k=2)
-        suggestion = (
-            "可以吃：清淡蛋白質與蔬菜\n"
-            "不建議吃：油炸與高糖飲品\n"
-            "份量上限：主食半碗、蛋白質一掌"
+    try:
+        prompt = _build_name_prompt(
+            use_lang,
+            profile,
+            raw_name,
+            payload.note,
+            payload.portion_percent,
+            payload.meal_type,
+            payload.context,
+            payload.advice_mode,
+            payload.container_type,
+            payload.container_size,
+            payload.container_depth,
+            payload.container_diameter_cm,
+            payload.container_capacity_ml,
         )
-    else:
-        judgement_tags = random.sample(["Heavier oil", "Light", "Higher carbs", "Low protein"], k=2)
-        suggestion = (
-            "Can eat: lean protein + veggies\n"
-            "Avoid: fried foods and sugary drinks\n"
-            "Portion limit: half bowl carbs, palm-sized protein"
+        response = _client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
         )
-    debug_reason = None
-    if CALL_REAL_AI and RETURN_AI_ERROR:
-        debug_reason = _last_ai_error or "ai_failed_unknown"
-    logging.info("Name analyze mock result name=%s", chosen_name)
-    container_guess_type, container_guess_size = _normalize_container_guess(None)
-    return AnalysisResult(
-        food_name=chosen_name,
-        calorie_range=calorie_range,
-        macros=macros,
-        food_items=[chosen_name],
-        judgement_tags=judgement_tags,
-        dish_summary="",
-        suggestion=suggestion,
-        tier="name",
-        source="mock",
-        cost_estimate_usd=None,
-        confidence=0.35,
-        is_beverage=False,
-        is_food=True,
-        non_food_reason=None,
-        container_guess_type=container_guess_type,
-        container_guess_size=container_guess_size,
-        debug_reason=debug_reason,
-    )
+        text = response.choices[0].message.content or ""
+        data = _parse_json(text)
+        if not isinstance(data, dict) or "food_name" not in data or "calorie_range" not in data:
+            raise HTTPException(status_code=502, detail="ai_invalid_response")
+        usage = response.usage
+        usage_data = None
+        if usage is not None:
+            usage_data = {
+                "input_tokens": usage.prompt_tokens,
+                "output_tokens": usage.completion_tokens,
+                "total_tokens": usage.total_tokens,
+            }
+        cost_estimate = None
+        if usage_data is not None:
+            cost_estimate = _estimate_cost_usd(
+                int(usage_data.get("input_tokens") or 0),
+                int(usage_data.get("output_tokens") or 0),
+            )
+        _append_usage(
+            {
+                "id": str(uuid.uuid4()),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "model": OPENAI_MODEL,
+                "lang": use_lang,
+                "source": "name",
+                "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
+                "output_tokens": int(usage_data.get("output_tokens") or 0) if usage_data else 0,
+                "total_tokens": int(usage_data.get("total_tokens") or 0) if usage_data else 0,
+                "cost_estimate_usd": cost_estimate,
+            }
+        )
+        _increment_daily_count()
+        is_beverage, is_food = _coerce_food_flags(data)
+        normalized_macros = _normalize_macros(data, use_lang)
+        calorie_range = _normalize_calorie_range(
+            data.get("calorie_range", ""),
+            is_beverage=is_beverage,
+            tighten=False,
+        )
+        container_guess_type, container_guess_size = _normalize_container_guess(data)
+        return AnalysisResult(
+            food_name=raw_name or data.get("food_name", ""),
+            calorie_range=calorie_range,
+            macros=normalized_macros,
+            food_items=data.get("food_items") or [],
+            judgement_tags=data.get("judgement_tags") or [],
+            dish_summary=data.get("dish_summary", ""),
+            suggestion=data.get("suggestion", ""),
+            tier="name",
+            source="ai",
+            cost_estimate_usd=cost_estimate,
+            confidence=data.get("confidence"),
+            is_beverage=is_beverage,
+            is_food=data.get("is_food", True),
+            non_food_reason=data.get("non_food_reason"),
+            container_guess_type=container_guess_type,
+            container_guess_size=container_guess_size,
+            debug_reason=None,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        global _last_ai_error
+        _last_ai_error = str(exc)
+        logging.exception("Name analyze failed: %s", exc)
+        raise HTTPException(status_code=502, detail="ai_failed")
 
 
 @app.post("/analyze_label", response_model=LabelResult)
@@ -1969,67 +1818,52 @@ async def analyze_label(
     image_bytes = await image.read()
 
     use_lang = lang or DEFAULT_LANG
-    if use_lang not in _fake_foods:
+    if use_lang not in _supported_langs:
         use_lang = "zh-TW"
 
-    use_ai = _should_use_ai()
-    if use_ai and _client is not None:
-        try:
-            payload = await asyncio.to_thread(_analyze_label_with_openai, image_bytes, use_lang)
-            if payload and payload.get("result"):
-                usage_data = payload.get("usage") or {}
-                input_tokens = int(usage_data.get("input_tokens") or 0)
-                output_tokens = int(usage_data.get("output_tokens") or 0)
-                cost_estimate = _estimate_cost_usd(input_tokens, output_tokens) if usage_data else None
-                logging.info(
-                    "Analyze label result tokens=%s cost=%s",
-                    int(usage_data.get("total_tokens") or 0),
-                    cost_estimate,
-                )
-                _append_usage(
-                    {
-                        "id": str(uuid.uuid4()),
-                        "created_at": datetime.now(timezone.utc).isoformat(),
-                        "model": OPENAI_MODEL,
-                        "lang": use_lang,
-                        "source": "label",
-                        "input_tokens": input_tokens,
-                        "output_tokens": output_tokens,
-                        "total_tokens": int(usage_data.get("total_tokens") or 0),
-                        "cost_estimate_usd": cost_estimate,
-                        "image_bytes": len(image_bytes),
-                    }
-                )
-                _increment_daily_count()
-                return LabelResult(
-                    label_name=payload["result"].get("label_name"),
-                    calorie_range=payload["result"].get("calorie_range", ""),
-                    macros=_normalize_macros(payload["result"], use_lang),
-                    confidence=payload["result"].get("confidence"),
-                    is_beverage=payload["result"].get("is_beverage"),
-                )
-        except Exception as exc:
-            global _last_ai_error
-            _last_ai_error = str(exc)
-            logging.exception("Label analyze failed: %s", exc)
-
-    if CALL_REAL_AI and _client is None:
-        logging.warning("CALL_REAL_AI is true but API_KEY is missing.")
-
-    macros = {
-        "protein": float(random.choice(_fake_macro_choices_g)),
-        "carbs": float(random.choice(_fake_macro_choices_g)),
-        "fat": float(random.choice(_fake_macro_choices_g)),
-        "sodium": float(random.choice(_fake_sodium_choices_mg)),
-    }
-    return LabelResult(
-        label_name="",
-        calorie_range="",
-        macros=_normalize_macros({"macros": macros, "is_beverage": False}, use_lang),
-        confidence=0.2,
-        is_beverage=False,
-        debug_reason=_last_ai_error if RETURN_AI_ERROR else None,
-    )
+    _ensure_ai_available()
+    try:
+        payload = await asyncio.to_thread(_analyze_label_with_openai, image_bytes, use_lang)
+        if not payload or not payload.get("result"):
+            raise HTTPException(status_code=502, detail="ai_invalid_response")
+        usage_data = payload.get("usage") or {}
+        input_tokens = int(usage_data.get("input_tokens") or 0)
+        output_tokens = int(usage_data.get("output_tokens") or 0)
+        cost_estimate = _estimate_cost_usd(input_tokens, output_tokens) if usage_data else None
+        logging.info(
+            "Analyze label result tokens=%s cost=%s",
+            int(usage_data.get("total_tokens") or 0),
+            cost_estimate,
+        )
+        _append_usage(
+            {
+                "id": str(uuid.uuid4()),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "model": OPENAI_MODEL,
+                "lang": use_lang,
+                "source": "label",
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": int(usage_data.get("total_tokens") or 0),
+                "cost_estimate_usd": cost_estimate,
+                "image_bytes": len(image_bytes),
+            }
+        )
+        _increment_daily_count()
+        return LabelResult(
+            label_name=payload["result"].get("label_name"),
+            calorie_range=payload["result"].get("calorie_range", ""),
+            macros=_normalize_macros(payload["result"], use_lang),
+            confidence=payload["result"].get("confidence"),
+            is_beverage=payload["result"].get("is_beverage"),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        global _last_ai_error
+        _last_ai_error = str(exc)
+        logging.exception("Label analyze failed: %s", exc)
+        raise HTTPException(status_code=502, detail="ai_failed")
 
 
 @app.post("/summarize_day", response_model=DaySummaryResponse)
@@ -2038,43 +1872,39 @@ async def summarize_day(
     _auth: dict = Depends(_require_auth),
 ):
     use_lang = payload.lang or DEFAULT_LANG
-    if use_lang not in _fake_foods:
+    if use_lang not in _supported_langs:
         use_lang = "zh-TW"
-    use_ai = _should_use_ai()
-    if use_ai and _client is not None:
-        try:
-            prompt = _build_day_prompt(
-                use_lang,
-                payload.profile or {},
-                payload.meals,
-                payload.day_calorie_range,
-                payload.day_meal_count,
-            )
-            response = _client.chat.completions.create(
-                model=OPENAI_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
-            )
-            text = response.choices[0].message.content or ""
-            data = _parse_json(text)
-            if isinstance(data, dict) and "day_summary" in data and "tomorrow_advice" in data:
-                return DaySummaryResponse(
-                    day_summary=data.get("day_summary", ""),
-                    tomorrow_advice=data.get("tomorrow_advice", ""),
-                    source="ai",
-                    confidence=(data.get("confidence") or 0.6),
-                )
-        except Exception as exc:
-            global _last_ai_error
-            _last_ai_error = str(exc)
-            logging.exception("Day summary failed: %s", exc)
-    fallback = _fallback_day_summary(use_lang, payload.meals)
-    return DaySummaryResponse(
-        day_summary=fallback.get("day_summary", ""),
-        tomorrow_advice=fallback.get("tomorrow_advice", ""),
-        source="mock",
-        confidence=fallback.get("confidence", 0.5),
-    )
+    _ensure_ai_available()
+    try:
+        prompt = _build_day_prompt(
+            use_lang,
+            payload.profile or {},
+            payload.meals,
+            payload.day_calorie_range,
+            payload.day_meal_count,
+        )
+        response = _client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+        )
+        text = response.choices[0].message.content or ""
+        data = _parse_json(text)
+        if not isinstance(data, dict) or "day_summary" not in data or "tomorrow_advice" not in data:
+            raise HTTPException(status_code=502, detail="ai_invalid_response")
+        return DaySummaryResponse(
+            day_summary=data.get("day_summary", ""),
+            tomorrow_advice=data.get("tomorrow_advice", ""),
+            source="ai",
+            confidence=(data.get("confidence") or 0.6),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        global _last_ai_error
+        _last_ai_error = str(exc)
+        logging.exception("Day summary failed: %s", exc)
+        raise HTTPException(status_code=502, detail="ai_failed")
 
 
 @app.post("/summarize_week", response_model=WeekSummaryResponse)
@@ -2083,37 +1913,33 @@ async def summarize_week(
     _auth: dict = Depends(_require_auth),
 ):
     use_lang = payload.lang or DEFAULT_LANG
-    if use_lang not in _fake_foods:
+    if use_lang not in _supported_langs:
         use_lang = "zh-TW"
-    use_ai = _should_use_ai()
-    if use_ai and _client is not None:
-        try:
-            prompt = _build_week_prompt(use_lang, payload.profile or {}, payload.days, payload.week_start, payload.week_end)
-            response = _client.chat.completions.create(
-                model=OPENAI_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
-            )
-            text = response.choices[0].message.content or ""
-            data = _parse_json(text)
-            if isinstance(data, dict) and "week_summary" in data and "next_week_advice" in data:
-                return WeekSummaryResponse(
-                    week_summary=data.get("week_summary", ""),
-                    next_week_advice=data.get("next_week_advice", ""),
-                    source="ai",
-                    confidence=(data.get("confidence") or 0.6),
-                )
-        except Exception as exc:
-            global _last_ai_error
-            _last_ai_error = str(exc)
-            logging.exception("Week summary failed: %s", exc)
-    fallback = _fallback_week_summary(use_lang, payload.days)
-    return WeekSummaryResponse(
-        week_summary=fallback.get("week_summary", ""),
-        next_week_advice=fallback.get("next_week_advice", ""),
-        source="mock",
-        confidence=fallback.get("confidence", 0.5),
-    )
+    _ensure_ai_available()
+    try:
+        prompt = _build_week_prompt(use_lang, payload.profile or {}, payload.days, payload.week_start, payload.week_end)
+        response = _client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+        )
+        text = response.choices[0].message.content or ""
+        data = _parse_json(text)
+        if not isinstance(data, dict) or "week_summary" not in data or "next_week_advice" not in data:
+            raise HTTPException(status_code=502, detail="ai_invalid_response")
+        return WeekSummaryResponse(
+            week_summary=data.get("week_summary", ""),
+            next_week_advice=data.get("next_week_advice", ""),
+            source="ai",
+            confidence=(data.get("confidence") or 0.6),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        global _last_ai_error
+        _last_ai_error = str(exc)
+        logging.exception("Week summary failed: %s", exc)
+        raise HTTPException(status_code=502, detail="ai_failed")
 
 
 @app.post("/suggest_meal", response_model=MealAdviceResponse)
@@ -2122,71 +1948,65 @@ async def suggest_meal(
     _auth: dict = Depends(_require_auth),
 ):
     use_lang = payload.lang or DEFAULT_LANG
-    if use_lang not in _fake_foods:
+    if use_lang not in _supported_langs:
         use_lang = "zh-TW"
     profile = payload.profile or {}
-    if CALL_REAL_AI and _client is not None and _should_use_ai():
-        try:
-            prompt = _build_meal_advice_prompt(use_lang, profile, payload)
-            response = _client.chat.completions.create(
-                model=OPENAI_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
+    _ensure_ai_available()
+    try:
+        prompt = _build_meal_advice_prompt(use_lang, profile, payload)
+        response = _client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+        )
+        text = response.choices[0].message.content or ""
+        data = _parse_json(text)
+        required = {"self_cook", "convenience", "bento", "other"}
+        if not isinstance(data, dict) or not required.issubset(set(data.keys())):
+            raise HTTPException(status_code=502, detail="ai_invalid_response")
+        usage = response.usage
+        usage_data = None
+        if usage is not None:
+            usage_data = {
+                "input_tokens": usage.prompt_tokens,
+                "output_tokens": usage.completion_tokens,
+                "total_tokens": usage.total_tokens,
+            }
+        cost_estimate = None
+        if usage_data is not None:
+            cost_estimate = _estimate_cost_usd(
+                int(usage_data.get("input_tokens") or 0),
+                int(usage_data.get("output_tokens") or 0),
             )
-            text = response.choices[0].message.content or ""
-            data = _parse_json(text)
-            if isinstance(data, dict):
-                required = {"self_cook", "convenience", "bento", "other"}
-                if required.issubset(set(data.keys())):
-                    usage = response.usage
-                    usage_data = None
-                    if usage is not None:
-                        usage_data = {
-                            "input_tokens": usage.prompt_tokens,
-                            "output_tokens": usage.completion_tokens,
-                            "total_tokens": usage.total_tokens,
-                        }
-                    cost_estimate = None
-                    if usage_data is not None:
-                        cost_estimate = _estimate_cost_usd(
-                            int(usage_data.get("input_tokens") or 0),
-                            int(usage_data.get("output_tokens") or 0),
-                        )
-                    _append_usage(
-                        {
-                            "id": str(uuid.uuid4()),
-                            "created_at": datetime.now(timezone.utc).isoformat(),
-                            "model": OPENAI_MODEL,
-                            "lang": use_lang,
-                            "source": "ai",
-                            "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
-                            "output_tokens": int(usage_data.get("output_tokens") or 0) if usage_data else 0,
-                            "total_tokens": int(usage_data.get("total_tokens") or 0) if usage_data else 0,
-                            "cost_estimate_usd": cost_estimate,
-                        }
-                    )
-                    _increment_daily_count()
-                    return MealAdviceResponse(
-                        self_cook=str(data.get("self_cook", "")).strip(),
-                        convenience=str(data.get("convenience", "")).strip(),
-                        bento=str(data.get("bento", "")).strip(),
-                        other=str(data.get("other", "")).strip(),
-                        source="ai",
-                        confidence=data.get("confidence"),
-                    )
-        except Exception as exc:
-            global _last_ai_error
-            _last_ai_error = str(exc)
-            logging.exception("Meal advice failed: %s", exc)
-    fallback = _fallback_meal_advice(use_lang)
-    return MealAdviceResponse(
-        self_cook=fallback["self_cook"],
-        convenience=fallback["convenience"],
-        bento=fallback["bento"],
-        other=fallback["other"],
-        source="mock",
-        confidence=fallback.get("confidence"),
-    )
+        _append_usage(
+            {
+                "id": str(uuid.uuid4()),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "model": OPENAI_MODEL,
+                "lang": use_lang,
+                "source": "ai",
+                "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
+                "output_tokens": int(usage_data.get("output_tokens") or 0) if usage_data else 0,
+                "total_tokens": int(usage_data.get("total_tokens") or 0) if usage_data else 0,
+                "cost_estimate_usd": cost_estimate,
+            }
+        )
+        _increment_daily_count()
+        return MealAdviceResponse(
+            self_cook=str(data.get("self_cook", "")).strip(),
+            convenience=str(data.get("convenience", "")).strip(),
+            bento=str(data.get("bento", "")).strip(),
+            other=str(data.get("other", "")).strip(),
+            source="ai",
+            confidence=data.get("confidence"),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        global _last_ai_error
+        _last_ai_error = str(exc)
+        logging.exception("Meal advice failed: %s", exc)
+        raise HTTPException(status_code=502, detail="ai_failed")
 
 
 
