@@ -138,11 +138,51 @@ class _MainShellState extends State<MainShell> {
         inactiveColor: theme.colorScheme.onSurface.withOpacity(0.6),
         onTap: (value) => tabState.setIndex(value),
         items: [
-          BottomNavigationBarItem(icon: const Icon(Icons.camera_alt), label: t.tabSuggest),
-          BottomNavigationBarItem(icon: const Icon(Icons.home_filled), label: t.tabHome),
-          BottomNavigationBarItem(icon: const Icon(Icons.receipt_long), label: t.tabLog),
-          BottomNavigationBarItem(icon: const Icon(Icons.bookmark), label: t.tabCustom),
-          BottomNavigationBarItem(icon: const Icon(Icons.settings), label: t.tabSettings),
+          BottomNavigationBarItem(
+            icon: Builder(
+              builder: (context) {
+                final color = IconTheme.of(context).color;
+                return Text('📸', style: TextStyle(fontSize: 20, color: color));
+              },
+            ),
+            label: t.tabSuggest,
+          ),
+          BottomNavigationBarItem(
+            icon: Builder(
+              builder: (context) {
+                final color = IconTheme.of(context).color;
+                return Text('🏠', style: TextStyle(fontSize: 20, color: color));
+              },
+            ),
+            label: t.tabHome,
+          ),
+          BottomNavigationBarItem(
+            icon: Builder(
+              builder: (context) {
+                final color = IconTheme.of(context).color;
+                return Text('🧾', style: TextStyle(fontSize: 20, color: color));
+              },
+            ),
+            label: t.tabLog,
+          ),
+          BottomNavigationBarItem(
+            icon: Builder(
+              builder: (context) {
+                final color = IconTheme.of(context).color;
+                return Text('🔖', style: TextStyle(fontSize: 20, color: color));
+              },
+            ),
+            label: t.tabCustom,
+          ),
+          BottomNavigationBarItem(
+            icon: Builder(
+              builder: (context) {
+                final color = IconTheme.of(context).color;
+                return Text('⚙️', style: TextStyle(fontSize: 20, color: color));
+              },
+            ),
+            label: t.tabSettings,
+          ),
         ],
       ),
     );

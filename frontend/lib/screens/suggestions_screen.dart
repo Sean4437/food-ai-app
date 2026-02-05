@@ -1621,9 +1621,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                             Center(
                                               child: SizedBox(
                                                 width: buttonWidth,
-                                                child: ElevatedButton.icon(
+                                              child: ElevatedButton.icon(
                                                   onPressed: _startCaptureFromCamera,
-                                                  icon: const Icon(Icons.camera_alt, color: Colors.white),
+                                                  icon: const Text('📷', style: TextStyle(fontSize: 18)),
                                                   label: Text(
                                                     _analysis == null ? t.suggestInstantStart : t.suggestInstantRetake,
                                                     style: const TextStyle(fontWeight: FontWeight.w700),
@@ -1642,7 +1642,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                               width: buttonWidth,
                                               child: OutlinedButton.icon(
                                                 onPressed: _startCaptureFromGallery,
-                                                icon: Icon(Icons.photo_library_outlined, size: 18, color: theme.colorScheme.primary),
+                                                icon: const Text('🖼️', style: TextStyle(fontSize: 18)),
                                                 label: Text(t.suggestInstantPickGallery, style: const TextStyle(fontWeight: FontWeight.w600)),
                                                 style: OutlinedButton.styleFrom(
                                                   foregroundColor: theme.colorScheme.primary,
@@ -1657,7 +1657,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                               width: buttonWidth,
                                               child: OutlinedButton.icon(
                                                 onPressed: _requestNowAdvice,
-                                                icon: Icon(Icons.restaurant_menu, size: 18, color: theme.colorScheme.primary),
+                                                icon: const Text('🍽️', style: TextStyle(fontSize: 18)),
                                                 label: Text(t.suggestInstantNowEat, style: const TextStyle(fontWeight: FontWeight.w600)),
                                                 style: OutlinedButton.styleFrom(
                                                   foregroundColor: theme.colorScheme.primary,
@@ -1672,7 +1672,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                               width: buttonWidth,
                                               child: OutlinedButton.icon(
                                                 onPressed: _useCustomFood,
-                                                icon: Icon(Icons.bookmark_add_outlined, size: 18, color: theme.colorScheme.primary),
+                                                icon: const Text('🔖', style: TextStyle(fontSize: 18)),
                                                 label: Text(
                                                   '${t.customUse} - ${app.customFoods.length}${t.customCountUnit}',
                                                   style: const TextStyle(fontWeight: FontWeight.w600),
@@ -1721,7 +1721,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                               ),
                                               IconButton(
                                                 onPressed: () => setState(() => _instantAdvice = null),
-                                                icon: const Icon(Icons.close, size: 18),
+                                                icon: const Text('✖️', style: TextStyle(fontSize: 16)),
                                                 tooltip: t.cancel,
                                                 padding: const EdgeInsets.all(6),
                                                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -1774,7 +1774,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                             const Spacer(),
                             IconButton(
                               onPressed: () => setState(() => _hideFloatingCard = true),
-                              icon: const Icon(Icons.close, size: 18),
+                              icon: const Text('✖️', style: TextStyle(fontSize: 16)),
                               tooltip: t.cancel,
                               padding: const EdgeInsets.all(6),
                               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),

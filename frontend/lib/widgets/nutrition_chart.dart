@@ -75,10 +75,10 @@ class NutritionChart extends StatelessWidget {
     final fatRatio = (_percentFromGrams("fat", fat).clamp(0, 100)) / 100;
     final sodiumRatio = (_percentFromGrams("sodium", sodium).clamp(0, 100)) / 100;
     return [
-      _MacroPoint("protein", t.protein, protein, proteinRatio, _axisColors[0], Icons.eco, "g"),
-      _MacroPoint("carbs", t.carbs, carbs, carbsRatio, _axisColors[1], Icons.grass, "g"),
-      _MacroPoint("fat", t.fat, fat, fatRatio, _axisColors[2], Icons.local_pizza, "g"),
-      _MacroPoint("sodium", t.sodium, sodium, sodiumRatio, _axisColors[3], Icons.opacity, "mg"),
+      _MacroPoint("protein", t.protein, protein, proteinRatio, _axisColors[0], emoji: "🥩", unit: "g"),
+      _MacroPoint("carbs", t.carbs, carbs, carbsRatio, _axisColors[1], emoji: "🍚", unit: "g"),
+      _MacroPoint("fat", t.fat, fat, fatRatio, _axisColors[2], emoji: "🥑", unit: "g"),
+      _MacroPoint("sodium", t.sodium, sodium, sodiumRatio, _axisColors[3], emoji: "🧂", unit: "mg"),
     ];
   }
 
@@ -124,15 +124,36 @@ class NutritionChart extends StatelessWidget {
 }
 
 class _MacroPoint {
-  _MacroPoint(this.key, this.label, this.rawValue, this.ratio, this.color, this.icon, this.unit);
+  _MacroPoint(
+    this.key,
+    this.label,
+    this.rawValue,
+    this.ratio,
+    this.color, {
+    this.icon,
+    this.emoji,
+    required this.unit,
+  });
 
   final String key;
   final String label;
   final double rawValue;
   final double ratio;
   final Color color;
-  final IconData icon;
+  final IconData? icon;
+  final String? emoji;
   final String unit;
+}
+
+Widget _macroGlyph(_MacroPoint point, {double size = 16, Color? color}) {
+  final emoji = point.emoji;
+  if (emoji != null && emoji.isNotEmpty) {
+    return Text(emoji, style: TextStyle(fontSize: size, height: 1));
+  }
+  if (point.icon != null) {
+    return Icon(point.icon, size: size, color: color);
+  }
+  return SizedBox(width: size, height: size);
 }
 
 class _RadarChart extends StatelessWidget {
@@ -189,7 +210,7 @@ class _RadarChart extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(point.icon, size: 16, color: point.color),
+        _macroGlyph(point, size: 16, color: point.color),
         const SizedBox(width: 6),
         Text(
           "${point.label} ${displayValue(point)}",
@@ -209,7 +230,7 @@ class _RadarChart extends StatelessWidget {
     return Column(
       crossAxisAlignment: align == TextAlign.right ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        Icon(point.icon, size: 16, color: point.color),
+        _macroGlyph(point, size: 16, color: point.color),
         const SizedBox(height: 4),
         Text(
           "${point.label} ${displayValue(point)}",
@@ -374,7 +395,7 @@ class _MacroBar extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Row(
                     children: [
-                      Icon(point.icon, size: 14, color: Colors.white),
+                      _macroGlyph(point, size: 14, color: Colors.white),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -445,7 +466,7 @@ class _DonutChart extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(point.icon, size: 14, color: point.color),
+                    _macroGlyph(point, size: 14, color: point.color),
                     const SizedBox(width: 4),
                     Text(point.label, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                   ],

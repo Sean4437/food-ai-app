@@ -50,13 +50,12 @@ class MealDetailScreen extends StatelessWidget {
     String label,
     double grams,
     double ratio,
-    IconData icon,
-    Color color,
+    String emoji,
   ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: color),
+        Text(emoji, style: const TextStyle(fontSize: 16)),
         const SizedBox(width: 6),
         Text(
           '$label ${_displayValue(key, grams)}',
@@ -101,8 +100,7 @@ class MealDetailScreen extends StatelessWidget {
                         t.protein,
                         protein,
                         proteinRatio,
-                        Icons.eco,
-                        const Color(0xFF7FCB99),
+                        '🥩',
                       ),
                     ),
                     Align(
@@ -113,8 +111,7 @@ class MealDetailScreen extends StatelessWidget {
                         t.carbs,
                         carbs,
                         carbsRatio,
-                        Icons.grass,
-                        const Color(0xFFF1BE4B),
+                        '🍚',
                       ),
                     ),
                     Align(
@@ -125,8 +122,7 @@ class MealDetailScreen extends StatelessWidget {
                         t.fat,
                         fat,
                         fatRatio,
-                        Icons.local_pizza,
-                        const Color(0xFFF08A7C),
+                        '🥑',
                       ),
                     ),
                     Align(
@@ -137,8 +133,7 @@ class MealDetailScreen extends StatelessWidget {
                         t.sodium,
                         sodium,
                         sodiumRatio,
-                        Icons.opacity,
-                        const Color(0xFF8AB4F8),
+                        '🧂',
                       ),
                     ),
                   ],

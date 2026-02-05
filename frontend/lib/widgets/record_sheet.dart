@@ -43,17 +43,17 @@ Future<RecordResult?> showRecordSheet(
             Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8))),
             const SizedBox(height: 12),
             ListTile(
-              leading: const Icon(Icons.camera_alt),
+              leading: const Text('📷', style: TextStyle(fontSize: 18)),
               title: Text(t.pickFromCamera),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library),
+              leading: const Text('🖼️', style: TextStyle(fontSize: 18)),
               title: Text(t.pickFromGallery),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
             ListTile(
-              leading: const Icon(Icons.close),
+              leading: const Text('✖️', style: TextStyle(fontSize: 18)),
               title: Text(t.cancel),
               onTap: () => Navigator.of(context).pop(),
             ),
