@@ -895,7 +895,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
             label: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(option.icon, size: 20),
+                _iconChipGlyph(option),
                 const SizedBox(height: 2),
                 Text(option.label),
               ],
@@ -909,17 +909,30 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
+  Widget _iconChipGlyph(_IconChipOption option) {
+    if (option.emoji != null && option.emoji!.isNotEmpty) {
+      return Text(
+        option.emoji!,
+        style: const TextStyle(fontSize: 18, height: 1),
+      );
+    }
+    if (option.icon != null) {
+      return Icon(option.icon, size: 20);
+    }
+    return const SizedBox(height: 20, width: 20);
+  }
+
   Widget _buildPortionContainerSection(AppLocalizations t) {
     final theme = Theme.of(context);
     final normalized = _normalizeContainerSelection(_containerType, _containerSize);
     final currentType = normalized[0];
     final currentSize = normalized[1];
     final typeOptions = <_IconChipOption>[
-      _IconChipOption(icon: Icons.ramen_dining, value: 'bowl', label: t.containerTypeBowl),
-      _IconChipOption(icon: Icons.dinner_dining, value: 'plate', label: t.containerTypePlate),
-      _IconChipOption(icon: Icons.takeout_dining, value: 'box', label: t.containerTypeBox),
-      _IconChipOption(icon: Icons.local_cafe, value: 'cup', label: t.containerTypeCup),
-      _IconChipOption(icon: Icons.help_outline, value: 'unknown', label: t.containerTypeUnknown),
+      _IconChipOption(emoji: '🍜', value: 'bowl', label: t.containerTypeBowl),
+      _IconChipOption(emoji: '🍽️', value: 'plate', label: t.containerTypePlate),
+      _IconChipOption(emoji: '🍱', value: 'box', label: t.containerTypeBox),
+      _IconChipOption(emoji: '🥤', value: 'cup', label: t.containerTypeCup),
+      _IconChipOption(emoji: '❓', value: 'unknown', label: t.containerTypeUnknown),
     ];
     final sizeOptions = <MapEntry<String, String>>[
       MapEntry(t.containerSizeSmall, 'small'),
@@ -1779,12 +1792,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
 class _IconChipOption {
   const _IconChipOption({
-    required this.icon,
+    this.icon,
+    this.emoji,
     required this.value,
     required this.label,
   });
 
-  final IconData icon;
+  final IconData? icon;
+  final String? emoji;
   final String value;
   final String label;
 }
