@@ -26,6 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final Map<DateTime, int> _dateSelectedMeal = {};
   String? _lastPlateAsset;
 
+  Widget _emojiIcon(String emoji, {double size = 16}) {
+    return Text(emoji, style: TextStyle(fontSize: size, height: 1));
+  }
+
   Widget _skeletonBar(double width, {double height = 12}) {
     return Container(
       width: width,
@@ -573,7 +577,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           appTheme: appTheme,
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today, size: 18, color: Colors.black54),
+                              _emojiIcon('📅', size: 18),
                               const SizedBox(width: 8),
                               Builder(builder: (context) {
                                 final localeTag = Localizations.localeOf(context).toLanguageTag();
@@ -637,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       final delta = app.dailyCalorieDeltaValue(activeDate);
                                       final isSurplus = delta != null && delta > 0;
                                       final pillColor = isSurplus ? Colors.redAccent : theme.colorScheme.primary;
-                                      final icon = isSurplus ? Icons.warning_amber_rounded : Icons.trending_down;
+                                      final icon = isSurplus ? '⚠️' : '📉';
                                       return Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                         decoration: BoxDecoration(
@@ -647,7 +651,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Icon(icon, size: 16, color: pillColor),
+                                            _emojiIcon(icon, size: 16),
                                             const SizedBox(width: 6),
                                             Text(
                                               app.dailyCalorieDeltaLabel(activeDate, t),
@@ -682,7 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.chat_bubble_outline, size: 16, color: Colors.black54),
+                                        _emojiIcon('💬', size: 16),
                                         const SizedBox(width: 6),
                                         Text(
                                           t.dayCardSummaryLabel,
@@ -693,7 +697,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     if (!app.isDailySummaryReady(activeDate))
                                       Center(
-                                        child: Icon(Icons.hourglass_empty, size: 26, color: Colors.black38),
+                                        child: _emojiIcon('⏳', size: 24),
                                       ),
                                     const SizedBox(height: 6),
                                     Text(
@@ -713,7 +717,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.lightbulb_outline, size: 16, color: Colors.black54),
+                                        _emojiIcon('💡', size: 16),
                                         const SizedBox(width: 6),
                                         Text(
                                           t.dayCardTomorrowLabel,
@@ -724,7 +728,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     if (!app.isDailySummaryReady(activeDate))
                                       Center(
-                                        child: Icon(Icons.hourglass_empty, size: 26, color: Colors.black38),
+                                        child: _emojiIcon('⏳', size: 24),
                                       ),
                                     const SizedBox(height: 6),
                                     Text(
@@ -751,7 +755,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.filter_alt_outlined, size: 16, color: Colors.black54),
+                                        _emojiIcon('📅', size: 16),
                                         const SizedBox(width: 6),
                                         Text(
                                           t.weekSummaryTitle,
@@ -762,7 +766,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     if (!app.isWeeklySummaryReady(activeDate))
                                       Center(
-                                        child: Icon(Icons.hourglass_empty, size: 26, color: Colors.black38),
+                                        child: _emojiIcon('⏳', size: 24),
                                       ),
                                     const SizedBox(height: 6),
                                     Text(
@@ -782,7 +786,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.filter_alt_outlined, size: 16, color: Colors.black54),
+                                        _emojiIcon('🔮', size: 16),
                                         const SizedBox(width: 6),
                                         Text(
                                           t.nextWeekAdviceTitle,
@@ -793,7 +797,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     const SizedBox(height: 6),
                                     if (!app.isWeeklySummaryReady(activeDate))
                                       Center(
-                                        child: Icon(Icons.hourglass_empty, size: 26, color: Colors.black38),
+                                        child: _emojiIcon('⏳', size: 24),
                                       ),
                                     const SizedBox(height: 6),
                                     Text(
