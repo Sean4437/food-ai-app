@@ -20,7 +20,7 @@ import '../config/supabase_config.dart';
 import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
 
-const String kDefaultApiBaseUrl = 'https://pharmacy-little-fever-attacked.trycloudflare.com';
+const String kDefaultApiBaseUrl = 'https://effectively-wild-oecd-weddings.trycloudflare.com';
 const List<String> kDeprecatedApiBaseUrls = [
   'https://sussex-oscar-southern-scanning.trycloudflare.com',
 ];
@@ -380,12 +380,6 @@ class AppState extends ChangeNotifier {
     final mealType = resolveMealType(time);
     final bytes = _compressImageBytes(originalBytes);
     final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
-    final now = DateTime.now();
-    final day = _dateOnly(now);
-    final consumedKcal = dailyConsumedCalorieMid(day).round();
-    final targetMid = targetCalorieMid(day);
-    final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
-    final proteinG = dailyProteinConsumedGrams(day).round();
     final result = await _api.analyzeImage(
       bytes,
       filename,
@@ -395,9 +389,6 @@ class AppState extends ChangeNotifier {
       mealType: _mealTypeKey(mealType),
       mealPhotoCount: 1,
       analyzeReason: 'quick_capture',
-      todayConsumedKcal: consumedKcal > 0 ? consumedKcal : null,
-      todayRemainingKcal: remainingKcal,
-      todayProteinG: proteinG > 0 ? proteinG : null,
       containerType: profile.containerType,
       containerSize: profile.containerSize,
       containerDepth: profile.containerDepth,
@@ -437,12 +428,6 @@ class AppState extends ChangeNotifier {
     final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
     final selectedContainerType = containerType ?? profile.containerType;
     final selectedContainerSize = containerSize ?? profile.containerSize;
-    final now = DateTime.now();
-    final day = _dateOnly(now);
-    final consumedKcal = dailyConsumedCalorieMid(day).round();
-    final targetMid = targetCalorieMid(day);
-    final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
-    final proteinG = dailyProteinConsumedGrams(day).round();
     final result = await _api.analyzeImage(
       analysis.imageBytes,
       filename,
@@ -454,9 +439,6 @@ class AppState extends ChangeNotifier {
       mealType: _mealTypeKey(analysis.mealType),
       mealPhotoCount: 1,
       analyzeReason: 'quick_capture_manual',
-      todayConsumedKcal: consumedKcal > 0 ? consumedKcal : null,
-      todayRemainingKcal: remainingKcal,
-      todayProteinG: proteinG > 0 ? proteinG : null,
       containerType: selectedContainerType,
       containerSize: selectedContainerSize,
       containerDepth: profile.containerDepth,
@@ -561,7 +543,6 @@ class AppState extends ChangeNotifier {
     if (profileMap != null) {
       _applyProfile(profileMap);
     }
-    _forceFixedApiBaseUrl();
     final didMigrateApi = _migrateApiBaseUrlIfNeeded();
     bool profileChanged = false;
     if (profile.nutritionValueMode != 'amount') {
@@ -1554,15 +1535,22 @@ class AppState extends ChangeNotifier {
     return false;
   }
 
-  void _forceFixedApiBaseUrl() {
-    if (profile.apiBaseUrl != kDefaultApiBaseUrl) {
-      profile.apiBaseUrl = kDefaultApiBaseUrl;
-    }
-    _api = ApiService(baseUrl: kDefaultApiBaseUrl);
+  Future<void> updateApiBaseUrl(String url) async {
+    final normalized = _normalizeApiBaseUrl(url);
+    _api = ApiService(baseUrl: normalized);
+    notifyListeners();
   }
 
-  void updateApiBaseUrl(String url) {
-    _forceFixedApiBaseUrl();
+  Future<void> refreshApiBaseUrlFromRemote() async {
+    if (_migrateApiBaseUrlIfNeeded()) {
+      _touchSettingsUpdatedAt();
+      // ignore: discarded_futures
+      _saveProfile();
+      // ignore: discarded_futures
+      _saveOverrides();
+    }
+    final normalized = _normalizeApiBaseUrl(profile.apiBaseUrl);
+    _api = ApiService(baseUrl: normalized);
     notifyListeners();
   }
 
@@ -3372,28 +3360,6 @@ class AppState extends ChangeNotifier {
         foodsToSync.add(food);
       }
     }
-    if (since != null) {
-      final remoteMealIds = await _fetchRemoteIds(kSupabaseMealsTable, user.id);
-      if (remoteMealIds != null) {
-        final existingIds = entriesToSync.map((e) => e.id).toSet();
-        for (final entry in entries) {
-          if (entry.id.isEmpty) continue;
-          if (!remoteMealIds.contains(entry.id) && !existingIds.contains(entry.id)) {
-            entriesToSync.add(entry);
-          }
-        }
-      }
-      final remoteFoodIds = await _fetchRemoteIds(kSupabaseCustomFoodsTable, user.id);
-      if (remoteFoodIds != null) {
-        final existingIds = foodsToSync.map((f) => f.id).toSet();
-        for (final food in customFoods) {
-          if (food.id.isEmpty) continue;
-          if (!remoteFoodIds.contains(food.id) && !existingIds.contains(food.id)) {
-            foodsToSync.add(food);
-          }
-        }
-      }
-    }
     final deletionsToSync = _deletedEntries.values.where((value) {
       final raw = value['deleted_at'];
       if (raw is! String || raw.isEmpty) return true;
@@ -4000,26 +3966,6 @@ class AppState extends ChangeNotifier {
     return raw == null || raw.isEmpty ? null : DateTime.tryParse(raw);
   }
 
-  Future<Set<String>?> _fetchRemoteIds(String table, String userId) async {
-    try {
-      final rows = await _supabase.client
-          .from(table)
-          .select('id')
-          .eq('user_id', userId)
-          .limit(10000);
-      if (rows is! List) return null;
-      final ids = <String>{};
-      for (final row in rows) {
-        if (row is Map && row['id'] != null) {
-          ids.add(row['id'].toString());
-        }
-      }
-      return ids;
-    } catch (_) {
-      return null;
-    }
-  }
-
   Future<void> _storeRemoteSyncAt(String userId, DateTime time) async {
     await _supabase.client.from('sync_meta').upsert({
       'user_id': userId,
@@ -4414,6 +4360,7 @@ class AppState extends ChangeNotifier {
       ..lateSnackStart = _parseTime(data['late_snack_start'] as String?, profile.lateSnackStart)
       ..lateSnackEnd = _parseTime(data['late_snack_end'] as String?, profile.lateSnackEnd)
       ..language = (data['language'] as String?) ?? profile.language
+      ..apiBaseUrl = (data['api_base_url'] as String?) ?? profile.apiBaseUrl
       ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset
       ..themeAsset = (data['theme_asset'] as String?) ?? profile.themeAsset
       ..textScale = (data['text_scale'] as num?)?.toDouble() ?? profile.textScale
