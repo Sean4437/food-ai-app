@@ -38,6 +38,29 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
+  String _withEmoji(String emoji, String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return trimmed;
+    if (trimmed.startsWith(emoji)) return trimmed;
+    return '$emoji $trimmed';
+  }
+
+  String _tagWithEmoji(String tag) {
+    final normalized = tag.trim();
+    switch (normalized) {
+      case '偏油':
+        return '🍟 $tag';
+      case '清淡':
+        return '🥗 $tag';
+      case '碳水偏多':
+        return '🍚 $tag';
+      case '蛋白不足':
+        return '🥩 $tag';
+      default:
+        return tag;
+    }
+  }
+
   Widget _buildSkeleton() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -201,7 +224,7 @@ class _LogScreenState extends State<LogScreen> {
 
     final title = _entryTitle(entry, t);
     final mid = _entryCalorieMid(app, entry);
-    final kcalText = mid == null ? t.calorieUnknown : '${mid.round()} kcal';
+    final kcalText = _withEmoji('🔥', mid == null ? t.calorieUnknown : '${mid.round()} kcal');
     final dateLabel = '${entry.time.month}/${entry.time.day}';
     final mealLabel = _mealLabel(entry.type, t);
 
@@ -229,7 +252,10 @@ class _LogScreenState extends State<LogScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(t.logTopMealTitle, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                      Text(
+                        _withEmoji('🍽️', t.logTopMealTitle),
+                        style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                      ),
                       const SizedBox(height: 6),
                       Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
@@ -428,7 +454,7 @@ class _LogScreenState extends State<LogScreen> {
   Widget _mealRow(BuildContext context, AppState app, MealEntry entry, List<MealEntry> group) {
     final t = AppLocalizations.of(context)!;
     final summary = _entryTitle(entry, t);
-    final calorie = app.entryCalorieRangeLabel(entry, t);
+    final calorie = _withEmoji('🔥', app.entryCalorieRangeLabel(entry, t));
     final tags = entry.result?.judgementTags ?? const <String>[];
     return GestureDetector(
       onTap: () {
@@ -477,10 +503,10 @@ class _LogScreenState extends State<LogScreen> {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              _timeLabel(entry.time),
-                              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                            ),
+                          Text(
+                            _withEmoji('⏰', _timeLabel(entry.time)),
+                            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                          ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -488,12 +514,15 @@ class _LogScreenState extends State<LogScreen> {
                                 style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
                               ),
                             ),
-                            Text(calorie, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                          Text(calorie, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                           ],
                         ),
                         if (tags.isNotEmpty) ...[
                           const SizedBox(height: 6),
-                          Text(tags.join(' · '), style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+                          Text(
+                            tags.map(_tagWithEmoji).join(' · '),
+                            style: AppTextStyles.caption(context).copyWith(color: Colors.black45),
+                          ),
                         ],
                       ],
                     ),
@@ -617,7 +646,7 @@ class _LogScreenState extends State<LogScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(t.logTitle, style: AppTextStyles.title1(context)),
+                    Text(_withEmoji('📔', t.logTitle), style: AppTextStyles.title1(context)),
                     const SizedBox(height: 12),
                     _buildHighlightCard(context, app, t),
                     const SizedBox(height: 16),
