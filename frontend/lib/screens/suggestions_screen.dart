@@ -452,13 +452,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     for (final line in lines) {
       final normalized = _normalizeAdviceLine(line);
       final lower = normalized.toLowerCase();
-      if (_startsWithAny(normalized, ['可以吃', '建議吃', '適合吃', '可吃', '可以怎麼吃', '可以喝', '建議喝', '適合喝', '可喝', '可以怎麼喝']) ||
+      if (_startsWithAny(normalized, ['搭配', '可以吃', '建議吃', '適合吃', '可吃', '可以怎麼吃', '可以喝', '建議喝', '適合喝', '可喝', '可以怎麼喝']) ||
           lower.startsWith('can eat') ||
           lower.startsWith('can drink')) {
         sections['can'] = _cleanAdviceValue(_splitAdviceValue(normalized), 'can');
         continue;
       }
-      if (_startsWithAny(normalized, ['不建議吃', '避免', '不推薦', '不建議喝', '少吃', '少喝', '避免吃', '避免喝']) ||
+      if (_startsWithAny(normalized, ['不建議', '不建議吃', '避免', '不推薦', '不建議喝', '少吃', '少喝', '避免吃', '避免喝']) ||
           lower.startsWith('avoid')) {
         sections['avoid'] = _cleanAdviceValue(_splitAdviceValue(normalized), 'avoid');
         continue;
@@ -529,6 +529,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   String _stripAdviceLabel(String text) {
     var result = _normalizeAdviceLine(text);
     const prefixes = [
+      '搭配',
       '可以吃',
       '建議吃',
       '適合吃',
@@ -539,6 +540,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       '適合喝',
       '可喝',
       '可以怎麼喝',
+      '不建議',
       '不建議吃',
       '避免',
       '不推薦',

@@ -40,6 +40,9 @@ class ApiService {
     String? mealType,
     int? mealPhotoCount,
     String? adviceMode,
+    int? todayConsumedKcal,
+    int? todayRemainingKcal,
+    int? todayProteinG,
     String? labelContext,
     String? analyzeReason,
     bool forceReanalyze = false,
@@ -114,6 +117,15 @@ class ApiService {
     }
     if (adviceMode != null && adviceMode.trim().isNotEmpty) {
       request.fields['advice_mode'] = adviceMode.trim();
+    }
+    if (todayConsumedKcal != null && todayConsumedKcal > 0) {
+      request.fields['today_consumed_kcal'] = todayConsumedKcal.toString();
+    }
+    if (todayRemainingKcal != null) {
+      request.fields['today_remaining_kcal'] = todayRemainingKcal.toString();
+    }
+    if (todayProteinG != null && todayProteinG > 0) {
+      request.fields['today_protein_g'] = todayProteinG.toString();
     }
     if (labelContext != null && labelContext.trim().isNotEmpty) {
       request.fields['label_context'] = labelContext.trim();

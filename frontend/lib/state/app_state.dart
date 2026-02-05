@@ -380,6 +380,12 @@ class AppState extends ChangeNotifier {
     final mealType = resolveMealType(time);
     final bytes = _compressImageBytes(originalBytes);
     final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
+    final now = DateTime.now();
+    final day = _dateOnly(now);
+    final consumedKcal = dailyConsumedCalorieMid(day).round();
+    final targetMid = targetCalorieMid(day);
+    final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
+    final proteinG = dailyProteinConsumedGrams(day).round();
     final result = await _api.analyzeImage(
       bytes,
       filename,
@@ -389,6 +395,9 @@ class AppState extends ChangeNotifier {
       mealType: _mealTypeKey(mealType),
       mealPhotoCount: 1,
       analyzeReason: 'quick_capture',
+      todayConsumedKcal: consumedKcal > 0 ? consumedKcal : null,
+      todayRemainingKcal: remainingKcal,
+      todayProteinG: proteinG > 0 ? proteinG : null,
       containerType: profile.containerType,
       containerSize: profile.containerSize,
       containerDepth: profile.containerDepth,
@@ -428,6 +437,12 @@ class AppState extends ChangeNotifier {
     final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
     final selectedContainerType = containerType ?? profile.containerType;
     final selectedContainerSize = containerSize ?? profile.containerSize;
+    final now = DateTime.now();
+    final day = _dateOnly(now);
+    final consumedKcal = dailyConsumedCalorieMid(day).round();
+    final targetMid = targetCalorieMid(day);
+    final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
+    final proteinG = dailyProteinConsumedGrams(day).round();
     final result = await _api.analyzeImage(
       analysis.imageBytes,
       filename,
@@ -439,6 +454,9 @@ class AppState extends ChangeNotifier {
       mealType: _mealTypeKey(analysis.mealType),
       mealPhotoCount: 1,
       analyzeReason: 'quick_capture_manual',
+      todayConsumedKcal: consumedKcal > 0 ? consumedKcal : null,
+      todayRemainingKcal: remainingKcal,
+      todayProteinG: proteinG > 0 ? proteinG : null,
       containerType: selectedContainerType,
       containerSize: selectedContainerSize,
       containerDepth: profile.containerDepth,
