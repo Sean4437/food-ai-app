@@ -504,7 +504,7 @@ class _LogScreenState extends State<LogScreen> {
                         Row(
                           children: [
                           Text(
-                            _withEmoji('⏰', _timeLabel(entry.time)),
+                            _timeLabel(entry.time),
                             style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                           ),
                             const SizedBox(width: 10),
