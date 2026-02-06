@@ -474,6 +474,21 @@
   "syncDownload": "Download sync",
   "syncNow": "Sync now",
   "syncInProgress": "Syncing…",
+  "syncLastSyncLabel": "Last sync:",
+  "syncLastResultLabel": "Last result:",
+  "syncLastResultNone": "No record yet",
+  "syncLastResultNoChanges": "No changes",
+  "syncFailedItemsLabel": "Failed items:",
+  "syncFailedItemsCount": "{count} items",
+  "@syncFailedItemsCount": {
+    "description": "Failed sync item count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncRetryFailed": "Retry failed items",
   "syncSuccess": "Sync complete",
   "syncUpdated": "Update complete",
   "syncNoChanges": "Nothing to sync right now",

@@ -674,28 +674,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planSection => '計畫設定';
 
   @override
+  String get webTestSectionTitle => 'Web 測試';
+
+  @override
+  String get webTestSubscriptionLabel => '測試訂閱';
+
+  @override
+  String get webTestEnabled => '已啟用';
+
+  @override
+  String get webTestDisabled => '未啟用';
+
+  @override
+  String get webTestPlanMonthly => '月訂（測試）';
+
+  @override
+  String get webTestPlanYearly => '年訂（測試）';
+
+  @override
+  String get webTestPlanNone => '未訂閱';
+
+  @override
+  String get webTestAccessGraceLabel => '驗證寬限時間';
+
+  @override
+  String get webTestAccessGraceDialogTitle => '驗證寬限時間（1-168 小時）';
+
+  @override
+  String webTestAccessGraceValue(int hours) {
+    return '$hours 小時';
+  }
+
+  @override
+  String get accessStatusFailed => '驗證失敗，請稍後再試';
+
+  @override
   String get heightLabel => '身高';
 
   @override
   String get weightLabel => '體重';
-
-  @override
-  String get placeholderDash => '--';
-
-  @override
-  String valueWithCm(int value) {
-    return '$value 公分';
-  }
-
-  @override
-  String valueWithKg(int value) {
-    return '$value 公斤';
-  }
-
-  @override
-  String valueWithMl(int value) {
-    return '$value 毫升';
-  }
 
   @override
   String get ageLabel => '年齡';
@@ -750,123 +767,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get subscriptionPlan => '目前方案';
-
-  @override
-  String get paywallTitle => '解鎖完整功能';
-
-  @override
-  String get paywallSubtitle => 'AI 分析、營養圖、週／月總結';
-
-  @override
-  String planMonthlyWithPrice(String price) {
-    return '月訂 $price';
-  }
-
-  @override
-  String planYearlyWithPrice(String price) {
-    return '年訂 $price';
-  }
-
-  @override
-  String get paywallYearlyBadge => '年訂省下約 30%';
-
-  @override
-  String get paywallRestore => '恢復購買';
-
-  @override
-  String get paywallDisclaimer => '訂閱將自動續訂，可隨時在 Apple ID 訂閱管理中取消。付款由 Apple 處理。';
-
-  @override
-  String get paywallStartMonthly => '開始月訂';
-
-  @override
-  String get paywallStartYearly => '開始年訂';
-
-  @override
-  String get paywallFeatureAiAnalysis => '完整 AI 分析';
-
-  @override
-  String get paywallFeatureNutritionAdvice => '熱量與營養建議';
-
-  @override
-  String get paywallFeatureSummaries => '週／月總結';
-
-  @override
-  String get paywallFeatureBestValue => '更划算的長期方案';
-
-  @override
-  String get paywallUnavailableTitle => '無法載入訂閱';
-
-  @override
-  String get paywallUnavailableBody => '目前無法取得 App Store 訂閱資訊，請稍後再試。';
-
-  @override
-  String get webPaywallTitle => '解鎖完整功能（Web 測試）';
-
-  @override
-  String get webPaywallTestBadge => '僅供測試，不會扣款';
-
-  @override
-  String get webPaywallCurrentPlanMonthly => '目前方案：月訂（測試）';
-
-  @override
-  String get webPaywallCurrentPlanYearly => '目前方案：年訂（測試）';
-
-  @override
-  String get webPaywallCurrentPlanNone => '目前方案：未訂閱';
-
-  @override
-  String get webPaywallTestNote => 'Web 測試版：此流程不會實際扣款。';
-
-  @override
-  String get webPaywallActivated => '已啟用測試訂閱';
-
-  @override
-  String get webPaywallSuccessTitle => '測試訂閱成功';
-
-  @override
-  String get webPaywallSuccessBody => '已解鎖完整功能（測試模式）。';
-
-  @override
-  String get webPaywallSuccessCta => '開始使用';
-
-  @override
-  String get dialogOk => '知道了';
-
-  @override
-  String get webTestSectionTitle => 'Web 測試';
-
-  @override
-  String get webTestSubscriptionLabel => '測試訂閱';
-
-  @override
-  String get webTestEnabled => '已啟用';
-
-  @override
-  String get webTestDisabled => '未啟用';
-
-  @override
-  String get webTestPlanMonthly => '月訂（測試）';
-
-  @override
-  String get webTestPlanYearly => '年訂（測試）';
-
-  @override
-  String get webTestPlanNone => '未訂閱';
-
-  @override
-  String get webTestAccessGraceLabel => '驗證寬限時間';
-
-  @override
-  String get webTestAccessGraceDialogTitle => '驗證寬限時間（1-168 小時）';
-
-  @override
-  String webTestAccessGraceValue(int hours) {
-    return '$hours 小時';
-  }
-
-  @override
-  String get accessStatusFailed => '驗證失敗，請稍後再試';
 
   @override
   String get planMonthly => '減脂周數 \$199/月';
@@ -1155,18 +1055,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get plateWarmLabel => '暖色陶瓷盤';
 
   @override
-  String get plateJapanese02 => '日式盤 02';
-
-  @override
-  String get plateJapanese04 => '日式盤 04';
-
-  @override
-  String get plateChina01 => '中式盤 01';
-
-  @override
-  String get plateChina02 => '中式盤 02';
-
-  @override
   String get apiSection => 'API 連線';
 
   @override
@@ -1334,6 +1222,30 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get syncInProgress => '正在努力同步中…';
 
+
+  @override
+  String get syncLastSyncLabel => '上次同步：';
+
+  @override
+  String get syncLastResultLabel => '上次結果：';
+
+  @override
+  String get syncLastResultNone => '尚無紀錄';
+
+  @override
+  String get syncLastResultNoChanges => '無變更';
+
+  @override
+  String get syncFailedItemsLabel => '失敗項目：';
+
+  @override
+  String syncFailedItemsCount(int count) {
+    return '$count 項';
+  }
+
+  @override
+  String get syncRetryFailed => '重試失敗項';
+
   @override
   String get syncSuccess => '同步完成囉';
 
@@ -1345,71 +1257,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get syncError => '同步失敗，請稍後再試';
-
-  @override
-  String get syncErrorUploadFailedDetail => '圖片上傳失敗';
-
-  @override
-  String get syncErrorSyncMetaFailedDetail => '同步狀態寫入失敗';
-
-  @override
-  String get syncErrorPostgrestDetail => '資料庫存取失敗';
-
-  @override
-  String get syncErrorNetworkDetail => '網路連線失敗';
-
-  @override
-  String syncSummaryUploadMeals(int count) {
-    return '上傳餐點 $count';
-  }
-
-  @override
-  String syncSummaryDeleteMeals(int count) {
-    return '刪除餐點 $count';
-  }
-
-  @override
-  String syncSummaryUploadCustom(int count) {
-    return '上傳自訂食物 $count';
-  }
-
-  @override
-  String syncSummaryDeleteCustom(int count) {
-    return '刪除自訂食物 $count';
-  }
-
-  @override
-  String syncSummaryUploadSettings(int count) {
-    return '上傳設定 $count';
-  }
-
-  @override
-  String syncSummaryDownloadMeals(int count) {
-    return '下載餐點 $count';
-  }
-
-  @override
-  String syncSummaryDownloadDeletedMeals(int count) {
-    return '下載刪除餐點 $count';
-  }
-
-  @override
-  String syncSummaryDownloadCustom(int count) {
-    return '下載自訂食物 $count';
-  }
-
-  @override
-  String syncSummaryDownloadDeletedCustom(int count) {
-    return '下載刪除自訂食物 $count';
-  }
-
-  @override
-  String syncSummaryDownloadSettings(int count) {
-    return '下載設定 $count';
-  }
-
-  @override
-  String get syncSummarySeparator => '、';
 
   @override
   String get syncRequireLogin => '先登入才能同步喔';
@@ -1599,33 +1446,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get containerSizeLabel => '容器尺寸';
 
   @override
-  String get referenceObjectLabel => '參考物';
-
-  @override
-  String get referenceObjectNone => '無';
-
-  @override
-  String get referenceObjectCard => '信用卡';
-
-  @override
-  String get referenceObjectCoin10 => '10 元硬幣';
-
-  @override
-  String get referenceObjectCoin5 => '5 元硬幣';
-
-  @override
-  String get referenceObjectManual => '測距（公分）';
-
-  @override
-  String get referenceLengthLabel => '測距長度（公分）';
-
-  @override
-  String get referenceLengthHint => '輸入 iOS 測距量到的公分';
-
-  @override
-  String get referenceLengthApply => '套用';
-
-  @override
   String get containerDepthLabel => '碗深度';
 
   @override
@@ -1672,6 +1492,210 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get containerDepthDeep => '深';
+
+  @override
+  String get paywallTitle => '解鎖完整功能';
+
+  @override
+  String get paywallSubtitle => 'AI 分析、營養圖、週／月總結';
+
+  @override
+  String planMonthlyWithPrice(String price) {
+    return '月訂 $price';
+  }
+
+  @override
+  String planYearlyWithPrice(String price) {
+    return '年訂 $price';
+  }
+
+  @override
+  String get paywallYearlyBadge => '年訂省下約 30%';
+
+  @override
+  String get paywallRestore => '恢復購買';
+
+  @override
+  String get paywallDisclaimer => '訂閱將自動續訂，可隨時在 Apple ID 訂閱管理中取消。付款由 Apple 處理。';
+
+  @override
+  String get paywallStartMonthly => '開始月訂';
+
+  @override
+  String get paywallStartYearly => '開始年訂';
+
+  @override
+  String get paywallFeatureAiAnalysis => '完整 AI 分析';
+
+  @override
+  String get paywallFeatureNutritionAdvice => '熱量與營養建議';
+
+  @override
+  String get paywallFeatureSummaries => '週／月總結';
+
+  @override
+  String get paywallFeatureBestValue => '更划算的長期方案';
+
+  @override
+  String get paywallUnavailableTitle => '無法載入訂閱';
+
+  @override
+  String get paywallUnavailableBody => '目前無法取得 App Store 訂閱資訊，請稍後再試。';
+
+  @override
+  String get webPaywallTitle => '解鎖完整功能（Web 測試）';
+
+  @override
+  String get webPaywallTestBadge => '僅供測試，不會扣款';
+
+  @override
+  String get webPaywallCurrentPlanMonthly => '目前方案：月訂（測試）';
+
+  @override
+  String get webPaywallCurrentPlanYearly => '目前方案：年訂（測試）';
+
+  @override
+  String get webPaywallCurrentPlanNone => '目前方案：未訂閱';
+
+  @override
+  String get webPaywallTestNote => 'Web 測試版：此流程不會實際扣款。';
+
+  @override
+  String get webPaywallActivated => '已啟用測試訂閱';
+
+  @override
+  String get webPaywallSuccessTitle => '測試訂閱成功';
+
+  @override
+  String get webPaywallSuccessBody => '已解鎖完整功能（測試模式）。';
+
+  @override
+  String get webPaywallSuccessCta => '開始使用';
+
+  @override
+  String get dialogOk => '知道了';
+
+  @override
+  String get syncErrorUploadFailedDetail => '圖片上傳失敗';
+
+  @override
+  String get syncErrorSyncMetaFailedDetail => '同步狀態寫入失敗';
+
+  @override
+  String get syncErrorPostgrestDetail => '資料庫存取失敗';
+
+  @override
+  String get syncErrorNetworkDetail => '網路連線失敗';
+
+  @override
+  String syncSummaryUploadMeals(int count) {
+    return '上傳餐點 $count';
+  }
+
+  @override
+  String syncSummaryDeleteMeals(int count) {
+    return '刪除餐點 $count';
+  }
+
+  @override
+  String syncSummaryUploadCustom(int count) {
+    return '上傳自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDeleteCustom(int count) {
+    return '刪除自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryUploadSettings(int count) {
+    return '上傳設定 $count';
+  }
+
+  @override
+  String syncSummaryDownloadMeals(int count) {
+    return '下載餐點 $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedMeals(int count) {
+    return '下載刪除餐點 $count';
+  }
+
+  @override
+  String syncSummaryDownloadCustom(int count) {
+    return '下載自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedCustom(int count) {
+    return '下載刪除自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDownloadSettings(int count) {
+    return '下載設定 $count';
+  }
+
+  @override
+  String get syncSummarySeparator => '、';
+
+  @override
+  String get plateJapanese02 => '日式盤 02';
+
+  @override
+  String get plateJapanese04 => '日式盤 04';
+
+  @override
+  String get plateChina01 => '中式盤 01';
+
+  @override
+  String get plateChina02 => '中式盤 02';
+
+  @override
+  String get placeholderDash => '--';
+
+  @override
+  String valueWithCm(int value) {
+    return '$value 公分';
+  }
+
+  @override
+  String valueWithKg(int value) {
+    return '$value 公斤';
+  }
+
+  @override
+  String valueWithMl(int value) {
+    return '$value 毫升';
+  }
+
+  @override
+  String get referenceObjectLabel => '參考物';
+
+  @override
+  String get referenceObjectNone => '無';
+
+  @override
+  String get referenceObjectCard => '信用卡';
+
+  @override
+  String get referenceObjectCoin10 => '10 元硬幣';
+
+  @override
+  String get referenceObjectCoin5 => '5 元硬幣';
+
+  @override
+  String get referenceObjectManual => '測距（公分）';
+
+  @override
+  String get referenceLengthLabel => '測距長度（公分）';
+
+  @override
+  String get referenceLengthHint => '輸入 iOS 測距量到的公分';
+
+  @override
+  String get referenceLengthApply => '套用';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2344,6 +2368,41 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get planSection => '計畫設定';
 
   @override
+  String get webTestSectionTitle => 'Web 測試';
+
+  @override
+  String get webTestSubscriptionLabel => '測試訂閱';
+
+  @override
+  String get webTestEnabled => '已啟用';
+
+  @override
+  String get webTestDisabled => '未啟用';
+
+  @override
+  String get webTestPlanMonthly => '月訂（測試）';
+
+  @override
+  String get webTestPlanYearly => '年訂（測試）';
+
+  @override
+  String get webTestPlanNone => '未訂閱';
+
+  @override
+  String get webTestAccessGraceLabel => '驗證寬限時間';
+
+  @override
+  String get webTestAccessGraceDialogTitle => '驗證寬限時間（1-168 小時）';
+
+  @override
+  String webTestAccessGraceValue(int hours) {
+    return '$hours 小時';
+  }
+
+  @override
+  String get accessStatusFailed => '驗證失敗，請稍後再試';
+
+  @override
   String get heightLabel => '身高';
 
   @override
@@ -2831,6 +2890,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get syncSignOut => '登出';
 
   @override
+  String get syncSwitchAccount => '切換帳號';
+
+  @override
+  String get syncSwitchAccountConfirmTitle => '切換帳號';
+
+  @override
+  String get syncSwitchAccountConfirmMessage => '將清除本機資料並登出，確定要切換帳號嗎？';
+
+  @override
+  String get syncSwitchAccountConfirmAction => '切換';
+
+  @override
+  String get syncSwitchAccountDone => '已切換帳號，資料已清空。';
+
+  @override
   String get syncUpload => '上傳同步';
 
   @override
@@ -2841,6 +2915,30 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncInProgress => '正在努力同步中…';
+
+
+  @override
+  String get syncLastSyncLabel => '上次同步：';
+
+  @override
+  String get syncLastResultLabel => '上次結果：';
+
+  @override
+  String get syncLastResultNone => '尚無紀錄';
+
+  @override
+  String get syncLastResultNoChanges => '無變更';
+
+  @override
+  String get syncFailedItemsLabel => '失敗項目：';
+
+  @override
+  String syncFailedItemsCount(int count) {
+    return '$count 項';
+  }
+
+  @override
+  String get syncRetryFailed => '重試失敗項';
 
   @override
   String get syncSuccess => '同步完成囉';
@@ -2853,71 +2951,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncError => '同步失敗，請稍後再試';
-
-  @override
-  String get syncErrorUploadFailedDetail => '圖片上傳失敗';
-
-  @override
-  String get syncErrorSyncMetaFailedDetail => '同步狀態寫入失敗';
-
-  @override
-  String get syncErrorPostgrestDetail => '資料庫存取失敗';
-
-  @override
-  String get syncErrorNetworkDetail => '網路連線失敗';
-
-  @override
-  String syncSummaryUploadMeals(int count) {
-    return '上傳餐點 $count';
-  }
-
-  @override
-  String syncSummaryDeleteMeals(int count) {
-    return '刪除餐點 $count';
-  }
-
-  @override
-  String syncSummaryUploadCustom(int count) {
-    return '上傳自訂食物 $count';
-  }
-
-  @override
-  String syncSummaryDeleteCustom(int count) {
-    return '刪除自訂食物 $count';
-  }
-
-  @override
-  String syncSummaryUploadSettings(int count) {
-    return '上傳設定 $count';
-  }
-
-  @override
-  String syncSummaryDownloadMeals(int count) {
-    return '下載餐點 $count';
-  }
-
-  @override
-  String syncSummaryDownloadDeletedMeals(int count) {
-    return '下載刪除餐點 $count';
-  }
-
-  @override
-  String syncSummaryDownloadCustom(int count) {
-    return '下載自訂食物 $count';
-  }
-
-  @override
-  String syncSummaryDownloadDeletedCustom(int count) {
-    return '下載刪除自訂食物 $count';
-  }
-
-  @override
-  String syncSummaryDownloadSettings(int count) {
-    return '下載設定 $count';
-  }
-
-  @override
-  String get syncSummarySeparator => '、';
 
   @override
   String get syncRequireLogin => '先登入才能同步喔';
@@ -3153,4 +3186,208 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get containerDepthDeep => '深';
+
+  @override
+  String get paywallTitle => '解鎖完整功能';
+
+  @override
+  String get paywallSubtitle => 'AI 分析、營養圖、週／月總結';
+
+  @override
+  String planMonthlyWithPrice(String price) {
+    return '月訂 $price';
+  }
+
+  @override
+  String planYearlyWithPrice(String price) {
+    return '年訂 $price';
+  }
+
+  @override
+  String get paywallYearlyBadge => '年訂省下約 30%';
+
+  @override
+  String get paywallRestore => '恢復購買';
+
+  @override
+  String get paywallDisclaimer => '訂閱將自動續訂，可隨時在 Apple ID 訂閱管理中取消。付款由 Apple 處理。';
+
+  @override
+  String get paywallStartMonthly => '開始月訂';
+
+  @override
+  String get paywallStartYearly => '開始年訂';
+
+  @override
+  String get paywallFeatureAiAnalysis => '完整 AI 分析';
+
+  @override
+  String get paywallFeatureNutritionAdvice => '熱量與營養建議';
+
+  @override
+  String get paywallFeatureSummaries => '週／月總結';
+
+  @override
+  String get paywallFeatureBestValue => '更划算的長期方案';
+
+  @override
+  String get paywallUnavailableTitle => '無法載入訂閱';
+
+  @override
+  String get paywallUnavailableBody => '目前無法取得 App Store 訂閱資訊，請稍後再試。';
+
+  @override
+  String get webPaywallTitle => '解鎖完整功能（Web 測試）';
+
+  @override
+  String get webPaywallTestBadge => '僅供測試，不會扣款';
+
+  @override
+  String get webPaywallCurrentPlanMonthly => '目前方案：月訂（測試）';
+
+  @override
+  String get webPaywallCurrentPlanYearly => '目前方案：年訂（測試）';
+
+  @override
+  String get webPaywallCurrentPlanNone => '目前方案：未訂閱';
+
+  @override
+  String get webPaywallTestNote => 'Web 測試版：此流程不會實際扣款。';
+
+  @override
+  String get webPaywallActivated => '已啟用測試訂閱';
+
+  @override
+  String get webPaywallSuccessTitle => '測試訂閱成功';
+
+  @override
+  String get webPaywallSuccessBody => '已解鎖完整功能（測試模式）。';
+
+  @override
+  String get webPaywallSuccessCta => '開始使用';
+
+  @override
+  String get dialogOk => '知道了';
+
+  @override
+  String get syncErrorUploadFailedDetail => '圖片上傳失敗';
+
+  @override
+  String get syncErrorSyncMetaFailedDetail => '同步狀態寫入失敗';
+
+  @override
+  String get syncErrorPostgrestDetail => '資料庫存取失敗';
+
+  @override
+  String get syncErrorNetworkDetail => '網路連線失敗';
+
+  @override
+  String syncSummaryUploadMeals(int count) {
+    return '上傳餐點 $count';
+  }
+
+  @override
+  String syncSummaryDeleteMeals(int count) {
+    return '刪除餐點 $count';
+  }
+
+  @override
+  String syncSummaryUploadCustom(int count) {
+    return '上傳自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDeleteCustom(int count) {
+    return '刪除自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryUploadSettings(int count) {
+    return '上傳設定 $count';
+  }
+
+  @override
+  String syncSummaryDownloadMeals(int count) {
+    return '下載餐點 $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedMeals(int count) {
+    return '下載刪除餐點 $count';
+  }
+
+  @override
+  String syncSummaryDownloadCustom(int count) {
+    return '下載自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedCustom(int count) {
+    return '下載刪除自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDownloadSettings(int count) {
+    return '下載設定 $count';
+  }
+
+  @override
+  String get syncSummarySeparator => '、';
+
+  @override
+  String get plateJapanese02 => '日式盤 02';
+
+  @override
+  String get plateJapanese04 => '日式盤 04';
+
+  @override
+  String get plateChina01 => '中式盤 01';
+
+  @override
+  String get plateChina02 => '中式盤 02';
+
+  @override
+  String get placeholderDash => '--';
+
+  @override
+  String valueWithCm(int value) {
+    return '$value 公分';
+  }
+
+  @override
+  String valueWithKg(int value) {
+    return '$value 公斤';
+  }
+
+  @override
+  String valueWithMl(int value) {
+    return '$value 毫升';
+  }
+
+  @override
+  String get referenceObjectLabel => '參考物';
+
+  @override
+  String get referenceObjectNone => '無';
+
+  @override
+  String get referenceObjectCard => '信用卡';
+
+  @override
+  String get referenceObjectCoin10 => '10 元硬幣';
+
+  @override
+  String get referenceObjectCoin5 => '5 元硬幣';
+
+  @override
+  String get referenceObjectManual => '測距（公分）';
+
+  @override
+  String get referenceLengthLabel => '測距長度（公分）';
+
+  @override
+  String get referenceLengthHint => '輸入 iOS 測距量到的公分';
+
+  @override
+  String get referenceLengthApply => '套用';
 }

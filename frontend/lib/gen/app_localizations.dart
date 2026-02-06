@@ -1401,6 +1401,72 @@ abstract class AppLocalizations {
   /// **'計畫設定'**
   String get planSection;
 
+  /// No description provided for @webTestSectionTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'Web 測試'**
+  String get webTestSectionTitle;
+
+  /// No description provided for @webTestSubscriptionLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'測試訂閱'**
+  String get webTestSubscriptionLabel;
+
+  /// No description provided for @webTestEnabled.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已啟用'**
+  String get webTestEnabled;
+
+  /// No description provided for @webTestDisabled.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'未啟用'**
+  String get webTestDisabled;
+
+  /// No description provided for @webTestPlanMonthly.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'月訂（測試）'**
+  String get webTestPlanMonthly;
+
+  /// No description provided for @webTestPlanYearly.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'年訂（測試）'**
+  String get webTestPlanYearly;
+
+  /// No description provided for @webTestPlanNone.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'未訂閱'**
+  String get webTestPlanNone;
+
+  /// No description provided for @webTestAccessGraceLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'驗證寬限時間'**
+  String get webTestAccessGraceLabel;
+
+  /// No description provided for @webTestAccessGraceDialogTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'驗證寬限時間（1-168 小時）'**
+  String get webTestAccessGraceDialogTitle;
+
+  /// No description provided for @webTestAccessGraceValue.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'{hours} 小時'**
+  String webTestAccessGraceValue(int hours);
+
+  /// No description provided for @accessStatusFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'驗證失敗，請稍後再試'**
+  String get accessStatusFailed;
+
   /// No description provided for @heightLabel.
   ///
   /// In zh_TW, this message translates to:
@@ -1412,10 +1478,6 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'體重'**
   String get weightLabel;
-  String get placeholderDash;
-  String valueWithCm(int value);
-  String valueWithKg(int value);
-  String valueWithMl(int value);
 
   /// No description provided for @ageLabel.
   ///
@@ -1524,44 +1586,6 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'目前方案'**
   String get subscriptionPlan;
-  String get paywallTitle;
-  String get paywallSubtitle;
-  String planMonthlyWithPrice(String price);
-  String planYearlyWithPrice(String price);
-  String get paywallYearlyBadge;
-  String get paywallRestore;
-  String get paywallDisclaimer;
-  String get paywallStartMonthly;
-  String get paywallStartYearly;
-  String get paywallFeatureAiAnalysis;
-  String get paywallFeatureNutritionAdvice;
-  String get paywallFeatureSummaries;
-  String get paywallFeatureBestValue;
-  String get paywallUnavailableTitle;
-  String get paywallUnavailableBody;
-  String get webPaywallTitle;
-  String get webPaywallTestBadge;
-  String get webPaywallCurrentPlanMonthly;
-  String get webPaywallCurrentPlanYearly;
-  String get webPaywallCurrentPlanNone;
-  String get webPaywallTestNote;
-  String get webPaywallActivated;
-  String get webPaywallSuccessTitle;
-  String get webPaywallSuccessBody;
-  String get webPaywallSuccessCta;
-  String get dialogOk;
-
-  String get webTestSectionTitle;
-  String get webTestSubscriptionLabel;
-  String get webTestEnabled;
-  String get webTestDisabled;
-  String get webTestPlanMonthly;
-  String get webTestPlanYearly;
-  String get webTestPlanNone;
-  String get webTestAccessGraceLabel;
-  String get webTestAccessGraceDialogTitle;
-  String webTestAccessGraceValue(int hours);
-  String get accessStatusFailed;
 
   /// No description provided for @planMonthly.
   ///
@@ -2114,10 +2138,6 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'暖色陶瓷盤'**
   String get plateWarmLabel;
-  String get plateJapanese02;
-  String get plateJapanese04;
-  String get plateChina01;
-  String get plateChina02;
 
   /// No description provided for @apiSection.
   ///
@@ -2400,10 +2420,35 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'登出'**
   String get syncSignOut;
+
+  /// No description provided for @syncSwitchAccount.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'切換帳號'**
   String get syncSwitchAccount;
+
+  /// No description provided for @syncSwitchAccountConfirmTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'切換帳號'**
   String get syncSwitchAccountConfirmTitle;
+
+  /// No description provided for @syncSwitchAccountConfirmMessage.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'將清除本機資料並登出，確定要切換帳號嗎？'**
   String get syncSwitchAccountConfirmMessage;
+
+  /// No description provided for @syncSwitchAccountConfirmAction.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'切換'**
   String get syncSwitchAccountConfirmAction;
+
+  /// No description provided for @syncSwitchAccountDone.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已切換帳號，資料已清空。'**
   String get syncSwitchAccountDone;
 
   /// No description provided for @syncUpload.
@@ -2430,6 +2475,48 @@ abstract class AppLocalizations {
   /// **'正在努力同步中…'**
   String get syncInProgress;
 
+  /// No description provided for @syncLastSyncLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'上次同步：'**
+  String get syncLastSyncLabel;
+
+  /// No description provided for @syncLastResultLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'上次結果：'**
+  String get syncLastResultLabel;
+
+  /// No description provided for @syncLastResultNone.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'尚無紀錄'**
+  String get syncLastResultNone;
+
+  /// No description provided for @syncLastResultNoChanges.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'無變更'**
+  String get syncLastResultNoChanges;
+
+  /// No description provided for @syncFailedItemsLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'失敗項目：'**
+  String get syncFailedItemsLabel;
+
+  /// Failed sync item count
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'{count} 項'**
+  String syncFailedItemsCount(int count);
+
+  /// No description provided for @syncRetryFailed.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重試失敗項'**
+  String get syncRetryFailed;
+
   /// No description provided for @syncSuccess.
   ///
   /// In zh_TW, this message translates to:
@@ -2453,21 +2540,6 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'同步失敗，請稍後再試'**
   String get syncError;
-  String get syncErrorUploadFailedDetail;
-  String get syncErrorSyncMetaFailedDetail;
-  String get syncErrorPostgrestDetail;
-  String get syncErrorNetworkDetail;
-  String syncSummaryUploadMeals(int count);
-  String syncSummaryDeleteMeals(int count);
-  String syncSummaryUploadCustom(int count);
-  String syncSummaryDeleteCustom(int count);
-  String syncSummaryUploadSettings(int count);
-  String syncSummaryDownloadMeals(int count);
-  String syncSummaryDownloadDeletedMeals(int count);
-  String syncSummaryDownloadCustom(int count);
-  String syncSummaryDownloadDeletedCustom(int count);
-  String syncSummaryDownloadSettings(int count);
-  String get syncSummarySeparator;
 
   /// No description provided for @syncRequireLogin.
   ///
@@ -2834,15 +2906,6 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'容器尺寸'**
   String get containerSizeLabel;
-  String get referenceObjectLabel;
-  String get referenceObjectNone;
-  String get referenceObjectCard;
-  String get referenceObjectCoin10;
-  String get referenceObjectCoin5;
-  String get referenceObjectManual;
-  String get referenceLengthLabel;
-  String get referenceLengthHint;
-  String get referenceLengthApply;
 
   /// No description provided for @containerDepthLabel.
   ///
@@ -2939,6 +3002,354 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'深'**
   String get containerDepthDeep;
+
+  /// No description provided for @paywallTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'解鎖完整功能'**
+  String get paywallTitle;
+
+  /// No description provided for @paywallSubtitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'AI 分析、營養圖、週／月總結'**
+  String get paywallSubtitle;
+
+  /// No description provided for @planMonthlyWithPrice.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'月訂 {price}'**
+  String planMonthlyWithPrice(String price);
+
+  /// No description provided for @planYearlyWithPrice.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'年訂 {price}'**
+  String planYearlyWithPrice(String price);
+
+  /// No description provided for @paywallYearlyBadge.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'年訂省下約 30%'**
+  String get paywallYearlyBadge;
+
+  /// No description provided for @paywallRestore.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'恢復購買'**
+  String get paywallRestore;
+
+  /// No description provided for @paywallDisclaimer.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'訂閱將自動續訂，可隨時在 Apple ID 訂閱管理中取消。付款由 Apple 處理。'**
+  String get paywallDisclaimer;
+
+  /// No description provided for @paywallStartMonthly.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'開始月訂'**
+  String get paywallStartMonthly;
+
+  /// No description provided for @paywallStartYearly.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'開始年訂'**
+  String get paywallStartYearly;
+
+  /// No description provided for @paywallFeatureAiAnalysis.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'完整 AI 分析'**
+  String get paywallFeatureAiAnalysis;
+
+  /// No description provided for @paywallFeatureNutritionAdvice.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'熱量與營養建議'**
+  String get paywallFeatureNutritionAdvice;
+
+  /// No description provided for @paywallFeatureSummaries.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'週／月總結'**
+  String get paywallFeatureSummaries;
+
+  /// No description provided for @paywallFeatureBestValue.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'更划算的長期方案'**
+  String get paywallFeatureBestValue;
+
+  /// No description provided for @paywallUnavailableTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'無法載入訂閱'**
+  String get paywallUnavailableTitle;
+
+  /// No description provided for @paywallUnavailableBody.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'目前無法取得 App Store 訂閱資訊，請稍後再試。'**
+  String get paywallUnavailableBody;
+
+  /// No description provided for @webPaywallTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'解鎖完整功能（Web 測試）'**
+  String get webPaywallTitle;
+
+  /// No description provided for @webPaywallTestBadge.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'僅供測試，不會扣款'**
+  String get webPaywallTestBadge;
+
+  /// No description provided for @webPaywallCurrentPlanMonthly.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'目前方案：月訂（測試）'**
+  String get webPaywallCurrentPlanMonthly;
+
+  /// No description provided for @webPaywallCurrentPlanYearly.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'目前方案：年訂（測試）'**
+  String get webPaywallCurrentPlanYearly;
+
+  /// No description provided for @webPaywallCurrentPlanNone.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'目前方案：未訂閱'**
+  String get webPaywallCurrentPlanNone;
+
+  /// No description provided for @webPaywallTestNote.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'Web 測試版：此流程不會實際扣款。'**
+  String get webPaywallTestNote;
+
+  /// No description provided for @webPaywallActivated.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已啟用測試訂閱'**
+  String get webPaywallActivated;
+
+  /// No description provided for @webPaywallSuccessTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'測試訂閱成功'**
+  String get webPaywallSuccessTitle;
+
+  /// No description provided for @webPaywallSuccessBody.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已解鎖完整功能（測試模式）。'**
+  String get webPaywallSuccessBody;
+
+  /// No description provided for @webPaywallSuccessCta.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'開始使用'**
+  String get webPaywallSuccessCta;
+
+  /// No description provided for @dialogOk.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'知道了'**
+  String get dialogOk;
+
+  /// No description provided for @syncErrorUploadFailedDetail.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'圖片上傳失敗'**
+  String get syncErrorUploadFailedDetail;
+
+  /// No description provided for @syncErrorSyncMetaFailedDetail.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'同步狀態寫入失敗'**
+  String get syncErrorSyncMetaFailedDetail;
+
+  /// No description provided for @syncErrorPostgrestDetail.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'資料庫存取失敗'**
+  String get syncErrorPostgrestDetail;
+
+  /// No description provided for @syncErrorNetworkDetail.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'網路連線失敗'**
+  String get syncErrorNetworkDetail;
+
+  /// No description provided for @syncSummaryUploadMeals.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'上傳餐點 {count}'**
+  String syncSummaryUploadMeals(int count);
+
+  /// No description provided for @syncSummaryDeleteMeals.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刪除餐點 {count}'**
+  String syncSummaryDeleteMeals(int count);
+
+  /// No description provided for @syncSummaryUploadCustom.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'上傳自訂食物 {count}'**
+  String syncSummaryUploadCustom(int count);
+
+  /// No description provided for @syncSummaryDeleteCustom.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'刪除自訂食物 {count}'**
+  String syncSummaryDeleteCustom(int count);
+
+  /// No description provided for @syncSummaryUploadSettings.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'上傳設定 {count}'**
+  String syncSummaryUploadSettings(int count);
+
+  /// No description provided for @syncSummaryDownloadMeals.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'下載餐點 {count}'**
+  String syncSummaryDownloadMeals(int count);
+
+  /// No description provided for @syncSummaryDownloadDeletedMeals.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'下載刪除餐點 {count}'**
+  String syncSummaryDownloadDeletedMeals(int count);
+
+  /// No description provided for @syncSummaryDownloadCustom.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'下載自訂食物 {count}'**
+  String syncSummaryDownloadCustom(int count);
+
+  /// No description provided for @syncSummaryDownloadDeletedCustom.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'下載刪除自訂食物 {count}'**
+  String syncSummaryDownloadDeletedCustom(int count);
+
+  /// No description provided for @syncSummaryDownloadSettings.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'下載設定 {count}'**
+  String syncSummaryDownloadSettings(int count);
+
+  /// No description provided for @syncSummarySeparator.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'、'**
+  String get syncSummarySeparator;
+
+  /// No description provided for @plateJapanese02.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'日式盤 02'**
+  String get plateJapanese02;
+
+  /// No description provided for @plateJapanese04.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'日式盤 04'**
+  String get plateJapanese04;
+
+  /// No description provided for @plateChina01.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'中式盤 01'**
+  String get plateChina01;
+
+  /// No description provided for @plateChina02.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'中式盤 02'**
+  String get plateChina02;
+
+  /// No description provided for @placeholderDash.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'--'**
+  String get placeholderDash;
+
+  /// No description provided for @valueWithCm.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'{value} 公分'**
+  String valueWithCm(int value);
+
+  /// No description provided for @valueWithKg.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'{value} 公斤'**
+  String valueWithKg(int value);
+
+  /// No description provided for @valueWithMl.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'{value} 毫升'**
+  String valueWithMl(int value);
+
+  /// No description provided for @referenceObjectLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'參考物'**
+  String get referenceObjectLabel;
+
+  /// No description provided for @referenceObjectNone.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'無'**
+  String get referenceObjectNone;
+
+  /// No description provided for @referenceObjectCard.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'信用卡'**
+  String get referenceObjectCard;
+
+  /// No description provided for @referenceObjectCoin10.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'10 元硬幣'**
+  String get referenceObjectCoin10;
+
+  /// No description provided for @referenceObjectCoin5.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'5 元硬幣'**
+  String get referenceObjectCoin5;
+
+  /// No description provided for @referenceObjectManual.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'測距（公分）'**
+  String get referenceObjectManual;
+
+  /// No description provided for @referenceLengthLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'測距長度（公分）'**
+  String get referenceLengthLabel;
+
+  /// No description provided for @referenceLengthHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'輸入 iOS 測距量到的公分'**
+  String get referenceLengthHint;
+
+  /// No description provided for @referenceLengthApply.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'套用'**
+  String get referenceLengthApply;
 }
 
 class _AppLocalizationsDelegate

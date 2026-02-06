@@ -474,6 +474,21 @@
   "syncDownload": "下載同步",
   "syncNow": "同步",
   "syncInProgress": "正在努力同步中…",
+  "syncLastSyncLabel": "上次同步：",
+  "syncLastResultLabel": "上次結果：",
+  "syncLastResultNone": "尚無紀錄",
+  "syncLastResultNoChanges": "無變更",
+  "syncFailedItemsLabel": "失敗項目：",
+  "syncFailedItemsCount": "{count} 項",
+  "@syncFailedItemsCount": {
+    "description": "Failed sync item count",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncRetryFailed": "重試失敗項",
   "syncSuccess": "同步完成囉",
   "syncUpdated": "更新完成",
   "syncNoChanges": "目前沒有要同步的資料",

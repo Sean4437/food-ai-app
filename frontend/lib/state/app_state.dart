@@ -91,6 +91,7 @@ class AppState extends ChangeNotifier {
   final Set<String> _failedCustomFoodDeleteSyncIds = {};
   final List<CustomFood> customFoods = [];
   SyncReport? _lastSyncReport;
+  String? _lastSyncError;
   final Map<String, Timer> _analysisTimers = {};
   final Map<String, bool> _analysisTimerForce = {};
   final Map<String, String> _analysisTimerReason = {};
@@ -104,6 +105,14 @@ class AppState extends ChangeNotifier {
   bool get isSupabaseSignedIn => _supabase.isSignedIn;
   bool get syncInProgress => _syncing;
   SyncReport? get lastSyncReport => _lastSyncReport;
+  String? get lastSyncError => _lastSyncError;
+  DateTime? get lastSyncAt => _localSyncAt();
+  int get failedSyncCount =>
+      _failedMealSyncIds.length +
+      _failedMealDeleteSyncIds.length +
+      _failedCustomFoodSyncIds.length +
+      _failedCustomFoodDeleteSyncIds.length;
+  bool get hasFailedSync => failedSyncCount > 0;
 
   String? get supabaseUserEmail => _supabase.currentUser?.email;
 
@@ -685,7 +694,8 @@ class AppState extends ChangeNotifier {
     setSyncInProgress(true);
     try {
       await syncAuto();
-    } catch (_) {
+    } catch (err) {
+      setLastSyncError(err.toString());
       // Silent auto sync failure.
     } finally {
       setSyncInProgress(false);
@@ -2188,6 +2198,7 @@ class AppState extends ChangeNotifier {
     _mealOverrides.clear();
     _weekOverrides.clear();
     _lastSyncReport = null;
+    _lastSyncError = null;
     _syncing = false;
     _meta.clear();
 
@@ -4021,6 +4032,16 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setLastSyncError(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed != null && trimmed.isEmpty) {
+      value = null;
+    }
+    if (_lastSyncError == value) return;
+    _lastSyncError = value;
+    notifyListeners();
+  }
+
   Future<bool> syncAuto() async {
     final user = _supabase.currentUser;
     if (user == null) {
@@ -4086,6 +4107,25 @@ class AppState extends ChangeNotifier {
     _meta['last_sync_fingerprint'] = _syncFingerprint();
     await _saveOverrides();
     _lastSyncReport = report;
+    _lastSyncError = null;
+    return changed;
+  }
+
+  Future<bool> retryFailedSync() async {
+    if (!hasFailedSync) return false;
+    final user = _supabase.currentUser;
+    if (user == null) {
+      throw Exception('Supabase not signed in');
+    }
+    final report = SyncReport();
+    final changed = await syncToSupabase(report: report);
+    if (changed) {
+      final now = DateTime.now().toUtc();
+      await _storeRemoteSyncAt(user.id, now);
+      await _storeLocalSyncAt(now);
+    }
+    _lastSyncReport = report;
+    _lastSyncError = null;
     return changed;
   }
 

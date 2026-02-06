@@ -471,6 +471,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } catch (err) {
       final message = _formatSyncError(err, t);
+      app.setLastSyncError(err.toString());
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    } finally {
+      app.setSyncInProgress(false);
+    }
+  }
+
+  Future<void> _retryFailedSync(BuildContext context, AppState app) async {
+    final t = AppLocalizations.of(context)!;
+    if (!app.isSupabaseSignedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.syncRequireLogin)));
+      return;
+    }
+    if (app.syncInProgress) return;
+    app.setSyncInProgress(true);
+    try {
+      final changed = await app.retryFailedSync();
+      if (context.mounted) {
+        final report = app.lastSyncReport;
+        final locale = Localizations.localeOf(context);
+        final summary = report == null ? null : _buildSyncSummary(report, t, locale);
+        final message = changed
+            ? (summary == null ? t.syncSuccess : '${t.syncSuccess}: $summary')
+            : t.syncNoChanges;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      }
+    } catch (err) {
+      final message = _formatSyncError(err, t);
+      app.setLastSyncError(err.toString());
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
@@ -499,6 +532,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return '${t.syncError}: ${t.syncErrorNetworkDetail}';
     }
     return '${t.syncError}: $text';
+  }
+
+  String _formatSyncTime(DateTime? time) {
+    if (time == null) return '';
+    final local = time.toLocal();
+    final yyyy = local.year.toString().padLeft(4, '0');
+    final mm = local.month.toString().padLeft(2, '0');
+    final dd = local.day.toString().padLeft(2, '0');
+    final hh = local.hour.toString().padLeft(2, '0');
+    final mi = local.minute.toString().padLeft(2, '0');
+    return '$yyyy-$mm-$dd $hh:$mi';
   }
 
   String? _buildSyncSummary(SyncReport report, AppLocalizations t, Locale locale) {
@@ -763,6 +807,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isSupabaseSignedIn = app.isSupabaseSignedIn;
     final isSyncing = app.syncInProgress;
     final supabaseEmail = app.supabaseUserEmail ?? '';
+    final lastSyncAt = app.lastSyncAt;
+    final lastSyncError = app.lastSyncError;
+    final lastReport = app.lastSyncReport;
+    final failedCount = app.failedSyncCount;
     final accessToken = app.debugAccessToken ?? '';
     final showMockSubscription = kIsWeb;
     final theme = Theme.of(context);
@@ -816,6 +864,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
+                      if (isSupabaseSignedIn) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${t.syncLastSyncLabel} ${lastSyncAt == null ? t.placeholderDash : _formatSyncTime(lastSyncAt)}',
+                                style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${t.syncLastResultLabel} ${lastSyncError != null && lastSyncError.isNotEmpty ? _formatSyncError(lastSyncError, t) : (lastReport == null ? t.syncLastResultNone : (_buildSyncSummary(lastReport, t, Localizations.localeOf(context)) ?? t.syncLastResultNoChanges))}',
+                                style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${t.syncFailedItemsLabel} ${t.syncFailedItemsCount(failedCount)}',
+                                style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       if (kDebugMode && isSupabaseSignedIn)
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 6),
@@ -943,6 +1025,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ],
                       ),
+                      if (isSupabaseSignedIn) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: !isSyncing && failedCount > 0 ? () => _retryFailedSync(context, app) : null,
+                                child: Text(t.syncRetryFailed),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

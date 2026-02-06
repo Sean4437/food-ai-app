@@ -686,28 +686,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planSection => 'Plan';
 
   @override
+  String get webTestSectionTitle => 'Web Test';
+
+  @override
+  String get webTestSubscriptionLabel => 'Test subscription';
+
+  @override
+  String get webTestEnabled => 'Enabled';
+
+  @override
+  String get webTestDisabled => 'Disabled';
+
+  @override
+  String get webTestPlanMonthly => 'Monthly (test)';
+
+  @override
+  String get webTestPlanYearly => 'Yearly (test)';
+
+  @override
+  String get webTestPlanNone => 'None';
+
+  @override
+  String get webTestAccessGraceLabel => 'Access grace hours';
+
+  @override
+  String get webTestAccessGraceDialogTitle => 'Access grace hours (1-168)';
+
+  @override
+  String webTestAccessGraceValue(int hours) {
+    return '${hours}h';
+  }
+
+  @override
+  String get accessStatusFailed =>
+      'Verification failed. Please try again later.';
+
+  @override
   String get heightLabel => 'Height';
 
   @override
   String get weightLabel => 'Weight';
-
-  @override
-  String get placeholderDash => '--';
-
-  @override
-  String valueWithCm(int value) {
-    return '$value cm';
-  }
-
-  @override
-  String valueWithKg(int value) {
-    return '$value kg';
-  }
-
-  @override
-  String valueWithMl(int value) {
-    return '$value ml';
-  }
 
   @override
   String get ageLabel => 'Age';
@@ -762,123 +780,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get subscriptionPlan => 'Current plan';
-
-  @override
-  String get paywallTitle => 'Unlock full features';
-
-  @override
-  String get paywallSubtitle => 'AI analysis, nutrition charts, weekly/monthly summaries';
-
-  @override
-  String planMonthlyWithPrice(String price) {
-    return 'Monthly $price';
-  }
-
-  @override
-  String planYearlyWithPrice(String price) {
-    return 'Yearly $price';
-  }
-
-  @override
-  String get paywallYearlyBadge => 'Save about 30% yearly';
-
-  @override
-  String get paywallRestore => 'Restore purchases';
-
-  @override
-  String get paywallDisclaimer => 'Subscriptions auto-renew and can be canceled in Apple ID settings. Payments are handled by Apple.';
-
-  @override
-  String get paywallStartMonthly => 'Start monthly';
-
-  @override
-  String get paywallStartYearly => 'Start yearly';
-
-  @override
-  String get paywallFeatureAiAnalysis => 'Full AI analysis';
-
-  @override
-  String get paywallFeatureNutritionAdvice => 'Calories & nutrition advice';
-
-  @override
-  String get paywallFeatureSummaries => 'Weekly/monthly summaries';
-
-  @override
-  String get paywallFeatureBestValue => 'Best value for long term';
-
-  @override
-  String get paywallUnavailableTitle => 'Subscription unavailable';
-
-  @override
-  String get paywallUnavailableBody => 'Unable to load App Store subscriptions. Please try again later.';
-
-  @override
-  String get webPaywallTitle => 'Unlock full features (Web test)';
-
-  @override
-  String get webPaywallTestBadge => 'Test only, no charge';
-
-  @override
-  String get webPaywallCurrentPlanMonthly => 'Current plan: Monthly (test)';
-
-  @override
-  String get webPaywallCurrentPlanYearly => 'Current plan: Yearly (test)';
-
-  @override
-  String get webPaywallCurrentPlanNone => 'Current plan: None';
-
-  @override
-  String get webPaywallTestNote => 'Web test: this flow does not charge real money.';
-
-  @override
-  String get webPaywallActivated => 'Test subscription enabled';
-
-  @override
-  String get webPaywallSuccessTitle => 'Test Subscription Active';
-
-  @override
-  String get webPaywallSuccessBody => 'Full features unlocked (test mode).';
-
-  @override
-  String get webPaywallSuccessCta => 'Continue';
-
-  @override
-  String get dialogOk => 'OK';
-
-  @override
-  String get webTestSectionTitle => 'Web Test';
-
-  @override
-  String get webTestSubscriptionLabel => 'Test subscription';
-
-  @override
-  String get webTestEnabled => 'Enabled';
-
-  @override
-  String get webTestDisabled => 'Disabled';
-
-  @override
-  String get webTestPlanMonthly => 'Monthly (test)';
-
-  @override
-  String get webTestPlanYearly => 'Yearly (test)';
-
-  @override
-  String get webTestPlanNone => 'None';
-
-  @override
-  String get webTestAccessGraceLabel => 'Access grace hours';
-
-  @override
-  String get webTestAccessGraceDialogTitle => 'Access grace hours (1-168)';
-
-  @override
-  String webTestAccessGraceValue(int hours) {
-    return '${hours}h';
-  }
-
-  @override
-  String get accessStatusFailed => 'Verification failed. Please try again later.';
 
   @override
   String get planMonthly => 'Fat loss \$199/mo';
@@ -1167,18 +1068,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get plateWarmLabel => 'Warm ceramic plate';
 
   @override
-  String get plateJapanese02 => 'Japanese plate 02';
-
-  @override
-  String get plateJapanese04 => 'Japanese plate 04';
-
-  @override
-  String get plateChina01 => 'Chinese plate 01';
-
-  @override
-  String get plateChina02 => 'Chinese plate 02';
-
-  @override
   String get apiSection => 'API';
 
   @override
@@ -1334,7 +1223,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncSwitchAccountConfirmAction => 'Switch';
 
   @override
-  String get syncSwitchAccountDone => 'Switched account and cleared local data.';
+  String get syncSwitchAccountDone =>
+      'Switched account and cleared local data.';
 
   @override
   String get syncUpload => 'Upload sync';
@@ -1349,6 +1239,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncInProgress => 'Syncing…';
 
   @override
+  String get syncLastSyncLabel => 'Last sync:';
+
+  @override
+  String get syncLastResultLabel => 'Last result:';
+
+  @override
+  String get syncLastResultNone => 'No record yet';
+
+  @override
+  String get syncLastResultNoChanges => 'No changes';
+
+  @override
+  String get syncFailedItemsLabel => 'Failed items:';
+
+  @override
+  String syncFailedItemsCount(int count) {
+    return '$count items';
+  }
+
+  @override
+  String get syncRetryFailed => 'Retry failed items';
+
+  @override
   String get syncSuccess => 'Sync complete';
 
   @override
@@ -1359,71 +1272,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncError => 'Sync failed. Please try again.';
-
-  @override
-  String get syncErrorUploadFailedDetail => 'image upload failed';
-
-  @override
-  String get syncErrorSyncMetaFailedDetail => 'sync meta write failed';
-
-  @override
-  String get syncErrorPostgrestDetail => 'database request failed';
-
-  @override
-  String get syncErrorNetworkDetail => 'network connection failed';
-
-  @override
-  String syncSummaryUploadMeals(int count) {
-    return 'upload meals $count';
-  }
-
-  @override
-  String syncSummaryDeleteMeals(int count) {
-    return 'delete meals $count';
-  }
-
-  @override
-  String syncSummaryUploadCustom(int count) {
-    return 'upload custom $count';
-  }
-
-  @override
-  String syncSummaryDeleteCustom(int count) {
-    return 'delete custom $count';
-  }
-
-  @override
-  String syncSummaryUploadSettings(int count) {
-    return 'upload settings $count';
-  }
-
-  @override
-  String syncSummaryDownloadMeals(int count) {
-    return 'download meals $count';
-  }
-
-  @override
-  String syncSummaryDownloadDeletedMeals(int count) {
-    return 'download deleted meals $count';
-  }
-
-  @override
-  String syncSummaryDownloadCustom(int count) {
-    return 'download custom $count';
-  }
-
-  @override
-  String syncSummaryDownloadDeletedCustom(int count) {
-    return 'download deleted custom $count';
-  }
-
-  @override
-  String syncSummaryDownloadSettings(int count) {
-    return 'download settings $count';
-  }
-
-  @override
-  String get syncSummarySeparator => ', ';
 
   @override
   String get syncRequireLogin => 'Please sign in to sync';
@@ -1617,33 +1465,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get containerSizeLabel => 'Container size';
 
   @override
-  String get referenceObjectLabel => 'Reference object';
-
-  @override
-  String get referenceObjectNone => 'None';
-
-  @override
-  String get referenceObjectCard => 'Credit card';
-
-  @override
-  String get referenceObjectCoin10 => 'Coin (26.5 mm)';
-
-  @override
-  String get referenceObjectCoin5 => 'Coin (22 mm)';
-
-  @override
-  String get referenceObjectManual => 'Measure (cm)';
-
-  @override
-  String get referenceLengthLabel => 'Measured length (cm)';
-
-  @override
-  String get referenceLengthHint => 'Enter the measured length in cm';
-
-  @override
-  String get referenceLengthApply => 'Apply';
-
-  @override
   String get containerDepthLabel => 'Bowl depth';
 
   @override
@@ -1690,4 +1511,212 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get containerDepthDeep => 'Deep';
+
+  @override
+  String get paywallTitle => 'Unlock full features';
+
+  @override
+  String get paywallSubtitle =>
+      'AI analysis, nutrition charts, weekly/monthly summaries';
+
+  @override
+  String planMonthlyWithPrice(String price) {
+    return 'Monthly $price';
+  }
+
+  @override
+  String planYearlyWithPrice(String price) {
+    return 'Yearly $price';
+  }
+
+  @override
+  String get paywallYearlyBadge => 'Save about 30% yearly';
+
+  @override
+  String get paywallRestore => 'Restore purchases';
+
+  @override
+  String get paywallDisclaimer =>
+      'Subscriptions auto-renew and can be canceled in Apple ID settings. Payments are handled by Apple.';
+
+  @override
+  String get paywallStartMonthly => 'Start monthly';
+
+  @override
+  String get paywallStartYearly => 'Start yearly';
+
+  @override
+  String get paywallFeatureAiAnalysis => 'Full AI analysis';
+
+  @override
+  String get paywallFeatureNutritionAdvice => 'Calories & nutrition advice';
+
+  @override
+  String get paywallFeatureSummaries => 'Weekly/monthly summaries';
+
+  @override
+  String get paywallFeatureBestValue => 'Best value for long term';
+
+  @override
+  String get paywallUnavailableTitle => 'Subscription unavailable';
+
+  @override
+  String get paywallUnavailableBody =>
+      'Unable to load App Store subscriptions. Please try again later.';
+
+  @override
+  String get webPaywallTitle => 'Unlock full features (Web test)';
+
+  @override
+  String get webPaywallTestBadge => 'Test only, no charge';
+
+  @override
+  String get webPaywallCurrentPlanMonthly => 'Current plan: Monthly (test)';
+
+  @override
+  String get webPaywallCurrentPlanYearly => 'Current plan: Yearly (test)';
+
+  @override
+  String get webPaywallCurrentPlanNone => 'Current plan: None';
+
+  @override
+  String get webPaywallTestNote =>
+      'Web test: this flow does not charge real money.';
+
+  @override
+  String get webPaywallActivated => 'Test subscription enabled';
+
+  @override
+  String get webPaywallSuccessTitle => 'Test Subscription Active';
+
+  @override
+  String get webPaywallSuccessBody => 'Full features unlocked (test mode).';
+
+  @override
+  String get webPaywallSuccessCta => 'Continue';
+
+  @override
+  String get dialogOk => 'OK';
+
+  @override
+  String get syncErrorUploadFailedDetail => 'image upload failed';
+
+  @override
+  String get syncErrorSyncMetaFailedDetail => 'sync meta write failed';
+
+  @override
+  String get syncErrorPostgrestDetail => 'database request failed';
+
+  @override
+  String get syncErrorNetworkDetail => 'network connection failed';
+
+  @override
+  String syncSummaryUploadMeals(int count) {
+    return 'upload meals $count';
+  }
+
+  @override
+  String syncSummaryDeleteMeals(int count) {
+    return 'delete meals $count';
+  }
+
+  @override
+  String syncSummaryUploadCustom(int count) {
+    return 'upload custom $count';
+  }
+
+  @override
+  String syncSummaryDeleteCustom(int count) {
+    return 'delete custom $count';
+  }
+
+  @override
+  String syncSummaryUploadSettings(int count) {
+    return 'upload settings $count';
+  }
+
+  @override
+  String syncSummaryDownloadMeals(int count) {
+    return 'download meals $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedMeals(int count) {
+    return 'download deleted meals $count';
+  }
+
+  @override
+  String syncSummaryDownloadCustom(int count) {
+    return 'download custom $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedCustom(int count) {
+    return 'download deleted custom $count';
+  }
+
+  @override
+  String syncSummaryDownloadSettings(int count) {
+    return 'download settings $count';
+  }
+
+  @override
+  String get syncSummarySeparator => ', ';
+
+  @override
+  String get plateJapanese02 => 'Japanese plate 02';
+
+  @override
+  String get plateJapanese04 => 'Japanese plate 04';
+
+  @override
+  String get plateChina01 => 'Chinese plate 01';
+
+  @override
+  String get plateChina02 => 'Chinese plate 02';
+
+  @override
+  String get placeholderDash => '--';
+
+  @override
+  String valueWithCm(int value) {
+    return '$value cm';
+  }
+
+  @override
+  String valueWithKg(int value) {
+    return '$value kg';
+  }
+
+  @override
+  String valueWithMl(int value) {
+    return '$value ml';
+  }
+
+  @override
+  String get referenceObjectLabel => 'Reference object';
+
+  @override
+  String get referenceObjectNone => 'None';
+
+  @override
+  String get referenceObjectCard => 'Credit card';
+
+  @override
+  String get referenceObjectCoin10 => 'Coin (26.5 mm)';
+
+  @override
+  String get referenceObjectCoin5 => 'Coin (22 mm)';
+
+  @override
+  String get referenceObjectManual => 'Measure (cm)';
+
+  @override
+  String get referenceLengthLabel => 'Measured length (cm)';
+
+  @override
+  String get referenceLengthHint => 'Enter the measured length in cm';
+
+  @override
+  String get referenceLengthApply => 'Apply';
 }
