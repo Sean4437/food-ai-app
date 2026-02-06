@@ -139,6 +139,11 @@ class AppState extends ChangeNotifier {
   bool get isWhitelisted => _whitelisted;
 
   bool get mockSubscriptionActive => _mockSubscriptionActive;
+  bool get iapAvailable => _iapAvailable;
+  bool get iapSubscriptionActive => _iapSubscriptionActive;
+  bool get iapProcessing => _iapProcessing;
+  String? get iapLastError => _iapLastError;
+  List<ProductDetails> get iapProducts => List.unmodifiable(_iapProducts);
 
   DateTime? get trialEndAt => _trialEnd;
 
@@ -4340,21 +4345,17 @@ class AppState extends ChangeNotifier {
 
   Future<void> refreshIapStatus() async {
     if (!_iapAvailable) return;
-    final response = await _iap.queryPastPurchases();
-    if (response.error != null) {
-      _iapLastError = response.error!.message;
+    _iapProcessing = true;
+    _iapLastError = null;
+    notifyListeners();
+    try {
+      await _iap.restorePurchases();
+    } catch (e) {
+      _iapLastError = e.toString();
+    } finally {
+      _iapProcessing = false;
+      notifyListeners();
     }
-    bool active = false;
-    for (final purchase in response.pastPurchases) {
-      if (_isIapProduct(purchase.productID) &&
-          (purchase.status == PurchaseStatus.purchased || purchase.status == PurchaseStatus.restored)) {
-        active = true;
-      }
-      if (purchase.pendingCompletePurchase) {
-        await _iap.completePurchase(purchase);
-      }
-    }
-    _setIapActive(active);
   }
 
   Future<void> buySubscription(String productId) async {
@@ -4869,6 +4870,10 @@ class AppStateScope extends InheritedNotifier<AppState> {
     return scope!.notifier!;
   }
 }
+
+
+
+
 
 
 
