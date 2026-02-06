@@ -23,6 +23,7 @@ dependencies:
   sembast: ^3.7.2
   sembast_web: ^2.4.1
   supabase_flutter: ^2.5.6
+  in_app_purchase: ^3.2.0
 
 dev_dependencies:
   flutter_test:
@@ -41,3 +42,4 @@ flutter:
     - assets/icons/favicon.png
     - assets/icons/Icon-192.png
     - assets/icons/Icon-512.png
+

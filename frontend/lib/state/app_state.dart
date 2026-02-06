@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:exif/exif.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -10,6 +11,7 @@ import 'package:image/image.dart' as img;
 import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:storage_client/storage_client.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import '../models/analysis_result.dart';
 import '../models/meal_entry.dart';
 import '../models/label_result.dart';
@@ -25,12 +27,15 @@ const List<String> kDeprecatedApiBaseUrls = [
   'https://sussex-oscar-southern-scanning.trycloudflare.com',
   'https://effectively-wild-oecd-weddings.trycloudflare.com',
 ];
+const String kIapMonthlyId = 'com.foodieeye.subscription.monthly';
+const String kIapYearlyId = 'com.foodieeye.subscription.yearly';
 const String kDefaultPlateAsset = 'assets/plates/plate_Japanese_02.png';
 const String kDefaultThemeAsset = 'assets/themes/theme_clean.json';
 const double kDefaultTextScale = 1.0;
 const String _kMacroUnitMetaKey = 'macro_unit';
 const String _kSettingsUpdatedAtKey = 'settings_updated_at';
 const String _kMockSubscriptionKey = 'mock_subscription_active';
+const String _kIapSubscriptionKey = 'iap_subscription_active';
 const String _kMacroUnitGrams = 'grams';
 const String _kMacroUnitPercent = 'percent';
 const double _kMacroBaselineProteinG = 30;
@@ -57,6 +62,14 @@ class AppState extends ChangeNotifier {
   bool _trialChecked = false;
   bool _whitelisted = false;
   bool _mockSubscriptionActive = false;
+  bool _iapSubscriptionActive = false;
+  bool _iapAvailable = false;
+  bool _iapProcessing = false;
+  bool _iapInitialized = false;
+  String? _iapLastError;
+  List<ProductDetails> _iapProducts = [];
+  StreamSubscription<List<PurchaseDetails>>? _iapSubscription;
+  final InAppPurchase _iap = InAppPurchase.instance;
   DateTime? _trialEnd;
   DateTime _selectedDate = _dateOnly(DateTime.now());
   final UserProfile profile = UserProfile.initial();
@@ -119,7 +132,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  bool get trialExpired => _trialChecked && _trialExpired && !_mockSubscriptionActive;
+  bool get trialExpired => _trialChecked && _trialExpired && !_mockSubscriptionActive && !_iapSubscriptionActive;
 
   bool get trialChecked => _trialChecked;
 
@@ -610,6 +623,12 @@ class AppState extends ChangeNotifier {
       scheduleMicrotask(() async {
         await refreshAccessStatus();
         await _runAutoSync();
+      });
+    }
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      // Do not block startup on IAP checks.
+      scheduleMicrotask(() async {
+        await initIap();
       });
     }
     notifyListeners();
@@ -4214,7 +4233,8 @@ class AppState extends ChangeNotifier {
         key.startsWith('exercise_type:') ||
         key.startsWith('exercise_minutes:') ||
         key.startsWith('day_finalized:') ||
-        key == _kMockSubscriptionKey;
+        key == _kMockSubscriptionKey ||
+        key == _kIapSubscriptionKey;
   }
 
   Map<String, String> _settingsMetaToSync() {
@@ -4276,15 +4296,144 @@ class AppState extends ChangeNotifier {
     _meta.removeWhere((key, _) => _isSettingsMetaKey(key));
     _meta.addAll(meta);
     _mockSubscriptionActive = _meta[_kMockSubscriptionKey] == 'true';
+    _iapSubscriptionActive = _meta[_kIapSubscriptionKey] == 'true';
   }
 
-  void setMockSubscriptionActive(bool value) {
+    void setMockSubscriptionActive(bool value) {
     _mockSubscriptionActive = value;
     _meta[_kMockSubscriptionKey] = value ? 'true' : 'false';
     _touchSettingsUpdatedAt();
     notifyListeners();
     // ignore: discarded_futures
     _saveOverrides();
+  }
+
+  ProductDetails? productById(String id) {
+    for (final product in _iapProducts) {
+      if (product.id == id) return product;
+    }
+    return null;
+  }
+
+  Future<void> initIap() async {
+    if (_iapInitialized) return;
+    _iapInitialized = true;
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return;
+    _iapAvailable = await _iap.isAvailable();
+    if (!_iapAvailable) {
+      notifyListeners();
+      return;
+    }
+    _iapSubscription ??= _iap.purchaseStream.listen(_onPurchaseUpdated, onError: (error) {
+      _iapLastError = error.toString();
+      _iapProcessing = false;
+      notifyListeners();
+    });
+    final response = await _iap.queryProductDetails({kIapMonthlyId, kIapYearlyId});
+    if (response.error != null) {
+      _iapLastError = response.error!.message;
+    }
+    _iapProducts = response.productDetails;
+    notifyListeners();
+    await refreshIapStatus();
+  }
+
+  Future<void> refreshIapStatus() async {
+    if (!_iapAvailable) return;
+    final response = await _iap.queryPastPurchases();
+    if (response.error != null) {
+      _iapLastError = response.error!.message;
+    }
+    bool active = false;
+    for (final purchase in response.pastPurchases) {
+      if (_isIapProduct(purchase.productID) &&
+          (purchase.status == PurchaseStatus.purchased || purchase.status == PurchaseStatus.restored)) {
+        active = true;
+      }
+      if (purchase.pendingCompletePurchase) {
+        await _iap.completePurchase(purchase);
+      }
+    }
+    _setIapActive(active);
+  }
+
+  Future<void> buySubscription(String productId) async {
+    if (!_iapAvailable) {
+      _iapLastError = 'IAP unavailable';
+      notifyListeners();
+      return;
+    }
+    final product = productById(productId);
+    if (product == null) {
+      _iapLastError = 'Product not found';
+      notifyListeners();
+      return;
+    }
+    _iapProcessing = true;
+    _iapLastError = null;
+    notifyListeners();
+    try {
+      final param = PurchaseParam(productDetails: product);
+      await _iap.buyNonConsumable(purchaseParam: param);
+    } catch (e) {
+      _iapProcessing = false;
+      _iapLastError = e.toString();
+      notifyListeners();
+    }
+  }
+
+  Future<void> restoreIapPurchases() async {
+    if (!_iapAvailable) {
+      _iapLastError = 'IAP unavailable';
+      notifyListeners();
+      return;
+    }
+    _iapProcessing = true;
+    _iapLastError = null;
+    notifyListeners();
+    try {
+      await _iap.restorePurchases();
+    } catch (e) {
+      _iapLastError = e.toString();
+    } finally {
+      _iapProcessing = false;
+      notifyListeners();
+    }
+  }
+
+  bool _isIapProduct(String productId) {
+    return productId == kIapMonthlyId || productId == kIapYearlyId;
+  }
+
+  void _setIapActive(bool value) {
+    _iapSubscriptionActive = value;
+    _meta[_kIapSubscriptionKey] = value ? 'true' : 'false';
+    _touchSettingsUpdatedAt();
+    notifyListeners();
+    // ignore: discarded_futures
+    _saveOverrides();
+  }
+
+  Future<void> _onPurchaseUpdated(List<PurchaseDetails> purchases) async {
+    bool active = _iapSubscriptionActive;
+    for (final purchase in purchases) {
+      if (_isIapProduct(purchase.productID)) {
+        if (purchase.status == PurchaseStatus.purchased || purchase.status == PurchaseStatus.restored) {
+          active = true;
+        } else if (purchase.status == PurchaseStatus.error) {
+          _iapLastError = purchase.error?.message ?? 'Purchase error';
+        }
+      }
+      if (purchase.pendingCompletePurchase) {
+        await _iap.completePurchase(purchase);
+      }
+    }
+    _iapProcessing = false;
+    if (active != _iapSubscriptionActive) {
+      _setIapActive(active);
+    } else {
+      notifyListeners();
+    }
   }
 
   Map<String, dynamic> _profileToMap() {
@@ -4720,3 +4869,20 @@ class AppStateScope extends InheritedNotifier<AppState> {
     return scope!.notifier!;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
