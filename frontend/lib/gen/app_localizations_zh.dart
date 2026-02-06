@@ -1308,6 +1308,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncSignOut => '登出';
 
   @override
+  String get syncSwitchAccount => '切換帳號';
+
+  @override
+  String get syncSwitchAccountConfirmTitle => '切換帳號';
+
+  @override
+  String get syncSwitchAccountConfirmMessage => '將清除本機資料並登出，確定要切換帳號嗎？';
+
+  @override
+  String get syncSwitchAccountConfirmAction => '切換';
+
+  @override
+  String get syncSwitchAccountDone => '已切換帳號，資料已清空。';
+
+  @override
   String get syncUpload => '上傳同步';
 
   @override

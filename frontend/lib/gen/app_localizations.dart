@@ -2400,6 +2400,11 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'登出'**
   String get syncSignOut;
+  String get syncSwitchAccount;
+  String get syncSwitchAccountConfirmTitle;
+  String get syncSwitchAccountConfirmMessage;
+  String get syncSwitchAccountConfirmAction;
+  String get syncSwitchAccountDone;
 
   /// No description provided for @syncUpload.
   ///

@@ -289,6 +289,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _showSwitchAccountDialog(BuildContext context, AppState app) async {
+    final t = AppLocalizations.of(context)!;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.syncSwitchAccountConfirmTitle),
+        content: Text(t.syncSwitchAccountConfirmMessage),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.syncSwitchAccountConfirmAction)),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    await app.switchAccount();
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.syncSwitchAccountDone)),
+      );
+    }
+  }
+
   Future<void> _selectOption(
     BuildContext context, {
     required String title,
@@ -774,13 +796,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           if (isSupabaseSignedIn)
-                            TextButton(
-                              onPressed: isSyncing
-                                  ? null
-                                  : () async {
-                                      await app.signOutSupabase();
-                                    },
-                              child: Text(t.syncSignOut),
+                            Row(
+                              children: [
+                                TextButton(
+                                  onPressed: isSyncing ? null : () => _showSwitchAccountDialog(context, app),
+                                  child: Text(t.syncSwitchAccount),
+                                ),
+                                TextButton(
+                                  onPressed: isSyncing
+                                      ? null
+                                      : () async {
+                                          await app.signOutSupabase();
+                                        },
+                                  child: Text(t.syncSignOut),
+                                ),
+                              ],
                             ),
                         ],
                       ),

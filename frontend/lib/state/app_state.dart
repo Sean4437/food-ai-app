@@ -2107,6 +2107,51 @@ class AppState extends ChangeNotifier {
     await _store.clearAll();
   }
 
+  Future<void> _clearLocalDataForAccountSwitch() async {
+    final apiBaseUrl = profile.apiBaseUrl;
+    final language = profile.language;
+    final plateAsset = profile.plateAsset;
+    final themeAsset = profile.themeAsset;
+    final textScale = profile.textScale;
+    final nutritionChartStyle = profile.nutritionChartStyle;
+    final nutritionValueMode = profile.nutritionValueMode;
+    final glowEnabled = profile.glowEnabled;
+
+    entries.clear();
+    customFoods.clear();
+    _deletedEntries.clear();
+    _deletedCustomFoods.clear();
+    _failedMealSyncIds.clear();
+    _failedMealDeleteSyncIds.clear();
+    _failedCustomFoodSyncIds.clear();
+    _failedCustomFoodDeleteSyncIds.clear();
+    _dayOverrides.clear();
+    _mealOverrides.clear();
+    _weekOverrides.clear();
+    _lastSyncReport = null;
+    _syncing = false;
+    _meta.clear();
+
+    _mockSubscriptionActive = false;
+    _mockSubscriptionPlanId = null;
+    _iapSubscriptionActive = false;
+
+    profile = UserProfile.initial()
+      ..apiBaseUrl = apiBaseUrl
+      ..language = language
+      ..plateAsset = plateAsset
+      ..themeAsset = themeAsset
+      ..textScale = textScale
+      ..nutritionChartStyle = nutritionChartStyle
+      ..nutritionValueMode = nutritionValueMode
+      ..glowEnabled = glowEnabled;
+
+    await _store.clearAll();
+    await _saveProfile();
+    await _saveOverrides();
+    notifyListeners();
+  }
+
   Future<void> updateEntryFoodName(MealEntry entry, String foodName, String locale) async {
     entry.overrideFoodName = foodName.trim().isEmpty ? null : foodName.trim();
     entry.updatedAt = DateTime.now().toUtc();
@@ -3366,6 +3411,13 @@ class AppState extends ChangeNotifier {
 
   Future<void> signOutSupabase() async {
     await _supabase.client.auth.signOut();
+    await refreshAccessStatus();
+    notifyListeners();
+  }
+
+  Future<void> switchAccount() async {
+    await _supabase.client.auth.signOut();
+    await _clearLocalDataForAccountSwitch();
     await refreshAccessStatus();
     notifyListeners();
   }

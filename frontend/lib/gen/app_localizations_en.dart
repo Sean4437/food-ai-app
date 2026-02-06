@@ -1321,6 +1321,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncSignOut => 'Sign out';
 
   @override
+  String get syncSwitchAccount => 'Switch account';
+
+  @override
+  String get syncSwitchAccountConfirmTitle => 'Switch account';
+
+  @override
+  String get syncSwitchAccountConfirmMessage =>
+      'This will clear local data and sign you out. Continue?';
+
+  @override
+  String get syncSwitchAccountConfirmAction => 'Switch';
+
+  @override
+  String get syncSwitchAccountDone => 'Switched account and cleared local data.';
+
+  @override
   String get syncUpload => 'Upload sync';
 
   @override
