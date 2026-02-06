@@ -3800,6 +3800,8 @@ class AppState extends ChangeNotifier {
               _failedCustomFoodSyncIds.add(foodId);
               continue;
             }
+            customFoods.removeWhere((food) => food.id == foodId);
+            _deletedCustomFoods.remove(foodId);
             if (report != null) report.pulledCustomDeletes += 1;
           }
           continue;
@@ -3820,7 +3822,7 @@ class AppState extends ChangeNotifier {
             path: imagePath,
           );
         }
-        if (bytes == null) continue;
+        final resolvedBytes = bytes ?? existing?.imageBytes ?? _namePlaceholderBytes;
         final food = CustomFood(
           id: row['id'] as String,
           name: (row['name'] as String?) ?? '',
@@ -3828,7 +3830,7 @@ class AppState extends ChangeNotifier {
           calorieRange: (row['calorie_range'] as String?) ?? '',
           suggestion: (row['suggestion'] as String?) ?? '',
           macros: _parseMacros(row['macros']),
-          imageBytes: bytes,
+          imageBytes: resolvedBytes,
           createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ?? DateTime.now(),
           updatedAt: DateTime.tryParse(row['updated_at'] as String? ?? '') ?? DateTime.now(),
         );
@@ -3877,7 +3879,17 @@ class AppState extends ChangeNotifier {
     final hasLocalData = entries.isNotEmpty || customFoods.isNotEmpty;
 
     if (remoteSyncAt == null) {
-      if (!hasLocalData && !hasLocalSettings) return false;
+      if (!hasLocalData && !hasLocalSettings) {
+        await syncFromSupabase(report: report);
+        final changed = report.hasChanges;
+        if (changed) {
+          final now = DateTime.now().toUtc();
+          await _storeRemoteSyncAt(user.id, now);
+          await _storeLocalSyncAt(now);
+        }
+        _lastSyncReport = report;
+        return changed;
+      }
       final changed = await syncToSupabase(report: report);
       if (changed) {
         final now = DateTime.now().toUtc();
