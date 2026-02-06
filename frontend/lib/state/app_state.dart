@@ -111,6 +111,8 @@ class AppState extends ChangeNotifier {
     return _supabase.client.auth.currentSession?.accessToken;
   }
 
+  String? get debugAccessToken => _accessToken();
+
   Future<void> refreshAccessStatus() async {
     if (!isSupabaseSignedIn) {
       _trialChecked = false;

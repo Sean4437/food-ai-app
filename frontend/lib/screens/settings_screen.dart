@@ -763,6 +763,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isSupabaseSignedIn = app.isSupabaseSignedIn;
     final isSyncing = app.syncInProgress;
     final supabaseEmail = app.supabaseUserEmail ?? '';
+    final accessToken = app.debugAccessToken ?? '';
     final showMockSubscription = kIsWeb;
     final theme = Theme.of(context);
     return AppBackground(
@@ -815,6 +816,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
+                      if (kDebugMode && isSupabaseSignedIn)
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: const BoxDecoration(
+                            border: Border(top: BorderSide(color: Colors.black12)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
+                              Text(
+                                'Access Token (debug)',
+                                style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      accessToken.isEmpty
+                                          ? '-'
+                                          : '${accessToken.substring(0, accessToken.length > 24 ? 24 : accessToken.length)}...',
+                                      style: AppTextStyles.body(context).copyWith(color: Colors.black87),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  TextButton(
+                                    onPressed: accessToken.isEmpty
+                                        ? null
+                                        : () async {
+                                            await Clipboard.setData(ClipboardData(text: accessToken));
+                                            if (!context.mounted) return;
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text('Access token copied')),
+                                            );
+                                          },
+                                    child: const Text('Copy'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       if (isSupabaseSignedIn)
                         _row(
                           context,
