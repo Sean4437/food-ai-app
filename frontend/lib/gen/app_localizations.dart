@@ -1521,6 +1521,18 @@ abstract class AppLocalizations {
   /// **'目前方案'**
   String get subscriptionPlan;
 
+  String get webTestSectionTitle;
+  String get webTestSubscriptionLabel;
+  String get webTestEnabled;
+  String get webTestDisabled;
+  String get webTestPlanMonthly;
+  String get webTestPlanYearly;
+  String get webTestPlanNone;
+  String get webTestAccessGraceLabel;
+  String get webTestAccessGraceDialogTitle;
+  String webTestAccessGraceValue(int hours);
+  String get accessStatusFailed;
+
   /// No description provided for @planMonthly.
   ///
   /// In zh_TW, this message translates to:

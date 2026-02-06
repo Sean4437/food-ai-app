@@ -746,6 +746,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subscriptionPlan => 'Current plan';
 
   @override
+  String get webTestSectionTitle => 'Web Test';
+
+  @override
+  String get webTestSubscriptionLabel => 'Test subscription';
+
+  @override
+  String get webTestEnabled => 'Enabled';
+
+  @override
+  String get webTestDisabled => 'Disabled';
+
+  @override
+  String get webTestPlanMonthly => 'Monthly (test)';
+
+  @override
+  String get webTestPlanYearly => 'Yearly (test)';
+
+  @override
+  String get webTestPlanNone => 'None';
+
+  @override
+  String get webTestAccessGraceLabel => 'Access grace hours';
+
+  @override
+  String get webTestAccessGraceDialogTitle => 'Access grace hours (1-168)';
+
+  @override
+  String webTestAccessGraceValue(int hours) {
+    return '${hours}h';
+  }
+
+  @override
+  String get accessStatusFailed => 'Verification failed. Please try again later.';
+
+  @override
   String get planMonthly => 'Fat loss \$199/mo';
 
   @override

@@ -392,10 +392,10 @@ class TrialExpiredScreen extends StatelessWidget {
                       style: AppTextStyles.body(context).copyWith(color: Colors.black87),
                       textAlign: TextAlign.center,
                     ),
-                    if ((app.accessStatusError ?? '').isNotEmpty) ...[
+                    if (app.accessStatusFailed) ...[
                       const SizedBox(height: 10),
                       Text(
-                        app.accessStatusError!,
+                        t.accessStatusFailed,
                         style: AppTextStyles.body(context).copyWith(color: Colors.redAccent, fontSize: 12),
                         textAlign: TextAlign.center,
                       ),

@@ -244,6 +244,24 @@
   "editProfile": "Edit profile",
   "nicknameLabel": "Nickname",
   "planSection": "Plan",
+  "webTestSectionTitle": "Web Test",
+  "webTestSubscriptionLabel": "Test subscription",
+  "webTestEnabled": "Enabled",
+  "webTestDisabled": "Disabled",
+  "webTestPlanMonthly": "Monthly (test)",
+  "webTestPlanYearly": "Yearly (test)",
+  "webTestPlanNone": "None",
+  "webTestAccessGraceLabel": "Access grace hours",
+  "webTestAccessGraceDialogTitle": "Access grace hours (1-168)",
+  "webTestAccessGraceValue": "{hours}h",
+  "@webTestAccessGraceValue": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "accessStatusFailed": "Verification failed. Please try again later.",
   "heightLabel": "Height",
   "weightLabel": "Weight",
   "ageLabel": "Age",

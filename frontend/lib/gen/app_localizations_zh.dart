@@ -734,6 +734,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String get subscriptionPlan => '目前方案';
 
   @override
+  String get webTestSectionTitle => 'Web 測試';
+
+  @override
+  String get webTestSubscriptionLabel => '測試訂閱';
+
+  @override
+  String get webTestEnabled => '已啟用';
+
+  @override
+  String get webTestDisabled => '未啟用';
+
+  @override
+  String get webTestPlanMonthly => '月訂（測試）';
+
+  @override
+  String get webTestPlanYearly => '年訂（測試）';
+
+  @override
+  String get webTestPlanNone => '未訂閱';
+
+  @override
+  String get webTestAccessGraceLabel => '驗證寬限時間';
+
+  @override
+  String get webTestAccessGraceDialogTitle => '驗證寬限時間（1-168 小時）';
+
+  @override
+  String webTestAccessGraceValue(int hours) {
+    return '$hours 小時';
+  }
+
+  @override
+  String get accessStatusFailed => '驗證失敗，請稍後再試';
+
+  @override
   String get planMonthly => '減脂周數 \$199/月';
 
   @override

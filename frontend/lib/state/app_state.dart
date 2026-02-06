@@ -68,7 +68,7 @@ class AppState extends ChangeNotifier {
   bool _mockSubscriptionActive = false;
   String? _mockSubscriptionPlanId;
   bool _iapSubscriptionActive = false;
-  String? _accessStatusError;
+  bool _accessStatusFailed = false;
   bool _iapAvailable = false;
   bool _iapProcessing = false;
   bool _iapInitialized = false;
@@ -117,7 +117,7 @@ class AppState extends ChangeNotifier {
       _trialExpired = false;
       _whitelisted = false;
       _trialEnd = null;
-      _accessStatusError = null;
+      _accessStatusFailed = false;
       notifyListeners();
       return;
     }
@@ -130,7 +130,7 @@ class AppState extends ChangeNotifier {
       final endRaw = response['trial_end'] as String?;
       _trialEnd = endRaw == null ? null : DateTime.tryParse(endRaw);
       _meta[_kAccessCheckAtKey] = DateTime.now().toUtc().toIso8601String();
-      _accessStatusError = null;
+      _accessStatusFailed = false;
       _touchSettingsUpdatedAt();
       // ignore: discarded_futures
       _saveOverrides();
@@ -145,9 +145,9 @@ class AppState extends ChangeNotifier {
         _trialExpired = true;
         _whitelisted = false;
         _trialEnd = null;
-        _accessStatusError = '驗證失敗，請稍後再試';
+        _accessStatusFailed = true;
       } else {
-        _accessStatusError = null;
+        _accessStatusFailed = false;
       }
       notifyListeners();
     }
@@ -161,7 +161,7 @@ class AppState extends ChangeNotifier {
 
   bool get mockSubscriptionActive => _mockSubscriptionActive;
   String? get mockSubscriptionPlanId => _mockSubscriptionPlanId;
-  String? get accessStatusError => _accessStatusError;
+  bool get accessStatusFailed => _accessStatusFailed;
   int get accessGraceHours {
     final raw = _meta[_kAccessGraceHoursKey];
     final parsed = int.tryParse(raw ?? '');

@@ -886,11 +886,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 if (showMockSubscription) ...[
-                  _sectionTitle(context, 'Web Test'),
+                  _sectionTitle(context, t.webTestSectionTitle),
                   _row(
                     context,
-                    'Test subscription',
-                    app.mockSubscriptionActive ? 'Enabled' : 'Disabled',
+                    t.webTestSubscriptionLabel,
+                    app.mockSubscriptionActive ? t.webTestEnabled : t.webTestDisabled,
                     icon: Icons.science_outlined,
                     onTap: () {
                       final next = !app.mockSubscriptionActive;
@@ -900,23 +900,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   _row(
                     context,
-                    'Current plan',
+                    t.subscriptionPlan,
                     app.mockSubscriptionPlanId == kIapMonthlyId
-                        ? 'Monthly (test)'
+                        ? t.webTestPlanMonthly
                         : app.mockSubscriptionPlanId == kIapYearlyId
-                            ? 'Yearly (test)'
-                            : 'None',
+                            ? t.webTestPlanYearly
+                            : t.webTestPlanNone,
                     icon: Icons.credit_card,
                     showChevron: false,
                   ),
                   _row(
                     context,
-                    'Access grace hours',
-                    '${app.accessGraceHours}h',
+                    t.webTestAccessGraceLabel,
+                    t.webTestAccessGraceValue(app.accessGraceHours),
                     icon: Icons.timer_outlined,
                     onTap: () => _editText(
                       context,
-                      title: 'Access grace hours (1-168)',
+                      title: t.webTestAccessGraceDialogTitle,
                       initial: app.accessGraceHours.toString(),
                       keyboardType: TextInputType.number,
                       onSave: (value) {
