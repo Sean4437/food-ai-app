@@ -756,6 +756,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isSupabaseSignedIn = app.isSupabaseSignedIn;
     final isSyncing = app.syncInProgress;
     final supabaseEmail = app.supabaseUserEmail ?? '';
+    final showMockSubscription = kIsWeb && app.isWhitelisted;
     final theme = Theme.of(context);
     return AppBackground(
       child: SafeArea(
@@ -884,6 +885,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
+                if (showMockSubscription) ...[
+                  _sectionTitle(context, '測試訂閱（Web）'),
+                  _row(
+                    context,
+                    '模擬付費解鎖',
+                    app.mockSubscriptionActive ? '已啟用' : '未啟用',
+                    emoji: '🧪',
+                    onTap: () {
+                      final next = !app.mockSubscriptionActive;
+                      app.setMockSubscriptionActive(next);
+                    },
+                  ),
+                ],
                 _sectionTitle(context, t.planSection),
                 _grid2([
                   _row(

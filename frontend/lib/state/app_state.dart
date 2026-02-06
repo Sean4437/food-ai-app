@@ -30,6 +30,7 @@ const String kDefaultThemeAsset = 'assets/themes/theme_clean.json';
 const double kDefaultTextScale = 1.0;
 const String _kMacroUnitMetaKey = 'macro_unit';
 const String _kSettingsUpdatedAtKey = 'settings_updated_at';
+const String _kMockSubscriptionKey = 'mock_subscription_active';
 const String _kMacroUnitGrams = 'grams';
 const String _kMacroUnitPercent = 'percent';
 const double _kMacroBaselineProteinG = 30;
@@ -55,6 +56,7 @@ class AppState extends ChangeNotifier {
   bool _trialExpired = false;
   bool _trialChecked = false;
   bool _whitelisted = false;
+  bool _mockSubscriptionActive = false;
   DateTime? _trialEnd;
   DateTime _selectedDate = _dateOnly(DateTime.now());
   final UserProfile profile = UserProfile.initial();
@@ -117,11 +119,13 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  bool get trialExpired => _trialChecked && _trialExpired;
+  bool get trialExpired => _trialChecked && _trialExpired && !_mockSubscriptionActive;
 
   bool get trialChecked => _trialChecked;
 
   bool get isWhitelisted => _whitelisted;
+
+  bool get mockSubscriptionActive => _mockSubscriptionActive;
 
   DateTime? get trialEndAt => _trialEnd;
 
@@ -4209,7 +4213,8 @@ class AppState extends ChangeNotifier {
     return key.startsWith('activity:') ||
         key.startsWith('exercise_type:') ||
         key.startsWith('exercise_minutes:') ||
-        key.startsWith('day_finalized:');
+        key.startsWith('day_finalized:') ||
+        key == _kMockSubscriptionKey;
   }
 
   Map<String, String> _settingsMetaToSync() {
@@ -4270,6 +4275,16 @@ class AppState extends ChangeNotifier {
       ..addAll(week);
     _meta.removeWhere((key, _) => _isSettingsMetaKey(key));
     _meta.addAll(meta);
+    _mockSubscriptionActive = _meta[_kMockSubscriptionKey] == 'true';
+  }
+
+  void setMockSubscriptionActive(bool value) {
+    _mockSubscriptionActive = value;
+    _meta[_kMockSubscriptionKey] = value ? 'true' : 'false';
+    _touchSettingsUpdatedAt();
+    notifyListeners();
+    // ignore: discarded_futures
+    _saveOverrides();
   }
 
   Map<String, dynamic> _profileToMap() {
