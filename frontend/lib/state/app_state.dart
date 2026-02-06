@@ -35,6 +35,7 @@ const double kDefaultTextScale = 1.0;
 const String _kMacroUnitMetaKey = 'macro_unit';
 const String _kSettingsUpdatedAtKey = 'settings_updated_at';
 const String _kMockSubscriptionKey = 'mock_subscription_active';
+const String _kMockSubscriptionPlanKey = 'mock_subscription_plan';
 const String _kIapSubscriptionKey = 'iap_subscription_active';
 const String _kMacroUnitGrams = 'grams';
 const String _kMacroUnitPercent = 'percent';
@@ -62,6 +63,7 @@ class AppState extends ChangeNotifier {
   bool _trialChecked = false;
   bool _whitelisted = false;
   bool _mockSubscriptionActive = false;
+  String? _mockSubscriptionPlanId;
   bool _iapSubscriptionActive = false;
   bool _iapAvailable = false;
   bool _iapProcessing = false;
@@ -139,6 +141,7 @@ class AppState extends ChangeNotifier {
   bool get isWhitelisted => _whitelisted;
 
   bool get mockSubscriptionActive => _mockSubscriptionActive;
+  String? get mockSubscriptionPlanId => _mockSubscriptionPlanId;
   bool get iapAvailable => _iapAvailable;
   bool get iapSubscriptionActive => _iapSubscriptionActive;
   bool get iapProcessing => _iapProcessing;
@@ -4239,6 +4242,7 @@ class AppState extends ChangeNotifier {
         key.startsWith('exercise_minutes:') ||
         key.startsWith('day_finalized:') ||
         key == _kMockSubscriptionKey ||
+        key == _kMockSubscriptionPlanKey ||
         key == _kIapSubscriptionKey;
   }
 
@@ -4301,12 +4305,20 @@ class AppState extends ChangeNotifier {
     _meta.removeWhere((key, _) => _isSettingsMetaKey(key));
     _meta.addAll(meta);
     _mockSubscriptionActive = _meta[_kMockSubscriptionKey] == 'true';
+    _mockSubscriptionPlanId = _meta[_kMockSubscriptionPlanKey];
     _iapSubscriptionActive = _meta[_kIapSubscriptionKey] == 'true';
   }
 
-    void setMockSubscriptionActive(bool value) {
+  void setMockSubscriptionActive(bool value, {String? planId}) {
     _mockSubscriptionActive = value;
     _meta[_kMockSubscriptionKey] = value ? 'true' : 'false';
+    if (value && planId != null) {
+      _mockSubscriptionPlanId = planId;
+      _meta[_kMockSubscriptionPlanKey] = planId;
+    } else if (!value) {
+      _mockSubscriptionPlanId = null;
+      _meta.remove(_kMockSubscriptionPlanKey);
+    }
     _touchSettingsUpdatedAt();
     notifyListeners();
     // ignore: discarded_futures

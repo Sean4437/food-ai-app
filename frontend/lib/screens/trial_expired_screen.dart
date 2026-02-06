@@ -10,12 +10,19 @@ class TrialExpiredScreen extends StatelessWidget {
 
   Future<void> _showMockPaywall(BuildContext context, AppState app, AppLocalizations t) async {
     final isZh = Localizations.localeOf(context).languageCode.startsWith('zh');
-    final title = isZh ? '選擇訂閱方案（測試）' : 'Select a plan (test)';
-    final subtitle = isZh ? '以下僅為測試流程，不會實際扣款。' : 'This is a test flow. No real charge.';
+    final title = isZh ? '解鎖完整功能（Web 測試）' : 'Unlock full features (Web test)';
+    final subtitle = isZh ? 'AI 分析、營養圖、週／月總結' : 'AI analysis, nutrition charts, weekly/monthly summaries';
     final monthly = isZh ? '月訂 \$5.99' : 'Monthly \$5.99';
     final yearly = isZh ? '年訂 \$49.99' : 'Yearly \$49.99';
     final yearlyBadge = isZh ? '年訂省下約 30%' : 'Save about 30% yearly';
+    final testBadge = isZh ? '僅供測試，不會扣款' : 'Test only, no charge';
     final cancel = isZh ? '取消' : 'Cancel';
+    final currentPlan = app.mockSubscriptionPlanId;
+    final currentPlanLabel = currentPlan == kIapMonthlyId
+        ? (isZh ? '目前方案：月訂（測試）' : 'Current plan: Monthly (test)')
+        : currentPlan == kIapYearlyId
+            ? (isZh ? '目前方案：年訂（測試）' : 'Current plan: Yearly (test)')
+            : (isZh ? '目前方案：未訂閱' : 'Current plan: None');
     final chosen = await showModalBottomSheet<String>(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
@@ -26,7 +33,7 @@ class TrialExpiredScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8))),
             const SizedBox(height: 12),
-            Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+            Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -36,14 +43,23 @@ class TrialExpiredScreen extends StatelessWidget {
                 style: AppTextStyles.body(context).copyWith(color: Colors.black54, fontSize: 13),
               ),
             ),
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Text(
+                currentPlanLabel,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.body(context).copyWith(color: Colors.black54, fontSize: 12),
+              ),
+            ),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: _planCard(
                 context,
                 title: monthly,
-                badge: null,
-                onTap: () => Navigator.of(context).pop('monthly'),
+                badge: testBadge,
+                onTap: () => Navigator.of(context).pop(kIapMonthlyId),
                 bullets: [
                   isZh ? '完整 AI 分析' : 'Full AI analysis',
                   isZh ? '熱量與營養建議' : 'Calories & nutrition advice',
@@ -58,13 +74,22 @@ class TrialExpiredScreen extends StatelessWidget {
                 context,
                 title: yearly,
                 badge: yearlyBadge,
-                onTap: () => Navigator.of(context).pop('yearly'),
+                onTap: () => Navigator.of(context).pop(kIapYearlyId),
                 bullets: [
                   isZh ? '完整 AI 分析' : 'Full AI analysis',
                   isZh ? '熱量與營養建議' : 'Calories & nutrition advice',
                   isZh ? '週／月總結' : 'Weekly/monthly summaries',
                   isZh ? '更划算的長期方案' : 'Best value for long term',
                 ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Text(
+                isZh ? 'Web 測試版：此流程不會實際扣款。' : 'Web test: this flow does not charge real money.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.body(context).copyWith(color: Colors.black45, fontSize: 12),
               ),
             ),
             const SizedBox(height: 6),
@@ -77,8 +102,8 @@ class TrialExpiredScreen extends StatelessWidget {
         ),
       ),
     );
-    if (chosen == 'monthly' || chosen == 'yearly') {
-      app.setMockSubscriptionActive(true);
+    if (chosen == kIapMonthlyId || chosen == kIapYearlyId) {
+      app.setMockSubscriptionActive(true, planId: chosen);
       if (context.mounted) {
         await _showMockSuccess(context, isZh: isZh);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -370,7 +395,7 @@ class TrialExpiredScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
-                        if (kIsWeb && app.isWhitelisted) {
+                        if (kIsWeb) {
                           _showMockPaywall(context, app, t);
                           return;
                         }

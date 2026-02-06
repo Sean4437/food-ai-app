@@ -756,7 +756,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isSupabaseSignedIn = app.isSupabaseSignedIn;
     final isSyncing = app.syncInProgress;
     final supabaseEmail = app.supabaseUserEmail ?? '';
-    final showMockSubscription = kIsWeb && app.isWhitelisted;
+    final showMockSubscription = kIsWeb;
     final theme = Theme.of(context);
     return AppBackground(
       child: SafeArea(
@@ -886,16 +886,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 if (showMockSubscription) ...[
-                  _sectionTitle(context, '測試訂閱（Web）'),
+                  _sectionTitle(context, 'Web Test'),
                   _row(
                     context,
-                    '模擬付費解鎖',
-                    app.mockSubscriptionActive ? '已啟用' : '未啟用',
-                    emoji: '🧪',
+                    'Test subscription',
+                    app.mockSubscriptionActive ? 'Enabled' : 'Disabled',
+                    icon: Icons.science_outlined,
                     onTap: () {
                       final next = !app.mockSubscriptionActive;
-                      app.setMockSubscriptionActive(next);
+                      final planId = next ? (app.mockSubscriptionPlanId ?? kIapMonthlyId) : null;
+                      app.setMockSubscriptionActive(next, planId: planId);
                     },
+                  ),
+                  _row(
+                    context,
+                    'Current plan',
+                    app.mockSubscriptionPlanId == kIapMonthlyId
+                        ? 'Monthly (test)'
+                        : app.mockSubscriptionPlanId == kIapYearlyId
+                            ? 'Yearly (test)'
+                            : 'None',
+                    icon: Icons.credit_card,
+                    showChevron: false,
                   ),
                 ],
                 _sectionTitle(context, t.planSection),
