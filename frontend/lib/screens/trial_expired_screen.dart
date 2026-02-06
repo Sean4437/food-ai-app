@@ -12,8 +12,8 @@ class TrialExpiredScreen extends StatelessWidget {
     final isZh = Localizations.localeOf(context).languageCode.startsWith('zh');
     final title = isZh ? '選擇訂閱方案（測試）' : 'Select a plan (test)';
     final subtitle = isZh ? '以下僅為測試流程，不會實際扣款。' : 'This is a test flow. No real charge.';
-    final monthly = isZh ? '月訂 $5.99' : 'Monthly $5.99';
-    final yearly = isZh ? '年訂 $49.99' : 'Yearly $49.99';
+    final monthly = isZh ? '月訂 \$5.99' : 'Monthly \$5.99';
+    final yearly = isZh ? '年訂 \$49.99' : 'Yearly \$49.99';
     final yearlyBadge = isZh ? '年訂省下約 30%' : 'Save about 30% yearly';
     final cancel = isZh ? '取消' : 'Cancel';
     final chosen = await showModalBottomSheet<String>(
