@@ -1225,16 +1225,23 @@ class AppState extends ChangeNotifier {
         'dish_summaries': collapsedSummaries,
       });
     }
-      final payload = {
-        'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-        'lang': locale,
-        'meals': meals,
-        'day_calorie_range': _dailyCalorieRangeLabelForDate(date, t),
-        'day_meal_count': mealGroups.length,
-        'profile': {
-          'height_cm': profile.heightCm,
-          'weight_kg': profile.weightKg,
-          'age': profile.age,
+    final prevDate = _dateOnly(date).subtract(const Duration(days: 1));
+    final prevKey = _dayKey(prevDate);
+    final prevOverride = _dayOverrides[prevKey];
+    final prevSummary = prevOverride?['summary']?.trim();
+    final prevAdvice = prevOverride?['tomorrow_advice']?.trim();
+    final payload = {
+      'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+      'lang': locale,
+      'meals': meals,
+      'day_calorie_range': _dailyCalorieRangeLabelForDate(date, t),
+      'day_meal_count': mealGroups.length,
+      if (prevSummary != null && prevSummary.isNotEmpty) 'previous_day_summary': prevSummary,
+      if (prevAdvice != null && prevAdvice.isNotEmpty) 'previous_tomorrow_advice': prevAdvice,
+      'profile': {
+        'height_cm': profile.heightCm,
+        'weight_kg': profile.weightKg,
+        'age': profile.age,
           'gender': profile.gender,
           'tone': profile.tone,
           'persona': profile.persona,
@@ -1359,15 +1366,22 @@ class AppState extends ChangeNotifier {
       });
     }
     if (days.isEmpty) return hadOverride;
-      final payload = {
-        'week_start': '${weekStart.year.toString().padLeft(4, '0')}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}',
-        'week_end': '${weekEnd.year.toString().padLeft(4, '0')}-${weekEnd.month.toString().padLeft(2, '0')}-${weekEnd.day.toString().padLeft(2, '0')}',
-        'lang': locale,
-        'days': days,
-        'profile': {
-          'height_cm': profile.heightCm,
-          'weight_kg': profile.weightKg,
-          'age': profile.age,
+    final prevWeekStart = weekStart.subtract(const Duration(days: 7));
+    final prevWeekKey = _weekKey(prevWeekStart);
+    final prevWeekOverride = _weekOverrides[prevWeekKey];
+    final prevWeekSummary = prevWeekOverride?['week_summary']?.trim();
+    final prevWeekAdvice = prevWeekOverride?['next_week_advice']?.trim();
+    final payload = {
+      'week_start': '${weekStart.year.toString().padLeft(4, '0')}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}',
+      'week_end': '${weekEnd.year.toString().padLeft(4, '0')}-${weekEnd.month.toString().padLeft(2, '0')}-${weekEnd.day.toString().padLeft(2, '0')}',
+      'lang': locale,
+      'days': days,
+      if (prevWeekSummary != null && prevWeekSummary.isNotEmpty) 'previous_week_summary': prevWeekSummary,
+      if (prevWeekAdvice != null && prevWeekAdvice.isNotEmpty) 'previous_next_week_advice': prevWeekAdvice,
+      'profile': {
+        'height_cm': profile.heightCm,
+        'weight_kg': profile.weightKg,
+        'age': profile.age,
           'gender': profile.gender,
           'tone': profile.tone,
           'persona': profile.persona,

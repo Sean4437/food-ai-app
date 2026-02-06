@@ -75,6 +75,8 @@ class DaySummaryRequest(BaseModel):
     day_meal_count: Optional[int] = None
     lang: Optional[str] = None
     profile: Optional[dict] = None
+    previous_day_summary: Optional[str] = None
+    previous_tomorrow_advice: Optional[str] = None
 
 
 class DaySummaryResponse(BaseModel):
@@ -99,6 +101,8 @@ class WeekSummaryRequest(BaseModel):
     days: List[WeekSummaryInput]
     lang: Optional[str] = None
     profile: Optional[dict] = None
+    previous_week_summary: Optional[str] = None
+    previous_next_week_advice: Optional[str] = None
 
 
 class WeekSummaryResponse(BaseModel):
@@ -866,6 +870,8 @@ def _build_day_prompt(
     meals: List[MealSummaryInput],
     day_calorie_range: Optional[str],
     day_meal_count: Optional[int],
+    previous_day_summary: Optional[str],
+    previous_tomorrow_advice: Optional[str],
 ) -> str:
     profile_text = ""
     if profile:
@@ -888,15 +894,23 @@ def _build_day_prompt(
             summaries = "; ".join(meal.dish_summaries) if meal.dish_summaries else "no summary"
             meal_lines.append(f"- {label}: {meal.calorie_range} | {summaries}")
     meal_block = "\n".join(meal_lines)
+    history_lines = []
+    if previous_day_summary:
+        history_lines.append(f"Previous day summary: {previous_day_summary}")
+    if previous_tomorrow_advice:
+        history_lines.append(f"Previous tomorrow advice: {previous_tomorrow_advice}")
+    history_block = "\n".join(history_lines)
     if lang == "zh-TW":
         return (
             "你是營養分析助理。請根據當日多餐摘要，輸出今日總結與明天建議，回傳 JSON。\n"
             "要求：\n"
             "- 僅回傳 JSON（不要多餘文字）\n"
-            "- day_summary: 一句話總結（30 字內）\n"
-            "- tomorrow_advice: 明天一餐的方向（一句話）\n"
+            "- day_summary: 一句話總結（30 字內），描述「今天狀態」\n"
+            "- tomorrow_advice: 一句話建議「下一餐/明天行動」\n"
             "- confidence: 0 到 1 的信心分數\n"
             "- 避免醫療或診斷字眼；避免精準數值或克數\n"
+            "- day_summary 與 tomorrow_advice 不得重複詞句或同義改寫\n"
+            "- 避免與「前一天 summary/advice」重複或高度相似\n"
             "JSON 範例：\n"
             "{\n"
             "  \"day_summary\": \"整體均衡，油脂略多\",\n"
@@ -906,15 +920,18 @@ def _build_day_prompt(
             f"今日累計熱量區間：{day_calorie_range or '未知'}\n"
             f"今日已記錄餐數：{day_meal_count or 0}\n"
             f"餐次摘要：\n{meal_block}\n"
+            f"{history_block}\n"
         ) + profile_text
     return (
         "You are a nutrition assistant. Based on day meal summaries, return JSON.\n"
         "Requirements:\n"
         "- Return JSON only\n"
-        "- day_summary: one-sentence summary (<= 30 words)\n"
-        "- tomorrow_advice: one sentence guidance for tomorrow\n"
+        "- day_summary: one-sentence summary (<= 30 words) describing today's status\n"
+        "- tomorrow_advice: one sentence guidance for the next meal/tomorrow action\n"
         "- confidence: 0 to 1\n"
         "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
+        "- Do not repeat phrases between day_summary and tomorrow_advice\n"
+        "- Avoid repeating or paraphrasing the previous day summary/advice\n"
         "JSON example:\n"
         "{\n"
         "  \"day_summary\": \"Overall balanced, slightly higher fat\",\n"
@@ -924,10 +941,19 @@ def _build_day_prompt(
         f"Today total range: {day_calorie_range or 'unknown'}\n"
         f"Meals today: {day_meal_count or 0}\n"
         f"Meal summaries:\n{meal_block}\n"
+        f"{history_block}\n"
     ) + profile_text
 
 
-def _build_week_prompt(lang: str, profile: dict | None, days: List[WeekSummaryInput], week_start: str, week_end: str) -> str:
+def _build_week_prompt(
+    lang: str,
+    profile: dict | None,
+    days: List[WeekSummaryInput],
+    week_start: str,
+    week_end: str,
+    previous_week_summary: Optional[str],
+    previous_next_week_advice: Optional[str],
+) -> str:
     profile_text = ""
     if profile:
         tone = str(profile.get("tone") or "").strip()
@@ -953,15 +979,23 @@ def _build_week_prompt(lang: str, profile: dict | None, days: List[WeekSummaryIn
                 line += f" | 餐次細節：{meal_text}" if lang == "zh-TW" else f" | details: {meal_text}"
         day_lines.append(line)
     day_block = "\n".join(day_lines)
+    history_lines = []
+    if previous_week_summary:
+        history_lines.append(f"Previous week summary: {previous_week_summary}")
+    if previous_next_week_advice:
+        history_lines.append(f"Previous next week advice: {previous_next_week_advice}")
+    history_block = "\n".join(history_lines)
     if lang == "zh-TW":
         return (
             "你是營養分析助理。請根據一週摘要，輸出週總結與下週建議，回傳 JSON。\n"
             "要求：\n"
             "- 僅回傳 JSON（不要多餘文字）\n"
-            "- week_summary: 一句話總結（40 字內）\n"
-            "- next_week_advice: 下週方向（一句話）\n"
+            "- week_summary: 一句話總結（40 字內），描述「本週狀態」\n"
+            "- next_week_advice: 一句話建議「下週行動方向」\n"
             "- confidence: 0 到 1 的信心分數\n"
             "- 避免醫療或診斷字眼；避免精準數值或克數\n"
+            "- week_summary 與 next_week_advice 不得重複詞句或同義改寫\n"
+            "- 避免與「上一週 summary/advice」重複或高度相似\n"
             "JSON 範例：\n"
             "{\n"
             "  \"week_summary\": \"整體均衡但油脂偏高，注意蔬菜比例\",\n"
@@ -970,15 +1004,18 @@ def _build_week_prompt(lang: str, profile: dict | None, days: List[WeekSummaryIn
             "}\n"
             f"週期：{week_start} ~ {week_end}\n"
             f"每日摘要：\n{day_block}\n"
+            f"{history_block}\n"
         ) + profile_text
     return (
         "You are a nutrition assistant. Based on weekly summaries, return JSON.\n"
         "Requirements:\n"
         "- Return JSON only\n"
-        "- week_summary: one-sentence summary (<= 40 words)\n"
-        "- next_week_advice: one sentence guidance for next week\n"
+        "- week_summary: one-sentence summary (<= 40 words) describing this week\n"
+        "- next_week_advice: one sentence guidance for next week actions\n"
         "- confidence: 0 to 1\n"
         "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
+        "- Do not repeat phrases between week_summary and next_week_advice\n"
+        "- Avoid repeating or paraphrasing the previous week summary/advice\n"
         "JSON example:\n"
         "{\n"
         "  \"week_summary\": \"Overall balanced, but fat intake is slightly high\",\n"
@@ -987,6 +1024,7 @@ def _build_week_prompt(lang: str, profile: dict | None, days: List[WeekSummaryIn
         "}\n"
         f"Week: {week_start} ~ {week_end}\n"
         f"Daily summaries:\n{day_block}\n"
+        f"{history_block}\n"
     ) + profile_text
 
 
@@ -1923,6 +1961,8 @@ async def summarize_day(
             payload.meals,
             payload.day_calorie_range,
             payload.day_meal_count,
+            payload.previous_day_summary,
+            payload.previous_tomorrow_advice,
         )
         response = _client.chat.completions.create(
             model=OPENAI_MODEL,
@@ -1958,7 +1998,15 @@ async def summarize_week(
         use_lang = "zh-TW"
     _ensure_ai_available()
     try:
-        prompt = _build_week_prompt(use_lang, payload.profile or {}, payload.days, payload.week_start, payload.week_end)
+        prompt = _build_week_prompt(
+            use_lang,
+            payload.profile or {},
+            payload.days,
+            payload.week_start,
+            payload.week_end,
+            payload.previous_week_summary,
+            payload.previous_next_week_advice,
+        )
         response = _client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[{"role": "user", "content": prompt}],
