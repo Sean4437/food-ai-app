@@ -2136,7 +2136,7 @@ class AppState extends ChangeNotifier {
     _mockSubscriptionPlanId = null;
     _iapSubscriptionActive = false;
 
-    profile = UserProfile.initial()
+    final reset = UserProfile.initial()
       ..apiBaseUrl = apiBaseUrl
       ..language = language
       ..plateAsset = plateAsset
@@ -2145,6 +2145,52 @@ class AppState extends ChangeNotifier {
       ..nutritionChartStyle = nutritionChartStyle
       ..nutritionValueMode = nutritionValueMode
       ..glowEnabled = glowEnabled;
+    profile
+      ..name = reset.name
+      ..email = reset.email
+      ..gender = reset.gender
+      ..containerType = reset.containerType
+      ..containerSize = reset.containerSize
+      ..containerDepth = reset.containerDepth
+      ..containerDiameterCm = reset.containerDiameterCm
+      ..containerCapacityMl = reset.containerCapacityMl
+      ..dietType = reset.dietType
+      ..dietNote = reset.dietNote
+      ..tone = reset.tone
+      ..persona = reset.persona
+      ..activityLevel = reset.activityLevel
+      ..heightCm = reset.heightCm
+      ..weightKg = reset.weightKg
+      ..age = reset.age
+      ..goal = reset.goal
+      ..planSpeed = reset.planSpeed
+      ..dailySummaryTime = reset.dailySummaryTime
+      ..weeklySummaryWeekday = reset.weeklySummaryWeekday
+      ..lunchReminderEnabled = reset.lunchReminderEnabled
+      ..dinnerReminderEnabled = reset.dinnerReminderEnabled
+      ..lunchReminderTime = reset.lunchReminderTime
+      ..dinnerReminderTime = reset.dinnerReminderTime
+      ..breakfastStart = reset.breakfastStart
+      ..breakfastEnd = reset.breakfastEnd
+      ..brunchStart = reset.brunchStart
+      ..brunchEnd = reset.brunchEnd
+      ..lunchStart = reset.lunchStart
+      ..lunchEnd = reset.lunchEnd
+      ..afternoonTeaStart = reset.afternoonTeaStart
+      ..afternoonTeaEnd = reset.afternoonTeaEnd
+      ..dinnerStart = reset.dinnerStart
+      ..dinnerEnd = reset.dinnerEnd
+      ..lateSnackStart = reset.lateSnackStart
+      ..lateSnackEnd = reset.lateSnackEnd
+      ..language = reset.language
+      ..apiBaseUrl = reset.apiBaseUrl
+      ..plateAsset = reset.plateAsset
+      ..themeAsset = reset.themeAsset
+      ..textScale = reset.textScale
+      ..nutritionChartStyle = reset.nutritionChartStyle
+      ..nutritionValueMode = reset.nutritionValueMode
+      ..glowEnabled = reset.glowEnabled
+      ..exerciseSuggestionType = reset.exerciseSuggestionType;
 
     await _store.clearAll();
     await _saveProfile();
