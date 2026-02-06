@@ -909,6 +909,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.credit_card,
                     showChevron: false,
                   ),
+                  _row(
+                    context,
+                    'Access grace hours',
+                    '${app.accessGraceHours}h',
+                    icon: Icons.timer_outlined,
+                    onTap: () => _editText(
+                      context,
+                      title: 'Access grace hours (1-168)',
+                      initial: app.accessGraceHours.toString(),
+                      keyboardType: TextInputType.number,
+                      onSave: (value) {
+                        final parsed = int.tryParse(value);
+                        if (parsed != null) {
+                          app.setAccessGraceHours(parsed);
+                        }
+                      },
+                    ),
+                  ),
                 ],
                 _sectionTitle(context, t.planSection),
                 _grid2([

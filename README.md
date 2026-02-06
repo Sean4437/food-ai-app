@@ -32,6 +32,15 @@ flutter pub get
 flutter run
 ```
 
+## iOS 真機快速更新（Mac）
+
+在 Mac 上一鍵更新並跑 iOS 真機：
+
+```bash
+cd /Users/hsiangyuhsieh/Documents/AI/app/food-ai-app
+bash ios_run.sh
+```
+
 ## 備註
 
 - 後端回傳假分析結果，尚未接真 AI。

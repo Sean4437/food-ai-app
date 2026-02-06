@@ -37,6 +37,9 @@ const String _kSettingsUpdatedAtKey = 'settings_updated_at';
 const String _kMockSubscriptionKey = 'mock_subscription_active';
 const String _kMockSubscriptionPlanKey = 'mock_subscription_plan';
 const String _kIapSubscriptionKey = 'iap_subscription_active';
+const String _kAccessCheckAtKey = 'access_check_at';
+const String _kAccessGraceHoursKey = 'access_grace_hours';
+const int _kAccessGraceHoursDefault = 24;
 const String _kMacroUnitGrams = 'grams';
 const String _kMacroUnitPercent = 'percent';
 const double _kMacroBaselineProteinG = 30;
@@ -65,6 +68,7 @@ class AppState extends ChangeNotifier {
   bool _mockSubscriptionActive = false;
   String? _mockSubscriptionPlanId;
   bool _iapSubscriptionActive = false;
+  String? _accessStatusError;
   bool _iapAvailable = false;
   bool _iapProcessing = false;
   bool _iapInitialized = false;
@@ -113,6 +117,7 @@ class AppState extends ChangeNotifier {
       _trialExpired = false;
       _whitelisted = false;
       _trialEnd = null;
+      _accessStatusError = null;
       notifyListeners();
       return;
     }
@@ -124,12 +129,26 @@ class AppState extends ChangeNotifier {
       _trialExpired = !active;
       final endRaw = response['trial_end'] as String?;
       _trialEnd = endRaw == null ? null : DateTime.tryParse(endRaw);
+      _meta[_kAccessCheckAtKey] = DateTime.now().toUtc().toIso8601String();
+      _accessStatusError = null;
+      _touchSettingsUpdatedAt();
+      // ignore: discarded_futures
+      _saveOverrides();
       notifyListeners();
     } catch (_) {
+      final lastCheckRaw = _meta[_kAccessCheckAtKey];
+      final lastCheck = lastCheckRaw == null ? null : DateTime.tryParse(lastCheckRaw);
+      final now = DateTime.now().toUtc();
+      final withinGrace = lastCheck != null && now.difference(lastCheck) <= Duration(hours: accessGraceHours);
       _trialChecked = true;
-      _trialExpired = false;
-      _whitelisted = false;
-      _trialEnd = null;
+      if (!withinGrace) {
+        _trialExpired = true;
+        _whitelisted = false;
+        _trialEnd = null;
+        _accessStatusError = '驗證失敗，請稍後再試';
+      } else {
+        _accessStatusError = null;
+      }
       notifyListeners();
     }
   }
@@ -142,6 +161,13 @@ class AppState extends ChangeNotifier {
 
   bool get mockSubscriptionActive => _mockSubscriptionActive;
   String? get mockSubscriptionPlanId => _mockSubscriptionPlanId;
+  String? get accessStatusError => _accessStatusError;
+  int get accessGraceHours {
+    final raw = _meta[_kAccessGraceHoursKey];
+    final parsed = int.tryParse(raw ?? '');
+    if (parsed == null || parsed <= 0) return _kAccessGraceHoursDefault;
+    return parsed;
+  }
   bool get iapAvailable => _iapAvailable;
   bool get iapSubscriptionActive => _iapSubscriptionActive;
   bool get iapProcessing => _iapProcessing;
@@ -4243,7 +4269,9 @@ class AppState extends ChangeNotifier {
         key.startsWith('day_finalized:') ||
         key == _kMockSubscriptionKey ||
         key == _kMockSubscriptionPlanKey ||
-        key == _kIapSubscriptionKey;
+        key == _kIapSubscriptionKey ||
+        key == _kAccessCheckAtKey ||
+        key == _kAccessGraceHoursKey;
   }
 
   Map<String, String> _settingsMetaToSync() {
@@ -4319,6 +4347,15 @@ class AppState extends ChangeNotifier {
       _mockSubscriptionPlanId = null;
       _meta.remove(_kMockSubscriptionPlanKey);
     }
+    _touchSettingsUpdatedAt();
+    notifyListeners();
+    // ignore: discarded_futures
+    _saveOverrides();
+  }
+
+  void setAccessGraceHours(int hours) {
+    final value = hours.clamp(1, 168);
+    _meta[_kAccessGraceHoursKey] = value.toString();
     _touchSettingsUpdatedAt();
     notifyListeners();
     // ignore: discarded_futures
