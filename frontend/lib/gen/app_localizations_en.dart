@@ -746,6 +746,88 @@ class AppLocalizationsEn extends AppLocalizations {
   String get subscriptionPlan => 'Current plan';
 
   @override
+  String get paywallTitle => 'Unlock full features';
+
+  @override
+  String get paywallSubtitle => 'AI analysis, nutrition charts, weekly/monthly summaries';
+
+  @override
+  String planMonthlyWithPrice(String price) {
+    return 'Monthly $price';
+  }
+
+  @override
+  String planYearlyWithPrice(String price) {
+    return 'Yearly $price';
+  }
+
+  @override
+  String get paywallYearlyBadge => 'Save about 30% yearly';
+
+  @override
+  String get paywallRestore => 'Restore purchases';
+
+  @override
+  String get paywallDisclaimer => 'Subscriptions auto-renew and can be canceled in Apple ID settings. Payments are handled by Apple.';
+
+  @override
+  String get paywallStartMonthly => 'Start monthly';
+
+  @override
+  String get paywallStartYearly => 'Start yearly';
+
+  @override
+  String get paywallFeatureAiAnalysis => 'Full AI analysis';
+
+  @override
+  String get paywallFeatureNutritionAdvice => 'Calories & nutrition advice';
+
+  @override
+  String get paywallFeatureSummaries => 'Weekly/monthly summaries';
+
+  @override
+  String get paywallFeatureBestValue => 'Best value for long term';
+
+  @override
+  String get paywallUnavailableTitle => 'Subscription unavailable';
+
+  @override
+  String get paywallUnavailableBody => 'Unable to load App Store subscriptions. Please try again later.';
+
+  @override
+  String get webPaywallTitle => 'Unlock full features (Web test)';
+
+  @override
+  String get webPaywallTestBadge => 'Test only, no charge';
+
+  @override
+  String get webPaywallCurrentPlanMonthly => 'Current plan: Monthly (test)';
+
+  @override
+  String get webPaywallCurrentPlanYearly => 'Current plan: Yearly (test)';
+
+  @override
+  String get webPaywallCurrentPlanNone => 'Current plan: None';
+
+  @override
+  String get webPaywallTestNote => 'Web test: this flow does not charge real money.';
+
+  @override
+  String get webPaywallActivated => 'Test subscription enabled';
+
+  @override
+  String get webPaywallSuccessTitle => 'Test Subscription Active';
+
+  @override
+  String get webPaywallSuccessBody => 'Full features unlocked (test mode).';
+
+  @override
+  String get webPaywallSuccessCta => 'Continue';
+
+  @override
+  String get dialogOk => 'OK';
+
+  @override
   String get webTestSectionTitle => 'Web Test';
 
   @override

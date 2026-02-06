@@ -734,6 +734,88 @@ class AppLocalizationsZh extends AppLocalizations {
   String get subscriptionPlan => '目前方案';
 
   @override
+  String get paywallTitle => '解鎖完整功能';
+
+  @override
+  String get paywallSubtitle => 'AI 分析、營養圖、週／月總結';
+
+  @override
+  String planMonthlyWithPrice(String price) {
+    return '月訂 $price';
+  }
+
+  @override
+  String planYearlyWithPrice(String price) {
+    return '年訂 $price';
+  }
+
+  @override
+  String get paywallYearlyBadge => '年訂省下約 30%';
+
+  @override
+  String get paywallRestore => '恢復購買';
+
+  @override
+  String get paywallDisclaimer => '訂閱將自動續訂，可隨時在 Apple ID 訂閱管理中取消。付款由 Apple 處理。';
+
+  @override
+  String get paywallStartMonthly => '開始月訂';
+
+  @override
+  String get paywallStartYearly => '開始年訂';
+
+  @override
+  String get paywallFeatureAiAnalysis => '完整 AI 分析';
+
+  @override
+  String get paywallFeatureNutritionAdvice => '熱量與營養建議';
+
+  @override
+  String get paywallFeatureSummaries => '週／月總結';
+
+  @override
+  String get paywallFeatureBestValue => '更划算的長期方案';
+
+  @override
+  String get paywallUnavailableTitle => '無法載入訂閱';
+
+  @override
+  String get paywallUnavailableBody => '目前無法取得 App Store 訂閱資訊，請稍後再試。';
+
+  @override
+  String get webPaywallTitle => '解鎖完整功能（Web 測試）';
+
+  @override
+  String get webPaywallTestBadge => '僅供測試，不會扣款';
+
+  @override
+  String get webPaywallCurrentPlanMonthly => '目前方案：月訂（測試）';
+
+  @override
+  String get webPaywallCurrentPlanYearly => '目前方案：年訂（測試）';
+
+  @override
+  String get webPaywallCurrentPlanNone => '目前方案：未訂閱';
+
+  @override
+  String get webPaywallTestNote => 'Web 測試版：此流程不會實際扣款。';
+
+  @override
+  String get webPaywallActivated => '已啟用測試訂閱';
+
+  @override
+  String get webPaywallSuccessTitle => '測試訂閱成功';
+
+  @override
+  String get webPaywallSuccessBody => '已解鎖完整功能（測試模式）。';
+
+  @override
+  String get webPaywallSuccessCta => '開始使用';
+
+  @override
+  String get dialogOk => '知道了';
+
+  @override
   String get webTestSectionTitle => 'Web 測試';
 
   @override

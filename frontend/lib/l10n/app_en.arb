@@ -227,7 +227,7 @@
   "suggestInstantEnergyOk": "Acceptable",
   "suggestInstantEnergyHigh": "High",
   "suggestInstantMissing": "No analysis yet",
-  "suggestInstantNonFood": "This doesn\u0027t look like food. Please retake. If you\u0027re not planning to eat now, feel free to use the app when you\u0027re hungry.",
+  "suggestInstantNonFood": "This doesn't look like food. Please retake. If you're not planning to eat now, feel free to use the app when you're hungry.",
   "suggestInstantReestimate": "Re-estimate",
   "suggestInstantRecentHint": "Advice uses the last 7 days and the previous meal",
   "suggestAutoSaved": "Saved automatically",
@@ -571,5 +571,45 @@
   "containerSizeCustom": "Custom",
   "containerDepthShallow": "Shallow",
   "containerDepthMedium": "Medium",
-  "containerDepthDeep": "Deep"
+  "containerDepthDeep": "Deep",
+  "paywallTitle": "Unlock full features",
+  "paywallSubtitle": "AI analysis, nutrition charts, weekly/monthly summaries",
+  "planMonthlyWithPrice": "Monthly {price}",
+  "@planMonthlyWithPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "planYearlyWithPrice": "Yearly {price}",
+  "@planYearlyWithPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallYearlyBadge": "Save about 30% yearly",
+  "paywallRestore": "Restore purchases",
+  "paywallDisclaimer": "Subscriptions auto-renew and can be canceled in Apple ID settings. Payments are handled by Apple.",
+  "paywallStartMonthly": "Start monthly",
+  "paywallStartYearly": "Start yearly",
+  "paywallFeatureAiAnalysis": "Full AI analysis",
+  "paywallFeatureNutritionAdvice": "Calories & nutrition advice",
+  "paywallFeatureSummaries": "Weekly/monthly summaries",
+  "paywallFeatureBestValue": "Best value for long term",
+  "paywallUnavailableTitle": "Subscription unavailable",
+  "paywallUnavailableBody": "Unable to load App Store subscriptions. Please try again later.",
+  "webPaywallTitle": "Unlock full features (Web test)",
+  "webPaywallTestBadge": "Test only, no charge",
+  "webPaywallCurrentPlanMonthly": "Current plan: Monthly (test)",
+  "webPaywallCurrentPlanYearly": "Current plan: Yearly (test)",
+  "webPaywallCurrentPlanNone": "Current plan: None",
+  "webPaywallTestNote": "Web test: this flow does not charge real money.",
+  "webPaywallActivated": "Test subscription enabled",
+  "webPaywallSuccessTitle": "Test Subscription Active",
+  "webPaywallSuccessBody": "Full features unlocked (test mode).",
+  "webPaywallSuccessCta": "Continue",
+  "dialogOk": "OK"
 }

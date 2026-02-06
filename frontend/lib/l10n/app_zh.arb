@@ -571,5 +571,45 @@
   "containerSizeCustom": "自订",
   "containerDepthShallow": "浅",
   "containerDepthMedium": "中",
-  "containerDepthDeep": "深"
+  "containerDepthDeep": "深",
+  "paywallTitle": "解鎖完整功能",
+  "paywallSubtitle": "AI 分析、營養圖、週／月總結",
+  "planMonthlyWithPrice": "月訂 {price}",
+  "@planMonthlyWithPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "planYearlyWithPrice": "年訂 {price}",
+  "@planYearlyWithPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallYearlyBadge": "年訂省下約 30%",
+  "paywallRestore": "恢復購買",
+  "paywallDisclaimer": "訂閱將自動續訂，可隨時在 Apple ID 訂閱管理中取消。付款由 Apple 處理。",
+  "paywallStartMonthly": "開始月訂",
+  "paywallStartYearly": "開始年訂",
+  "paywallFeatureAiAnalysis": "完整 AI 分析",
+  "paywallFeatureNutritionAdvice": "熱量與營養建議",
+  "paywallFeatureSummaries": "週／月總結",
+  "paywallFeatureBestValue": "更划算的長期方案",
+  "paywallUnavailableTitle": "無法載入訂閱",
+  "paywallUnavailableBody": "目前無法取得 App Store 訂閱資訊，請稍後再試。",
+  "webPaywallTitle": "解鎖完整功能（Web 測試）",
+  "webPaywallTestBadge": "僅供測試，不會扣款",
+  "webPaywallCurrentPlanMonthly": "目前方案：月訂（測試）",
+  "webPaywallCurrentPlanYearly": "目前方案：年訂（測試）",
+  "webPaywallCurrentPlanNone": "目前方案：未訂閱",
+  "webPaywallTestNote": "Web 測試版：此流程不會實際扣款。",
+  "webPaywallActivated": "已啟用測試訂閱",
+  "webPaywallSuccessTitle": "測試訂閱成功",
+  "webPaywallSuccessBody": "已解鎖完整功能（測試模式）。",
+  "webPaywallSuccessCta": "開始使用",
+  "dialogOk": "知道了"
 }

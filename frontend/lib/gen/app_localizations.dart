@@ -1520,6 +1520,32 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'目前方案'**
   String get subscriptionPlan;
+  String get paywallTitle;
+  String get paywallSubtitle;
+  String planMonthlyWithPrice(String price);
+  String planYearlyWithPrice(String price);
+  String get paywallYearlyBadge;
+  String get paywallRestore;
+  String get paywallDisclaimer;
+  String get paywallStartMonthly;
+  String get paywallStartYearly;
+  String get paywallFeatureAiAnalysis;
+  String get paywallFeatureNutritionAdvice;
+  String get paywallFeatureSummaries;
+  String get paywallFeatureBestValue;
+  String get paywallUnavailableTitle;
+  String get paywallUnavailableBody;
+  String get webPaywallTitle;
+  String get webPaywallTestBadge;
+  String get webPaywallCurrentPlanMonthly;
+  String get webPaywallCurrentPlanYearly;
+  String get webPaywallCurrentPlanNone;
+  String get webPaywallTestNote;
+  String get webPaywallActivated;
+  String get webPaywallSuccessTitle;
+  String get webPaywallSuccessBody;
+  String get webPaywallSuccessCta;
+  String get dialogOk;
 
   String get webTestSectionTitle;
   String get webTestSubscriptionLabel;

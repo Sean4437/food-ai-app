@@ -9,20 +9,19 @@ class TrialExpiredScreen extends StatelessWidget {
   const TrialExpiredScreen({super.key});
 
   Future<void> _showMockPaywall(BuildContext context, AppState app, AppLocalizations t) async {
-    final isZh = Localizations.localeOf(context).languageCode.startsWith('zh');
-    final title = isZh ? '解鎖完整功能（Web 測試）' : 'Unlock full features (Web test)';
-    final subtitle = isZh ? 'AI 分析、營養圖、週／月總結' : 'AI analysis, nutrition charts, weekly/monthly summaries';
-    final monthly = isZh ? '月訂 \$5.99' : 'Monthly \$5.99';
-    final yearly = isZh ? '年訂 \$49.99' : 'Yearly \$49.99';
-    final yearlyBadge = isZh ? '年訂省下約 30%' : 'Save about 30% yearly';
-    final testBadge = isZh ? '僅供測試，不會扣款' : 'Test only, no charge';
-    final cancel = isZh ? '取消' : 'Cancel';
+    final title = t.webPaywallTitle;
+    final subtitle = t.paywallSubtitle;
+    final monthly = t.planMonthlyWithPrice(r'$5.99');
+    final yearly = t.planYearlyWithPrice(r'$49.99');
+    final yearlyBadge = t.paywallYearlyBadge;
+    final testBadge = t.webPaywallTestBadge;
+    final cancel = t.cancel;
     final currentPlan = app.mockSubscriptionPlanId;
     final currentPlanLabel = currentPlan == kIapMonthlyId
-        ? (isZh ? '目前方案：月訂（測試）' : 'Current plan: Monthly (test)')
+        ? t.webPaywallCurrentPlanMonthly
         : currentPlan == kIapYearlyId
-            ? (isZh ? '目前方案：年訂（測試）' : 'Current plan: Yearly (test)')
-            : (isZh ? '目前方案：未訂閱' : 'Current plan: None');
+            ? t.webPaywallCurrentPlanYearly
+            : t.webPaywallCurrentPlanNone;
     final chosen = await showModalBottomSheet<String>(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
@@ -61,9 +60,9 @@ class TrialExpiredScreen extends StatelessWidget {
                 badge: testBadge,
                 onTap: () => Navigator.of(context).pop(kIapMonthlyId),
                 bullets: [
-                  isZh ? '完整 AI 分析' : 'Full AI analysis',
-                  isZh ? '熱量與營養建議' : 'Calories & nutrition advice',
-                  isZh ? '週／月總結' : 'Weekly/monthly summaries',
+                  t.paywallFeatureAiAnalysis,
+                  t.paywallFeatureNutritionAdvice,
+                  t.paywallFeatureSummaries,
                 ],
               ),
             ),
@@ -76,10 +75,10 @@ class TrialExpiredScreen extends StatelessWidget {
                 badge: yearlyBadge,
                 onTap: () => Navigator.of(context).pop(kIapYearlyId),
                 bullets: [
-                  isZh ? '完整 AI 分析' : 'Full AI analysis',
-                  isZh ? '熱量與營養建議' : 'Calories & nutrition advice',
-                  isZh ? '週／月總結' : 'Weekly/monthly summaries',
-                  isZh ? '更划算的長期方案' : 'Best value for long term',
+                  t.paywallFeatureAiAnalysis,
+                  t.paywallFeatureNutritionAdvice,
+                  t.paywallFeatureSummaries,
+                  t.paywallFeatureBestValue,
                 ],
               ),
             ),
@@ -87,7 +86,7 @@ class TrialExpiredScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Text(
-                isZh ? 'Web 測試版：此流程不會實際扣款。' : 'Web test: this flow does not charge real money.',
+                t.webPaywallTestNote,
                 textAlign: TextAlign.center,
                 style: AppTextStyles.body(context).copyWith(color: Colors.black45, fontSize: 12),
               ),
@@ -105,22 +104,22 @@ class TrialExpiredScreen extends StatelessWidget {
     if (chosen == kIapMonthlyId || chosen == kIapYearlyId) {
       app.setMockSubscriptionActive(true, planId: chosen);
       if (context.mounted) {
-        await _showMockSuccess(context, isZh: isZh);
+        await _showMockSuccess(context, t: t);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isZh ? '已啟用測試訂閱' : 'Test subscription enabled')),
+          SnackBar(content: Text(t.webPaywallActivated)),
         );
       }
     }
   }
 
   Future<void> _showIapPaywall(BuildContext context, AppState app) async {
-    final isZh = Localizations.localeOf(context).languageCode.startsWith('zh');
+    final t = AppLocalizations.of(context)!;
     if (!app.iapAvailable) {
       await app.initIap();
     }
     if (!app.iapAvailable) {
       if (context.mounted) {
-        await _showIapUnavailable(context, isZh: isZh);
+        await _showIapUnavailable(context, t: t);
       }
       return;
     }
@@ -128,15 +127,13 @@ class TrialExpiredScreen extends StatelessWidget {
     final yearlyProduct = app.productById(kIapYearlyId);
     final monthlyPrice = monthlyProduct?.price ?? '\$5.99';
     final yearlyPrice = yearlyProduct?.price ?? '\$49.99';
-    final title = isZh ? '解鎖完整功能' : 'Unlock full features';
-    final subtitle = isZh ? 'AI 分析、營養圖、週／月總結' : 'AI analysis, nutrition charts, weekly/monthly summaries';
-    final monthlyTitle = isZh ? '月訂 $monthlyPrice' : 'Monthly $monthlyPrice';
-    final yearlyTitle = isZh ? '年訂 $yearlyPrice' : 'Yearly $yearlyPrice';
-    final yearlyBadge = isZh ? '年訂省下約 30%' : 'Save about 30% yearly';
-    final restoreLabel = isZh ? '恢復購買' : 'Restore purchases';
-    final disclaimer = isZh
-        ? '訂閱將自動續訂，可隨時在 Apple ID 訂閱管理中取消。付款由 Apple 處理。'
-        : 'Subscriptions auto‑renew and can be canceled in Apple ID settings. Payments are handled by Apple.';
+    final title = t.paywallTitle;
+    final subtitle = t.paywallSubtitle;
+    final monthlyTitle = t.planMonthlyWithPrice(monthlyPrice);
+    final yearlyTitle = t.planYearlyWithPrice(yearlyPrice);
+    final yearlyBadge = t.paywallYearlyBadge;
+    final restoreLabel = t.paywallRestore;
+    final disclaimer = t.paywallDisclaimer;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -168,14 +165,14 @@ class TrialExpiredScreen extends StatelessWidget {
                   context,
                   title: monthlyTitle,
                   badge: null,
-                  ctaLabel: isZh ? '開始月訂' : 'Start monthly',
+                  ctaLabel: t.paywallStartMonthly,
                   ctaLoading: app.iapProcessing,
                   onTap: () => app.buySubscription(kIapMonthlyId),
                   onCta: () => app.buySubscription(kIapMonthlyId),
                   bullets: [
-                    isZh ? '完整 AI 分析' : 'Full AI analysis',
-                    isZh ? '熱量與營養建議' : 'Calories & nutrition advice',
-                    isZh ? '週／月總結' : 'Weekly/monthly summaries',
+                    t.paywallFeatureAiAnalysis,
+                    t.paywallFeatureNutritionAdvice,
+                    t.paywallFeatureSummaries,
                   ],
                 ),
               ),
@@ -186,15 +183,15 @@ class TrialExpiredScreen extends StatelessWidget {
                   context,
                   title: yearlyTitle,
                   badge: yearlyBadge,
-                  ctaLabel: isZh ? '開始年訂' : 'Start yearly',
+                  ctaLabel: t.paywallStartYearly,
                   ctaLoading: app.iapProcessing,
                   onTap: () => app.buySubscription(kIapYearlyId),
                   onCta: () => app.buySubscription(kIapYearlyId),
                   bullets: [
-                    isZh ? '完整 AI 分析' : 'Full AI analysis',
-                    isZh ? '熱量與營養建議' : 'Calories & nutrition advice',
-                    isZh ? '週／月總結' : 'Weekly/monthly summaries',
-                    isZh ? '更划算的長期方案' : 'Best value for long term',
+                    t.paywallFeatureAiAnalysis,
+                    t.paywallFeatureNutritionAdvice,
+                    t.paywallFeatureSummaries,
+                    t.paywallFeatureBestValue,
                   ],
                 ),
               ),
@@ -316,36 +313,36 @@ class TrialExpiredScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _showMockSuccess(BuildContext context, {required bool isZh}) {
+  Future<void> _showMockSuccess(BuildContext context, {required AppLocalizations t}) {
     return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isZh ? '測試訂閱成功' : 'Test Subscription Active'),
+        title: Text(t.webPaywallSuccessTitle),
         content: Text(
-          isZh ? '已解鎖完整功能（測試模式）。' : 'Full features unlocked (test mode).',
+          t.webPaywallSuccessBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(isZh ? '開始使用' : 'Continue'),
+            child: Text(t.webPaywallSuccessCta),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _showIapUnavailable(BuildContext context, {required bool isZh}) {
+  Future<void> _showIapUnavailable(BuildContext context, {required AppLocalizations t}) {
     return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isZh ? '無法載入訂閱' : 'Subscription unavailable'),
+        title: Text(t.paywallUnavailableTitle),
         content: Text(
-          isZh ? '目前無法取得 App Store 訂閱資訊，請稍後再試。' : 'Unable to load App Store subscriptions. Please try again later.',
+          t.paywallUnavailableBody,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(isZh ? '知道了' : 'OK'),
+            child: Text(t.dialogOk),
           ),
         ],
       ),
