@@ -426,6 +426,8 @@ class AppState extends ChangeNotifier {
     XFile file,
     String locale, {
     String? historyContext,
+    String? referenceObject,
+    double? referenceLengthCm,
   }) async {
     final originalBytes = await file.readAsBytes();
     final time = await _resolveImageTime(file, originalBytes);
@@ -441,6 +443,8 @@ class AppState extends ChangeNotifier {
       mealType: _mealTypeKey(mealType),
       mealPhotoCount: 1,
       analyzeReason: 'quick_capture',
+      referenceObject: referenceObject,
+      referenceLengthCm: referenceLengthCm,
       containerType: profile.containerType,
       containerSize: profile.containerSize,
       containerDepth: profile.containerDepth,
@@ -476,6 +480,8 @@ class AppState extends ChangeNotifier {
     String? containerType,
     String? containerSize,
     int? portionPercent,
+    String? referenceObject,
+    double? referenceLengthCm,
   }) async {
     final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
     final selectedContainerType = containerType ?? profile.containerType;
@@ -491,6 +497,8 @@ class AppState extends ChangeNotifier {
       mealType: _mealTypeKey(analysis.mealType),
       mealPhotoCount: 1,
       analyzeReason: 'quick_capture_manual',
+      referenceObject: referenceObject,
+      referenceLengthCm: referenceLengthCm,
       containerType: selectedContainerType,
       containerSize: selectedContainerSize,
       containerDepth: profile.containerDepth,

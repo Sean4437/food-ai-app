@@ -319,6 +319,8 @@ def _build_prompt(
     today_remaining_kcal: int | None,
     today_protein_g: int | None,
     label_context: str | None,
+    reference_object: str | None,
+    reference_length_cm: float | None,
     container_type: str | None,
     container_size: str | None,
     container_depth: str | None,
@@ -369,6 +371,35 @@ def _build_prompt(
         label_text = (
             f"Nutrition label info (must override calorie_range and macros if provided): {label_context}\n"
         )
+    reference_text = ""
+    if reference_length_cm:
+        if lang == "zh-TW":
+            reference_text = (
+                f"參考長度（使用者量測）：{reference_length_cm} 公分。"
+                "請用此長度估計份量大小。\n"
+            )
+        else:
+            reference_text = (
+                f"Reference length (user-measured): {reference_length_cm} cm. "
+                "Use it to estimate portion size.\n"
+            )
+    elif reference_object:
+        if lang == "zh-TW":
+            ref_map = {
+                "card": "信用卡（85.6×54 mm）",
+                "coin_10": "10 元硬幣（直徑 26.5 mm）",
+                "coin_5": "5 元硬幣（直徑 22 mm）",
+            }
+            ref_label = ref_map.get(reference_object, reference_object)
+            reference_text = f"參考物：{ref_label}。請用其尺寸估計份量大小。\n"
+        else:
+            ref_map = {
+                "card": "credit card (85.6×54 mm)",
+                "coin_10": "coin 26.5 mm diameter",
+                "coin_5": "coin 22 mm diameter",
+            }
+            ref_label = ref_map.get(reference_object, reference_object)
+            reference_text = f"Reference object: {ref_label}. Use it to estimate portion size.\n"
     container_text = ""
     if (
         container_type
@@ -449,7 +480,7 @@ def _build_prompt(
             "- 若使用者提供 food_name，必須優先採用\n"
             "- 若提供 nutrition label info，必須使用其 calorie_range 與 macros\n"
             "- 避免醫療或診斷字眼；避免精準數值或克數，維持區間與語意描述\n"
-            "- 若畫面中有硬幣或信用卡，請將其視為參考物估計份量；無則使用一般估計\n"
+            "- 若提供參考長度，優先使用；若畫面中有硬幣/信用卡等可辨識參考物，也可作為估算依據；無則使用一般估計\n"
             "JSON 範例：\n"
             "{\n"
             "  \"food_name\": \"牛肉便當\",\n"
@@ -466,7 +497,7 @@ def _build_prompt(
             "  \"container_guess_type\": \"bowl\",\n"
             "  \"container_guess_size\": \"medium\"\n"
             "}\n"
-        ) + profile_text + note_text + context_text + intake_text + label_text + container_text + meal_text
+        ) + profile_text + note_text + context_text + intake_text + label_text + reference_text + container_text + meal_text
     suggestion_rule = (
         "- suggestion: next meal guidance, formatted as three lines: Can eat / Avoid / Portion limit\n"
         "- Include concrete food types and portion guidance (e.g. half bowl carbs, palm-sized protein, one bowl veggies)\n"
@@ -513,7 +544,7 @@ def _build_prompt(
         "- If user provides food_name, it must be used as the primary name\n"
         "- If nutrition label info is provided, you must use its calorie_range and macros\n"
         "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
-        "- If a coin or credit card is visible, treat it as a size reference; otherwise estimate normally\n"
+        "- If a reference length is provided, use it first; otherwise use any visible coin/credit card as a reference if clear\n"
         "JSON example:\n"
         "{\n"
         "  \"food_name\": \"beef bento\",\n"
@@ -530,7 +561,7 @@ def _build_prompt(
         "  \"container_guess_type\": \"bowl\",\n"
         "  \"container_guess_size\": \"medium\"\n"
         "}\n"
-    ) + profile_text + note_text + context_text + intake_text + label_text + container_text + meal_text
+    ) + profile_text + note_text + context_text + intake_text + label_text + reference_text + container_text + meal_text
 
 
 def _build_name_prompt(
@@ -1270,6 +1301,8 @@ def _analyze_with_openai(
     today_remaining_kcal: int | None,
     today_protein_g: int | None,
     label_context: str | None,
+    reference_object: str | None,
+    reference_length_cm: float | None,
     container_type: str | None,
     container_size: str | None,
     container_depth: str | None,
@@ -1292,6 +1325,8 @@ def _analyze_with_openai(
         today_remaining_kcal,
         today_protein_g,
         label_context,
+        reference_object,
+        reference_length_cm,
         container_type,
         container_size,
         container_depth,
@@ -1528,6 +1563,8 @@ async def analyze_image(
     advice_mode: Optional[str] = Form(default=None),
     force_reanalyze: Optional[str] = Form(default=None),
     label_context: Optional[str] = Form(default=None),
+    reference_object: Optional[str] = Form(default=None),
+    reference_length_cm: Optional[float] = Form(default=None),
     analyze_reason: Optional[str] = Form(default=None),
 ):
     image_bytes = await image.read()
@@ -1561,6 +1598,8 @@ async def analyze_image(
         and portion_is_default
         and advice_mode is None
         and label_context is None
+        and reference_object is None
+        and reference_length_cm is None
         and container_type is None
         and container_size is None
         and container_depth is None
@@ -1627,6 +1666,8 @@ async def analyze_image(
             today_remaining_kcal,
             today_protein_g,
             label_context,
+            reference_object,
+            reference_length_cm,
             container_type,
             container_size,
             container_depth,

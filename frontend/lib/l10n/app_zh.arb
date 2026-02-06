@@ -725,5 +725,14 @@
         "type": "int"
       }
     }
-  }
+  },
+  "referenceObjectLabel": "參考物",
+  "referenceObjectNone": "無",
+  "referenceObjectCard": "信用卡",
+  "referenceObjectCoin10": "10 元硬幣",
+  "referenceObjectCoin5": "5 元硬幣",
+  "referenceObjectManual": "測距（公分）",
+  "referenceLengthLabel": "測距長度（公分）",
+  "referenceLengthHint": "輸入 iOS 測距量到的公分",
+  "referenceLengthApply": "套用"
 }

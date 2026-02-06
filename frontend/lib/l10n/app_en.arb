@@ -725,5 +725,14 @@
         "type": "int"
       }
     }
-  }
+  },
+  "referenceObjectLabel": "Reference object",
+  "referenceObjectNone": "None",
+  "referenceObjectCard": "Credit card",
+  "referenceObjectCoin10": "Coin (26.5 mm)",
+  "referenceObjectCoin5": "Coin (22 mm)",
+  "referenceObjectManual": "Measure (cm)",
+  "referenceLengthLabel": "Measured length (cm)",
+  "referenceLengthHint": "Enter the measured length in cm",
+  "referenceLengthApply": "Apply"
 }

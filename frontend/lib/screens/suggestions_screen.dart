@@ -33,6 +33,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   int _portionPercent = 100;
   String? _containerType;
   String? _containerSize;
+  String _referenceObject = 'none';
+  final TextEditingController _referenceLengthController = TextEditingController();
   String? _overrideCalorieRange;
   String? _displayCalorieRange;
   late final AnimationController _scanController;
@@ -58,6 +60,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     _progressTimer?.cancel();
     _statusTimer?.cancel();
     _scanController.dispose();
+    _referenceLengthController.dispose();
     super.dispose();
   }
 
@@ -74,6 +77,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _portionPercent = 100;
       _containerType = null;
       _containerSize = null;
+      _referenceObject = 'none';
+      _referenceLengthController.text = '';
       _overrideCalorieRange = null;
       _displayCalorieRange = null;
     });
@@ -95,6 +100,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         file,
         locale,
         historyContext: historyContext.isEmpty ? null : historyContext,
+        referenceObject: _referenceObject == 'none' || _referenceObject == 'manual' ? null : _referenceObject,
+        referenceLengthCm: _referenceObject == 'manual' ? _parsedReferenceLength() : null,
       );
       if (!mounted) return;
       if (analysis == null) {
@@ -232,6 +239,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         foodName: result.trim(),
         containerType: _containerType,
         containerSize: _containerSize,
+        referenceObject: _referenceObject == 'none' || _referenceObject == 'manual' ? null : _referenceObject,
+        referenceLengthCm: _referenceObject == 'manual' ? _parsedReferenceLength() : null,
       );
       if (!mounted) return;
       _analysis = updated;
@@ -820,6 +829,34 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     }
   }
 
+  double? _parsedReferenceLength() {
+    final raw = _referenceLengthController.text.trim().replaceAll(',', '.');
+    if (raw.isEmpty) return null;
+    final value = double.tryParse(raw);
+    if (value == null || value <= 0) return null;
+    return value;
+  }
+
+  Future<void> _updateReferenceObject(String value) async {
+    if (value == _referenceObject) return;
+    setState(() {
+      _referenceObject = value;
+      if (value != 'manual') {
+        _referenceLengthController.text = '';
+      }
+    });
+    if (_analysis == null) return;
+    if (value == 'manual') return;
+    await _reanalyzeWithAdjustments();
+  }
+
+  Future<void> _updateReferenceLength() async {
+    if (_analysis == null) return;
+    final length = _parsedReferenceLength();
+    if (length == null) return;
+    await _reanalyzeWithAdjustments();
+  }
+
   Future<void> _editCalorieRange() async {
     final t = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '');
@@ -951,6 +988,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       MapEntry(t.containerSizeMedium, 'medium'),
       MapEntry(t.containerSizeLarge, 'large'),
     ];
+    final referenceOptions = <MapEntry<String, String>>[
+      MapEntry(t.referenceObjectNone, 'none'),
+      MapEntry(t.referenceObjectCard, 'card'),
+      MapEntry(t.referenceObjectCoin10, 'coin_10'),
+      MapEntry(t.referenceObjectCoin5, 'coin_5'),
+      MapEntry(t.referenceObjectManual, 'manual'),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -989,6 +1033,33 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         Text(t.containerSizeLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         _buildChipGroup(options: sizeOptions, value: currentSize, onSelected: _updateContainerSize),
+        const SizedBox(height: 12),
+        Text(t.referenceObjectLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        _buildChipGroup(options: referenceOptions, value: _referenceObject, onSelected: _updateReferenceObject),
+        if (_referenceObject == 'manual') ...[
+          const SizedBox(height: 10),
+          Text(t.referenceLengthLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _referenceLengthController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(hintText: t.referenceLengthHint),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _loading ? null : _updateReferenceLength,
+                child: Text(t.referenceLengthApply),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(t.referenceLengthHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+        ],
       ],
     );
   }
@@ -1293,6 +1364,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         containerType: _containerType,
         containerSize: _containerSize,
         portionPercent: _portionPercent,
+        referenceObject: _referenceObject == 'none' || _referenceObject == 'manual' ? null : _referenceObject,
+        referenceLengthCm: _referenceObject == 'manual' ? _parsedReferenceLength() : null,
       );
       if (!mounted) return;
       _analysis = updated;

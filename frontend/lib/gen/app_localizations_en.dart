@@ -1601,6 +1601,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get containerSizeLabel => 'Container size';
 
   @override
+  String get referenceObjectLabel => 'Reference object';
+
+  @override
+  String get referenceObjectNone => 'None';
+
+  @override
+  String get referenceObjectCard => 'Credit card';
+
+  @override
+  String get referenceObjectCoin10 => 'Coin (26.5 mm)';
+
+  @override
+  String get referenceObjectCoin5 => 'Coin (22 mm)';
+
+  @override
+  String get referenceObjectManual => 'Measure (cm)';
+
+  @override
+  String get referenceLengthLabel => 'Measured length (cm)';
+
+  @override
+  String get referenceLengthHint => 'Enter the measured length in cm';
+
+  @override
+  String get referenceLengthApply => 'Apply';
+
+  @override
   String get containerDepthLabel => 'Bowl depth';
 
   @override

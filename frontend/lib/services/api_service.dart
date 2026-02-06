@@ -45,6 +45,8 @@ class ApiService {
     int? todayProteinG,
     String? labelContext,
     String? analyzeReason,
+    String? referenceObject,
+    double? referenceLengthCm,
     bool forceReanalyze = false,
   }) async {
     final query = lang == null ? '' : '?lang=$lang';
@@ -132,6 +134,12 @@ class ApiService {
     }
     if (analyzeReason != null && analyzeReason.trim().isNotEmpty) {
       request.fields['analyze_reason'] = analyzeReason.trim();
+    }
+    if (referenceObject != null && referenceObject.trim().isNotEmpty) {
+      request.fields['reference_object'] = referenceObject.trim();
+    }
+    if (referenceLengthCm != null && referenceLengthCm > 0) {
+      request.fields['reference_length_cm'] = referenceLengthCm.toString();
     }
     if (forceReanalyze) {
       request.fields['force_reanalyze'] = 'true';

@@ -2829,6 +2829,15 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'容器尺寸'**
   String get containerSizeLabel;
+  String get referenceObjectLabel;
+  String get referenceObjectNone;
+  String get referenceObjectCard;
+  String get referenceObjectCoin10;
+  String get referenceObjectCoin5;
+  String get referenceObjectManual;
+  String get referenceLengthLabel;
+  String get referenceLengthHint;
+  String get referenceLengthApply;
 
   /// No description provided for @containerDepthLabel.
   ///

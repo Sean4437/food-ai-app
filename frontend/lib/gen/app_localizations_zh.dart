@@ -1584,6 +1584,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get containerSizeLabel => '容器尺寸';
 
   @override
+  String get referenceObjectLabel => '參考物';
+
+  @override
+  String get referenceObjectNone => '無';
+
+  @override
+  String get referenceObjectCard => '信用卡';
+
+  @override
+  String get referenceObjectCoin10 => '10 元硬幣';
+
+  @override
+  String get referenceObjectCoin5 => '5 元硬幣';
+
+  @override
+  String get referenceObjectManual => '測距（公分）';
+
+  @override
+  String get referenceLengthLabel => '測距長度（公分）';
+
+  @override
+  String get referenceLengthHint => '輸入 iOS 測距量到的公分';
+
+  @override
+  String get referenceLengthApply => '套用';
+
+  @override
   String get containerDepthLabel => '碗深度';
 
   @override
