@@ -244,6 +244,24 @@
   "editProfile": "編輯個人資料",
   "nicknameLabel": "暱稱",
   "planSection": "計畫設定",
+  "webTestSectionTitle": "Web 測試",
+  "webTestSubscriptionLabel": "測試訂閱",
+  "webTestEnabled": "已啟用",
+  "webTestDisabled": "未啟用",
+  "webTestPlanMonthly": "月訂（測試）",
+  "webTestPlanYearly": "年訂（測試）",
+  "webTestPlanNone": "未訂閱",
+  "webTestAccessGraceLabel": "驗證寬限時間",
+  "webTestAccessGraceDialogTitle": "驗證寬限時間（1-168 小時）",
+  "webTestAccessGraceValue": "{hours} 小時",
+  "@webTestAccessGraceValue": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "accessStatusFailed": "驗證失敗，請稍後再試",
   "heightLabel": "身高",
   "weightLabel": "體重",
   "ageLabel": "年齡",
