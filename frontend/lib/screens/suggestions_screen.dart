@@ -245,7 +245,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       if (!mounted) return;
       _analysis = updated;
       _savedEntry = null;
-      _applyAnalysisDefaults(updated.result);
+      _applyAnalysisDefaults(updated.result, keepUserSelections: true);
       _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
@@ -762,11 +762,17 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     return [nextType, nextSize];
   }
 
-  void _applyAnalysisDefaults(AnalysisResult result) {
+  void _applyAnalysisDefaults(AnalysisResult result, {bool keepUserSelections = false}) {
     final normalized = _normalizeContainerSelection(result.containerGuessType, result.containerGuessSize);
-    _portionPercent = 100;
-    _containerType = normalized[0];
-    _containerSize = normalized[1];
+    if (!keepUserSelections) {
+      _portionPercent = 100;
+      _containerType = normalized[0];
+      _containerSize = normalized[1];
+    } else {
+      _portionPercent = _portionPercent.clamp(10, 200);
+      _containerType ??= normalized[0];
+      _containerSize ??= normalized[1];
+    }
     _overrideCalorieRange = null;
     _displayCalorieRange = _scaledCalorieRangeText(
       result.calorieRange,
@@ -1370,7 +1376,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       if (!mounted) return;
       _analysis = updated;
       _savedEntry = null;
-      _applyAnalysisDefaults(updated.result);
+      _applyAnalysisDefaults(updated.result, keepUserSelections: true);
       _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
