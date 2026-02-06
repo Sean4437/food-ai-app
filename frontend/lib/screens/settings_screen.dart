@@ -465,49 +465,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return t.syncRequireLogin;
     }
     if (text.contains('storage_upload_failed')) {
-      return '${t.syncError}: 圖片上傳失敗';
+      return '${t.syncError}: ${t.syncErrorUploadFailedDetail}';
     }
     if (text.contains('sync_meta_write_failed')) {
-      return '${t.syncError}: 同步狀態寫入失敗';
+      return '${t.syncError}: ${t.syncErrorSyncMetaFailedDetail}';
     }
     if (text.contains('PGRST') || text.contains('Postgrest')) {
-      return '${t.syncError}: 資料庫同步失敗';
+      return '${t.syncError}: ${t.syncErrorPostgrestDetail}';
     }
     if (text.contains('SocketException') || text.contains('TimeoutException') || text.contains('timeout')) {
-      return '${t.syncError}: 網路連線不穩定或逾時';
+      return '${t.syncError}: ${t.syncErrorNetworkDetail}';
     }
     return '${t.syncError}: $text';
   }
 
   String? _buildSyncSummary(SyncReport report, AppLocalizations t, Locale locale) {
     if (!report.hasChanges) return null;
-    final isZh = locale.languageCode.startsWith('zh');
-    if (isZh) {
-      final parts = <String>[];
-      if (report.pushedMeals > 0) parts.add('上傳餐點 ${report.pushedMeals}');
-      if (report.pushedMealDeletes > 0) parts.add('刪除餐點 ${report.pushedMealDeletes}');
-      if (report.pushedCustomFoods > 0) parts.add('上傳自訂食物 ${report.pushedCustomFoods}');
-      if (report.pushedCustomDeletes > 0) parts.add('刪除自訂食物 ${report.pushedCustomDeletes}');
-      if (report.pushedSettings > 0) parts.add('上傳設定 ${report.pushedSettings}');
-      if (report.pulledMeals > 0) parts.add('下載餐點 ${report.pulledMeals}');
-      if (report.pulledMealDeletes > 0) parts.add('下載刪除餐點 ${report.pulledMealDeletes}');
-      if (report.pulledCustomFoods > 0) parts.add('下載自訂食物 ${report.pulledCustomFoods}');
-      if (report.pulledCustomDeletes > 0) parts.add('下載刪除自訂食物 ${report.pulledCustomDeletes}');
-      if (report.pulledSettings > 0) parts.add('下載設定 ${report.pulledSettings}');
-      return parts.join('、');
-    }
     final parts = <String>[];
-    if (report.pushedMeals > 0) parts.add('upload meals ${report.pushedMeals}');
-    if (report.pushedMealDeletes > 0) parts.add('delete meals ${report.pushedMealDeletes}');
-    if (report.pushedCustomFoods > 0) parts.add('upload custom ${report.pushedCustomFoods}');
-    if (report.pushedCustomDeletes > 0) parts.add('delete custom ${report.pushedCustomDeletes}');
-    if (report.pushedSettings > 0) parts.add('upload settings ${report.pushedSettings}');
-    if (report.pulledMeals > 0) parts.add('download meals ${report.pulledMeals}');
-    if (report.pulledMealDeletes > 0) parts.add('download deleted ${report.pulledMealDeletes}');
-    if (report.pulledCustomFoods > 0) parts.add('download custom ${report.pulledCustomFoods}');
-    if (report.pulledCustomDeletes > 0) parts.add('download custom deleted ${report.pulledCustomDeletes}');
-    if (report.pulledSettings > 0) parts.add('download settings ${report.pulledSettings}');
-    return parts.join(', ');
+    if (report.pushedMeals > 0) parts.add(t.syncSummaryUploadMeals(report.pushedMeals));
+    if (report.pushedMealDeletes > 0) parts.add(t.syncSummaryDeleteMeals(report.pushedMealDeletes));
+    if (report.pushedCustomFoods > 0) parts.add(t.syncSummaryUploadCustom(report.pushedCustomFoods));
+    if (report.pushedCustomDeletes > 0) parts.add(t.syncSummaryDeleteCustom(report.pushedCustomDeletes));
+    if (report.pushedSettings > 0) parts.add(t.syncSummaryUploadSettings(report.pushedSettings));
+    if (report.pulledMeals > 0) parts.add(t.syncSummaryDownloadMeals(report.pulledMeals));
+    if (report.pulledMealDeletes > 0) parts.add(t.syncSummaryDownloadDeletedMeals(report.pulledMealDeletes));
+    if (report.pulledCustomFoods > 0) parts.add(t.syncSummaryDownloadCustom(report.pulledCustomFoods));
+    if (report.pulledCustomDeletes > 0) parts.add(t.syncSummaryDownloadDeletedCustom(report.pulledCustomDeletes));
+    if (report.pulledSettings > 0) parts.add(t.syncSummaryDownloadSettings(report.pulledSettings));
+    return parts.join(t.syncSummarySeparator);
   }
 
   Future<void> _exportData(BuildContext context, AppState app) async {

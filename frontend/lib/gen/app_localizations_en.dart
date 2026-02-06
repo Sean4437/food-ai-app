@@ -1315,6 +1315,71 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncError => 'Sync failed. Please try again.';
 
   @override
+  String get syncErrorUploadFailedDetail => 'image upload failed';
+
+  @override
+  String get syncErrorSyncMetaFailedDetail => 'sync meta write failed';
+
+  @override
+  String get syncErrorPostgrestDetail => 'database request failed';
+
+  @override
+  String get syncErrorNetworkDetail => 'network connection failed';
+
+  @override
+  String syncSummaryUploadMeals(int count) {
+    return 'upload meals $count';
+  }
+
+  @override
+  String syncSummaryDeleteMeals(int count) {
+    return 'delete meals $count';
+  }
+
+  @override
+  String syncSummaryUploadCustom(int count) {
+    return 'upload custom $count';
+  }
+
+  @override
+  String syncSummaryDeleteCustom(int count) {
+    return 'delete custom $count';
+  }
+
+  @override
+  String syncSummaryUploadSettings(int count) {
+    return 'upload settings $count';
+  }
+
+  @override
+  String syncSummaryDownloadMeals(int count) {
+    return 'download meals $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedMeals(int count) {
+    return 'download deleted meals $count';
+  }
+
+  @override
+  String syncSummaryDownloadCustom(int count) {
+    return 'download custom $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedCustom(int count) {
+    return 'download deleted custom $count';
+  }
+
+  @override
+  String syncSummaryDownloadSettings(int count) {
+    return 'download settings $count';
+  }
+
+  @override
+  String get syncSummarySeparator => ', ';
+
+  @override
   String get syncRequireLogin => 'Please sign in to sync';
 
   @override

@@ -611,5 +611,90 @@
   "webPaywallSuccessTitle": "測試訂閱成功",
   "webPaywallSuccessBody": "已解鎖完整功能（測試模式）。",
   "webPaywallSuccessCta": "開始使用",
-  "dialogOk": "知道了"
+  "dialogOk": "知道了",
+  "syncErrorUploadFailedDetail": "圖片上傳失敗",
+  "syncErrorSyncMetaFailedDetail": "同步狀態寫入失敗",
+  "syncErrorPostgrestDetail": "資料庫存取失敗",
+  "syncErrorNetworkDetail": "網路連線失敗",
+  "syncSummaryUploadMeals": "上傳餐點 {count}",
+  "@syncSummaryUploadMeals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDeleteMeals": "刪除餐點 {count}",
+  "@syncSummaryDeleteMeals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryUploadCustom": "上傳自訂食物 {count}",
+  "@syncSummaryUploadCustom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDeleteCustom": "刪除自訂食物 {count}",
+  "@syncSummaryDeleteCustom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryUploadSettings": "上傳設定 {count}",
+  "@syncSummaryUploadSettings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDownloadMeals": "下載餐點 {count}",
+  "@syncSummaryDownloadMeals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDownloadDeletedMeals": "下載刪除餐點 {count}",
+  "@syncSummaryDownloadDeletedMeals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDownloadCustom": "下載自訂食物 {count}",
+  "@syncSummaryDownloadCustom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDownloadDeletedCustom": "下載刪除自訂食物 {count}",
+  "@syncSummaryDownloadDeletedCustom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDownloadSettings": "下載設定 {count}",
+  "@syncSummaryDownloadSettings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummarySeparator": "、"
 }

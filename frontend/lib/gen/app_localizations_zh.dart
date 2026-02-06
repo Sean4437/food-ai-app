@@ -1302,6 +1302,71 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncError => '同步失敗，請稍後再試';
 
   @override
+  String get syncErrorUploadFailedDetail => '圖片上傳失敗';
+
+  @override
+  String get syncErrorSyncMetaFailedDetail => '同步狀態寫入失敗';
+
+  @override
+  String get syncErrorPostgrestDetail => '資料庫存取失敗';
+
+  @override
+  String get syncErrorNetworkDetail => '網路連線失敗';
+
+  @override
+  String syncSummaryUploadMeals(int count) {
+    return '上傳餐點 $count';
+  }
+
+  @override
+  String syncSummaryDeleteMeals(int count) {
+    return '刪除餐點 $count';
+  }
+
+  @override
+  String syncSummaryUploadCustom(int count) {
+    return '上傳自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDeleteCustom(int count) {
+    return '刪除自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryUploadSettings(int count) {
+    return '上傳設定 $count';
+  }
+
+  @override
+  String syncSummaryDownloadMeals(int count) {
+    return '下載餐點 $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedMeals(int count) {
+    return '下載刪除餐點 $count';
+  }
+
+  @override
+  String syncSummaryDownloadCustom(int count) {
+    return '下載自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedCustom(int count) {
+    return '下載刪除自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDownloadSettings(int count) {
+    return '下載設定 $count';
+  }
+
+  @override
+  String get syncSummarySeparator => '、';
+
+  @override
   String get syncRequireLogin => '先登入才能同步喔';
 
   @override
@@ -2716,6 +2781,71 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get syncError => '同步失敗，請稍後再試';
+
+  @override
+  String get syncErrorUploadFailedDetail => '圖片上傳失敗';
+
+  @override
+  String get syncErrorSyncMetaFailedDetail => '同步狀態寫入失敗';
+
+  @override
+  String get syncErrorPostgrestDetail => '資料庫存取失敗';
+
+  @override
+  String get syncErrorNetworkDetail => '網路連線失敗';
+
+  @override
+  String syncSummaryUploadMeals(int count) {
+    return '上傳餐點 $count';
+  }
+
+  @override
+  String syncSummaryDeleteMeals(int count) {
+    return '刪除餐點 $count';
+  }
+
+  @override
+  String syncSummaryUploadCustom(int count) {
+    return '上傳自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDeleteCustom(int count) {
+    return '刪除自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryUploadSettings(int count) {
+    return '上傳設定 $count';
+  }
+
+  @override
+  String syncSummaryDownloadMeals(int count) {
+    return '下載餐點 $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedMeals(int count) {
+    return '下載刪除餐點 $count';
+  }
+
+  @override
+  String syncSummaryDownloadCustom(int count) {
+    return '下載自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedCustom(int count) {
+    return '下載刪除自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDownloadSettings(int count) {
+    return '下載設定 $count';
+  }
+
+  @override
+  String get syncSummarySeparator => '、';
 
   @override
   String get syncRequireLogin => '先登入才能同步喔';

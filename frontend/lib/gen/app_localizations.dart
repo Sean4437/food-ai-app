@@ -2440,6 +2440,21 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'同步失敗，請稍後再試'**
   String get syncError;
+  String get syncErrorUploadFailedDetail;
+  String get syncErrorSyncMetaFailedDetail;
+  String get syncErrorPostgrestDetail;
+  String get syncErrorNetworkDetail;
+  String syncSummaryUploadMeals(int count);
+  String syncSummaryDeleteMeals(int count);
+  String syncSummaryUploadCustom(int count);
+  String syncSummaryDeleteCustom(int count);
+  String syncSummaryUploadSettings(int count);
+  String syncSummaryDownloadMeals(int count);
+  String syncSummaryDownloadDeletedMeals(int count);
+  String syncSummaryDownloadCustom(int count);
+  String syncSummaryDownloadDeletedCustom(int count);
+  String syncSummaryDownloadSettings(int count);
+  String get syncSummarySeparator;
 
   /// No description provided for @syncRequireLogin.
   ///

@@ -611,5 +611,90 @@
   "webPaywallSuccessTitle": "Test Subscription Active",
   "webPaywallSuccessBody": "Full features unlocked (test mode).",
   "webPaywallSuccessCta": "Continue",
-  "dialogOk": "OK"
+  "dialogOk": "OK",
+  "syncErrorUploadFailedDetail": "image upload failed",
+  "syncErrorSyncMetaFailedDetail": "sync meta write failed",
+  "syncErrorPostgrestDetail": "database request failed",
+  "syncErrorNetworkDetail": "network connection failed",
+  "syncSummaryUploadMeals": "upload meals {count}",
+  "@syncSummaryUploadMeals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDeleteMeals": "delete meals {count}",
+  "@syncSummaryDeleteMeals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryUploadCustom": "upload custom {count}",
+  "@syncSummaryUploadCustom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDeleteCustom": "delete custom {count}",
+  "@syncSummaryDeleteCustom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryUploadSettings": "upload settings {count}",
+  "@syncSummaryUploadSettings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDownloadMeals": "download meals {count}",
+  "@syncSummaryDownloadMeals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDownloadDeletedMeals": "download deleted meals {count}",
+  "@syncSummaryDownloadDeletedMeals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDownloadCustom": "download custom {count}",
+  "@syncSummaryDownloadCustom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDownloadDeletedCustom": "download deleted custom {count}",
+  "@syncSummaryDownloadDeletedCustom": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummaryDownloadSettings": "download settings {count}",
+  "@syncSummaryDownloadSettings": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncSummarySeparator": ", "
 }
