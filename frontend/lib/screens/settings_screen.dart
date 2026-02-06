@@ -527,7 +527,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   String _bmiText(UserProfile profile, AppLocalizations t) {
-    if (profile.heightCm <= 0) return '--';
+    if (profile.heightCm <= 0) return t.placeholderDash;
     final heightM = profile.heightCm / 100.0;
     final bmi = profile.weightKg / (heightM * heightM);
     final value = bmi.toStringAsFixed(1);
@@ -567,10 +567,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }
     final plateOptions = <String, String>{
-      '日式盤 02': 'assets/plates/plate_Japanese_02.png',
-      '日式盤 04': 'assets/plates/plate_Japanese_04.png',
-      '中式盤 01': 'assets/plates/plate_China_01.png',
-      '中式盤 02': 'assets/plates/plate_China_02.png',
+      t.plateJapanese02: 'assets/plates/plate_Japanese_02.png',
+      t.plateJapanese04: 'assets/plates/plate_Japanese_04.png',
+      t.plateChina01: 'assets/plates/plate_China_01.png',
+      t.plateChina02: 'assets/plates/plate_China_02.png',
     };
     final chartOptions = <String, String>{
       t.chartRadar: 'radar',
@@ -583,7 +583,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final currentPlateLabel = plateOptions.entries
         .firstWhere(
           (entry) => entry.value == profile.plateAsset,
-          orElse: () => MapEntry('日式盤 02', kDefaultPlateAsset),
+          orElse: () => MapEntry(t.plateJapanese02, kDefaultPlateAsset),
         )
         .key;
     final currentChartLabel = chartOptions.entries
@@ -789,7 +789,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         _row(
                           context,
                           t.nicknameLabel,
-                          profile.name.isEmpty ? '--' : profile.name,
+                          profile.name.isEmpty ? t.placeholderDash : profile.name,
                           emoji: '👤',
                           onTap: () => _editText(
                             context,
@@ -805,7 +805,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               child: _row(
                                 context,
                                 t.nicknameLabel,
-                                profile.name.isEmpty ? '--' : profile.name,
+                                profile.name.isEmpty ? t.placeholderDash : profile.name,
                                 emoji: '👤',
                                 onTap: () => _editText(
                                   context,
@@ -918,7 +918,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _row(
                     context,
                     t.heightLabel,
-                    '${profile.heightCm} cm',
+                    t.valueWithCm(profile.heightCm),
                     emoji: '📏',
                     onTap: () => _editText(
                       context,
@@ -931,7 +931,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _row(
                     context,
                     t.weightLabel,
-                    '${profile.weightKg} kg',
+                    t.valueWithKg(profile.weightKg),
                     emoji: '⚖️',
                     onTap: () => _editText(
                       context,
@@ -1081,7 +1081,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _row(
                       context,
                       t.containerCapacityLabel,
-                      profile.containerCapacityMl > 0 ? '${profile.containerCapacityMl} ml' : '--',
+                      profile.containerCapacityMl > 0 ? t.valueWithMl(profile.containerCapacityMl) : t.placeholderDash,
                       emoji: '🥤',
                       onTap: () => _editText(
                         context,
@@ -1101,7 +1101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: _row(
                       context,
                       t.containerDiameterLabel,
-                      profile.containerDiameterCm > 0 ? '${profile.containerDiameterCm} cm' : '--',
+                      profile.containerDiameterCm > 0 ? t.valueWithCm(profile.containerDiameterCm) : t.placeholderDash,
                       emoji: '⭕',
                       onTap: () => _editText(
                         context,
@@ -1132,7 +1132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _row(
                     context,
                     t.dietNoteLabel,
-                    profile.dietNote.isEmpty ? '--' : profile.dietNote,
+                    profile.dietNote.isEmpty ? t.placeholderDash : profile.dietNote,
                     emoji: '📝',
                     onTap: () => _editText(
                       context,
@@ -1560,9 +1560,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     final shortCommit = commit.length > 7 ? commit.substring(0, 7) : commit;
                     return Column(
                       children: [
-                        _row(context, t.versionBuild, info['build_time'] ?? '--', emoji: 'ℹ️', showChevron: false),
+                        _row(context, t.versionBuild, info['build_time'] ?? t.placeholderDash, emoji: 'ℹ️', showChevron: false),
                         const SizedBox(height: 6),
-                        _row(context, t.versionCommit, shortCommit.isEmpty ? '--' : shortCommit, emoji: '🧩', showChevron: false),
+                        _row(context, t.versionCommit, shortCommit.isEmpty ? t.placeholderDash : shortCommit, emoji: '🧩', showChevron: false),
                       ],
                     );
                   },

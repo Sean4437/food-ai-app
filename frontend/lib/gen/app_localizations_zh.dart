@@ -680,6 +680,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get weightLabel => '體重';
 
   @override
+  String get placeholderDash => '--';
+
+  @override
+  String valueWithCm(int value) {
+    return '$value 公分';
+  }
+
+  @override
+  String valueWithKg(int value) {
+    return '$value 公斤';
+  }
+
+  @override
+  String valueWithMl(int value) {
+    return '$value 毫升';
+  }
+
+  @override
   String get ageLabel => '年齡';
 
   @override
@@ -1135,6 +1153,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get plateWarmLabel => '暖色陶瓷盤';
+
+  @override
+  String get plateJapanese02 => '日式盤 02';
+
+  @override
+  String get plateJapanese04 => '日式盤 04';
+
+  @override
+  String get plateChina01 => '中式盤 01';
+
+  @override
+  String get plateChina02 => '中式盤 02';
 
   @override
   String get apiSection => 'API 連線';

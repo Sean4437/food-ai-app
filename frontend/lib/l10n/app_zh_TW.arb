@@ -696,5 +696,34 @@
       }
     }
   },
-  "syncSummarySeparator": "、"
+  "syncSummarySeparator": "、",
+  "plateJapanese02": "日式盤 02",
+  "plateJapanese04": "日式盤 04",
+  "plateChina01": "中式盤 01",
+  "plateChina02": "中式盤 02",
+  "placeholderDash": "--",
+  "valueWithCm": "{value} 公分",
+  "@valueWithCm": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "valueWithKg": "{value} 公斤",
+  "@valueWithKg": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "valueWithMl": "{value} 毫升",
+  "@valueWithMl": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  }
 }

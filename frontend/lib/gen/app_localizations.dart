@@ -1412,6 +1412,10 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'體重'**
   String get weightLabel;
+  String get placeholderDash;
+  String valueWithCm(int value);
+  String valueWithKg(int value);
+  String valueWithMl(int value);
 
   /// No description provided for @ageLabel.
   ///
@@ -2110,6 +2114,10 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'暖色陶瓷盤'**
   String get plateWarmLabel;
+  String get plateJapanese02;
+  String get plateJapanese04;
+  String get plateChina01;
+  String get plateChina02;
 
   /// No description provided for @apiSection.
   ///

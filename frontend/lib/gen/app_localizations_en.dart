@@ -692,6 +692,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weightLabel => 'Weight';
 
   @override
+  String get placeholderDash => '--';
+
+  @override
+  String valueWithCm(int value) {
+    return '$value cm';
+  }
+
+  @override
+  String valueWithKg(int value) {
+    return '$value kg';
+  }
+
+  @override
+  String valueWithMl(int value) {
+    return '$value ml';
+  }
+
+  @override
   String get ageLabel => 'Age';
 
   @override
@@ -1147,6 +1165,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get plateWarmLabel => 'Warm ceramic plate';
+
+  @override
+  String get plateJapanese02 => 'Japanese plate 02';
+
+  @override
+  String get plateJapanese04 => 'Japanese plate 04';
+
+  @override
+  String get plateChina01 => 'Chinese plate 01';
+
+  @override
+  String get plateChina02 => 'Chinese plate 02';
 
   @override
   String get apiSection => 'API';

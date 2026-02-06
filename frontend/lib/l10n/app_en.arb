@@ -696,5 +696,34 @@
       }
     }
   },
-  "syncSummarySeparator": ", "
+  "syncSummarySeparator": ", ",
+  "plateJapanese02": "Japanese plate 02",
+  "plateJapanese04": "Japanese plate 04",
+  "plateChina01": "Chinese plate 01",
+  "plateChina02": "Chinese plate 02",
+  "placeholderDash": "--",
+  "valueWithCm": "{value} cm",
+  "@valueWithCm": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "valueWithKg": "{value} kg",
+  "@valueWithKg": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "valueWithMl": "{value} ml",
+  "@valueWithMl": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  }
 }
