@@ -657,6 +657,7 @@ class AppState extends ChangeNotifier {
     }
     _scheduleAutoFinalize();
     _scheduleAutoFinalizeWeek();
+    await _maybeFinalizeDayOnLaunch();
     await _maybeFinalizeWeekOnLaunch();
     // Warm plate asset cache on startup (web uses network for assets).
     precachePlateAsset();
@@ -700,6 +701,28 @@ class AppState extends ChangeNotifier {
     } catch (_) {}
   }
 
+  Future<void> _maybeFinalizeDayOnLaunch() async {
+    final now = DateTime.now();
+    if (!isDailySummaryReady(now)) {
+      return;
+    }
+    final dayKey = _dayKey(now);
+    if (_meta['last_auto_finalize'] == dayKey) {
+      return;
+    }
+    if (_dayOverrides.containsKey(dayKey)) {
+      return;
+    }
+    final locale = _localeFromProfile();
+    final t = lookupAppLocalizations(locale);
+    final success = await finalizeDay(now, locale.toLanguageTag(), t);
+    if (!success) {
+      return;
+    }
+    _meta['last_auto_finalize'] = dayKey;
+    await _saveOverrides();
+  }
+
   Future<void> _maybeFinalizeWeekOnLaunch() async {
     final now = DateTime.now();
     if (!isWeeklySummaryReady(now)) {
@@ -715,7 +738,10 @@ class AppState extends ChangeNotifier {
     }
     final locale = _localeFromProfile();
     final t = lookupAppLocalizations(locale);
-    await finalizeWeek(now, locale.toLanguageTag(), t);
+    final success = await finalizeWeek(now, locale.toLanguageTag(), t);
+    if (!success) {
+      return;
+    }
     _meta['last_auto_week'] = weekKey;
     await _saveOverrides();
   }
@@ -1161,9 +1187,11 @@ class AppState extends ChangeNotifier {
     return t.nextMealHint;
   }
 
-  Future<void> finalizeDay(DateTime date, String locale, AppLocalizations t) async {
+  Future<bool> finalizeDay(DateTime date, String locale, AppLocalizations t) async {
+    final dayKey = _dayKey(date);
+    final hadOverride = _dayOverrides.containsKey(dayKey);
     final groups = mealGroupsForDateAll(date);
-    if (groups.isEmpty) return;
+    if (groups.isEmpty) return true;
     final mealGroups = _nonBeverageGroups(groups);
     if (mealGroups.isEmpty) {
       await updateDayOverride(
@@ -1174,7 +1202,7 @@ class AppState extends ChangeNotifier {
       _meta[_dayLockKey(date)] = 'true';
       await _saveOverrides();
       await _maybeFinalizeWeekForDate(date, locale, t);
-      return;
+      return true;
     }
     final meals = <Map<String, dynamic>>[];
     for (final group in mealGroups) {
@@ -1228,6 +1256,10 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       // Keep existing summary if summarize fails
     }
+    final success = _dayOverrides.containsKey(dayKey) || hadOverride;
+    if (!success) {
+      return false;
+    }
     _meta[_dayLockKey(date)] = 'true';
     for (final entry in entriesForDate(date)) {
       final key = entry.id;
@@ -1238,6 +1270,7 @@ class AppState extends ChangeNotifier {
     }
     await _saveOverrides();
     await _maybeFinalizeWeekForDate(date, locale, t);
+    return true;
   }
 
   Future<void> _maybeFinalizeWeekForDate(DateTime date, String locale, AppLocalizations t) async {
@@ -1254,7 +1287,10 @@ class AppState extends ChangeNotifier {
     if (_meta['last_auto_week'] == weekKey) {
       return;
     }
-    await finalizeWeek(normalized, locale, t);
+    final success = await finalizeWeek(normalized, locale, t);
+    if (!success) {
+      return;
+    }
     _meta['last_auto_week'] = weekKey;
     await _saveOverrides();
   }
@@ -1267,15 +1303,19 @@ class AppState extends ChangeNotifier {
       _scheduleAutoFinalize();
       return;
     }
-    await finalizeDay(DateTime.now(), locale.toLanguageTag(), t);
-    _meta['last_auto_finalize'] = todayKey;
-    await _saveOverrides();
-    await _runAutoSync();
+    final success = await finalizeDay(DateTime.now(), locale.toLanguageTag(), t);
+    if (success) {
+      _meta['last_auto_finalize'] = todayKey;
+      await _saveOverrides();
+      await _runAutoSync();
+    }
     _scheduleAutoFinalize();
   }
 
-  Future<void> finalizeWeek(DateTime date, String locale, AppLocalizations t) async {
+  Future<bool> finalizeWeek(DateTime date, String locale, AppLocalizations t) async {
     final weekStart = _weekStartFor(date);
+    final weekKey = _weekKey(weekStart);
+    final hadOverride = _weekOverrides.containsKey(weekKey);
     final weekEnd = weekStart.add(const Duration(days: 6));
     final days = <Map<String, dynamic>>[];
     for (int i = 0; i < 7; i++) {
@@ -1318,7 +1358,7 @@ class AppState extends ChangeNotifier {
         'day_meal_summaries': dayMealSummaries,
       });
     }
-    if (days.isEmpty) return;
+    if (days.isEmpty) return hadOverride;
       final payload = {
         'week_start': '${weekStart.year.toString().padLeft(4, '0')}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}',
         'week_end': '${weekEnd.year.toString().padLeft(4, '0')}-${weekEnd.month.toString().padLeft(2, '0')}-${weekEnd.day.toString().padLeft(2, '0')}',
@@ -1349,6 +1389,7 @@ class AppState extends ChangeNotifier {
     } catch (_) {
       // Keep existing summary if summarize fails
     }
+    return _weekOverrides.containsKey(weekKey) || hadOverride;
   }
 
   Future<void> autoFinalizeWeek() async {
@@ -1359,9 +1400,11 @@ class AppState extends ChangeNotifier {
       _scheduleAutoFinalizeWeek();
       return;
     }
-    await finalizeWeek(DateTime.now(), locale.toLanguageTag(), t);
-    _meta['last_auto_week'] = weekKey;
-    await _saveOverrides();
+    final success = await finalizeWeek(DateTime.now(), locale.toLanguageTag(), t);
+    if (success) {
+      _meta['last_auto_week'] = weekKey;
+      await _saveOverrides();
+    }
     _scheduleAutoFinalizeWeek();
   }
 
