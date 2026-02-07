@@ -1,4 +1,5 @@
 ﻿from fastapi import FastAPI, UploadFile, File, Query, Form, Request, Depends, HTTPException
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Optional, List
@@ -162,6 +163,7 @@ PRICE_OUTPUT_PER_M = float(os.getenv("PRICE_OUTPUT_PER_M", "0.60"))
 RETURN_AI_ERROR = os.getenv("RETURN_AI_ERROR", "false").lower() == "true"
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+APP_DEEPLINK_URL = os.getenv("APP_DEEPLINK_URL", "foodieeye://")
 TEST_BYPASS_EMAILS = {
     email.strip().lower()
     for email in os.getenv("TEST_BYPASS_EMAILS", "").split(",")
@@ -2125,6 +2127,43 @@ def access_status(_auth: dict = Depends(_require_auth)):
         "trial_end": trial_end.isoformat(),
         "whitelisted": False,
     }
+
+
+
+@app.get("/", response_class=HTMLResponse)
+def root():
+    deep_link = APP_DEEPLINK_URL
+    return f"""<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Food AI</title>
+    <style>
+      :root {{ color-scheme: light; }}
+      body {{ margin:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif; background: #f6fbf8; color:#1f2a24; }}
+      .wrap {{ max-width: 680px; margin: 0 auto; padding: 48px 24px; }}
+      .card {{ background: #ffffff; border-radius: 20px; box-shadow: 0 10px 30px rgba(26,64,38,0.08); padding: 28px; }}
+      .title {{ font-size: 28px; font-weight: 700; margin: 0 0 8px; }}
+      .subtitle {{ font-size: 16px; color: #4c5d52; margin: 0 0 18px; }}
+      .badge {{ display:inline-flex; align-items:center; gap:8px; padding: 8px 12px; background:#eaf6ef; border-radius: 999px; font-size: 14px; color:#2f5f41; }}
+      .btn {{ display:inline-block; margin-top:18px; padding: 12px 18px; background:#2db26b; color:white; text-decoration:none; border-radius: 12px; font-weight:600; }}
+      .hint {{ margin-top: 10px; font-size: 13px; color:#6b7b72; }}
+      .emoji {{ font-size: 30px; }}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <div class="badge"><span class="emoji">🍽️</span> Food AI</div>
+        <h1 class="title">嗨，這裡是 Food AI 服務頁</h1>
+        <p class="subtitle">如果你是要回到 App，點下面按鈕就能回去啦！</p>
+        <a class="btn" href="{deep_link}">回到 App</a>
+        <div class="hint">若沒有自動打開 App，請確認已安裝或使用 iOS 開啟。</div>
+      </div>
+    </div>
+  </body>
+</html>"""
 
 @app.get("/health")
 def health():
