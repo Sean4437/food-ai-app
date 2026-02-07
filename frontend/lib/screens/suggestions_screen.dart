@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'dart:async';
@@ -1749,6 +1750,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                                 onPressed: _requestNowAdvice,
                                                 icon: const Text('🍽️', style: TextStyle(fontSize: 18)),
                                                 label: Text(t.suggestInstantNowEat, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                                
                                                 style: OutlinedButton.styleFrom(
                                                   foregroundColor: theme.colorScheme.primary,
                                                   side: BorderSide(color: theme.colorScheme.primary),
@@ -1823,6 +1825,26 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                         ],
                                       ),
                                     ),
+                                  if (kDebugMode)
+                                    Builder(builder: (context) {
+                                      final app = AppStateScope.of(context);
+                                      final now = DateTime.now();
+                                      final mealDate = DateTime(now.year, now.month, now.day);
+                                      final consumed = app.dailyConsumedCalorieMid(mealDate).round();
+                                      final target = app.targetCalorieMid(mealDate);
+                                      final remaining = target == null ? null : (target - consumed).round();
+                                      final info = app.lastMealInfo(now);
+                                      final lastTime = info['last_meal_time']?.toString() ?? '-';
+                                      final fasting = info['fasting_hours']?.toString() ?? '-';
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 8),
+                                        child: Text(
+                                          'Debug: remaining=${remaining ?? '-'} kcal | last=$lastTime | fasting=${fasting}h',
+                                          style: AppTextStyles.caption(context).copyWith(color: Colors.black45),
+                                        ),
+                                      );
+                                    }),
+
                                   if (_instantAdvice != null) const SizedBox(height: 12),
                                 ],
                               ),

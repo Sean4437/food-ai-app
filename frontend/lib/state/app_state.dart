@@ -4870,6 +4870,10 @@ class AppState extends ChangeNotifier {
     };
   }
 
+  Map<String, dynamic> lastMealInfo(DateTime referenceTime, {String? excludeMealId}) {
+    return _lastMealInfo(referenceTime, excludeMealId: excludeMealId);
+  }
+
   String _weekdayLabel(int weekday, AppLocalizations t) {
     switch (weekday) {
       case DateTime.monday:
