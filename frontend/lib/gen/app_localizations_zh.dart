@@ -623,7 +623,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantMissing => '還沒有分析結果';
 
   @override
-  String get suggestInstantNonFood => '这不是食物，请重拍。若现在不打算吃东西，也欢迎之后肚子饿再使用。';
+  String get suggestInstantNonFood => '这张好像不是食物耶～要不要再拍一次？如果现在不打算吃也没关系，等肚子饿再来～';
 
   @override
   String get suggestInstantReestimate => '重新估算';
@@ -2317,7 +2317,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantMissing => '還沒有分析結果';
 
   @override
-  String get suggestInstantNonFood => '這不是食物，請重拍。若現在不打算吃東西，也歡迎之後肚子餓再使用。';
+  String get suggestInstantNonFood => '這張好像不是食物耶～要不要再拍一次？如果現在不打算吃也沒關係，等肚子餓再來～';
 
   @override
   String get suggestInstantReestimate => '重新估算';

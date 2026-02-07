@@ -227,7 +227,7 @@
   "suggestInstantEnergyOk": "Acceptable",
   "suggestInstantEnergyHigh": "High",
   "suggestInstantMissing": "No analysis yet",
-  "suggestInstantNonFood": "This doesn't look like food. Please retake. If you're not planning to eat now, feel free to use the app when you're hungry.",
+  "suggestInstantNonFood": "This doesn't look like food—want to try another shot? If you're not eating now, come back when you're hungry.",
   "suggestInstantReestimate": "Re-estimate",
   "suggestInstantRecentHint": "Advice uses the last 7 days and the previous meal",
   "suggestAutoSaved": "Saved automatically",

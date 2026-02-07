@@ -633,7 +633,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestInstantNonFood =>
-      'This doesn\'t look like food. Please retake. If you\'re not planning to eat now, feel free to use the app when you\'re hungry.';
+      'This doesn\'t look like food—want to try another shot? If you\'re not eating now, come back when you\'re hungry.';
 
   @override
   String get suggestInstantReestimate => 'Re-estimate';

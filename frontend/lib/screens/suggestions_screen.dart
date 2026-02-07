@@ -1417,9 +1417,18 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            t.suggestInstantNonFood,
-            style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('🥹', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  t.suggestInstantNonFood,
+                  style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
           ),
           if ((analysis.nonFoodReason ?? '').trim().isNotEmpty) ...[
             const SizedBox(height: 6),
