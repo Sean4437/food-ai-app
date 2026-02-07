@@ -1689,6 +1689,14 @@ class AppState extends ChangeNotifier {
       // ignore: discarded_futures
       _saveOverrides();
     }
+    if (!kDebugMode && profile.apiBaseUrl != kDefaultApiBaseUrl) {
+      profile.apiBaseUrl = kDefaultApiBaseUrl;
+      _touchSettingsUpdatedAt();
+      // ignore: discarded_futures
+      _saveProfile();
+      // ignore: discarded_futures
+      _saveOverrides();
+    }
     final normalized = _normalizeApiBaseUrl(profile.apiBaseUrl);
     _api = ApiService(baseUrl: normalized);
     notifyListeners();
@@ -4797,7 +4805,7 @@ class AppState extends ChangeNotifier {
       ..lateSnackStart = _parseTime(data['late_snack_start'] as String?, profile.lateSnackStart)
       ..lateSnackEnd = _parseTime(data['late_snack_end'] as String?, profile.lateSnackEnd)
       ..language = (data['language'] as String?) ?? profile.language
-      ..apiBaseUrl = (data['api_base_url'] as String?) ?? profile.apiBaseUrl
+      ..apiBaseUrl = profile.apiBaseUrl
       ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset
       ..themeAsset = (data['theme_asset'] as String?) ?? profile.themeAsset
       ..textScale = (data['text_scale'] as num?)?.toDouble() ?? profile.textScale
@@ -4807,6 +4815,9 @@ class AppState extends ChangeNotifier {
       ..exerciseSuggestionType = (data['exercise_suggestion_type'] as String?) ?? profile.exerciseSuggestionType;
     if (profile.nutritionValueMode == 'percent') {
       profile.nutritionValueMode = 'amount';
+    }
+    if (!kDebugMode && profile.apiBaseUrl != kDefaultApiBaseUrl) {
+      profile.apiBaseUrl = kDefaultApiBaseUrl;
     }
   }
 
