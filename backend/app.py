@@ -78,6 +78,8 @@ class DaySummaryRequest(BaseModel):
     profile: Optional[dict] = None
     previous_day_summary: Optional[str] = None
     previous_tomorrow_advice: Optional[str] = None
+    today_consumed_kcal: Optional[int] = None
+    today_remaining_kcal: Optional[int] = None
 
 
 class DaySummaryResponse(BaseModel):
@@ -124,6 +126,8 @@ class MealAdviceRequest(BaseModel):
     today_remaining_kcal: Optional[int] = None
     today_macros: Optional[dict] = None
     last_meal_macros: Optional[dict] = None
+    last_meal_time: Optional[str] = None
+    fasting_hours: Optional[float] = None
     recent_advice: Optional[List[str]] = None
     lang: Optional[str] = None
     profile: Optional[dict] = None
@@ -874,6 +878,8 @@ def _build_day_prompt(
     day_meal_count: Optional[int],
     previous_day_summary: Optional[str],
     previous_tomorrow_advice: Optional[str],
+    today_consumed_kcal: Optional[int],
+    today_remaining_kcal: Optional[int],
 ) -> str:
     profile_text = ""
     if profile:
@@ -896,6 +902,12 @@ def _build_day_prompt(
             summaries = "; ".join(meal.dish_summaries) if meal.dish_summaries else "no summary"
             meal_lines.append(f"- {label}: {meal.calorie_range} | {summaries}")
     meal_block = "\n".join(meal_lines)
+    day_intake_context = ''
+    if today_consumed_kcal is not None or today_remaining_kcal is not None:
+        day_intake_context = (
+            f'今日已吃熱量估計：{today_consumed_kcal if today_consumed_kcal is not None else "未知"} kcal\n'
+            f'今日剩餘熱量估計：{today_remaining_kcal if today_remaining_kcal is not None else "未知"} kcal\n'
+        )
     history_lines = []
     if previous_day_summary:
         history_lines.append(f"Previous day summary: {previous_day_summary}")
@@ -912,7 +924,7 @@ def _build_day_prompt(
             "- confidence: 0 到 1 的信心分數\n"
             "- 避免醫療或診斷字眼；避免精準數值或克數\n"
             "- day_summary 與 tomorrow_advice 不得重複詞句或同義改寫\n"
-            "- 避免與「前一天 summary/advice」重複或高度相似\n"
+            "- 避免與「前一天 summary/advice」重複或高度相似\n- 若今日已超量（今日剩餘熱量 <= 0），tomorrow_advice 必須勸戒、避免再進食\n- 若今日晚餐已吃且已接近上限，tomorrow_advice 應以清淡/不吃宵夜為主\n"
             "- 避免重複句型與開頭（例如不要連續多天以「今日飲食…」開頭）\n"
             "- 句子要有變化：可交替使用「描述現況 / 點出缺口 / 給方向」等語氣\n"
             "JSON 範例：\n"
@@ -924,6 +936,7 @@ def _build_day_prompt(
             f"今日累計熱量區間：{day_calorie_range or '未知'}\n"
             f"今日已記錄餐數：{day_meal_count or 0}\n"
             f"餐次摘要：\n{meal_block}\n"
+            f"{day_intake_context}"
             f"{history_block}\n"
         ) + profile_text
     return (
@@ -935,7 +948,7 @@ def _build_day_prompt(
         "- confidence: 0 to 1\n"
         "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
         "- Do not repeat phrases between day_summary and tomorrow_advice\n"
-        "- Avoid repeating or paraphrasing the previous day summary/advice\n"
+        "- Avoid repeating or paraphrasing the previous day summary/advice\n- If today_remaining_kcal <= 0: tomorrow_advice must discourage further eating\n- If dinner already eaten and intake near limit, focus on light/no late snack\n"
         "- Avoid repeating the same sentence pattern or starting phrase across days\n"
         "- Vary tone/structure (status / gap / action) instead of one template\n"
         "JSON example:\n"
@@ -947,6 +960,7 @@ def _build_day_prompt(
         f"Today total range: {day_calorie_range or 'unknown'}\n"
         f"Meals today: {day_meal_count or 0}\n"
         f"Meal summaries:\n{meal_block}\n"
+        f"{day_intake_context}"
         f"{history_block}\n"
     ) + profile_text
 
@@ -1072,6 +1086,12 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             f"今日宏量累計：{meal.today_macros or '未知'}\n"
         )
     last_meal_context = ""
+    fasting_context = ''
+    if meal.last_meal_time or meal.fasting_hours is not None:
+        fasting_context = (
+            f'前一餐時間：{meal.last_meal_time or "未知"}\n'
+            f'空腹多久：{meal.fasting_hours if meal.fasting_hours is not None else "未知"} 小時\n'
+        )
     if meal.last_meal_macros:
         last_meal_context = f"上一餐宏量：{meal.last_meal_macros}\n"
     recent_advice_context = ""
@@ -1109,7 +1129,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             "- 避免醫療或診斷字眼；避免精準數值或克數\n"
             "- 需提到上一餐摘要的影響（例如偏油、偏鹹）\n"
             "- 需考量今日累計與已吃內容，避免重複負擔\n"
-            "- 若為晚餐或消夜，建議更清淡、避免夜間加餐或高糖高油\n"
+            "- 若為晚餐或消夜，建議更清淡、避免夜間加餐或高糖高油\n- 節奏規則：\n  * 早餐：若空腹很久→溫和好消化；若前一餐很晚→更清淡\n  * 午餐：依早餐量調整；早餐偏多→午餐清淡；早餐偏少→午餐補足\n  * 下午茶：若距晚餐 <= 2 小時→提醒不一定需要或少量；若吃了→提醒晚餐減量或取消\n  * 晚餐：依早/午/下午茶調整；吃多→減量清淡；吃少→正常補足\n  * 消夜：若早/中/晚都有吃→勸戒不建議；若缺餐→可輕量\n- 若今日剩餘熱量 <= 0：必須勸戒停止進食，不提供進食方案\n"
             "- 若有飲食偏好/禁忌，必須遵守並避免推薦衝突食物\n"
             "JSON 範例：\n"
             "{\n"
@@ -1121,7 +1141,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             "}\n"
             f"本餐：{_meal_type_label(meal.meal_type, lang) or meal.meal_type} | {meal.calorie_range}\n"
             f"本餐摘要：{summaries}\n"
-            f"{day_context}{intake_context}{last_meal_context}{diet_context}{container_context}{recent_advice_context}"
+            f"{day_context}{intake_context}{last_meal_context}{fasting_context}{diet_context}{container_context}{recent_advice_context}"
         ) + profile_text
     return (
         "You are a nutrition assistant. Based on the meal summary, return JSON advice for the next meal.\n"
@@ -1132,7 +1152,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
         "- Avoid medical/diagnosis language; avoid precise numbers/grams\n"
         "- Mention the influence of the previous meal summary\n"
         "- Consider today’s cumulative intake and foods already eaten\n"
-        "- If this is dinner or late-night snack, keep it lighter and avoid late-night extra eating\n"
+        "- If this is dinner or late-night snack, keep it lighter and avoid late-night extra eating\n- Rhythm rules:\n  * Breakfast: long fasting -> gentle/easy; late last meal -> lighter\n  * Lunch: adjust by breakfast; heavy breakfast -> lighter lunch; light breakfast -> normal\n  * Afternoon snack: if <= 2h to dinner -> suggest skipping or tiny; if eaten -> warn to reduce dinner\n  * Dinner: adjust by earlier meals; heavy day -> light dinner; light day -> normal dinner\n  * Late snack: if already had all meals -> discourage; if skipped meals -> light option\n- If today_remaining_kcal <= 0: must discourage further eating, no meal suggestions\n"
         "- Respect dietary preferences or restrictions when present\n"
         "- Avoid repeating foods or phrasing from the recent advice list if provided\n"
         "JSON example:\n"
@@ -1971,6 +1991,8 @@ async def summarize_day(
             payload.day_meal_count,
             payload.previous_day_summary,
             payload.previous_tomorrow_advice,
+            payload.today_consumed_kcal,
+            payload.today_remaining_kcal,
         )
         response = _client.chat.completions.create(
             model=OPENAI_MODEL,

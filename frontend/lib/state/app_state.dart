@@ -1237,6 +1237,9 @@ class AppState extends ChangeNotifier {
         'dish_summaries': collapsedSummaries,
       });
     }
+    final consumedKcal = dailyConsumedCalorieMid(date).round();
+    final targetMid = targetCalorieMid(date);
+    final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
     final prevDate = _dateOnly(date).subtract(const Duration(days: 1));
     final prevKey = _dayKey(prevDate);
     final prevOverride = _dayOverrides[prevKey];
@@ -1248,6 +1251,8 @@ class AppState extends ChangeNotifier {
       'meals': meals,
       'day_calorie_range': _dailyCalorieRangeLabelForDate(date, t),
       'day_meal_count': mealGroups.length,
+      'today_consumed_kcal': consumedKcal > 0 ? consumedKcal : null,
+      'today_remaining_kcal': remainingKcal,
       if (prevSummary != null && prevSummary.isNotEmpty) 'previous_day_summary': prevSummary,
       if (prevAdvice != null && prevAdvice.isNotEmpty) 'previous_tomorrow_advice': prevAdvice,
       'profile': {
@@ -1470,8 +1475,8 @@ class AppState extends ChangeNotifier {
     String locale,
   ) async {
     if (group.isEmpty) return;
-    final mealId = group.first.mealId ?? group.first.id;
-    final key = _mealKey(mealId);
+      final mealId = group.first.mealId ?? group.first.id;
+      final key = _mealKey(mealId);
     if (_mealOverrides.containsKey(key)) return;
     if (_mealAdviceLoading.contains(mealId)) return;
     _mealAdviceLoading.add(mealId);
@@ -1492,7 +1497,13 @@ class AppState extends ChangeNotifier {
       }
       final dayGroups = mealGroupsForDateAll(mealDate);
       final mealGroups = _nonBeverageGroups(dayGroups);
+      final daySummary = buildDaySummary(mealDate, t);
       final summary = buildMealSummary(group, t);
+      final consumedKcal = dailyConsumedCalorieMid(mealDate).round();
+      final targetMid = targetCalorieMid(mealDate);
+      final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
+      final lastMealInfo = _lastMealInfo(group.first.time, excludeMealId: mealId);
+      final recentAdvice = _collectRecentMealAdvice(mealDate, t);
       final dishSummaries = <String>[];
       for (final entry in group) {
         final summaryText = _entryDishSummary(entry, t);
@@ -1536,6 +1547,12 @@ class AppState extends ChangeNotifier {
         'day_calorie_range': _dailyCalorieRangeLabelForDate(mealDate, t),
         'day_meal_count': mealGroups.length,
         'day_meal_summaries': dayMealSummaries,
+        'today_consumed_kcal': consumedKcal > 0 ? consumedKcal : null,
+        'today_remaining_kcal': remainingKcal,
+        'today_macros': daySummary?.macros.isNotEmpty == true ? _roundMacros(daySummary!.macros) : null,
+        'last_meal_macros': summary?.macros.isNotEmpty == true ? _roundMacros(summary!.macros) : null,
+        if (lastMealInfo.isNotEmpty) ...lastMealInfo,
+        'recent_advice': recentAdvice.isEmpty ? null : recentAdvice,
         'lang': locale,
         'profile': {
           'height_cm': profile.heightCm,
@@ -3379,6 +3396,7 @@ class AppState extends ChangeNotifier {
     final consumedKcal = dailyConsumedCalorieMid(mealDate).round();
     final targetMid = targetCalorieMid(mealDate);
     final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
+    final lastMealInfo = _lastMealInfo(now);
     Map<String, double>? lastMealMacros;
     if (mealGroups.isNotEmpty) {
       final lastGroup = mealGroups.first;
@@ -3431,6 +3449,7 @@ class AppState extends ChangeNotifier {
       'today_remaining_kcal': remainingKcal,
       'today_macros': daySummary?.macros.isNotEmpty == true ? _roundMacros(daySummary!.macros) : null,
       'last_meal_macros': lastMealMacros == null || lastMealMacros.isEmpty ? null : _roundMacros(lastMealMacros),
+      if (lastMealInfo.isNotEmpty) ...lastMealInfo,
       'recent_advice': recentAdvice.isEmpty ? null : recentAdvice,
       'lang': locale,
       'profile': {
@@ -4831,6 +4850,24 @@ class AppState extends ChangeNotifier {
     final h = time.hour.toString().padLeft(2, '0');
     final m = time.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+
+  Map<String, dynamic> _lastMealInfo(DateTime referenceTime, {String? excludeMealId}) {
+    final candidates = entries.where((entry) {
+      if (!entry.time.isBefore(referenceTime)) return false;
+      if (entry.result?.isBeverage == true) return false;
+      final mealId = entry.mealId ?? entry.id;
+      if (excludeMealId != null && mealId == excludeMealId) return false;
+      return true;
+    }).toList();
+    if (candidates.isEmpty) return {};
+    candidates.sort((a, b) => b.time.compareTo(a.time));
+    final last = candidates.first;
+    final hours = referenceTime.difference(last.time).inMinutes / 60.0;
+    return {
+      'last_meal_time': last.time.toIso8601String(),
+      'fasting_hours': double.parse(hours.clamp(0, 9999).toStringAsFixed(2)),
+    };
   }
 
   String _weekdayLabel(int weekday, AppLocalizations t) {
