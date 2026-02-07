@@ -1672,8 +1672,13 @@ class AppState extends ChangeNotifier {
 
   Future<void> updateApiBaseUrl(String url) async {
     final normalized = _normalizeApiBaseUrl(url);
+    if (normalized.isEmpty) return;
+    profile.apiBaseUrl = normalized;
     _api = ApiService(baseUrl: normalized);
+    _touchSettingsUpdatedAt();
     notifyListeners();
+    await _saveProfile();
+    await _saveOverrides();
   }
 
   Future<void> refreshApiBaseUrlFromRemote() async {
