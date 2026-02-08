@@ -2223,6 +2223,12 @@ abstract class AppLocalizations {
   /// **'目前無法分析'**
   String get analyzeFailed;
 
+  /// No description provided for @reestimateFailedKeepLast.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重新估算失敗，已保留上一版結果'**
+  String get reestimateFailedKeepLast;
+
   /// No description provided for @costEstimateLabel.
   ///
   /// In zh_TW, this message translates to:

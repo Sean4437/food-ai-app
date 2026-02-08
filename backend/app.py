@@ -50,6 +50,7 @@ class AnalysisResult(BaseModel):
     is_food: Optional[bool] = None
     non_food_reason: Optional[str] = None
     debug_reason: Optional[str] = None
+    reference_used: Optional[str] = None
     container_guess_type: Optional[str] = None
     container_guess_size: Optional[str] = None
 
@@ -479,6 +480,9 @@ def _build_prompt(
             "- is_beverage: 是否為飲料（true/false）\n"
             "- is_food: 是否為食物（true/false；若不是食物請填 false）\n"
             "- non_food_reason: 若不是食物，簡短原因\n"
+            "- reference_used: 若照片中有可用參考物（信用卡/硬幣/手機/筷子/叉子/湯匙/手掌/鋁罐/寶特瓶等），請寫出你用來估算份量的參考物；若沒有請填「無」\n"
+            "- 若提供參考長度，reference_used 請寫「測距 {公分}cm」\n"
+            "- 若有多個參考物，請選最清楚且最接近食物的那一個\n"
             "- container_guess_type: 容器推測類型（bowl/plate/box/cup/unknown）\n"
             "- container_guess_size: 容器推測尺寸（small/medium/large/none）\n"
             "- 若為盤/盒/unknown，尺寸請用 none；若為飲料優先用 cup\n"
@@ -504,6 +508,7 @@ def _build_prompt(
             "  \"is_beverage\": false,\n"
             "  \"is_food\": true,\n"
             "  \"non_food_reason\": \"\",\n"
+            "  \"reference_used\": \"10 元硬幣\",\n"
             "  \"container_guess_type\": \"bowl\",\n"
             "  \"container_guess_size\": \"medium\"\n"
             "}\n"
@@ -543,6 +548,9 @@ def _build_prompt(
         "- is_beverage: true/false\n"
         "- is_food: true/false (set false if not food)\n"
         "- non_food_reason: brief reason if not food\n"
+        "- reference_used: if a reference object is visible (credit card/coin/phone/chopsticks/fork/spoon/hand/can/bottle), state what you used to estimate portion size; otherwise use \"none\"\n"
+        "- If reference length is provided, set reference_used to \"measured {cm}cm\"\n"
+        "- If multiple reference objects appear, choose the clearest one closest to the food\n"
         "- container_guess_type: container type guess (bowl/plate/box/cup/unknown)\n"
         "- container_guess_size: container size guess (small/medium/large/none)\n"
         "- If plate/box/unknown, size must be none; if beverage, prefer cup\n"
@@ -568,6 +576,7 @@ def _build_prompt(
         "  \"is_beverage\": false,\n"
         "  \"is_food\": true,\n"
         "  \"non_food_reason\": \"\",\n"
+        "  \"reference_used\": \"credit card\",\n"
         "  \"container_guess_type\": \"bowl\",\n"
         "  \"container_guess_size\": \"medium\"\n"
         "}\n"
@@ -1432,6 +1441,16 @@ def _analyze_with_openai(
         is_beverage=is_beverage,
         tighten=label_context is None,
     )
+    ref_used = str(data.get("reference_used") or "").strip()
+    if reference_length_cm and reference_length_cm > 0:
+        if lang == "zh-TW":
+            data["reference_used"] = f"測距 {reference_length_cm}cm"
+        else:
+            data["reference_used"] = f"measured {reference_length_cm}cm"
+    elif ref_used:
+        data["reference_used"] = ref_used
+    else:
+        data["reference_used"] = "無" if lang == "zh-TW" else "none"
     data.setdefault("confidence", 0.6)
     data.setdefault("dish_summary", "")
     data.setdefault("food_items", [])
@@ -1696,6 +1715,7 @@ async def analyze_image(
                 is_beverage=is_beverage,
                 is_food=is_food,
                 non_food_reason=cached_result.get("non_food_reason"),
+                reference_used=cached_result.get("reference_used"),
                 container_guess_type=container_guess_type,
                 container_guess_size=container_guess_size,
             )
@@ -1779,6 +1799,7 @@ async def analyze_image(
                 "is_beverage": payload["result"].get("is_beverage"),
                 "is_food": payload["result"].get("is_food", True),
                 "non_food_reason": payload["result"].get("non_food_reason"),
+                "reference_used": payload["result"].get("reference_used"),
                 "container_guess_type": container_guess_type,
                 "container_guess_size": container_guess_size,
             },
@@ -1799,6 +1820,7 @@ async def analyze_image(
             is_beverage=is_beverage,
             is_food=is_food,
             non_food_reason=payload["result"].get("non_food_reason"),
+            reference_used=payload["result"].get("reference_used"),
             container_guess_type=container_guess_type,
             container_guess_size=container_guess_size,
             debug_reason=None,
@@ -1903,6 +1925,7 @@ async def analyze_name(
             is_beverage=is_beverage,
             is_food=data.get("is_food", True),
             non_food_reason=data.get("non_food_reason"),
+            reference_used="無" if use_lang == "zh-TW" else "none",
             container_guess_type=container_guess_type,
             container_guess_size=container_guess_size,
             debug_reason=None,

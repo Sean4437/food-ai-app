@@ -16,6 +16,7 @@
   final bool? isBeverage;
   final bool? isFood;
   final String? nonFoodReason;
+  final String? referenceUsed;
   final String? containerGuessType;
   final String? containerGuessSize;
 
@@ -37,6 +38,7 @@
     this.isBeverage,
     this.isFood,
     this.nonFoodReason,
+    this.referenceUsed,
     this.containerGuessType,
     this.containerGuessSize,
   });
@@ -70,6 +72,7 @@
       isBeverage: json['is_beverage'] as bool?,
       isFood: json['is_food'] as bool?,
       nonFoodReason: json['non_food_reason'] as String?,
+      referenceUsed: json['reference_used'] as String?,
       containerGuessType: json['container_guess_type'] as String?,
       containerGuessSize: json['container_guess_size'] as String?,
     );
@@ -94,6 +97,7 @@
       'is_beverage': isBeverage,
       'is_food': isFood,
       'non_food_reason': nonFoodReason,
+      'reference_used': referenceUsed,
       'container_guess_type': containerGuessType,
       'container_guess_size': containerGuessSize,
     };

@@ -1110,6 +1110,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyzeFailed => 'Unable to analyze';
 
   @override
+  String get reestimateFailedKeepLast => 'Re-estimate failed. Keeping the last result.';
+
+  @override
   String get costEstimateLabel => 'Estimated cost';
 
   @override

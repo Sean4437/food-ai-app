@@ -1263,6 +1263,36 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                       borderRadius: BorderRadius.all(Radius.circular(12)),
                     ),
                   ),
+                  Positioned.fill(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Row(
+                        children: [
+                          Text(
+                            t.suggestInstantEnergyOk,
+                            style: AppTextStyles.caption(context).copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              shadows: const [
+                                Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 1)),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            t.suggestInstantEnergyHigh,
+                            style: AppTextStyles.caption(context).copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              shadows: const [
+                                Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 1)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   Positioned(
                     left: indicatorLeft,
                     top: (barHeight - indicatorSize) / 2,
@@ -1281,12 +1311,94 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
             );
           },
         ),
+        const SizedBox(height: 2),
+      ],
+    );
+  }
+
+  Widget _buildProteinRangeBar(AppLocalizations t, double consumed, List<int> range) {
+    final theme = Theme.of(context);
+    final minTarget = range[0].toDouble();
+    final maxTarget = range[1].toDouble();
+    final maxScale = math.max(maxTarget * 1.2, consumed * 1.1 + 1);
+    final currentRatio = (consumed / maxScale).clamp(0.0, 1.0);
+    final startRatio = (minTarget / maxScale).clamp(0.0, 1.0);
+    final endRatio = (maxTarget / maxScale).clamp(0.0, 1.0);
+    const barHeight = 16.0;
+    const indicatorSize = 12.0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              t.proteinIntakeTodayLabel,
+              style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+            Text(
+              '${consumed.round()}g',
+              style: AppTextStyles.caption(context).copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final rangeLeft = width * startRatio;
+            final rangeWidth = width * (endRatio - startRatio);
+            final indicatorLeft = (width * currentRatio).clamp(0.0, width - indicatorSize);
+            return SizedBox(
+              height: barHeight,
+              child: Stack(
+                alignment: Alignment.centerLeft,
+                children: [
+                  Container(
+                    height: barHeight,
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  if (rangeWidth > 0)
+                    Positioned(
+                      left: rangeLeft,
+                      child: Container(
+                        height: barHeight,
+                        width: rangeWidth,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.35),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    left: indicatorLeft,
+                    top: (barHeight - indicatorSize) / 2,
+                    child: Container(
+                      width: indicatorSize,
+                      height: indicatorSize,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
         const SizedBox(height: 4),
         Row(
           children: [
-            Text(t.suggestInstantEnergyOk, style: AppTextStyles.caption(context).copyWith(color: okColor)),
+            Text('${range[0]}g', style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
             const Spacer(),
-            Text(t.suggestInstantEnergyHigh, style: AppTextStyles.caption(context).copyWith(color: highColor)),
+            Text('${range[1]}g', style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
           ],
         ),
       ],
@@ -1354,6 +1466,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   Future<void> _reanalyzeWithAdjustments() async {
     if (_analysis == null) return;
     if (!mounted) return;
+    final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final historyContext = app.buildAiContext();
@@ -1392,7 +1505,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       if (!mounted) return;
       _stopSmartProgress();
       setState(() {
-        _error = err.toString();
+        _error = t.reestimateFailedKeepLast;
         _loading = false;
       });
     }
@@ -1456,7 +1569,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           containerSize: _containerSize,
         );
     final proteinRange = app.proteinTargetRangeGrams();
-    final proteinConsumed = app.dailyProteinConsumedGrams((_analysis?.time ?? DateTime.now())).round();
+    final baseProteinConsumed = app.dailyProteinConsumedGrams((_analysis?.time ?? DateTime.now()));
+    final adjustedMacros = _scaledMacros(analysis.macros);
+    final currentProtein = _savedEntry == null ? (adjustedMacros['protein'] ?? 0) : 0;
+    final proteinConsumed = (baseProteinConsumed + currentProtein).round();
+    final referenceUsed = (analysis.referenceUsed ?? '').trim();
+    final referenceLabel = referenceUsed.isEmpty ? t.referenceObjectNone : referenceUsed;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1492,21 +1610,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         ),
         const SizedBox(height: 8),
         _buildEnergyBar(app, t, analysis),
+        const SizedBox(height: 6),
+        Text(
+          '${t.referenceObjectLabel}：$referenceLabel',
+          style: AppTextStyles.caption(context).copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
+        ),
         if (proteinRange != null) ...[
-          const SizedBox(height: 10),
-          Text(
-            t.proteinIntakeTodayLabel,
-            style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            t.proteinIntakeFormat(
-              proteinConsumed,
-              proteinRange[0],
-              proteinRange[1],
-            ),
-            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-          ),
+          const SizedBox(height: 12),
+          _buildProteinRangeBar(t, proteinConsumed.toDouble(), proteinRange),
         ],
         const SizedBox(height: 12),
         Text(

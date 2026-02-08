@@ -426,6 +426,7 @@
   "sodium": "鈉含量",
   "tier": "層級",
   "analyzeFailed": "目前無法分析",
+  "reestimateFailedKeepLast": "重新估算失敗，已保留上一版結果",
   "costEstimateLabel": "估算花費",
   "usageSection": "AI 花費",
   "usageTotalLabel": "累計花費",

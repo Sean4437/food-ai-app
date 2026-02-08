@@ -426,6 +426,7 @@
   "sodium": "Sodium",
   "tier": "Tier",
   "analyzeFailed": "Unable to analyze",
+  "reestimateFailedKeepLast": "Re-estimate failed. Keeping the last result.",
   "costEstimateLabel": "Estimated cost",
   "usageSection": "AI cost",
   "usageTotalLabel": "Total spent",
