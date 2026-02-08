@@ -1009,7 +1009,7 @@ class AppState extends ChangeNotifier {
   }
 
   String entryCalorieRangeLabel(MealEntry entry, AppLocalizations t) {
-    final baseRange = entry.overrideCalorieRange ?? entry.result?.calorieRange ?? '';
+    final baseRange = entry.overrideCalorieRange ?? entry.labelResult?.calorieRange ?? entry.result?.calorieRange ?? '';
     final parsed = _parseCalorieRange(baseRange);
     if (parsed == null) return t.calorieUnknown;
     final weight = _entryPortionFactor(entry);
@@ -1019,7 +1019,7 @@ class AppState extends ChangeNotifier {
   }
 
   double? entryCalorieMid(MealEntry entry) {
-    final baseRange = entry.overrideCalorieRange ?? entry.result?.calorieRange;
+    final baseRange = entry.overrideCalorieRange ?? entry.labelResult?.calorieRange ?? entry.result?.calorieRange;
     final parsed = _parseCalorieRange(baseRange);
     if (parsed == null) return null;
     final weight = _entryPortionFactor(entry);
