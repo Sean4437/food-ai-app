@@ -444,7 +444,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
             for (final option in options)
               ListTile(
                 title: Text(app.mealTypeLabel(option, t)),
-                trailing: option == current ? const Icon(Icons.check) : null,
+                trailing: option == current ? const Text('✅', style: TextStyle(fontSize: 16)) : null,
                 onTap: () => Navigator.of(context).pop(option),
               ),
           ],
@@ -972,10 +972,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         style: const TextStyle(fontSize: 18, height: 1),
       );
     }
-    if (option.icon != null) {
-      return Icon(option.icon, size: 20);
-    }
-    return const SizedBox(height: 20, width: 20);
+    return const Text('🔹', style: TextStyle(fontSize: 18, height: 1));
   }
 
   Widget _buildPortionContainerSection(AppLocalizations t) {
@@ -1602,7 +1599,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           children: [
             IconButton(
               onPressed: _editFoodName,
-              icon: const Icon(Icons.edit, size: 18),
+              icon: const Text('✏️', style: TextStyle(fontSize: 16)),
               tooltip: t.editFoodName,
               padding: const EdgeInsets.all(8),
               constraints: const BoxConstraints(minWidth: 44, minHeight: 44),

@@ -142,7 +142,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                               padding: const EdgeInsets.only(left: 4),
                               child: IconButton(
                                 onPressed: () => _editFoodName(context, app, entry),
-                                icon: const Icon(Icons.edit, size: 20),
+                                icon: const Text('✏️', style: TextStyle(fontSize: 16)),
                                 tooltip: t.editFoodName,
                                 padding: const EdgeInsets.all(6),
                                 constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
@@ -158,7 +158,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                     SnackBar(content: Text(t.customAdded)),
                                   );
                                 },
-                                icon: const Icon(Icons.bookmark_add, size: 20),
+                                icon: const Text('📌', style: TextStyle(fontSize: 16)),
                                 tooltip: t.customAdd,
                                 padding: const EdgeInsets.all(6),
                                 constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
@@ -168,7 +168,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                               padding: const EdgeInsets.only(left: 4),
                               child: IconButton(
                                 onPressed: () => _reanalyzeEntry(context, app, entry),
-                                icon: const Icon(Icons.refresh, size: 20),
+                                icon: const Text('🔄', style: TextStyle(fontSize: 16)),
                                 tooltip: t.reanalyzeLabel,
                                 padding: const EdgeInsets.all(6),
                                 constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
@@ -178,7 +178,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                               padding: const EdgeInsets.only(left: 4),
                               child: IconButton(
                                 onPressed: () => _confirmDelete(context, app, entry),
-                                icon: const Icon(Icons.delete_outline, size: 20),
+                                icon: const Text('🗑️', style: TextStyle(fontSize: 16)),
                                 tooltip: t.delete,
                                 padding: const EdgeInsets.all(6),
                                 constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
@@ -288,12 +288,12 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_camera),
+              leading: const Text('📷', style: TextStyle(fontSize: 16)),
               title: Text(t.takePhoto),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library),
+              leading: const Text('🖼️', style: TextStyle(fontSize: 16)),
               title: Text(t.uploadPhoto),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
@@ -540,7 +540,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                               if (currentEntry != null)
                                 TextButton.icon(
                                   onPressed: () => _pickLabelImage(context, app, currentEntry),
-                                  icon: const Icon(Icons.receipt_long, size: 18),
+                                  icon: const Text('🧾', style: TextStyle(fontSize: 16)),
                                   label: Text(t.addLabel),
                                 ),
                             ],
@@ -604,7 +604,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                     ),
                                     IconButton(
                                       onPressed: () => app.removeLabelFromEntry(currentEntry, Localizations.localeOf(context).toLanguageTag()),
-                                      icon: const Icon(Icons.delete_outline, size: 20),
+                                      icon: const Text('🗑️', style: TextStyle(fontSize: 16)),
                                       tooltip: t.removeLabel,
                                       padding: const EdgeInsets.all(6),
                                       constraints: const BoxConstraints(minWidth: 36, minHeight: 36),

@@ -283,7 +283,7 @@ class TrialExpiredScreen extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.check, size: 16, color: theme.colorScheme.primary),
+                    const Text('✅', style: TextStyle(fontSize: 14)),
                     const SizedBox(width: 6),
                     Expanded(child: Text(text, style: AppTextStyles.body(context).copyWith(fontSize: 13))),
                   ],

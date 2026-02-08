@@ -199,7 +199,7 @@ class MealDetailScreen extends StatelessWidget {
           actions: [
             IconButton(
               onPressed: () => _confirmDelete(context),
-              icon: const Icon(Icons.delete_outline),
+              icon: const Text('🗑️', style: TextStyle(fontSize: 16)),
               tooltip: t.delete,
             ),
           ],

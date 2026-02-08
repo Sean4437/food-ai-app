@@ -328,7 +328,7 @@ class _LogScreenState extends State<LogScreen> {
       children: [
         IconButton(
           onPressed: () => _shiftMonth(app, -1),
-          icon: const Icon(Icons.chevron_left),
+          icon: const Text('⬅️', style: TextStyle(fontSize: 16)),
         ),
         Expanded(
           child: Text(
@@ -339,7 +339,7 @@ class _LogScreenState extends State<LogScreen> {
         ),
         IconButton(
           onPressed: () => _shiftMonth(app, 1),
-          icon: const Icon(Icons.chevron_right),
+          icon: const Text('➡️', style: TextStyle(fontSize: 16)),
         ),
       ],
     );

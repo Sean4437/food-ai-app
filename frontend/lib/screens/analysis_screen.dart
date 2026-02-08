@@ -214,7 +214,7 @@ class AnalysisScreen extends StatelessWidget {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.local_fire_department, color: Color(0xFFF4C95D)),
+                                  const Text('🔥', style: TextStyle(fontSize: 18)),
                                   const SizedBox(width: 8),
                                   Text(
                                     '${t.calorieLabel}: ${prefix}${entry.result!.calorieRange}',

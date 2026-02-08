@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,9 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // ignore: discarded_futures
       app.refreshApiBaseUrlFromRemote();
     });
-  }
-
-  Widget _skeletonBar(double width, {double height = 12}) {
+  }\r\n  Widget _skeletonBar(double width, {double height = 12}) {
     return Container(
       width: width,
       height: height,
@@ -76,7 +74,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     BuildContext context,
     String title,
     String value, {
-    IconData? icon,
     String? emoji,
     VoidCallback? onTap,
     bool showChevron = true,
@@ -94,14 +91,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             if (emoji != null && emoji.isNotEmpty) ...[
               Text(emoji, style: const TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
-            ] else if (icon != null) ...[
-              Icon(icon, size: 18, color: Colors.black54),
-              const SizedBox(width: 8),
             ],
             Expanded(child: Text(title)),
             Text(value, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
             if (showChevron)
-              const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
+              const Text('➡️', style: TextStyle(fontSize: 16)),
           ],
         ),
       ),
@@ -112,7 +106,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     BuildContext context,
     String title,
     String value, {
-    IconData? icon,
     String? emoji,
     VoidCallback? onTap,
   }) {
@@ -132,9 +125,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (emoji != null && emoji.isNotEmpty) ...[
                   Text(emoji, style: const TextStyle(fontSize: 18)),
                   const SizedBox(width: 8),
-                ] else if (icon != null) ...[
-                  Icon(icon, size: 18, color: Colors.black54),
-                  const SizedBox(width: 8),
                 ],
                 Expanded(
                   child: Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
@@ -151,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
+                const Text('➡️', style: TextStyle(fontSize: 16)),
               ],
             ),
           ],
@@ -240,7 +230,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           decoration: InputDecoration(
             hintText: 'http://127.0.0.1:8000',
             suffixIcon: IconButton(
-              icon: const Icon(Icons.content_paste),
+              icon: const Text('??', style: TextStyle(fontSize: 16)),
               onPressed: () async {
                 final data = await Clipboard.getData(Clipboard.kTextPlain);
                 final text = data?.text?.trim();
@@ -335,7 +325,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             for (final option in options)
               ListTile(
                 title: Text(option),
-                trailing: option == current ? const Icon(Icons.check) : null,
+                trailing: option == current ? const Text('??, style: TextStyle(fontSize: 16)) : null,
                 onTap: () => Navigator.of(context).pop(option),
               ),
             const SizedBox(height: 8),
@@ -948,7 +938,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           context,
                           t.nicknameLabel,
                           profile.name.isEmpty ? t.placeholderDash : profile.name,
-                          emoji: '👤',
+                          emoji: '?',
                           onTap: () => _editText(
                             context,
                             title: t.nicknameLabel,
@@ -964,7 +954,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 context,
                                 t.nicknameLabel,
                                 profile.name.isEmpty ? t.placeholderDash : profile.name,
-                                emoji: '👤',
+                                emoji: '?',
                                 onTap: () => _editText(
                                   context,
                                   title: t.nicknameLabel,
@@ -1047,7 +1037,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.webTestSubscriptionLabel,
                     app.mockSubscriptionActive ? t.webTestEnabled : t.webTestDisabled,
-                    icon: Icons.science_outlined,
+                    emoji: '?妒',
                     onTap: () {
                       final next = !app.mockSubscriptionActive;
                       final planId = next ? (app.mockSubscriptionPlanId ?? kIapMonthlyId) : null;
@@ -1062,14 +1052,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         : app.mockSubscriptionPlanId == kIapYearlyId
                             ? t.webTestPlanYearly
                             : t.webTestPlanNone,
-                    icon: Icons.credit_card,
+                    emoji: '?',
                     showChevron: false,
                   ),
                   _row(
                     context,
                     t.webTestAccessGraceLabel,
                     t.webTestAccessGraceValue(app.accessGraceHours),
-                    icon: Icons.timer_outlined,
+                    emoji: '?梧?',
                     onTap: () => _editText(
                       context,
                       title: t.webTestAccessGraceDialogTitle,
@@ -1090,7 +1080,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.heightLabel,
                     t.valueWithCm(profile.heightCm),
-                    emoji: '📏',
+                    emoji: '??',
                     onTap: () => _editText(
                       context,
                       title: t.heightLabel,
@@ -1103,7 +1093,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.weightLabel,
                     t.valueWithKg(profile.weightKg),
-                    emoji: '⚖️',
+                    emoji: '??',
                     onTap: () => _editText(
                       context,
                       title: t.weightLabel,
@@ -1116,7 +1106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.ageLabel,
                     '${profile.age}',
-                    emoji: '🎂',
+                    emoji: '??',
                     onTap: () => _editText(
                       context,
                       title: t.ageLabel,
@@ -1129,7 +1119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.genderLabel,
                     currentGenderLabel,
-                    emoji: '🚻',
+                    emoji: '?',
                     onTap: () => _selectOption(
                       context,
                       title: t.genderLabel,
@@ -1142,14 +1132,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.bmiLabel,
                     _bmiText(profile, t),
-                    emoji: '🧮',
+                    emoji: '?妙',
                     showChevron: false,
                   ),
                   _row(
                     context,
                     t.goalLabel,
                     profile.goal,
-                    emoji: '🎯',
+                    emoji: '?',
                     onTap: () => _selectOption(
                       context,
                       title: t.goalLabel,
@@ -1162,7 +1152,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.planSpeedLabel,
                     profile.planSpeed,
-                    emoji: '⚡',
+                    emoji: '??,
                     onTap: () => _selectOption(
                       context,
                       title: t.planSpeedLabel,
@@ -1175,7 +1165,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.activityLevelLabel,
                     currentActivityLabel,
-                    emoji: '🚶',
+                    emoji: '?',
                     onTap: () => _selectOption(
                       context,
                       title: t.activityLevelLabel,
@@ -1188,7 +1178,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.commonExerciseLabel,
                     currentExerciseLabel,
-                    emoji: '🏋️',
+                    emoji: '??儭?,
                     onTap: () => _selectOption(
                       context,
                       title: t.commonExerciseLabel,
@@ -1205,7 +1195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.containerTypeLabel,
                     currentContainerTypeLabel,
-                    emoji: '🍱',
+                    emoji: '?',
                     onTap: () => _selectOption(
                       context,
                       title: t.containerTypeLabel,
@@ -1220,7 +1210,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.containerSizeLabel,
                     currentContainerSizeLabel,
-                    emoji: '📏',
+                    emoji: '??',
                     onTap: () => _selectOption(
                       context,
                       title: t.containerSizeLabel,
@@ -1238,7 +1228,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       context,
                       t.containerDepthLabel,
                       currentContainerDepthLabel,
-                      emoji: '⬇️',
+                      emoji: '漎?',
                       onTap: () => _selectOption(
                         context,
                         title: t.containerDepthLabel,
@@ -1253,7 +1243,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       context,
                       t.containerCapacityLabel,
                       profile.containerCapacityMl > 0 ? t.valueWithMl(profile.containerCapacityMl) : t.placeholderDash,
-                      emoji: '🥤',
+                      emoji: '?奶',
                       onTap: () => _editText(
                         context,
                         title: t.containerCapacityLabel,
@@ -1273,7 +1263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       context,
                       t.containerDiameterLabel,
                       profile.containerDiameterCm > 0 ? t.valueWithCm(profile.containerDiameterCm) : t.placeholderDash,
-                      emoji: '⭕',
+                      emoji: '潃?,
                       onTap: () => _editText(
                         context,
                         title: t.containerDiameterLabel,
@@ -1291,7 +1281,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.dietTypeLabel,
                     currentDietTypeLabel,
-                    emoji: '🥗',
+                    emoji: '??',
                     onTap: () => _selectOption(
                       context,
                       title: t.dietTypeLabel,
@@ -1304,7 +1294,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.dietNoteLabel,
                     profile.dietNote.isEmpty ? t.placeholderDash : profile.dietNote,
-                    emoji: '📝',
+                    emoji: '??',
                     onTap: () => _editText(
                       context,
                       title: t.dietNoteLabel,
@@ -1319,7 +1309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.toneLabel,
                     currentToneLabel,
-                    emoji: '🎙️',
+                    emoji: '??儭?,
                     onTap: () => _selectOption(
                       context,
                       title: t.toneLabel,
@@ -1332,7 +1322,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.personaLabel,
                     currentPersonaLabel,
-                    emoji: '🙂',
+                    emoji: '??',
                     onTap: () => _selectOption(
                       context,
                       title: t.personaLabel,
@@ -1348,7 +1338,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.summaryTimeLabel,
                     profile.dailySummaryTime.format(context),
-                    emoji: '⏰',
+                    emoji: '??,
                     onTap: () => _pickTime(
                       context,
                       initial: profile.dailySummaryTime,
@@ -1359,7 +1349,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.weeklySummaryDayLabel,
                     currentWeekdayLabel,
-                    emoji: '📅',
+                    emoji: '??',
                     onTap: () => _selectOption(
                       context,
                       title: t.weeklySummaryDayLabel,
@@ -1397,7 +1387,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.breakfastStartLabel,
                               profile.breakfastStart.format(context),
-                              emoji: '☀️',
+                              emoji: '?儭?,
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.breakfastStart,
@@ -1408,7 +1398,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.breakfastEndLabel,
                               profile.breakfastEnd.format(context),
-                              emoji: '☀️',
+                              emoji: '?儭?,
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.breakfastEnd,
@@ -1419,7 +1409,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.brunchStartLabel,
                               profile.brunchStart.format(context),
-                              emoji: '☕',
+                              emoji: '??,
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.brunchStart,
@@ -1430,7 +1420,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.brunchEndLabel,
                               profile.brunchEnd.format(context),
-                              emoji: '☕',
+                              emoji: '??,
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.brunchEnd,
@@ -1441,7 +1431,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.lunchStartLabel,
                               profile.lunchStart.format(context),
-                              emoji: '🍱',
+                              emoji: '?',
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.lunchStart,
@@ -1452,7 +1442,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.lunchEndLabel,
                               profile.lunchEnd.format(context),
-                              emoji: '🍱',
+                              emoji: '?',
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.lunchEnd,
@@ -1463,7 +1453,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.afternoonTeaStartLabel,
                               profile.afternoonTeaStart.format(context),
-                              emoji: '🧋',
+                              emoji: '??',
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.afternoonTeaStart,
@@ -1474,7 +1464,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.afternoonTeaEndLabel,
                               profile.afternoonTeaEnd.format(context),
-                              emoji: '🧋',
+                              emoji: '??',
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.afternoonTeaEnd,
@@ -1485,7 +1475,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.dinnerStartLabel,
                               profile.dinnerStart.format(context),
-                              emoji: '🍽️',
+                              emoji: '?儭?,
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.dinnerStart,
@@ -1496,7 +1486,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.dinnerEndLabel,
                               profile.dinnerEnd.format(context),
-                              emoji: '🍽️',
+                              emoji: '?儭?,
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.dinnerEnd,
@@ -1507,7 +1497,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.lateSnackStartLabel,
                               profile.lateSnackStart.format(context),
-                              emoji: '🌙',
+                              emoji: '??',
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.lateSnackStart,
@@ -1518,7 +1508,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               context,
                               t.lateSnackEndLabel,
                               profile.lateSnackEnd.format(context),
-                              emoji: '🌙',
+                              emoji: '??',
                               onTap: () => _pickTime(
                                 context,
                                 initial: profile.lateSnackEnd,
@@ -1536,13 +1526,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   value: profile.lunchReminderEnabled,
                   onChanged: (value) => app.updateField((p) => p.lunchReminderEnabled = value),
                   title: Text(t.reminderLunch),
-                  secondary: const Text('⏰', style: TextStyle(fontSize: 18)),
+                  secondary: const Text('??, style: TextStyle(fontSize: 18)),
                 ),
                 _row(
                   context,
                   t.reminderLunchTime,
                   profile.lunchReminderTime.format(context),
-                  emoji: '⏰',
+                  emoji: '??,
                   onTap: () => _pickTime(
                     context,
                     initial: profile.lunchReminderTime,
@@ -1554,13 +1544,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   value: profile.dinnerReminderEnabled,
                   onChanged: (value) => app.updateField((p) => p.dinnerReminderEnabled = value),
                   title: Text(t.reminderDinner),
-                  secondary: const Text('⏰', style: TextStyle(fontSize: 18)),
+                  secondary: const Text('??, style: TextStyle(fontSize: 18)),
                 ),
                 _row(
                   context,
                   t.reminderDinnerTime,
                   profile.dinnerReminderTime.format(context),
-                  emoji: '⏰',
+                  emoji: '??,
                   onTap: () => _pickTime(
                     context,
                     initial: profile.dinnerReminderTime,
@@ -1569,12 +1559,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 _sectionTitle(context, t.subscriptionSection),
                 _grid2([
-                  _row(context, t.subscriptionPlan, t.planMonthly, emoji: '⭐'),
+                  _row(context, t.subscriptionPlan, t.planMonthly, emoji: '潃?),
                   _row(
                     context,
                     t.languageLabel,
                     profile.language == 'zh-TW' ? t.langZh : t.langEn,
-                    emoji: '🌐',
+                    emoji: '??',
                     onTap: () => _selectOption(
                       context,
                       title: t.languageLabel,
@@ -1595,7 +1585,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.apiBaseUrlLabel,
                     profile.apiBaseUrl,
-                    emoji: '🔗',
+                    emoji: '??',
                     onTap: () => _editApiUrl(context, app),
                   ),
                   const SizedBox(height: 8),
@@ -1606,7 +1596,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context,
                   t.textSizeLabel,
                   currentTextSizeLabel,
-                  emoji: '🔤',
+                  emoji: '?',
                   onTap: () => _selectOption(
                     context,
                     title: t.textSizeLabel,
@@ -1672,7 +1662,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   value: profile.glowEnabled,
                   onChanged: (value) => app.updateField((p) => p.glowEnabled = value),
                   title: Text(t.glowToggleLabel),
-                  secondary: const Text('✨', style: TextStyle(fontSize: 18)),
+                  secondary: const Text('??, style: TextStyle(fontSize: 18)),
                 ),
                 const SizedBox(height: 8),
                 _sectionTitle(context, t.plateSection),
@@ -1680,7 +1670,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context,
                   t.plateStyleLabel,
                   currentPlateLabel,
-                  emoji: '🍽️',
+                  emoji: '?儭?,
                   onTap: () => _selectOption(
                     context,
                     title: t.plateStyleLabel,
@@ -1699,7 +1689,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context,
                   t.nutritionChartLabel,
                   currentChartLabel,
-                  emoji: '📊',
+                  emoji: '??',
                   onTap: () => _selectOption(
                     context,
                     title: t.nutritionChartLabel,
@@ -1713,7 +1703,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   context,
                   t.nutritionValueLabel,
                   currentNutritionValueLabel,
-                  emoji: '🔢',
+                  emoji: '?',
                   onTap: () => _selectOption(
                     context,
                     title: t.nutritionValueLabel,
@@ -1728,19 +1718,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   future: _loadVersionInfo(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return _row(context, t.versionBuild, t.usageLoading, emoji: 'ℹ️', showChevron: false);
+                      return _row(context, t.versionBuild, t.usageLoading, emoji: '?對?', showChevron: false);
                     }
                     final info = snapshot.data;
                     if (info == null) {
-                      return _row(context, t.versionBuild, t.versionUnavailable, emoji: 'ℹ️', showChevron: false);
+                      return _row(context, t.versionBuild, t.versionUnavailable, emoji: '?對?', showChevron: false);
                     }
                     final commit = info['commit'] ?? '';
                     final shortCommit = commit.length > 7 ? commit.substring(0, 7) : commit;
                     return Column(
                       children: [
-                        _row(context, t.versionBuild, info['build_time'] ?? t.placeholderDash, emoji: 'ℹ️', showChevron: false),
+                        _row(context, t.versionBuild, info['build_time'] ?? t.placeholderDash, emoji: '?對?', showChevron: false),
                         const SizedBox(height: 6),
-                        _row(context, t.versionCommit, shortCommit.isEmpty ? t.placeholderDash : shortCommit, emoji: '🧩', showChevron: false),
+                        _row(context, t.versionCommit, shortCommit.isEmpty ? t.placeholderDash : shortCommit, emoji: '?妝', showChevron: false),
                       ],
                     );
                   },
@@ -1752,7 +1742,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.exportData,
                     '',
-                    emoji: '📤',
+                    emoji: '?',
                     showChevron: false,
                     onTap: () => _exportData(context, app),
                   ),
@@ -1760,7 +1750,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context,
                     t.clearData,
                     '',
-                    emoji: '🗑️',
+                    emoji: '??儭?,
                     showChevron: false,
                     onTap: () => _clearData(context, app),
                   ),
@@ -1774,3 +1764,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+

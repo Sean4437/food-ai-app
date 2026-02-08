@@ -150,10 +150,7 @@ Widget _macroGlyph(_MacroPoint point, {double size = 16, Color? color}) {
   if (emoji != null && emoji.isNotEmpty) {
     return Text(emoji, style: TextStyle(fontSize: size, height: 1));
   }
-  if (point.icon != null) {
-    return Icon(point.icon, size: size, color: color);
-  }
-  return SizedBox(width: size, height: size);
+  return Text('🔹', style: TextStyle(fontSize: size, height: 1, color: color));
 }
 
 class _RadarChart extends StatelessWidget {

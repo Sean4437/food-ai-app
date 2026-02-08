@@ -33,7 +33,7 @@ class SummaryScreen extends StatelessWidget {
     return t.summaryNeutral;
   }
 
-  Widget _statChip(BuildContext context, IconData icon, String label, String value) {
+  Widget _statChip(BuildContext context, String emoji, String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -49,7 +49,7 @@ class SummaryScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF5B7CFA)),
+          Text(emoji, style: const TextStyle(fontSize: 18)),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +102,7 @@ class SummaryScreen extends StatelessWidget {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back),
+                        icon: const Text('⬅️', style: TextStyle(fontSize: 16)),
                         onPressed: () {
                           if (Navigator.of(context).canPop()) {
                             Navigator.of(context).pop();
@@ -119,7 +119,7 @@ class SummaryScreen extends StatelessWidget {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.chevron_left),
+                        icon: const Text('⬅️', style: TextStyle(fontSize: 16)),
                         onPressed: () => app.shiftSelectedDate(-1),
                       ),
                       Expanded(
@@ -130,7 +130,7 @@ class SummaryScreen extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.chevron_right),
+                        icon: const Text('➡️', style: TextStyle(fontSize: 16)),
                         onPressed: () => app.shiftSelectedDate(1),
                       ),
                     ],
@@ -182,12 +182,12 @@ class SummaryScreen extends StatelessWidget {
                           spacing: 10,
                           runSpacing: 10,
                           children: [
-                            _statChip(context, Icons.free_breakfast, t.breakfast, breakfast.toString()),
-                            _statChip(context, Icons.brunch_dining, t.brunch, brunch.toString()),
-                            _statChip(context, Icons.lunch_dining, t.lunch, lunch.toString()),
-                            _statChip(context, Icons.emoji_food_beverage, t.afternoonTea, afternoonTea.toString()),
-                            _statChip(context, Icons.restaurant, t.dinner, dinner.toString()),
-                            _statChip(context, Icons.nightlife, t.lateSnack, lateSnack.toString()),
+                            _statChip(context, '🍳', t.breakfast, breakfast.toString()),
+                            _statChip(context, '🥪', t.brunch, brunch.toString()),
+                            _statChip(context, '🍱', t.lunch, lunch.toString()),
+                            _statChip(context, '☕', t.afternoonTea, afternoonTea.toString()),
+                            _statChip(context, '🍽️', t.dinner, dinner.toString()),
+                            _statChip(context, '🌙', t.lateSnack, lateSnack.toString()),
                           ],
                         ),
                       ],

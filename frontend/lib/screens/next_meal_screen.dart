@@ -9,7 +9,7 @@ class NextMealScreen extends StatelessWidget {
 
   Widget _optionCard({
     required BuildContext context,
-    required IconData icon,
+    required String emoji,
     required String title,
     required String desc,
     required Color tint,
@@ -37,7 +37,12 @@ class NextMealScreen extends StatelessWidget {
               color: tint.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: tint),
+            child: Center(
+              child: Text(
+                emoji,
+                style: TextStyle(fontSize: 18, color: tint),
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -105,7 +110,7 @@ class NextMealScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   _optionCard(
                     context: context,
-                    icon: Icons.store_mall_directory,
+                    emoji: '🏪',
                     title: t.optionConvenienceTitle,
                     desc: t.optionConvenienceDesc,
                     tint: const Color(0xFF5B7CFA),
@@ -113,7 +118,7 @@ class NextMealScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _optionCard(
                     context: context,
-                    icon: Icons.lunch_dining,
+                    emoji: '🍱',
                     title: t.optionBentoTitle,
                     desc: t.optionBentoDesc,
                     tint: const Color(0xFF8AD7A4),
@@ -121,7 +126,7 @@ class NextMealScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _optionCard(
                     context: context,
-                    icon: Icons.restaurant,
+                    emoji: '🍽️',
                     title: t.optionLightTitle,
                     desc: t.optionLightDesc,
                     tint: const Color(0xFFF4C95D),

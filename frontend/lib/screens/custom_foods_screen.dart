@@ -205,12 +205,12 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
                           children: [
                             IconButton(
                               onPressed: () => _editCustomFood(food),
-                              icon: const Icon(Icons.edit, size: 20),
+                              icon: const Text('✏️', style: TextStyle(fontSize: 16)),
                               tooltip: t.edit,
                             ),
                             IconButton(
                               onPressed: () => _deleteCustomFood(food),
-                              icon: const Icon(Icons.delete_outline, size: 20),
+                              icon: const Text('🗑️', style: TextStyle(fontSize: 16)),
                               tooltip: t.delete,
                             ),
                           ],

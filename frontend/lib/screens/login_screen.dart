@@ -280,7 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         suffixIcon: IconButton(
-                          icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility),
+                          icon: Text(_showPassword ? '🙈' : '👁️'),
                           onPressed: _loading ? null : () => setState(() => _showPassword = !_showPassword),
                         ),
                       ),
@@ -306,7 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           suffixIcon: IconButton(
-                            icon: Icon(_showConfirm ? Icons.visibility_off : Icons.visibility),
+                            icon: Text(_showConfirm ? '🙈' : '👁️'),
                             onPressed: _loading ? null : () => setState(() => _showConfirm = !_showConfirm),
                           ),
                         ),
