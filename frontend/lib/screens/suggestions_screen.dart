@@ -1559,6 +1559,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final analysis = _analysis?.result;
     final showFloatingCard = analysis != null && !_hideFloatingCard;
+    final showAdviceCard = _instantAdvice != null && !showFloatingCard;
     final showPreview = _analysis == null && _previewBytes != null;
     final media = MediaQuery.of(context);
     final cardWidth = (media.size.width - 32).clamp(280.0, 340.0);
@@ -1582,7 +1583,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           child: Stack(
             children: [
               SingleChildScrollView(
-                          padding: EdgeInsets.fromLTRB(16, 16, 16, showFloatingCard ? 260 : 16),
+                          padding: EdgeInsets.fromLTRB(16, 16, 16, (showFloatingCard || showAdviceCard) ? 260 : 16),
                           child: Center(
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 420),
@@ -1786,45 +1787,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-                                  if (_instantAdvice != null)
-                                    Container(
-                                      padding: const EdgeInsets.all(14),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(18),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.05),
-                                            blurRadius: 14,
-                                            offset: const Offset(0, 10),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  t.suggestInstantNowEat,
-                                                  style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
-                                                ),
-                                              ),
-                                              IconButton(
-                                                onPressed: () => setState(() => _instantAdvice = null),
-                                                icon: const Text('✖️', style: TextStyle(fontSize: 16)),
-                                                tooltip: t.cancel,
-                                                padding: const EdgeInsets.all(6),
-                                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8),
-                                          _buildInstantAdviceFromModel(t, _instantAdvice!),
-                                        ],
-                                      ),
-                                    ),
                                   if (kDebugMode)
                                     Builder(builder: (context) {
                                       final app = AppStateScope.of(context);
@@ -1845,7 +1807,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                       );
                                     }),
 
-                                  if (_instantAdvice != null) const SizedBox(height: 12),
                                 ],
                               ),
                             ),
@@ -1898,6 +1859,69 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                             controller: controller,
                             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                             child: _buildAnalysisCardContent(t, app, analysis!),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (showAdviceCard)
+                DraggableScrollableSheet(
+                  initialChildSize: 0.4,
+                  minChildSize: 0.3,
+                  maxChildSize: 0.75,
+                  builder: (context, controller) => Container(
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(22), bottom: Radius.circular(22)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 22,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        Container(
+                          width: 44,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.black12,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Spacer(),
+                            IconButton(
+                              onPressed: () => setState(() => _instantAdvice = null),
+                              icon: const Text('??', style: TextStyle(fontSize: 16)),
+                              tooltip: t.cancel,
+                              padding: const EdgeInsets.all(6),
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                          ],
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            controller: controller,
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  t.suggestInstantNowEat,
+                                  style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildInstantAdviceFromModel(t, _instantAdvice!),
+                              ],
+                            ),
                           ),
                         ),
                       ],
