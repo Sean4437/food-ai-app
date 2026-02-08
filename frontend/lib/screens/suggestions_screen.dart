@@ -1399,16 +1399,22 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   }
 
   Widget _buildInstantAdviceFromModel(AppLocalizations t, MealAdvice advice) {
+    final labels = <String, String>{
+      t.nextSelfCookLabel: '🍳',
+      t.nextConvenienceLabel: '🏪',
+      t.nextBentoLabel: '🍱',
+      t.nextOtherLabel: '🌿',
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _adviceRow(t.nextSelfCookLabel, advice.selfCook),
+        _adviceRow('${labels[t.nextSelfCookLabel] ?? ''} ${t.nextSelfCookLabel}'.trim(), advice.selfCook),
         const SizedBox(height: 8),
-        _adviceRow(t.nextConvenienceLabel, advice.convenience),
+        _adviceRow('${labels[t.nextConvenienceLabel] ?? ''} ${t.nextConvenienceLabel}'.trim(), advice.convenience),
         const SizedBox(height: 8),
-        _adviceRow(t.nextBentoLabel, advice.bento),
+        _adviceRow('${labels[t.nextBentoLabel] ?? ''} ${t.nextBentoLabel}'.trim(), advice.bento),
         const SizedBox(height: 8),
-        _adviceRow(t.nextOtherLabel, advice.other),
+        _adviceRow('${labels[t.nextOtherLabel] ?? ''} ${t.nextOtherLabel}'.trim(), advice.other),
       ],
     );
   }
@@ -1915,7 +1921,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  t.suggestInstantNowEat,
+                                  '🍽️ ${t.suggestInstantNowEat}',
                                   style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
                                 ),
                                 const SizedBox(height: 8),
