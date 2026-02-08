@@ -7,3 +7,4 @@ backend/__pycache__/
 test.jpg
 .DS_Store
 food-ai-export.json
+tools/.github_token
