@@ -3851,7 +3851,33 @@ class AppState extends ChangeNotifier {
     return hasChanges;
   }
 
-  Future<void> syncFromSupabase({SyncReport? report}) async {
+  Future<List<Map<String, dynamic>>> _fetchPagedRows(
+    Future<dynamic> Function(int from, int to) fetchPage, {
+    int pageSize = 1000,
+  }) async {
+    final all = <Map<String, dynamic>>[];
+    var from = 0;
+    while (true) {
+      final page = await fetchPage(from, from + pageSize - 1);
+      if (page is! List) break;
+      for (final row in page) {
+        if (row is Map<String, dynamic>) {
+          all.add(row);
+        } else if (row is Map) {
+          all.add(row.map((key, value) => MapEntry(key.toString(), value)));
+        }
+      }
+      if (page.length < pageSize) break;
+      from += pageSize;
+    }
+    return all;
+  }
+
+  Future<void> syncFromSupabase({
+    SyncReport? report,
+    DateTime? sinceOverride,
+    bool allowPrune = true,
+  }) async {
     final user = _supabase.currentUser;
     if (user == null) {
       throw Exception('Supabase not signed in');
@@ -3885,14 +3911,17 @@ class AppState extends ChangeNotifier {
         }
       }
     }
-    final since = _localSyncAt();
+    final since = sinceOverride ?? _localSyncAt();
     final existingEntries = {
       for (final entry in entries) entry.id: entry,
     };
-    final query = client.from(kSupabaseMealsTable).select().eq('user_id', user.id);
-    final rows = since == null
-        ? await query
-        : await query.or('updated_at.gt.${since.toIso8601String()},deleted_at.gt.${since.toIso8601String()}');
+    Future<dynamic> mealsQuery() {
+      final base = client.from(kSupabaseMealsTable).select().eq('user_id', user.id).order('id', ascending: true);
+      if (since == null) return base;
+      final iso = since.toIso8601String();
+      return base.or('updated_at.gt.$iso,deleted_at.gt.$iso');
+    }
+    final rows = await _fetchPagedRows((from, to) => mealsQuery().range(from, to));
     if (rows is List) {
       final remoteIds = <String>{};
       for (final row in rows) {
@@ -3963,7 +3992,7 @@ class AppState extends ChangeNotifier {
         }
         await _store.upsert(entry);
       }
-      if (since == null) {
+      if (since == null && allowPrune) {
         // Remove local entries that no longer exist remotely (full sync only)
         final toRemove = entries.where((e) => !remoteIds.contains(e.id)).toList();
         if (toRemove.isNotEmpty) {
@@ -3978,11 +4007,13 @@ class AppState extends ChangeNotifier {
     final existingFoods = {
       for (final food in customFoods) food.id: food,
     };
-    final foodQuery = client.from(kSupabaseCustomFoodsTable).select().eq('user_id', user.id);
-    final foodRows = since == null
-        ? await foodQuery
-        : await foodQuery
-            .or('updated_at.gt.${since.toIso8601String()},deleted_at.gt.${since.toIso8601String()}');
+    Future<dynamic> foodsQuery() {
+      final base = client.from(kSupabaseCustomFoodsTable).select().eq('user_id', user.id).order('id', ascending: true);
+      if (since == null) return base;
+      final iso = since.toIso8601String();
+      return base.or('updated_at.gt.$iso,deleted_at.gt.$iso');
+    }
+    final foodRows = await _fetchPagedRows((from, to) => foodsQuery().range(from, to));
     if (foodRows is List) {
       final remoteFoodIds = <String>{};
       for (final row in foodRows) {
@@ -4043,7 +4074,7 @@ class AppState extends ChangeNotifier {
           if (report != null) report.pulledCustomFoods += 1;
         }
       }
-      if (since == null) {
+      if (since == null && allowPrune) {
         final toRemove = existingFoods.keys.where((id) => !remoteFoodIds.contains(id)).toList();
         if (toRemove.isNotEmpty) {
           for (final id in toRemove) {
@@ -4088,51 +4119,66 @@ class AppState extends ChangeNotifier {
     final hasLocalSettings = localSettingsUpdatedAt != null;
     final hasLocalData = entries.isNotEmpty || customFoods.isNotEmpty;
 
+    bool changed = false;
     if (remoteSyncAt == null) {
       if (!hasLocalData && !hasLocalSettings) {
-        await syncFromSupabase(report: report);
-        final changed = report.hasChanges;
+        await syncFromSupabase(report: report, sinceOverride: localSyncAt, allowPrune: true);
+        changed = report.hasChanges;
         if (changed) {
           final now = DateTime.now().toUtc();
           await _storeRemoteSyncAt(user.id, now);
           await _storeLocalSyncAt(now);
         }
+        _meta['last_sync_fingerprint'] = _syncFingerprint();
+        await _saveOverrides();
         _lastSyncReport = report;
+        _lastSyncError = null;
         return changed;
       }
-      final changed = await syncToSupabase(report: report);
-      if (changed) {
+      // Remote has no sync_meta yet. Pull first without pruning local data.
+      await syncFromSupabase(report: report, sinceOverride: localSyncAt, allowPrune: false);
+      if (report.hasChanges) {
+        changed = true;
+      }
+      final pushed = await syncToSupabase(report: report);
+      if (pushed) {
+        changed = true;
+        final now = DateTime.now().toUtc();
+        await _storeRemoteSyncAt(user.id, now);
+        await _storeLocalSyncAt(now);
+      } else if (changed) {
+        // If we only pulled, still establish sync_meta for future diffs.
         final now = DateTime.now().toUtc();
         await _storeRemoteSyncAt(user.id, now);
         await _storeLocalSyncAt(now);
       }
+      _meta['last_sync_fingerprint'] = _syncFingerprint();
+      await _saveOverrides();
       _lastSyncReport = report;
+      _lastSyncError = null;
       return changed;
     }
 
-    bool changed = false;
-    // 1) Always push local changes first (if any)
+    // 1) Pull remote changes first using the previous local sync time.
+    final shouldPullData = remoteSyncAt != null && (localSyncAt == null || remoteSyncAt.isAfter(localSyncAt));
+    final shouldPullSettings = remoteSettingsUpdatedAt != null &&
+        (localSettingsUpdatedAt == null || remoteSettingsUpdatedAt.isAfter(localSettingsUpdatedAt));
+    final shouldPull = shouldPullData || shouldPullSettings;
+    if (shouldPull) {
+      await syncFromSupabase(report: report, sinceOverride: localSyncAt, allowPrune: true);
+      if (remoteSyncAt != null && (localSyncAt == null || remoteSyncAt.isAfter(localSyncAt))) {
+        await _storeLocalSyncAt(remoteSyncAt);
+      }
+      changed = true;
+    }
+
+    // 2) Then push local changes (if any).
     final pushed = await syncToSupabase(report: report);
     if (pushed) {
       changed = true;
       final now = DateTime.now().toUtc();
       await _storeRemoteSyncAt(user.id, now);
       await _storeLocalSyncAt(now);
-    }
-
-    // 2) Then pull remote changes
-    final updatedRemoteSyncAt = await _fetchRemoteSyncAt(user.id);
-    final shouldPullData =
-        updatedRemoteSyncAt != null && (localSyncAt == null || updatedRemoteSyncAt.isAfter(localSyncAt));
-    final shouldPullSettings = remoteSettingsUpdatedAt != null &&
-        (localSettingsUpdatedAt == null || remoteSettingsUpdatedAt.isAfter(localSettingsUpdatedAt));
-    final shouldPull = shouldPullData || shouldPullSettings;
-    if (shouldPull) {
-      await syncFromSupabase(report: report);
-      if (updatedRemoteSyncAt != null && (localSyncAt == null || updatedRemoteSyncAt.isAfter(localSyncAt))) {
-        await _storeLocalSyncAt(updatedRemoteSyncAt);
-      }
-      changed = true;
     }
 
     // 3) Update fingerprint after sync to avoid stale "no change" state
