@@ -3852,7 +3852,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<List<Map<String, dynamic>>> _fetchPagedRows(
-    Future<dynamic> Function(int from, int to) fetchPage, {
+    dynamic Function(int from, int to) fetchPage, {
     int pageSize = 1000,
   }) async {
     final all = <Map<String, dynamic>>[];
@@ -3915,11 +3915,13 @@ class AppState extends ChangeNotifier {
     final existingEntries = {
       for (final entry in entries) entry.id: entry,
     };
-    Future<dynamic> mealsQuery() {
-      final base = client.from(kSupabaseMealsTable).select().eq('user_id', user.id).order('id', ascending: true);
-      if (since == null) return base;
-      final iso = since.toIso8601String();
-      return base.or('updated_at.gt.$iso,deleted_at.gt.$iso');
+    dynamic mealsQuery() {
+      var base = client.from(kSupabaseMealsTable).select().eq('user_id', user.id);
+      if (since != null) {
+        final iso = since.toIso8601String();
+        base = base.or('updated_at.gt.$iso,deleted_at.gt.$iso');
+      }
+      return base.order('id', ascending: true);
     }
     final rows = await _fetchPagedRows((from, to) => mealsQuery().range(from, to));
     if (rows is List) {
@@ -4007,11 +4009,13 @@ class AppState extends ChangeNotifier {
     final existingFoods = {
       for (final food in customFoods) food.id: food,
     };
-    Future<dynamic> foodsQuery() {
-      final base = client.from(kSupabaseCustomFoodsTable).select().eq('user_id', user.id).order('id', ascending: true);
-      if (since == null) return base;
-      final iso = since.toIso8601String();
-      return base.or('updated_at.gt.$iso,deleted_at.gt.$iso');
+    dynamic foodsQuery() {
+      var base = client.from(kSupabaseCustomFoodsTable).select().eq('user_id', user.id);
+      if (since != null) {
+        final iso = since.toIso8601String();
+        base = base.or('updated_at.gt.$iso,deleted_at.gt.$iso');
+      }
+      return base.order('id', ascending: true);
     }
     final foodRows = await _fetchPagedRows((from, to) => foodsQuery().range(from, to));
     if (foodRows is List) {
