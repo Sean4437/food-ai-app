@@ -32,7 +32,7 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(t.customEditTitle),
+        title: Text('✏️ ${t.customEditTitle}'),
         content: SingleChildScrollView(
           child: Column(
             children: [
@@ -57,21 +57,21 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              TextField(controller: nameController, decoration: InputDecoration(labelText: t.foodNameLabel)),
+              TextField(controller: nameController, decoration: InputDecoration(labelText: '🍽️ ${t.foodNameLabel}')),
               const SizedBox(height: 8),
-              TextField(controller: summaryController, decoration: InputDecoration(labelText: t.customSummaryLabel)),
+              TextField(controller: summaryController, decoration: InputDecoration(labelText: '📝 ${t.customSummaryLabel}')),
               const SizedBox(height: 8),
-              TextField(controller: calorieController, decoration: InputDecoration(labelText: t.calorieLabel)),
+              TextField(controller: calorieController, decoration: InputDecoration(labelText: '🔥 ${t.calorieLabel}')),
               const SizedBox(height: 8),
-              TextField(controller: suggestionController, decoration: InputDecoration(labelText: t.customSuggestionLabel)),
+              TextField(controller: suggestionController, decoration: InputDecoration(labelText: '💡 ${t.customSuggestionLabel}')),
               const SizedBox(height: 8),
-              TextField(controller: proteinController, decoration: InputDecoration(labelText: '${t.protein} (g)')),
+              TextField(controller: proteinController, decoration: InputDecoration(labelText: '🥩 ${t.protein} (g)')),
               const SizedBox(height: 8),
-              TextField(controller: carbsController, decoration: InputDecoration(labelText: '${t.carbs} (g)')),
+              TextField(controller: carbsController, decoration: InputDecoration(labelText: '🍚 ${t.carbs} (g)')),
               const SizedBox(height: 8),
-              TextField(controller: fatController, decoration: InputDecoration(labelText: '${t.fat} (g)')),
+              TextField(controller: fatController, decoration: InputDecoration(labelText: '🥑 ${t.fat} (g)')),
               const SizedBox(height: 8),
-              TextField(controller: sodiumController, decoration: InputDecoration(labelText: '${t.sodium} (mg)')),
+              TextField(controller: sodiumController, decoration: InputDecoration(labelText: '🧂 ${t.sodium} (mg)')),
             ],
           ),
         ),
@@ -150,7 +150,7 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: Text(t.customTabTitle),
+          title: Text('🍱 ${t.customTabTitle}'),
           backgroundColor: Colors.transparent,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
@@ -162,7 +162,7 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
               if (app.customFoods.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Text(t.customEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                  child: Text('🍽️ ${t.customEmpty}', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
                 )
               else
                 for (final food in app.customFoods)
