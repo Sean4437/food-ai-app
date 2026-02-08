@@ -102,7 +102,7 @@ class SummaryScreen extends StatelessWidget {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Text('⬅️', style: TextStyle(fontSize: 16)),
+                        icon: const Icon(Icons.chevron_left, color: Colors.black45, size: 18),
                         onPressed: () {
                           if (Navigator.of(context).canPop()) {
                             Navigator.of(context).pop();
@@ -119,7 +119,7 @@ class SummaryScreen extends StatelessWidget {
                   Row(
                     children: [
                       IconButton(
-                        icon: const Text('⬅️', style: TextStyle(fontSize: 16)),
+                        icon: const Icon(Icons.chevron_left, color: Colors.black45, size: 18),
                         onPressed: () => app.shiftSelectedDate(-1),
                       ),
                       Expanded(
