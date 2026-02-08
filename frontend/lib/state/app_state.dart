@@ -772,13 +772,15 @@ class AppState extends ChangeNotifier {
     final now = DateTime.now();
     final result = entry.result;
     if (result == null) return;
+    final scaledRange = entryCalorieRangeLabel(entry, t);
+    final scaledMacros = scaledMacrosForEntry(entry);
     final food = CustomFood(
       id: _newId(),
       name: entry.overrideFoodName ?? result.foodName,
       summary: result.dishSummary ?? '',
-      calorieRange: result.calorieRange,
+      calorieRange: scaledRange == t.calorieUnknown ? result.calorieRange : scaledRange,
       suggestion: result.suggestion,
-      macros: Map<String, double>.from(result.macros),
+      macros: scaledMacros.isEmpty ? Map<String, double>.from(result.macros) : scaledMacros,
       imageBytes: entry.imageBytes,
       createdAt: now,
       updatedAt: now,
