@@ -97,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Expanded(child: Text(title)),
             Text(value, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
             if (showChevron)
-              const Text('➡️', style: TextStyle(fontSize: 16)),
+              const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
           ],
         ),
       ),
@@ -143,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Text('➡️', style: TextStyle(fontSize: 16)),
+                const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
               ],
             ),
           ],
