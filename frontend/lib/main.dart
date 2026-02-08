@@ -116,7 +116,38 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
+  AppState? _app;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _app = AppStateScope.of(context);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final app = _app;
+      if (app != null) {
+        // ignore: discarded_futures
+        app.runAutoFinalizeFlow();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;

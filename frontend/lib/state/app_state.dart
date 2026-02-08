@@ -668,15 +668,13 @@ class AppState extends ChangeNotifier {
     }
     _scheduleAutoFinalize();
     _scheduleAutoFinalizeWeek();
-    await _maybeFinalizeDayOnLaunch();
-    await _maybeFinalizeWeekOnLaunch();
     // Warm plate asset cache on startup (web uses network for assets).
     precachePlateAsset();
     if (isSupabaseSignedIn) {
       // Do not block app startup on network calls.
       scheduleMicrotask(() async {
         await refreshAccessStatus();
-        await _runAutoSync();
+        await runAutoFinalizeFlow();
       });
     }
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
@@ -702,6 +700,16 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<void> runAutoFinalizeFlow() async {
+    if (!isSupabaseSignedIn) return;
+    await _runAutoSync();
+    final dayFinalized = await _maybeFinalizeDayOnLaunch();
+    final weekFinalized = await _maybeFinalizeWeekOnLaunch();
+    if (dayFinalized || weekFinalized) {
+      await _runAutoSync();
+    }
+  }
+
   Future<void> precachePlateAsset() async {
     final binding = WidgetsBinding.instance;
     await binding.endOfFrame;
@@ -713,49 +721,51 @@ class AppState extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<void> _maybeFinalizeDayOnLaunch() async {
+  Future<bool> _maybeFinalizeDayOnLaunch() async {
     final now = DateTime.now();
     if (!isDailySummaryReady(now)) {
-      return;
+      return false;
     }
     final dayKey = _dayKey(now);
     if (_meta['last_auto_finalize'] == dayKey) {
-      return;
+      return false;
     }
     if (_dayOverrides.containsKey(dayKey)) {
-      return;
+      return false;
     }
     final locale = _localeFromProfile();
     final t = lookupAppLocalizations(locale);
     final success = await finalizeDay(now, locale.toLanguageTag(), t);
     if (!success) {
-      return;
+      return false;
     }
     _meta['last_auto_finalize'] = dayKey;
     await _saveOverrides();
+    return true;
   }
 
-  Future<void> _maybeFinalizeWeekOnLaunch() async {
+  Future<bool> _maybeFinalizeWeekOnLaunch() async {
     final now = DateTime.now();
     if (!isWeeklySummaryReady(now)) {
-      return;
+      return false;
     }
     final weekStart = _weekStartFor(now);
     final weekKey = _weekKey(weekStart);
     if (_meta['last_auto_week'] == weekKey) {
-      return;
+      return false;
     }
     if (_weekOverrides.containsKey(weekKey)) {
-      return;
+      return false;
     }
     final locale = _localeFromProfile();
     final t = lookupAppLocalizations(locale);
     final success = await finalizeWeek(now, locale.toLanguageTag(), t);
     if (!success) {
-      return;
+      return false;
     }
     _meta['last_auto_week'] = weekKey;
     await _saveOverrides();
+    return true;
   }
 
   Future<void> addCustomFoodFromEntry(MealEntry entry, AppLocalizations t) async {
@@ -1320,19 +1330,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> autoFinalizeToday() async {
-    final locale = _localeFromProfile();
-    final t = lookupAppLocalizations(locale);
-    final todayKey = _dayKey(DateTime.now());
-    if (_meta['last_auto_finalize'] == todayKey) {
-      _scheduleAutoFinalize();
-      return;
-    }
-    final success = await finalizeDay(DateTime.now(), locale.toLanguageTag(), t);
-    if (success) {
-      _meta['last_auto_finalize'] = todayKey;
-      await _saveOverrides();
-      await _runAutoSync();
-    }
+    await runAutoFinalizeFlow();
     _scheduleAutoFinalize();
   }
 
@@ -1424,18 +1422,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> autoFinalizeWeek() async {
-    final locale = _localeFromProfile();
-    final t = lookupAppLocalizations(locale);
-    final weekKey = _weekKey(_weekStartFor(DateTime.now()));
-    if (_meta['last_auto_week'] == weekKey) {
-      _scheduleAutoFinalizeWeek();
-      return;
-    }
-    final success = await finalizeWeek(DateTime.now(), locale.toLanguageTag(), t);
-    if (success) {
-      _meta['last_auto_week'] = weekKey;
-      await _saveOverrides();
-    }
+    await runAutoFinalizeFlow();
     _scheduleAutoFinalizeWeek();
   }
 
