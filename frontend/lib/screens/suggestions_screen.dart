@@ -1041,9 +1041,31 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         const SizedBox(height: 6),
         _buildChipGroup(options: sizeOptions, value: currentSize, onSelected: _updateContainerSize),
         const SizedBox(height: 12),
-        Text(t.referenceObjectLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        _buildChipGroup(options: referenceOptions, value: _referenceObject, onSelected: _updateReferenceObject),
+        _buildReferenceAdjustSection(t, referenceOptions),
+      ],
+    );
+  }
+
+  Widget _buildReferenceAdjustSection(
+    AppLocalizations t,
+    List<MapEntry<String, String>> referenceOptions,
+  ) {
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: const EdgeInsets.only(top: 6),
+      title: Text(
+        t.referenceObjectLabel,
+        style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        t.referenceLengthHint,
+        style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+      ),
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _buildChipGroup(options: referenceOptions, value: _referenceObject, onSelected: _updateReferenceObject),
+        ),
         if (_referenceObject == 'manual') ...[
           const SizedBox(height: 10),
           Text(t.referenceLengthLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
@@ -1064,8 +1086,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(t.referenceLengthHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
         ],
       ],
     );
