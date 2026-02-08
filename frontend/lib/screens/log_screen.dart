@@ -339,7 +339,7 @@ class _LogScreenState extends State<LogScreen> {
         ),
         IconButton(
           onPressed: () => _shiftMonth(app, 1),
-          icon: const Text('➡️', style: TextStyle(fontSize: 16)),
+          icon: const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
         ),
       ],
     );

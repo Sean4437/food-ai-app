@@ -411,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Text(app.activityLabel(current, t), style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
                         const Spacer(),
-                        const Text('➡️', style: TextStyle(fontSize: 16)),
+                        const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
                       ],
                     ),
                   ),
@@ -432,7 +432,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Text(shortExercise, style: AppTextStyles.caption(context).copyWith(color: Colors.black87, fontWeight: FontWeight.w600)),
                         const Spacer(),
-                        const Text('➡️', style: TextStyle(fontSize: 16)),
+                        const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
                       ],
                     ),
                   ),
@@ -455,7 +455,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(t.exerciseMinutesLabel, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
                   const Spacer(),
                   Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
-                  const Text('➡️', style: TextStyle(fontSize: 16)),
+                  const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
                 ],
               ),
             ),
