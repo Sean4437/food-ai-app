@@ -183,6 +183,9 @@ class MealDetailScreen extends StatelessWidget {
     final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
     final mealGroup = app.entriesForMeal(entry);
     final mealSummary = app.buildMealSummary(mealGroup, t);
+    final mealCalorieMid = mealSummary == null ? null : app.calorieRangeMid(mealSummary.calorieRange);
+    final referenceUsed = (entry.result?.referenceUsed ?? '').trim();
+    final referenceLabel = referenceUsed.isEmpty ? t.referenceObjectNone : referenceUsed;
     final prefix = entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
 
     return AppBackground(
@@ -289,6 +292,11 @@ class MealDetailScreen extends StatelessWidget {
                                     mealSummary?.advice ?? t.detailAiEmpty,
                                     style: AppTextStyles.title1(context).copyWith(color: Colors.black87, fontWeight: FontWeight.w600),
                                   ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${t.referenceObjectLabel}：$referenceLabel',
+                                    style: AppTextStyles.caption(context).copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
+                                  ),
                                 ],
                               ),
                             ),
@@ -299,7 +307,7 @@ class MealDetailScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
-                                mealSummary?.calorieRange ?? t.calorieUnknown,
+                                mealCalorieMid == null ? t.calorieUnknown : mealCalorieMid.round().toString(),
                                 style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
                               ),
                             ),
