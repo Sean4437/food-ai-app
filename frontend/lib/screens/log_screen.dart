@@ -454,7 +454,8 @@ class _LogScreenState extends State<LogScreen> {
   Widget _mealRow(BuildContext context, AppState app, MealEntry entry, List<MealEntry> group) {
     final t = AppLocalizations.of(context)!;
     final summary = _entryTitle(entry, t);
-    final calorie = _withEmoji('🔥', app.entryCalorieRangeLabel(entry, t));
+    final mid = app.entryCalorieMid(entry);
+    final calorie = _withEmoji('🔥', mid == null ? '—' : mid.round().toString());
     final tags = entry.result?.judgementTags ?? const <String>[];
     return GestureDetector(
       onTap: () {
