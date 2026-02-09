@@ -3423,6 +3423,30 @@ abstract class AppLocalizations {
   /// **'聊天失敗，請稍後再試'**
   String get chatError;
 
+  /// No description provided for @chatErrorAuth.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登入已過期，請重新登入'**
+  String get chatErrorAuth;
+
+  /// No description provided for @chatErrorQuota.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'今日聊天額度已用完，請稍後再試'**
+  String get chatErrorQuota;
+
+  /// No description provided for @chatErrorServer.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'喵嗚～我有點忙，稍後再試'**
+  String get chatErrorServer;
+
+  /// No description provided for @chatErrorNetwork.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'網路不穩定，請稍後再試'**
+  String get chatErrorNetwork;
+
   /// No description provided for @chatAvatarLabel.
   ///
   /// In zh_TW, this message translates to:

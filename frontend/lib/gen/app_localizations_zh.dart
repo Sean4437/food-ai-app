@@ -1735,6 +1735,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatError => '聊天失败，请稍后再试';
 
   @override
+  String get chatErrorAuth => '登入已过期，请重新登入';
+
+  @override
+  String get chatErrorQuota => '今日聊天额度已用完，请稍后再试';
+
+  @override
+  String get chatErrorServer => '喵嗚～我有点忙，稍后再试';
+
+  @override
+  String get chatErrorNetwork => '网路不稳定，请稍后再试';
+
+  @override
   String get chatAvatarLabel => '聊天头像';
 
   @override
@@ -3485,6 +3497,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get chatError => '聊天失敗，請稍後再試';
+
+  @override
+  String get chatErrorAuth => '登入已過期，請重新登入';
+
+  @override
+  String get chatErrorQuota => '今日聊天額度已用完，請稍後再試';
+
+  @override
+  String get chatErrorServer => '喵嗚～我有點忙，稍後再試';
+
+  @override
+  String get chatErrorNetwork => '網路不穩定，請稍後再試';
 
   @override
   String get chatAvatarLabel => '聊天頭像';

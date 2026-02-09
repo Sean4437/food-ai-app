@@ -227,6 +227,12 @@ _chat_blocklist = {
     "gambling",
 }
 
+
+def _chat_ai_fallback_reply(lang: str) -> str:
+    if lang == "zh-TW":
+        return "喵嗚～我剛剛有點累，稍後再問我一次好嗎？"
+    return "Meow~ I’m a bit tired right now. Please try again soon."
+
 _usage_dir = _base_dir / "data"
 _usage_dir.mkdir(exist_ok=True)
 _usage_log_path = _usage_dir / "usage.jsonl"
@@ -2357,7 +2363,17 @@ async def chat(
             source="rate_limit",
             confidence=1.0,
         )
-    _ensure_ai_available()
+    try:
+        _ensure_ai_available()
+    except HTTPException as exc:
+        if exc.detail in {"ai_disabled", "ai_not_configured", "ai_quota_exceeded"}:
+            return ChatResponse(
+                reply=_chat_ai_fallback_reply(use_lang),
+                summary=payload.summary or "",
+                source="fallback",
+                confidence=0.0,
+            )
+        raise
     try:
         prompt = _build_chat_prompt(
             use_lang,
@@ -2412,7 +2428,14 @@ async def chat(
             source="ai",
             confidence=data.get("confidence"),
         )
-    except HTTPException:
+    except HTTPException as exc:
+        if exc.detail in {"ai_failed", "ai_invalid_response"}:
+            return ChatResponse(
+                reply=_chat_ai_fallback_reply(use_lang),
+                summary=payload.summary or "",
+                source="fallback",
+                confidence=0.0,
+            )
         raise
     except Exception as exc:
         global _last_ai_error

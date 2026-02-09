@@ -1763,6 +1763,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatError => 'Chat failed. Please try again.';
 
   @override
+  String get chatErrorAuth => 'Session expired. Please sign in again.';
+
+  @override
+  String get chatErrorQuota => 'Daily chat quota reached. Please try later.';
+
+  @override
+  String get chatErrorServer => 'Meow~ I\'m busy. Please try again soon.';
+
+  @override
+  String get chatErrorNetwork => 'Network issue. Please try again.';
+
+  @override
   String get chatAvatarLabel => 'Chat avatar';
 
   @override

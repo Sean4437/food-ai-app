@@ -3571,7 +3571,19 @@ class AppState extends ChangeNotifier {
       _trimChatHistory();
       await _persistChat();
     } catch (e) {
-      _chatError = t.chatError;
+      if (e is ChatApiException) {
+        if (e.statusCode == 401 || e.statusCode == 402) {
+          _chatError = t.chatErrorAuth;
+        } else if (e.statusCode == 429) {
+          _chatError = t.chatErrorQuota;
+        } else if (e.statusCode >= 500) {
+          _chatError = t.chatErrorServer;
+        } else {
+          _chatError = t.chatError;
+        }
+      } else {
+        _chatError = t.chatErrorNetwork;
+      }
     } finally {
       _chatSending = false;
       notifyListeners();

@@ -298,8 +298,18 @@ class ApiService {
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
-      throw Exception('Chat failed: ${response.statusCode}');
+      throw ChatApiException(response.statusCode, response.body);
     }
     return json.decode(response.body) as Map<String, dynamic>;
   }
+}
+
+class ChatApiException implements Exception {
+  ChatApiException(this.statusCode, this.body);
+
+  final int statusCode;
+  final String body;
+
+  @override
+  String toString() => 'ChatApiException($statusCode)';
 }
