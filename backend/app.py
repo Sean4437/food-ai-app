@@ -13,6 +13,7 @@ import json
 import os
 import uuid
 import hashlib
+import time
 from datetime import datetime, timezone, timedelta
 import jwt
 from jwt import PyJWKClient
@@ -200,6 +201,31 @@ _client = OpenAI(api_key=API_KEY) if API_KEY else None
 logging.basicConfig(level=logging.INFO)
 _last_ai_error: Optional[str] = None
 _jwks_client: Optional[PyJWKClient] = None
+_chat_rate_state: dict[str, list[float]] = {}
+_chat_rate_limit = int(os.getenv("CHAT_RATE_LIMIT_PER_MIN", "5"))
+_chat_rate_window_sec = int(os.getenv("CHAT_RATE_WINDOW_SEC", "60"))
+
+_chat_blocklist = {
+    "色情",
+    "裸照",
+    "約炮",
+    "援交",
+    "毒品",
+    "自殺",
+    "殺人",
+    "炸彈",
+    "詐騙",
+    "賭博",
+    "porn",
+    "nude",
+    "sex",
+    "drugs",
+    "suicide",
+    "kill",
+    "bomb",
+    "scam",
+    "gambling",
+}
 
 _usage_dir = _base_dir / "data"
 _usage_dir.mkdir(exist_ok=True)
@@ -1381,6 +1407,47 @@ def _increment_daily_count() -> None:
     _save_daily_counts(counts)
 
 
+def _chat_rate_allowed(user_id: str) -> bool:
+    if _chat_rate_limit <= 0:
+        return True
+    now = time.time()
+    window = _chat_rate_window_sec
+    entries = _chat_rate_state.get(user_id, [])
+    entries = [t for t in entries if now - t <= window]
+    if len(entries) >= _chat_rate_limit:
+        _chat_rate_state[user_id] = entries
+        return False
+    entries.append(now)
+    _chat_rate_state[user_id] = entries
+    return True
+
+
+def _find_latest_user_message(messages: List[ChatMessageInput]) -> str:
+    for msg in reversed(messages):
+        if (msg.role or "").lower() == "user":
+            return (msg.content or "").strip()
+    return ""
+
+
+def _chat_is_blocked(text: str) -> bool:
+    if not text:
+        return False
+    lower = text.lower()
+    return any(term in lower for term in _chat_blocklist)
+
+
+def _chat_blocked_reply(lang: str) -> str:
+    if lang == "zh-TW":
+        return "喵～我只聊飲食與健康相關問題喔！可以問我今天要吃什麼或怎麼搭配～"
+    return "Meow~ I can only help with food and health topics. Ask me about meals or nutrition!"
+
+
+def _chat_rate_reply(lang: str) -> str:
+    if lang == "zh-TW":
+        return "喵嗚～先慢一點點，我剛剛回覆太頻繁了，稍後再問我喔！"
+    return "Meow~ a little too fast. Please wait a moment and try again!"
+
+
 def _build_chat_prompt(
     lang: str,
     profile: dict | None,
@@ -1451,6 +1518,7 @@ def _build_chat_prompt(
             "- 若資料不足，先追問 1-2 個必要問題\n"
             "- 若今天剩餘熱量 <= 0，且使用者想吃/要建議，必須勸戒不要再吃\n"
             "- 口癖：可用「喵～」或「喵嗚」點綴，但每次回覆最多出現 1 次，且隨機低頻（約 3-5 次回覆出現 1 次）\n"
+            "- 若問題與飲食/健康無關，請簡短婉拒並引導回飲食主題\n"
             "JSON 範例：\n"
             "{\n  \"reply\": \"今天晚餐建議清淡些…\",\n  \"summary\": \"使用者偏好清淡、避免油炸…\"\n}\n"
             f"最近 7 天紀錄：\n{days_block}\n"
@@ -1464,6 +1532,7 @@ def _build_chat_prompt(
         "- summary: compact memory (<= 120 words), keep user preferences/goals\n"
         "- Ask 1-2 clarifying questions if data is insufficient\n"
         "- If today's remaining_kcal <= 0 and user asks for food suggestions, discourage further eating\n"
+        "- If the question is unrelated to food/health, politely decline and redirect to diet topics\n"
         "JSON example:\n"
         "{\n  \"reply\": \"Keep dinner light...\",\n  \"summary\": \"User prefers light meals...\"\n}\n"
         f"Last 7 days:\n{days_block}\n"
@@ -2272,6 +2341,22 @@ async def chat(
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
+    user_id = _auth.get("user_id", "")
+    latest_user = _find_latest_user_message(payload.messages or [])
+    if _chat_is_blocked(latest_user):
+        return ChatResponse(
+            reply=_chat_blocked_reply(use_lang),
+            summary=payload.summary or "",
+            source="rule",
+            confidence=1.0,
+        )
+    if user_id and not _chat_rate_allowed(user_id):
+        return ChatResponse(
+            reply=_chat_rate_reply(use_lang),
+            summary=payload.summary or "",
+            source="rate_limit",
+            confidence=1.0,
+        )
     _ensure_ai_available()
     try:
         prompt = _build_chat_prompt(
