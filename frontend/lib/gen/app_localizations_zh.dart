@@ -1700,7 +1700,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get referenceLengthApply => '套用';
 
   @override
-  String get tabChatAssistant => '饮食小助手咚咚';
+  String get tabChatAssistant => '咚咚';
 
   @override
   String get chatEmptyHint => '嗨～我是咚咚，问我饮食或目标吧！';
@@ -1728,6 +1728,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chatError => '聊天失败，请稍后再试';
+
+  @override
+  String get chatAvatarLabel => '聊天头像';
+
+  @override
+  String get chatAvatarSet => '已设置';
+
+  @override
+  String get chatAvatarUnset => '未设置';
+
+  @override
+  String get chatAvatarSheetTitle => '设置聊天头像';
+
+  @override
+  String get chatAvatarPick => '选择照片';
+
+  @override
+  String get chatAvatarRemove => '移除照片';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -3426,7 +3444,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get referenceLengthApply => '套用';
 
   @override
-  String get tabChatAssistant => '飲食小助手咚咚';
+  String get tabChatAssistant => '咚咚';
 
   @override
   String get chatEmptyHint => '嗨～我是咚咚，問我飲食或目標吧！';
@@ -3454,4 +3472,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get chatError => '聊天失敗，請稍後再試';
+
+  @override
+  String get chatAvatarLabel => '聊天頭像';
+
+  @override
+  String get chatAvatarSet => '已設定';
+
+  @override
+  String get chatAvatarUnset => '未設定';
+
+  @override
+  String get chatAvatarSheetTitle => '設定聊天頭像';
+
+  @override
+  String get chatAvatarPick => '選擇照片';
+
+  @override
+  String get chatAvatarRemove => '移除照片';
 }

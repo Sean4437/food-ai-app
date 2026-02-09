@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import '../utils/data_exporter.dart';
 import '../design/theme_controller.dart';
 import '../state/app_state.dart';
@@ -347,6 +348,118 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) async {
     final result = await showTimePicker(context: context, initialTime: initial);
     if (result != null) onSave(result);
+  }
+
+  String _genderEmoji(String gender) {
+    switch (gender) {
+      case 'male':
+        return '👨';
+      case 'female':
+        return '👩';
+      case 'other':
+        return '🧑';
+      default:
+        return '🙂';
+    }
+  }
+
+  Widget _chatAvatarPreview(AppState app, double size) {
+    final bytes = app.chatAvatarBytes;
+    if (bytes != null && bytes.isNotEmpty) {
+      return ClipOval(
+        child: Image.memory(bytes, width: size, height: size, fit: BoxFit.cover),
+      );
+    }
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Center(
+        child: Text(_genderEmoji(app.profile.gender), style: TextStyle(fontSize: size * 0.5)),
+      ),
+    );
+  }
+
+  Future<void> _pickChatAvatar(BuildContext context, AppState app) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    if (!context.mounted) return;
+    await app.updateChatAvatar(bytes);
+  }
+
+  Future<void> _showChatAvatarSheet(BuildContext context, AppState app, AppLocalizations t) async {
+    final hasAvatar = app.chatAvatarBytes != null && app.chatAvatarBytes!.isNotEmpty;
+    await showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8))),
+            const SizedBox(height: 12),
+            Text(t.chatAvatarSheetTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 12),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(t.chatAvatarPick),
+              onTap: () async {
+                Navigator.of(context).pop();
+                await _pickChatAvatar(context, app);
+              },
+            ),
+            if (hasAvatar)
+              ListTile(
+                leading: const Icon(Icons.delete_outline),
+                title: Text(t.chatAvatarRemove),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  await app.updateChatAvatar(null);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chatAvatarRow(BuildContext context, AppState app, AppLocalizations t) {
+    final hasAvatar = app.chatAvatarBytes != null && app.chatAvatarBytes!.isNotEmpty;
+    final value = hasAvatar ? t.chatAvatarSet : t.chatAvatarUnset;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: InkWell(
+        onTap: () => _showChatAvatarSheet(context, app, t),
+        child: Row(
+          children: [
+            const Text('🖼️', style: TextStyle(fontSize: 18)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(t.chatAvatarLabel)),
+            Text(value, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+            const SizedBox(width: 8),
+            _chatAvatarPreview(app, 32),
+            const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<Map<String, String>?> _loadVersionInfo() async {
@@ -935,7 +1048,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ],
                           ),
                         ),
-                      if (isSupabaseSignedIn)
+                      if (isSupabaseSignedIn) ...[
                         _row(
                           context,
                           t.nicknameLabel,
@@ -947,8 +1060,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             initial: profile.name,
                             onSave: (value) => app.updateNickname(value),
                           ),
-                        )
-                      else ...[
+                        ),
+                        const SizedBox(height: 8),
+                        _chatAvatarRow(context, app, t),
+                      ] else ...[
                         Row(
                           children: [
                             Expanded(
@@ -974,6 +1089,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                        _chatAvatarRow(context, app, t),
                         const SizedBox(height: 8),
                         Row(
                           children: [

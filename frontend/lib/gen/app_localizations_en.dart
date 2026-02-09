@@ -1725,7 +1725,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referenceLengthApply => 'Apply';
 
   @override
-  String get tabChatAssistant => 'Assistant';
+  String get tabChatAssistant => 'Dongdong';
 
   @override
   String get chatEmptyHint =>
@@ -1756,4 +1756,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatError => 'Chat failed. Please try again.';
+
+  @override
+  String get chatAvatarLabel => 'Chat avatar';
+
+  @override
+  String get chatAvatarSet => 'Set';
+
+  @override
+  String get chatAvatarUnset => 'Not set';
+
+  @override
+  String get chatAvatarSheetTitle => 'Set chat avatar';
+
+  @override
+  String get chatAvatarPick => 'Choose photo';
+
+  @override
+  String get chatAvatarRemove => 'Remove photo';
 }

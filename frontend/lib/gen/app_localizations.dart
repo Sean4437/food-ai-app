@@ -3360,7 +3360,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabChatAssistant.
   ///
   /// In zh_TW, this message translates to:
-  /// **'飲食小助手咚咚'**
+  /// **'咚咚'**
   String get tabChatAssistant;
 
   /// No description provided for @chatEmptyHint.
@@ -3416,6 +3416,42 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'聊天失敗，請稍後再試'**
   String get chatError;
+
+  /// No description provided for @chatAvatarLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'聊天頭像'**
+  String get chatAvatarLabel;
+
+  /// No description provided for @chatAvatarSet.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已設定'**
+  String get chatAvatarSet;
+
+  /// No description provided for @chatAvatarUnset.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'未設定'**
+  String get chatAvatarUnset;
+
+  /// No description provided for @chatAvatarSheetTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'設定聊天頭像'**
+  String get chatAvatarSheetTitle;
+
+  /// No description provided for @chatAvatarPick.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'選擇照片'**
+  String get chatAvatarPick;
+
+  /// No description provided for @chatAvatarRemove.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'移除照片'**
+  String get chatAvatarRemove;
 }
 
 class _AppLocalizationsDelegate

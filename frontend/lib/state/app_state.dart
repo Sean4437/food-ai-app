@@ -90,6 +90,7 @@ class AppState extends ChangeNotifier {
   String _chatSummary = '';
   bool _chatSending = false;
   String? _chatError;
+  Uint8List? _chatAvatarBytes;
   final Map<String, Map<String, dynamic>> _deletedEntries = {};
   final Map<String, Map<String, dynamic>> _deletedCustomFoods = {};
   final Set<String> _failedMealSyncIds = {};
@@ -197,6 +198,7 @@ class AppState extends ChangeNotifier {
   bool get chatSending => _chatSending;
   String? get chatError => _chatError;
   List<ChatMessage> get chatMessages => List.unmodifiable(_chatMessages);
+  Uint8List? get chatAvatarBytes => _chatAvatarBytes;
 
   String buildAiContext() {
     final now = DateTime.now();
@@ -625,6 +627,7 @@ class AppState extends ChangeNotifier {
     if (profileMap != null) {
       _applyProfile(profileMap);
     }
+    _refreshChatAvatarBytes();
     final didMigrateApi = _migrateApiBaseUrlIfNeeded();
     bool profileChanged = false;
     if (profile.nutritionValueMode != 'amount') {
@@ -2360,6 +2363,7 @@ class AppState extends ChangeNotifier {
       ..name = updated.name
       ..email = updated.email
       ..gender = updated.gender
+      ..chatAvatarBase64 = updated.chatAvatarBase64
       ..containerType = updated.containerType
       ..containerSize = updated.containerSize
       ..containerDepth = updated.containerDepth
@@ -2386,6 +2390,7 @@ class AppState extends ChangeNotifier {
       ..textScale = updated.textScale
       ..nutritionChartStyle = updated.nutritionChartStyle
       ..glowEnabled = updated.glowEnabled;
+    _refreshChatAvatarBytes();
     notifyListeners();
     _touchSettingsUpdatedAt();
     // ignore: unawaited_futures
@@ -3416,6 +3421,49 @@ class AppState extends ChangeNotifier {
     _chatSummary = _meta[_kChatSummaryKey] ?? '';
   }
 
+  void _refreshChatAvatarBytes() {
+    final raw = profile.chatAvatarBase64;
+    if (raw.isEmpty) {
+      _chatAvatarBytes = null;
+      return;
+    }
+    try {
+      _chatAvatarBytes = base64Decode(raw);
+    } catch (_) {
+      _chatAvatarBytes = null;
+    }
+  }
+
+  Uint8List _normalizeChatAvatar(Uint8List bytes) {
+    try {
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return bytes;
+      final size = min(decoded.width, decoded.height);
+      final cropped = img.copyCrop(
+        decoded,
+        x: ((decoded.width - size) / 2).round(),
+        y: ((decoded.height - size) / 2).round(),
+        width: size,
+        height: size,
+      );
+      final resized = img.copyResize(cropped, width: 128, height: 128);
+      return Uint8List.fromList(img.encodePng(resized));
+    } catch (_) {
+      return bytes;
+    }
+  }
+
+  Future<void> updateChatAvatar(Uint8List? bytes) async {
+    Uint8List? normalized;
+    String encoded = '';
+    if (bytes != null && bytes.isNotEmpty) {
+      normalized = _normalizeChatAvatar(bytes);
+      encoded = base64Encode(normalized);
+    }
+    _chatAvatarBytes = normalized;
+    updateField((p) => p.chatAvatarBase64 = encoded);
+  }
+
   Future<void> _persistChat() async {
     _meta[_kChatHistoryKey] = json.encode(_chatMessages.map((msg) => msg.toJson()).toList());
     _meta[_kChatSummaryKey] = _chatSummary;
@@ -3453,6 +3501,7 @@ class AppState extends ChangeNotifier {
       'weight_kg': profile.weightKg,
       'age': profile.age,
       'gender': profile.gender,
+      'chat_avatar': profile.chatAvatarBase64,
       'tone': profile.tone,
       'persona': profile.persona,
       'activity_level': dailyActivityLevel(date),
@@ -4989,6 +5038,7 @@ class AppState extends ChangeNotifier {
       ..name = (data['name'] as String?) ?? profile.name
       ..email = (data['email'] as String?) ?? profile.email
       ..gender = (data['gender'] as String?) ?? profile.gender
+      ..chatAvatarBase64 = (data['chat_avatar'] as String?) ?? profile.chatAvatarBase64
       ..containerType = (data['container_type'] as String?) ?? profile.containerType
       ..containerSize = (data['container_size'] as String?) ?? profile.containerSize
       ..containerDepth = (data['container_depth'] as String?) ?? profile.containerDepth
@@ -5031,6 +5081,7 @@ class AppState extends ChangeNotifier {
       ..nutritionValueMode = (data['nutrition_value_mode'] as String?) ?? profile.nutritionValueMode
       ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled
       ..exerciseSuggestionType = (data['exercise_suggestion_type'] as String?) ?? profile.exerciseSuggestionType;
+    _refreshChatAvatarBytes();
     if (profile.nutritionValueMode == 'percent') {
       profile.nutritionValueMode = 'amount';
     }
@@ -5214,6 +5265,7 @@ class UserProfile {
     required this.name,
     required this.email,
     required this.gender,
+    required this.chatAvatarBase64,
     required this.containerType,
     required this.containerSize,
     required this.containerDepth,
@@ -5261,6 +5313,7 @@ class UserProfile {
   String name;
   String email;
   String gender;
+  String chatAvatarBase64;
   String containerType;
   String containerSize;
   String containerDepth;
@@ -5309,6 +5362,7 @@ class UserProfile {
       name: '小明',
       email: 'xiaoming123@gmail.com',
       gender: 'unspecified',
+      chatAvatarBase64: '',
       containerType: 'bowl',
       containerSize: 'medium',
       containerDepth: 'medium',

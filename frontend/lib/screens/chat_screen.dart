@@ -66,54 +66,95 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildBubble(ChatMessage msg, bool isUser, ThemeData theme) {
+  String _genderEmoji(String gender) {
+    switch (gender) {
+      case 'male':
+        return '👨';
+      case 'female':
+        return '👩';
+      case 'other':
+        return '🧑';
+      default:
+        return '🙂';
+    }
+  }
+
+  Widget _buildUserAvatar(AppState app) {
+    const size = 80.0;
+    final bytes = app.chatAvatarBytes;
+    if (bytes != null && bytes.isNotEmpty) {
+      return ClipOval(
+        child: Image.memory(bytes, width: size, height: size, fit: BoxFit.cover),
+      );
+    }
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(_genderEmoji(app.profile.gender), style: const TextStyle(fontSize: 32)),
+      ),
+    );
+  }
+
+  Widget _buildAssistantAvatar() {
+    const size = 80.0;
+    return Image.asset('assets/cat01.png', width: size, height: size);
+  }
+
+  Widget _buildBubble(ChatMessage msg, bool isUser, ThemeData theme, AppState app) {
     final bubbleColor = isUser ? theme.colorScheme.primary.withOpacity(0.9) : Colors.white;
     final textColor = isUser ? Colors.white : Colors.black87;
-    final alignment = isUser ? Alignment.centerRight : Alignment.centerLeft;
     final radius = Radius.circular(16);
-    return Align(
-      alignment: alignment,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: isUser ? 60 : 18,
-          right: isUser ? 18 : 60,
-          top: 6,
-          bottom: 6,
+    final bubble = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: bubbleColor,
+        borderRadius: BorderRadius.only(
+          topLeft: radius,
+          topRight: radius,
+          bottomLeft: isUser ? radius : const Radius.circular(6),
+          bottomRight: isUser ? const Radius.circular(6) : radius,
         ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: bubbleColor,
-                borderRadius: BorderRadius.only(
-                  topLeft: radius,
-                  topRight: radius,
-                  bottomLeft: isUser ? radius : const Radius.circular(6),
-                  bottomRight: isUser ? const Radius.circular(6) : radius,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Text(
-                msg.content,
-                style: AppTextStyles.body(context).copyWith(color: textColor, height: 1.4),
-              ),
-            ),
-            if (!isUser)
-              Positioned(
-                left: -10,
-                top: -20,
-                child: Image.asset('assets/cat01.png', width: 40, height: 40),
-              ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Text(
+        msg.content,
+        style: AppTextStyles.body(context).copyWith(color: textColor, height: 1.4),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isUser) ...[
+            _buildAssistantAvatar(),
+            const SizedBox(width: 10),
           ],
-        ),
+          Flexible(child: bubble),
+          if (isUser) ...[
+            const SizedBox(width: 10),
+            _buildUserAvatar(app),
+          ],
+        ],
       ),
     );
   }
@@ -133,7 +174,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemBuilder: (context, index) {
                     final msg = messages[index];
                     final isUser = msg.role == 'user';
-                    return _buildBubble(msg, isUser, theme);
+                    return _buildBubble(msg, isUser, theme, app);
                   },
                 ),
         ),

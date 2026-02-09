@@ -756,7 +756,7 @@
   "referenceLengthLabel": "測距長度（公分）",
   "referenceLengthHint": "輸入 iOS 測距量到的公分",
   "referenceLengthApply": "套用",
-  "tabChatAssistant": "饮食小助手咚咚",
+  "tabChatAssistant": "咚咚",
   "chatEmptyHint": "嗨～我是咚咚，问我饮食或目标吧！",
   "chatInputHint": "问问咚咚...",
   "chatLockedTitle": "订阅即可开启聊天",
@@ -765,5 +765,11 @@
   "chatClearTitle": "清除聊天记录？",
   "chatClearBody": "这会移除本机上的对话内容。",
   "chatClearConfirm": "清除",
-  "chatError": "聊天失败，请稍后再试"
+  "chatError": "聊天失败，请稍后再试",
+  "chatAvatarLabel": "聊天头像",
+  "chatAvatarSet": "已设置",
+  "chatAvatarUnset": "未设置",
+  "chatAvatarSheetTitle": "设置聊天头像",
+  "chatAvatarPick": "选择照片",
+  "chatAvatarRemove": "移除照片"
 }

@@ -756,7 +756,7 @@
   "referenceLengthLabel": "Measured length (cm)",
   "referenceLengthHint": "Enter the measured length in cm",
   "referenceLengthApply": "Apply",
-  "tabChatAssistant": "Assistant",
+  "tabChatAssistant": "Dongdong",
   "chatEmptyHint": "Hi! I'm Dongdong. Ask me about your meals or goals.",
   "chatInputHint": "Ask Dongdong...",
   "chatLockedTitle": "Chat unlocked with subscription",
@@ -765,5 +765,11 @@
   "chatClearTitle": "Clear chat history?",
   "chatClearBody": "This will remove the conversation on this device.",
   "chatClearConfirm": "Clear",
-  "chatError": "Chat failed. Please try again."
+  "chatError": "Chat failed. Please try again.",
+  "chatAvatarLabel": "Chat avatar",
+  "chatAvatarSet": "Set",
+  "chatAvatarUnset": "Not set",
+  "chatAvatarSheetTitle": "Set chat avatar",
+  "chatAvatarPick": "Choose photo",
+  "chatAvatarRemove": "Remove photo"
 }
