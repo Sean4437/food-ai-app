@@ -154,6 +154,7 @@ class ChatRequest(BaseModel):
     summary: Optional[str] = None
     profile: Optional[dict] = None
     days: Optional[List[dict]] = None
+    context: Optional[dict] = None
     lang: Optional[str] = None
 
 
@@ -1459,6 +1460,7 @@ def _build_chat_prompt(
     profile: dict | None,
     days: Optional[List[dict]],
     summary: Optional[str],
+    context: Optional[dict],
 ) -> str:
     assistant_name = ""
     if profile:
@@ -1514,6 +1516,21 @@ def _build_chat_prompt(
     days_block = "\n".join(day_lines) if day_lines else ("- 無紀錄" if lang == "zh-TW" else "- no records")
     summary_block = summary.strip() if summary else ""
 
+    now_text = ""
+    if context:
+        now_raw = str(context.get("now") or "").strip()
+        last_meal = str(context.get("last_meal_time") or "").strip()
+        if lang == "zh-TW":
+            now_text = (
+                f"現在時間：{now_raw or '未知'}\n"
+                f"最近一餐時間：{last_meal or '未知'}\n"
+            )
+        else:
+            now_text = (
+                f"Current time: {now_raw or 'unknown'}\n"
+                f"Last meal time: {last_meal or 'unknown'}\n"
+            )
+
     if lang == "zh-TW":
         return (
             f"你是{assistant_name}，風格可愛親切但專業。請根據使用者最近 7 天紀錄與對話摘要回答問題。\n"
@@ -1528,6 +1545,7 @@ def _build_chat_prompt(
             "JSON 範例：\n"
             "{\n  \"reply\": \"今天晚餐建議清淡些…\",\n  \"summary\": \"使用者偏好清淡、避免油炸…\"\n}\n"
             f"最近 7 天紀錄：\n{days_block}\n"
+            f"{now_text}"
             f"對話摘要：{summary_block or '無'}\n"
         ) + profile_text
     return (
@@ -1542,6 +1560,7 @@ def _build_chat_prompt(
         "JSON example:\n"
         "{\n  \"reply\": \"Keep dinner light...\",\n  \"summary\": \"User prefers light meals...\"\n}\n"
         f"Last 7 days:\n{days_block}\n"
+        f"{now_text}"
         f"Conversation summary: {summary_block or 'none'}\n"
     ) + profile_text
 
@@ -2380,6 +2399,7 @@ async def chat(
             payload.profile or {},
             payload.days or [],
             payload.summary,
+            payload.context,
         )
         messages = [{"role": "system", "content": prompt}]
         for msg in payload.messages:

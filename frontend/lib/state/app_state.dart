@@ -3550,6 +3550,15 @@ class AppState extends ChangeNotifier {
     return days;
   }
 
+  String? _lastMealTimeForChat(DateTime now) {
+    final groups = _nonBeverageGroups(mealGroupsForDateAll(_dateOnly(now)));
+    if (groups.isEmpty) return null;
+    final latest = groups.first;
+    if (latest.isEmpty) return null;
+    final lastEntry = latest.first;
+    return lastEntry.time.toIso8601String();
+  }
+
   Future<void> sendChatMessage(String message, String locale, AppLocalizations t) async {
     final text = message.trim();
     if (text.isEmpty) return;
@@ -3561,10 +3570,15 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     await _persistChat();
     final today = _dateOnly(DateTime.now());
+    final now = DateTime.now();
     final payload = {
       'lang': locale,
       'profile': _chatProfileSnapshot(today),
       'days': _recentDaysForChat(t),
+      'context': {
+        'now': now.toIso8601String(),
+        'last_meal_time': _lastMealTimeForChat(now),
+      },
       if (_chatSummary.trim().isNotEmpty) 'summary': _chatSummary.trim(),
       'messages': _chatMessagesForApi(),
     };
