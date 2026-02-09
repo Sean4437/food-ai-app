@@ -404,7 +404,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
         compressFormat: ImageCompressFormat.png,
         compressQuality: 90,
-        cropStyle: CropStyle.circle,
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: AppLocalizations.of(context)!.chatAvatarSheetTitle,
@@ -415,12 +414,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: AppLocalizations.of(context)!.chatAvatarSheetTitle,
             aspectRatioLockEnabled: true,
           ),
-          if (kIsWeb)
-            WebUiSettings(
-              context: context,
-              enableResize: true,
-              enableZoom: true,
-            ),
         ],
       );
       if (cropped != null) {
