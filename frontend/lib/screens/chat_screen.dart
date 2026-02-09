@@ -140,7 +140,7 @@ class _ChatScreenState extends State<ChatScreen> {
         bubble,
         Positioned(
           left: -12,
-          top: -26,
+          top: -46,
           child: Image.asset('assets/cat01.png', width: 80, height: 80),
         ),
       ],
