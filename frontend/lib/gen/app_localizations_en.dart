@@ -1110,7 +1110,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyzeFailed => 'Unable to analyze';
 
   @override
-  String get reestimateFailedKeepLast => 'Re-estimate failed. Keeping the last result.';
+  String get reestimateFailedKeepLast =>
+      'Re-estimate failed. Keeping the last result.';
 
   @override
   String get costEstimateLabel => 'Estimated cost';
@@ -1722,4 +1723,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get referenceLengthApply => 'Apply';
+
+  @override
+  String get tabChatAssistant => 'Assistant';
+
+  @override
+  String get chatEmptyHint =>
+      'Hi! I\'m Dongdong. Ask me about your meals or goals.';
+
+  @override
+  String get chatInputHint => 'Ask Dongdong...';
+
+  @override
+  String get chatLockedTitle => 'Chat unlocked with subscription';
+
+  @override
+  String get chatLockedBody =>
+      'Subscribe to get personalized meal guidance and answers.';
+
+  @override
+  String get chatLockedAction => 'View subscription';
+
+  @override
+  String get chatClearTitle => 'Clear chat history?';
+
+  @override
+  String get chatClearBody =>
+      'This will remove the conversation on this device.';
+
+  @override
+  String get chatClearConfirm => 'Clear';
+
+  @override
+  String get chatError => 'Chat failed. Please try again.';
 }

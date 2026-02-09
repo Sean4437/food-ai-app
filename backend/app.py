@@ -143,6 +143,26 @@ class MealAdviceResponse(BaseModel):
     confidence: Optional[float] = None
 
 
+class ChatMessageInput(BaseModel):
+    role: str
+    content: str
+
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessageInput]
+    summary: Optional[str] = None
+    profile: Optional[dict] = None
+    days: Optional[List[dict]] = None
+    lang: Optional[str] = None
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    summary: str
+    source: str
+    confidence: Optional[float] = None
+
+
 class NameAnalyzeRequest(BaseModel):
     food_name: str
     lang: Optional[str] = None
@@ -1361,6 +1381,85 @@ def _increment_daily_count() -> None:
     _save_daily_counts(counts)
 
 
+def _build_chat_prompt(
+    lang: str,
+    profile: dict | None,
+    days: Optional[List[dict]],
+    summary: Optional[str],
+) -> str:
+    profile_text = ""
+    if profile:
+        tone = str(profile.get("tone") or "").strip()
+        persona = str(profile.get("persona") or "").strip()
+        tone_line = f"Tone: {tone}\n" if tone else ""
+        persona_line = f"Persona: {persona}\n" if persona else ""
+        profile_text = (
+            f"User profile (do not mention exact values): {json.dumps(profile, ensure_ascii=True)}\n"
+            f"{persona_line}{tone_line}"
+            "Use this only to adjust tone and suggestions. Never mention the profile values explicitly.\n"
+        )
+    day_lines = []
+    for day in days or []:
+        date = str(day.get("date") or "")
+        has_data = bool(day.get("has_data"))
+        if not has_data:
+            line = f"- {date}: 無紀錄" if lang == "zh-TW" else f"- {date}: no records"
+            day_lines.append(line)
+            continue
+        meal_count = day.get("meal_count") or 0
+        labels = str(day.get("meal_labels") or "").strip()
+        calorie_range = str(day.get("calorie_range") or "").strip()
+        summary_text = str(day.get("summary") or "").strip()
+        consumed = day.get("consumed_kcal")
+        remaining = day.get("remaining_kcal")
+        extras = []
+        if consumed is not None:
+            extras.append(f"已吃 {consumed} kcal" if lang == "zh-TW" else f"consumed {consumed} kcal")
+        if remaining is not None:
+            extras.append(f"剩餘 {remaining} kcal" if lang == "zh-TW" else f"remaining {remaining} kcal")
+        extra_text = f"（{'，'.join(extras)}）" if extras and lang == "zh-TW" else (f" ({', '.join(extras)})" if extras else "")
+        if lang == "zh-TW":
+            label_text = f"{labels}，" if labels else ""
+            range_text = f"熱量 {calorie_range}" if calorie_range else "熱量未知"
+            summary_block = f"；摘要：{summary_text}" if summary_text else ""
+            day_lines.append(f"- {date}：餐數 {meal_count}，{label_text}{range_text}{extra_text}{summary_block}")
+        else:
+            label_text = f"{labels}, " if labels else ""
+            range_text = f"calories {calorie_range}" if calorie_range else "calories unknown"
+            summary_block = f"; summary: {summary_text}" if summary_text else ""
+            day_lines.append(f"- {date}: meals {meal_count}, {label_text}{range_text}{extra_text}{summary_block}")
+    days_block = "\n".join(day_lines) if day_lines else ("- 無紀錄" if lang == "zh-TW" else "- no records")
+    summary_block = summary.strip() if summary else ""
+
+    if lang == "zh-TW":
+        return (
+            "你是飲食小助手咚咚，風格可愛親切但專業。請根據使用者最近 7 天紀錄與對話摘要回答問題。\n"
+            "要求：\n"
+            "- 僅回傳 JSON（不要多餘文字）\n"
+            "- reply：回答使用者問題（1-4 句），避免醫療/診斷語氣\n"
+            "- summary：濃縮對話記憶（120 字內），保留使用者偏好/目標/禁忌\n"
+            "- 若資料不足，先追問 1-2 個必要問題\n"
+            "- 若今天剩餘熱量 <= 0，且使用者想吃/要建議，必須勸戒不要再吃\n"
+            "JSON 範例：\n"
+            "{\n  \"reply\": \"今天晚餐建議清淡些…\",\n  \"summary\": \"使用者偏好清淡、避免油炸…\"\n}\n"
+            f"最近 7 天紀錄：\n{days_block}\n"
+            f"對話摘要：{summary_block or '無'}\n"
+        ) + profile_text
+    return (
+        "You are Dongdong, a friendly nutrition assistant. Answer based on the last 7 days and the conversation summary.\n"
+        "Requirements:\n"
+        "- Return JSON only\n"
+        "- reply: answer in 1-4 sentences, avoid medical/diagnosis language\n"
+        "- summary: compact memory (<= 120 words), keep user preferences/goals\n"
+        "- Ask 1-2 clarifying questions if data is insufficient\n"
+        "- If today's remaining_kcal <= 0 and user asks for food suggestions, discourage further eating\n"
+        "JSON example:\n"
+        "{\n  \"reply\": \"Keep dinner light...\",\n  \"summary\": \"User prefers light meals...\"\n}\n"
+        f"Last 7 days:\n{days_block}\n"
+        f"Conversation summary: {summary_block or 'none'}\n"
+    ) + profile_text
+
+
 def _analyze_with_openai(
     image_bytes: bytes,
     lang: str,
@@ -2153,6 +2252,78 @@ async def suggest_meal(
 
 
 
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat(
+    payload: ChatRequest,
+    _auth: dict = Depends(_require_auth),
+):
+    use_lang = payload.lang or DEFAULT_LANG
+    if use_lang not in _supported_langs:
+        use_lang = "zh-TW"
+    _ensure_ai_available()
+    try:
+        prompt = _build_chat_prompt(
+            use_lang,
+            payload.profile or {},
+            payload.days or [],
+            payload.summary,
+        )
+        messages = [{"role": "system", "content": prompt}]
+        for msg in payload.messages:
+            role = msg.role if msg.role in {"user", "assistant"} else "user"
+            messages.append({"role": role, "content": msg.content})
+        response = _client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=messages,
+            temperature=0.4,
+        )
+        text = response.choices[0].message.content or ""
+        data = _parse_json(text)
+        if not isinstance(data, dict) or "reply" not in data or "summary" not in data:
+            raise HTTPException(status_code=502, detail="ai_invalid_response")
+        usage = response.usage
+        usage_data = None
+        if usage is not None:
+            usage_data = {
+                "input_tokens": usage.prompt_tokens,
+                "output_tokens": usage.completion_tokens,
+                "total_tokens": usage.total_tokens,
+            }
+        cost_estimate = None
+        if usage_data is not None:
+            cost_estimate = _estimate_cost_usd(
+                int(usage_data.get("input_tokens") or 0),
+                int(usage_data.get("output_tokens") or 0),
+            )
+        _append_usage(
+            {
+                "id": str(uuid.uuid4()),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "model": OPENAI_MODEL,
+                "lang": use_lang,
+                "source": "chat",
+                "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
+                "output_tokens": int(usage_data.get("output_tokens") or 0) if usage_data else 0,
+                "total_tokens": int(usage_data.get("total_tokens") or 0) if usage_data else 0,
+                "cost_estimate_usd": cost_estimate,
+            }
+        )
+        _increment_daily_count()
+        return ChatResponse(
+            reply=str(data.get("reply", "")).strip(),
+            summary=str(data.get("summary", "")).strip(),
+            source="ai",
+            confidence=data.get("confidence"),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        global _last_ai_error
+        _last_ai_error = str(exc)
+        logging.exception("Chat failed: %s", exc)
+        raise HTTPException(status_code=502, detail="ai_failed")
+
 @app.get("/access_status")
 def access_status(_auth: dict = Depends(_require_auth)):
     if _auth.get("whitelisted"):
@@ -2274,3 +2445,4 @@ def usage_summary():
         "total_input_tokens": total_input,
         "total_output_tokens": total_output,
     }
+

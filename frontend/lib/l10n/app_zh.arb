@@ -755,5 +755,15 @@
   "referenceObjectManual": "測距（公分）",
   "referenceLengthLabel": "測距長度（公分）",
   "referenceLengthHint": "輸入 iOS 測距量到的公分",
-  "referenceLengthApply": "套用"
+  "referenceLengthApply": "套用",
+  "tabChatAssistant": "饮食小助手咚咚",
+  "chatEmptyHint": "嗨～我是咚咚，问我饮食或目标吧！",
+  "chatInputHint": "问问咚咚...",
+  "chatLockedTitle": "订阅即可开启聊天",
+  "chatLockedBody": "订阅后可获得个性化饮食建议与解答。",
+  "chatLockedAction": "查看订阅",
+  "chatClearTitle": "清除聊天记录？",
+  "chatClearBody": "这会移除本机上的对话内容。",
+  "chatClearConfirm": "清除",
+  "chatError": "聊天失败，请稍后再试"
 }

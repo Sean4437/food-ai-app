@@ -3356,6 +3356,66 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'套用'**
   String get referenceLengthApply;
+
+  /// No description provided for @tabChatAssistant.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'飲食小助手咚咚'**
+  String get tabChatAssistant;
+
+  /// No description provided for @chatEmptyHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'嗨～我是咚咚，問我飲食或目標吧！'**
+  String get chatEmptyHint;
+
+  /// No description provided for @chatInputHint.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'問問咚咚...'**
+  String get chatInputHint;
+
+  /// No description provided for @chatLockedTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'訂閱即可開啟聊天'**
+  String get chatLockedTitle;
+
+  /// No description provided for @chatLockedBody.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'訂閱後可獲得個人化飲食建議與解答。'**
+  String get chatLockedBody;
+
+  /// No description provided for @chatLockedAction.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'查看訂閱'**
+  String get chatLockedAction;
+
+  /// No description provided for @chatClearTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'清除聊天紀錄？'**
+  String get chatClearTitle;
+
+  /// No description provided for @chatClearBody.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'這會移除本機上的對話內容。'**
+  String get chatClearBody;
+
+  /// No description provided for @chatClearConfirm.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'清除'**
+  String get chatClearConfirm;
+
+  /// No description provided for @chatError.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'聊天失敗，請稍後再試'**
+  String get chatError;
 }
 
 class _AppLocalizationsDelegate

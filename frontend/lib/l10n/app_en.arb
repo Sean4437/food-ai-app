@@ -755,5 +755,15 @@
   "referenceObjectManual": "Measure (cm)",
   "referenceLengthLabel": "Measured length (cm)",
   "referenceLengthHint": "Enter the measured length in cm",
-  "referenceLengthApply": "Apply"
+  "referenceLengthApply": "Apply",
+  "tabChatAssistant": "Assistant",
+  "chatEmptyHint": "Hi! I'm Dongdong. Ask me about your meals or goals.",
+  "chatInputHint": "Ask Dongdong...",
+  "chatLockedTitle": "Chat unlocked with subscription",
+  "chatLockedBody": "Subscribe to get personalized meal guidance and answers.",
+  "chatLockedAction": "View subscription",
+  "chatClearTitle": "Clear chat history?",
+  "chatClearBody": "This will remove the conversation on this device.",
+  "chatClearConfirm": "Clear",
+  "chatError": "Chat failed. Please try again."
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/home_screen.dart';
 import 'screens/log_screen.dart';
 import 'screens/suggestions_screen.dart';
+import 'screens/chat_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/custom_foods_screen.dart';
 import 'screens/login_screen.dart';
@@ -156,6 +157,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     final screens = const [
       SuggestionsScreen(),
       HomeScreen(),
+      ChatScreen(),
       LogScreen(),
       CustomFoodsScreen(),
       SettingsScreen(),
@@ -190,6 +192,18 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
           BottomNavigationBarItem(
             icon: Builder(
               builder: (context) {
+                return Opacity(
+                  opacity: 0.7,
+                  child: Image.asset('assets/cat01.png', width: 24, height: 24),
+                );
+              },
+            ),
+            activeIcon: Image.asset('assets/cat01.png', width: 24, height: 24),
+            label: t.tabChatAssistant,
+          ),
+          BottomNavigationBarItem(
+            icon: Builder(
+              builder: (context) {
                 final color = IconTheme.of(context).color;
                 return Text('🧾', style: TextStyle(fontSize: 20, color: color));
               },
@@ -200,7 +214,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             icon: Builder(
               builder: (context) {
                 final color = IconTheme.of(context).color;
-                return Text('🔖', style: TextStyle(fontSize: 20, color: color));
+                return Text('🍳', style: TextStyle(fontSize: 20, color: color));
               },
             ),
             label: t.tabCustom,
@@ -219,3 +233,5 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     );
   }
 }
+
+

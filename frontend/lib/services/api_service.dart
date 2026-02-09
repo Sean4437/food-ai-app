@@ -286,4 +286,20 @@ class ApiService {
     }
     return json.decode(response.body) as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> chat(
+    Map<String, dynamic> payload,
+    String? accessToken,
+  ) async {
+    final uri = Uri.parse('$baseUrl/chat');
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json', ..._authHeaders(accessToken)},
+      body: json.encode(payload),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Chat failed: ${response.statusCode}');
+    }
+    return json.decode(response.body) as Map<String, dynamic>;
+  }
 }

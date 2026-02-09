@@ -13,6 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:storage_client/storage_client.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../models/analysis_result.dart';
+import '../models/chat_message.dart';
 import '../models/meal_entry.dart';
 import '../models/label_result.dart';
 import '../models/custom_food.dart';
@@ -39,6 +40,8 @@ const String _kMockSubscriptionPlanKey = 'mock_subscription_plan';
 const String _kIapSubscriptionKey = 'iap_subscription_active';
 const String _kAccessCheckAtKey = 'access_check_at';
 const String _kAccessGraceHoursKey = 'access_grace_hours';
+const String _kChatHistoryKey = 'chat_history';
+const String _kChatSummaryKey = 'chat_summary';
 const int _kAccessGraceHoursDefault = 24;
 const String _kMacroUnitGrams = 'grams';
 const String _kMacroUnitPercent = 'percent';
@@ -83,6 +86,10 @@ class AppState extends ChangeNotifier {
   final Map<String, Map<String, String>> _mealOverrides = {};
   final Map<String, Map<String, String>> _weekOverrides = {};
   final Map<String, String> _meta = {};
+  final List<ChatMessage> _chatMessages = [];
+  String _chatSummary = '';
+  bool _chatSending = false;
+  String? _chatError;
   final Map<String, Map<String, dynamic>> _deletedEntries = {};
   final Map<String, Map<String, dynamic>> _deletedCustomFoods = {};
   final Set<String> _failedMealSyncIds = {};
@@ -186,6 +193,10 @@ class AppState extends ChangeNotifier {
   List<ProductDetails> get iapProducts => List.unmodifiable(_iapProducts);
 
   DateTime? get trialEndAt => _trialEnd;
+  bool get chatAvailable => _iapSubscriptionActive || _mockSubscriptionActive || _whitelisted;
+  bool get chatSending => _chatSending;
+  String? get chatError => _chatError;
+  List<ChatMessage> get chatMessages => List.unmodifiable(_chatMessages);
 
   String buildAiContext() {
     final now = DateTime.now();
@@ -2191,8 +2202,14 @@ class AppState extends ChangeNotifier {
 
   Future<void> clearAll() async {
     entries.clear();
+    _chatMessages.clear();
+    _chatSummary = '';
+    _chatError = null;
+    _meta.remove(_kChatHistoryKey);
+    _meta.remove(_kChatSummaryKey);
     notifyListeners();
     await _store.clearAll();
+    await _saveOverrides();
   }
 
   Future<void> _clearLocalDataForAccountSwitch() async {
@@ -2220,6 +2237,9 @@ class AppState extends ChangeNotifier {
     _lastSyncError = null;
     _syncing = false;
     _meta.clear();
+    _chatMessages.clear();
+    _chatSummary = '';
+    _chatError = null;
 
     _mockSubscriptionActive = false;
     _mockSubscriptionPlanId = null;
@@ -3373,6 +3393,146 @@ class AppState extends ChangeNotifier {
         }
       }
     }
+    _loadChatFromMeta();
+  }
+
+  void _loadChatFromMeta() {
+    _chatMessages.clear();
+    final raw = _meta[_kChatHistoryKey];
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        final decoded = json.decode(raw);
+        if (decoded is List) {
+          for (final item in decoded) {
+            if (item is Map<String, dynamic>) {
+              _chatMessages.add(ChatMessage.fromJson(item));
+            } else if (item is Map) {
+              _chatMessages.add(ChatMessage.fromJson(item.map((k, v) => MapEntry(k.toString(), v))));
+            }
+          }
+        }
+      } catch (_) {}
+    }
+    _chatSummary = _meta[_kChatSummaryKey] ?? '';
+  }
+
+  Future<void> _persistChat() async {
+    _meta[_kChatHistoryKey] = json.encode(_chatMessages.map((msg) => msg.toJson()).toList());
+    _meta[_kChatSummaryKey] = _chatSummary;
+    await _saveOverrides();
+  }
+
+  void _trimChatHistory({int maxMessages = 60, int keepRecent = 20}) {
+    if (_chatMessages.length <= maxMessages) return;
+    if (keepRecent <= 0) {
+      _chatMessages.clear();
+      return;
+    }
+    final start = max(0, _chatMessages.length - keepRecent);
+    final recent = _chatMessages.sublist(start);
+    _chatMessages
+      ..clear()
+      ..addAll(recent);
+  }
+
+  List<Map<String, dynamic>> _chatMessagesForApi({int maxItems = 16}) {
+    if (_chatMessages.isEmpty) return const [];
+    final start = max(0, _chatMessages.length - maxItems);
+    final slice = _chatMessages.sublist(start);
+    return slice
+        .map((msg) => {
+              'role': msg.role,
+              'content': msg.content,
+            })
+        .toList();
+  }
+
+  Map<String, dynamic> _chatProfileSnapshot(DateTime date) {
+    return {
+      'height_cm': profile.heightCm,
+      'weight_kg': profile.weightKg,
+      'age': profile.age,
+      'gender': profile.gender,
+      'tone': profile.tone,
+      'persona': profile.persona,
+      'activity_level': dailyActivityLevel(date),
+      'target_calorie_range': targetCalorieRangeValue(date),
+      'goal': profile.goal,
+      'plan_speed': profile.planSpeed,
+    };
+  }
+
+  List<Map<String, dynamic>> _recentDaysForChat(AppLocalizations t) {
+    final today = _dateOnly(DateTime.now());
+    final days = <Map<String, dynamic>>[];
+    for (int i = 6; i >= 0; i--) {
+      final date = today.subtract(Duration(days: i));
+      final entriesForDay = entriesForDate(date);
+      final groups = mealGroupsForDateAll(date);
+      final summary = buildDaySummary(date, t);
+      final consumed = entriesForDay.isEmpty ? null : dailyConsumedCalorieMid(date).round();
+      final targetMid = targetCalorieMid(date);
+      final remaining = consumed == null || targetMid == null ? null : (targetMid - consumed).round();
+      days.add({
+        'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+        'has_data': entriesForDay.isNotEmpty,
+        'meal_count': groups.length,
+        'meal_labels': entriesForDay.isNotEmpty ? dayMealLabels(date, t) : '',
+        'calorie_range': summary?.calorieRange ?? t.calorieUnknown,
+        'summary': daySummaryText(date, t),
+        'consumed_kcal': consumed,
+        'remaining_kcal': remaining,
+        'target_range': targetCalorieRangeValue(date),
+        'macros': summary?.macros.isNotEmpty == true ? _roundMacros(summary!.macros) : null,
+      });
+    }
+    return days;
+  }
+
+  Future<void> sendChatMessage(String message, String locale, AppLocalizations t) async {
+    final text = message.trim();
+    if (text.isEmpty) return;
+    if (_chatSending) return;
+    _chatSending = true;
+    _chatError = null;
+    final userMsg = ChatMessage.user(text);
+    _chatMessages.add(userMsg);
+    notifyListeners();
+    await _persistChat();
+    final today = _dateOnly(DateTime.now());
+    final payload = {
+      'lang': locale,
+      'profile': _chatProfileSnapshot(today),
+      'days': _recentDaysForChat(t),
+      if (_chatSummary.trim().isNotEmpty) 'summary': _chatSummary.trim(),
+      'messages': _chatMessagesForApi(),
+    };
+    try {
+      final response = await _api.chat(payload, _accessToken());
+      final reply = (response['reply'] as String?)?.trim() ?? '';
+      final summary = (response['summary'] as String?)?.trim() ?? '';
+      if (reply.isNotEmpty) {
+        _chatMessages.add(ChatMessage.assistant(reply));
+      }
+      if (summary.isNotEmpty) {
+        _chatSummary = summary;
+      }
+      _trimChatHistory();
+      await _persistChat();
+    } catch (e) {
+      _chatError = t.chatError;
+    } finally {
+      _chatSending = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> clearChat() async {
+    _chatMessages.clear();
+    _chatSummary = '';
+    _chatError = null;
+    await _persistChat();
+    notifyListeners();
   }
 
   Future<MealAdvice> suggestNowMealAdvice(AppLocalizations t, String locale) async {
