@@ -3559,6 +3559,15 @@ class AppState extends ChangeNotifier {
     return lastEntry.time.toIso8601String();
   }
 
+  double? _fastingHoursForChat(DateTime now) {
+    final lastMealRaw = _lastMealTimeForChat(now);
+    if (lastMealRaw == null || lastMealRaw.isEmpty) return null;
+    final lastMeal = DateTime.tryParse(lastMealRaw);
+    if (lastMeal == null) return null;
+    final diff = now.difference(lastMeal).inMinutes / 60.0;
+    return diff < 0 ? 0 : double.parse(diff.toStringAsFixed(1));
+  }
+
   Future<void> sendChatMessage(String message, String locale, AppLocalizations t) async {
     final text = message.trim();
     if (text.isEmpty) return;
@@ -3578,6 +3587,7 @@ class AppState extends ChangeNotifier {
       'context': {
         'now': now.toIso8601String(),
         'last_meal_time': _lastMealTimeForChat(now),
+        'fasting_hours': _fastingHoursForChat(now),
       },
       if (_chatSummary.trim().isNotEmpty) 'summary': _chatSummary.trim(),
       'messages': _chatMessagesForApi(),

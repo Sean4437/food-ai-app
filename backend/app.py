@@ -1520,15 +1520,24 @@ def _build_chat_prompt(
     if context:
         now_raw = str(context.get("now") or "").strip()
         last_meal = str(context.get("last_meal_time") or "").strip()
+        fasting_hours = context.get("fasting_hours")
+        fasting_text = ""
+        if fasting_hours is not None:
+            try:
+                fasting_text = f"{float(fasting_hours):.1f} 小時" if lang == "zh-TW" else f"{float(fasting_hours):.1f} hours"
+            except Exception:
+                fasting_text = ""
         if lang == "zh-TW":
             now_text = (
                 f"現在時間：{now_raw or '未知'}\n"
                 f"最近一餐時間：{last_meal or '未知'}\n"
+                f"空腹時間：約 {fasting_text or '未知'}\n"
             )
         else:
             now_text = (
                 f"Current time: {now_raw or 'unknown'}\n"
                 f"Last meal time: {last_meal or 'unknown'}\n"
+                f"Fasting duration: ~{fasting_text or 'unknown'}\n"
             )
 
     if lang == "zh-TW":
