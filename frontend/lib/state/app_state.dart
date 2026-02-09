@@ -624,6 +624,7 @@ class AppState extends ChangeNotifier {
     await _store.init();
     await _settings.init();
     final profileMap = await _settings.loadProfile();
+    final hadProfile = profileMap != null;
     if (profileMap != null) {
       _applyProfile(profileMap);
     }
@@ -637,6 +638,15 @@ class AppState extends ChangeNotifier {
     final overrides = await _settings.loadOverrides();
     if (overrides != null) {
       _loadOverrides(overrides);
+    }
+    if (!hadProfile) {
+      final systemLocale = WidgetsBinding.instance.platformDispatcher.locale;
+      if (systemLocale.languageCode == 'en') {
+        profile.language = 'en';
+      } else {
+        profile.language = 'zh-TW';
+      }
+      await _saveProfile();
     }
     if (_meta[_kSettingsUpdatedAtKey] == null || _meta[_kSettingsUpdatedAtKey]!.isEmpty) {
       _meta[_kSettingsUpdatedAtKey] = DateTime.now().toUtc().toIso8601String();
