@@ -154,6 +154,10 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     final t = AppLocalizations.of(context)!;
     final tabState = TabScope.of(context);
     final theme = Theme.of(context);
+    final app = AppStateScope.of(context);
+    final assistantName = app.profile.chatAssistantName.trim().isEmpty
+        ? t.tabChatAssistant
+        : app.profile.chatAssistantName.trim();
     final screens = const [
       HomeScreen(),
       ChatScreen(),
@@ -190,7 +194,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               },
             ),
             activeIcon: Image.asset('assets/cat01.png', width: 24, height: 24),
-            label: t.tabChatAssistant,
+            label: assistantName,
           ),
           BottomNavigationBarItem(
             icon: Builder(

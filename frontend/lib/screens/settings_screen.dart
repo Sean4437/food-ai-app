@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:characters/characters.dart';
 import '../utils/data_exporter.dart';
 import '../design/theme_controller.dart';
 import '../state/app_state.dart';
@@ -198,6 +200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String initial,
     required ValueChanged<String> onSave,
     TextInputType keyboardType = TextInputType.text,
+    bool allowEmpty = false,
   }) async {
     final controller = TextEditingController(text: initial);
     final t = AppLocalizations.of(context)!;
@@ -216,9 +219,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
-    if (result != null && result.isNotEmpty) {
-      onSave(result);
-    }
+    if (result == null) return;
+    if (!allowEmpty && result.isEmpty) return;
+    onSave(result);
   }
 
   Future<void> _editApiUrl(BuildContext context, AppState app) async {
@@ -393,8 +396,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
       imageQuality: 85,
     );
     if (picked == null) return;
-    final bytes = await picked.readAsBytes();
+    Uint8List bytes = await picked.readAsBytes();
     if (!context.mounted) return;
+    try {
+      final cropped = await ImageCropper().cropImage(
+        sourcePath: picked.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        compressFormat: ImageCompressFormat.png,
+        compressQuality: 90,
+        cropStyle: CropStyle.circle,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: AppLocalizations.of(context)!.chatAvatarSheetTitle,
+            lockAspectRatio: true,
+            hideBottomControls: false,
+          ),
+          IOSUiSettings(
+            title: AppLocalizations.of(context)!.chatAvatarSheetTitle,
+            aspectRatioLockEnabled: true,
+          ),
+          if (kIsWeb)
+            WebUiSettings(
+              context: context,
+              enableResize: true,
+              enableZoom: true,
+            ),
+        ],
+      );
+      if (cropped != null) {
+        bytes = await cropped.readAsBytes();
+      }
+    } catch (_) {
+      // Fallback to the original bytes if cropping is not supported.
+    }
     await app.updateChatAvatar(bytes);
   }
 
@@ -458,6 +492,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _chatAssistantNameRow(BuildContext context, AppState app, AppLocalizations t) {
+    final current = app.profile.chatAssistantName.trim();
+    final value = current.isEmpty ? t.tabChatAssistant : current;
+    return _row(
+      context,
+      t.chatAssistantNameLabel,
+      value,
+      emoji: '🐱',
+      onTap: () => _editText(
+        context,
+        title: t.chatAssistantNameLabel,
+        initial: current,
+        allowEmpty: true,
+        onSave: (value) {
+          final trimmed = value.trim();
+          if (trimmed.isEmpty) {
+            app.updateField((p) => p.chatAssistantName = '');
+            return;
+          }
+          final safe = trimmed.characters.take(10).toString();
+          app.updateField((p) => p.chatAssistantName = safe);
+        },
       ),
     );
   }
@@ -1063,6 +1123,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const SizedBox(height: 8),
                         _chatAvatarRow(context, app, t),
+                        const SizedBox(height: 8),
+                        _chatAssistantNameRow(context, app, t),
                       ] else ...[
                         Row(
                           children: [
@@ -1091,6 +1153,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const SizedBox(height: 8),
                         _chatAvatarRow(context, app, t),
+                        const SizedBox(height: 8),
+                        _chatAssistantNameRow(context, app, t),
                         const SizedBox(height: 8),
                         Row(
                           children: [

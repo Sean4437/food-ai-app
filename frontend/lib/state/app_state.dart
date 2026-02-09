@@ -1285,9 +1285,10 @@ class AppState extends ChangeNotifier {
         'height_cm': profile.heightCm,
         'weight_kg': profile.weightKg,
         'age': profile.age,
-          'gender': profile.gender,
-          'tone': profile.tone,
-          'persona': profile.persona,
+      'gender': profile.gender,
+      'assistant_name': profile.chatAssistantName,
+      'tone': profile.tone,
+      'persona': profile.persona,
           'activity_level': dailyActivityLevel(date),
           'target_calorie_range': targetCalorieRangeValue(date),
           'goal': profile.goal,
@@ -2363,6 +2364,7 @@ class AppState extends ChangeNotifier {
       ..name = updated.name
       ..email = updated.email
       ..gender = updated.gender
+      ..chatAssistantName = updated.chatAssistantName
       ..chatAvatarBase64 = updated.chatAvatarBase64
       ..containerType = updated.containerType
       ..containerSize = updated.containerSize
@@ -4988,6 +4990,8 @@ class AppState extends ChangeNotifier {
       'name': profile.name,
       'email': profile.email,
       'gender': profile.gender,
+      'chat_assistant_name': profile.chatAssistantName,
+      'chat_avatar': profile.chatAvatarBase64,
       'container_type': profile.containerType,
       'container_size': profile.containerSize,
       'container_depth': profile.containerDepth,
@@ -5038,6 +5042,7 @@ class AppState extends ChangeNotifier {
       ..name = (data['name'] as String?) ?? profile.name
       ..email = (data['email'] as String?) ?? profile.email
       ..gender = (data['gender'] as String?) ?? profile.gender
+      ..chatAssistantName = (data['chat_assistant_name'] as String?) ?? profile.chatAssistantName
       ..chatAvatarBase64 = (data['chat_avatar'] as String?) ?? profile.chatAvatarBase64
       ..containerType = (data['container_type'] as String?) ?? profile.containerType
       ..containerSize = (data['container_size'] as String?) ?? profile.containerSize
@@ -5265,6 +5270,7 @@ class UserProfile {
     required this.name,
     required this.email,
     required this.gender,
+    required this.chatAssistantName,
     required this.chatAvatarBase64,
     required this.containerType,
     required this.containerSize,
@@ -5313,6 +5319,7 @@ class UserProfile {
   String name;
   String email;
   String gender;
+  String chatAssistantName;
   String chatAvatarBase64;
   String containerType;
   String containerSize;
@@ -5362,6 +5369,7 @@ class UserProfile {
       name: '小明',
       email: 'xiaoming123@gmail.com',
       gender: 'unspecified',
+      chatAssistantName: '',
       chatAvatarBase64: '',
       containerType: 'bowl',
       containerSize: 'medium',

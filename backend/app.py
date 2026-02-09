@@ -1387,6 +1387,16 @@ def _build_chat_prompt(
     days: Optional[List[dict]],
     summary: Optional[str],
 ) -> str:
+    assistant_name = ""
+    if profile:
+        assistant_name = str(
+            profile.get("assistant_name")
+            or profile.get("chat_assistant_name")
+            or profile.get("assistantName")
+            or ""
+        ).strip()
+    if not assistant_name:
+        assistant_name = "咚咚" if lang == "zh-TW" else "Dongdong"
     profile_text = ""
     if profile:
         tone = str(profile.get("tone") or "").strip()
@@ -1433,7 +1443,7 @@ def _build_chat_prompt(
 
     if lang == "zh-TW":
         return (
-            "你是飲食小助手咚咚，風格可愛親切但專業。請根據使用者最近 7 天紀錄與對話摘要回答問題。\n"
+            f"你是{assistant_name}，風格可愛親切但專業。請根據使用者最近 7 天紀錄與對話摘要回答問題。\n"
             "要求：\n"
             "- 僅回傳 JSON（不要多餘文字）\n"
             "- reply：回答使用者問題（1-4 句），避免醫療/診斷語氣\n"
@@ -1446,7 +1456,7 @@ def _build_chat_prompt(
             f"對話摘要：{summary_block or '無'}\n"
         ) + profile_text
     return (
-        "You are Dongdong, a friendly nutrition assistant. Answer based on the last 7 days and the conversation summary.\n"
+        f"You are {assistant_name}, a friendly nutrition assistant. Answer based on the last 7 days and the conversation summary.\n"
         "Requirements:\n"
         "- Return JSON only\n"
         "- reply: answer in 1-4 sentences, avoid medical/diagnosis language\n"

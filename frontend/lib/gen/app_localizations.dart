@@ -3369,6 +3369,12 @@ abstract class AppLocalizations {
   /// **'嗨～我是咚咚，問我飲食或目標吧！'**
   String get chatEmptyHint;
 
+  /// No description provided for @chatEmptyHintWithName.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'嗨～我是{name}，問我飲食或目標吧！'**
+  String chatEmptyHintWithName(Object name);
+
   /// No description provided for @chatInputHint.
   ///
   /// In zh_TW, this message translates to:
@@ -3422,6 +3428,12 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'聊天頭像'**
   String get chatAvatarLabel;
+
+  /// No description provided for @chatAssistantNameLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'咚咚名稱'**
+  String get chatAssistantNameLabel;
 
   /// No description provided for @chatAvatarSet.
   ///

@@ -758,6 +758,12 @@
   "referenceLengthApply": "套用",
   "tabChatAssistant": "咚咚",
   "chatEmptyHint": "嗨～我是咚咚，问我饮食或目标吧！",
+  "chatEmptyHintWithName": "嗨～我是{name}，问我饮食或目标吧！",
+  "@chatEmptyHintWithName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "chatInputHint": "问问咚咚...",
   "chatLockedTitle": "订阅即可开启聊天",
   "chatLockedBody": "订阅后可获得个性化饮食建议与解答。",
@@ -767,6 +773,7 @@
   "chatClearConfirm": "清除",
   "chatError": "聊天失败，请稍后再试",
   "chatAvatarLabel": "聊天头像",
+  "chatAssistantNameLabel": "咚咚名称",
   "chatAvatarSet": "已设置",
   "chatAvatarUnset": "未设置",
   "chatAvatarSheetTitle": "设置聊天头像",

@@ -758,6 +758,12 @@
   "referenceLengthApply": "Apply",
   "tabChatAssistant": "Dongdong",
   "chatEmptyHint": "Hi! I'm Dongdong. Ask me about your meals or goals.",
+  "chatEmptyHintWithName": "Hi! I'm {name}. Ask me about your meals or goals.",
+  "@chatEmptyHintWithName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
   "chatInputHint": "Ask Dongdong...",
   "chatLockedTitle": "Chat unlocked with subscription",
   "chatLockedBody": "Subscribe to get personalized meal guidance and answers.",
@@ -767,6 +773,7 @@
   "chatClearConfirm": "Clear",
   "chatError": "Chat failed. Please try again.",
   "chatAvatarLabel": "Chat avatar",
+  "chatAssistantNameLabel": "Assistant name",
   "chatAvatarSet": "Set",
   "chatAvatarUnset": "Not set",
   "chatAvatarSheetTitle": "Set chat avatar",

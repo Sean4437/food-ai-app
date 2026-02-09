@@ -1732,6 +1732,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Hi! I\'m Dongdong. Ask me about your meals or goals.';
 
   @override
+  String chatEmptyHintWithName(Object name) {
+    return 'Hi! I\'m $name. Ask me about your meals or goals.';
+  }
+
+  @override
   String get chatInputHint => 'Ask Dongdong...';
 
   @override
@@ -1759,6 +1764,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatAvatarLabel => 'Chat avatar';
+
+  @override
+  String get chatAssistantNameLabel => 'Assistant name';
 
   @override
   String get chatAvatarSet => 'Set';

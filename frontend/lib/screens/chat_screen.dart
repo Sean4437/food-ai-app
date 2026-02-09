@@ -46,7 +46,13 @@ class _ChatScreenState extends State<ChatScreen> {
     await app.sendChatMessage(text, locale, t);
   }
 
-  Widget _buildEmpty(AppLocalizations t) {
+  String _assistantName(AppState app, AppLocalizations t) {
+    final name = app.profile.chatAssistantName.trim();
+    return name.isEmpty ? t.tabChatAssistant : name;
+  }
+
+  Widget _buildEmpty(AppState app, AppLocalizations t) {
+    final name = _assistantName(app, t);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -56,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Image.asset('assets/cat01.png', width: 72, height: 72),
             const SizedBox(height: 12),
             Text(
-              t.chatEmptyHint,
+              t.chatEmptyHintWithName(name),
               style: AppTextStyles.body(context).copyWith(color: Colors.black54),
               textAlign: TextAlign.center,
             ),
@@ -168,7 +174,7 @@ class _ChatScreenState extends State<ChatScreen> {
       children: [
         Expanded(
           child: messages.isEmpty
-              ? _buildEmpty(t)
+              ? _buildEmpty(app, t)
               : ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.only(top: 12, bottom: 12),
@@ -653,11 +659,12 @@ class _ChatScreenState extends State<ChatScreen> {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final app = AppStateScope.of(context);
+    final assistantName = _assistantName(app, t);
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: Text(t.tabChatAssistant),
+          title: Text(assistantName),
           elevation: 0,
           backgroundColor: Colors.transparent,
           actions: [

@@ -1706,6 +1706,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatEmptyHint => '嗨～我是咚咚，问我饮食或目标吧！';
 
   @override
+  String chatEmptyHintWithName(Object name) {
+    return '嗨～我是$name，问我饮食或目标吧！';
+  }
+
+  @override
   String get chatInputHint => '问问咚咚...';
 
   @override
@@ -1731,6 +1736,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chatAvatarLabel => '聊天头像';
+
+  @override
+  String get chatAssistantNameLabel => '咚咚名称';
 
   @override
   String get chatAvatarSet => '已设置';
@@ -3450,6 +3458,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get chatEmptyHint => '嗨～我是咚咚，問我飲食或目標吧！';
 
   @override
+  String chatEmptyHintWithName(Object name) {
+    return '嗨～我是$name，問我飲食或目標吧！';
+  }
+
+  @override
   String get chatInputHint => '問問咚咚...';
 
   @override
@@ -3475,6 +3488,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get chatAvatarLabel => '聊天頭像';
+
+  @override
+  String get chatAssistantNameLabel => '咚咚名稱';
 
   @override
   String get chatAvatarSet => '已設定';
