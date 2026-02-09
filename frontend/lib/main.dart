@@ -155,9 +155,9 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     final tabState = TabScope.of(context);
     final theme = Theme.of(context);
     final screens = const [
-      SuggestionsScreen(),
       HomeScreen(),
       ChatScreen(),
+      SuggestionsScreen(),
       LogScreen(),
       CustomFoodsScreen(),
       SettingsScreen(),
@@ -171,15 +171,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         inactiveColor: theme.colorScheme.onSurface.withOpacity(0.6),
         onTap: (value) => tabState.setIndex(value),
         items: [
-          BottomNavigationBarItem(
-            icon: Builder(
-              builder: (context) {
-                final color = IconTheme.of(context).color;
-                return Text('📸', style: TextStyle(fontSize: 20, color: color));
-              },
-            ),
-            label: t.tabSuggest,
-          ),
           BottomNavigationBarItem(
             icon: Builder(
               builder: (context) {
@@ -200,6 +191,15 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             ),
             activeIcon: Image.asset('assets/cat01.png', width: 24, height: 24),
             label: t.tabChatAssistant,
+          ),
+          BottomNavigationBarItem(
+            icon: Builder(
+              builder: (context) {
+                final color = IconTheme.of(context).color;
+                return Text('📸', style: TextStyle(fontSize: 20, color: color));
+              },
+            ),
+            label: t.tabSuggest,
           ),
           BottomNavigationBarItem(
             icon: Builder(

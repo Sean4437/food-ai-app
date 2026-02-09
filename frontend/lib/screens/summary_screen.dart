@@ -107,7 +107,7 @@ class SummaryScreen extends StatelessWidget {
                           if (Navigator.of(context).canPop()) {
                             Navigator.of(context).pop();
                           } else {
-                            TabScope.of(context).setIndex(0);
+                            TabScope.of(context).setIndex(2);
                           }
                         },
                       ),
