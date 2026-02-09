@@ -107,11 +107,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildAssistantAvatar() {
-    const size = 80.0;
-    return Image.asset('assets/cat01.png', width: size, height: size);
-  }
-
   Widget _buildBubble(ChatMessage msg, bool isUser, ThemeData theme, AppState app) {
     final bubbleColor = isUser ? theme.colorScheme.primary.withOpacity(0.9) : Colors.white;
     final textColor = isUser ? Colors.white : Colors.black87;
@@ -139,17 +134,24 @@ class _ChatScreenState extends State<ChatScreen> {
         style: AppTextStyles.body(context).copyWith(color: textColor, height: 1.4),
       ),
     );
+    final bubbleWithCat = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        bubble,
+        Positioned(
+          left: -12,
+          top: -26,
+          child: Image.asset('assets/cat01.png', width: 80, height: 80),
+        ),
+      ],
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!isUser) ...[
-            _buildAssistantAvatar(),
-            const SizedBox(width: 10),
-          ],
-          Flexible(child: bubble),
+          Flexible(child: isUser ? bubble : bubbleWithCat),
           if (isUser) ...[
             const SizedBox(width: 10),
             _buildUserAvatar(app),
