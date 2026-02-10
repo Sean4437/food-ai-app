@@ -2378,6 +2378,7 @@ async def chat(
     user_id = _auth.get("user_id", "")
     latest_user = _find_latest_user_message(payload.messages or [])
     if _chat_is_blocked(latest_user):
+        logging.warning("Chat blocked: user=%s text=%s", user_id or "-", latest_user[:200])
         return ChatResponse(
             reply=_chat_blocked_reply(use_lang),
             summary=payload.summary or "",
@@ -2385,6 +2386,7 @@ async def chat(
             confidence=1.0,
         )
     if user_id and not _chat_rate_allowed(user_id):
+        logging.warning("Chat rate limited: user=%s", user_id or "-")
         return ChatResponse(
             reply=_chat_rate_reply(use_lang),
             summary=payload.summary or "",
@@ -2395,6 +2397,7 @@ async def chat(
         _ensure_ai_available()
     except HTTPException as exc:
         if exc.detail in {"ai_disabled", "ai_not_configured", "ai_quota_exceeded"}:
+            logging.warning("Chat AI unavailable: user=%s reason=%s", user_id or "-", exc.detail)
             return ChatResponse(
                 reply=_chat_ai_fallback_reply(use_lang),
                 summary=payload.summary or "",
@@ -2459,6 +2462,7 @@ async def chat(
         )
     except HTTPException as exc:
         if exc.detail in {"ai_failed", "ai_invalid_response"}:
+            logging.warning("Chat AI error: user=%s reason=%s", user_id or "-", exc.detail)
             return ChatResponse(
                 reply=_chat_ai_fallback_reply(use_lang),
                 summary=payload.summary or "",
