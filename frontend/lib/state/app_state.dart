@@ -24,8 +24,9 @@ import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
 
 const String kDefaultApiBaseUrl =
-    'https://pharmacy-little-fever-attacked.trycloudflare.com';
+    'https://food-ai-app-production.up.railway.app';
 const List<String> kDeprecatedApiBaseUrls = [
+  'https://pharmacy-little-fever-attacked.trycloudflare.com',
   'https://sussex-oscar-southern-scanning.trycloudflare.com',
   'https://effectively-wild-oecd-weddings.trycloudflare.com',
 ];
