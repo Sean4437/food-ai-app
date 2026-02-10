@@ -1951,9 +1951,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ]),
                   if (kDebugMode) ...[
                     const SizedBox(height: 8),
-                  ],
-                  if (kDebugMode) ...[
-                    const SizedBox(height: 8),
                     _sectionTitle(context, t.apiSection),
                     _apiRow(
                       context,
