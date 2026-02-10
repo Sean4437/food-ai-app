@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:math';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/chat_message.dart';
@@ -17,6 +18,85 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   int _lastMessageCount = 0;
+  final _rand = Random();
+  List<String> _quickPrompts = [];
+  String _quickLocale = '';
+
+  void _ensureQuickPrompts(AppLocalizations t) {
+    if (_quickPrompts.isNotEmpty && _quickLocale == t.localeName) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _quickLocale = t.localeName;
+        _quickPrompts = _generateQuickPrompts(t);
+      });
+    });
+  }
+
+  List<String> _generateQuickPrompts(AppLocalizations t) {
+    if (t.localeName.startsWith('en')) {
+      final today = [
+        'Give me a quick summary of today’s eating.',
+        'How did I do today? Just the key points.',
+        'One‑sentence recap of today’s meals.',
+        'Did I go over today? Quick check.',
+      ];
+      final tomorrow = [
+        'How should I eat tomorrow to stay on track?',
+        'Give me a simple plan for tomorrow.',
+        '3 quick tips for tomorrow’s meals.',
+        'Keep it light tomorrow—any suggestions?',
+      ];
+      final week = [
+        'How was my eating this week? Key takeaways.',
+        'Weekly summary, short and clear.',
+        'What did I do well and what to fix this week?',
+        'Any imbalance or overages this week?',
+      ];
+      final nextWeek = [
+        'What should I focus on next week?',
+        '3 reminders for next week’s meals.',
+        'I want to eat cleaner next week—guidance?',
+        'Give me one sentence for next week’s direction.',
+      ];
+      return [
+        today[_rand.nextInt(today.length)],
+        tomorrow[_rand.nextInt(tomorrow.length)],
+        week[_rand.nextInt(week.length)],
+        nextWeek[_rand.nextInt(nextWeek.length)],
+      ];
+    }
+    final today = [
+      '幫我用一句話整理今天吃得怎麼樣',
+      '今天我吃得還可以嗎？給我重點',
+      '今天飲食狀況懶人包一下',
+      '今天有沒有超標？快速看一下',
+    ];
+    final tomorrow = [
+      '明天我怎麼吃會比較穩？',
+      '幫我規劃明天的吃法（簡短版）',
+      '明天想清爽一點，你給方向',
+      '明天給我 3 個簡單建議',
+    ];
+    final week = [
+      '這週我吃得怎麼樣？給重點',
+      '本週飲食總體評語是什麼？',
+      '幫我抓這週的優點跟需要改的',
+      '這週有超標或不均衡嗎？',
+    ];
+    final nextWeek = [
+      '下週我該怎麼調整比較好？',
+      '給我下週 3 個最重要提醒',
+      '下週想更健康一點，怎麼吃？',
+      '下週方向給我一句話就好',
+    ];
+    return [
+      today[_rand.nextInt(today.length)],
+      tomorrow[_rand.nextInt(tomorrow.length)],
+      week[_rand.nextInt(week.length)],
+      nextWeek[_rand.nextInt(nextWeek.length)],
+    ];
+  }
 
   @override
   void dispose() {
@@ -41,6 +121,14 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _sendMessage(AppState app, AppLocalizations t) async {
     final text = _controller.text.trim();
     if (text.isEmpty || app.chatSending) return;
+    _controller.clear();
+    final locale = Localizations.localeOf(context).toString();
+    await app.sendChatMessage(text, locale, t);
+  }
+
+  Future<void> _sendQuickPrompt(
+      String text, AppState app, AppLocalizations t) async {
+    if (text.trim().isEmpty || app.chatSending) return;
     _controller.clear();
     final locale = Localizations.localeOf(context).toString();
     await app.sendChatMessage(text, locale, t);
@@ -169,6 +257,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildChat(AppState app, AppLocalizations t, ThemeData theme) {
     final messages = app.chatMessages;
+    _ensureQuickPrompts(t);
     _maybeScroll(app);
     return Column(
       children: [
@@ -186,6 +275,24 @@ class _ChatScreenState extends State<ChatScreen> {
                   },
                 ),
         ),
+        if (_quickPrompts.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _quickPrompts
+                  .map(
+                    (text) => ActionChip(
+                      label: Text(text, style: const TextStyle(fontSize: 12)),
+                      onPressed: app.chatSending
+                          ? null
+                          : () => _sendQuickPrompt(text, app, t),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
         if (app.chatError != null && app.chatError!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
