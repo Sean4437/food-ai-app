@@ -417,6 +417,8 @@
   "plateWarmLabel": "Warm ceramic plate",
   "apiSection": "API",
   "apiBaseUrlLabel": "API base URL",
+  "apiBaseUrlReset": "Clear old API and reset",
+  "apiBaseUrlResetDone": "API base URL reset",
   "delete": "Delete",
   "deleteConfirm": "Delete this record?",
   "logSuccess": "Meal logged",

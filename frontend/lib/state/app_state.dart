@@ -1902,6 +1902,20 @@ class AppState extends ChangeNotifier {
     await _saveOverrides();
   }
 
+  void _clearApiBaseUrlBackups() {
+    _meta.removeWhere((key, _) => key.startsWith('api_base_url'));
+  }
+
+  Future<void> resetApiBaseUrlToDefault() async {
+    profile.apiBaseUrl = kDefaultApiBaseUrl;
+    _api = ApiService(baseUrl: kDefaultApiBaseUrl);
+    _clearApiBaseUrlBackups();
+    _touchSettingsUpdatedAt();
+    notifyListeners();
+    await _saveProfile();
+    await _saveOverrides();
+  }
+
   Future<void> refreshApiBaseUrlFromRemote() async {
     if (_migrateApiBaseUrlIfNeeded()) {
       _touchSettingsUpdatedAt();

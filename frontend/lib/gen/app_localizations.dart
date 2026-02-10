@@ -2169,6 +2169,18 @@ abstract class AppLocalizations {
   /// **'API 位址'**
   String get apiBaseUrlLabel;
 
+  /// No description provided for @apiBaseUrlReset.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'清除舊 API 並重設'**
+  String get apiBaseUrlReset;
+
+  /// No description provided for @apiBaseUrlResetDone.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已重設 API 位址'**
+  String get apiBaseUrlResetDone;
+
   /// No description provided for @delete.
   ///
   /// In zh_TW, this message translates to:

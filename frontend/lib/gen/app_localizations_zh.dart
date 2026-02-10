@@ -1070,6 +1070,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get apiBaseUrlLabel => 'API 位址';
 
   @override
+  String get apiBaseUrlReset => '清除舊 API 並重設';
+
+  @override
+  String get apiBaseUrlResetDone => '已重設 API 位址';
+
+  @override
   String get delete => '刪除';
 
   @override
@@ -2862,6 +2868,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get apiBaseUrlLabel => 'API 位址';
+
+  @override
+  String get apiBaseUrlReset => '清除舊 API 並重設';
+
+  @override
+  String get apiBaseUrlResetDone => '已重設 API 位址';
+
 
   @override
   String get delete => '刪除';

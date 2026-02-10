@@ -1083,6 +1083,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiBaseUrlLabel => 'API base URL';
 
   @override
+  String get apiBaseUrlReset => 'Clear old API and reset';
+
+  @override
+  String get apiBaseUrlResetDone => 'API base URL reset';
+
+  @override
   String get delete => 'Delete';
 
   @override

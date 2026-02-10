@@ -417,6 +417,8 @@
   "plateWarmLabel": "暖色陶瓷盤",
   "apiSection": "API 連線",
   "apiBaseUrlLabel": "API 位址",
+  "apiBaseUrlReset": "清除舊 API 並重設",
+  "apiBaseUrlResetDone": "已重設 API 位址",
   "delete": "刪除",
   "deleteConfirm": "確定要刪除此紀錄嗎？",
   "logSuccess": "已記錄這餐",
