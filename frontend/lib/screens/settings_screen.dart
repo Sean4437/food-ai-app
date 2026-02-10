@@ -1109,8 +1109,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                           },
                                     child: Text(t.syncSignOut),
                                   ),
-                                            ),
-                                ),
+                                ],
+                              ),
+                          ],
+                        ),
                         const SizedBox(height: 8),
                         if (isSupabaseSignedIn) ...[
                           Row(
@@ -1122,7 +1124,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       .copyWith(color: Colors.black54),
                                 ),
                               ),
-                                    ),
+                            ],
+                          ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
@@ -1133,7 +1136,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       .copyWith(color: Colors.black54),
                                 ),
                               ),
-                                    ),
+                            ],
+                          ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
@@ -1144,8 +1148,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       .copyWith(color: Colors.black54),
                                 ),
                               ),
-                                    ),
-                              if (kDebugMode && isSupabaseSignedIn)
+                            ],
+                          ),
+                        ],
+                        if (kDebugMode && isSupabaseSignedIn)
                           Container(
                             padding: const EdgeInsets.symmetric(vertical: 6),
                             decoration: const BoxDecoration(
@@ -1193,8 +1199,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             },
                                       child: const Text('Copy'),
                                     ),
-                                                ),
-                                        ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         if (isSupabaseSignedIn) ...[
                           _row(
@@ -1246,7 +1254,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   child: Text(t.syncSignIn),
                                 ),
                               ),
-                                    ),
+                            ],
+                          ),
                           const SizedBox(height: 8),
                           _chatAvatarRow(context, app, t),
                           const SizedBox(height: 8),
@@ -1274,8 +1283,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   child: Text(t.syncForgotPassword),
                                 ),
                               ),
-                                    ),
-                              const SizedBox(height: 8),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 8),
                         Row(
                           children: [
                             Expanded(
@@ -1294,13 +1305,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                             strokeWidth: 2),
                                       ),
                                       const SizedBox(width: 8),
-                                                      Text(isSyncing
+                                    ],
+                                    Text(isSyncing
                                         ? t.syncInProgress
                                         : t.syncNow),
-                                                ),
+                                  ],
+                                ),
                               ),
                             ),
-                                ),
+                          ],
+                        ),
                         if (isSupabaseSignedIn) ...[
                           const SizedBox(height: 8),
                           Row(
@@ -1313,8 +1327,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   child: Text(t.syncRetryFailed),
                                 ),
                               ),
-                                    ),
-                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                   if (showMockSubscription) ...[
                     _sectionTitle(context, t.webTestSectionTitle),
@@ -1362,6 +1379,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         },
                       ),
                     ),
+                  ],
                   _sectionTitle(context, t.planSection),
                   _grid2([
                     _row(
@@ -1853,7 +1871,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                               ),
                             ]),
-                                ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1990,7 +2009,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: Text(t.themeWarm),
                         ),
                       ),
-                    ),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -2015,7 +2035,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: Text(t.themePink),
                         ),
                       ),
-                    ),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                   SwitchListTile(
                     value: profile.glowEnabled,
@@ -2109,7 +2130,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   : shortCommit,
                               emoji: '🔧',
                               showChevron: false),
-                            );
+                        ],
+                      );
                     },
                   ),
                   const SizedBox(height: 8),
