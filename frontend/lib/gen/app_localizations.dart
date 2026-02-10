@@ -1563,6 +1563,18 @@ abstract class AppLocalizations {
   /// **'提醒設定'**
   String get reminderSection;
 
+  /// No description provided for @reminderTimeNote.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'提醒時間會跟餐次開始時間同步'**
+  String get reminderTimeNote;
+
+  /// No description provided for @reminderBreakfast.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'提醒拍攝早餐'**
+  String get reminderBreakfast;
+
   /// No description provided for @reminderLunch.
   ///
   /// In zh_TW, this message translates to:
@@ -2030,6 +2042,12 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'晚餐提醒時間'**
   String get reminderDinnerTime;
+
+  /// No description provided for @reminderBreakfastTime.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'早餐提醒時間'**
+  String get reminderBreakfastTime;
 
   /// No description provided for @pickFromCamera.
   ///
@@ -3446,6 +3464,48 @@ abstract class AppLocalizations {
   /// In zh_TW, this message translates to:
   /// **'網路不穩定，請稍後再試'**
   String get chatErrorNetwork;
+
+  /// No description provided for @chatErrorReplyBase.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'喵嗚～我剛剛有點累，稍後再問我一次好嗎？'**
+  String get chatErrorReplyBase;
+
+  /// No description provided for @chatErrorReasonPrefix.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'原因：'**
+  String get chatErrorReasonPrefix;
+
+  /// No description provided for @chatErrorReasonAuth.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'登入已過期或權限不足'**
+  String get chatErrorReasonAuth;
+
+  /// No description provided for @chatErrorReasonQuota.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'請求太頻繁或額度已用完'**
+  String get chatErrorReasonQuota;
+
+  /// No description provided for @chatErrorReasonServer.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'伺服器忙碌或暫時出錯'**
+  String get chatErrorReasonServer;
+
+  /// No description provided for @chatErrorReasonNetwork.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'網路不穩定或連線中斷'**
+  String get chatErrorReasonNetwork;
+
+  /// No description provided for @chatErrorReasonUnknown.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'暫時無法判斷'**
+  String get chatErrorReasonUnknown;
 
   /// No description provided for @chatAvatarLabel.
   ///

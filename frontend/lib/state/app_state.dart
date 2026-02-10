@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:exif/exif.dart';
 import 'package:image_picker/image_picker.dart';
@@ -23,7 +23,8 @@ import '../config/supabase_config.dart';
 import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
 
-const String kDefaultApiBaseUrl = 'https://pharmacy-little-fever-attacked.trycloudflare.com';
+const String kDefaultApiBaseUrl =
+    'https://pharmacy-little-fever-attacked.trycloudflare.com';
 const List<String> kDeprecatedApiBaseUrls = [
   'https://sussex-oscar-southern-scanning.trycloudflare.com',
   'https://effectively-wild-oecd-weddings.trycloudflare.com',
@@ -42,6 +43,7 @@ const String _kAccessCheckAtKey = 'access_check_at';
 const String _kAccessGraceHoursKey = 'access_grace_hours';
 const String _kChatHistoryKey = 'chat_history';
 const String _kChatSummaryKey = 'chat_summary';
+const String _kMealReminderKeyPrefix = 'last_meal_reminder';
 const int _kAccessGraceHoursDefault = 24;
 const String _kMacroUnitGrams = 'grams';
 const String _kMacroUnitPercent = 'percent';
@@ -64,7 +66,8 @@ class AppState extends ChangeNotifier {
   final MealStore _store;
   final SettingsStore _settings;
   final List<MealEntry> entries = [];
-  static final Uint8List _namePlaceholderBytes = Uint8List.fromList(base64Decode(_kNamePlaceholderBase64));
+  static final Uint8List _namePlaceholderBytes =
+      Uint8List.fromList(base64Decode(_kNamePlaceholderBase64));
   bool _trialExpired = false;
   bool _trialChecked = false;
   bool _whitelisted = false;
@@ -91,6 +94,7 @@ class AppState extends ChangeNotifier {
   bool _chatSending = false;
   String? _chatError;
   Uint8List? _chatAvatarBytes;
+  // Meal reminders are delivered via auto chat (no UI card).
   final Map<String, Map<String, dynamic>> _deletedEntries = {};
   final Map<String, Map<String, dynamic>> _deletedCustomFoods = {};
   final Set<String> _failedMealSyncIds = {};
@@ -156,9 +160,11 @@ class AppState extends ChangeNotifier {
       notifyListeners();
     } catch (_) {
       final lastCheckRaw = _meta[_kAccessCheckAtKey];
-      final lastCheck = lastCheckRaw == null ? null : DateTime.tryParse(lastCheckRaw);
+      final lastCheck =
+          lastCheckRaw == null ? null : DateTime.tryParse(lastCheckRaw);
       final now = DateTime.now().toUtc();
-      final withinGrace = lastCheck != null && now.difference(lastCheck) <= Duration(hours: accessGraceHours);
+      final withinGrace = lastCheck != null &&
+          now.difference(lastCheck) <= Duration(hours: accessGraceHours);
       _trialChecked = true;
       if (!withinGrace) {
         _trialExpired = true;
@@ -172,7 +178,11 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  bool get trialExpired => _trialChecked && _trialExpired && !_mockSubscriptionActive && !_iapSubscriptionActive;
+  bool get trialExpired =>
+      _trialChecked &&
+      _trialExpired &&
+      !_mockSubscriptionActive &&
+      !_iapSubscriptionActive;
 
   bool get trialChecked => _trialChecked;
 
@@ -187,6 +197,7 @@ class AppState extends ChangeNotifier {
     if (parsed == null || parsed <= 0) return _kAccessGraceHoursDefault;
     return parsed;
   }
+
   bool get iapAvailable => _iapAvailable;
   bool get iapSubscriptionActive => _iapSubscriptionActive;
   bool get iapProcessing => _iapProcessing;
@@ -194,7 +205,8 @@ class AppState extends ChangeNotifier {
   List<ProductDetails> get iapProducts => List.unmodifiable(_iapProducts);
 
   DateTime? get trialEndAt => _trialEnd;
-  bool get chatAvailable => _iapSubscriptionActive || _mockSubscriptionActive || _whitelisted;
+  bool get chatAvailable =>
+      _iapSubscriptionActive || _mockSubscriptionActive || _whitelisted;
   bool get chatSending => _chatSending;
   String? get chatError => _chatError;
   List<ChatMessage> get chatMessages => List.unmodifiable(_chatMessages);
@@ -203,11 +215,13 @@ class AppState extends ChangeNotifier {
   String buildAiContext() {
     final now = DateTime.now();
     final cutoff = now.subtract(const Duration(days: 7));
-    final recent = entries.where((entry) => entry.time.isAfter(cutoff)).toList();
+    final recent =
+        entries.where((entry) => entry.time.isAfter(cutoff)).toList();
     if (recent.isEmpty) return '';
     recent.sort((a, b) => b.time.compareTo(a.time));
     final last = recent.first;
-    final lastName = last.overrideFoodName ?? last.result?.foodName ?? last.filename;
+    final lastName =
+        last.overrideFoodName ?? last.result?.foodName ?? last.filename;
     final t = lookupAppLocalizations(_localeFromProfile());
     final lastSummary = _entryDishSummary(last, t) ?? '';
     final protein = _aggregateMacroPercentPlain(recent, 'protein').round();
@@ -219,7 +233,8 @@ class AppState extends ChangeNotifier {
       final key = entry.mealId ?? entry.id;
       recentGroups.putIfAbsent(key, () => []).add(entry);
     }
-    final recentMealCount = recentGroups.values.where((group) => !_isBeverageGroup(group)).length;
+    final recentMealCount =
+        recentGroups.values.where((group) => !_isBeverageGroup(group)).length;
     return [
       'last_meal_type=${_mealTypeKey(last.type)}',
       'last_meal_name=$lastName',
@@ -369,9 +384,11 @@ class AppState extends ChangeNotifier {
     double target = bmr * factor;
     final goal = profile.goal;
     final plan = profile.planSpeed;
-    final isMaintain = goal.contains('維持') || goal.toLowerCase().contains('maintain');
+    final isMaintain =
+        goal.contains('維持') || goal.toLowerCase().contains('maintain');
     if (!isMaintain) {
-      final isGentle = plan.contains('保守') || plan.toLowerCase().contains('gentle');
+      final isGentle =
+          plan.contains('保守') || plan.toLowerCase().contains('gentle');
       target -= isGentle ? 300 : 500;
     }
     target += dailyExerciseCalories(date);
@@ -424,7 +441,8 @@ class AppState extends ChangeNotifier {
     bool hasRange = false;
     for (final entry in entriesForDate(date)) {
       if (excludeEntryId != null && entry.id == excludeEntryId) continue;
-      final range = _parseCalorieRange(entry.overrideCalorieRange ?? entry.result?.calorieRange);
+      final range = _parseCalorieRange(
+          entry.overrideCalorieRange ?? entry.result?.calorieRange);
       if (range == null) continue;
       final weight = _entryPortionFactor(entry);
       final mid = ((range[0] + range[1]) / 2) * weight;
@@ -507,7 +525,8 @@ class AppState extends ChangeNotifier {
     String? referenceObject,
     double? referenceLengthCm,
   }) async {
-    final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
+    final filename =
+        analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
     final selectedContainerType = containerType ?? profile.containerType;
     final selectedContainerSize = containerSize ?? profile.containerSize;
     final result = await _api.analyzeImage(
@@ -560,7 +579,8 @@ class AppState extends ChangeNotifier {
     String? overrideCalorieRange,
   }) async {
     final now = DateTime.now().toUtc();
-    final filename = analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
+    final filename =
+        analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
     final imageHash = _hashBytes(analysis.originalBytes);
     MealEntry entry;
     if (existing != null) {
@@ -574,7 +594,8 @@ class AppState extends ChangeNotifier {
         portionPercent: portionPercent ?? existing.portionPercent,
         containerType: containerType ?? existing.containerType,
         containerSize: containerSize ?? existing.containerSize,
-        overrideCalorieRange: overrideCalorieRange ?? existing.overrideCalorieRange,
+        overrideCalorieRange:
+            overrideCalorieRange ?? existing.overrideCalorieRange,
         result: _resolveNutritionResult(analysis.result),
         updatedAt: now,
         lastAnalyzedNote: (note ?? '').trim(),
@@ -648,11 +669,15 @@ class AppState extends ChangeNotifier {
       }
       await _saveProfile();
     }
-    if (_meta[_kSettingsUpdatedAtKey] == null || _meta[_kSettingsUpdatedAtKey]!.isEmpty) {
+    if (_meta[_kSettingsUpdatedAtKey] == null ||
+        _meta[_kSettingsUpdatedAtKey]!.isEmpty) {
       _meta[_kSettingsUpdatedAtKey] = DateTime.now().toUtc().toIso8601String();
       await _saveOverrides();
     }
-    _api = ApiService(baseUrl: profile.apiBaseUrl.isEmpty ? kDefaultApiBaseUrl : profile.apiBaseUrl);
+    _api = ApiService(
+        baseUrl: profile.apiBaseUrl.isEmpty
+            ? kDefaultApiBaseUrl
+            : profile.apiBaseUrl);
     final loaded = await _store.loadAll();
     entries
       ..clear()
@@ -734,12 +759,129 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<void> runAutoMealChatReminder(
+    AppLocalizations t,
+    String locale,
+  ) async {
+    if (!chatAvailable) return;
+    if (_chatSending) return;
+    final now = DateTime.now();
+    final reminder = _buildMealReminder(now);
+    if (reminder == null) return;
+    await _sendHiddenMealReminder(reminder, t, locale);
+  }
+
+  MealReminder? _buildMealReminder(DateTime now) {
+    final reminderType = _currentReminderMealType(now);
+    if (reminderType == null) return null;
+    if (!_isMealReminderEnabled(reminderType)) return null;
+    final date = _dateOnly(now);
+    if (_hasNonBeverageMealForDate(date, reminderType)) return null;
+    final dayKey = _dayKey(date);
+    final key = _lastMealReminderKey(reminderType);
+    if (_meta[key] == dayKey) return null;
+    _meta[key] = dayKey;
+    // ignore: unawaited_futures
+    _saveOverrides();
+    return MealReminder(type: reminderType, date: date);
+  }
+
+  Future<void> _sendHiddenMealReminder(
+    MealReminder reminder,
+    AppLocalizations t,
+    String locale,
+  ) async {
+    if (_chatSending) return;
+    _chatSending = true;
+    // Do not surface chat errors for auto reminders.
+    try {
+      final now = DateTime.now();
+      final mealLabel = _mealTypeLabel(reminder.type, t);
+      final prompt = _buildHiddenMealPrompt(mealLabel, t);
+      final payload = {
+        'lang': locale,
+        'profile': _chatProfileSnapshot(_dateOnly(now)),
+        'days': _recentDaysForChat(t),
+        'context': {
+          'now': now.toIso8601String(),
+          'last_meal_time': _lastMealTimeForChat(now),
+          'fasting_hours': _fastingHoursForChat(now),
+        },
+        if (_chatSummary.trim().isNotEmpty) 'summary': _chatSummary.trim(),
+        'messages': [
+          ..._chatMessagesForApi(),
+          {'role': 'user', 'content': prompt},
+        ],
+      };
+      final response = await _api.chat(payload, _accessToken());
+      final reply = (response['reply'] as String?)?.trim() ?? '';
+      final summary = (response['summary'] as String?)?.trim() ?? '';
+      if (reply.isNotEmpty) {
+        _chatMessages.add(ChatMessage.assistant(reply));
+      }
+      if (summary.isNotEmpty) {
+        _chatSummary = summary;
+      }
+      _trimChatHistory();
+      await _persistChat();
+    } catch (_) {
+      // Silent failure for auto reminders.
+    } finally {
+      _chatSending = false;
+      notifyListeners();
+    }
+  }
+
+  String _buildHiddenMealPrompt(String mealLabel, AppLocalizations t) {
+    if (t.localeName.startsWith('en')) {
+      return 'It is $mealLabel time. Based on my logged meals today, remaining calories, and time since last meal, give 2-4 short suggestions. If I am already over, clearly advise me to stop eating. Do not ask questions or request photos. Follow my persona and tone, and occasionally add a meow/nya.';
+    }
+    return '現在是$mealLabel時間。請根據我今天已記錄的餐點、剩餘熱量與距離上一餐時間，給我 2-4 句簡短飲食建議。若今天已超量或不建議再吃，請明確提醒。不要提問或要求照片。請符合我的角色與語氣設定，偶爾加入喵／喵嗚口癖。';
+  }
+
+  MealType? _currentReminderMealType(DateTime time) {
+    final current = TimeOfDay.fromDateTime(time);
+    if (_inRange(profile.breakfastStart, profile.breakfastEnd, current))
+      return MealType.breakfast;
+    if (_inRange(profile.lunchStart, profile.lunchEnd, current))
+      return MealType.lunch;
+    if (_inRange(profile.dinnerStart, profile.dinnerEnd, current))
+      return MealType.dinner;
+    return null;
+  }
+
+  bool _isMealReminderEnabled(MealType type) {
+    switch (type) {
+      case MealType.breakfast:
+        return profile.breakfastReminderEnabled;
+      case MealType.lunch:
+        return profile.lunchReminderEnabled;
+      case MealType.dinner:
+        return profile.dinnerReminderEnabled;
+      default:
+        return false;
+    }
+  }
+
+  bool _hasNonBeverageMealForDate(DateTime date, MealType type) {
+    final groups = mealGroupsForDate(date, type);
+    for (final group in groups) {
+      if (!_isBeverageGroup(group)) return true;
+    }
+    return false;
+  }
+
+  String _lastMealReminderKey(MealType type) {
+    return '$_kMealReminderKeyPrefix:${_mealTypeKey(type)}';
+  }
+
   Future<void> precachePlateAsset() async {
     final binding = WidgetsBinding.instance;
     await binding.endOfFrame;
     final context = binding.renderViewElement;
     if (context == null) return;
-    final asset = profile.plateAsset.isEmpty ? kDefaultPlateAsset : profile.plateAsset;
+    final asset =
+        profile.plateAsset.isEmpty ? kDefaultPlateAsset : profile.plateAsset;
     try {
       await precacheImage(AssetImage(asset), context);
     } catch (_) {}
@@ -792,7 +934,8 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
-  Future<void> addCustomFoodFromEntry(MealEntry entry, AppLocalizations t) async {
+  Future<void> addCustomFoodFromEntry(
+      MealEntry entry, AppLocalizations t) async {
     final now = DateTime.now();
     final result = entry.result;
     if (result == null) return;
@@ -802,9 +945,12 @@ class AppState extends ChangeNotifier {
       id: _newId(),
       name: entry.overrideFoodName ?? result.foodName,
       summary: result.dishSummary ?? '',
-      calorieRange: scaledRange == t.calorieUnknown ? result.calorieRange : scaledRange,
+      calorieRange:
+          scaledRange == t.calorieUnknown ? result.calorieRange : scaledRange,
       suggestion: result.suggestion,
-      macros: scaledMacros.isEmpty ? Map<String, double>.from(result.macros) : scaledMacros,
+      macros: scaledMacros.isEmpty
+          ? Map<String, double>.from(result.macros)
+          : scaledMacros,
       imageBytes: entry.imageBytes,
       createdAt: now,
       updatedAt: now,
@@ -978,7 +1124,8 @@ class AppState extends ChangeNotifier {
     return [min, max];
   }
 
-  double dailyProteinConsumedGrams(DateTime date, {bool excludeBeverages = false}) {
+  double dailyProteinConsumedGrams(DateTime date,
+      {bool excludeBeverages = false}) {
     double sum = 0;
     for (final entry in entriesForDate(date)) {
       final result = entry.result;
@@ -1006,15 +1153,18 @@ class AppState extends ChangeNotifier {
   }
 
   bool hasBeverageEntriesForDate(DateTime date) {
-    return entriesForDate(date).any((entry) => entry.result?.isBeverage == true);
+    return entriesForDate(date)
+        .any((entry) => entry.result?.isBeverage == true);
   }
 
   bool hasNonBeverageEntriesForDate(DateTime date) {
-    return entriesForDate(date).any((entry) => entry.result == null || entry.result?.isBeverage != true);
+    return entriesForDate(date).any(
+        (entry) => entry.result == null || entry.result?.isBeverage != true);
   }
 
   bool _isBeverageOnlyDay(DateTime date) {
-    return hasBeverageEntriesForDate(date) && !hasNonBeverageEntriesForDate(date);
+    return hasBeverageEntriesForDate(date) &&
+        !hasNonBeverageEntriesForDate(date);
   }
 
   void setSelectedDate(DateTime date) {
@@ -1035,7 +1185,10 @@ class AppState extends ChangeNotifier {
   }
 
   String entryCalorieRangeLabel(MealEntry entry, AppLocalizations t) {
-    final baseRange = entry.overrideCalorieRange ?? entry.labelResult?.calorieRange ?? entry.result?.calorieRange ?? '';
+    final baseRange = entry.overrideCalorieRange ??
+        entry.labelResult?.calorieRange ??
+        entry.result?.calorieRange ??
+        '';
     final parsed = _parseCalorieRange(baseRange);
     if (parsed == null) return t.calorieUnknown;
     final weight = _entryPortionFactor(entry);
@@ -1045,7 +1198,9 @@ class AppState extends ChangeNotifier {
   }
 
   double? entryCalorieMid(MealEntry entry) {
-    final baseRange = entry.overrideCalorieRange ?? entry.labelResult?.calorieRange ?? entry.result?.calorieRange;
+    final baseRange = entry.overrideCalorieRange ??
+        entry.labelResult?.calorieRange ??
+        entry.result?.calorieRange;
     final parsed = _parseCalorieRange(baseRange);
     if (parsed == null) return null;
     final weight = _entryPortionFactor(entry);
@@ -1099,7 +1254,8 @@ class AppState extends ChangeNotifier {
       ...mealGroupsForDate(date, MealType.other),
     ];
     for (final group in groups) {
-      final summary = buildMealSummary(group, lookupAppLocalizations(_localeFromProfile()));
+      final summary =
+          buildMealSummary(group, lookupAppLocalizations(_localeFromProfile()));
       if (summary == null) continue;
       final range = _parseCalorieRange(summary.calorieRange);
       if (range == null) continue;
@@ -1153,7 +1309,8 @@ class AppState extends ChangeNotifier {
     if (_isSameDate(date, today)) {
       final now = TimeOfDay.now();
       final target = profile.dailySummaryTime;
-      return (now.hour > target.hour) || (now.hour == target.hour && now.minute >= target.minute);
+      return (now.hour > target.hour) ||
+          (now.hour == target.hour && now.minute >= target.minute);
     }
     return date.isBefore(today);
   }
@@ -1168,7 +1325,8 @@ class AppState extends ChangeNotifier {
     if (_isSameDate(today, target)) {
       final now = TimeOfDay.now();
       final t = profile.dailySummaryTime;
-      return (now.hour > t.hour) || (now.hour == t.hour && now.minute >= t.minute);
+      return (now.hour > t.hour) ||
+          (now.hour == t.hour && now.minute >= t.minute);
     }
     return today.isAfter(target);
   }
@@ -1179,7 +1337,8 @@ class AppState extends ChangeNotifier {
 
   String weeklySummaryPendingText(AppLocalizations t) {
     final weekdayLabel = _weekdayLabel(profile.weeklySummaryWeekday, t);
-    return t.weekSummaryPendingAt(weekdayLabel, _timeToString(profile.dailySummaryTime));
+    return t.weekSummaryPendingAt(
+        weekdayLabel, _timeToString(profile.dailySummaryTime));
   }
 
   String daySummaryText(DateTime date, AppLocalizations t) {
@@ -1189,8 +1348,10 @@ class AppState extends ChangeNotifier {
     if (!isDailySummaryReady(date)) return dailySummaryPendingText(t);
     final dayEntries = entriesForDate(date);
     if (dayEntries.isEmpty) return t.summaryEmpty;
-    final nonBeverageEntries =
-        dayEntries.where((entry) => entry.result != null && entry.result?.isBeverage != true).toList();
+    final nonBeverageEntries = dayEntries
+        .where(
+            (entry) => entry.result != null && entry.result?.isBeverage != true)
+        .toList();
     if (nonBeverageEntries.isEmpty) {
       return _isBeverageOnlyDay(date) ? t.summaryBeverageOnly : t.summaryEmpty;
     }
@@ -1235,7 +1396,8 @@ class AppState extends ChangeNotifier {
     return t.nextMealHint;
   }
 
-  Future<bool> finalizeDay(DateTime date, String locale, AppLocalizations t) async {
+  Future<bool> finalizeDay(
+      DateTime date, String locale, AppLocalizations t) async {
     final dayKey = _dayKey(date);
     final hadOverride = _dayOverrides.containsKey(dayKey);
     final groups = mealGroupsForDateAll(date);
@@ -1275,36 +1437,40 @@ class AppState extends ChangeNotifier {
     }
     final consumedKcal = dailyConsumedCalorieMid(date).round();
     final targetMid = targetCalorieMid(date);
-    final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
+    final remainingKcal =
+        targetMid == null ? null : (targetMid - consumedKcal).round();
     final prevDate = _dateOnly(date).subtract(const Duration(days: 1));
     final prevKey = _dayKey(prevDate);
     final prevOverride = _dayOverrides[prevKey];
     final prevSummary = prevOverride?['summary']?.trim();
     final prevAdvice = prevOverride?['tomorrow_advice']?.trim();
     final payload = {
-      'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+      'date':
+          '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
       'lang': locale,
       'meals': meals,
       'day_calorie_range': _dailyCalorieRangeLabelForDate(date, t),
       'day_meal_count': mealGroups.length,
       'today_consumed_kcal': consumedKcal > 0 ? consumedKcal : null,
       'today_remaining_kcal': remainingKcal,
-      if (prevSummary != null && prevSummary.isNotEmpty) 'previous_day_summary': prevSummary,
-      if (prevAdvice != null && prevAdvice.isNotEmpty) 'previous_tomorrow_advice': prevAdvice,
+      if (prevSummary != null && prevSummary.isNotEmpty)
+        'previous_day_summary': prevSummary,
+      if (prevAdvice != null && prevAdvice.isNotEmpty)
+        'previous_tomorrow_advice': prevAdvice,
       'profile': {
         'height_cm': profile.heightCm,
         'weight_kg': profile.weightKg,
         'age': profile.age,
-      'gender': profile.gender,
-      'assistant_name': profile.chatAssistantName,
-      'tone': profile.tone,
-      'persona': profile.persona,
-          'activity_level': dailyActivityLevel(date),
-          'target_calorie_range': targetCalorieRangeValue(date),
-          'goal': profile.goal,
-          'plan_speed': profile.planSpeed,
-        },
-      };
+        'gender': profile.gender,
+        'assistant_name': profile.chatAssistantName,
+        'tone': profile.tone,
+        'persona': profile.persona,
+        'activity_level': dailyActivityLevel(date),
+        'target_calorie_range': targetCalorieRangeValue(date),
+        'goal': profile.goal,
+        'plan_speed': profile.planSpeed,
+      },
+    };
     try {
       final response = await _api.summarizeDay(payload, _accessToken());
       final summaryText = (response['day_summary'] as String?) ?? '';
@@ -1334,14 +1500,16 @@ class AppState extends ChangeNotifier {
     return true;
   }
 
-  Future<void> _maybeFinalizeWeekForDate(DateTime date, String locale, AppLocalizations t) async {
+  Future<void> _maybeFinalizeWeekForDate(
+      DateTime date, String locale, AppLocalizations t) async {
     final normalized = _dateOnly(date);
     final weekStart = _weekStartFor(normalized);
     final weekKey = _weekKey(weekStart);
     if (_weekOverrides.containsKey(weekKey)) {
       return;
     }
-    final targetDate = weekStart.add(Duration(days: profile.weeklySummaryWeekday - 1));
+    final targetDate =
+        weekStart.add(Duration(days: profile.weeklySummaryWeekday - 1));
     if (normalized.isBefore(targetDate)) {
       return;
     }
@@ -1361,7 +1529,8 @@ class AppState extends ChangeNotifier {
     _scheduleAutoFinalize();
   }
 
-  Future<bool> finalizeWeek(DateTime date, String locale, AppLocalizations t) async {
+  Future<bool> finalizeWeek(
+      DateTime date, String locale, AppLocalizations t) async {
     final weekStart = _weekStartFor(date);
     final weekKey = _weekKey(weekStart);
     final hadOverride = _weekOverrides.containsKey(weekKey);
@@ -1392,14 +1561,16 @@ class AppState extends ChangeNotifier {
         );
         final label = _mealTypeLabel(group.first.type, t);
         final rangeText = summary?.calorieRange ?? t.calorieUnknown;
-        final dishText = collapsedSummaries.isEmpty ? '' : collapsedSummaries.join(' / ');
+        final dishText =
+            collapsedSummaries.isEmpty ? '' : collapsedSummaries.join(' / ');
         final parts = <String>[label];
         if (rangeText.isNotEmpty) parts.add(rangeText);
         if (dishText.isNotEmpty) parts.add(dishText);
         dayMealSummaries.add(parts.join(' · '));
       }
       days.add({
-        'date': '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}',
+        'date':
+            '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}',
         'calorie_range': daySummary.calorieRange,
         'day_summary': daySummary.advice,
         'meal_count': mealGroups.length,
@@ -1414,25 +1585,29 @@ class AppState extends ChangeNotifier {
     final prevWeekSummary = prevWeekOverride?['week_summary']?.trim();
     final prevWeekAdvice = prevWeekOverride?['next_week_advice']?.trim();
     final payload = {
-      'week_start': '${weekStart.year.toString().padLeft(4, '0')}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}',
-      'week_end': '${weekEnd.year.toString().padLeft(4, '0')}-${weekEnd.month.toString().padLeft(2, '0')}-${weekEnd.day.toString().padLeft(2, '0')}',
+      'week_start':
+          '${weekStart.year.toString().padLeft(4, '0')}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}',
+      'week_end':
+          '${weekEnd.year.toString().padLeft(4, '0')}-${weekEnd.month.toString().padLeft(2, '0')}-${weekEnd.day.toString().padLeft(2, '0')}',
       'lang': locale,
       'days': days,
-      if (prevWeekSummary != null && prevWeekSummary.isNotEmpty) 'previous_week_summary': prevWeekSummary,
-      if (prevWeekAdvice != null && prevWeekAdvice.isNotEmpty) 'previous_next_week_advice': prevWeekAdvice,
+      if (prevWeekSummary != null && prevWeekSummary.isNotEmpty)
+        'previous_week_summary': prevWeekSummary,
+      if (prevWeekAdvice != null && prevWeekAdvice.isNotEmpty)
+        'previous_next_week_advice': prevWeekAdvice,
       'profile': {
         'height_cm': profile.heightCm,
         'weight_kg': profile.weightKg,
         'age': profile.age,
-          'gender': profile.gender,
-          'tone': profile.tone,
-          'persona': profile.persona,
-          'activity_level': profile.activityLevel,
-          'target_calorie_range': targetCalorieRangeValue(weekStart),
-          'goal': profile.goal,
-          'plan_speed': profile.planSpeed,
-        },
-      };
+        'gender': profile.gender,
+        'tone': profile.tone,
+        'persona': profile.persona,
+        'activity_level': profile.activityLevel,
+        'target_calorie_range': targetCalorieRangeValue(weekStart),
+        'goal': profile.goal,
+        'plan_speed': profile.planSpeed,
+      },
+    };
     try {
       final response = await _api.summarizeWeek(payload, _accessToken());
       final summaryText = (response['week_summary'] as String?) ?? '';
@@ -1489,8 +1664,8 @@ class AppState extends ChangeNotifier {
     String locale,
   ) async {
     if (group.isEmpty) return;
-      final mealId = group.first.mealId ?? group.first.id;
-      final key = _mealKey(mealId);
+    final mealId = group.first.mealId ?? group.first.id;
+    final key = _mealKey(mealId);
     if (_mealOverrides.containsKey(key)) return;
     if (_mealAdviceLoading.contains(mealId)) return;
     _mealAdviceLoading.add(mealId);
@@ -1515,8 +1690,10 @@ class AppState extends ChangeNotifier {
       final summary = buildMealSummary(group, t);
       final consumedKcal = dailyConsumedCalorieMid(mealDate).round();
       final targetMid = targetCalorieMid(mealDate);
-      final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
-      final lastMealInfo = _lastMealInfo(group.first.time, excludeMealId: mealId);
+      final remainingKcal =
+          targetMid == null ? null : (targetMid - consumedKcal).round();
+      final lastMealInfo =
+          _lastMealInfo(group.first.time, excludeMealId: mealId);
       final recentAdvice = _collectRecentMealAdvice(mealDate, t);
       final dishSummaries = <String>[];
       for (final entry in group) {
@@ -1548,7 +1725,9 @@ class AppState extends ChangeNotifier {
           dayGroup,
           t,
         );
-        final dishText = collapsedDaySummaries.isEmpty ? '' : collapsedDaySummaries.join(' / ');
+        final dishText = collapsedDaySummaries.isEmpty
+            ? ''
+            : collapsedDaySummaries.join(' / ');
         final parts = <String>[label];
         if (rangeText.isNotEmpty) parts.add(rangeText);
         if (dishText.isNotEmpty) parts.add(dishText);
@@ -1563,8 +1742,12 @@ class AppState extends ChangeNotifier {
         'day_meal_summaries': dayMealSummaries,
         'today_consumed_kcal': consumedKcal > 0 ? consumedKcal : null,
         'today_remaining_kcal': remainingKcal,
-        'today_macros': daySummary?.macros.isNotEmpty == true ? _roundMacros(daySummary!.macros) : null,
-        'last_meal_macros': summary?.macros.isNotEmpty == true ? _roundMacros(summary!.macros) : null,
+        'today_macros': daySummary?.macros.isNotEmpty == true
+            ? _roundMacros(daySummary!.macros)
+            : null,
+        'last_meal_macros': summary?.macros.isNotEmpty == true
+            ? _roundMacros(summary!.macros)
+            : null,
         if (lastMealInfo.isNotEmpty) ...lastMealInfo,
         'recent_advice': recentAdvice.isEmpty ? null : recentAdvice,
         'lang': locale,
@@ -1584,7 +1767,8 @@ class AppState extends ChangeNotifier {
       final response = await _api.suggestMeal(payload, _accessToken());
       final advice = MealAdvice(
         selfCook: (response['self_cook'] as String?) ?? t.nextSelfCookHint,
-        convenience: (response['convenience'] as String?) ?? t.nextConvenienceHint,
+        convenience:
+            (response['convenience'] as String?) ?? t.nextConvenienceHint,
         bento: (response['bento'] as String?) ?? t.nextBentoHint,
         other: (response['other'] as String?) ?? t.nextOtherHint,
       );
@@ -1596,7 +1780,8 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> updateDayOverride(DateTime date, {String? summary, String? tomorrowAdvice}) async {
+  Future<void> updateDayOverride(DateTime date,
+      {String? summary, String? tomorrowAdvice}) async {
     final key = _dayKey(date);
     _dayOverrides.putIfAbsent(key, () => {});
     if (summary != null) {
@@ -1623,7 +1808,8 @@ class AppState extends ChangeNotifier {
     await _saveOverrides();
   }
 
-  Future<void> updateWeekOverride(DateTime weekStart, {String? weekSummary, String? nextWeekAdvice}) async {
+  Future<void> updateWeekOverride(DateTime weekStart,
+      {String? weekSummary, String? nextWeekAdvice}) async {
     final key = _weekKey(weekStart);
     _weekOverrides.putIfAbsent(key, () => {});
     if (weekSummary != null) {
@@ -1650,7 +1836,8 @@ class AppState extends ChangeNotifier {
     await _saveOverrides();
   }
 
-  Future<void> updateMealAdvice(String mealId, MealAdvice advice, {bool reanalyzeEntries = true}) async {
+  Future<void> updateMealAdvice(String mealId, MealAdvice advice,
+      {bool reanalyzeEntries = true}) async {
     final key = _mealKey(mealId);
     _mealOverrides[key] = {
       'self_cook': advice.selfCook.trim(),
@@ -1665,7 +1852,8 @@ class AppState extends ChangeNotifier {
     if (reanalyzeEntries) {
       final locale = profile.language;
       for (final entry in entriesForMealId(mealId)) {
-        _scheduleAnalyze(entry, locale, force: true, reason: 'meal_advice_changed');
+        _scheduleAnalyze(entry, locale,
+            force: true, reason: 'meal_advice_changed');
       }
     }
   }
@@ -1685,11 +1873,13 @@ class AppState extends ChangeNotifier {
     }
     final normalized = _normalizeApiBaseUrl(profile.apiBaseUrl);
     final normalizedDefault = _normalizeApiBaseUrl(kDefaultApiBaseUrl);
-    if (normalized.contains('trycloudflare.com') && normalized != normalizedDefault) {
+    if (normalized.contains('trycloudflare.com') &&
+        normalized != normalizedDefault) {
       profile.apiBaseUrl = kDefaultApiBaseUrl;
       return true;
     }
-    final deprecatedNormalized = kDeprecatedApiBaseUrls.map(_normalizeApiBaseUrl);
+    final deprecatedNormalized =
+        kDeprecatedApiBaseUrls.map(_normalizeApiBaseUrl);
     if (deprecatedNormalized.contains(normalized)) {
       profile.apiBaseUrl = kDefaultApiBaseUrl;
       return true;
@@ -1735,12 +1925,18 @@ class AppState extends ChangeNotifier {
 
   MealType resolveMealType(DateTime time) {
     final current = TimeOfDay.fromDateTime(time);
-    if (_inRange(profile.breakfastStart, profile.breakfastEnd, current)) return MealType.breakfast;
-    if (_inRange(profile.brunchStart, profile.brunchEnd, current)) return MealType.brunch;
-    if (_inRange(profile.lunchStart, profile.lunchEnd, current)) return MealType.lunch;
-    if (_inRange(profile.afternoonTeaStart, profile.afternoonTeaEnd, current)) return MealType.afternoonTea;
-    if (_inRange(profile.dinnerStart, profile.dinnerEnd, current)) return MealType.dinner;
-    if (_inRange(profile.lateSnackStart, profile.lateSnackEnd, current)) return MealType.lateSnack;
+    if (_inRange(profile.breakfastStart, profile.breakfastEnd, current))
+      return MealType.breakfast;
+    if (_inRange(profile.brunchStart, profile.brunchEnd, current))
+      return MealType.brunch;
+    if (_inRange(profile.lunchStart, profile.lunchEnd, current))
+      return MealType.lunch;
+    if (_inRange(profile.afternoonTeaStart, profile.afternoonTeaEnd, current))
+      return MealType.afternoonTea;
+    if (_inRange(profile.dinnerStart, profile.dinnerEnd, current))
+      return MealType.dinner;
+    if (_inRange(profile.lateSnackStart, profile.lateSnackEnd, current))
+      return MealType.lateSnack;
     return MealType.other;
   }
 
@@ -1917,7 +2113,8 @@ class AppState extends ChangeNotifier {
       if (result == null) continue;
       final weight = _entryPortionFactor(entry);
       totalWeight += weight;
-      final range = _parseCalorieRange(entry.overrideCalorieRange ?? result.calorieRange);
+      final range =
+          _parseCalorieRange(entry.overrideCalorieRange ?? result.calorieRange);
       if (range != null) {
         minSum += range[0] * weight;
         maxSum += range[1] * weight;
@@ -1936,9 +2133,14 @@ class AppState extends ChangeNotifier {
       'sodium': sodiumSum,
     };
     final dishSummary = _buildMealDishSummary(group, t);
-    final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
-    final advice = dishSummary.isNotEmpty ? dishSummary : _buildMealAdvice(macros, calorieRange, t);
-    return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
+    final calorieRange = minSum > 0 && maxSum > 0
+        ? '${minSum.round()}-${maxSum.round()} kcal'
+        : t.calorieUnknown;
+    final advice = dishSummary.isNotEmpty
+        ? dishSummary
+        : _buildMealAdvice(macros, calorieRange, t);
+    return MealSummary(
+        calorieRange: calorieRange, macros: macros, advice: advice);
   }
 
   MealSummary? buildDaySummary(DateTime date, AppLocalizations t) {
@@ -1957,7 +2159,8 @@ class AppState extends ChangeNotifier {
       if (result == null) continue;
       final weight = _entryPortionFactor(entry);
       totalWeight += weight;
-      final range = _parseCalorieRange(entry.overrideCalorieRange ?? result.calorieRange);
+      final range =
+          _parseCalorieRange(entry.overrideCalorieRange ?? result.calorieRange);
       if (range != null) {
         minSum += range[0] * weight;
         maxSum += range[1] * weight;
@@ -1975,9 +2178,12 @@ class AppState extends ChangeNotifier {
       'fat': fatSum,
       'sodium': sodiumSum,
     };
-    final calorieRange = minSum > 0 && maxSum > 0 ? '${minSum.round()}-${maxSum.round()} kcal' : t.calorieUnknown;
+    final calorieRange = minSum > 0 && maxSum > 0
+        ? '${minSum.round()}-${maxSum.round()} kcal'
+        : t.calorieUnknown;
     final advice = _buildMealAdvice(macros, calorieRange, t);
-    return MealSummary(calorieRange: calorieRange, macros: macros, advice: advice);
+    return MealSummary(
+        calorieRange: calorieRange, macros: macros, advice: advice);
   }
 
   Future<MealEntry?> addEntryFromFiles(
@@ -1989,7 +2195,8 @@ class AppState extends ChangeNotifier {
   }) async {
     if (files.isEmpty) return null;
     if (files.length == 1) {
-      return addEntry(files.first, locale, note: note, fixedType: fixedType, overrideTime: overrideTime);
+      return addEntry(files.first, locale,
+          note: note, fixedType: fixedType, overrideTime: overrideTime);
     }
     final List<MealEntry> created = [];
     DateTime? anchorTime;
@@ -2000,7 +2207,9 @@ class AppState extends ChangeNotifier {
       final bytes = _compressImageBytes(originalBytes);
       final filename = file.name.isNotEmpty ? file.name : 'upload.jpg';
       final mealType = fixedType ?? resolveMealType(time);
-      final mealId = fixedType != null ? _assignMealId(time, fixedType) : _assignMealId(time, mealType);
+      final mealId = fixedType != null
+          ? _assignMealId(time, fixedType)
+          : _assignMealId(time, mealType);
       final entry = MealEntry(
         id: _newId(),
         imageBytes: bytes,
@@ -2077,7 +2286,8 @@ class AppState extends ChangeNotifier {
     return entry;
   }
 
-  Future<void> updateEntryNote(MealEntry entry, String note, String locale) async {
+  Future<void> updateEntryNote(
+      MealEntry entry, String note, String locale) async {
     entry.note = note.trim().isEmpty ? null : note.trim();
     entry.updatedAt = DateTime.now().toUtc();
     markMealInteraction(entry.mealId ?? entry.id);
@@ -2158,7 +2368,8 @@ class AppState extends ChangeNotifier {
     _store.upsert(entry);
   }
 
-  Future<void> addLabelToEntry(MealEntry entry, XFile file, String locale) async {
+  Future<void> addLabelToEntry(
+      MealEntry entry, XFile file, String locale) async {
     entry.loading = true;
     entry.error = null;
     notifyListeners();
@@ -2178,7 +2389,8 @@ class AppState extends ChangeNotifier {
       entry.updatedAt = DateTime.now().toUtc();
       if (entry.result != null) {
         final custom = _findCustomFoodByName(entry.overrideFoodName);
-        entry.result = _resolveNutritionResult(entry.result!, custom: custom, label: labelResult);
+        entry.result = _resolveNutritionResult(entry.result!,
+            custom: custom, label: labelResult);
       } else {
         final fallbackName = (entry.overrideFoodName ?? '').trim().isNotEmpty
             ? entry.overrideFoodName!.trim()
@@ -2289,6 +2501,7 @@ class AppState extends ChangeNotifier {
       ..planSpeed = reset.planSpeed
       ..dailySummaryTime = reset.dailySummaryTime
       ..weeklySummaryWeekday = reset.weeklySummaryWeekday
+      ..breakfastReminderEnabled = reset.breakfastReminderEnabled
       ..lunchReminderEnabled = reset.lunchReminderEnabled
       ..dinnerReminderEnabled = reset.dinnerReminderEnabled
       ..lunchReminderTime = reset.lunchReminderTime
@@ -2321,13 +2534,15 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateEntryFoodName(MealEntry entry, String foodName, String locale) async {
+  Future<void> updateEntryFoodName(
+      MealEntry entry, String foodName, String locale) async {
     entry.overrideFoodName = foodName.trim().isEmpty ? null : foodName.trim();
     entry.updatedAt = DateTime.now().toUtc();
     markMealInteraction(entry.mealId ?? entry.id);
     final custom = _findCustomFoodByName(entry.overrideFoodName);
     if (entry.result != null) {
-      entry.result = _resolveNutritionResult(entry.result!, custom: custom, label: entry.labelResult);
+      entry.result = _resolveNutritionResult(entry.result!,
+          custom: custom, label: entry.labelResult);
     }
     notifyListeners();
     await _store.upsert(entry);
@@ -2391,6 +2606,7 @@ class AppState extends ChangeNotifier {
       ..planSpeed = updated.planSpeed
       ..dailySummaryTime = updated.dailySummaryTime
       ..weeklySummaryWeekday = updated.weeklySummaryWeekday
+      ..breakfastReminderEnabled = updated.breakfastReminderEnabled
       ..lunchReminderEnabled = updated.lunchReminderEnabled
       ..dinnerReminderEnabled = updated.dinnerReminderEnabled
       ..lunchReminderTime = updated.lunchReminderTime
@@ -2505,7 +2721,8 @@ class AppState extends ChangeNotifier {
         forceReanalyze: force,
       );
       final custom = _findCustomFoodByName(entry.overrideFoodName);
-      entry.result = _resolveNutritionResult(res, custom: custom, label: entry.labelResult);
+      entry.result = _resolveNutritionResult(res,
+          custom: custom, label: entry.labelResult);
       entry.lastAnalyzedNote = noteKey;
       entry.lastAnalyzedFoodName = nameKey;
       entry.lastAnalyzedAt = DateTime.now().toIso8601String();
@@ -2525,7 +2742,9 @@ class AppState extends ChangeNotifier {
         'portion_changed',
         'time_changed',
       };
-      if (force && entry.error == null && refreshMealAdviceReasons.contains(reason)) {
+      if (force &&
+          entry.error == null &&
+          refreshMealAdviceReasons.contains(reason)) {
         await _refreshMealAdviceForEntry(entry, locale);
       }
       const refreshDaySummaryReasons = {
@@ -2557,7 +2776,8 @@ class AppState extends ChangeNotifier {
     await _store.upsert(entry);
   }
 
-  Future<void> _refreshMealAdviceForEntry(MealEntry entry, String locale) async {
+  Future<void> _refreshMealAdviceForEntry(
+      MealEntry entry, String locale) async {
     final mealId = entry.mealId ?? entry.id;
     _scheduleMealAdviceRefresh(mealId, locale);
   }
@@ -2577,24 +2797,30 @@ class AppState extends ChangeNotifier {
       _mealOverrides.remove(key);
       await _saveOverrides();
     }
-    final t = lookupAppLocalizations(Locale.fromSubtags(languageCode: locale.split('-').first));
+    final t = lookupAppLocalizations(
+        Locale.fromSubtags(languageCode: locale.split('-').first));
     final group = entriesForMealId(mealId);
     if (group.isEmpty) return;
     await ensureMealAdviceForGroup(group, t, locale);
   }
 
-  Future<void> _refreshDaySummaryForEntry(MealEntry entry, String locale) async {
+  Future<void> _refreshDaySummaryForEntry(
+      MealEntry entry, String locale) async {
     final date = _dateOnly(entry.time);
-    final t = lookupAppLocalizations(Locale.fromSubtags(languageCode: locale.split('-').first));
+    final t = lookupAppLocalizations(
+        Locale.fromSubtags(languageCode: locale.split('-').first));
     await _refreshDaySummaryForDate(date, locale, t: t);
   }
 
-  Future<void> _refreshDaySummaryForDate(DateTime date, String locale, {AppLocalizations? t}) async {
+  Future<void> _refreshDaySummaryForDate(DateTime date, String locale,
+      {AppLocalizations? t}) async {
     final key = _dayKey(date);
     if (!_isDayLocked(date) && !_dayOverrides.containsKey(key)) {
       return;
     }
-    final resolved = t ?? lookupAppLocalizations(Locale.fromSubtags(languageCode: locale.split('-').first));
+    final resolved = t ??
+        lookupAppLocalizations(
+            Locale.fromSubtags(languageCode: locale.split('-').first));
     await finalizeDay(date, locale, resolved);
   }
 
@@ -2632,7 +2858,8 @@ class AppState extends ChangeNotifier {
   }
 
   DateTime? _parseFilenameDate(String filename) {
-    final match = RegExp(r'(20\\d{2})[-_]?([01]\\d)[-_]?([0-3]\\d)').firstMatch(filename);
+    final match =
+        RegExp(r'(20\\d{2})[-_]?([01]\\d)[-_]?([0-3]\\d)').firstMatch(filename);
     if (match == null) return null;
     final year = int.tryParse(match.group(1)!);
     final month = int.tryParse(match.group(2)!);
@@ -2644,11 +2871,14 @@ class AppState extends ChangeNotifier {
   Uint8List _compressImageBytes(List<int> bytes) {
     final decoded = img.decodeImage(Uint8List.fromList(bytes));
     if (decoded == null) return Uint8List.fromList(bytes);
-    final maxDim = decoded.width > decoded.height ? decoded.width : decoded.height;
+    final maxDim =
+        decoded.width > decoded.height ? decoded.width : decoded.height;
     final scale = maxDim > 1024 ? 1024 / maxDim : 1.0;
     final targetWidth = (decoded.width * scale).round();
     final targetHeight = (decoded.height * scale).round();
-    final resized = scale < 1.0 ? img.copyResize(decoded, width: targetWidth, height: targetHeight) : decoded;
+    final resized = scale < 1.0
+        ? img.copyResize(decoded, width: targetWidth, height: targetHeight)
+        : decoded;
     final jpg = img.encodeJpg(resized, quality: 70);
     return Uint8List.fromList(jpg);
   }
@@ -2717,7 +2947,8 @@ class AppState extends ChangeNotifier {
     return (grams / baseline) * 100;
   }
 
-  Map<String, double> _macroPercentMapFromGrams(Map<String, double> grams, String? calorieRange,
+  Map<String, double> _macroPercentMapFromGrams(
+      Map<String, double> grams, String? calorieRange,
       {double baselineMultiplier = 1.0}) {
     final calories = calorieRangeMid(calorieRange);
     return {
@@ -2767,6 +2998,7 @@ class AppState extends ChangeNotifier {
       final sodium = macros['sodium'] ?? 0;
       return protein > 100 || carbs > 100 || fat > 100 || sodium > 120;
     }
+
     for (final entry in entries) {
       if (entry.result != null && checkMacros(entry.result!.macros)) {
         looksLikeGrams = true;
@@ -2805,7 +3037,9 @@ class AppState extends ChangeNotifier {
           source: result.source,
           nutritionSource: result.nutritionSource,
           aiOriginalCalorieRange: result.aiOriginalCalorieRange,
-          aiOriginalMacros: result.aiOriginalMacros == null ? null : _percentMacrosToGrams(result.aiOriginalMacros!),
+          aiOriginalMacros: result.aiOriginalMacros == null
+              ? null
+              : _percentMacrosToGrams(result.aiOriginalMacros!),
           costEstimateUsd: result.costEstimateUsd,
           confidence: result.confidence,
           isBeverage: result.isBeverage,
@@ -2834,7 +3068,8 @@ class AppState extends ChangeNotifier {
     return changed;
   }
 
-  double _aggregateMacroScore(List<MealEntry> dayEntries, String key, AppLocalizations t) {
+  double _aggregateMacroScore(
+      List<MealEntry> dayEntries, String key, AppLocalizations t) {
     double totalWeight = 0;
     double score = 0;
     for (final entry in dayEntries) {
@@ -2896,7 +3131,8 @@ class AppState extends ChangeNotifier {
         'macros=protein_g:${macros['protein']?.round() ?? 0}, carbs_g:${macros['carbs']?.round() ?? 0}, fat_g:${macros['fat']?.round() ?? 0}, sodium_mg:${macros['sodium']?.round() ?? 0}',
       );
     }
-    if (labelResult.labelName != null && labelResult.labelName!.trim().isNotEmpty) {
+    if (labelResult.labelName != null &&
+        labelResult.labelName!.trim().isNotEmpty) {
       parts.add('label_name=${labelResult.labelName!.trim()}');
     }
     return 'nutrition_label: ${parts.join(' | ')}';
@@ -2929,8 +3165,12 @@ class AppState extends ChangeNotifier {
         macros: Map<String, double>.from(custom.macros),
         foodItems: base.foodItems,
         judgementTags: base.judgementTags,
-        dishSummary: custom.summary.trim().isNotEmpty ? custom.summary : base.dishSummary,
-        suggestion: custom.suggestion.trim().isNotEmpty ? custom.suggestion : base.suggestion,
+        dishSummary: custom.summary.trim().isNotEmpty
+            ? custom.summary
+            : base.dishSummary,
+        suggestion: custom.suggestion.trim().isNotEmpty
+            ? custom.suggestion
+            : base.suggestion,
         tier: base.tier,
         source: base.source,
         nutritionSource: 'custom',
@@ -2942,7 +3182,9 @@ class AppState extends ChangeNotifier {
       );
     }
     if (label != null) {
-      final calorieRange = label.calorieRange.trim().isNotEmpty ? label.calorieRange : base.calorieRange;
+      final calorieRange = label.calorieRange.trim().isNotEmpty
+          ? label.calorieRange
+          : base.calorieRange;
       final macros = label.macros.isNotEmpty ? label.macros : base.macros;
       return AnalysisResult(
         foodName: base.foodName,
@@ -2980,7 +3222,9 @@ class AppState extends ChangeNotifier {
       source: base.source,
       nutritionSource: resolvedSource,
       aiOriginalCalorieRange: base.aiOriginalCalorieRange,
-      aiOriginalMacros: base.aiOriginalMacros == null ? null : Map<String, double>.from(base.aiOriginalMacros!),
+      aiOriginalMacros: base.aiOriginalMacros == null
+          ? null
+          : Map<String, double>.from(base.aiOriginalMacros!),
       costEstimateUsd: base.costEstimateUsd,
       confidence: base.confidence,
       isBeverage: isBeverage,
@@ -2992,7 +3236,8 @@ class AppState extends ChangeNotifier {
     if ((entry.overrideFoodName ?? '').trim().isNotEmpty) return null;
     for (final existing in entries) {
       if (existing.id == entry.id) continue;
-      if (existing.imageHash == null || existing.imageHash != entry.imageHash) continue;
+      if (existing.imageHash == null || existing.imageHash != entry.imageHash)
+        continue;
       if (existing.result == null) continue;
       if ((existing.overrideFoodName ?? '').trim().isNotEmpty) continue;
       if ((existing.note ?? '').trim().isNotEmpty) continue;
@@ -3002,7 +3247,8 @@ class AppState extends ChangeNotifier {
   }
 
   DateTime? _parseExifDate(String value) {
-    final match = RegExp(r'(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})').firstMatch(value);
+    final match = RegExp(r'(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})')
+        .firstMatch(value);
     if (match == null) return null;
     final year = int.tryParse(match.group(1)!);
     final month = int.tryParse(match.group(2)!);
@@ -3010,7 +3256,8 @@ class AppState extends ChangeNotifier {
     final hour = int.tryParse(match.group(4)!);
     final minute = int.tryParse(match.group(5)!);
     final second = int.tryParse(match.group(6)!);
-    if ([year, month, day, hour, minute, second].any((v) => v == null)) return null;
+    if ([year, month, day, hour, minute, second].any((v) => v == null))
+      return null;
     return DateTime(year!, month!, day!, hour!, minute!, second!);
   }
 
@@ -3024,7 +3271,8 @@ class AppState extends ChangeNotifier {
 
   List<int>? _parseCalorieRange(String? value) {
     if (value == null) return null;
-    final rangeMatch = RegExp(r'(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)').firstMatch(value);
+    final rangeMatch =
+        RegExp(r'(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)').firstMatch(value);
     if (rangeMatch != null) {
       final minVal = double.tryParse(rangeMatch.group(1)!);
       final maxVal = double.tryParse(rangeMatch.group(2)!);
@@ -3050,7 +3298,9 @@ class AppState extends ChangeNotifier {
     final typeRaw = (entry.containerType ?? '').trim();
     final size = sizeRaw.isEmpty ? profile.containerSize : sizeRaw;
     final type = typeRaw.isEmpty ? profile.containerType : typeRaw;
-    return portion * _containerSizeFactorFor(size) * _containerTypeFactorFor(type);
+    return portion *
+        _containerSizeFactorFor(size) *
+        _containerTypeFactorFor(type);
   }
 
   double _containerSizeFactorFor(String? size) {
@@ -3160,7 +3410,8 @@ class AppState extends ChangeNotifier {
     return t.levelMedium;
   }
 
-  String _buildMealAdvice(Map<String, double> macros, String calorieRange, AppLocalizations t) {
+  String _buildMealAdvice(
+      Map<String, double> macros, String calorieRange, AppLocalizations t) {
     final advice = <String>[];
     final percentMap = _macroPercentMapFromGrams(macros, calorieRange);
     final protein = percentMap['protein'] ?? 0;
@@ -3171,7 +3422,8 @@ class AppState extends ChangeNotifier {
     if (_isHigh(fat)) advice.add(t.dietitianFatHigh);
     if (_isHigh(carbs)) advice.add(t.dietitianCarbHigh);
     if (_isHigh(sodium)) advice.add(t.dietitianSodiumHigh);
-    final line = advice.isEmpty ? t.dietitianBalanced : advice.take(2).join('、');
+    final line =
+        advice.isEmpty ? t.dietitianBalanced : advice.take(2).join('、');
     final goalLower = profile.goal.toLowerCase();
     final loseFat = profile.goal == t.goalLoseFat ||
         goalLower.contains('減脂') ||
@@ -3184,7 +3436,8 @@ class AppState extends ChangeNotifier {
     return entry.portionPercent <= _kSmallPortionThreshold;
   }
 
-  bool _shouldShowSmallPortionNoteForGroup(List<MealEntry> group, {double ratio = 0.5}) {
+  bool _shouldShowSmallPortionNoteForGroup(List<MealEntry> group,
+      {double ratio = 0.5}) {
     if (group.isEmpty) return false;
     int total = 0;
     int small = 0;
@@ -3198,7 +3451,8 @@ class AppState extends ChangeNotifier {
     return (small / total) >= ratio;
   }
 
-  String _appendSmallPortionSuffix(String text, List<MealEntry> group, AppLocalizations t) {
+  String _appendSmallPortionSuffix(
+      String text, List<MealEntry> group, AppLocalizations t) {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return trimmed;
     if (!_shouldShowSmallPortionNoteForGroup(group)) return trimmed;
@@ -3275,7 +3529,8 @@ class AppState extends ChangeNotifier {
     return _appendSmallPortionSuffix(combined, group, t);
   }
 
-  List<String> _collapseDishSummaries(List<String> items, AppLocalizations t, {int maxItems = 3}) {
+  List<String> _collapseDishSummaries(List<String> items, AppLocalizations t,
+      {int maxItems = 3}) {
     final cleaned = <String>[];
     final seen = <String>{};
     for (final item in items) {
@@ -3293,7 +3548,8 @@ class AppState extends ChangeNotifier {
     final total = cleaned.length;
     final joiner = t.localeName.startsWith('en') ? ', ' : '、';
     final prefix = shown.join(joiner);
-    final suffix = t.localeName.startsWith('en') ? '... + $total items' : '...等${total}道';
+    final suffix =
+        t.localeName.startsWith('en') ? '... + $total items' : '...等${total}道';
     return ['$prefix$suffix'];
   }
 
@@ -3340,7 +3596,8 @@ class AppState extends ChangeNotifier {
     final week = overrides['week'] as Map<String, dynamic>?;
     final meta = overrides['meta'] as Map<String, dynamic>?;
     final deleted = overrides['deleted_entries'] as Map<String, dynamic>?;
-    final deletedCustom = overrides['deleted_custom_foods'] as Map<String, dynamic>?;
+    final deletedCustom =
+        overrides['deleted_custom_foods'] as Map<String, dynamic>?;
     final failedMeals = overrides['failed_meal_sync_ids'];
     final failedMealDeletes = overrides['failed_meal_delete_sync_ids'];
     final failedCustomFoods = overrides['failed_custom_food_sync_ids'];
@@ -3424,7 +3681,8 @@ class AppState extends ChangeNotifier {
             if (item is Map<String, dynamic>) {
               _chatMessages.add(ChatMessage.fromJson(item));
             } else if (item is Map) {
-              _chatMessages.add(ChatMessage.fromJson(item.map((k, v) => MapEntry(k.toString(), v))));
+              _chatMessages.add(ChatMessage.fromJson(
+                  item.map((k, v) => MapEntry(k.toString(), v))));
             }
           }
         }
@@ -3477,7 +3735,8 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _persistChat() async {
-    _meta[_kChatHistoryKey] = json.encode(_chatMessages.map((msg) => msg.toJson()).toList());
+    _meta[_kChatHistoryKey] =
+        json.encode(_chatMessages.map((msg) => msg.toJson()).toList());
     _meta[_kChatSummaryKey] = _chatSummary;
     await _saveOverrides();
   }
@@ -3531,11 +3790,15 @@ class AppState extends ChangeNotifier {
       final entriesForDay = entriesForDate(date);
       final groups = mealGroupsForDateAll(date);
       final summary = buildDaySummary(date, t);
-      final consumed = entriesForDay.isEmpty ? null : dailyConsumedCalorieMid(date).round();
+      final consumed =
+          entriesForDay.isEmpty ? null : dailyConsumedCalorieMid(date).round();
       final targetMid = targetCalorieMid(date);
-      final remaining = consumed == null || targetMid == null ? null : (targetMid - consumed).round();
+      final remaining = consumed == null || targetMid == null
+          ? null
+          : (targetMid - consumed).round();
       days.add({
-        'date': '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+        'date':
+            '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
         'has_data': entriesForDay.isNotEmpty,
         'meal_count': groups.length,
         'meal_labels': entriesForDay.isNotEmpty ? dayMealLabels(date, t) : '',
@@ -3544,7 +3807,9 @@ class AppState extends ChangeNotifier {
         'consumed_kcal': consumed,
         'remaining_kcal': remaining,
         'target_range': targetCalorieRangeValue(date),
-        'macros': summary?.macros.isNotEmpty == true ? _roundMacros(summary!.macros) : null,
+        'macros': summary?.macros.isNotEmpty == true
+            ? _roundMacros(summary!.macros)
+            : null,
       });
     }
     return days;
@@ -3568,7 +3833,8 @@ class AppState extends ChangeNotifier {
     return diff < 0 ? 0 : double.parse(diff.toStringAsFixed(1));
   }
 
-  Future<void> sendChatMessage(String message, String locale, AppLocalizations t) async {
+  Future<void> sendChatMessage(
+      String message, String locale, AppLocalizations t) async {
     final text = message.trim();
     if (text.isEmpty) return;
     if (_chatSending) return;
@@ -3605,19 +3871,26 @@ class AppState extends ChangeNotifier {
       _trimChatHistory();
       await _persistChat();
     } catch (e) {
+      String reasonText;
       if (e is ChatApiException) {
         if (e.statusCode == 401 || e.statusCode == 402) {
-          _chatError = t.chatErrorAuth;
+          reasonText = t.chatErrorReasonAuth;
         } else if (e.statusCode == 429) {
-          _chatError = t.chatErrorQuota;
+          reasonText = t.chatErrorReasonQuota;
         } else if (e.statusCode >= 500) {
-          _chatError = t.chatErrorServer;
+          reasonText = t.chatErrorReasonServer;
         } else {
-          _chatError = t.chatError;
+          reasonText = t.chatErrorReasonUnknown;
         }
       } else {
-        _chatError = t.chatErrorNetwork;
+        reasonText = t.chatErrorReasonNetwork;
       }
+      final reply =
+          '${t.chatErrorReplyBase}（${t.chatErrorReasonPrefix}$reasonText）';
+      _chatMessages.add(ChatMessage.assistant(reply));
+      _trimChatHistory();
+      await _persistChat();
+      _chatError = null;
     } finally {
       _chatSending = false;
       notifyListeners();
@@ -3632,7 +3905,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<MealAdvice> suggestNowMealAdvice(AppLocalizations t, String locale) async {
+  Future<MealAdvice> suggestNowMealAdvice(
+      AppLocalizations t, String locale) async {
     final now = DateTime.now();
     final mealType = resolveMealType(now);
     final mealDate = _dateOnly(now);
@@ -3641,7 +3915,8 @@ class AppState extends ChangeNotifier {
     final daySummary = buildDaySummary(mealDate, t);
     final consumedKcal = dailyConsumedCalorieMid(mealDate).round();
     final targetMid = targetCalorieMid(mealDate);
-    final remainingKcal = targetMid == null ? null : (targetMid - consumedKcal).round();
+    final remainingKcal =
+        targetMid == null ? null : (targetMid - consumedKcal).round();
     final lastMealInfo = _lastMealInfo(now);
     Map<String, double>? lastMealMacros;
     if (mealGroups.isNotEmpty) {
@@ -3678,7 +3953,9 @@ class AppState extends ChangeNotifier {
         dayGroup,
         t,
       );
-      final dishText = collapsedDaySummaries.isEmpty ? '' : collapsedDaySummaries.join(' / ');
+      final dishText = collapsedDaySummaries.isEmpty
+          ? ''
+          : collapsedDaySummaries.join(' / ');
       final parts = <String>[label];
       if (rangeText.isNotEmpty) parts.add(rangeText);
       if (dishText.isNotEmpty) parts.add(dishText);
@@ -3693,8 +3970,12 @@ class AppState extends ChangeNotifier {
       'day_meal_summaries': dayMealSummaries,
       'today_consumed_kcal': consumedKcal > 0 ? consumedKcal : null,
       'today_remaining_kcal': remainingKcal,
-      'today_macros': daySummary?.macros.isNotEmpty == true ? _roundMacros(daySummary!.macros) : null,
-      'last_meal_macros': lastMealMacros == null || lastMealMacros.isEmpty ? null : _roundMacros(lastMealMacros),
+      'today_macros': daySummary?.macros.isNotEmpty == true
+          ? _roundMacros(daySummary!.macros)
+          : null,
+      'last_meal_macros': lastMealMacros == null || lastMealMacros.isEmpty
+          ? null
+          : _roundMacros(lastMealMacros),
       if (lastMealInfo.isNotEmpty) ...lastMealInfo,
       'recent_advice': recentAdvice.isEmpty ? null : recentAdvice,
       'lang': locale,
@@ -3722,7 +4003,8 @@ class AppState extends ChangeNotifier {
       final response = await _api.suggestMeal(payload, _accessToken());
       return MealAdvice(
         selfCook: (response['self_cook'] as String?) ?? t.nextSelfCookHint,
-        convenience: (response['convenience'] as String?) ?? t.nextConvenienceHint,
+        convenience:
+            (response['convenience'] as String?) ?? t.nextConvenienceHint,
         bento: (response['bento'] as String?) ?? t.nextBentoHint,
         other: (response['other'] as String?) ?? t.nextOtherHint,
       );
@@ -3766,7 +4048,8 @@ class AppState extends ChangeNotifier {
     return items;
   }
 
-  Future<void> signUpSupabase(String email, String password, {String? nickname}) async {
+  Future<void> signUpSupabase(String email, String password,
+      {String? nickname}) async {
     final trimmedEmail = email.trim();
     if (trimmedEmail.isEmpty || password.isEmpty) return;
     final trimmedNickname = (nickname ?? '').trim();
@@ -3787,7 +4070,8 @@ class AppState extends ChangeNotifier {
   Future<void> signInSupabase(String email, String password) async {
     final trimmedEmail = email.trim();
     if (trimmedEmail.isEmpty || password.isEmpty) return;
-    await _supabase.client.auth.signInWithPassword(email: trimmedEmail, password: password);
+    await _supabase.client.auth
+        .signInWithPassword(email: trimmedEmail, password: password);
     _applySupabaseNickname(_supabase.currentUser);
     await refreshAccessStatus();
     notifyListeners();
@@ -3856,19 +4140,24 @@ class AppState extends ChangeNotifier {
     final since = _localSyncAt();
     final entriesToSync = (since == null
             ? entries
-            : entries.where((entry) => entry.updatedAt != null && entry.updatedAt!.isAfter(since)))
+            : entries.where((entry) =>
+                entry.updatedAt != null && entry.updatedAt!.isAfter(since)))
         .where((entry) => entry.id.isNotEmpty)
         .toList();
     for (final entry in entries) {
-      if (_failedMealSyncIds.contains(entry.id) && !entriesToSync.any((e) => e.id == entry.id)) {
+      if (_failedMealSyncIds.contains(entry.id) &&
+          !entriesToSync.any((e) => e.id == entry.id)) {
         entriesToSync.add(entry);
       }
     }
-    final foodsToSync = (since == null ? customFoods : customFoods.where((food) => food.updatedAt.isAfter(since)))
+    final foodsToSync = (since == null
+            ? customFoods
+            : customFoods.where((food) => food.updatedAt.isAfter(since)))
         .where((food) => food.id.isNotEmpty)
         .toList();
     for (final food in customFoods) {
-      if (_failedCustomFoodSyncIds.contains(food.id) && !foodsToSync.any((f) => f.id == food.id)) {
+      if (_failedCustomFoodSyncIds.contains(food.id) &&
+          !foodsToSync.any((f) => f.id == food.id)) {
         foodsToSync.add(food);
       }
     }
@@ -3881,7 +4170,9 @@ class AppState extends ChangeNotifier {
     }).toList();
     for (final deleted in _deletedEntries.values) {
       final id = deleted['id'];
-      if (id is String && _failedMealDeleteSyncIds.contains(id) && !deletionsToSync.contains(deleted)) {
+      if (id is String &&
+          _failedMealDeleteSyncIds.contains(id) &&
+          !deletionsToSync.contains(deleted)) {
         deletionsToSync.add(deleted);
       }
     }
@@ -3901,7 +4192,8 @@ class AppState extends ChangeNotifier {
       }
     }
     final settingsUpdatedAt = _settingsUpdatedAt();
-    final settingsToSync = settingsUpdatedAt != null && (since == null || settingsUpdatedAt.isAfter(since));
+    final settingsToSync = settingsUpdatedAt != null &&
+        (since == null || settingsUpdatedAt.isAfter(since));
     final hasChanges = entriesToSync.isNotEmpty ||
         foodsToSync.isNotEmpty ||
         deletionsToSync.isNotEmpty ||
@@ -3948,10 +4240,15 @@ class AppState extends ChangeNotifier {
     }
     if (mealPayloads.isNotEmpty) {
       try {
-        await client.from(kSupabaseMealsTable).upsert(mealPayloads).select('id');
+        await client
+            .from(kSupabaseMealsTable)
+            .upsert(mealPayloads)
+            .select('id');
         _failedMealSyncIds.removeAll(entriesToSync.map((e) => e.id));
         _failedMealDeleteSyncIds.removeAll(
-          deletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
+          deletionsToSync
+              .map((e) => (e['id'] ?? '').toString())
+              .where((id) => id.isNotEmpty),
         );
         if (report != null) {
           report.pushedMeals += entriesToSync.length;
@@ -3960,7 +4257,9 @@ class AppState extends ChangeNotifier {
       } catch (_) {
         _failedMealSyncIds.addAll(entriesToSync.map((e) => e.id));
         _failedMealDeleteSyncIds.addAll(
-          deletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
+          deletionsToSync
+              .map((e) => (e['id'] ?? '').toString())
+              .where((id) => id.isNotEmpty),
         );
         await _saveOverrides();
         rethrow;
@@ -3997,7 +4296,10 @@ class AppState extends ChangeNotifier {
     }
     if (foodPayloads.isNotEmpty) {
       try {
-        await client.from(kSupabaseCustomFoodsTable).upsert(foodPayloads).select('id');
+        await client
+            .from(kSupabaseCustomFoodsTable)
+            .upsert(foodPayloads)
+            .select('id');
         _failedCustomFoodSyncIds.removeAll(foodsToSync.map((e) => e.id));
         if (report != null) {
           report.pushedCustomFoods += foodsToSync.length;
@@ -4040,23 +4342,32 @@ class AppState extends ChangeNotifier {
         }
       } catch (_) {
         _failedCustomFoodDeleteSyncIds.addAll(
-          customDeletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
+          customDeletionsToSync
+              .map((e) => (e['id'] ?? '').toString())
+              .where((id) => id.isNotEmpty),
         );
         await _saveOverrides();
         rethrow;
       }
       if (deletePayloads.isNotEmpty) {
         try {
-          await client.from(kSupabaseCustomFoodsTable).upsert(deletePayloads).select('id');
+          await client
+              .from(kSupabaseCustomFoodsTable)
+              .upsert(deletePayloads)
+              .select('id');
           _failedCustomFoodDeleteSyncIds.removeAll(
-            customDeletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
+            customDeletionsToSync
+                .map((e) => (e['id'] ?? '').toString())
+                .where((id) => id.isNotEmpty),
           );
           if (report != null) {
             report.pushedCustomDeletes += deletePayloads.length;
           }
         } catch (_) {
           _failedCustomFoodDeleteSyncIds.addAll(
-            customDeletionsToSync.map((e) => (e['id'] ?? '').toString()).where((id) => id.isNotEmpty),
+            customDeletionsToSync
+                .map((e) => (e['id'] ?? '').toString())
+                .where((id) => id.isNotEmpty),
           );
           await _saveOverrides();
           rethrow;
@@ -4071,7 +4382,10 @@ class AppState extends ChangeNotifier {
         'updated_at': settingsUpdatedAt.toIso8601String(),
         'deleted_at': null,
       };
-      await client.from(kSupabaseUserSettingsTable).upsert(settingsPayload).select('user_id');
+      await client
+          .from(kSupabaseUserSettingsTable)
+          .upsert(settingsPayload)
+          .select('user_id');
       if (report != null) {
         report.pushedSettings += 1;
       }
@@ -4131,9 +4445,11 @@ class AppState extends ChangeNotifier {
     final client = _supabase.client;
     final settingsRow = await _fetchRemoteSettingsRow(user.id);
     if (settingsRow != null) {
-      final remoteUpdatedAt = DateTime.tryParse(settingsRow['updated_at'] as String? ?? '');
+      final remoteUpdatedAt =
+          DateTime.tryParse(settingsRow['updated_at'] as String? ?? '');
       final localUpdatedAt = _settingsUpdatedAt();
-      if (remoteUpdatedAt != null && (localUpdatedAt == null || remoteUpdatedAt.isAfter(localUpdatedAt))) {
+      if (remoteUpdatedAt != null &&
+          (localUpdatedAt == null || remoteUpdatedAt.isAfter(localUpdatedAt))) {
         final profileJson = settingsRow['profile_json'];
         if (profileJson is Map<String, dynamic>) {
           _applyProfile(profileJson);
@@ -4144,7 +4460,8 @@ class AppState extends ChangeNotifier {
         if (overridesJson is Map<String, dynamic>) {
           _applySettingsOverrides(overridesJson);
         } else if (overridesJson is Map) {
-          _applySettingsOverrides(overridesJson.map((k, v) => MapEntry(k.toString(), v)));
+          _applySettingsOverrides(
+              overridesJson.map((k, v) => MapEntry(k.toString(), v)));
         }
         _meta[_kSettingsUpdatedAtKey] = remoteUpdatedAt.toIso8601String();
         await _saveProfile();
@@ -4162,14 +4479,17 @@ class AppState extends ChangeNotifier {
       for (final entry in entries) entry.id: entry,
     };
     dynamic mealsQuery() {
-      var base = client.from(kSupabaseMealsTable).select().eq('user_id', user.id);
+      var base =
+          client.from(kSupabaseMealsTable).select().eq('user_id', user.id);
       if (since != null) {
         final iso = since.toIso8601String();
         base = base.or('updated_at.gt.$iso,deleted_at.gt.$iso');
       }
       return base.order('id', ascending: true);
     }
-    final rows = await _fetchPagedRows((from, to) => mealsQuery().range(from, to));
+
+    final rows =
+        await _fetchPagedRows((from, to) => mealsQuery().range(from, to));
     if (rows is List) {
       final remoteIds = <String>{};
       for (final row in rows) {
@@ -4179,27 +4499,28 @@ class AppState extends ChangeNotifier {
           remoteIds.add(entryId);
         }
         final deletedAt = row['deleted_at'] as String?;
-        final remoteUpdatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
+        final remoteUpdatedAt =
+            DateTime.tryParse(row['updated_at'] as String? ?? '');
         if (deletedAt != null && deletedAt.isNotEmpty) {
-        if (entryId != null) {
-          final existing = existingEntries[entryId];
-          if (existing != null &&
-              existing.updatedAt != null &&
-              remoteUpdatedAt != null &&
-              existing.updatedAt!.isAfter(remoteUpdatedAt)) {
-            _failedMealSyncIds.add(entryId);
-            continue;
+          if (entryId != null) {
+            final existing = existingEntries[entryId];
+            if (existing != null &&
+                existing.updatedAt != null &&
+                remoteUpdatedAt != null &&
+                existing.updatedAt!.isAfter(remoteUpdatedAt)) {
+              _failedMealSyncIds.add(entryId);
+              continue;
+            }
+            final index = entries.indexWhere((item) => item.id == entryId);
+            if (index != -1) {
+              entries.removeAt(index);
+              // ignore: discarded_futures
+              _store.delete(entryId);
+              if (report != null) report.pulledMealDeletes += 1;
+            }
           }
-          final index = entries.indexWhere((item) => item.id == entryId);
-          if (index != -1) {
-            entries.removeAt(index);
-            // ignore: discarded_futures
-            _store.delete(entryId);
-            if (report != null) report.pulledMealDeletes += 1;
-          }
+          continue;
         }
-        continue;
-      }
         final existing = entryId == null ? null : existingEntries[entryId];
         if (existing != null &&
             existing.updatedAt != null &&
@@ -4211,7 +4532,9 @@ class AppState extends ChangeNotifier {
         final imagePath = row['image_path'] as String?;
         final labelPath = row['label_image_path'] as String?;
         Uint8List? imageBytes;
-        if (existing != null && existing.imageBytes.isNotEmpty && existing.imageHash == row['image_hash']) {
+        if (existing != null &&
+            existing.imageBytes.isNotEmpty &&
+            existing.imageHash == row['image_hash']) {
           imageBytes = existing.imageBytes;
         } else {
           imageBytes = await _downloadImageIfAvailable(
@@ -4221,7 +4544,10 @@ class AppState extends ChangeNotifier {
         }
         final resolvedImageBytes = imageBytes ?? _namePlaceholderBytes;
         Uint8List? labelBytes;
-        if (existing != null && existing.labelImageBytes != null && labelPath != null && labelPath.isNotEmpty) {
+        if (existing != null &&
+            existing.labelImageBytes != null &&
+            labelPath != null &&
+            labelPath.isNotEmpty) {
           labelBytes = existing.labelImageBytes;
         } else {
           labelBytes = await _downloadImageIfAvailable(
@@ -4242,7 +4568,8 @@ class AppState extends ChangeNotifier {
       }
       if (since == null && allowPrune) {
         // Remove local entries that no longer exist remotely (full sync only)
-        final toRemove = entries.where((e) => !remoteIds.contains(e.id)).toList();
+        final toRemove =
+            entries.where((e) => !remoteIds.contains(e.id)).toList();
         if (toRemove.isNotEmpty) {
           for (final entry in toRemove) {
             entries.remove(entry);
@@ -4256,14 +4583,19 @@ class AppState extends ChangeNotifier {
       for (final food in customFoods) food.id: food,
     };
     dynamic foodsQuery() {
-      var base = client.from(kSupabaseCustomFoodsTable).select().eq('user_id', user.id);
+      var base = client
+          .from(kSupabaseCustomFoodsTable)
+          .select()
+          .eq('user_id', user.id);
       if (since != null) {
         final iso = since.toIso8601String();
         base = base.or('updated_at.gt.$iso,deleted_at.gt.$iso');
       }
       return base.order('id', ascending: true);
     }
-    final foodRows = await _fetchPagedRows((from, to) => foodsQuery().range(from, to));
+
+    final foodRows =
+        await _fetchPagedRows((from, to) => foodsQuery().range(from, to));
     if (foodRows is List) {
       final remoteFoodIds = <String>{};
       for (final row in foodRows) {
@@ -4273,11 +4605,14 @@ class AppState extends ChangeNotifier {
           remoteFoodIds.add(foodId);
         }
         final deletedAt = row['deleted_at'] as String?;
-        final remoteUpdatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
+        final remoteUpdatedAt =
+            DateTime.tryParse(row['updated_at'] as String? ?? '');
         if (deletedAt != null && deletedAt.isNotEmpty) {
           if (foodId != null) {
             final existing = existingFoods[foodId];
-            if (existing != null && remoteUpdatedAt != null && existing.updatedAt.isAfter(remoteUpdatedAt)) {
+            if (existing != null &&
+                remoteUpdatedAt != null &&
+                existing.updatedAt.isAfter(remoteUpdatedAt)) {
               _failedCustomFoodSyncIds.add(foodId);
               continue;
             }
@@ -4288,14 +4623,18 @@ class AppState extends ChangeNotifier {
           continue;
         }
         final existing = foodId == null ? null : existingFoods[foodId];
-        if (existing != null && remoteUpdatedAt != null && existing.updatedAt.isAfter(remoteUpdatedAt)) {
+        if (existing != null &&
+            remoteUpdatedAt != null &&
+            existing.updatedAt.isAfter(remoteUpdatedAt)) {
           _failedCustomFoodSyncIds.add(existing.id);
           continue;
         }
         final imagePath = row['image_path'] as String?;
         final updatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
         Uint8List? bytes;
-        if (existing != null && updatedAt != null && existing.updatedAt.isAtSameMomentAs(updatedAt)) {
+        if (existing != null &&
+            updatedAt != null &&
+            existing.updatedAt.isAtSameMomentAs(updatedAt)) {
           bytes = existing.imageBytes;
         } else {
           bytes = await _downloadImageIfAvailable(
@@ -4303,7 +4642,8 @@ class AppState extends ChangeNotifier {
             path: imagePath,
           );
         }
-        final resolvedBytes = bytes ?? existing?.imageBytes ?? _namePlaceholderBytes;
+        final resolvedBytes =
+            bytes ?? existing?.imageBytes ?? _namePlaceholderBytes;
         final food = CustomFood(
           id: row['id'] as String,
           name: (row['name'] as String?) ?? '',
@@ -4312,8 +4652,10 @@ class AppState extends ChangeNotifier {
           suggestion: (row['suggestion'] as String?) ?? '',
           macros: _parseMacros(row['macros']),
           imageBytes: resolvedBytes,
-          createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ?? DateTime.now(),
-          updatedAt: DateTime.tryParse(row['updated_at'] as String? ?? '') ?? DateTime.now(),
+          createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ??
+              DateTime.now(),
+          updatedAt: DateTime.tryParse(row['updated_at'] as String? ?? '') ??
+              DateTime.now(),
         );
         final index = customFoods.indexWhere((item) => item.id == food.id);
         if (index == -1) {
@@ -4325,7 +4667,9 @@ class AppState extends ChangeNotifier {
         }
       }
       if (since == null && allowPrune) {
-        final toRemove = existingFoods.keys.where((id) => !remoteFoodIds.contains(id)).toList();
+        final toRemove = existingFoods.keys
+            .where((id) => !remoteFoodIds.contains(id))
+            .toList();
         if (toRemove.isNotEmpty) {
           for (final id in toRemove) {
             // keep storage in sync; overrides will be saved below
@@ -4365,14 +4709,16 @@ class AppState extends ChangeNotifier {
     final localSyncAt = _localSyncAt();
     final remoteSyncAt = await _fetchRemoteSyncAt(user.id);
     final localSettingsUpdatedAt = _settingsUpdatedAt();
-    final remoteSettingsUpdatedAt = await _fetchRemoteSettingsUpdatedAt(user.id);
+    final remoteSettingsUpdatedAt =
+        await _fetchRemoteSettingsUpdatedAt(user.id);
     final hasLocalSettings = localSettingsUpdatedAt != null;
     final hasLocalData = entries.isNotEmpty || customFoods.isNotEmpty;
 
     bool changed = false;
     if (remoteSyncAt == null) {
       if (!hasLocalData && !hasLocalSettings) {
-        await syncFromSupabase(report: report, sinceOverride: localSyncAt, allowPrune: true);
+        await syncFromSupabase(
+            report: report, sinceOverride: localSyncAt, allowPrune: true);
         changed = report.hasChanges;
         if (changed) {
           final now = DateTime.now().toUtc();
@@ -4386,7 +4732,8 @@ class AppState extends ChangeNotifier {
         return changed;
       }
       // Remote has no sync_meta yet. Pull first without pruning local data.
-      await syncFromSupabase(report: report, sinceOverride: localSyncAt, allowPrune: false);
+      await syncFromSupabase(
+          report: report, sinceOverride: localSyncAt, allowPrune: false);
       if (report.hasChanges) {
         changed = true;
       }
@@ -4410,13 +4757,17 @@ class AppState extends ChangeNotifier {
     }
 
     // 1) Pull remote changes first using the previous local sync time.
-    final shouldPullData = remoteSyncAt != null && (localSyncAt == null || remoteSyncAt.isAfter(localSyncAt));
+    final shouldPullData = remoteSyncAt != null &&
+        (localSyncAt == null || remoteSyncAt.isAfter(localSyncAt));
     final shouldPullSettings = remoteSettingsUpdatedAt != null &&
-        (localSettingsUpdatedAt == null || remoteSettingsUpdatedAt.isAfter(localSettingsUpdatedAt));
+        (localSettingsUpdatedAt == null ||
+            remoteSettingsUpdatedAt.isAfter(localSettingsUpdatedAt));
     final shouldPull = shouldPullData || shouldPullSettings;
     if (shouldPull) {
-      await syncFromSupabase(report: report, sinceOverride: localSyncAt, allowPrune: true);
-      if (remoteSyncAt != null && (localSyncAt == null || remoteSyncAt.isAfter(localSyncAt))) {
+      await syncFromSupabase(
+          report: report, sinceOverride: localSyncAt, allowPrune: true);
+      if (remoteSyncAt != null &&
+          (localSyncAt == null || remoteSyncAt.isAfter(localSyncAt))) {
         await _storeLocalSyncAt(remoteSyncAt);
       }
       changed = true;
@@ -4585,11 +4936,14 @@ class AppState extends ChangeNotifier {
     required String path,
     required Uint8List bytes,
   }) async {
-    final String result = await _supabase.client.storage.from(bucket).uploadBinary(
+    final String result = await _supabase.client.storage
+        .from(bucket)
+        .uploadBinary(
           path,
           bytes,
           fileOptions: FileOptions(upsert: true),
-        ).timeout(const Duration(seconds: 12));
+        )
+        .timeout(const Duration(seconds: 12));
     if (result.isEmpty) {
       throw Exception('storage_upload_failed');
     }
@@ -4609,7 +4963,8 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Map<String, dynamic> _mealEntryToRow(MealEntry entry, String userId, String? imagePath, String? labelPath) {
+  Map<String, dynamic> _mealEntryToRow(
+      MealEntry entry, String userId, String? imagePath, String? labelPath) {
     return {
       'id': entry.id,
       'user_id': userId,
@@ -4652,8 +5007,12 @@ class AppState extends ChangeNotifier {
       overrideCalorieRange: row['override_calorie_range'] as String?,
       containerType: row['container_type'] as String?,
       containerSize: row['container_size'] as String?,
-      updatedAt: row['updated_at'] == null ? null : DateTime.tryParse(row['updated_at'] as String),
-      deletedAt: row['deleted_at'] == null ? null : DateTime.tryParse(row['deleted_at'] as String),
+      updatedAt: row['updated_at'] == null
+          ? null
+          : DateTime.tryParse(row['updated_at'] as String),
+      deletedAt: row['deleted_at'] == null
+          ? null
+          : DateTime.tryParse(row['deleted_at'] as String),
       note: row['note'] as String?,
       overrideFoodName: row['override_food_name'] as String?,
       imageHash: row['image_hash'] as String?,
@@ -4732,7 +5091,8 @@ class AppState extends ChangeNotifier {
       'failed_meal_sync_ids': _failedMealSyncIds.toList(),
       'failed_meal_delete_sync_ids': _failedMealDeleteSyncIds.toList(),
       'failed_custom_food_sync_ids': _failedCustomFoodSyncIds.toList(),
-      'failed_custom_food_delete_sync_ids': _failedCustomFoodDeleteSyncIds.toList(),
+      'failed_custom_food_delete_sync_ids':
+          _failedCustomFoodDeleteSyncIds.toList(),
       'custom_foods': customFoods.map((item) => item.toJson()).toList(),
     });
   }
@@ -4745,14 +5105,18 @@ class AppState extends ChangeNotifier {
   }
 
   Locale _localeFromProfile() {
-    return profile.language == 'en' ? const Locale('en') : const Locale('zh', 'TW');
+    return profile.language == 'en'
+        ? const Locale('en')
+        : const Locale('zh', 'TW');
   }
 
   void _scheduleAutoFinalize() {
     _autoFinalizeTimer?.cancel();
     final now = DateTime.now();
-    final target = DateTime(now.year, now.month, now.day, profile.dailySummaryTime.hour, profile.dailySummaryTime.minute);
-    final next = now.isAfter(target) ? target.add(const Duration(days: 1)) : target;
+    final target = DateTime(now.year, now.month, now.day,
+        profile.dailySummaryTime.hour, profile.dailySummaryTime.minute);
+    final next =
+        now.isAfter(target) ? target.add(const Duration(days: 1)) : target;
     final delay = next.difference(now);
     _autoFinalizeTimer = Timer(delay, () {
       // ignore: discarded_futures
@@ -4764,7 +5128,8 @@ class AppState extends ChangeNotifier {
     _autoWeeklyTimer?.cancel();
     final now = DateTime.now();
     final weekStart = _weekStartFor(now);
-    final targetDate = weekStart.add(Duration(days: profile.weeklySummaryWeekday - 1));
+    final targetDate =
+        weekStart.add(Duration(days: profile.weeklySummaryWeekday - 1));
     final target = DateTime(
       targetDate.year,
       targetDate.month,
@@ -4772,7 +5137,8 @@ class AppState extends ChangeNotifier {
       profile.dailySummaryTime.hour,
       profile.dailySummaryTime.minute,
     );
-    final next = now.isAfter(target) ? target.add(const Duration(days: 7)) : target;
+    final next =
+        now.isAfter(target) ? target.add(const Duration(days: 7)) : target;
     final delay = next.difference(now);
     _autoWeeklyTimer = Timer(delay, () {
       // ignore: discarded_futures
@@ -4834,9 +5200,11 @@ class AppState extends ChangeNotifier {
     if (raw is Map) {
       raw.forEach((key, value) {
         if (value is Map<String, dynamic>) {
-          parsed[key.toString()] = value.map((k, v) => MapEntry(k, v.toString()));
+          parsed[key.toString()] =
+              value.map((k, v) => MapEntry(k, v.toString()));
         } else if (value is Map) {
-          parsed[key.toString()] = value.map((k, v) => MapEntry(k.toString(), v.toString()));
+          parsed[key.toString()] =
+              value.map((k, v) => MapEntry(k.toString(), v.toString()));
         }
       });
     }
@@ -4923,12 +5291,14 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    _iapSubscription ??= _iap.purchaseStream.listen(_onPurchaseUpdated, onError: (error) {
+    _iapSubscription ??=
+        _iap.purchaseStream.listen(_onPurchaseUpdated, onError: (error) {
       _iapLastError = error.toString();
       _iapProcessing = false;
       notifyListeners();
     });
-    final response = await _iap.queryProductDetails({kIapMonthlyId, kIapYearlyId});
+    final response =
+        await _iap.queryProductDetails({kIapMonthlyId, kIapYearlyId});
     if (response.error != null) {
       _iapLastError = response.error!.message;
     }
@@ -5013,7 +5383,8 @@ class AppState extends ChangeNotifier {
     bool active = _iapSubscriptionActive;
     for (final purchase in purchases) {
       if (_isIapProduct(purchase.productID)) {
-        if (purchase.status == PurchaseStatus.purchased || purchase.status == PurchaseStatus.restored) {
+        if (purchase.status == PurchaseStatus.purchased ||
+            purchase.status == PurchaseStatus.restored) {
           active = true;
         } else if (purchase.status == PurchaseStatus.error) {
           _iapLastError = purchase.error?.message ?? 'Purchase error';
@@ -5055,6 +5426,7 @@ class AppState extends ChangeNotifier {
       'plan_speed': profile.planSpeed,
       'daily_summary_time': _timeToString(profile.dailySummaryTime),
       'weekly_summary_weekday': profile.weeklySummaryWeekday,
+      'breakfast_reminder_enabled': profile.breakfastReminderEnabled,
       'lunch_reminder_enabled': profile.lunchReminderEnabled,
       'dinner_reminder_enabled': profile.dinnerReminderEnabled,
       'lunch_reminder_time': _timeToString(profile.lunchReminderTime),
@@ -5088,50 +5460,81 @@ class AppState extends ChangeNotifier {
       ..name = (data['name'] as String?) ?? profile.name
       ..email = (data['email'] as String?) ?? profile.email
       ..gender = (data['gender'] as String?) ?? profile.gender
-      ..chatAssistantName = (data['chat_assistant_name'] as String?) ?? profile.chatAssistantName
-      ..chatAvatarBase64 = (data['chat_avatar'] as String?) ?? profile.chatAvatarBase64
-      ..containerType = (data['container_type'] as String?) ?? profile.containerType
-      ..containerSize = (data['container_size'] as String?) ?? profile.containerSize
-      ..containerDepth = (data['container_depth'] as String?) ?? profile.containerDepth
-      ..containerDiameterCm = _parseInt(data['container_diameter_cm'], profile.containerDiameterCm)
-      ..containerCapacityMl = _parseInt(data['container_capacity_ml'], profile.containerCapacityMl)
+      ..chatAssistantName =
+          (data['chat_assistant_name'] as String?) ?? profile.chatAssistantName
+      ..chatAvatarBase64 =
+          (data['chat_avatar'] as String?) ?? profile.chatAvatarBase64
+      ..containerType =
+          (data['container_type'] as String?) ?? profile.containerType
+      ..containerSize =
+          (data['container_size'] as String?) ?? profile.containerSize
+      ..containerDepth =
+          (data['container_depth'] as String?) ?? profile.containerDepth
+      ..containerDiameterCm =
+          _parseInt(data['container_diameter_cm'], profile.containerDiameterCm)
+      ..containerCapacityMl =
+          _parseInt(data['container_capacity_ml'], profile.containerCapacityMl)
       ..dietType = (data['diet_type'] as String?) ?? profile.dietType
       ..dietNote = (data['diet_note'] as String?) ?? profile.dietNote
       ..tone = (data['tone'] as String?) ?? profile.tone
       ..persona = (data['persona'] as String?) ?? profile.persona
-      ..activityLevel = (data['activity_level'] as String?) ?? profile.activityLevel
+      ..activityLevel =
+          (data['activity_level'] as String?) ?? profile.activityLevel
       ..heightCm = _parseInt(data['height_cm'], profile.heightCm)
       ..weightKg = _parseInt(data['weight_kg'], profile.weightKg)
       ..age = _parseInt(data['age'], profile.age)
       ..goal = (data['goal'] as String?) ?? profile.goal
       ..planSpeed = (data['plan_speed'] as String?) ?? profile.planSpeed
-      ..dailySummaryTime = _parseTime(data['daily_summary_time'] as String?, profile.dailySummaryTime)
-      ..weeklySummaryWeekday = _parseInt(data['weekly_summary_weekday'], profile.weeklySummaryWeekday)
-      ..lunchReminderEnabled = (data['lunch_reminder_enabled'] as bool?) ?? profile.lunchReminderEnabled
-      ..dinnerReminderEnabled = (data['dinner_reminder_enabled'] as bool?) ?? profile.dinnerReminderEnabled
-      ..lunchReminderTime = _parseTime(data['lunch_reminder_time'] as String?, profile.lunchReminderTime)
-      ..dinnerReminderTime = _parseTime(data['dinner_reminder_time'] as String?, profile.dinnerReminderTime)
-      ..breakfastStart = _parseTime(data['breakfast_start'] as String?, profile.breakfastStart)
-      ..breakfastEnd = _parseTime(data['breakfast_end'] as String?, profile.breakfastEnd)
-      ..brunchStart = _parseTime(data['brunch_start'] as String?, profile.brunchStart)
+      ..dailySummaryTime = _parseTime(
+          data['daily_summary_time'] as String?, profile.dailySummaryTime)
+      ..weeklySummaryWeekday = _parseInt(
+          data['weekly_summary_weekday'], profile.weeklySummaryWeekday)
+      ..breakfastReminderEnabled =
+          (data['breakfast_reminder_enabled'] as bool?) ??
+              profile.breakfastReminderEnabled
+      ..lunchReminderEnabled = (data['lunch_reminder_enabled'] as bool?) ??
+          profile.lunchReminderEnabled
+      ..dinnerReminderEnabled = (data['dinner_reminder_enabled'] as bool?) ??
+          profile.dinnerReminderEnabled
+      ..lunchReminderTime = _parseTime(
+          data['lunch_reminder_time'] as String?, profile.lunchReminderTime)
+      ..dinnerReminderTime = _parseTime(
+          data['dinner_reminder_time'] as String?, profile.dinnerReminderTime)
+      ..breakfastStart =
+          _parseTime(data['breakfast_start'] as String?, profile.breakfastStart)
+      ..breakfastEnd =
+          _parseTime(data['breakfast_end'] as String?, profile.breakfastEnd)
+      ..brunchStart =
+          _parseTime(data['brunch_start'] as String?, profile.brunchStart)
       ..brunchEnd = _parseTime(data['brunch_end'] as String?, profile.brunchEnd)
-      ..lunchStart = _parseTime(data['lunch_start'] as String?, profile.lunchStart)
+      ..lunchStart =
+          _parseTime(data['lunch_start'] as String?, profile.lunchStart)
       ..lunchEnd = _parseTime(data['lunch_end'] as String?, profile.lunchEnd)
-      ..afternoonTeaStart = _parseTime(data['afternoon_tea_start'] as String?, profile.afternoonTeaStart)
-      ..afternoonTeaEnd = _parseTime(data['afternoon_tea_end'] as String?, profile.afternoonTeaEnd)
-      ..dinnerStart = _parseTime(data['dinner_start'] as String?, profile.dinnerStart)
+      ..afternoonTeaStart = _parseTime(
+          data['afternoon_tea_start'] as String?, profile.afternoonTeaStart)
+      ..afternoonTeaEnd = _parseTime(
+          data['afternoon_tea_end'] as String?, profile.afternoonTeaEnd)
+      ..dinnerStart =
+          _parseTime(data['dinner_start'] as String?, profile.dinnerStart)
       ..dinnerEnd = _parseTime(data['dinner_end'] as String?, profile.dinnerEnd)
-      ..lateSnackStart = _parseTime(data['late_snack_start'] as String?, profile.lateSnackStart)
-      ..lateSnackEnd = _parseTime(data['late_snack_end'] as String?, profile.lateSnackEnd)
+      ..lateSnackStart = _parseTime(
+          data['late_snack_start'] as String?, profile.lateSnackStart)
+      ..lateSnackEnd =
+          _parseTime(data['late_snack_end'] as String?, profile.lateSnackEnd)
       ..language = (data['language'] as String?) ?? profile.language
       ..apiBaseUrl = profile.apiBaseUrl
       ..plateAsset = (data['plate_asset'] as String?) ?? profile.plateAsset
       ..themeAsset = (data['theme_asset'] as String?) ?? profile.themeAsset
-      ..textScale = (data['text_scale'] as num?)?.toDouble() ?? profile.textScale
-      ..nutritionChartStyle = (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle
-      ..nutritionValueMode = (data['nutrition_value_mode'] as String?) ?? profile.nutritionValueMode
+      ..textScale =
+          (data['text_scale'] as num?)?.toDouble() ?? profile.textScale
+      ..nutritionChartStyle =
+          (data['nutrition_chart'] as String?) ?? profile.nutritionChartStyle
+      ..nutritionValueMode = (data['nutrition_value_mode'] as String?) ??
+          profile.nutritionValueMode
       ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled
-      ..exerciseSuggestionType = (data['exercise_suggestion_type'] as String?) ?? profile.exerciseSuggestionType;
+      ..exerciseSuggestionType =
+          (data['exercise_suggestion_type'] as String?) ??
+              profile.exerciseSuggestionType;
     _refreshChatAvatarBytes();
     if (profile.nutritionValueMode == 'percent') {
       profile.nutritionValueMode = 'amount';
@@ -5153,7 +5556,8 @@ class AppState extends ChangeNotifier {
     return '$h:$m';
   }
 
-  Map<String, dynamic> _lastMealInfo(DateTime referenceTime, {String? excludeMealId}) {
+  Map<String, dynamic> _lastMealInfo(DateTime referenceTime,
+      {String? excludeMealId}) {
     final candidates = entries.where((entry) {
       if (!entry.time.isBefore(referenceTime)) return false;
       if (entry.result?.isBeverage == true) return false;
@@ -5171,7 +5575,8 @@ class AppState extends ChangeNotifier {
     };
   }
 
-  Map<String, dynamic> lastMealInfo(DateTime referenceTime, {String? excludeMealId}) {
+  Map<String, dynamic> lastMealInfo(DateTime referenceTime,
+      {String? excludeMealId}) {
     return _lastMealInfo(referenceTime, excludeMealId: excludeMealId);
   }
 
@@ -5293,6 +5698,16 @@ class MealAdvice {
   }
 }
 
+class MealReminder {
+  MealReminder({
+    required this.type,
+    required this.date,
+  });
+
+  final MealType type;
+  final DateTime date;
+}
+
 class QuickCaptureAnalysis {
   QuickCaptureAnalysis({
     required this.file,
@@ -5335,6 +5750,7 @@ class UserProfile {
     required this.planSpeed,
     required this.dailySummaryTime,
     required this.weeklySummaryWeekday,
+    required this.breakfastReminderEnabled,
     required this.lunchReminderEnabled,
     required this.dinnerReminderEnabled,
     required this.lunchReminderTime,
@@ -5384,6 +5800,7 @@ class UserProfile {
   String planSpeed;
   TimeOfDay dailySummaryTime;
   int weeklySummaryWeekday;
+  bool breakfastReminderEnabled;
   bool lunchReminderEnabled;
   bool dinnerReminderEnabled;
   TimeOfDay lunchReminderTime;
@@ -5434,6 +5851,7 @@ class UserProfile {
       planSpeed: '穩定',
       dailySummaryTime: const TimeOfDay(hour: 21, minute: 0),
       weeklySummaryWeekday: DateTime.sunday,
+      breakfastReminderEnabled: true,
       lunchReminderEnabled: true,
       dinnerReminderEnabled: true,
       lunchReminderTime: const TimeOfDay(hour: 12, minute: 15),
@@ -5500,24 +5918,3 @@ class AppStateScope extends InheritedNotifier<AppState> {
     return scope!.notifier!;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

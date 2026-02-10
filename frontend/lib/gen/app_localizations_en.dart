@@ -770,6 +770,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reminderSection => 'Reminders';
 
   @override
+  String get reminderTimeNote => 'Reminder time follows the meal start time';
+
+  @override
+  String get reminderBreakfast => 'Breakfast reminder';
+
+  @override
   String get reminderLunch => 'Lunch reminder';
 
   @override
@@ -1012,6 +1018,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reminderDinnerTime => 'Dinner reminder time';
+
+  @override
+  String get reminderBreakfastTime => 'Breakfast reminder time';
 
   @override
   String get pickFromCamera => 'Camera';
@@ -1773,6 +1782,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatErrorNetwork => 'Network issue. Please try again.';
+
+  @override
+  String get chatErrorReplyBase =>
+      'Meow~ I\'m a little tired. Could you ask me again in a moment?';
+
+  @override
+  String get chatErrorReasonPrefix => 'Reason: ';
+
+  @override
+  String get chatErrorReasonAuth => 'Session expired or permission denied';
+
+  @override
+  String get chatErrorReasonQuota => 'Too many requests or quota reached';
+
+  @override
+  String get chatErrorReasonServer => 'Server busy or temporary error';
+
+  @override
+  String get chatErrorReasonNetwork => 'Network unstable or disconnected';
+
+  @override
+  String get chatErrorReasonUnknown => 'Unable to determine right now';
 
   @override
   String get chatAvatarLabel => 'Chat avatar';

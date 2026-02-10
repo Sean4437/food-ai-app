@@ -757,6 +757,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reminderSection => '提醒設定';
 
   @override
+  String get reminderTimeNote => '提醒時間會跟餐次開始時間同步';
+
+  @override
+  String get reminderBreakfast => '提醒拍攝早餐';
+
+  @override
   String get reminderLunch => '提醒拍攝午餐';
 
   @override
@@ -999,6 +1005,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reminderDinnerTime => '晚餐提醒時間';
+
+  @override
+  String get reminderBreakfastTime => '早餐提醒時間';
 
   @override
   String get pickFromCamera => '拍照';
@@ -1745,6 +1754,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get chatErrorNetwork => '网路不稳定，请稍后再试';
+
+  @override
+  String get chatErrorReplyBase => '喵嗚～我刚刚有点累，稍后再问我一次好吗？';
+
+  @override
+  String get chatErrorReasonPrefix => '原因：';
+
+  @override
+  String get chatErrorReasonAuth => '登入已过期或权限不足';
+
+  @override
+  String get chatErrorReasonQuota => '请求太频繁或额度已用完';
+
+  @override
+  String get chatErrorReasonServer => '服务器忙碌或暂时出错';
+
+  @override
+  String get chatErrorReasonNetwork => '网路不稳定或连线中断';
+
+  @override
+  String get chatErrorReasonUnknown => '暂时无法判断';
 
   @override
   String get chatAvatarLabel => '聊天头像';
@@ -2521,6 +2551,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get reminderSection => '提醒設定';
 
   @override
+  String get reminderTimeNote => '提醒時間會跟餐次開始時間同步';
+
+  @override
+  String get reminderBreakfast => '提醒拍攝早餐';
+
+  @override
   String get reminderLunch => '提醒拍攝午餐';
 
   @override
@@ -2763,6 +2799,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get reminderDinnerTime => '晚餐提醒時間';
+
+  @override
+  String get reminderBreakfastTime => '早餐提醒時間';
 
   @override
   String get pickFromCamera => '拍照';
@@ -3509,6 +3548,27 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get chatErrorNetwork => '網路不穩定，請稍後再試';
+
+  @override
+  String get chatErrorReplyBase => '喵嗚～我剛剛有點累，稍後再問我一次好嗎？';
+
+  @override
+  String get chatErrorReasonPrefix => '原因：';
+
+  @override
+  String get chatErrorReasonAuth => '登入已過期或權限不足';
+
+  @override
+  String get chatErrorReasonQuota => '請求太頻繁或額度已用完';
+
+  @override
+  String get chatErrorReasonServer => '伺服器忙碌或暫時出錯';
+
+  @override
+  String get chatErrorReasonNetwork => '網路不穩定或連線中斷';
+
+  @override
+  String get chatErrorReasonUnknown => '暫時無法判斷';
 
   @override
   String get chatAvatarLabel => '聊天頭像';
