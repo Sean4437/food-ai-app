@@ -154,6 +154,7 @@ class ChatRequest(BaseModel):
     summary: Optional[str] = None
     profile: Optional[dict] = None
     days: Optional[List[dict]] = None
+    today_meals: Optional[List[dict]] = None
     context: Optional[dict] = None
     lang: Optional[str] = None
 
@@ -1515,6 +1516,12 @@ def _build_chat_prompt(
             day_lines.append(f"- {date}: meals {meal_count}, {label_text}{range_text}{extra_text}{summary_block}")
     days_block = "\n".join(day_lines) if day_lines else ("- 無紀錄" if lang == "zh-TW" else "- no records")
     summary_block = summary.strip() if summary else ""
+    today_meals_block = ""
+    if today_meals:
+        try:
+            today_meals_block = json.dumps(today_meals, ensure_ascii=True)
+        except Exception:
+            today_meals_block = str(today_meals)
 
     now_text = ""
     if context:
@@ -1554,6 +1561,7 @@ def _build_chat_prompt(
             "JSON 範例：\n"
             "{\n  \"reply\": \"今天晚餐建議清淡些…\",\n  \"summary\": \"使用者偏好清淡、避免油炸…\"\n}\n"
             f"最近 7 天紀錄：\n{days_block}\n"
+            f"今日餐點明細（JSON）：{today_meals_block or '無'}\n"
             f"{now_text}"
             f"對話摘要：{summary_block or '無'}\n"
         ) + profile_text
@@ -1569,6 +1577,7 @@ def _build_chat_prompt(
         "JSON example:\n"
         "{\n  \"reply\": \"Keep dinner light...\",\n  \"summary\": \"User prefers light meals...\"\n}\n"
         f"Last 7 days:\n{days_block}\n"
+        f"Today's meals (JSON): {today_meals_block or 'none'}\n"
         f"{now_text}"
         f"Conversation summary: {summary_block or 'none'}\n"
     ) + profile_text
@@ -2410,6 +2419,7 @@ async def chat(
             use_lang,
             payload.profile or {},
             payload.days or [],
+            payload.today_meals or [],
             payload.summary,
             payload.context,
         )

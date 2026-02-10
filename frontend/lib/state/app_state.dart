@@ -803,6 +803,7 @@ class AppState extends ChangeNotifier {
         'lang': locale,
         'profile': _chatProfileSnapshot(_dateOnly(now)),
         'days': _recentDaysForChat(t),
+        'today_meals': _todayMealsForChat(t),
         'context': {
           'now': now.toIso8601String(),
           'last_meal_time': _lastMealTimeForChat(now),
@@ -3830,6 +3831,65 @@ class AppState extends ChangeNotifier {
     return days;
   }
 
+  List<Map<String, dynamic>> _todayMealsForChat(AppLocalizations t) {
+    final today = _dateOnly(DateTime.now());
+    final groups = mealGroupsForDateAll(today);
+    if (groups.isEmpty) return const [];
+    final meals = <Map<String, dynamic>>[];
+    for (final group in groups) {
+      if (group.isEmpty) continue;
+      final summary = buildMealSummary(group, t);
+      final dishSummaries = <String>[];
+      for (final entry in group) {
+        final summaryText = _entryDishSummary(entry, t);
+        if (summaryText != null && summaryText.isNotEmpty) {
+          dishSummaries.add(summaryText);
+        }
+      }
+      final collapsedSummaries = _appendSmallPortionSuffixToList(
+        _collapseDishSummaries(dishSummaries, t),
+        group,
+        t,
+      );
+      final items = <Map<String, dynamic>>[];
+      for (final entry in group) {
+        final result = entry.result;
+        final foodName =
+            (entry.overrideFoodName ?? result?.foodName ?? '').trim();
+        final calorieRange =
+            (entry.overrideCalorieRange ?? result?.calorieRange ?? '').trim();
+        final macros =
+            result?.macros.isNotEmpty == true ? _roundMacros(result!.macros) : null;
+        items.add({
+          'time': entry.time.toIso8601String(),
+          'food_name': foodName,
+          'food_items': result?.foodItems ?? const [],
+          'calorie_range': calorieRange,
+          'portion_percent': entry.portionPercent,
+          'note': (entry.note ?? '').trim(),
+          'dish_summary': (result?.dishSummary ?? '').trim(),
+          'macros': macros,
+          'is_beverage': result?.isBeverage,
+          'is_food': result?.isFood,
+          'non_food_reason': result?.nonFoodReason,
+          'reference_used': result?.referenceUsed,
+        });
+      }
+      meals.add({
+        'meal_type': _mealTypeKey(group.first.type),
+        'meal_label': _mealTypeLabel(group.first.type, t),
+        'time': group.first.time.toIso8601String(),
+        'calorie_range': summary?.calorieRange ?? '',
+        'macros': summary?.macros.isNotEmpty == true
+            ? _roundMacros(summary!.macros)
+            : null,
+        'dish_summaries': collapsedSummaries,
+        'items': items,
+      });
+    }
+    return meals;
+  }
+
   String? _lastMealTimeForChat(DateTime now) {
     final groups = _nonBeverageGroups(mealGroupsForDateAll(_dateOnly(now)));
     if (groups.isEmpty) return null;
@@ -3865,6 +3925,7 @@ class AppState extends ChangeNotifier {
       'lang': locale,
       'profile': _chatProfileSnapshot(today),
       'days': _recentDaysForChat(t),
+      'today_meals': _todayMealsForChat(t),
       'context': {
         'now': now.toIso8601String(),
         'last_meal_time': _lastMealTimeForChat(now),
