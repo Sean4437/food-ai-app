@@ -1949,9 +1949,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                   ]),
-                  if (kDebugMode) ...[
-                    const SizedBox(height: 8),
-                    _sectionTitle(context, t.apiSection),
+                  _sectionTitle(context, t.apiSection),
                     _apiRow(
                       context,
                       t.apiBaseUrlLabel,
@@ -1972,7 +1970,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 8),
                   ],
-                  _sectionTitle(context, t.layoutThemeLabel),
+                  
+                  if (kDebugMode) ...[
+                    const SizedBox(height: 8),
+                    _sectionTitle(context, t.layoutThemeLabel),
                   _row(
                     context,
                     t.textSizeLabel,
