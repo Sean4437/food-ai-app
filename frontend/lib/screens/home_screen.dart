@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -10,6 +10,7 @@ import '../widgets/record_sheet.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/plate_polygon_stack.dart';
 import '../widgets/app_background.dart';
+import '../widgets/daily_overview_cards.dart';
 import 'day_meals_screen.dart';
 import 'meal_items_screen.dart';
 
@@ -79,7 +80,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final app = AppStateScope.of(context);
-    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
+    final plateAsset = app.profile.plateAsset.isEmpty
+        ? kDefaultPlateAsset
+        : app.profile.plateAsset;
     if (_lastPlateAsset != plateAsset) {
       _lastPlateAsset = plateAsset;
       precacheImage(AssetImage(plateAsset), context);
@@ -95,11 +98,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openRecordSheet(AppState app) async {
     final result = await showRecordSheet(context, app);
     if (!mounted || result == null) return;
-                      final mealId = result.mealId;
+    final mealId = result.mealId;
     if (result.mealCount >= 2) {
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => DayMealsScreen(date: result.date, initialMealId: mealId),
+          builder: (_) =>
+              DayMealsScreen(date: result.date, initialMealId: mealId),
         ),
       );
       return;
@@ -117,7 +121,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   Widget _statusPill(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -125,7 +128,9 @@ class _HomeScreenState extends State<HomeScreen> {
         color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label, style: AppTextStyles.caption(context).copyWith(color: color, fontWeight: FontWeight.w600)),
+      child: Text(label,
+          style: AppTextStyles.caption(context)
+              .copyWith(color: color, fontWeight: FontWeight.w600)),
     );
   }
 
@@ -143,7 +148,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return count;
   }
-
 
   Future<T?> _showPickerSheet<T>({
     required BuildContext context,
@@ -168,7 +172,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 width: 36,
                 height: 4,
-                decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(8)),
               ),
               const SizedBox(height: 10),
               Padding(
@@ -183,7 +189,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Text(
                         title,
                         textAlign: TextAlign.center,
-                        style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                        style: AppTextStyles.body(context)
+                            .copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
                     TextButton(
@@ -196,7 +203,8 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: CupertinoPicker(
                   itemExtent: 40,
-                  scrollController: FixedExtentScrollController(initialItem: initialIndex),
+                  scrollController:
+                      FixedExtentScrollController(initialItem: initialIndex),
                   onSelectedItemChanged: (index) => selected = options[index],
                   children: [
                     for (final option in options)
@@ -215,7 +223,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 
   Future<void> _selectExerciseType(
     BuildContext context,
@@ -249,7 +256,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-
   Future<void> _selectActivityLevel(
     BuildContext context,
     AppState app,
@@ -270,7 +276,6 @@ class _HomeScreenState extends State<HomeScreen> {
       await app.updateDailyActivity(date, result);
     }
   }
-
 
   Future<void> _selectExerciseMinutes(
     BuildContext context,
@@ -295,10 +300,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _plateStackForGroups(DateTime date, List<List<MealEntry>> groups) {
     final app = AppStateScope.of(context);
-    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
+    final plateAsset = app.profile.plateAsset.isEmpty
+        ? kDefaultPlateAsset
+        : app.profile.plateAsset;
     final key = DateTime(date.year, date.month, date.day);
     final displayGroups = List<List<MealEntry>>.from(groups);
-    final selectedIndex = (_dateSelectedMeal[key] ?? 0).clamp(0, displayGroups.length - 1);
+    final selectedIndex =
+        (_dateSelectedMeal[key] ?? 0).clamp(0, displayGroups.length - 1);
     return PlatePolygonStack(
       images: displayGroups.map((group) => group.first.imageBytes).toList(),
       plateAsset: plateAsset,
@@ -334,7 +342,9 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(appTheme.radiusCard),
           border: Border.all(color: Colors.black.withOpacity(0.08)),
         ),
-        child: Text(t.latestMealEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+        child: Text(t.latestMealEmpty,
+            style:
+                AppTextStyles.caption(context).copyWith(color: Colors.black54)),
       );
     }
 
@@ -357,111 +367,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       child: child,
-    );
-  }
-
-  Widget _activityCard(
-    DateTime date,
-    AppLocalizations t,
-    AppTheme appTheme,
-    AppState app,
-    ThemeData theme,
-  ) {
-    final current = app.dailyActivityLevel(date);
-    final exerciseType = app.dailyExerciseType(date);
-    final exerciseMinutes = app.dailyExerciseMinutes(date);
-    final exerciseCalories = app.dailyExerciseCalories(date).round();
-    final exerciseLabel = app.exerciseLabel(exerciseType, t);
-    final shortExercise = exerciseLabel.length > 3 ? exerciseLabel.substring(0, 3) : exerciseLabel;
-    return _homeInfoCard(
-      appTheme: appTheme,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            t.activityCardTitle,
-            style: AppTextStyles.title2(context),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              app.targetCalorieRangeLabel(date, t),
-              style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () => _selectActivityLevel(context, app, date, t),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(app.activityLabel(current, t), style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
-                        const Spacer(),
-                        const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: InkWell(
-                  onTap: () => _selectExerciseType(context, app, date, t),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(shortExercise, style: AppTextStyles.caption(context).copyWith(color: Colors.black87, fontWeight: FontWeight.w600)),
-                        const Spacer(),
-                        const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          InkWell(
-            onTap: () => _selectExerciseMinutes(context, app, date, t),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.black12),
-              ),
-              child: Row(
-                children: [
-                  Text(t.exerciseMinutesLabel, style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
-                  const Spacer(),
-                  Text('$exerciseMinutes ${t.exerciseMinutesUnit}', style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600)),
-                  const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -491,8 +396,11 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_pageIndex >= displayDates.length) {
       _pageIndex = 0;
     }
-    final activeDate = displayDates.isEmpty ? DateTime.now() : displayDates[_pageIndex];
-    final nickname = app.profile.name.trim().isEmpty ? t.profileName : app.profile.name.trim();
+    final activeDate =
+        displayDates.isEmpty ? DateTime.now() : displayDates[_pageIndex];
+    final nickname = app.profile.name.trim().isEmpty
+        ? t.profileName
+        : app.profile.name.trim();
     final streakDays = _streakDays(app);
 
     return AppBackground(
@@ -502,317 +410,278 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-                Row(
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(t.greetingTitle(nickname),
+                            style: AppTextStyles.title2(context)),
+                        const SizedBox(height: 4),
+                        Text(t.streakLabel(streakDays),
+                            style: AppTextStyles.caption(context)
+                                .copyWith(color: Colors.black54)),
+                      ],
+                    ),
+                  ),
+                  _statusPill(t.aiSuggest, theme.colorScheme.primary),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (displayDates.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: appTheme.card,
+                      borderRadius: BorderRadius.circular(appTheme.radiusCard),
+                    ),
+                    child: Text(t.latestMealEmpty,
+                        style: AppTextStyles.caption(context)
+                            .copyWith(color: Colors.black54)),
+                  ),
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    SizedBox(
+                      height: 460,
+                      child: PageView.builder(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          setState(() => _pageIndex = index);
+                          app.setSelectedDate(displayDates[index]);
+                        },
+                        itemCount: displayDates.length,
+                        itemBuilder: (context, index) => Center(
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: _mealStackForDate(
+                                  displayDates[index], t, theme, appTheme, app),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        displayDates.length,
+                        (index) => Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: _pageIndex == index ? 8 : 6,
+                          height: _pageIndex == index ? 8 : 6,
+                          decoration: BoxDecoration(
+                            color: _pageIndex == index
+                                ? theme.colorScheme.primary
+                                : Colors.black26,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: _homeInfoCard(
+                        appTheme: appTheme,
+                        child: Row(
+                          children: [
+                            _emojiIcon('📅', size: 18),
+                            const SizedBox(width: 8),
+                            Builder(builder: (context) {
+                              final localeTag = Localizations.localeOf(context)
+                                  .toLanguageTag();
+                              final dateLabel =
+                                  DateFormat('yyyy/MM/dd', localeTag)
+                                      .format(activeDate);
+                              final weekdayLabel =
+                                  DateFormat('E', localeTag).format(activeDate);
+                              return Text(
+                                '$dateLabel（$weekdayLabel）',
+                                style: AppTextStyles.title2(context),
+                              );
+                            }),
+                            const Spacer(),
+                            TextButton(
+                              onPressed: () => app.finalizeDay(
+                                  activeDate,
+                                  Localizations.localeOf(context)
+                                      .toLanguageTag(),
+                                  t),
+                              child: Text(t.finalizeDay),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: DailyOverviewCards(
+                        date: activeDate,
+                        app: app,
+                        t: t,
+                        appTheme: appTheme,
+                        theme: theme,
+                        onSelectActivityLevel: () =>
+                            _selectActivityLevel(context, app, activeDate, t),
+                        onSelectExerciseType: () =>
+                            _selectExerciseType(context, app, activeDate, t),
+                        onSelectExerciseMinutes: () =>
+                            _selectExerciseMinutes(context, app, activeDate, t),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
                         children: [
-                          Text(t.greetingTitle(nickname), style: AppTextStyles.title2(context)),
-                          const SizedBox(height: 4),
-                          Text(t.streakLabel(streakDays), style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                          Expanded(
+                            child: _homeInfoCard(
+                              appTheme: appTheme,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      _emojiIcon('💬', size: 16),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        t.dayCardSummaryLabel,
+                                        style: AppTextStyles.title2(context),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (!app.isDailySummaryReady(activeDate))
+                                    Center(
+                                      child: _emojiIcon('⏳', size: 24),
+                                    ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    app.daySummaryText(activeDate, t),
+                                    style: AppTextStyles.caption(context)
+                                        .copyWith(color: Colors.black54),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _homeInfoCard(
+                              appTheme: appTheme,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      _emojiIcon('💡', size: 16),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        t.dayCardTomorrowLabel,
+                                        style: AppTextStyles.title2(context),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (!app.isDailySummaryReady(activeDate))
+                                    Center(
+                                      child: _emojiIcon('⏳', size: 24),
+                                    ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    app.dayTomorrowAdvice(activeDate, t),
+                                    style: AppTextStyles.caption(context)
+                                        .copyWith(color: Colors.black54),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    _statusPill(t.aiSuggest, theme.colorScheme.primary),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _homeInfoCard(
+                              appTheme: appTheme,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      _emojiIcon('📅', size: 16),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        t.weekSummaryTitle,
+                                        style: AppTextStyles.title2(context),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (!app.isWeeklySummaryReady(activeDate))
+                                    Center(
+                                      child: _emojiIcon('⏳', size: 24),
+                                    ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    app.weekSummaryText(activeDate, t),
+                                    style: AppTextStyles.caption(context)
+                                        .copyWith(color: Colors.black54),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _homeInfoCard(
+                              appTheme: appTheme,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      _emojiIcon('🔮', size: 16),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        t.nextWeekAdviceTitle,
+                                        style: AppTextStyles.title2(context),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (!app.isWeeklySummaryReady(activeDate))
+                                    Center(
+                                      child: _emojiIcon('⏳', size: 24),
+                                    ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    app.nextWeekAdviceText(activeDate, t),
+                                    style: AppTextStyles.caption(context)
+                                        .copyWith(color: Colors.black54),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 14),
-                if (displayDates.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: appTheme.card,
-                        borderRadius: BorderRadius.circular(appTheme.radiusCard),
-                      ),
-                      child: Text(t.latestMealEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
-                    ),
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(
-                        height: 460,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          onPageChanged: (index) {
-                            setState(() => _pageIndex = index);
-                            app.setSelectedDate(displayDates[index]);
-                          },
-                          itemCount: displayDates.length,
-                          itemBuilder: (context, index) => Center(
-                            child: Align(
-                              alignment: Alignment.topCenter,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: _mealStackForDate(displayDates[index], t, theme, appTheme, app),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          displayDates.length,
-                          (index) => Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: _pageIndex == index ? 8 : 6,
-                            height: _pageIndex == index ? 8 : 6,
-                            decoration: BoxDecoration(
-                              color: _pageIndex == index ? theme.colorScheme.primary : Colors.black26,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _homeInfoCard(
-                          appTheme: appTheme,
-                          child: Row(
-                            children: [
-                              _emojiIcon('📅', size: 18),
-                              const SizedBox(width: 8),
-                              Builder(builder: (context) {
-                                final localeTag = Localizations.localeOf(context).toLanguageTag();
-                                final dateLabel = DateFormat('yyyy/MM/dd', localeTag).format(activeDate);
-                                final weekdayLabel = DateFormat('E', localeTag).format(activeDate);
-                                return Text(
-                                  '$dateLabel（$weekdayLabel）',
-                                  style: AppTextStyles.title2(context),
-                                );
-                              }),
-                              const Spacer(),
-                              TextButton(
-                                onPressed: () => app.finalizeDay(activeDate, Localizations.localeOf(context).toLanguageTag(), t),
-                                child: Text(t.finalizeDay),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _activityCard(activeDate, t, appTheme, app, theme),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _homeInfoCard(
-                                appTheme: appTheme,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      t.dayCardCalorieLabel,
-                                      style: AppTextStyles.title2(context),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Builder(
-                                      builder: (context) {
-                                        return Row(
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                              decoration: BoxDecoration(
-                                                color: theme.colorScheme.primary.withOpacity(0.14),
-                                                borderRadius: BorderRadius.circular(16),
-                                              ),
-                                              child: Text(
-                                                app.dailyCalorieRangeLabelForDate(activeDate, t),
-                                                style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
-                                              ),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Builder(builder: (context) {
-                                      final delta = app.dailyCalorieDeltaValue(activeDate);
-                                      final isSurplus = delta != null && delta > 0;
-                                      final pillColor = isSurplus ? Colors.redAccent : theme.colorScheme.primary;
-                                      final icon = isSurplus ? '⚠️' : '📉';
-                                      return Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: pillColor.withOpacity(0.12),
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            _emojiIcon(icon, size: 16),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              app.dailyCalorieDeltaLabel(activeDate, t),
-                                              style: TextStyle(fontWeight: FontWeight.w600, color: pillColor),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    }),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      '${t.dayCardMealsLabel} ${app.dayMealLabels(activeDate, t)}',
-                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _homeInfoCard(
-                                appTheme: appTheme,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        _emojiIcon('💬', size: 16),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          t.dayCardSummaryLabel,
-                                          style: AppTextStyles.title2(context),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    if (!app.isDailySummaryReady(activeDate))
-                                      Center(
-                                        child: _emojiIcon('⏳', size: 24),
-                                      ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      app.daySummaryText(activeDate, t),
-                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _homeInfoCard(
-                                appTheme: appTheme,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        _emojiIcon('💡', size: 16),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          t.dayCardTomorrowLabel,
-                                          style: AppTextStyles.title2(context),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    if (!app.isDailySummaryReady(activeDate))
-                                      Center(
-                                        child: _emojiIcon('⏳', size: 24),
-                                      ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      app.dayTomorrowAdvice(activeDate, t),
-                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _homeInfoCard(
-                                appTheme: appTheme,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        _emojiIcon('📅', size: 16),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          t.weekSummaryTitle,
-                                          style: AppTextStyles.title2(context),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    if (!app.isWeeklySummaryReady(activeDate))
-                                      Center(
-                                        child: _emojiIcon('⏳', size: 24),
-                                      ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      app.weekSummaryText(activeDate, t),
-                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _homeInfoCard(
-                                appTheme: appTheme,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        _emojiIcon('🔮', size: 16),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          t.nextWeekAdviceTitle,
-                                          style: AppTextStyles.title2(context),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    if (!app.isWeeklySummaryReady(activeDate))
-                                      Center(
-                                        child: _emojiIcon('⏳', size: 24),
-                                      ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      app.nextWeekAdviceText(activeDate, t),
-                                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
             ],
           ),
         ),

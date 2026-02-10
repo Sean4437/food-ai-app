@@ -1,5 +1,6 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../state/app_state.dart';
@@ -8,6 +9,8 @@ import 'meal_items_screen.dart';
 import '../widgets/record_sheet.dart';
 import '../widgets/app_background.dart';
 import '../design/text_styles.dart';
+import '../design/app_theme.dart';
+import '../widgets/daily_overview_cards.dart';
 
 class LogScreen extends StatefulWidget {
   const LogScreen({super.key});
@@ -26,6 +29,155 @@ class _LogScreenState extends State<LogScreen> {
 
   static const double _dateItemWidth = 78;
   static const double _dateItemGap = 6;
+
+  Future<T?> _showPickerSheet<T>({
+    required BuildContext context,
+    required String title,
+    required List<T> options,
+    required int initialIndex,
+    required String Function(T value) labelBuilder,
+  }) async {
+    T selected = options[initialIndex.clamp(0, options.length - 1)];
+    return showModalBottomSheet<T>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) => SafeArea(
+        child: SizedBox(
+          height: 280,
+          child: Column(
+            children: [
+              const SizedBox(height: 6),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('取消'),
+                    ),
+                    Expanded(
+                      child: Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.body(context)
+                            .copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(selected),
+                      child: const Text('完成'),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: CupertinoPicker(
+                  itemExtent: 40,
+                  scrollController:
+                      FixedExtentScrollController(initialItem: initialIndex),
+                  onSelectedItemChanged: (index) => selected = options[index],
+                  children: [
+                    for (final option in options)
+                      Center(
+                        child: Text(
+                          labelBuilder(option),
+                          style: AppTextStyles.body(context),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectExerciseType(
+    BuildContext context,
+    AppState app,
+    DateTime date,
+    AppLocalizations t,
+  ) async {
+    final options = [
+      'none',
+      'walking',
+      'jogging',
+      'cycling',
+      'swimming',
+      'strength',
+      'yoga',
+      'hiit',
+      'basketball',
+      'hiking',
+    ];
+    final current = app.dailyExerciseType(date);
+    final initialIndex = options.indexOf(current);
+    final result = await _showPickerSheet<String>(
+      context: context,
+      title: t.exerciseLabel,
+      options: options,
+      initialIndex: initialIndex == -1 ? 0 : initialIndex,
+      labelBuilder: (value) => app.exerciseLabel(value, t),
+    );
+    if (result != null) {
+      await app.updateDailyExerciseType(date, result);
+    }
+  }
+
+  Future<void> _selectActivityLevel(
+    BuildContext context,
+    AppState app,
+    DateTime date,
+    AppLocalizations t,
+  ) async {
+    final options = ['sedentary', 'light', 'moderate', 'high'];
+    final current = app.dailyActivityLevel(date);
+    final initialIndex = options.indexOf(current);
+    final result = await _showPickerSheet<String>(
+      context: context,
+      title: t.activityLevelLabel,
+      options: options,
+      initialIndex: initialIndex == -1 ? 0 : initialIndex,
+      labelBuilder: (value) => app.activityLabel(value, t),
+    );
+    if (result != null) {
+      await app.updateDailyActivity(date, result);
+    }
+  }
+
+  Future<void> _selectExerciseMinutes(
+    BuildContext context,
+    AppState app,
+    DateTime date,
+    AppLocalizations t,
+  ) async {
+    final options = List.generate(37, (index) => index * 5);
+    final current = app.dailyExerciseMinutes(date);
+    final initialIndex = options.indexOf(current);
+    final result = await _showPickerSheet<int>(
+      context: context,
+      title: t.exerciseMinutesLabel,
+      options: options,
+      initialIndex: initialIndex == -1 ? 0 : initialIndex,
+      labelBuilder: (value) => '$value ${t.exerciseMinutesUnit}',
+    );
+    if (result != null) {
+      await app.updateDailyExerciseMinutes(date, result);
+    }
+  }
 
   Widget _skeletonBar(double width, {double height = 12}) {
     return Container(
@@ -172,10 +324,12 @@ class _LogScreenState extends State<LogScreen> {
 
   List<DateTime> _daysInMonth(DateTime month) {
     final lastDay = DateTime(month.year, month.month + 1, 0).day;
-    return List.generate(lastDay, (i) => DateTime(month.year, month.month, i + 1));
+    return List.generate(
+        lastDay, (i) => DateTime(month.year, month.month, i + 1));
   }
 
-  bool _isSameMonth(DateTime a, DateTime b) => a.year == b.year && a.month == b.month;
+  bool _isSameMonth(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month;
 
   DateTime _defaultSelectedDateForMonth(AppState app, DateTime month) {
     final today = DateTime.now();
@@ -183,12 +337,16 @@ class _LogScreenState extends State<LogScreen> {
       return DateTime(today.year, today.month, today.day);
     }
     final dates = app.entries
-        .where((entry) => entry.time.year == month.year && entry.time.month == month.month)
-        .map((entry) => DateTime(entry.time.year, entry.time.month, entry.time.day))
+        .where((entry) =>
+            entry.time.year == month.year && entry.time.month == month.month)
+        .map((entry) =>
+            DateTime(entry.time.year, entry.time.month, entry.time.day))
         .toSet()
         .toList()
       ..sort((a, b) => b.compareTo(a));
-    return dates.isNotEmpty ? dates.first : DateTime(month.year, month.month, 1);
+    return dates.isNotEmpty
+        ? dates.first
+        : DateTime(month.year, month.month, 1);
   }
 
   void _shiftMonth(AppState app, int delta) {
@@ -202,7 +360,8 @@ class _LogScreenState extends State<LogScreen> {
     });
   }
 
-  Widget _buildHighlightCard(BuildContext context, AppState app, AppLocalizations t) {
+  Widget _buildHighlightCard(
+      BuildContext context, AppState app, AppLocalizations t) {
     final entry = _topMealLast7Days(app);
     if (entry == null) {
       return Container(
@@ -218,13 +377,16 @@ class _LogScreenState extends State<LogScreen> {
             ),
           ],
         ),
-        child: Text(t.logTopMealEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+        child: Text(t.logTopMealEmpty,
+            style:
+                AppTextStyles.caption(context).copyWith(color: Colors.black54)),
       );
     }
 
     final title = _entryTitle(entry, t);
     final mid = _entryCalorieMid(app, entry);
-    final kcalText = _withEmoji('🔥', mid == null ? t.calorieUnknown : '${mid.round()} kcal');
+    final kcalText = _withEmoji(
+        '🔥', mid == null ? t.calorieUnknown : '${mid.round()} kcal');
     final dateLabel = '${entry.time.month}/${entry.time.day}';
     final mealLabel = _mealLabel(entry.type, t);
 
@@ -254,12 +416,17 @@ class _LogScreenState extends State<LogScreen> {
                     children: [
                       Text(
                         _withEmoji('🍽️', t.logTopMealTitle),
-                        style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                        style: AppTextStyles.caption(context)
+                            .copyWith(color: Colors.black54),
                       ),
                       const SizedBox(height: 6),
-                      Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                      Text(title,
+                          style: AppTextStyles.body(context)
+                              .copyWith(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
-                      Text(kcalText, style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700)),
+                      Text(kcalText,
+                          style: AppTextStyles.title2(context)
+                              .copyWith(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 6,
@@ -294,7 +461,11 @@ class _LogScreenState extends State<LogScreen> {
         color: const Color(0xFFE9F2EE),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 12, color: Color(0xFF3C6F5B), fontWeight: FontWeight.w600)),
+      child: Text(text,
+          style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF3C6F5B),
+              fontWeight: FontWeight.w600)),
     );
   }
 
@@ -307,7 +478,9 @@ class _LogScreenState extends State<LogScreen> {
     final resolvedRadius = borderRadius ?? BorderRadius.circular(radius);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final size = constraints.maxHeight.isFinite ? constraints.maxHeight : fallbackSize;
+        final size = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : fallbackSize;
         return SizedBox(
           width: size,
           height: size,
@@ -334,12 +507,14 @@ class _LogScreenState extends State<LogScreen> {
           child: Text(
             formatter.format(_currentMonth),
             textAlign: TextAlign.center,
-            style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+            style: AppTextStyles.body(context)
+                .copyWith(fontWeight: FontWeight.w600),
           ),
         ),
         IconButton(
           onPressed: () => _shiftMonth(app, 1),
-          icon: const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
+          icon:
+              const Icon(Icons.chevron_right, color: Colors.black45, size: 18),
         ),
       ],
     );
@@ -372,10 +547,14 @@ class _LogScreenState extends State<LogScreen> {
   void _snapToClosest(AppState app, double viewportWidth, List<DateTime> days) {
     if (!_dateController.hasClients) return;
     if (_isSnapping) return;
-    final index = _centerIndexForOffset(_dateController.offset, viewportWidth, days.length);
-    final target = _offsetForIndex(index, viewportWidth).clamp(0.0, _dateController.position.maxScrollExtent);
+    final index = _centerIndexForOffset(
+        _dateController.offset, viewportWidth, days.length);
+    final target = _offsetForIndex(index, viewportWidth)
+        .clamp(0.0, _dateController.position.maxScrollExtent);
     final date = days[index];
-    if (date.year != _selectedDate.year || date.month != _selectedDate.month || date.day != _selectedDate.day) {
+    if (date.year != _selectedDate.year ||
+        date.month != _selectedDate.month ||
+        date.day != _selectedDate.day) {
       setState(() => _selectedDate = date);
     }
     if ((_dateController.offset - target).abs() < 0.5) {
@@ -384,20 +563,21 @@ class _LogScreenState extends State<LogScreen> {
     _isSnapping = true;
     _dateController
         .animateTo(
-          target,
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-        )
+      target,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+    )
         .whenComplete(() {
-          if (!mounted) return;
-          _isSnapping = false;
-        });
+      if (!mounted) return;
+      _isSnapping = false;
+    });
   }
 
   void _jumpToSelected(DateTime date, double viewportWidth, int count) {
     if (!_dateController.hasClients) return;
     final index = _indexForDate(date).clamp(0, count - 1);
-    final target = _offsetForIndex(index, viewportWidth).clamp(0.0, _dateController.position.maxScrollExtent);
+    final target = _offsetForIndex(index, viewportWidth)
+        .clamp(0.0, _dateController.position.maxScrollExtent);
     _dateController.jumpTo(target);
   }
 
@@ -418,15 +598,19 @@ class _LogScreenState extends State<LogScreen> {
     required bool isCentered,
   }) {
     final hasData = app.entriesForDate(date).isNotEmpty;
-    final selectedLabel = hasData ? app.dailyCalorieRangeLabelForDate(date, t) : '—';
+    final selectedLabel =
+        hasData ? app.dailyCalorieRangeLabelForDate(date, t) : '—';
     final idleLabel = hasData ? _dailyAverageNumber(app, t, date) : '—';
-    final bgColor = isCentered ? Theme.of(context).colorScheme.primary : Colors.transparent;
-    final fgColor = isCentered ? Colors.white : (hasData ? Colors.black87 : Colors.black38);
+    final bgColor =
+        isCentered ? Theme.of(context).colorScheme.primary : Colors.transparent;
+    final fgColor =
+        isCentered ? Colors.white : (hasData ? Colors.black87 : Colors.black38);
     final borderColor = isCentered ? Colors.transparent : Colors.black12;
     return SizedBox(
       width: _dateItemExtent(),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: _dateItemGap, vertical: 4),
+        padding:
+            const EdgeInsets.symmetric(horizontal: _dateItemGap, vertical: 4),
         child: Transform.scale(
           scale: scale,
           child: AnimatedContainer(
@@ -440,9 +624,12 @@ class _LogScreenState extends State<LogScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('${date.month}/${date.day}', style: TextStyle(color: fgColor, fontWeight: FontWeight.w600)),
+                Text('${date.month}/${date.day}',
+                    style:
+                        TextStyle(color: fgColor, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Text(isCentered ? selectedLabel : idleLabel, style: TextStyle(color: fgColor, fontSize: 11)),
+                Text(isCentered ? selectedLabel : idleLabel,
+                    style: TextStyle(color: fgColor, fontSize: 11)),
               ],
             ),
           ),
@@ -451,11 +638,13 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
-  Widget _mealRow(BuildContext context, AppState app, MealEntry entry, List<MealEntry> group) {
+  Widget _mealRow(BuildContext context, AppState app, MealEntry entry,
+      List<MealEntry> group) {
     final t = AppLocalizations.of(context)!;
     final summary = _entryTitle(entry, t);
     final mid = app.entryCalorieMid(entry);
-    final calorie = _withEmoji('🔥', mid == null ? '—' : mid.round().toString());
+    final calorie =
+        _withEmoji('🔥', mid == null ? '—' : mid.round().toString());
     final tags = entry.result?.judgementTags ?? const <String>[];
     return GestureDetector(
       onTap: () {
@@ -464,7 +653,8 @@ class _LogScreenState extends State<LogScreen> {
           MaterialPageRoute(
             builder: (_) => MealItemsScreen(
               group: group,
-              initialIndex: initialIndex >= 0 ? (group.length - 1 - initialIndex) : null,
+              initialIndex:
+                  initialIndex >= 0 ? (group.length - 1 - initialIndex) : null,
             ),
           ),
         );
@@ -504,25 +694,30 @@ class _LogScreenState extends State<LogScreen> {
                       children: [
                         Row(
                           children: [
-                          Text(
-                            _timeLabel(entry.time),
-                            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                          ),
+                            Text(
+                              _timeLabel(entry.time),
+                              style: AppTextStyles.caption(context)
+                                  .copyWith(color: Colors.black54),
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 summary,
-                                style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                                style: AppTextStyles.body(context)
+                                    .copyWith(fontWeight: FontWeight.w600),
                               ),
                             ),
-                          Text(calorie, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                            Text(calorie,
+                                style: AppTextStyles.caption(context)
+                                    .copyWith(color: Colors.black54)),
                           ],
                         ),
                         if (tags.isNotEmpty) ...[
                           const SizedBox(height: 6),
                           Text(
                             tags.map(_tagWithEmoji).join(' · '),
-                            style: AppTextStyles.caption(context).copyWith(color: Colors.black45),
+                            style: AppTextStyles.caption(context)
+                                .copyWith(color: Colors.black45),
                           ),
                         ],
                       ],
@@ -537,7 +732,8 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
-  Widget _mealSection(BuildContext context, AppState app, MealType type, List<List<MealEntry>> groups) {
+  Widget _mealSection(BuildContext context, AppState app, MealType type,
+      List<List<MealEntry>> groups) {
     final t = AppLocalizations.of(context)!;
     if (groups.isEmpty) {
       return const SizedBox.shrink();
@@ -559,13 +755,14 @@ class _LogScreenState extends State<LogScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_mealLabel(type, t), style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+          Text(_mealLabel(type, t),
+              style: AppTextStyles.body(context)
+                  .copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Column(
             children: [
               for (final group in groups)
-                for (final entry in group)
-                  _mealRow(context, app, entry, group),
+                for (final entry in group) _mealRow(context, app, entry, group),
             ],
           ),
         ],
@@ -601,7 +798,8 @@ class _LogScreenState extends State<LogScreen> {
     );
     if (!mounted || result == null) return;
     setState(() {
-      _selectedDate = DateTime(overrideTime.year, overrideTime.month, overrideTime.day);
+      _selectedDate =
+          DateTime(overrideTime.year, overrideTime.month, overrideTime.day);
       _currentMonth = DateTime(overrideTime.year, overrideTime.month, 1);
       _currentMonthDays = _daysInMonth(_currentMonth);
       _lastJumpKey = '';
@@ -615,6 +813,8 @@ class _LogScreenState extends State<LogScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
+    final theme = Theme.of(context);
+    final appTheme = theme.extension<AppTheme>()!;
     final days = _currentMonthDays;
     final groupsByType = app.mealGroupsByTypeForDate(_selectedDate);
     if (!app.trialChecked) {
@@ -647,21 +847,38 @@ class _LogScreenState extends State<LogScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(_withEmoji('📔', t.logTitle), style: AppTextStyles.title1(context)),
+                    Text(_withEmoji('📔', t.logTitle),
+                        style: AppTextStyles.title1(context)),
                     const SizedBox(height: 12),
                     _buildHighlightCard(context, app, t),
+                    const SizedBox(height: 12),
+                    DailyOverviewCards(
+                      date: _selectedDate,
+                      app: app,
+                      t: t,
+                      appTheme: appTheme,
+                      theme: theme,
+                      onSelectActivityLevel: () =>
+                          _selectActivityLevel(context, app, _selectedDate, t),
+                      onSelectExerciseType: () =>
+                          _selectExerciseType(context, app, _selectedDate, t),
+                      onSelectExerciseMinutes: () => _selectExerciseMinutes(
+                          context, app, _selectedDate, t),
+                    ),
                     const SizedBox(height: 16),
                     _buildMonthHeader(context, app),
                     const SizedBox(height: 6),
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final viewportWidth = constraints.maxWidth;
-                        final jumpKey = '${_currentMonth.year}-${_currentMonth.month}-${_selectedDate.day}-${days.length}';
+                        final jumpKey =
+                            '${_currentMonth.year}-${_currentMonth.month}-${_selectedDate.day}-${days.length}';
                         if (_lastJumpKey != jumpKey) {
                           _lastJumpKey = jumpKey;
                           WidgetsBinding.instance.addPostFrameCallback((_) {
                             if (!mounted) return;
-                            _jumpToSelected(_selectedDate, viewportWidth, days.length);
+                            _jumpToSelected(
+                                _selectedDate, viewportWidth, days.length);
                           });
                         }
                         return SizedBox(
@@ -681,7 +898,9 @@ class _LogScreenState extends State<LogScreen> {
                                     ? _dateController.offset + viewportWidth / 2
                                     : viewportWidth / 2;
                                 final centerIndex = _centerIndexForOffset(
-                                  _dateController.hasClients ? _dateController.offset : 0,
+                                  _dateController.hasClients
+                                      ? _dateController.offset
+                                      : 0,
                                   viewportWidth,
                                   days.length,
                                 );
@@ -689,11 +908,15 @@ class _LogScreenState extends State<LogScreen> {
                                   controller: _dateController,
                                   scrollDirection: Axis.horizontal,
                                   itemCount: days.length,
-                                  padding: EdgeInsets.symmetric(horizontal: leading),
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: leading),
                                   itemBuilder: (context, index) {
-                                    final itemCenter = leading + index * extent + extent / 2;
-                                    final distance = (center - itemCenter).abs();
-                                    final factor = (distance / extent).clamp(0.0, 1.0);
+                                    final itemCenter =
+                                        leading + index * extent + extent / 2;
+                                    final distance =
+                                        (center - itemCenter).abs();
+                                    final factor =
+                                        (distance / extent).clamp(0.0, 1.0);
                                     final scale = 1.1 - 0.16 * factor;
                                     return _buildDateCard(
                                       context,
@@ -712,13 +935,20 @@ class _LogScreenState extends State<LogScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    _mealSection(context, app, MealType.breakfast, groupsByType[MealType.breakfast] ?? const []),
-                    _mealSection(context, app, MealType.brunch, groupsByType[MealType.brunch] ?? const []),
-                    _mealSection(context, app, MealType.lunch, groupsByType[MealType.lunch] ?? const []),
-                    _mealSection(context, app, MealType.afternoonTea, groupsByType[MealType.afternoonTea] ?? const []),
-                    _mealSection(context, app, MealType.dinner, groupsByType[MealType.dinner] ?? const []),
-                    _mealSection(context, app, MealType.lateSnack, groupsByType[MealType.lateSnack] ?? const []),
-                    _mealSection(context, app, MealType.other, groupsByType[MealType.other] ?? const []),
+                    _mealSection(context, app, MealType.breakfast,
+                        groupsByType[MealType.breakfast] ?? const []),
+                    _mealSection(context, app, MealType.brunch,
+                        groupsByType[MealType.brunch] ?? const []),
+                    _mealSection(context, app, MealType.lunch,
+                        groupsByType[MealType.lunch] ?? const []),
+                    _mealSection(context, app, MealType.afternoonTea,
+                        groupsByType[MealType.afternoonTea] ?? const []),
+                    _mealSection(context, app, MealType.dinner,
+                        groupsByType[MealType.dinner] ?? const []),
+                    _mealSection(context, app, MealType.lateSnack,
+                        groupsByType[MealType.lateSnack] ?? const []),
+                    _mealSection(context, app, MealType.other,
+                        groupsByType[MealType.other] ?? const []),
                   ],
                 ),
               ),
