@@ -4062,6 +4062,7 @@ class AppState extends ChangeNotifier {
     if (trimmedNickname.isNotEmpty) {
       updateField((p) => p.name = trimmedNickname);
     }
+    updateField((p) => p.email = trimmedEmail);
     _applySupabaseNickname(_supabase.currentUser);
     await refreshAccessStatus();
     notifyListeners();
@@ -4072,6 +4073,7 @@ class AppState extends ChangeNotifier {
     if (trimmedEmail.isEmpty || password.isEmpty) return;
     await _supabase.client.auth
         .signInWithPassword(email: trimmedEmail, password: password);
+    updateField((p) => p.email = trimmedEmail);
     _applySupabaseNickname(_supabase.currentUser);
     await refreshAccessStatus();
     notifyListeners();

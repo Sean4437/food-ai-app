@@ -26,6 +26,22 @@ class _LoginScreenState extends State<LoginScreen> {
   DateTime? _lastAuthAttempt;
   Timer? _resendTimer;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final app = AppStateScope.of(context);
+      final cached = (app.supabaseUserEmail ?? app.profile.email).trim();
+      if (cached.isEmpty) return;
+      if (_emailController.text.trim().isEmpty) {
+        _emailController.text = cached;
+        _emailController.selection =
+            TextSelection.fromPosition(TextPosition(offset: cached.length));
+      }
+    });
+  }
+
   bool _isValidEmail(String value) {
     final email = value.trim();
     if (email.isEmpty) return false;
