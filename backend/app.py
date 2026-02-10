@@ -1460,6 +1460,7 @@ def _build_chat_prompt(
     lang: str,
     profile: dict | None,
     days: Optional[List[dict]],
+    today_meals: Optional[List[dict]],
     summary: Optional[str],
     context: Optional[dict],
 ) -> str:
