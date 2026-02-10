@@ -2424,8 +2424,14 @@ async def chat(
         )
         text = response.choices[0].message.content or ""
         data = _parse_json(text)
-        if not isinstance(data, dict) or "reply" not in data or "summary" not in data:
-            raise HTTPException(status_code=502, detail="ai_invalid_response")
+        if not isinstance(data, dict) or "reply" not in data:
+            # Fallback: treat raw text as reply, allow empty summary
+            data = {
+                "reply": text.strip(),
+                "summary": payload.summary or "",
+            }
+        elif "summary" not in data:
+            data["summary"] = payload.summary or ""
         usage = response.usage
         usage_data = None
         if usage is not None:
