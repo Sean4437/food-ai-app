@@ -196,7 +196,7 @@ class DailyOverviewCards extends StatelessWidget {
         hasTarget ? (consumed / targetMid!).clamp(0.0, 1.0) : 0.0;
     final delta = app.dailyCalorieDeltaValue(date);
     final isSurplus = delta != null && delta > 0;
-    final ringColor = isSurplus ? Colors.redAccent : theme.colorScheme.primary;
+    final ringColor = theme.colorScheme.primary;
     final centerText = hasTarget
         ? '${consumed.round()}/${targetMid.round()}'
         : '---';
