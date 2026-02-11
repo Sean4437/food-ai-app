@@ -295,6 +295,18 @@ class DailyOverviewCards extends StatelessWidget {
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: _activityCard(context)),
+        const SizedBox(width: 12),
+        Expanded(child: _calorieCard(context)),
+      ],
+    );
+  }
+}
+
 class _PieChartPainter extends CustomPainter {
   _PieChartPainter({required this.progress, required this.color});
 
@@ -322,17 +334,5 @@ class _PieChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _PieChartPainter oldDelegate) {
     return oldDelegate.progress != progress || oldDelegate.color != color;
-  }
-}
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: _activityCard(context)),
-        const SizedBox(width: 12),
-        Expanded(child: _calorieCard(context)),
-      ],
-    );
   }
 }
