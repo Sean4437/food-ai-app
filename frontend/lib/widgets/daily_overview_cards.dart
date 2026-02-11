@@ -179,6 +179,17 @@ class DailyOverviewCards extends StatelessWidget {
   }
 
   Widget _calorieCard(BuildContext context) {
+    final consumed = app.dailyConsumedCalorieMid(date);
+    final targetMid = app.targetCalorieMid(date);
+    final hasTarget = targetMid != null && targetMid > 0;
+    final progress =
+        hasTarget ? (consumed / targetMid!).clamp(0.0, 1.0) : 0.0;
+    final delta = app.dailyCalorieDeltaValue(date);
+    final isSurplus = delta != null && delta > 0;
+    final ringColor = isSurplus ? Colors.redAccent : theme.colorScheme.primary;
+    final centerText = hasTarget
+        ? '${consumed.round()}/${targetMid.round()}'
+        : '---';
     return _infoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,58 +200,96 @@ class DailyOverviewCards extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.14),
-                  borderRadius: BorderRadius.circular(16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.14),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        app.dailyCalorieRangeLabelForDate(date, t),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Builder(builder: (context) {
+                      final pillColor = isSurplus
+                          ? Colors.redAccent
+                          : theme.colorScheme.primary;
+                      final icon = isSurplus ? '??' : '??';
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: pillColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _emojiIcon(icon, size: 16),
+                            const SizedBox(width: 6),
+                            Text(
+                              app.dailyCalorieDeltaLabel(date, t),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: pillColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${t.dayCardMealsLabel} ${app.dayMealLabels(date, t)}',
+                      style: AppTextStyles.caption(context)
+                          .copyWith(color: Colors.black54),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  app.dailyCalorieRangeLabelForDate(date, t),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.primary,
-                  ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 72,
+                height: 72,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: 1,
+                      strokeWidth: 8,
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(Color(0xFFE6ECE9)),
+                    ),
+                    CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: 8,
+                      valueColor: AlwaysStoppedAnimation<Color>(ringColor),
+                      backgroundColor: Colors.transparent,
+                    ),
+                    Text(
+                      centerText,
+                      style: AppTextStyles.caption(context).copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: ringColor,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          Builder(builder: (context) {
-            final delta = app.dailyCalorieDeltaValue(date);
-            final isSurplus = delta != null && delta > 0;
-            final pillColor =
-                isSurplus ? Colors.redAccent : theme.colorScheme.primary;
-            final icon = isSurplus ? '⚠️' : '📉';
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: pillColor.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _emojiIcon(icon, size: 16),
-                  const SizedBox(width: 6),
-                  Text(
-                    app.dailyCalorieDeltaLabel(date, t),
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: pillColor,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-          const SizedBox(height: 8),
-          Text(
-            '${t.dayCardMealsLabel} ${app.dayMealLabels(date, t)}',
-            style:
-                AppTextStyles.caption(context).copyWith(color: Colors.black54),
           ),
         ],
       ),
