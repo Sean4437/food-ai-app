@@ -17,11 +17,13 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _inputFocus = FocusNode();
   int _lastMessageCount = 0;
   final _rand = Random();
   List<String> _quickPrompts = [];
   String _quickLocale = '';
   String _quickDate = '';
+  bool _showQuickPrompts = false;
 
   void _ensureQuickPrompts(AppLocalizations t) {
     final now = DateTime.now();
@@ -108,9 +110,19 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _inputFocus.addListener(() {
+      if (!mounted) return;
+      setState(() => _showQuickPrompts = _inputFocus.hasFocus);
+    });
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
+    _inputFocus.dispose();
     super.dispose();
   }
 
@@ -131,6 +143,9 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty || app.chatSending) return;
     _controller.clear();
+    if (_inputFocus.hasFocus) {
+      _inputFocus.unfocus();
+    }
     final locale = Localizations.localeOf(context).toString();
     await app.sendChatMessage(text, locale, t);
   }
@@ -139,6 +154,9 @@ class _ChatScreenState extends State<ChatScreen> {
       String text, AppState app, AppLocalizations t) async {
     if (text.trim().isEmpty || app.chatSending) return;
     _controller.clear();
+    if (_inputFocus.hasFocus) {
+      _inputFocus.unfocus();
+    }
     final locale = Localizations.localeOf(context).toString();
     await app.sendChatMessage(text, locale, t);
   }
@@ -299,7 +317,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (_quickPrompts.isNotEmpty)
+                if (_quickPrompts.isNotEmpty && _showQuickPrompts)
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Wrap(
@@ -323,6 +341,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     Expanded(
                       child: TextField(
                         controller: _controller,
+                        focusNode: _inputFocus,
                         minLines: 1,
                         maxLines: 4,
                         textInputAction: TextInputAction.send,
