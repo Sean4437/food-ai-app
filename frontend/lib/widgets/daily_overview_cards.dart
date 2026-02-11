@@ -317,6 +317,7 @@ class _PieChartPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
+    const startAngle = -3.141592653589793 / 2;
     final basePaint = Paint()
       ..color = const Color(0xFFE6ECE9)
       ..style = PaintingStyle.fill;
@@ -324,10 +325,23 @@ class _PieChartPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, radius, basePaint);
-    final sweep = (progress.clamp(0.0, 1.0)) * 2 * 3.141592653589793;
+    final clamped = progress.clamp(0.0, 1.0);
+    final sweep = clamped * 2 * 3.141592653589793;
+    final rect = Rect.fromCircle(center: center, radius: radius);
     if (sweep > 0) {
-      final rect = Rect.fromCircle(center: center, radius: radius);
-      canvas.drawArc(rect, -3.141592653589793 / 2, sweep, true, slicePaint);
+      canvas.drawArc(rect, startAngle, sweep, true, slicePaint);
+    }
+
+    if (progress > 1.0) {
+      final overflow = (progress - 1.0).clamp(0.0, 1.0);
+      final overflowSweep = overflow * 2 * 3.141592653589793;
+      final ringPaint = Paint()
+        ..color = Colors.redAccent
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..strokeCap = StrokeCap.round;
+      final ringRect = Rect.fromCircle(center: center, radius: radius - 3);
+      canvas.drawArc(ringRect, startAngle, overflowSweep, false, ringPaint);
     }
   }
 
