@@ -21,19 +21,28 @@ class _ChatScreenState extends State<ChatScreen> {
   final _rand = Random();
   List<String> _quickPrompts = [];
   String _quickLocale = '';
+  String _quickDate = '';
 
   void _ensureQuickPrompts(AppLocalizations t) {
-    if (_quickPrompts.isNotEmpty && _quickLocale == t.localeName) return;
+    final now = DateTime.now();
+    final dateKey =
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    if (_quickPrompts.isNotEmpty &&
+        _quickLocale == t.localeName &&
+        _quickDate == dateKey) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {
         _quickLocale = t.localeName;
-        _quickPrompts = _generateQuickPrompts(t);
+        _quickDate = dateKey;
+        _quickPrompts = _generateQuickPrompts(t, seed: dateKey.hashCode);
       });
     });
   }
 
-  List<String> _generateQuickPrompts(AppLocalizations t) {
+  List<String> _generateQuickPrompts(AppLocalizations t,
+      {required int seed}) {
+    final rand = Random(seed);
     if (t.localeName.startsWith('en')) {
       final today = [
         'Give me a quick summary of today’s eating.',
@@ -60,10 +69,10 @@ class _ChatScreenState extends State<ChatScreen> {
         'Give me one sentence for next week’s direction.',
       ];
       return [
-        today[_rand.nextInt(today.length)],
-        tomorrow[_rand.nextInt(tomorrow.length)],
-        week[_rand.nextInt(week.length)],
-        nextWeek[_rand.nextInt(nextWeek.length)],
+        today[rand.nextInt(today.length)],
+        tomorrow[rand.nextInt(tomorrow.length)],
+        week[rand.nextInt(week.length)],
+        nextWeek[rand.nextInt(nextWeek.length)],
       ];
     }
     final today = [
@@ -91,10 +100,10 @@ class _ChatScreenState extends State<ChatScreen> {
       '下週方向給我一句話就好',
     ];
     return [
-      today[_rand.nextInt(today.length)],
-      tomorrow[_rand.nextInt(tomorrow.length)],
-      week[_rand.nextInt(week.length)],
-      nextWeek[_rand.nextInt(nextWeek.length)],
+      today[rand.nextInt(today.length)],
+      tomorrow[rand.nextInt(tomorrow.length)],
+      week[rand.nextInt(week.length)],
+      nextWeek[rand.nextInt(nextWeek.length)],
     ];
   }
 
@@ -275,24 +284,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   },
                 ),
         ),
-        if (_quickPrompts.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _quickPrompts
-                  .map(
-                    (text) => ActionChip(
-                      label: Text(text, style: const TextStyle(fontSize: 12)),
-                      onPressed: app.chatSending
-                          ? null
-                          : () => _sendQuickPrompt(text, app, t),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
         if (app.chatError != null && app.chatError!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -305,47 +296,71 @@ class _ChatScreenState extends State<ChatScreen> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    minLines: 1,
-                    maxLines: 4,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _sendMessage(app, t),
-                    decoration: InputDecoration(
-                      hintText: t.chatInputHint,
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
+                if (_quickPrompts.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _quickPrompts
+                          .map(
+                            (text) => ActionChip(
+                              label: Text(text, style: const TextStyle(fontSize: 12)),
+                              onPressed: app.chatSending
+                                  ? null
+                                  : () => _sendQuickPrompt(text, app, t),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        minLines: 1,
+                        maxLines: 4,
+                        textInputAction: TextInputAction.send,
+                        onSubmitted: (_) => _sendMessage(app, t),
+                        decoration: InputDecoration(
+                          hintText: t.chatInputHint,
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: app.chatSending ? null : () => _sendMessage(app, t),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      padding: EdgeInsets.zero,
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: app.chatSending ? null : () => _sendMessage(app, t),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: app.chatSending
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.send, size: 18),
+                      ),
                     ),
-                    child: app.chatSending
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.send, size: 18),
-                  ),
+                  ],
                 ),
               ],
             ),
