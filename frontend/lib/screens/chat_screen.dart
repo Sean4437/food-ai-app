@@ -1,6 +1,5 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:async';
 import 'dart:math';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
@@ -24,8 +23,7 @@ class _ChatScreenState extends State<ChatScreen> {
   List<String> _quickPrompts = [];
   String _quickLocale = '';
   String _quickDate = '';
-  int _promptIndex = 0;
-  Timer? _promptTimer;
+  bool _showQuickPrompts = false;
 
   void _ensureQuickPrompts(AppLocalizations t) {
     final now = DateTime.now();
@@ -40,7 +38,6 @@ class _ChatScreenState extends State<ChatScreen> {
         _quickLocale = t.localeName;
         _quickDate = dateKey;
         _quickPrompts = _generateQuickPrompts(t, seed: dateKey.hashCode);
-        _promptIndex = 0;
       });
     });
   }
@@ -117,11 +114,7 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     _inputFocus.addListener(() {
       if (!mounted) return;
-      if (_inputFocus.hasFocus) {
-        _startPromptTimer();
-      } else {
-        _stopPromptTimer();
-      }
+      setState(() => _showQuickPrompts = _inputFocus.hasFocus);
     });
   }
 
@@ -130,23 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.dispose();
     _scrollController.dispose();
     _inputFocus.dispose();
-    _stopPromptTimer();
     super.dispose();
-  }
-
-  void _startPromptTimer() {
-    _stopPromptTimer();
-    _promptTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!mounted || _quickPrompts.isEmpty) return;
-      setState(() {
-        _promptIndex = (_promptIndex + 1) % _quickPrompts.length;
-      });
-    });
-  }
-
-  void _stopPromptTimer() {
-    _promptTimer?.cancel();
-    _promptTimer = null;
   }
 
   void _maybeScroll(AppState app) {
@@ -340,9 +317,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _sendMessage(app, t),
                         decoration: InputDecoration(
-                          hintText: _quickPrompts.isNotEmpty
-                              ? _quickPrompts[_promptIndex]
-                              : t.chatInputHint,
+                          hintText: t.chatInputHint,
                           filled: true,
                           fillColor: Colors.white,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -376,6 +351,45 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ],
                 ),
+                if (_showQuickPrompts && _quickPrompts.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 10,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: _quickPrompts.map((text) {
+                          return InkWell(
+                            onTap: app.chatSending
+                                ? null
+                                : () {
+                                    _controller.text = text;
+                                    _controller.selection = TextSelection.collapsed(
+                                      offset: _controller.text.length,
+                                    );
+                                  },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(text, style: const TextStyle(fontSize: 13)),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
