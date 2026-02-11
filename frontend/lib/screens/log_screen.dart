@@ -24,11 +24,14 @@ class _LogScreenState extends State<LogScreen> {
   late DateTime _currentMonth;
   late List<DateTime> _currentMonthDays;
   final ScrollController _dateController = ScrollController();
+  final PageController _topCardController = PageController();
+  int _topCardIndex = 0;
   String _lastJumpKey = '';
   bool _isSnapping = false;
 
   static const double _dateItemWidth = 78;
   static const double _dateItemGap = 6;
+  static const double _topCardHeight = 210;
 
   Future<T?> _showPickerSheet<T>({
     required BuildContext context,
@@ -258,7 +261,27 @@ class _LogScreenState extends State<LogScreen> {
   @override
   void dispose() {
     _dateController.dispose();
+    _topCardController.dispose();
     super.dispose();
+  }
+
+  Widget _pageDots(int count) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (index) {
+        final isActive = index == _topCardIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: isActive ? 18 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFF3C6F5B) : Colors.black12,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        );
+      }),
+    );
   }
 
   String _mealLabel(MealType type, AppLocalizations t) {
@@ -850,21 +873,47 @@ class _LogScreenState extends State<LogScreen> {
                     Text(_withEmoji('📔', t.logTitle),
                         style: AppTextStyles.title1(context)),
                     const SizedBox(height: 12),
-                    _buildHighlightCard(context, app, t),
-                    const SizedBox(height: 12),
-                    DailyOverviewCards(
-                      date: _selectedDate,
-                      app: app,
-                      t: t,
-                      appTheme: appTheme,
-                      theme: theme,
-                      onSelectActivityLevel: () =>
-                          _selectActivityLevel(context, app, _selectedDate, t),
-                      onSelectExerciseType: () =>
-                          _selectExerciseType(context, app, _selectedDate, t),
-                      onSelectExerciseMinutes: () => _selectExerciseMinutes(
-                          context, app, _selectedDate, t),
-                    ),
+                    Builder(builder: (context) {
+                      final overview = DailyOverviewCards(
+                        date: _selectedDate,
+                        app: app,
+                        t: t,
+                        appTheme: appTheme,
+                        theme: theme,
+                        onSelectActivityLevel: () => _selectActivityLevel(
+                            context, app, _selectedDate, t),
+                        onSelectExerciseType: () => _selectExerciseType(
+                            context, app, _selectedDate, t),
+                        onSelectExerciseMinutes: () => _selectExerciseMinutes(
+                            context, app, _selectedDate, t),
+                      );
+                      final pages = [
+                        _buildHighlightCard(context, app, t),
+                        overview.activityCard(context),
+                        overview.calorieCard(context),
+                      ];
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(
+                            height: _topCardHeight,
+                            child: PageView.builder(
+                              controller: _topCardController,
+                              onPageChanged: (index) =>
+                                  setState(() => _topCardIndex = index),
+                              itemCount: pages.length,
+                              itemBuilder: (context, index) => Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 2),
+                                child: pages[index],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _pageDots(pages.length),
+                        ],
+                      );
+                    }),
                     const SizedBox(height: 16),
                     _buildMonthHeader(context, app),
                     const SizedBox(height: 6),

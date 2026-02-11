@@ -26,6 +26,10 @@ class DailyOverviewCards extends StatelessWidget {
   final VoidCallback onSelectExerciseType;
   final VoidCallback onSelectExerciseMinutes;
 
+  Widget activityCard(BuildContext context) => _activityCard(context);
+
+  Widget calorieCard(BuildContext context) => _calorieCard(context);
+
   Widget _emojiIcon(String emoji, {double size = 16}) {
     return Text(emoji, style: TextStyle(fontSize: size, height: 1));
   }
