@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'dart:math';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
@@ -23,7 +24,8 @@ class _ChatScreenState extends State<ChatScreen> {
   List<String> _quickPrompts = [];
   String _quickLocale = '';
   String _quickDate = '';
-  bool _showQuickPrompts = false;
+  int _promptIndex = 0;
+  Timer? _promptTimer;
 
   void _ensureQuickPrompts(AppLocalizations t) {
     final now = DateTime.now();
@@ -38,6 +40,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _quickLocale = t.localeName;
         _quickDate = dateKey;
         _quickPrompts = _generateQuickPrompts(t, seed: dateKey.hashCode);
+        _promptIndex = 0;
       });
     });
   }
@@ -114,7 +117,11 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     _inputFocus.addListener(() {
       if (!mounted) return;
-      setState(() => _showQuickPrompts = _inputFocus.hasFocus);
+      if (_inputFocus.hasFocus) {
+        _startPromptTimer();
+      } else {
+        _stopPromptTimer();
+      }
     });
   }
 
@@ -123,7 +130,23 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.dispose();
     _scrollController.dispose();
     _inputFocus.dispose();
+    _stopPromptTimer();
     super.dispose();
+  }
+
+  void _startPromptTimer() {
+    _stopPromptTimer();
+    _promptTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || _quickPrompts.isEmpty) return;
+      setState(() {
+        _promptIndex = (_promptIndex + 1) % _quickPrompts.length;
+      });
+    });
+  }
+
+  void _stopPromptTimer() {
+    _promptTimer?.cancel();
+    _promptTimer = null;
   }
 
   void _maybeScroll(AppState app) {
@@ -142,17 +165,6 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _sendMessage(AppState app, AppLocalizations t) async {
     final text = _controller.text.trim();
     if (text.isEmpty || app.chatSending) return;
-    _controller.clear();
-    if (_inputFocus.hasFocus) {
-      _inputFocus.unfocus();
-    }
-    final locale = Localizations.localeOf(context).toString();
-    await app.sendChatMessage(text, locale, t);
-  }
-
-  Future<void> _sendQuickPrompt(
-      String text, AppState app, AppLocalizations t) async {
-    if (text.trim().isEmpty || app.chatSending) return;
     _controller.clear();
     if (_inputFocus.hasFocus) {
       _inputFocus.unfocus();
@@ -317,25 +329,6 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (_quickPrompts.isNotEmpty && _showQuickPrompts)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _quickPrompts
-                          .map(
-                            (text) => ActionChip(
-                              label: Text(text, style: const TextStyle(fontSize: 12)),
-                              onPressed: app.chatSending
-                                  ? null
-                                  : () => _sendQuickPrompt(text, app, t),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -347,7 +340,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _sendMessage(app, t),
                         decoration: InputDecoration(
-                          hintText: t.chatInputHint,
+                          hintText: _quickPrompts.isNotEmpty
+                              ? _quickPrompts[_promptIndex]
+                              : t.chatInputHint,
                           filled: true,
                           fillColor: Colors.white,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
