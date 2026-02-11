@@ -34,6 +34,16 @@ class DailyOverviewCards extends StatelessWidget {
     return Text(emoji, style: TextStyle(fontSize: size, height: 1));
   }
 
+  Widget _pieChart(double progress, Color color, {double size = 72}) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _PieChartPainter(progress: progress, color: color),
+      ),
+    );
+  }
+
   Widget _infoCard({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -266,18 +276,7 @@ class DailyOverviewCards extends StatelessWidget {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    CircularProgressIndicator(
-                      value: 1,
-                      strokeWidth: 8,
-                      valueColor:
-                          const AlwaysStoppedAnimation<Color>(Color(0xFFE6ECE9)),
-                    ),
-                    CircularProgressIndicator(
-                      value: progress,
-                      strokeWidth: 8,
-                      valueColor: AlwaysStoppedAnimation<Color>(ringColor),
-                      backgroundColor: Colors.transparent,
-                    ),
+                    _pieChart(progress, ringColor, size: 72),
                     Text(
                       centerText,
                       style: AppTextStyles.caption(context).copyWith(
@@ -295,6 +294,36 @@ class DailyOverviewCards extends StatelessWidget {
       ),
     );
   }
+
+class _PieChartPainter extends CustomPainter {
+  _PieChartPainter({required this.progress, required this.color});
+
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    final basePaint = Paint()
+      ..color = const Color(0xFFE6ECE9)
+      ..style = PaintingStyle.fill;
+    final slicePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius, basePaint);
+    final sweep = (progress.clamp(0.0, 1.0)) * 2 * 3.141592653589793;
+    if (sweep > 0) {
+      final rect = Rect.fromCircle(center: center, radius: radius);
+      canvas.drawArc(rect, -3.141592653589793 / 2, sweep, true, slicePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _PieChartPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.color != color;
+  }
+}
 
   @override
   Widget build(BuildContext context) {
