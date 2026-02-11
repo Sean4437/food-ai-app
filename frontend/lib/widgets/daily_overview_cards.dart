@@ -323,9 +323,6 @@ class _PieChartPainter extends CustomPainter {
     final slicePaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
-    final overflowPaint = Paint()
-      ..color = Colors.redAccent
-      ..style = PaintingStyle.fill;
     canvas.drawCircle(center, radius, basePaint);
     final clamped = progress.clamp(0.0, 1.0);
     final sweep = clamped * 2 * 3.141592653589793;
@@ -338,7 +335,16 @@ class _PieChartPainter extends CustomPainter {
       final overflow = (progress - 1.0).clamp(0.0, 1.0);
       final overflowSweep = overflow * 2 * 3.141592653589793;
       if (overflowSweep > 0) {
-        canvas.drawArc(rect, startAngle, overflowSweep, true, overflowPaint);
+        final ringPaint = Paint()
+          ..color = Colors.redAccent
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6
+          ..strokeCap = StrokeCap.round;
+        final ringRect = Rect.fromCircle(
+          center: center,
+          radius: radius - (ringPaint.strokeWidth / 2),
+        );
+        canvas.drawArc(ringRect, startAngle, overflowSweep, false, ringPaint);
       }
     }
   }
