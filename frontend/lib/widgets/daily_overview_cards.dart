@@ -338,11 +338,11 @@ class _PieChartPainter extends CustomPainter {
         final ringPaint = Paint()
           ..color = Colors.redAccent
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 6
+          ..strokeWidth = 8
           ..strokeCap = StrokeCap.round;
         final ringRect = Rect.fromCircle(
           center: center,
-          radius: radius - (ringPaint.strokeWidth / 2),
+          radius: radius - 4,
         );
         canvas.drawArc(ringRect, startAngle, overflowSweep, false, ringPaint);
       }
