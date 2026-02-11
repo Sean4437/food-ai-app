@@ -31,7 +31,7 @@ class _LogScreenState extends State<LogScreen> {
 
   static const double _dateItemWidth = 78;
   static const double _dateItemGap = 6;
-  static const double _topCardHeight = 140;
+  static const double _topCardHeight = 160;
 
   Future<T?> _showPickerSheet<T>({
     required BuildContext context,
