@@ -192,8 +192,7 @@ class DailyOverviewCards extends StatelessWidget {
     final consumed = app.dailyConsumedCalorieMid(date);
     final targetMid = app.targetCalorieMid(date);
     final hasTarget = targetMid != null && targetMid > 0;
-    final progress =
-        hasTarget ? (consumed / targetMid!).clamp(0.0, 1.0) : 0.0;
+    final progress = hasTarget ? (consumed / targetMid!) : 0.0;
     final delta = app.dailyCalorieDeltaValue(date);
     final isSurplus = delta != null && delta > 0;
     final ringColor = theme.colorScheme.primary;
