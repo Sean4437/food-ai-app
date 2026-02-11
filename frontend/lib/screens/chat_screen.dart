@@ -18,12 +18,13 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _inputFocus = FocusNode();
+  final GlobalKey _inputKey = GlobalKey();
   int _lastMessageCount = 0;
   final _rand = Random();
   List<String> _quickPrompts = [];
   String _quickLocale = '';
   String _quickDate = '';
-  bool _showQuickPrompts = false;
+  bool _quickMenuOpen = false;
 
   void _ensureQuickPrompts(AppLocalizations t) {
     final now = DateTime.now();
@@ -114,7 +115,9 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     _inputFocus.addListener(() {
       if (!mounted) return;
-      setState(() => _showQuickPrompts = _inputFocus.hasFocus);
+      if (!_inputFocus.hasFocus) {
+        _quickMenuOpen = false;
+      }
     });
   }
 
@@ -148,6 +151,39 @@ class _ChatScreenState extends State<ChatScreen> {
     }
     final locale = Localizations.localeOf(context).toString();
     await app.sendChatMessage(text, locale, t);
+  }
+
+  Future<void> _showQuickMenu(AppState app, AppLocalizations t) async {
+    if (_quickMenuOpen || _quickPrompts.isEmpty) return;
+    final box = _inputKey.currentContext?.findRenderObject() as RenderBox?;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (box == null || overlay == null) return;
+    _quickMenuOpen = true;
+    final position = box.localToGlobal(Offset.zero, ancestor: overlay);
+    final rect = RelativeRect.fromRect(
+      Rect.fromLTWH(position.dx, position.dy, box.size.width, box.size.height),
+      Offset.zero & overlay.size,
+    );
+    final items = _quickPrompts
+        .map(
+          (text) => PopupMenuItem<String>(
+            value: text,
+            child: Text(text, style: const TextStyle(fontSize: 13)),
+          ),
+        )
+        .toList();
+    final selected = await showMenu<String>(
+      context: context,
+      position: rect,
+      items: items,
+      elevation: 8,
+    );
+    _quickMenuOpen = false;
+    if (!mounted || selected == null) return;
+    _controller.text = selected;
+    _controller.selection = TextSelection.collapsed(
+      offset: _controller.text.length,
+    );
   }
 
   String _assistantName(AppState app, AppLocalizations t) {
@@ -310,11 +346,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   children: [
                     Expanded(
                       child: TextField(
+                        key: _inputKey,
                         controller: _controller,
                         focusNode: _inputFocus,
                         minLines: 1,
                         maxLines: 4,
                         textInputAction: TextInputAction.send,
+                        onTap: () => _showQuickMenu(app, t),
                         onSubmitted: (_) => _sendMessage(app, t),
                         decoration: InputDecoration(
                           hintText: t.chatInputHint,
@@ -351,20 +389,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ],
                 ),
-                if (_showQuickPrompts && _quickPrompts.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 10,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
+              ],
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
