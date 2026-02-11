@@ -71,11 +71,25 @@ class _ChatScreenState extends State<ChatScreen> {
         'I want to eat cleaner next week—guidance?',
         'Give me one sentence for next week’s direction.',
       ];
+      final activity = [
+        'Based on today, what exercise should I do and how long?',
+        'Suggest a workout for today based on my profile.',
+        'How much exercise is appropriate for me today?',
+        'Pick an activity and duration for today.',
+      ];
+      final whatToEat = [
+        'What can I eat today given my current status?',
+        'Suggest what I should eat next today.',
+        'Any food ideas for today based on what I ate?',
+        'What should I eat now to stay on track?',
+      ];
       return [
         today[rand.nextInt(today.length)],
         tomorrow[rand.nextInt(tomorrow.length)],
         week[rand.nextInt(week.length)],
         nextWeek[rand.nextInt(nextWeek.length)],
+        activity[rand.nextInt(activity.length)],
+        whatToEat[rand.nextInt(whatToEat.length)],
       ];
     }
     final today = [
@@ -102,11 +116,25 @@ class _ChatScreenState extends State<ChatScreen> {
       '下週想更健康一點，怎麼吃？',
       '下週方向給我一句話就好',
     ];
+    final activity = [
+      '根據今天狀況，建議我做什麼運動？多久？',
+      '依我的設定，今天適合做哪種運動與時長？',
+      '今天活動量建議給我一個方向',
+      '今天要運動多久比較好？',
+    ];
+    final whatToEat = [
+      '依照今天狀況，建議我現在吃什麼？',
+      '我今天可以吃什麼？給我選項',
+      '下一餐吃什麼比較適合？',
+      '今天還能吃什麼才不超標？',
+    ];
     return [
       today[rand.nextInt(today.length)],
       tomorrow[rand.nextInt(tomorrow.length)],
       week[rand.nextInt(week.length)],
       nextWeek[rand.nextInt(nextWeek.length)],
+      activity[rand.nextInt(activity.length)],
+      whatToEat[rand.nextInt(whatToEat.length)],
     ];
   }
 
