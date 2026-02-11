@@ -390,32 +390,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   ],
                 ),
               ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: _quickPrompts.map((text) {
-                          return InkWell(
-                            onTap: app.chatSending
-                                ? null
-                                : () {
-                                    _controller.text = text;
-                                    _controller.selection = TextSelection.collapsed(
-                                      offset: _controller.text.length,
-                                    );
-                                  },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: Text(text, style: const TextStyle(fontSize: 13)),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-              ],
             ),
           ),
         ),
