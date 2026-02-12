@@ -225,7 +225,7 @@ class DailyOverviewCards extends StatelessWidget {
             ? t.suggestRemainingOver((-remaining!).round())
             : t.suggestRemainingLeft(remaining!.round());
     const gaugeSize = 156.0;
-    const innerSize = 91.2;
+    const innerSize = 73.0;
     return _infoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,28 +296,7 @@ class DailyOverviewCards extends StatelessWidget {
                   ),
                 ],
               ),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        t.dayCardMealsLabel,
-                        style: AppTextStyles.caption(context)
-                            .copyWith(color: Colors.black54),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        app.dayMealLabels(date, t),
-                        style: AppTextStyles.caption(context)
-                            .copyWith(fontWeight: FontWeight.w600),
-                        textAlign: TextAlign.right,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              const Expanded(child: SizedBox()),
             ],
           ),
         ],
@@ -354,6 +333,7 @@ class _CalorieGaugePainter extends CustomPainter {
   static const double _strokeWidth = 24;
   static const Color _startGrey = Color(0xFFC8D0CD);
   static const Color _midOrange = Color(0xFFFFB067);
+  static const Color _pointerBlue = Color(0xFF4A8DFF);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -370,27 +350,35 @@ class _CalorieGaugePainter extends CustomPainter {
 
     if (max != null && max! > 0) {
       final cap = max! * 1.5;
-      _drawGradientArc(canvas, rect, _startAngle, _sweepAngle, primary);
+      _drawGradientArc(
+        canvas,
+        rect,
+        _startAngle,
+        _sweepAngle,
+        primary,
+        minValue: min!.toDouble(),
+        maxValue: max!.toDouble(),
+        cap: cap,
+      );
+
+      _drawTick(
+        canvas,
+        center,
+        radius,
+        min!.toDouble() / cap,
+        label: min.toString(),
+      );
+      _drawTick(
+        canvas,
+        center,
+        radius,
+        max!.toDouble() / cap,
+        label: max.toString(),
+      );
 
       final value = consumed.clamp(0.0, cap);
       final t = (value / cap).clamp(0.0, 1.0);
-      final angle = _startAngle + _sweepAngle * t;
-      final end = Offset(
-        center.dx + math.cos(angle) * radius,
-        center.dy + math.sin(angle) * radius,
-      );
-      final pointerPaint = Paint()
-        ..color = Colors.black54
-        ..strokeWidth = 2.5
-        ..strokeCap = StrokeCap.round;
-      canvas.drawLine(center, end, pointerPaint);
-      final knobPaint = Paint()..color = Colors.white;
-      canvas.drawCircle(end, 4, knobPaint);
-      final knobBorder = Paint()
-        ..color = Colors.black26
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1;
-      canvas.drawCircle(end, 4, knobBorder);
+      _drawPointerTriangle(canvas, center, radius, t);
     }
   }
 
@@ -399,7 +387,11 @@ class _CalorieGaugePainter extends CustomPainter {
     Rect rect,
     double start,
     double sweep,
-    Color green,
+    Color green, {
+    required double minValue,
+    required double maxValue,
+    required double cap,
+  }
   ) {
     if (sweep == 0) return;
     const segments = 60;
@@ -410,19 +402,107 @@ class _CalorieGaugePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     for (var i = 0; i < segments; i++) {
       final t = (i + 0.5) / segments;
-      paint.color = _colorAt(t, green);
+      paint.color = _colorAt(t, green, minValue, maxValue, cap);
       canvas.drawArc(rect, start + segSweep * i, segSweep, false, paint);
     }
   }
 
-  Color _colorAt(double t, Color green) {
-    if (t <= 0.45) {
-      return Color.lerp(_startGrey, green, t / 0.45)!;
+  Color _colorAt(
+    double t,
+    Color green,
+    double minValue,
+    double maxValue,
+    double cap,
+  ) {
+    final minT = (minValue / cap).clamp(0.0, 1.0);
+    final maxT = (maxValue / cap).clamp(0.0, 1.0);
+    if (t <= minT) {
+      return _startGrey;
     }
-    if (t <= 0.75) {
-      return Color.lerp(green, _midOrange, (t - 0.45) / 0.30)!;
+    if (t <= maxT) {
+      final local = (t - minT) / (maxT - minT == 0 ? 1 : (maxT - minT));
+      return Color.lerp(_startGrey, green, local)!;
     }
-    return Color.lerp(_midOrange, Colors.redAccent, (t - 0.75) / 0.25)!;
+    final local = (t - maxT) / (1.0 - maxT == 0 ? 1 : (1.0 - maxT));
+    return Color.lerp(_midOrange, Colors.redAccent, local)!;
+  }
+
+  void _drawTick(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    double t, {
+    required String label,
+  }) {
+    final angle = _startAngle + _sweepAngle * t;
+    final outer = Offset(
+      center.dx + math.cos(angle) * radius,
+      center.dy + math.sin(angle) * radius,
+    );
+    final inner = Offset(
+      center.dx + math.cos(angle) * (radius - 10),
+      center.dy + math.sin(angle) * (radius - 10),
+    );
+    final paint = Paint()
+      ..color = Colors.black26
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(inner, outer, paint);
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: const TextStyle(
+          color: Colors.black54,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final offset = Offset(
+      outer.dx - textPainter.width / 2,
+      outer.dy - textPainter.height / 2,
+    );
+    textPainter.paint(canvas, offset);
+  }
+
+  void _drawPointerTriangle(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    double t,
+  ) {
+    final angle = _startAngle + _sweepAngle * t;
+    final tip = Offset(
+      center.dx + math.cos(angle) * radius,
+      center.dy + math.sin(angle) * radius,
+    );
+    final baseRadius = radius - 12;
+    final baseAngleLeft = angle + 0.12;
+    final baseAngleRight = angle - 0.12;
+    final left = Offset(
+      center.dx + math.cos(baseAngleLeft) * baseRadius,
+      center.dy + math.sin(baseAngleLeft) * baseRadius,
+    );
+    final right = Offset(
+      center.dx + math.cos(baseAngleRight) * baseRadius,
+      center.dy + math.sin(baseAngleRight) * baseRadius,
+    );
+    final path = Path()
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(left.dx, left.dy)
+      ..lineTo(right.dx, right.dy)
+      ..close();
+    final border = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    final fill = Paint()
+      ..color = _pointerBlue
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fill);
+    canvas.drawPath(path, border);
   }
 
   @override
