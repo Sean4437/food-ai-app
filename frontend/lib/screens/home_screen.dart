@@ -525,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: SizedBox(
-                        height: 210,
+                        height: 190,
                         child: DailyOverviewCards(
                           date: activeDate,
                           app: app,
