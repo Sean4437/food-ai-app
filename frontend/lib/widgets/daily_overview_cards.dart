@@ -93,93 +93,94 @@ class DailyOverviewCards extends StatelessWidget {
     final shortExercise = exerciseLabel.length > 3
         ? exerciseLabel.substring(0, 3)
         : exerciseLabel;
+    const menuWidth = 150.0;
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: onSelectActivityLevel,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.black12),
+        SizedBox(
+          width: menuWidth,
+          child: InkWell(
+            onTap: onSelectActivityLevel,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    app.activityLabel(current, t),
+                    style: AppTextStyles.caption(context)
+                        .copyWith(fontWeight: FontWeight.w600),
                   ),
-                  child: Row(
-                    children: [
-                      Text(
-                        app.activityLabel(current, t),
-                        style: AppTextStyles.caption(context)
-                            .copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      const Spacer(),
-                      const Icon(Icons.chevron_right,
-                          color: Colors.black45, size: 18),
-                    ],
-                  ),
-                ),
+                  const Spacer(),
+                  const Icon(Icons.chevron_right,
+                      color: Colors.black45, size: 18),
+                ],
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: InkWell(
-                onTap: onSelectExerciseType,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.black12),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        shortExercise,
-                        style: AppTextStyles.caption(context).copyWith(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const Spacer(),
-                      const Icon(Icons.chevron_right,
-                          color: Colors.black45, size: 18),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-        const SizedBox(height: 10),
-        InkWell(
-          onTap: onSelectExerciseMinutes,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.black12),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: menuWidth,
+          child: InkWell(
+            onTap: onSelectExerciseType,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    shortExercise,
+                    style: AppTextStyles.caption(context).copyWith(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  const Icon(Icons.chevron_right,
+                      color: Colors.black45, size: 18),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                Text(
-                  t.exerciseMinutesLabel,
-                  style: AppTextStyles.caption(context)
-                      .copyWith(fontWeight: FontWeight.w600),
-                ),
-                const Spacer(),
-                Text(
-                  '$exerciseMinutes ${t.exerciseMinutesUnit}',
-                  style: AppTextStyles.caption(context)
-                      .copyWith(fontWeight: FontWeight.w600),
-                ),
-                const Icon(Icons.chevron_right,
-                    color: Colors.black45, size: 18),
-              ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: menuWidth,
+          child: InkWell(
+            onTap: onSelectExerciseMinutes,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    t.exerciseMinutesLabel,
+                    style: AppTextStyles.caption(context)
+                        .copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '$exerciseMinutes ${t.exerciseMinutesUnit}',
+                    style: AppTextStyles.caption(context)
+                        .copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const Icon(Icons.chevron_right,
+                      color: Colors.black45, size: 18),
+                ],
+              ),
             ),
           ),
         ),
