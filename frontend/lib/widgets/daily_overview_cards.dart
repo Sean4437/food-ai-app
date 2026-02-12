@@ -40,6 +40,7 @@ class DailyOverviewCards extends StatelessWidget {
     required int? min,
     required int? max,
     required Color primary,
+    required double innerRadius,
     double size = 120,
   }) {
     return SizedBox(
@@ -51,6 +52,7 @@ class DailyOverviewCards extends StatelessWidget {
           min: min,
           max: max,
           primary: primary,
+          innerRadius: innerRadius,
         ),
       ),
     );
@@ -226,6 +228,7 @@ class DailyOverviewCards extends StatelessWidget {
             : t.suggestRemainingLeft(remaining!.round());
     const gaugeSize = 156.0;
     const innerSize = 73.0;
+    const innerRadius = innerSize / 2;
     return _infoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,62 +242,66 @@ class DailyOverviewCards extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Expanded(child: SizedBox()),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Transform.translate(
-                    offset: const Offset(0, -8),
-                    child: SizedBox(
-                      width: gaugeSize,
-                      height: gaugeSize,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          _calorieGauge(
-                            consumed: consumed,
-                            min: targetMin,
-                            max: targetMax,
-                            primary: theme.colorScheme.primary,
-                            size: gaugeSize,
-                          ),
-                          Container(
-                            width: innerSize,
-                            height: innerSize,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.12),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
+              Transform.translate(
+                offset: const Offset(20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Transform.translate(
+                      offset: const Offset(0, -8),
+                      child: SizedBox(
+                        width: gaugeSize,
+                        height: gaugeSize,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            _calorieGauge(
+                              consumed: consumed,
+                              min: targetMin,
+                              max: targetMax,
+                              primary: theme.colorScheme.primary,
+                              innerRadius: innerRadius,
+                              size: gaugeSize,
                             ),
-                            child: Text(
-                              consumed.round().toString(),
-                              style: AppTextStyles.title1(context).copyWith(
-                                fontWeight: FontWeight.w800,
+                            Container(
+                              width: innerSize,
+                              height: innerSize,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.12),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                consumed.round().toString(),
+                                style: AppTextStyles.title1(context).copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Transform.translate(
-                    offset: const Offset(0, -32),
-                    child: Text(
-                      remainingText,
-                      style: AppTextStyles.caption(context).copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: isOver ? Colors.redAccent : Colors.black54,
+                    Transform.translate(
+                      offset: const Offset(0, -32),
+                      child: Text(
+                        remainingText,
+                        style: AppTextStyles.caption(context).copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: isOver ? Colors.redAccent : Colors.black54,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const Expanded(child: SizedBox()),
             ],
@@ -321,12 +328,14 @@ class _CalorieGaugePainter extends CustomPainter {
     required this.min,
     required this.max,
     required this.primary,
+    required this.innerRadius,
   });
 
   final double consumed;
   final int? min;
   final int? max;
   final Color primary;
+  final double innerRadius;
 
   static const double _startAngle = math.pi * 11 / 12; // 165°
   static const double _sweepAngle = math.pi * 7 / 6; // 210°
@@ -349,36 +358,38 @@ class _CalorieGaugePainter extends CustomPainter {
     canvas.drawArc(rect, _startAngle, _sweepAngle, false, basePaint);
 
     if (max != null && max! > 0) {
-      final cap = max! * 1.5;
+      final cap = max! + 500;
+      final minValue = min!.toDouble();
+      final maxValue = max!.toDouble();
       _drawGradientArc(
         canvas,
         rect,
         _startAngle,
         _sweepAngle,
         primary,
-        minValue: min!.toDouble(),
-        maxValue: max!.toDouble(),
-        cap: cap,
+        minValue: minValue,
+        maxValue: maxValue,
+        cap: cap.toDouble(),
       );
 
       _drawTick(
         canvas,
         center,
         radius,
-        min!.toDouble() / cap,
+        minValue / cap,
         label: min.toString(),
       );
       _drawTick(
         canvas,
         center,
         radius,
-        max!.toDouble() / cap,
+        maxValue / cap,
         label: max.toString(),
       );
 
       final value = consumed.clamp(0.0, cap);
       final t = (value / cap).clamp(0.0, 1.0);
-      _drawPointerTriangle(canvas, center, radius, t);
+      _drawPointerTriangle(canvas, center, radius, t, innerRadius);
     }
   }
 
@@ -417,11 +428,11 @@ class _CalorieGaugePainter extends CustomPainter {
     final minT = (minValue / cap).clamp(0.0, 1.0);
     final maxT = (maxValue / cap).clamp(0.0, 1.0);
     if (t <= minT) {
-      return _startGrey;
+      final local = minT == 0 ? 1.0 : (t / minT);
+      return Color.lerp(_startGrey, green, local)!;
     }
     if (t <= maxT) {
-      final local = (t - minT) / (maxT - minT == 0 ? 1 : (maxT - minT));
-      return Color.lerp(_startGrey, green, local)!;
+      return green;
     }
     final local = (t - maxT) / (1.0 - maxT == 0 ? 1 : (1.0 - maxT));
     return Color.lerp(_midOrange, Colors.redAccent, local)!;
@@ -444,16 +455,22 @@ class _CalorieGaugePainter extends CustomPainter {
       center.dy + math.sin(angle) * (radius - 10),
     );
     final paint = Paint()
-      ..color = Colors.black26
+      ..color = primary
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(inner, outer, paint);
 
+    final lead = Offset(
+      center.dx + math.cos(angle) * (radius + 8),
+      center.dy + math.sin(angle) * (radius + 8),
+    );
+    canvas.drawLine(outer, lead, paint);
+
     final textPainter = TextPainter(
       text: TextSpan(
         text: label,
-        style: const TextStyle(
-          color: Colors.black54,
+        style: TextStyle(
+          color: primary,
           fontSize: 10,
           fontWeight: FontWeight.w600,
         ),
@@ -461,8 +478,8 @@ class _CalorieGaugePainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
     final offset = Offset(
-      outer.dx - textPainter.width / 2,
-      outer.dy - textPainter.height / 2,
+      lead.dx - textPainter.width / 2,
+      lead.dy - textPainter.height / 2,
     );
     textPainter.paint(canvas, offset);
   }
@@ -472,13 +489,14 @@ class _CalorieGaugePainter extends CustomPainter {
     Offset center,
     double radius,
     double t,
+    double innerRadius,
   ) {
     final angle = _startAngle + _sweepAngle * t;
     final tip = Offset(
       center.dx + math.cos(angle) * radius,
       center.dy + math.sin(angle) * radius,
     );
-    final baseRadius = radius - 12;
+    final baseRadius = innerRadius;
     final baseAngleLeft = angle + 0.12;
     final baseAngleRight = angle - 0.12;
     final left = Offset(
