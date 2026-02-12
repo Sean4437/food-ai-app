@@ -93,7 +93,7 @@ class DailyOverviewCards extends StatelessWidget {
     final shortExercise = exerciseLabel.length > 3
         ? exerciseLabel.substring(0, 3)
         : exerciseLabel;
-    const menuWidth = 150.0;
+    const menuWidth = 130.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -223,7 +223,7 @@ class DailyOverviewCards extends StatelessWidget {
             children: [
               const Expanded(child: SizedBox()),
               Transform.translate(
-                offset: const Offset(70, 0),
+                offset: const Offset(70, -12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
