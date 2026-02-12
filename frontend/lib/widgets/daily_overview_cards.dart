@@ -27,8 +27,6 @@ class DailyOverviewCards extends StatelessWidget {
   final VoidCallback onSelectExerciseType;
   final VoidCallback onSelectExerciseMinutes;
 
-  Widget activityCard(BuildContext context) => _activityCard(context);
-
   Widget calorieCard(BuildContext context) => _calorieCard(context);
 
   Widget _emojiIcon(String emoji, {double size = 16}) {
@@ -87,7 +85,7 @@ class DailyOverviewCards extends StatelessWidget {
     );
   }
 
-  Widget _activityCard(BuildContext context) {
+  Widget _activityControls(BuildContext context) {
     final current = app.dailyActivityLevel(date);
     final exerciseType = app.dailyExerciseType(date);
     final exerciseMinutes = app.dailyExerciseMinutes(date);
@@ -95,122 +93,100 @@ class DailyOverviewCards extends StatelessWidget {
     final shortExercise = exerciseLabel.length > 3
         ? exerciseLabel.substring(0, 3)
         : exerciseLabel;
-    return _infoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            t.activityCardTitle,
-            style: AppTextStyles.title2(context),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: onSelectActivityLevel,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        app.activityLabel(current, t),
+                        style: AppTextStyles.caption(context)
+                            .copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.chevron_right,
+                          color: Colors.black45, size: 18),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: InkWell(
+                onTap: onSelectExerciseType,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        shortExercise,
+                        style: AppTextStyles.caption(context).copyWith(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.chevron_right,
+                          color: Colors.black45, size: 18),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        InkWell(
+          onTap: onSelectExerciseMinutes,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.14),
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.black12),
             ),
-            child: Text(
-              app.targetCalorieRangeLabel(date, t),
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: onSelectActivityLevel,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          app.activityLabel(current, t),
-                          style: AppTextStyles.caption(context)
-                              .copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const Spacer(),
-                        const Icon(Icons.chevron_right,
-                            color: Colors.black45, size: 18),
-                      ],
-                    ),
-                  ),
+            child: Row(
+              children: [
+                Text(
+                  t.exerciseMinutesLabel,
+                  style: AppTextStyles.caption(context)
+                      .copyWith(fontWeight: FontWeight.w600),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: InkWell(
-                  onTap: onSelectExerciseType,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          shortExercise,
-                          style: AppTextStyles.caption(context).copyWith(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        const Icon(Icons.chevron_right,
-                            color: Colors.black45, size: 18),
-                      ],
-                    ),
-                  ),
+                const Spacer(),
+                Text(
+                  '$exerciseMinutes ${t.exerciseMinutesUnit}',
+                  style: AppTextStyles.caption(context)
+                      .copyWith(fontWeight: FontWeight.w600),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          InkWell(
-            onTap: onSelectExerciseMinutes,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.black12),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    t.exerciseMinutesLabel,
-                    style: AppTextStyles.caption(context)
-                        .copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '$exerciseMinutes ${t.exerciseMinutesUnit}',
-                    style: AppTextStyles.caption(context)
-                        .copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const Icon(Icons.chevron_right,
-                      color: Colors.black45, size: 18),
-                ],
-              ),
+                const Icon(Icons.chevron_right,
+                    color: Colors.black45, size: 18),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+
 
   Widget _calorieCard(BuildContext context) {
     final consumed = app.dailyConsumedCalorieMid(date);
@@ -238,13 +214,15 @@ class DailyOverviewCards extends StatelessWidget {
             t.dayCardCalorieLabel,
             style: AppTextStyles.title2(context),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
+          _activityControls(context),
+          const SizedBox(height: 6),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Expanded(child: SizedBox()),
               Transform.translate(
-                offset: const Offset(50, 0),
+                offset: const Offset(70, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -320,13 +298,7 @@ class DailyOverviewCards extends StatelessWidget {
   }
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: _activityCard(context)),
-        const SizedBox(width: 12),
-        Expanded(child: _calorieCard(context)),
-      ],
-    );
+    return _calorieCard(context);
   }
 }
 
@@ -466,7 +438,7 @@ class _CalorieGaugePainter extends CustomPainter {
       center.dy + math.sin(angle) * (radius - 12),
     );
     final paint = Paint()
-      ..color = primary
+      ..color = Colors.black87
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(inner, outer, paint);

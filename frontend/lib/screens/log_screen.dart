@@ -890,7 +890,6 @@ class _LogScreenState extends State<LogScreen> {
                       final pages = [
                         overview.calorieCard(context),
                         _buildHighlightCard(context, app, t),
-                        overview.activityCard(context),
                       ];
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
