@@ -225,7 +225,7 @@ class DailyOverviewCards extends StatelessWidget {
             ? t.suggestRemainingOver((-remaining!).round())
             : t.suggestRemainingLeft(remaining!.round());
     const gaugeSize = 156.0;
-    const innerSize = 76.0;
+    const innerSize = 91.2;
     return _infoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
