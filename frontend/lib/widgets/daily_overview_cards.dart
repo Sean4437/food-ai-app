@@ -351,7 +351,7 @@ class _CalorieGaugePainter extends CustomPainter {
 
   static const double _startAngle = math.pi * 11 / 12; // 165°
   static const double _sweepAngle = math.pi * 7 / 6; // 210°
-  static const double _strokeWidth = 12;
+  static const double _strokeWidth = 24;
   static const Color _startGrey = Color(0xFFC8D0CD);
   static const Color _midOrange = Color(0xFFFFB067);
 
