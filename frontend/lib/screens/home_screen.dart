@@ -524,18 +524,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: DailyOverviewCards(
-                        date: activeDate,
-                        app: app,
-                        t: t,
-                        appTheme: appTheme,
-                        theme: theme,
-                        onSelectActivityLevel: () =>
-                            _selectActivityLevel(context, app, activeDate, t),
-                        onSelectExerciseType: () =>
-                            _selectExerciseType(context, app, activeDate, t),
-                        onSelectExerciseMinutes: () =>
-                            _selectExerciseMinutes(context, app, activeDate, t),
+                      child: SizedBox(
+                        height: 210,
+                        child: DailyOverviewCards(
+                          date: activeDate,
+                          app: app,
+                          t: t,
+                          appTheme: appTheme,
+                          theme: theme,
+                          onSelectActivityLevel: () =>
+                              _selectActivityLevel(context, app, activeDate, t),
+                          onSelectExerciseType: () =>
+                              _selectExerciseType(context, app, activeDate, t),
+                          onSelectExerciseMinutes: () =>
+                              _selectExerciseMinutes(context, app, activeDate, t),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
