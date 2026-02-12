@@ -283,14 +283,16 @@ class DailyOverviewCards extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    remainingText,
-                    style: AppTextStyles.caption(context).copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: isOver ? Colors.redAccent : Colors.black54,
+                  Transform.translate(
+                    offset: const Offset(0, -6),
+                    child: Text(
+                      remainingText,
+                      style: AppTextStyles.caption(context).copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: isOver ? Colors.redAccent : Colors.black54,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
