@@ -224,7 +224,7 @@ class DailyOverviewCards extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 20),
+                    padding: const EdgeInsets.only(left: 10),
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -347,6 +347,16 @@ class _CalorieGaugePainter extends CustomPainter {
       final cap = max! + 500;
       final minValue = min!.toDouble();
       final maxValue = max!.toDouble();
+      _drawGradientArcGlow(
+        canvas,
+        rect,
+        _startAngle,
+        _sweepAngle,
+        primary,
+        minValue: minValue,
+        maxValue: maxValue,
+        cap: cap.toDouble(),
+      );
       _drawGradientArc(
         canvas,
         rect,
@@ -404,6 +414,37 @@ class _CalorieGaugePainter extends CustomPainter {
     }
   }
 
+  void _drawGradientArcGlow(
+    Canvas canvas,
+    Rect rect,
+    double start,
+    double sweep,
+    Color green, {
+    required double minValue,
+    required double maxValue,
+    required double cap,
+  }
+  ) {
+    if (sweep == 0) return;
+    const segments = 60;
+    final segSweep = sweep / segments;
+    final glowRect = Rect.fromCircle(
+      center: rect.center,
+      radius: rect.width / 2 + 4,
+    );
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth + 10
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    for (var i = 0; i < segments; i++) {
+      final t = (i + 0.5) / segments;
+      paint.color =
+          _colorAt(t, green, minValue, maxValue, cap).withOpacity(0.35);
+      canvas.drawArc(glowRect, start + segSweep * i, segSweep, false, paint);
+    }
+  }
+
   Color _colorAt(
     double t,
     Color green,
@@ -450,8 +491,8 @@ class _CalorieGaugePainter extends CustomPainter {
     canvas.drawLine(inner, outer, paint);
 
     final lead = Offset(
-      center.dx + math.cos(angle) * (radius + 16),
-      center.dy + math.sin(angle) * (radius + 16),
+      center.dx + math.cos(angle) * (radius + 21),
+      center.dy + math.sin(angle) * (radius + 21),
     );
     canvas.drawLine(outer, lead, paint);
 
