@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../design/app_theme.dart';
@@ -34,14 +35,35 @@ class DailyOverviewCards extends StatelessWidget {
     return Text(emoji, style: TextStyle(fontSize: size, height: 1));
   }
 
-  Widget _pieChart(double progress, Color color, {double size = 72}) {
+  Widget _calorieGauge({
+    required double consumed,
+    required int? min,
+    required int? max,
+    required Color primary,
+    double size = 120,
+  }) {
     return SizedBox(
       width: size,
       height: size,
       child: CustomPaint(
-        painter: _PieChartPainter(progress: progress, color: color),
+        painter: _CalorieGaugePainter(
+          consumed: consumed,
+          min: min,
+          max: max,
+          primary: primary,
+        ),
       ),
     );
+  }
+
+  List<int>? _parseRange(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    final match = RegExp(r'(\d+)\s*-\s*(\d+)').firstMatch(value);
+    if (match == null) return null;
+    final minVal = int.tryParse(match.group(1) ?? '');
+    final maxVal = int.tryParse(match.group(2) ?? '');
+    if (minVal == null || maxVal == null) return null;
+    return [minVal, maxVal];
   }
 
   Widget _infoCard({required Widget child}) {
@@ -190,15 +212,18 @@ class DailyOverviewCards extends StatelessWidget {
 
   Widget _calorieCard(BuildContext context) {
     final consumed = app.dailyConsumedCalorieMid(date);
-    final targetMid = app.targetCalorieMid(date);
-    final hasTarget = targetMid != null && targetMid > 0;
-    final progress = hasTarget ? (consumed / targetMid!) : 0.0;
-    final delta = app.dailyCalorieDeltaValue(date);
-    final isSurplus = delta != null && delta > 0;
-    final ringColor = theme.colorScheme.primary;
-    final centerText = hasTarget
-        ? '${consumed.round()}/${targetMid.round()}'
-        : '---';
+    final targetRange = _parseRange(app.targetCalorieRangeValue(date));
+    final targetMin = targetRange != null ? targetRange[0] : null;
+    final targetMax = targetRange != null ? targetRange[1] : null;
+    final hasTarget =
+        targetMin != null && targetMax != null && targetMax > 0;
+    final remaining = hasTarget ? (targetMax! - consumed) : null;
+    final isOver = remaining != null && remaining < 0;
+    final remainingText = !hasTarget
+        ? '---'
+        : isOver
+            ? t.suggestRemainingOver((-remaining!).round())
+            : t.suggestRemainingLeft(remaining!.round());
     return _infoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,84 +232,72 @@ class DailyOverviewCards extends StatelessWidget {
             t.dayCardCalorieLabel,
             style: AppTextStyles.title2(context),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Expanded(child: Container()),
+              SizedBox(
+                width: 120,
+                height: 120,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.14),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        app.dailyCalorieRangeLabelForDate(date, t),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
+                    _calorieGauge(
+                      consumed: consumed,
+                      min: targetMin,
+                      max: targetMax,
+                      primary: theme.colorScheme.primary,
+                      size: 120,
                     ),
-                    const SizedBox(height: 8),
-                    Builder(builder: (context) {
-                      final pillColor = isSurplus
-                          ? Colors.redAccent
-                          : theme.colorScheme.primary;
-                      final icon = isSurplus ? '??' : '??';
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: pillColor.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(16),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          consumed.round().toString(),
+                          style: AppTextStyles.title1(context).copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _emojiIcon(icon, size: 16),
-                            const SizedBox(width: 6),
-                            Text(
-                              app.dailyCalorieDeltaLabel(date, t),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: pillColor,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'kcal',
+                          style: AppTextStyles.caption(context)
+                              .copyWith(color: Colors.black54),
                         ),
-                      );
-                    }),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${t.dayCardMealsLabel} ${app.dayMealLabels(date, t)}',
-                      style: AppTextStyles.caption(context)
-                          .copyWith(color: Colors.black54),
+                        const SizedBox(height: 4),
+                        Text(
+                          remainingText,
+                          style: AppTextStyles.caption(context).copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: isOver ? Colors.redAccent : Colors.black54,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 72,
-                height: 72,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    _pieChart(progress, ringColor, size: 72),
-                    Text(
-                      centerText,
-                      style: AppTextStyles.caption(context).copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: ringColor,
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        t.dayCardMealsLabel,
+                        style: AppTextStyles.caption(context)
+                            .copyWith(color: Colors.black54),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        app.dayMealLabels(date, t),
+                        style: AppTextStyles.caption(context)
+                            .copyWith(fontWeight: FontWeight.w600),
+                        textAlign: TextAlign.right,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -306,51 +319,114 @@ class DailyOverviewCards extends StatelessWidget {
   }
 }
 
-class _PieChartPainter extends CustomPainter {
-  _PieChartPainter({required this.progress, required this.color});
+class _CalorieGaugePainter extends CustomPainter {
+  _CalorieGaugePainter({
+    required this.consumed,
+    required this.min,
+    required this.max,
+    required this.primary,
+  });
 
-  final double progress;
-  final Color color;
+  final double consumed;
+  final int? min;
+  final int? max;
+  final Color primary;
+
+  static const double _startAngle = math.pi * 7 / 6; // 210°
+  static const double _sweepAngle = math.pi * 4 / 3; // 240°
+  static const double _strokeWidth = 12;
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-    const startAngle = -3.141592653589793 / 2;
-    final basePaint = Paint()
-      ..color = const Color(0xFFE6ECE9)
-      ..style = PaintingStyle.fill;
-    final slicePaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, radius, basePaint);
-    final clamped = progress.clamp(0.0, 1.0);
-    final sweep = clamped * 2 * 3.141592653589793;
+    final radius = size.width / 2 - _strokeWidth / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
-    if (sweep > 0) {
-      canvas.drawArc(rect, startAngle, sweep, true, slicePaint);
-    }
 
-    if (progress > 1.0) {
-      final overflow = (progress - 1.0).clamp(0.0, 1.0);
-      final overflowSweep = overflow * 2 * 3.141592653589793;
-      if (overflowSweep > 0) {
-        final ringPaint = Paint()
-          ..color = Colors.redAccent
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 8
-          ..strokeCap = StrokeCap.round;
-        final ringRect = Rect.fromCircle(
-          center: center,
-          radius: radius - 4,
+    final basePaint = Paint()
+      ..color = const Color(0xFFE1E6E4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect, _startAngle, _sweepAngle, false, basePaint);
+
+    if (max != null && max! > 0) {
+      final cap = max! * 1.5;
+      final minValue = (min ?? max!).clamp(0, cap).toDouble();
+      final maxValue = max!.toDouble();
+      final minT = (minValue / cap).clamp(0.0, 1.0);
+      final maxT = (maxValue / cap).clamp(0.0, 1.0);
+
+      if (maxT > minT) {
+        _drawGradientArc(
+          canvas,
+          rect,
+          _startAngle + _sweepAngle * minT,
+          _sweepAngle * (maxT - minT),
+          const Color(0xFF7ADDB0),
+          primary,
         );
-        canvas.drawArc(ringRect, startAngle, overflowSweep, false, ringPaint);
       }
+
+      if (maxT < 1.0) {
+        _drawGradientArc(
+          canvas,
+          rect,
+          _startAngle + _sweepAngle * maxT,
+          _sweepAngle * (1.0 - maxT),
+          const Color(0xFFFFB067),
+          Colors.redAccent,
+        );
+      }
+
+      final value = consumed.clamp(0.0, cap);
+      final t = (value / cap).clamp(0.0, 1.0);
+      final angle = _startAngle + _sweepAngle * t;
+      final end = Offset(
+        center.dx + math.cos(angle) * radius,
+        center.dy + math.sin(angle) * radius,
+      );
+      final pointerPaint = Paint()
+        ..color = Colors.black54
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(center, end, pointerPaint);
+      final knobPaint = Paint()..color = Colors.white;
+      canvas.drawCircle(end, 4, knobPaint);
+      final knobBorder = Paint()
+        ..color = Colors.black26
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1;
+      canvas.drawCircle(end, 4, knobBorder);
+    }
+  }
+
+  void _drawGradientArc(
+    Canvas canvas,
+    Rect rect,
+    double start,
+    double sweep,
+    Color from,
+    Color to,
+  ) {
+    if (sweep <= 0) return;
+    const segments = 40;
+    final segSweep = sweep / segments;
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < segments; i++) {
+      final t = (i + 0.5) / segments;
+      paint.color = Color.lerp(from, to, t)!;
+      canvas.drawArc(rect, start + segSweep * i, segSweep, false, paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _PieChartPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.color != color;
+  bool shouldRepaint(covariant _CalorieGaugePainter oldDelegate) {
+    return oldDelegate.consumed != consumed ||
+        oldDelegate.min != min ||
+        oldDelegate.max != max ||
+        oldDelegate.primary != primary;
   }
 }
