@@ -223,7 +223,7 @@ class DailyOverviewCards extends StatelessWidget {
             children: [
               const Expanded(child: SizedBox()),
               Transform.translate(
-                offset: const Offset(70, -12),
+                offset: const Offset(70, -100),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
