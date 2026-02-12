@@ -229,6 +229,7 @@ class DailyOverviewCards extends StatelessWidget {
     const gaugeSize = 156.0;
     const innerSize = 73.0;
     const innerRadius = innerSize / 2;
+    final gaugeKey = ValueKey('gauge-${date.toIso8601String()}');
     return _infoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,50 +244,57 @@ class DailyOverviewCards extends StatelessWidget {
             children: [
               const Expanded(child: SizedBox()),
               Transform.translate(
-                offset: const Offset(20, 0),
+                offset: const Offset(50, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Transform.translate(
                       offset: const Offset(0, -8),
-                      child: SizedBox(
-                        width: gaugeSize,
-                        height: gaugeSize,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            _calorieGauge(
-                              consumed: consumed,
-                              min: targetMin,
-                              max: targetMax,
-                              primary: theme.colorScheme.primary,
-                              innerRadius: innerRadius,
-                              size: gaugeSize,
-                            ),
-                            Container(
-                              width: innerSize,
-                              height: innerSize,
+                      child: TweenAnimationBuilder<double>(
+                        key: gaugeKey,
+                        tween: Tween(begin: 0, end: consumed),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, animatedConsumed, child) {
+                          return SizedBox(
+                            width: gaugeSize,
+                            height: gaugeSize,
+                            child: Stack(
                               alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.12),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ],
-                              ),
-                              child: Text(
-                                consumed.round().toString(),
-                                style: AppTextStyles.title1(context).copyWith(
-                                  fontWeight: FontWeight.w800,
+                              children: [
+                                _calorieGauge(
+                                  consumed: animatedConsumed,
+                                  min: targetMin,
+                                  max: targetMax,
+                                  primary: theme.colorScheme.primary,
+                                  innerRadius: innerRadius,
+                                  size: gaugeSize,
                                 ),
-                              ),
+                                Container(
+                                  width: innerSize,
+                                  height: innerSize,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.12),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    animatedConsumed.round().toString(),
+                                    style: AppTextStyles.title1(context)
+                                        .copyWith(fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                     ),
                     Transform.translate(
@@ -435,7 +443,10 @@ class _CalorieGaugePainter extends CustomPainter {
       return green;
     }
     final local = (t - maxT) / (1.0 - maxT == 0 ? 1 : (1.0 - maxT));
-    return Color.lerp(_midOrange, Colors.redAccent, local)!;
+    if (local <= 0.2) {
+      return Color.lerp(green, _midOrange, local / 0.2)!;
+    }
+    return Color.lerp(_midOrange, Colors.redAccent, (local - 0.2) / 0.8)!;
   }
 
   void _drawTick(
@@ -451,8 +462,8 @@ class _CalorieGaugePainter extends CustomPainter {
       center.dy + math.sin(angle) * radius,
     );
     final inner = Offset(
-      center.dx + math.cos(angle) * (radius - 10),
-      center.dy + math.sin(angle) * (radius - 10),
+      center.dx + math.cos(angle) * (radius - 12),
+      center.dy + math.sin(angle) * (radius - 12),
     );
     final paint = Paint()
       ..color = primary
@@ -461,16 +472,16 @@ class _CalorieGaugePainter extends CustomPainter {
     canvas.drawLine(inner, outer, paint);
 
     final lead = Offset(
-      center.dx + math.cos(angle) * (radius + 8),
-      center.dy + math.sin(angle) * (radius + 8),
+      center.dx + math.cos(angle) * (radius + 16),
+      center.dy + math.sin(angle) * (radius + 16),
     );
     canvas.drawLine(outer, lead, paint);
 
     final textPainter = TextPainter(
       text: TextSpan(
         text: label,
-        style: TextStyle(
-          color: primary,
+        style: const TextStyle(
+          color: Colors.black87,
           fontSize: 10,
           fontWeight: FontWeight.w600,
         ),
