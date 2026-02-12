@@ -224,7 +224,7 @@ class DailyOverviewCards extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(left: 30),
+                    padding: const EdgeInsets.only(left: 20),
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -276,7 +276,7 @@ class DailyOverviewCards extends StatelessWidget {
                               );
                             },
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 0),
                           Text(
                             remainingText,
                             style: AppTextStyles.caption(context).copyWith(
