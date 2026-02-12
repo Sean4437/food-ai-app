@@ -284,7 +284,7 @@ class DailyOverviewCards extends StatelessWidget {
                     ),
                   ),
                   Transform.translate(
-                    offset: const Offset(0, -18),
+                    offset: const Offset(0, -26),
                     child: Text(
                       remainingText,
                       style: AppTextStyles.caption(context).copyWith(
