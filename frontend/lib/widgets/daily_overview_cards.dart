@@ -424,7 +424,9 @@ class DailyOverviewCards extends StatelessWidget {
           Positioned.fill(
             top: titleHeight + titleGap,
             child: Center(
-              child: TweenAnimationBuilder<double>(
+              child: Transform.translate(
+                offset: const Offset(0, -10),
+                child: TweenAnimationBuilder<double>(
                 key: gaugeKey,
                 tween: Tween(begin: 0, end: consumed),
                 duration: const Duration(milliseconds: 500),
@@ -475,7 +477,7 @@ class DailyOverviewCards extends StatelessWidget {
                           ),
                         ),
                         Positioned(
-                          top: gaugeSize / 2 + innerRadius + 6,
+                          top: gaugeSize / 2 + innerRadius - 4,
                           child: Text(
                             remainingText,
                             style: AppTextStyles.caption(context).copyWith(
@@ -496,6 +498,7 @@ class DailyOverviewCards extends StatelessWidget {
                     ),
                   );
                 },
+                ),
               ),
             ),
           ),
