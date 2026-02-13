@@ -209,6 +209,7 @@ class DailyOverviewCards extends StatelessWidget {
     final gaugeKey = ValueKey('gauge-${date.toIso8601String()}');
     return _infoCard(
       child: Stack(
+        fit: StackFit.expand,
         children: [
           Positioned(
             top: 0,
