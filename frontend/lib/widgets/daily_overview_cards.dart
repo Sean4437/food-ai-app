@@ -5,6 +5,46 @@ import '../design/app_theme.dart';
 import '../design/text_styles.dart';
 import '../state/app_state.dart';
 
+const _gaugeStartGrey = Color(0xFFC8D0CD);
+const _gaugeMidOrange = Color(0xFFFFB067);
+
+Color _gaugeColorAt(
+  double t,
+  Color green,
+  double minValue,
+  double maxValue,
+  double cap,
+) {
+  final minT = (minValue / cap).clamp(0.0, 1.0);
+  final maxT = (maxValue / cap).clamp(0.0, 1.0);
+  if (t <= minT) {
+    final local = minT == 0 ? 1.0 : (t / minT);
+    return Color.lerp(_gaugeStartGrey, green, local)!;
+  }
+  if (t <= maxT) {
+    return green;
+  }
+  final local = (t - maxT) / (1.0 - maxT == 0 ? 1 : (1.0 - maxT));
+  if (local <= 0.2) {
+    return Color.lerp(green, _gaugeMidOrange, local / 0.2)!;
+  }
+  return Color.lerp(_gaugeMidOrange, Colors.redAccent, (local - 0.2) / 0.8)!;
+}
+
+Color _gaugeColorForValue(
+  double value,
+  int? min,
+  int? max,
+  Color green,
+) {
+  if (max == null || max <= 0) return Colors.black54;
+  final cap = (max + 500).toDouble();
+  final minValue = (min ?? 0).toDouble();
+  final maxValue = max.toDouble();
+  final t = (value.clamp(0.0, cap)) / cap;
+  return _gaugeColorAt(t, green, minValue, maxValue, cap);
+}
+
 class DailyOverviewCards extends StatelessWidget {
   const DailyOverviewCards({
     super.key,
@@ -251,12 +291,18 @@ class DailyOverviewCards extends StatelessWidget {
                             key: gaugeKey,
                             tween: Tween(begin: 0, end: consumed),
                             duration: const Duration(milliseconds: 500),
-                            curve: Curves.easeOutCubic,
-                            builder: (context, animatedConsumed, child) {
-                              return Transform.translate(
-                                offset: const Offset(20, 0),
-                                child: SizedBox(
-                                  width: gaugeSize,
+                          curve: Curves.easeOutCubic,
+                          builder: (context, animatedConsumed, child) {
+                            final gaugeColor = _gaugeColorForValue(
+                              animatedConsumed,
+                              targetMin,
+                              targetMax,
+                              theme.colorScheme.primary,
+                            );
+                            return Transform.translate(
+                              offset: const Offset(20, 0),
+                              child: SizedBox(
+                                width: gaugeSize,
                                   height: gaugeSize,
                                   child: Stack(
                                     alignment: Alignment.center,
@@ -291,19 +337,24 @@ class DailyOverviewCards extends StatelessWidget {
                                         ),
                                       ),
                                       Positioned(
-                                        top: gaugeSize / 2 + innerRadius + 6,
-                                        child: Text(
-                                          remainingText,
-                                          style: AppTextStyles.caption(context)
-                                              .copyWith(
-                                            fontWeight: FontWeight.w600,
-                                            color: isOver
-                                                ? Colors.redAccent
-                                                : Colors.black54,
+                                    top: gaugeSize / 2 + innerRadius + 6,
+                                    child: Text(
+                                      remainingText,
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: gaugeColor,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black.withOpacity(0.25),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
                                           ),
-                                          textAlign: TextAlign.center,
-                                        ),
+                                        ],
                                       ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
                                     ],
                                   ),
                                 ),
@@ -355,8 +406,6 @@ class _CalorieGaugePainter extends CustomPainter {
   static const double _startAngle = math.pi * 11 / 12; // 165°
   static const double _sweepAngle = math.pi * 7 / 6; // 210°
   static const double _strokeWidth = 24;
-  static const Color _startGrey = Color(0xFFC8D0CD);
-  static const Color _midOrange = Color(0xFFFFB067);
   static const Color _pointerBlue = Color(0xFF4A8DFF);
 
   @override
@@ -483,18 +532,7 @@ class _CalorieGaugePainter extends CustomPainter {
   ) {
     final minT = (minValue / cap).clamp(0.0, 1.0);
     final maxT = (maxValue / cap).clamp(0.0, 1.0);
-    if (t <= minT) {
-      final local = minT == 0 ? 1.0 : (t / minT);
-      return Color.lerp(_startGrey, green, local)!;
-    }
-    if (t <= maxT) {
-      return green;
-    }
-    final local = (t - maxT) / (1.0 - maxT == 0 ? 1 : (1.0 - maxT));
-    if (local <= 0.2) {
-      return Color.lerp(green, _midOrange, local / 0.2)!;
-    }
-    return Color.lerp(_midOrange, Colors.redAccent, (local - 0.2) / 0.8)!;
+    return _gaugeColorAt(t, green, minValue, maxValue, cap);
   }
 
   void _drawTick(
