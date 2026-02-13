@@ -475,10 +475,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dayCardDateLabel => '?交?嚗?;
 
   @override
-  String get dayCardCalorieLabel => '今日能量狀態';
+  String get dayCardCalorieLabel => '能量狀態';
 
   @override
-  String get dayCardProteinLabel => '今日蛋白質狀態';
+  String get dayCardProteinLabel => '蛋白質狀態';
 
   @override
   String get dayCardMealsLabel => '??擗嚗?;
@@ -2288,10 +2288,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dayCardDateLabel => '?交?嚗?;
 
   @override
-  String get dayCardCalorieLabel => '今日能量狀態';
+  String get dayCardCalorieLabel => '能量狀態';
 
   @override
-  String get dayCardProteinLabel => '今日蛋白質狀態';
+  String get dayCardProteinLabel => '蛋白質狀態';
 
   @override
   String get dayCardMealsLabel => '??擗嚗?;

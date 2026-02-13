@@ -1,4 +1,4 @@
-// ignore: unused_import
+﻿// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -86,7 +86,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analysisTitle => 'Meal analysis';
 
   @override
-  String get analysisEmpty => 'No analysis yet — take a photo to start';
+  String get analysisEmpty => 'No analysis yet ??take a photo to start';
 
   @override
   String get foodNameLabel => 'Food name';
@@ -359,7 +359,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get optionLightDesc => 'Soup, steamed foods, less sauce.';
 
   @override
-  String get summaryTitle => 'Today’s summary';
+  String get summaryTitle => 'Today? summary';
 
   @override
   String get summaryEmpty => 'No meals recorded today yet';
@@ -374,10 +374,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get summaryCarb => 'Carb-heavy today';
 
   @override
-  String get summaryProteinOk => 'Protein looks OK — add some veggies';
+  String get summaryProteinOk => 'Protein looks OK ??add some veggies';
 
   @override
-  String get summaryNeutral => 'You’re doing well today, keep it up';
+  String get summaryNeutral => 'You?e doing well today, keep it up';
 
   @override
   String get summaryBeverageOnly => 'Only beverages recorded today';
@@ -431,7 +431,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String greetingTitle(String name) {
-    return 'Hi $name, you’ve got this';
+    return 'Hi $name, you?e got this';
   }
 
   @override
@@ -484,10 +484,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayCardDateLabel => 'Date:';
 
   @override
-  String get dayCardCalorieLabel => 'Energy Status Today';
+  String get dayCardCalorieLabel => 'Energy Status';
 
   @override
-  String get dayCardProteinLabel => 'Protein Status Today';
+  String get dayCardProteinLabel => 'Protein Status';
 
   @override
   String get dayCardMealsLabel => 'Meals analyzed:';
@@ -636,7 +636,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestInstantNonFood =>
-      'This doesn\'t look like food—want to try another shot? If you\'re not eating now, come back when you\'re hungry.';
+      'This doesn\'t look like food?ant to try another shot? If you\'re not eating now, come back when you\'re hungry.';
 
   @override
   String get suggestInstantReestimate => 'Re-estimate';
@@ -653,7 +653,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestTodayHint =>
-      'Fat is a bit high today — keep the next meal lighter';
+      'Fat is a bit high today ??keep the next meal lighter';
 
   @override
   String get suggestTodayOilyCarb => 'Oily and carb-heavy today';
@@ -665,7 +665,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestTodayCarb => 'Carbs are high today, go lighter on starch';
 
   @override
-  String get suggestTodayOk => 'You’re doing well today — keep it up';
+  String get suggestTodayOk => 'You?e doing well today ??keep it up';
 
   @override
   String get logThisMeal => 'Log this meal';
@@ -1268,7 +1268,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncNow => 'Sync now';
 
   @override
-  String get syncInProgress => 'Syncing…';
+  String get syncInProgress => 'Syncing??;
 
   @override
   String get syncLastSyncLabel => 'Last sync:';
@@ -1386,7 +1386,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String authVerifyBody(String email) {
-    return 'We sent a verification email to $email. Please check your inbox in 1–3 minutes and also check spam/promotions.';
+    return 'We sent a verification email to $email. Please check your inbox in 1?? minutes and also check spam/promotions.';
   }
 
   @override
