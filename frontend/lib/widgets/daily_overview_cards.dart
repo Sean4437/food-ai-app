@@ -285,7 +285,7 @@ class DailyOverviewCards extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Transform.translate(
-                      offset: const Offset(0, 10),
+                      offset: const Offset(0, -10),
                       child: _activityControls(context),
                     ),
                     const SizedBox(width: 12),
@@ -314,6 +314,7 @@ class DailyOverviewCards extends StatelessWidget {
                                   height: gaugeSize,
                                   child: Stack(
                                     alignment: Alignment.center,
+                                    clipBehavior: Clip.none,
                                     children: [
                                       _calorieGauge(
                                         consumed: animatedConsumed,
@@ -441,6 +442,7 @@ class DailyOverviewCards extends StatelessWidget {
                     height: gaugeSize,
                     child: Stack(
                       alignment: Alignment.center,
+                      clipBehavior: Clip.none,
                       children: [
                         _calorieGauge(
                           consumed: animatedConsumed,
