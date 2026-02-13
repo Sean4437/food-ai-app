@@ -111,13 +111,18 @@ class DailyOverviewCards extends StatelessWidget {
     return [minVal, maxVal];
   }
 
-  Widget _infoCard({required Widget child}) {
+  Widget _infoCard({required Widget child, double borderOpacity = 0.08}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: appTheme.card,
         borderRadius: BorderRadius.circular(appTheme.radiusCard),
-        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+        border: borderOpacity <= 0
+            ? null
+            : Border.all(
+                color: Colors.black.withOpacity(borderOpacity),
+                width: 1,
+              ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -280,7 +285,7 @@ class DailyOverviewCards extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Transform.translate(
-                      offset: const Offset(0, 20),
+                      offset: const Offset(0, -10),
                       child: _activityControls(context),
                     ),
                     const SizedBox(width: 12),
@@ -303,7 +308,7 @@ class DailyOverviewCards extends StatelessWidget {
                               theme.colorScheme.primary,
                             );
                             return Transform.translate(
-                              offset: const Offset(20, 0),
+                              offset: const Offset(20, -10),
                               child: SizedBox(
                                 width: gaugeSize,
                                   height: gaugeSize,
@@ -402,6 +407,7 @@ class DailyOverviewCards extends StatelessWidget {
     );
     const titleGap = 6.0;
     return _infoCard(
+      borderOpacity: 0,
       child: Stack(
         fit: StackFit.expand,
         children: [
