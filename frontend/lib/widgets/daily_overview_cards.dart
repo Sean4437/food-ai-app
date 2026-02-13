@@ -220,12 +220,10 @@ class DailyOverviewCards extends StatelessWidget {
             ),
           ),
           Center(
-            child: Transform.translate(
-              offset: const Offset(-10, -10),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
                   _activityControls(context),
                   const SizedBox(width: 12),
                   Padding(
@@ -293,10 +291,10 @@ class DailyOverviewCards extends StatelessWidget {
                               ),
                             );
                           },
-                        ),
-                      ],
-                    ),
-                  ),
+                ),
+              ],
+            ),
+          ),
                 ],
               ),
             ),
