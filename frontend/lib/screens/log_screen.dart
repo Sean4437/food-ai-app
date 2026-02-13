@@ -889,6 +889,7 @@ class _LogScreenState extends State<LogScreen> {
                       );
                       final pages = [
                         overview.calorieCard(context),
+                        overview.proteinCard(context),
                         _buildHighlightCard(context, app, t),
                       ];
                       return Column(

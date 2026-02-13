@@ -179,7 +179,8 @@
   "dayMealsTitle": "返回本日餐次",
   "tomorrowAdviceTitle": "明天建議",
   "dayCardDateLabel": "日期：",
-  "dayCardCalorieLabel": "今日熱量攝取",
+  "dayCardCalorieLabel": "今日能量狀態",
+  "dayCardProteinLabel": "今日蛋白質狀態",
   "dayCardMealsLabel": "分析餐數：",
   "dayCardSummaryLabel": "今日總結",
   "dayCardTomorrowLabel": "明日建議",
@@ -376,6 +377,22 @@
     }
   },
   "suggestRemainingOver": "已超過 {cal} kcal",
+  "proteinRemainingLeft": "還可以吃 {grams} g",
+  "@proteinRemainingLeft": {
+    "placeholders": {
+      "grams": {
+        "type": "int"
+      }
+    }
+  },
+  "proteinRemainingOver": "已超過 {grams} g",
+  "@proteinRemainingOver": {
+    "placeholders": {
+      "grams": {
+        "type": "int"
+      }
+    }
+  },
   "@suggestRemainingOver": {
     "placeholders": {
       "cal": {

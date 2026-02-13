@@ -35,10 +35,12 @@ Color _gaugeColorForValue(
   double value,
   int? min,
   int? max,
-  Color green,
+  Color green, {
+  double capPadding = 500,
+}
 ) {
   if (max == null || max <= 0) return Colors.black54;
-  final cap = (max + 500).toDouble();
+  final cap = (max + capPadding).toDouble();
   final minValue = (min ?? 0).toDouble();
   final maxValue = max.toDouble();
   final t = (value.clamp(0.0, cap)) / cap;
@@ -68,6 +70,7 @@ class DailyOverviewCards extends StatelessWidget {
   final VoidCallback onSelectExerciseMinutes;
 
   Widget calorieCard(BuildContext context) => _calorieCard(context);
+  Widget proteinCard(BuildContext context) => _proteinCard(context);
 
   Widget _emojiIcon(String emoji, {double size = 16}) {
     return Text(emoji, style: TextStyle(fontSize: size, height: 1));
@@ -79,6 +82,7 @@ class DailyOverviewCards extends StatelessWidget {
     required int? max,
     required Color primary,
     required double innerRadius,
+    double capPadding = 500,
     double size = 120,
   }) {
     return SizedBox(
@@ -91,6 +95,7 @@ class DailyOverviewCards extends StatelessWidget {
           max: max,
           primary: primary,
           innerRadius: innerRadius,
+          capPadding: capPadding,
         ),
       ),
     );
@@ -371,6 +376,126 @@ class DailyOverviewCards extends StatelessWidget {
     );
   }
 
+  Widget _proteinCard(BuildContext context) {
+    final consumed = app.dailyProteinConsumedGrams(date);
+    final proteinRange = app.proteinTargetRangeGrams();
+    final targetMin = proteinRange != null ? proteinRange[0] : null;
+    final targetMax = proteinRange != null ? proteinRange[1] : null;
+    final hasTarget =
+        targetMin != null && targetMax != null && targetMax > 0;
+    final remaining = hasTarget ? (targetMax! - consumed) : null;
+    final isOver = remaining != null && remaining < 0;
+    final remainingText = !hasTarget
+        ? '---'
+        : isOver
+            ? t.proteinRemainingOver((-remaining!).round())
+            : t.proteinRemainingLeft(remaining!.round());
+    const gaugeSize = 156.0;
+    const innerSize = 73.0;
+    const innerRadius = innerSize / 2;
+    const proteinCapPadding = 50.0;
+    final gaugeKey = ValueKey('protein-gauge-${date.toIso8601String()}');
+    final titleStyle = AppTextStyles.title2(context);
+    final titleHeight = _measureTextHeight(
+      t.dayCardProteinLabel,
+      titleStyle,
+    );
+    const titleGap = 6.0;
+    return _infoCard(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Text(
+              t.dayCardProteinLabel,
+              style: titleStyle,
+            ),
+          ),
+          Positioned.fill(
+            top: titleHeight + titleGap,
+            child: Center(
+              child: TweenAnimationBuilder<double>(
+                key: gaugeKey,
+                tween: Tween(begin: 0, end: consumed),
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeOutCubic,
+                builder: (context, animatedConsumed, child) {
+                  final gaugeColor = _gaugeColorForValue(
+                    animatedConsumed,
+                    targetMin,
+                    targetMax,
+                    theme.colorScheme.primary,
+                    capPadding: proteinCapPadding,
+                  );
+                  return SizedBox(
+                    width: gaugeSize,
+                    height: gaugeSize,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        _calorieGauge(
+                          consumed: animatedConsumed,
+                          min: targetMin,
+                          max: targetMax,
+                          primary: theme.colorScheme.primary,
+                          innerRadius: innerRadius,
+                          size: gaugeSize,
+                          capPadding: proteinCapPadding,
+                        ),
+                        Container(
+                          width: innerSize,
+                          height: innerSize,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.12),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            '${animatedConsumed.round()}g',
+                            style: AppTextStyles.title1(context)
+                                .copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                        Positioned(
+                          top: gaugeSize / 2 + innerRadius + 6,
+                          child: Text(
+                            remainingText,
+                            style: AppTextStyles.caption(context).copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: gaugeColor,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.25),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   double _measureTextHeight(String text, TextStyle style) {
     final painter = TextPainter(
       text: TextSpan(text: text, style: style),
@@ -392,6 +517,7 @@ class _CalorieGaugePainter extends CustomPainter {
     required this.max,
     required this.primary,
     required this.innerRadius,
+    required this.capPadding,
   });
 
   final double consumed;
@@ -399,6 +525,7 @@ class _CalorieGaugePainter extends CustomPainter {
   final int? max;
   final Color primary;
   final double innerRadius;
+  final double capPadding;
 
   static const double _startAngle = math.pi * 11 / 12; // 165°
   static const double _sweepAngle = math.pi * 7 / 6; // 210°
@@ -419,7 +546,7 @@ class _CalorieGaugePainter extends CustomPainter {
     canvas.drawArc(rect, _startAngle, _sweepAngle, false, basePaint);
 
     if (max != null && max! > 0) {
-      final cap = max! + 500;
+      final cap = max! + capPadding;
       final minValue = min!.toDouble();
       final maxValue = max!.toDouble();
       _drawGradientArcGlow(

@@ -179,7 +179,8 @@
   "dayMealsTitle": "Back to meals",
   "tomorrowAdviceTitle": "Tomorrow advice",
   "dayCardDateLabel": "Date:",
-  "dayCardCalorieLabel": "Today calorie range",
+  "dayCardCalorieLabel": "Energy Status Today",
+  "dayCardProteinLabel": "Protein Status Today",
   "dayCardMealsLabel": "Meals analyzed:",
   "dayCardSummaryLabel": "Today's summary",
   "dayCardTomorrowLabel": "Tomorrow's advice",
@@ -376,6 +377,22 @@
     }
   },
   "suggestRemainingOver": "Over by {cal} kcal",
+  "proteinRemainingLeft": "You can still have {grams} g",
+  "@proteinRemainingLeft": {
+    "placeholders": {
+      "grams": {
+        "type": "int"
+      }
+    }
+  },
+  "proteinRemainingOver": "Over by {grams} g",
+  "@proteinRemainingOver": {
+    "placeholders": {
+      "grams": {
+        "type": "int"
+      }
+    }
+  },
   "@suggestRemainingOver": {
     "placeholders": {
       "cal": {

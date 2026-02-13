@@ -484,7 +484,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayCardDateLabel => 'Date:';
 
   @override
-  String get dayCardCalorieLabel => 'Today calorie range';
+  String get dayCardCalorieLabel => 'Energy Status Today';
+
+  @override
+  String get dayCardProteinLabel => 'Protein Status Today';
 
   @override
   String get dayCardMealsLabel => 'Meals analyzed:';
@@ -1006,6 +1009,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String suggestRemainingOver(int cal) {
     return 'Over by $cal kcal';
+  }
+
+  @override
+  String proteinRemainingLeft(int grams) {
+    return 'You can still have $grams g';
+  }
+
+  @override
+  String proteinRemainingOver(int grams) {
+    return 'Over by $grams g';
   }
 
   @override

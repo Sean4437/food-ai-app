@@ -1017,6 +1017,12 @@ abstract class AppLocalizations {
   /// **'今日熱量攝取'**
   String get dayCardCalorieLabel;
 
+  /// No description provided for @dayCardProteinLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'今日蛋白質狀態'**
+  String get dayCardProteinLabel;
+
   /// No description provided for @dayCardMealsLabel.
   ///
   /// In zh_TW, this message translates to:
@@ -2019,11 +2025,23 @@ abstract class AppLocalizations {
   /// **'還可以吃 {cal} kcal'**
   String suggestRemainingLeft(int cal);
 
+  /// No description provided for @proteinRemainingLeft.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'還可以吃 {grams} g'**
+  String proteinRemainingLeft(int grams);
+
   /// No description provided for @suggestRemainingOver.
   ///
   /// In zh_TW, this message translates to:
   /// **'已超過 {cal} kcal'**
   String suggestRemainingOver(int cal);
+
+  /// No description provided for @proteinRemainingOver.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'已超過 {grams} g'**
+  String proteinRemainingOver(int grams);
 
   /// No description provided for @suggestExerciseHint.
   ///
