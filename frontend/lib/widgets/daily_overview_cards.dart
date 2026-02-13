@@ -270,9 +270,7 @@ class DailyOverviewCards extends StatelessWidget {
             top: titleHeight + titleGap,
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Transform.translate(
-                offset: const Offset(0, -20),
-                child: Row(
+              child: Row(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -366,7 +364,6 @@ class DailyOverviewCards extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
             ),
           ),
         ],
