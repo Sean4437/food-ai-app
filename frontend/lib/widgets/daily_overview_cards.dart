@@ -208,97 +208,97 @@ class DailyOverviewCards extends StatelessWidget {
     const innerRadius = innerSize / 2;
     final gaugeKey = ValueKey('gauge-${date.toIso8601String()}');
     return _infoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Text(
-            t.dayCardCalorieLabel,
-            style: AppTextStyles.title2(context),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Text(
+              t.dayCardCalorieLabel,
+              style: AppTextStyles.title2(context),
+            ),
           ),
-          const SizedBox(height: 6),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _activityControls(context),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Padding(
+          Center(
+            child: Transform.translate(
+              offset: const Offset(-10, -10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _activityControls(context),
+                  const SizedBox(width: 12),
+                  Padding(
                     padding: const EdgeInsets.only(left: 10),
-                    child: Center(
-                      child: Transform.translate(
-                        offset: const Offset(-10, -10),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            TweenAnimationBuilder<double>(
-                              key: gaugeKey,
-                              tween: Tween(begin: 0, end: consumed),
-                              duration: const Duration(milliseconds: 500),
-                              curve: Curves.easeOutCubic,
-                              builder: (context, animatedConsumed, child) {
-                                return SizedBox(
-                                  width: gaugeSize,
-                                  height: gaugeSize,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      _calorieGauge(
-                                        consumed: animatedConsumed,
-                                        min: targetMin,
-                                        max: targetMax,
-                                        primary: theme.colorScheme.primary,
-                                        innerRadius: innerRadius,
-                                        size: gaugeSize,
-                                      ),
-                                      Container(
-                                        width: innerSize,
-                                        height: innerSize,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.12),
-                                              blurRadius: 12,
-                                              offset: const Offset(0, 6),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Text(
-                                          animatedConsumed.round().toString(),
-                                          style: AppTextStyles.title1(context)
-                                              .copyWith(fontWeight: FontWeight.w800),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: gaugeSize / 2 + innerRadius + 6,
-                                        child: Text(
-                                          remainingText,
-                                          style: AppTextStyles.caption(context)
-                                              .copyWith(
-                                            fontWeight: FontWeight.w600,
-                                            color: isOver
-                                                ? Colors.redAccent
-                                                : Colors.black54,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                    ],
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        TweenAnimationBuilder<double>(
+                          key: gaugeKey,
+                          tween: Tween(begin: 0, end: consumed),
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, animatedConsumed, child) {
+                            return SizedBox(
+                              width: gaugeSize,
+                              height: gaugeSize,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  _calorieGauge(
+                                    consumed: animatedConsumed,
+                                    min: targetMin,
+                                    max: targetMax,
+                                    primary: theme.colorScheme.primary,
+                                    innerRadius: innerRadius,
+                                    size: gaugeSize,
                                   ),
-                                );
-                              },
-                            ),
-                          ],
+                                  Container(
+                                    width: innerSize,
+                                    height: innerSize,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.12),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      animatedConsumed.round().toString(),
+                                      style: AppTextStyles.title1(context)
+                                          .copyWith(fontWeight: FontWeight.w800),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: gaugeSize / 2 + innerRadius + 6,
+                                    child: Text(
+                                      remainingText,
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: isOver
+                                            ? Colors.redAccent
+                                            : Colors.black54,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
