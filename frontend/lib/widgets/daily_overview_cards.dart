@@ -425,7 +425,7 @@ class DailyOverviewCards extends StatelessWidget {
             top: titleHeight + titleGap,
             child: Center(
               child: Transform.translate(
-                offset: const Offset(0, 10),
+                offset: const Offset(0, 5),
                 child: TweenAnimationBuilder<double>(
                 key: gaugeKey,
                 tween: Tween(begin: 0, end: consumed),
