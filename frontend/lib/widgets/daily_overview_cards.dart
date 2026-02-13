@@ -207,6 +207,12 @@ class DailyOverviewCards extends StatelessWidget {
     const innerSize = 73.0;
     const innerRadius = innerSize / 2;
     final gaugeKey = ValueKey('gauge-${date.toIso8601String()}');
+    final titleStyle = AppTextStyles.title2(context);
+    final titleHeight = _measureTextHeight(
+      t.dayCardCalorieLabel,
+      titleStyle,
+    );
+    const titleGap = 6.0;
     return _infoCard(
       child: Stack(
         fit: StackFit.expand,
@@ -217,14 +223,16 @@ class DailyOverviewCards extends StatelessWidget {
             right: 0,
             child: Text(
               t.dayCardCalorieLabel,
-              style: AppTextStyles.title2(context),
+              style: titleStyle,
             ),
           ),
-          Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
+          Positioned.fill(
+            top: titleHeight + titleGap,
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
                 _activityControls(context),
                 const SizedBox(width: 12),
                 Padding(
@@ -297,11 +305,21 @@ class DailyOverviewCards extends StatelessWidget {
                   ),
                 ),
               ],
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  double _measureTextHeight(String text, TextStyle style) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+    return painter.height;
   }
   @override
   Widget build(BuildContext context) {
