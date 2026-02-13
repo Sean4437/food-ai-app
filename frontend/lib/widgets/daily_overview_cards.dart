@@ -227,7 +227,7 @@ class DailyOverviewCards extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 10),
                     child: Center(
                       child: Transform.translate(
-                        offset: const Offset(0, -15),
+                        offset: const Offset(-10, -10),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.center,
