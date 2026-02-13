@@ -443,7 +443,7 @@ class _CalorieGaugePainter extends CustomPainter {
     for (var i = 0; i < segments; i++) {
       final t = (i + 0.5) / segments;
       paint.color =
-          _colorAt(t, green, minValue, maxValue, cap).withOpacity(0.05);
+          _colorAt(t, green, minValue, maxValue, cap).withOpacity(0.02);
       canvas.drawArc(glowRect, start + segSweep * i, segSweep, false, paint);
     }
   }
