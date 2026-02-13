@@ -433,7 +433,7 @@ class _CalorieGaugePainter extends CustomPainter {
     final segSweep = sweep / segments;
     final glowRect = Rect.fromCircle(
       center: rect.center,
-      radius: rect.width / 2 + 4,
+      radius: rect.width / 2 + 2,
     );
     final paint = Paint()
       ..style = PaintingStyle.stroke
@@ -443,7 +443,7 @@ class _CalorieGaugePainter extends CustomPainter {
     for (var i = 0; i < segments; i++) {
       final t = (i + 0.5) / segments;
       paint.color =
-          _colorAt(t, green, minValue, maxValue, cap).withOpacity(0.15);
+          _colorAt(t, green, minValue, maxValue, cap).withOpacity(0.10);
       canvas.drawArc(glowRect, start + segSweep * i, segSweep, false, paint);
     }
   }
