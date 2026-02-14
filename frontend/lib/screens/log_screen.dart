@@ -530,6 +530,48 @@ class _LogScreenState extends State<LogScreen> {
     ];
   }
 
+  double? _proteinTargetMid(AppState app) {
+    final range = app.proteinTargetRangeGrams();
+    if (range == null) return null;
+    return (range[0] + range[1]) / 2;
+  }
+
+  List<_HistoryPoint> _buildProteinHistoryPoints(
+    AppState app,
+    DateTime endDate,
+    int days,
+  ) {
+    final base = DateTime(endDate.year, endDate.month, endDate.day);
+    final start = base.subtract(Duration(days: days - 1));
+    final points = <_HistoryPoint>[];
+    for (var i = 0; i < days; i++) {
+      final date = start.add(Duration(days: i));
+      final entries = app.entriesForDate(date);
+      if (entries.isEmpty) {
+        points.add(_HistoryPoint(date: date, value: null));
+        continue;
+      }
+      final value = app.dailyProteinConsumedGrams(date,
+          excludeBeverages: true);
+      points.add(_HistoryPoint(
+          date: date, value: value <= 0 ? null : value));
+    }
+    return points;
+  }
+
+  double? _averageProteinHistory(
+    AppState app,
+    DateTime endDate,
+    int days,
+  ) {
+    final points = _buildProteinHistoryPoints(app, endDate, days);
+    final values =
+        points.map((p) => p.value).whereType<double>().toList();
+    if (values.isEmpty) return null;
+    final sum = values.reduce((a, b) => a + b);
+    return sum / values.length;
+  }
+
   double? _averageHistoryValue(
     AppState app,
     DateTime endDate,
@@ -542,6 +584,38 @@ class _LogScreenState extends State<LogScreen> {
     if (values.isEmpty) return null;
     final sum = values.reduce((a, b) => a + b);
     return sum / values.length;
+  }
+
+  String _proteinSummaryText(
+    AppState app,
+    AppLocalizations t,
+  ) {
+    final currentAvg = _averageProteinHistory(
+        app, _selectedDate, _historyDays);
+    if (currentAvg == null) {
+      return t.proteinTrendSummaryNoData;
+    }
+    final previousEnd =
+        _selectedDate.subtract(Duration(days: _historyDays));
+    final previousAvg =
+        _averageProteinHistory(app, previousEnd, _historyDays);
+    final avgRounded = currentAvg.round();
+    if (previousAvg == null || previousAvg <= 0) {
+      return t.proteinTrendSummaryNoPrev(avgRounded.toString());
+    }
+    final diff =
+        ((currentAvg - previousAvg) / previousAvg * 100).round();
+    final periodLabel = _historyCompareLabel(t);
+    if (diff == 0) {
+      return t.proteinTrendSummarySame(
+          avgRounded.toString(), periodLabel);
+    }
+    if (diff > 0) {
+      return t.proteinTrendSummaryHigher(
+          avgRounded.toString(), periodLabel, diff.toString());
+    }
+    return t.proteinTrendSummaryLower(
+        avgRounded.toString(), periodLabel, diff.abs().toString());
   }
 
   String _historySummaryTitle(AppLocalizations t) {
@@ -778,6 +852,114 @@ class _LogScreenState extends State<LogScreen> {
                     Expanded(
                       child: Text(
                         _historySummaryText(app, t),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.body(context)
+                            .copyWith(fontSize: 12, color: Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProteinHistoryCard(
+    BuildContext context,
+    AppState app,
+    AppLocalizations t,
+    AppTheme appTheme,
+    ThemeData theme,
+  ) {
+    final points =
+        _buildProteinHistoryPoints(app, _selectedDate, _historyDays);
+    final hasData = points.any((p) => p.value != null);
+    final targetMid = _proteinTargetMid(app);
+    final targetLabel = targetMid == null
+        ? null
+        : t.proteinTrendTargetLabel(targetMid.round().toString());
+    final dateFormat = DateFormat('M/d');
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: appTheme.card,
+        borderRadius: BorderRadius.circular(appTheme.radiusCard),
+        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                t.proteinTrendTitle,
+                style: AppTextStyles.title2(context),
+              ),
+              const Spacer(),
+              _buildHistoryRangeSelector(app, theme, appTheme),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Transform.translate(
+            offset: const Offset(0, -10),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 82,
+                  child: hasData
+                      ? _CalorieHistoryChart(
+                          points: points,
+                          lineColor: theme.colorScheme.primary,
+                          targetMin: targetMid,
+                          targetMax: targetMid,
+                          targetLabel: targetLabel,
+                        )
+                      : Center(
+                          child: Text(
+                            t.noEntries,
+                            style: AppTextStyles.caption(context)
+                                .copyWith(color: Colors.black54),
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(dateFormat.format(points.first.date),
+                        style: AppTextStyles.caption(context)
+                            .copyWith(color: Colors.black45)),
+                    Text(dateFormat.format(points.last.date),
+                        style: AppTextStyles.caption(context)
+                            .copyWith(color: Colors.black45)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Divider(height: 1, color: Colors.black12.withOpacity(0.6)),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _historySummaryTitle(t),
+                      style: AppTextStyles.body(context)
+                          .copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _proteinSummaryText(app, t),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.body(context)
@@ -1209,6 +1391,8 @@ class _LogScreenState extends State<LogScreen> {
                         _buildCalorieHistoryCard(
                             context, app, t, appTheme, theme),
                         overview.proteinCard(context),
+                        _buildProteinHistoryCard(
+                            context, app, t, appTheme, theme),
                         _buildHighlightCard(context, app, t),
                       ];
                       return Column(
@@ -1486,10 +1670,15 @@ class _CalorieHistoryPainter extends CustomPainter {
     final maxT = ((targetMax! - minY) / (maxY - minY)).clamp(0.0, 1.0);
     final yMin = chartRect.bottom - minT * chartRect.height;
     final yMax = chartRect.bottom - maxT * chartRect.height;
-    _drawDashedLine(
-        canvas, Offset(chartRect.left, yMin), Offset(chartRect.right, yMin), paint);
-    _drawDashedLine(
-        canvas, Offset(chartRect.left, yMax), Offset(chartRect.right, yMax), paint);
+    if ((yMin - yMax).abs() < 0.5) {
+      _drawDashedLine(canvas, Offset(chartRect.left, yMin),
+          Offset(chartRect.right, yMin), paint);
+    } else {
+      _drawDashedLine(canvas, Offset(chartRect.left, yMin),
+          Offset(chartRect.right, yMin), paint);
+      _drawDashedLine(canvas, Offset(chartRect.left, yMax),
+          Offset(chartRect.right, yMax), paint);
+    }
 
     if (targetLabel == null) return;
     final textPainter = TextPainter(

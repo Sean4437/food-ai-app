@@ -539,6 +539,37 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get proteinTrendTitle => 'Protein Trend';
+
+  @override
+  String proteinTrendTargetLabel(String value) {
+    return 'Target $value g';
+  }
+
+  @override
+  String get proteinTrendSummaryNoData => 'No data yet.';
+
+  @override
+  String proteinTrendSummaryNoPrev(String avg) {
+    return 'Avg intake $avg g, no previous period data.';
+  }
+
+  @override
+  String proteinTrendSummaryHigher(String avg, String period, String pct) {
+    return 'Avg intake $avg g, higher than $period by $pct%.';
+  }
+
+  @override
+  String proteinTrendSummaryLower(String avg, String period, String pct) {
+    return 'Avg intake $avg g, lower than $period by $pct%.';
+  }
+
+  @override
+  String proteinTrendSummarySame(String avg, String period) {
+    return 'Avg intake $avg g, same as $period.';
+  }
+
+  @override
   String get dayCardMealsLabel => 'Meals analyzed:';
 
   @override

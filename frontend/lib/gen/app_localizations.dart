@@ -1101,6 +1101,48 @@ abstract class AppLocalizations {
   /// **'平均攝取 {avg} kcal，與{period}持平。'**
   String calorieTrendSummarySame(String avg, String period);
 
+  /// No description provided for @proteinTrendTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'蛋白質趨勢'**
+  String get proteinTrendTitle;
+
+  /// No description provided for @proteinTrendTargetLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'目標 {value} g'**
+  String proteinTrendTargetLabel(String value);
+
+  /// No description provided for @proteinTrendSummaryNoData.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'尚無資料'**
+  String get proteinTrendSummaryNoData;
+
+  /// No description provided for @proteinTrendSummaryNoPrev.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'平均攝取 {avg} g，尚無前期資料。'**
+  String proteinTrendSummaryNoPrev(String avg);
+
+  /// No description provided for @proteinTrendSummaryHigher.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'平均攝取 {avg} g，高於{period} {pct}%。'**
+  String proteinTrendSummaryHigher(String avg, String period, String pct);
+
+  /// No description provided for @proteinTrendSummaryLower.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'平均攝取 {avg} g，低於{period} {pct}%。'**
+  String proteinTrendSummaryLower(String avg, String period, String pct);
+
+  /// No description provided for @proteinTrendSummarySame.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'平均攝取 {avg} g，與{period}持平。'**
+  String proteinTrendSummarySame(String avg, String period);
+
   /// No description provided for @dayCardMealsLabel.
   ///
   /// In zh_TW, this message translates to:

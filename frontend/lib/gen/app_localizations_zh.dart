@@ -530,6 +530,37 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get proteinTrendTitle => '蛋白質趨勢';
+
+  @override
+  String proteinTrendTargetLabel(String value) {
+    return '目標 $value g';
+  }
+
+  @override
+  String get proteinTrendSummaryNoData => '尚無資料';
+
+  @override
+  String proteinTrendSummaryNoPrev(String avg) {
+    return '平均攝取 $avg g，尚無前期資料。';
+  }
+
+  @override
+  String proteinTrendSummaryHigher(String avg, String period, String pct) {
+    return '平均攝取 $avg g，高於$period $pct%。';
+  }
+
+  @override
+  String proteinTrendSummaryLower(String avg, String period, String pct) {
+    return '平均攝取 $avg g，低於$period $pct%。';
+  }
+
+  @override
+  String proteinTrendSummarySame(String avg, String period) {
+    return '平均攝取 $avg g，與$period持平。';
+  }
+
+  @override
   String calorieTrendTargetLabel(String min, String max) {
     return '目標 $min-$max';
   }
@@ -573,6 +604,37 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String calorieTrendSummarySame(String avg, String period) {
     return '平均攝取 $avg kcal，與$period持平。';
+  }
+
+  @override
+  String get proteinTrendTitle => '蛋白質趨勢';
+
+  @override
+  String proteinTrendTargetLabel(String value) {
+    return '目標 $value g';
+  }
+
+  @override
+  String get proteinTrendSummaryNoData => '尚無資料';
+
+  @override
+  String proteinTrendSummaryNoPrev(String avg) {
+    return '平均攝取 $avg g，尚無前期資料。';
+  }
+
+  @override
+  String proteinTrendSummaryHigher(String avg, String period, String pct) {
+    return '平均攝取 $avg g，高於$period $pct%。';
+  }
+
+  @override
+  String proteinTrendSummaryLower(String avg, String period, String pct) {
+    return '平均攝取 $avg g，低於$period $pct%。';
+  }
+
+  @override
+  String proteinTrendSummarySame(String avg, String period) {
+    return '平均攝取 $avg g，與$period持平。';
   }
 
   @override
