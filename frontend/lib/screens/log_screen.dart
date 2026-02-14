@@ -1490,7 +1490,7 @@ class _CalorieHistoryPainter extends CustomPainter {
           fontWeight: FontWeight.w500,
         ),
       ),
-      textDirection: TextDirection.ltr,
+      textDirection: TextDirection.LTR,
     )..layout(maxWidth: chartRect.width);
     final labelY =
         ((yMin + yMax) / 2) - textPainter.height / 2;
@@ -1567,7 +1567,7 @@ class _CalorieHistoryPainter extends CustomPainter {
           fontWeight: FontWeight.w600,
         ),
       ),
-      textDirection: TextDirection.ltr,
+      textDirection: TextDirection.LTR,
     )..layout();
     var dx = point.dx - painter.width / 2;
     dx = dx.clamp(chartRect.left, chartRect.right - painter.width);
