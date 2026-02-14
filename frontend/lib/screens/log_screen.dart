@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -1490,7 +1491,7 @@ class _CalorieHistoryPainter extends CustomPainter {
           fontWeight: FontWeight.w500,
         ),
       ),
-      textDirection: TextDirection.LTR,
+      textDirection: ui.TextDirection.ltr,
     )..layout(maxWidth: chartRect.width);
     final labelY =
         ((yMin + yMax) / 2) - textPainter.height / 2;
@@ -1567,7 +1568,7 @@ class _CalorieHistoryPainter extends CustomPainter {
           fontWeight: FontWeight.w600,
         ),
       ),
-      textDirection: TextDirection.LTR,
+      textDirection: ui.TextDirection.ltr,
     )..layout();
     var dx = point.dx - painter.width / 2;
     dx = dx.clamp(chartRect.left, chartRect.right - painter.width);
