@@ -1145,8 +1145,17 @@ class _CalorieHistoryChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _CalorieHistoryPainter(points: points, lineColor: lineColor),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite ? constraints.maxWidth : 0;
+        final height =
+            constraints.maxHeight.isFinite ? constraints.maxHeight : 0;
+        return CustomPaint(
+          size: Size(width, height),
+          painter:
+              _CalorieHistoryPainter(points: points, lineColor: lineColor),
+        );
+      },
     );
   }
 }
