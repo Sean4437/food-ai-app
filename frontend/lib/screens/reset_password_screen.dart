@@ -143,8 +143,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _loading ? null : _submit,
-                        child: Text(
-                            _loading ? t.loading : t.authResetPasswordAction),
+                        child: Text(_loading
+                            ? t.usageLoading
+                            : t.authResetPasswordAction),
                       ),
                     ),
                   ],

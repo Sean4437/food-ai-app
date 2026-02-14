@@ -119,7 +119,7 @@ class _AuthGateState extends State<AuthGate> {
       return;
     }
     try {
-      final initial = await _appLinks.getInitialAppLink();
+      final initial = await _appLinks.getInitialLink();
       if (initial != null) {
         await _handleAuthLink(initial);
       }
