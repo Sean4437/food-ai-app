@@ -8,5 +8,5 @@ const String kSupabaseUserSettingsTable = 'user_settings';
 const String kSupabaseMealImagesBucket = 'meal-images';
 const String kSupabaseLabelImagesBucket = 'label-images';
 const String kSupabaseEmailRedirectUrlWeb =
-    'https://sean4437.github.io/food-ai-app/#/';
+    'https://sean4437.github.io/food-ai-app/';
 const String kSupabaseEmailRedirectUrlApp = 'foodaiapp://auth-callback';
