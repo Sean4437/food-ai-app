@@ -10,6 +10,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:storage_client/storage_client.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../models/analysis_result.dart';
@@ -4133,7 +4134,7 @@ class AppState extends ChangeNotifier {
       email: trimmedEmail,
       password: password,
       data: trimmedNickname.isEmpty ? null : {'nickname': trimmedNickname},
-      emailRedirectTo: kSupabaseEmailRedirectUrl,
+      emailRedirectTo: _supabaseRedirectUrl(),
     );
     if (trimmedNickname.isNotEmpty) {
       updateField((p) => p.name = trimmedNickname);
@@ -4161,7 +4162,7 @@ class AppState extends ChangeNotifier {
     await _supabase.client.auth.resend(
       type: OtpType.signup,
       email: trimmedEmail,
-      emailRedirectTo: kSupabaseEmailRedirectUrl,
+      emailRedirectTo: _supabaseRedirectUrl(),
     );
   }
 
@@ -4183,8 +4184,12 @@ class AppState extends ChangeNotifier {
     if (trimmedEmail.isEmpty) return;
     await _supabase.client.auth.resetPasswordForEmail(
       trimmedEmail,
-      redirectTo: kSupabaseEmailRedirectUrl,
+      redirectTo: _supabaseRedirectUrl(),
     );
+  }
+
+  String _supabaseRedirectUrl() {
+    return kIsWeb ? kSupabaseEmailRedirectUrlWeb : kSupabaseEmailRedirectUrlApp;
   }
 
   Future<void> updateNickname(String nickname) async {

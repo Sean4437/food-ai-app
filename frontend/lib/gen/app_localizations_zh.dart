@@ -1555,6 +1555,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authPasswordInvalid => '撖Ⅳ??喳? 8 蝣潘?銝??臬蝛箇?葉??;
 
   @override
+  String get authResetPasswordTitle => '重設密碼';
+
+  @override
+  String get authNewPasswordLabel => '新密碼';
+
+  @override
+  String get authPasswordRequired => '請輸入密碼';
+
+  @override
+  String get authPasswordUpdated => '密碼已更新';
+
+  @override
+  String get authResetPasswordAction => '更新密碼';
+
+  @override
   String get authResetSent => '?身撖Ⅳ靽∪歇撖嚗??亦?靽∠拳';
 
   @override

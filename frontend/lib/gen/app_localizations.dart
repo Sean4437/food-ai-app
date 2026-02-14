@@ -2925,6 +2925,36 @@ abstract class AppLocalizations {
   /// **'撖Ⅳ??喳? 8 蝣潘?銝??臬蝛箇?葉??**
   String get authPasswordInvalid;
 
+  /// No description provided for @authResetPasswordTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'重設密碼'**
+  String get authResetPasswordTitle;
+
+  /// No description provided for @authNewPasswordLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'新密碼'**
+  String get authNewPasswordLabel;
+
+  /// No description provided for @authPasswordRequired.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'請輸入密碼'**
+  String get authPasswordRequired;
+
+  /// No description provided for @authPasswordUpdated.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'密碼已更新'**
+  String get authPasswordUpdated;
+
+  /// No description provided for @authResetPasswordAction.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'更新密碼'**
+  String get authResetPasswordAction;
+
   /// No description provided for @authResetSent.
   ///
   /// In zh_TW, this message translates to:

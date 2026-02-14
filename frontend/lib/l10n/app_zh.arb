@@ -831,5 +831,10 @@
   "chatAvatarUnset": "未设置",
   "chatAvatarSheetTitle": "设置聊天头像",
   "chatAvatarPick": "选择照片",
-  "chatAvatarRemove": "移除照片"
+  "chatAvatarRemove": "移除照片",
+  "authResetPasswordTitle": "重設密碼",
+  "authNewPasswordLabel": "新密碼",
+  "authPasswordRequired": "請輸入密碼",
+  "authPasswordUpdated": "密碼已更新",
+  "authResetPasswordAction": "更新密碼"
 }

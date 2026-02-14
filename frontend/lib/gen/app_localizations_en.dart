@@ -1498,6 +1498,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Password must be at least 8 characters and contain no spaces or Chinese characters';
 
   @override
+  String get authResetPasswordTitle => 'Reset password';
+
+  @override
+  String get authNewPasswordLabel => 'New password';
+
+  @override
+  String get authPasswordRequired => 'Please enter a password';
+
+  @override
+  String get authPasswordUpdated => 'Password updated';
+
+  @override
+  String get authResetPasswordAction => 'Update password';
+
+  @override
   String get authResetSent => 'Password reset email sent. Check your inbox.';
 
   @override
