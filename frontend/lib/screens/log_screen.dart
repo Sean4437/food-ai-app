@@ -602,7 +602,7 @@ class _LogScreenState extends State<LogScreen> {
       AppState app, ThemeData theme, AppTheme appTheme) {
     final borderColor = Colors.black.withOpacity(0.08);
     return Container(
-      padding: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(1),
       decoration: BoxDecoration(
         color: const Color(0xFFE9EEE9),
         borderRadius: BorderRadius.circular(999),
@@ -628,7 +628,7 @@ class _LogScreenState extends State<LogScreen> {
             if (i != _historyDayOptions.length - 1)
               Container(
                 width: 1,
-                height: 18,
+                height: 14,
                 color: borderColor,
               ),
           ],
@@ -658,7 +658,7 @@ class _LogScreenState extends State<LogScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(999),
@@ -674,8 +674,11 @@ class _LogScreenState extends State<LogScreen> {
         ),
         child: Text(
           '$days',
-          style: AppTextStyles.body(context)
-              .copyWith(fontWeight: FontWeight.w600, color: textColor),
+          style: AppTextStyles.body(context).copyWith(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
         ),
       ),
     );
@@ -726,29 +729,29 @@ class _LogScreenState extends State<LogScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          SizedBox(
-            height: 82,
-            child: hasData
-                ? _CalorieHistoryChart(
-                    points: points,
-                    lineColor: theme.colorScheme.primary,
-                    targetMin: targetRange?[0].toDouble(),
-                    targetMax: targetRange?[1].toDouble(),
-                    targetLabel: targetLabel,
-                  )
-                : Center(
-                    child: Text(
-                      t.noEntries,
-                      style: AppTextStyles.caption(context)
-                          .copyWith(color: Colors.black54),
-                    ),
-                  ),
-          ),
-          const SizedBox(height: 2),
           Transform.translate(
             offset: const Offset(0, -10),
             child: Column(
               children: [
+                SizedBox(
+                  height: 82,
+                  child: hasData
+                      ? _CalorieHistoryChart(
+                          points: points,
+                          lineColor: theme.colorScheme.primary,
+                          targetMin: targetRange?[0].toDouble(),
+                          targetMax: targetRange?[1].toDouble(),
+                          targetLabel: targetLabel,
+                        )
+                      : Center(
+                          child: Text(
+                            t.noEntries,
+                            style: AppTextStyles.caption(context)
+                                .copyWith(color: Colors.black54),
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 2),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
