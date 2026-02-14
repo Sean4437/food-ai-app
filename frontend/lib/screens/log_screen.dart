@@ -1147,9 +1147,12 @@ class _CalorieHistoryChart extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth.isFinite ? constraints.maxWidth : 0;
-        final height =
-            constraints.maxHeight.isFinite ? constraints.maxHeight : 0;
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth.toDouble()
+            : 0.0;
+        final height = constraints.maxHeight.isFinite
+            ? constraints.maxHeight.toDouble()
+            : 0.0;
         return CustomPaint(
           size: Size(width, height),
           painter:
