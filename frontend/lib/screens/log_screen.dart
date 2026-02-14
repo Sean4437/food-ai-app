@@ -35,7 +35,7 @@ class _LogScreenState extends State<LogScreen> {
 
   static const double _dateItemWidth = 78;
   static const double _dateItemGap = 6;
-  static const double _topCardHeight = 200;
+  static const double _topCardHeight = 210;
   static const List<int> _historyDayOptions = [7, 14, 30];
 
   Future<T?> _showPickerSheet<T>({
@@ -804,7 +804,7 @@ class _LogScreenState extends State<LogScreen> {
           ),
           const SizedBox(height: 6),
           Transform.translate(
-            offset: const Offset(0, -10),
+            offset: const Offset(0, 0),
             child: Column(
               children: [
                 SizedBox(
@@ -912,7 +912,7 @@ class _LogScreenState extends State<LogScreen> {
           ),
           const SizedBox(height: 6),
           Transform.translate(
-            offset: const Offset(0, -10),
+            offset: const Offset(0, 0),
             child: Column(
               children: [
                 SizedBox(

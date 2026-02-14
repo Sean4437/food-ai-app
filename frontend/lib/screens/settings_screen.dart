@@ -282,7 +282,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _showResetPasswordDialog(
       BuildContext context, AppState app) async {
     final t = AppLocalizations.of(context)!;
-    final controller = TextEditingController();
+    final cachedEmail = (app.supabaseUserEmail ?? app.profile.email).trim();
+    final controller = TextEditingController(text: cachedEmail);
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -597,7 +598,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool isSignUp,
   }) async {
     final t = AppLocalizations.of(context)!;
-    final emailController = TextEditingController();
+    final cachedEmail = (app.supabaseUserEmail ?? app.profile.email).trim();
+    final emailController = TextEditingController(text: cachedEmail);
     final passwordController = TextEditingController();
     final nicknameController = TextEditingController(text: app.profile.name);
     final result = await showDialog<bool>(
