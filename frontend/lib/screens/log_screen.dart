@@ -493,15 +493,14 @@ class _LogScreenState extends State<LogScreen> {
   }
 
   List<_HistoryPoint> _buildHistoryPoints(
-      AppState app, DateTime endDate, int days) {
+      AppState app, DateTime endDate, int days, AppLocalizations t) {
     final base = DateTime(endDate.year, endDate.month, endDate.day);
     final start = base.subtract(Duration(days: days - 1));
     final points = <_HistoryPoint>[];
     for (var i = 0; i < days; i++) {
       final date = start.add(Duration(days: i));
-      final entries = app.entriesForDate(date);
-      final value =
-          entries.isEmpty ? null : app.dailyConsumedCalorieMid(date);
+      final label = app.dailyCalorieRangeLabelForDate(date, t);
+      final value = app.calorieRangeMid(label);
       points.add(_HistoryPoint(date: date, value: value));
     }
     return points;
@@ -514,7 +513,8 @@ class _LogScreenState extends State<LogScreen> {
     AppTheme appTheme,
     ThemeData theme,
   ) {
-    final points = _buildHistoryPoints(app, _selectedDate, _historyDays);
+    final points =
+        _buildHistoryPoints(app, _selectedDate, _historyDays, t);
     final hasData = points.any((p) => p.value != null);
     final dateFormat = DateFormat('M/d');
     return Container(
