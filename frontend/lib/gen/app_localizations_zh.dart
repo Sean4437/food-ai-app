@@ -484,6 +484,98 @@ class AppLocalizationsZh extends AppLocalizations {
   String get calorieHistoryTitle => '熱量趨勢';
 
   @override
+  String calorieTrendTargetLabel(String min, String max) {
+    return '目標 $min-$max';
+  }
+
+  @override
+  String get calorieTrendSummaryWeekTitle => '本週總結';
+
+  @override
+  String get calorieTrendSummaryTwoWeeksTitle => '兩週總結';
+
+  @override
+  String get calorieTrendSummaryMonthTitle => '本月總結';
+
+  @override
+  String get calorieTrendCompareLastWeek => '上週';
+
+  @override
+  String get calorieTrendCompareLastTwoWeeks => '前兩週';
+
+  @override
+  String get calorieTrendCompareLastMonth => '上月';
+
+  @override
+  String get calorieTrendSummaryNoData => '尚無資料';
+
+  @override
+  String calorieTrendSummaryNoPrev(String avg) {
+    return '平均攝取 $avg kcal，尚無前期資料。';
+  }
+
+  @override
+  String calorieTrendSummaryHigher(String avg, String period, String pct) {
+    return '平均攝取 $avg kcal，高於$period $pct%。';
+  }
+
+  @override
+  String calorieTrendSummaryLower(String avg, String period, String pct) {
+    return '平均攝取 $avg kcal，低於$period $pct%。';
+  }
+
+  @override
+  String calorieTrendSummarySame(String avg, String period) {
+    return '平均攝取 $avg kcal，與$period持平。';
+  }
+
+  @override
+  String calorieTrendTargetLabel(String min, String max) {
+    return '目標 $min-$max';
+  }
+
+  @override
+  String get calorieTrendSummaryWeekTitle => '本週總結';
+
+  @override
+  String get calorieTrendSummaryTwoWeeksTitle => '兩週總結';
+
+  @override
+  String get calorieTrendSummaryMonthTitle => '本月總結';
+
+  @override
+  String get calorieTrendCompareLastWeek => '上週';
+
+  @override
+  String get calorieTrendCompareLastTwoWeeks => '前兩週';
+
+  @override
+  String get calorieTrendCompareLastMonth => '上月';
+
+  @override
+  String get calorieTrendSummaryNoData => '尚無資料';
+
+  @override
+  String calorieTrendSummaryNoPrev(String avg) {
+    return '平均攝取 $avg kcal，尚無前期資料。';
+  }
+
+  @override
+  String calorieTrendSummaryHigher(String avg, String period, String pct) {
+    return '平均攝取 $avg kcal，高於$period $pct%。';
+  }
+
+  @override
+  String calorieTrendSummaryLower(String avg, String period, String pct) {
+    return '平均攝取 $avg kcal，低於$period $pct%。';
+  }
+
+  @override
+  String calorieTrendSummarySame(String avg, String period) {
+    return '平均攝取 $avg kcal，與$period持平。';
+  }
+
+  @override
   String get dayCardMealsLabel => '??擗嚗?;
 
   @override

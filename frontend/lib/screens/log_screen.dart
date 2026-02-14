@@ -506,6 +506,180 @@ class _LogScreenState extends State<LogScreen> {
     return points;
   }
 
+  List<int>? _averageTargetRange(
+      AppState app, DateTime endDate, int days) {
+    final base = DateTime(endDate.year, endDate.month, endDate.day);
+    final start = base.subtract(Duration(days: days - 1));
+    var minSum = 0;
+    var maxSum = 0;
+    var count = 0;
+    for (var i = 0; i < days; i++) {
+      final date = start.add(Duration(days: i));
+      final label = app.targetCalorieRangeValue(date) ?? '';
+      final range = _parseCalorieRange(label);
+      if (range == null) continue;
+      minSum += range[0];
+      maxSum += range[1];
+      count += 1;
+    }
+    if (count == 0) return null;
+    return [
+      (minSum / count).round(),
+      (maxSum / count).round(),
+    ];
+  }
+
+  double? _averageHistoryValue(
+    AppState app,
+    DateTime endDate,
+    int days,
+    AppLocalizations t,
+  ) {
+    final points = _buildHistoryPoints(app, endDate, days, t);
+    final values =
+        points.map((p) => p.value).whereType<double>().toList();
+    if (values.isEmpty) return null;
+    final sum = values.reduce((a, b) => a + b);
+    return sum / values.length;
+  }
+
+  String _historySummaryTitle(AppLocalizations t) {
+    switch (_historyDays) {
+      case 14:
+        return t.calorieTrendSummaryTwoWeeksTitle;
+      case 30:
+        return t.calorieTrendSummaryMonthTitle;
+      default:
+        return t.calorieTrendSummaryWeekTitle;
+    }
+  }
+
+  String _historyCompareLabel(AppLocalizations t) {
+    switch (_historyDays) {
+      case 14:
+        return t.calorieTrendCompareLastTwoWeeks;
+      case 30:
+        return t.calorieTrendCompareLastMonth;
+      default:
+        return t.calorieTrendCompareLastWeek;
+    }
+  }
+
+  String _historySummaryText(
+    AppState app,
+    AppLocalizations t,
+  ) {
+    final currentAvg =
+        _averageHistoryValue(app, _selectedDate, _historyDays, t);
+    if (currentAvg == null) {
+      return t.calorieTrendSummaryNoData;
+    }
+    final previousEnd =
+        _selectedDate.subtract(Duration(days: _historyDays));
+    final previousAvg =
+        _averageHistoryValue(app, previousEnd, _historyDays, t);
+    final avgRounded = currentAvg.round();
+    if (previousAvg == null || previousAvg <= 0) {
+      return t.calorieTrendSummaryNoPrev(avgRounded.toString());
+    }
+    final diff =
+        ((currentAvg - previousAvg) / previousAvg * 100).round();
+    final periodLabel = _historyCompareLabel(t);
+    if (diff == 0) {
+      return t.calorieTrendSummarySame(
+          avgRounded.toString(), periodLabel);
+    }
+    if (diff > 0) {
+      return t.calorieTrendSummaryHigher(
+          avgRounded.toString(), periodLabel, diff.toString());
+    }
+    return t.calorieTrendSummaryLower(
+        avgRounded.toString(), periodLabel, diff.abs().toString());
+  }
+
+  Widget _buildHistoryRangeSelector(
+      AppState app, ThemeData theme, AppTheme appTheme) {
+    final borderColor = Colors.black.withOpacity(0.08);
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE9EEE9),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < _historyDayOptions.length; i++) ...[
+            _buildHistoryRangeChip(
+              app,
+              _historyDayOptions[i],
+              theme,
+              appTheme,
+            ),
+            if (i != _historyDayOptions.length - 1)
+              Container(
+                width: 1,
+                height: 18,
+                color: borderColor,
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryRangeChip(
+    AppState app,
+    int days,
+    ThemeData theme,
+    AppTheme appTheme,
+  ) {
+    final selected = _historyDays == days;
+    final color = selected ? Colors.white : Colors.transparent;
+    final textColor =
+        selected ? theme.colorScheme.primary : Colors.black54;
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: () {
+        if (_historyDays == days) return;
+        setState(() => _historyDays = days);
+        app.updateField((profile) {
+          profile.calorieHistoryDays = days;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          '$days',
+          style: AppTextStyles.body(context)
+              .copyWith(fontWeight: FontWeight.w600, color: textColor),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCalorieHistoryCard(
     BuildContext context,
     AppState app,
@@ -516,6 +690,12 @@ class _LogScreenState extends State<LogScreen> {
     final points =
         _buildHistoryPoints(app, _selectedDate, _historyDays, t);
     final hasData = points.any((p) => p.value != null);
+    final targetRange =
+        _averageTargetRange(app, _selectedDate, _historyDays);
+    final targetLabel = targetRange == null
+        ? null
+        : t.calorieTrendTargetLabel(
+            targetRange[0].toString(), targetRange[1].toString());
     final dateFormat = DateFormat('M/d');
     return Container(
       padding: const EdgeInsets.all(16),
@@ -541,32 +721,19 @@ class _LogScreenState extends State<LogScreen> {
                 style: AppTextStyles.title2(context),
               ),
               const Spacer(),
-              CupertinoSegmentedControl<int>(
-                groupValue: _historyDays,
-                onValueChanged: (value) {
-                  if (_historyDays == value) return;
-                  setState(() => _historyDays = value);
-                  app.updateField((profile) {
-                    profile.calorieHistoryDays = value;
-                  });
-                },
-                children: {
-                  for (final days in _historyDayOptions)
-                    days: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      child: Text('$days'),
-                    ),
-                },
-              ),
+              _buildHistoryRangeSelector(app, theme, appTheme),
             ],
           ),
-          const SizedBox(height: 8),
-          Expanded(
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 82,
             child: hasData
                 ? _CalorieHistoryChart(
                     points: points,
                     lineColor: theme.colorScheme.primary,
+                    targetMin: targetRange?[0].toDouble(),
+                    targetMax: targetRange?[1].toDouble(),
+                    targetLabel: targetLabel,
                   )
                 : Center(
                     child: Text(
@@ -576,7 +743,7 @@ class _LogScreenState extends State<LogScreen> {
                     ),
                   ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -586,6 +753,29 @@ class _LogScreenState extends State<LogScreen> {
               Text(dateFormat.format(points.last.date),
                   style: AppTextStyles.caption(context)
                       .copyWith(color: Colors.black45)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Divider(height: 1, color: Colors.black12.withOpacity(0.6)),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _historySummaryTitle(t),
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _historySummaryText(app, t),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.body(context)
+                      .copyWith(fontSize: 12, color: Colors.black54),
+                ),
+              ),
             ],
           ),
         ],
@@ -1138,10 +1328,16 @@ class _CalorieHistoryChart extends StatelessWidget {
   const _CalorieHistoryChart({
     required this.points,
     required this.lineColor,
+    this.targetMin,
+    this.targetMax,
+    this.targetLabel,
   });
 
   final List<_HistoryPoint> points;
   final Color lineColor;
+  final double? targetMin;
+  final double? targetMax;
+  final String? targetLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -1155,8 +1351,13 @@ class _CalorieHistoryChart extends StatelessWidget {
             : 0.0;
         return CustomPaint(
           size: Size(width, height),
-          painter:
-              _CalorieHistoryPainter(points: points, lineColor: lineColor),
+          painter: _CalorieHistoryPainter(
+            points: points,
+            lineColor: lineColor,
+            targetMin: targetMin,
+            targetMax: targetMax,
+            targetLabel: targetLabel,
+          ),
         );
       },
     );
@@ -1167,10 +1368,16 @@ class _CalorieHistoryPainter extends CustomPainter {
   _CalorieHistoryPainter({
     required this.points,
     required this.lineColor,
+    this.targetMin,
+    this.targetMax,
+    this.targetLabel,
   });
 
   final List<_HistoryPoint> points;
   final Color lineColor;
+  final double? targetMin;
+  final double? targetMax;
+  final String? targetLabel;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1193,57 +1400,226 @@ class _CalorieHistoryPainter extends CustomPainter {
     final maxY = maxValue + paddingValue;
     final chartRect = Rect.fromLTWH(
       6,
-      6,
+      4,
       size.width - 12,
-      size.height - 12,
+      size.height - 10,
     );
 
     final xStep = points.length > 1
         ? chartRect.width / (points.length - 1)
         : 0.0;
 
-    final path = Path();
-    final dots = <Offset>[];
-    var started = false;
+    final segments = <List<Offset>>[];
+    var current = <Offset>[];
     for (var i = 0; i < points.length; i++) {
       final value = points[i].value;
       if (value == null) {
-        started = false;
+        if (current.isNotEmpty) {
+          segments.add(current);
+          current = <Offset>[];
+        }
         continue;
       }
       final x = chartRect.left + xStep * i;
       final t = ((value - minY) / (maxY - minY)).clamp(0.0, 1.0);
       final y = chartRect.bottom - t * chartRect.height;
-      final point = Offset(x, y);
-      if (!started) {
-        path.moveTo(point.dx, point.dy);
-        started = true;
-      } else {
-        path.lineTo(point.dx, point.dy);
-      }
-      dots.add(point);
+      current.add(Offset(x, y));
     }
+    if (current.isNotEmpty) segments.add(current);
+
+    final areaPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          lineColor.withOpacity(0.28),
+          lineColor.withOpacity(0.0),
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(chartRect)
+      ..style = PaintingStyle.fill;
 
     final linePaint = Paint()
       ..color = lineColor
-      ..strokeWidth = 2
+      ..strokeWidth = 3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
-    final dotPaint = Paint()
+    for (final segment in segments) {
+      if (segment.length == 1) {
+        canvas.drawCircle(segment.first, 3, linePaint..style = PaintingStyle.fill);
+        linePaint.style = PaintingStyle.stroke;
+        continue;
+      }
+      final path = _smoothPath(segment);
+      final areaPath = Path.from(path)
+        ..lineTo(segment.last.dx, chartRect.bottom)
+        ..lineTo(segment.first.dx, chartRect.bottom)
+        ..close();
+      canvas.drawPath(areaPath, areaPaint);
+      canvas.drawPath(path, linePaint);
+    }
+
+    _drawTargetLines(canvas, chartRect, minY, maxY);
+
+    _drawHighLowLabels(canvas, chartRect, minY, maxY);
+  }
+
+  void _drawTargetLines(
+      Canvas canvas, Rect chartRect, double minY, double maxY) {
+    if (targetMin == null || targetMax == null) return;
+    final paint = Paint()
+      ..color = Colors.black26
+      ..strokeWidth = 1;
+    final minT = ((targetMin! - minY) / (maxY - minY)).clamp(0.0, 1.0);
+    final maxT = ((targetMax! - minY) / (maxY - minY)).clamp(0.0, 1.0);
+    final yMin = chartRect.bottom - minT * chartRect.height;
+    final yMax = chartRect.bottom - maxT * chartRect.height;
+    _drawDashedLine(
+        canvas, Offset(chartRect.left, yMin), Offset(chartRect.right, yMin), paint);
+    _drawDashedLine(
+        canvas, Offset(chartRect.left, yMax), Offset(chartRect.right, yMax), paint);
+
+    if (targetLabel == null) return;
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: targetLabel,
+        style: const TextStyle(
+          fontSize: 11,
+          color: Colors.black45,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: chartRect.width);
+    final labelY =
+        ((yMin + yMax) / 2) - textPainter.height / 2;
+    textPainter.paint(canvas, Offset(chartRect.left, labelY));
+  }
+
+  void _drawHighLowLabels(
+      Canvas canvas, Rect chartRect, double minY, double maxY) {
+    double? minValue;
+    double? maxValue;
+    int? minIndex;
+    int? maxIndex;
+    for (var i = 0; i < points.length; i++) {
+      final value = points[i].value;
+      if (value == null) continue;
+      if (minValue == null || value < minValue!) {
+        minValue = value;
+        minIndex = i;
+      }
+      if (maxValue == null || value > maxValue!) {
+        maxValue = value;
+        maxIndex = i;
+      }
+    }
+    if (minValue == null || maxValue == null) return;
+    final xStep = points.length > 1
+        ? chartRect.width / (points.length - 1)
+        : 0.0;
+    final minT = ((minValue! - minY) / (maxY - minY)).clamp(0.0, 1.0);
+    final maxT = ((maxValue! - minY) / (maxY - minY)).clamp(0.0, 1.0);
+    final minPoint = Offset(
+      chartRect.left + xStep * (minIndex ?? 0),
+      chartRect.bottom - minT * chartRect.height,
+    );
+    final maxPoint = Offset(
+      chartRect.left + xStep * (maxIndex ?? 0),
+      chartRect.bottom - maxT * chartRect.height,
+    );
+
+    final fillPaint = Paint()
       ..color = lineColor
       ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
 
-    canvas.drawPath(path, linePaint);
-    for (final dot in dots) {
-      canvas.drawCircle(dot, 3, dotPaint);
+    void drawPoint(Offset p) {
+      canvas.drawCircle(p, 5, fillPaint);
+      canvas.drawCircle(p, 5, strokePaint);
+    }
+
+    drawPoint(maxPoint);
+    if (minIndex != maxIndex) drawPoint(minPoint);
+
+    _drawValueLabel(canvas, chartRect, maxPoint, maxValue!.round().toString(),
+        isAbove: true);
+    if (minIndex != maxIndex) {
+      _drawValueLabel(canvas, chartRect, minPoint,
+          minValue!.round().toString(),
+          isAbove: false);
+    }
+  }
+
+  void _drawValueLabel(Canvas canvas, Rect chartRect, Offset point,
+      String text,
+      {required bool isAbove}) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          fontSize: 11,
+          color: Colors.black87,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    var dx = point.dx - painter.width / 2;
+    dx = dx.clamp(chartRect.left, chartRect.right - painter.width);
+    final dy = isAbove
+        ? point.dy - painter.height - 6
+        : point.dy + 6;
+    painter.paint(canvas, Offset(dx, dy));
+  }
+
+  Path _smoothPath(List<Offset> points) {
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
+    if (points.length < 2) return path;
+    for (var i = 0; i < points.length - 1; i++) {
+      final p0 = i == 0 ? points[i] : points[i - 1];
+      final p1 = points[i];
+      final p2 = points[i + 1];
+      final p3 = (i + 2 < points.length) ? points[i + 2] : p2;
+
+      final cp1 = Offset(
+        p1.dx + (p2.dx - p0.dx) / 6,
+        p1.dy + (p2.dy - p0.dy) / 6,
+      );
+      final cp2 = Offset(
+        p2.dx - (p3.dx - p1.dx) / 6,
+        p2.dy - (p3.dy - p1.dy) / 6,
+      );
+      path.cubicTo(cp1.dx, cp1.dy, cp2.dx, cp2.dy, p2.dx, p2.dy);
+    }
+    return path;
+  }
+
+  void _drawDashedLine(
+      Canvas canvas, Offset start, Offset end, Paint paint) {
+    const dashWidth = 4.0;
+    const dashGap = 4.0;
+    final distance = (end.dx - start.dx).abs();
+    var x = start.dx;
+    while (x < start.dx + distance) {
+      final x2 = math.min(x + dashWidth, start.dx + distance);
+      canvas.drawLine(Offset(x, start.dy), Offset(x2, start.dy), paint);
+      x += dashWidth + dashGap;
     }
   }
 
   @override
   bool shouldRepaint(covariant _CalorieHistoryPainter oldDelegate) {
     if (oldDelegate.lineColor != lineColor) return true;
+    if (oldDelegate.targetMin != targetMin ||
+        oldDelegate.targetMax != targetMax ||
+        oldDelegate.targetLabel != targetLabel) {
+      return true;
+    }
     if (oldDelegate.points.length != points.length) return true;
     for (var i = 0; i < points.length; i++) {
       final oldPoint = oldDelegate.points[i];

@@ -493,6 +493,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calorieHistoryTitle => 'Calorie Trend';
 
   @override
+  String calorieTrendTargetLabel(String min, String max) {
+    return 'Target $min-$max';
+  }
+
+  @override
+  String get calorieTrendSummaryWeekTitle => 'Weekly Summary';
+
+  @override
+  String get calorieTrendSummaryTwoWeeksTitle => '2-Week Summary';
+
+  @override
+  String get calorieTrendSummaryMonthTitle => 'Monthly Summary';
+
+  @override
+  String get calorieTrendCompareLastWeek => 'last week';
+
+  @override
+  String get calorieTrendCompareLastTwoWeeks => 'previous 2 weeks';
+
+  @override
+  String get calorieTrendCompareLastMonth => 'last month';
+
+  @override
+  String get calorieTrendSummaryNoData => 'No data yet.';
+
+  @override
+  String calorieTrendSummaryNoPrev(String avg) {
+    return 'Avg intake $avg kcal, no previous period data.';
+  }
+
+  @override
+  String calorieTrendSummaryHigher(String avg, String period, String pct) {
+    return 'Avg intake $avg kcal, higher than $period by $pct%.';
+  }
+
+  @override
+  String calorieTrendSummaryLower(String avg, String period, String pct) {
+    return 'Avg intake $avg kcal, lower than $period by $pct%.';
+  }
+
+  @override
+  String calorieTrendSummarySame(String avg, String period) {
+    return 'Avg intake $avg kcal, same as $period.';
+  }
+
+  @override
   String get dayCardMealsLabel => 'Meals analyzed:';
 
   @override

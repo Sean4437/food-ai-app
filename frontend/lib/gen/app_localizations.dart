@@ -1029,6 +1029,78 @@ abstract class AppLocalizations {
   /// **'熱量趨勢'**
   String get calorieHistoryTitle;
 
+  /// No description provided for @calorieTrendTargetLabel.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'目標 {min}-{max}'**
+  String calorieTrendTargetLabel(String min, String max);
+
+  /// No description provided for @calorieTrendSummaryWeekTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'本週總結'**
+  String get calorieTrendSummaryWeekTitle;
+
+  /// No description provided for @calorieTrendSummaryTwoWeeksTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'兩週總結'**
+  String get calorieTrendSummaryTwoWeeksTitle;
+
+  /// No description provided for @calorieTrendSummaryMonthTitle.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'本月總結'**
+  String get calorieTrendSummaryMonthTitle;
+
+  /// No description provided for @calorieTrendCompareLastWeek.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'上週'**
+  String get calorieTrendCompareLastWeek;
+
+  /// No description provided for @calorieTrendCompareLastTwoWeeks.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'前兩週'**
+  String get calorieTrendCompareLastTwoWeeks;
+
+  /// No description provided for @calorieTrendCompareLastMonth.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'上月'**
+  String get calorieTrendCompareLastMonth;
+
+  /// No description provided for @calorieTrendSummaryNoData.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'尚無資料'**
+  String get calorieTrendSummaryNoData;
+
+  /// No description provided for @calorieTrendSummaryNoPrev.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'平均攝取 {avg} kcal，尚無前期資料。'**
+  String calorieTrendSummaryNoPrev(String avg);
+
+  /// No description provided for @calorieTrendSummaryHigher.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'平均攝取 {avg} kcal，高於{period} {pct}%。'**
+  String calorieTrendSummaryHigher(String avg, String period, String pct);
+
+  /// No description provided for @calorieTrendSummaryLower.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'平均攝取 {avg} kcal，低於{period} {pct}%。'**
+  String calorieTrendSummaryLower(String avg, String period, String pct);
+
+  /// No description provided for @calorieTrendSummarySame.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'平均攝取 {avg} kcal，與{period}持平。'**
+  String calorieTrendSummarySame(String avg, String period);
+
   /// No description provided for @dayCardMealsLabel.
   ///
   /// In zh_TW, this message translates to:
