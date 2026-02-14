@@ -745,39 +745,46 @@ class _LogScreenState extends State<LogScreen> {
                   ),
           ),
           const SizedBox(height: 2),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(dateFormat.format(points.first.date),
-                  style: AppTextStyles.caption(context)
-                      .copyWith(color: Colors.black45)),
-              Text(dateFormat.format(points.last.date),
-                  style: AppTextStyles.caption(context)
-                      .copyWith(color: Colors.black45)),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Divider(height: 1, color: Colors.black12.withOpacity(0.6)),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _historySummaryTitle(t),
-                style: AppTextStyles.body(context)
-                    .copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _historySummaryText(app, t),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.body(context)
-                      .copyWith(fontSize: 12, color: Colors.black54),
+          Transform.translate(
+            offset: const Offset(0, -10),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(dateFormat.format(points.first.date),
+                        style: AppTextStyles.caption(context)
+                            .copyWith(color: Colors.black45)),
+                    Text(dateFormat.format(points.last.date),
+                        style: AppTextStyles.caption(context)
+                            .copyWith(color: Colors.black45)),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Divider(height: 1, color: Colors.black12.withOpacity(0.6)),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _historySummaryTitle(t),
+                      style: AppTextStyles.body(context)
+                          .copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _historySummaryText(app, t),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.body(context)
+                            .copyWith(fontSize: 12, color: Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
