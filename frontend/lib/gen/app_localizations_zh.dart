@@ -481,6 +481,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dayCardProteinLabel => '蛋白質狀態';
 
   @override
+  String get calorieHistoryTitle => '熱量趨勢';
+
+  @override
   String get dayCardMealsLabel => '??擗嚗?;
 
   @override
@@ -2292,6 +2295,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dayCardProteinLabel => '蛋白質狀態';
+
+  @override
+  String get calorieHistoryTitle => '熱量趨勢';
 
   @override
   String get dayCardMealsLabel => '??擗嚗?;

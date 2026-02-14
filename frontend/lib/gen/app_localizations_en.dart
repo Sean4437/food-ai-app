@@ -490,6 +490,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayCardProteinLabel => 'Protein Status';
 
   @override
+  String get calorieHistoryTitle => 'Calorie Trend';
+
+  @override
   String get dayCardMealsLabel => 'Meals analyzed:';
 
   @override

@@ -181,6 +181,7 @@
   "dayCardDateLabel": "Date:",
   "dayCardCalorieLabel": "Energy Status",
   "dayCardProteinLabel": "Protein Status",
+  "calorieHistoryTitle": "Calorie Trend",
   "dayCardMealsLabel": "Meals analyzed:",
   "dayCardSummaryLabel": "Today's summary",
   "dayCardTomorrowLabel": "Tomorrow's advice",
