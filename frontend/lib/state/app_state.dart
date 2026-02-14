@@ -5530,6 +5530,7 @@ class AppState extends ChangeNotifier {
       'nutrition_value_mode': profile.nutritionValueMode,
       'glow_enabled': profile.glowEnabled,
       'exercise_suggestion_type': profile.exerciseSuggestionType,
+      'calorie_history_days': profile.calorieHistoryDays,
     };
   }
 
@@ -5612,7 +5613,9 @@ class AppState extends ChangeNotifier {
       ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled
       ..exerciseSuggestionType =
           (data['exercise_suggestion_type'] as String?) ??
-              profile.exerciseSuggestionType;
+              profile.exerciseSuggestionType
+      ..calorieHistoryDays =
+          _parseInt(data['calorie_history_days'], profile.calorieHistoryDays);
     _refreshChatAvatarBytes();
     if (profile.nutritionValueMode == 'percent') {
       profile.nutritionValueMode = 'amount';
@@ -5854,6 +5857,7 @@ class UserProfile {
     required this.nutritionValueMode,
     required this.glowEnabled,
     required this.exerciseSuggestionType,
+    required this.calorieHistoryDays,
   });
 
   String name;
@@ -5904,6 +5908,7 @@ class UserProfile {
   String nutritionValueMode;
   bool glowEnabled;
   String exerciseSuggestionType;
+  int calorieHistoryDays;
 
   factory UserProfile.initial() {
     return UserProfile(
@@ -5955,6 +5960,7 @@ class UserProfile {
       nutritionValueMode: 'amount',
       glowEnabled: true,
       exerciseSuggestionType: 'walking',
+      calorieHistoryDays: 7,
     );
   }
 }

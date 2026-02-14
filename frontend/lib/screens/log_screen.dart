@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -28,10 +29,13 @@ class _LogScreenState extends State<LogScreen> {
   int _topCardIndex = 0;
   String _lastJumpKey = '';
   bool _isSnapping = false;
+  int _historyDays = 7;
+  bool _historyDaysLoaded = false;
 
   static const double _dateItemWidth = 78;
   static const double _dateItemGap = 6;
   static const double _topCardHeight = 200;
+  static const List<int> _historyDayOptions = [7, 14, 30];
 
   Future<T?> _showPickerSheet<T>({
     required BuildContext context,
@@ -259,6 +263,17 @@ class _LogScreenState extends State<LogScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_historyDaysLoaded) return;
+    final app = AppStateScope.of(context);
+    final saved = app.profile.calorieHistoryDays;
+    _historyDays =
+        _historyDayOptions.contains(saved) ? saved : _historyDayOptions.first;
+    _historyDaysLoaded = true;
+  }
+
+  @override
   void dispose() {
     _dateController.dispose();
     _topCardController.dispose();
@@ -473,6 +488,107 @@ class _LogScreenState extends State<LogScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  List<_HistoryPoint> _buildHistoryPoints(
+      AppState app, DateTime endDate, int days) {
+    final base = DateTime(endDate.year, endDate.month, endDate.day);
+    final start = base.subtract(Duration(days: days - 1));
+    final points = <_HistoryPoint>[];
+    for (var i = 0; i < days; i++) {
+      final date = start.add(Duration(days: i));
+      final entries = app.entriesForDate(date);
+      final value =
+          entries.isEmpty ? null : app.dailyConsumedCalorieMid(date);
+      points.add(_HistoryPoint(date: date, value: value));
+    }
+    return points;
+  }
+
+  Widget _buildCalorieHistoryCard(
+    BuildContext context,
+    AppState app,
+    AppLocalizations t,
+    AppTheme appTheme,
+    ThemeData theme,
+  ) {
+    final points = _buildHistoryPoints(app, _selectedDate, _historyDays);
+    final hasData = points.any((p) => p.value != null);
+    final dateFormat = DateFormat('M/d');
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: appTheme.card,
+        borderRadius: BorderRadius.circular(appTheme.radiusCard),
+        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                t.calorieHistoryTitle,
+                style: AppTextStyles.title2(context),
+              ),
+              const Spacer(),
+              CupertinoSegmentedControl<int>(
+                groupValue: _historyDays,
+                onValueChanged: (value) {
+                  if (_historyDays == value) return;
+                  setState(() => _historyDays = value);
+                  app.updateField((profile) {
+                    profile.calorieHistoryDays = value;
+                  });
+                },
+                children: {
+                  for (final days in _historyDayOptions)
+                    days: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      child: Text('$days'),
+                    ),
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: hasData
+                ? _CalorieHistoryChart(
+                    points: points,
+                    lineColor: theme.colorScheme.primary,
+                  )
+                : Center(
+                    child: Text(
+                      t.noEntries,
+                      style: AppTextStyles.caption(context)
+                          .copyWith(color: Colors.black54),
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(dateFormat.format(points.first.date),
+                  style: AppTextStyles.caption(context)
+                      .copyWith(color: Colors.black45)),
+              Text(dateFormat.format(points.last.date),
+                  style: AppTextStyles.caption(context)
+                      .copyWith(color: Colors.black45)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -889,6 +1005,8 @@ class _LogScreenState extends State<LogScreen> {
                       );
                       final pages = [
                         overview.calorieCard(context),
+                        _buildCalorieHistoryCard(
+                            context, app, t, appTheme, theme),
                         overview.proteinCard(context),
                         _buildHighlightCard(context, app, t),
                       ];
@@ -1006,5 +1124,123 @@ class _LogScreenState extends State<LogScreen> {
         ),
       ),
     );
+  }
+}
+
+class _HistoryPoint {
+  final DateTime date;
+  final double? value;
+
+  const _HistoryPoint({required this.date, required this.value});
+}
+
+class _CalorieHistoryChart extends StatelessWidget {
+  const _CalorieHistoryChart({
+    required this.points,
+    required this.lineColor,
+  });
+
+  final List<_HistoryPoint> points;
+  final Color lineColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _CalorieHistoryPainter(points: points, lineColor: lineColor),
+    );
+  }
+}
+
+class _CalorieHistoryPainter extends CustomPainter {
+  _CalorieHistoryPainter({
+    required this.points,
+    required this.lineColor,
+  });
+
+  final List<_HistoryPoint> points;
+  final Color lineColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (points.isEmpty) return;
+    final nonNull = points.where((p) => p.value != null).toList();
+    if (nonNull.isEmpty) return;
+
+    var minValue = nonNull.first.value!;
+    var maxValue = nonNull.first.value!;
+    for (final point in nonNull.skip(1)) {
+      final value = point.value!;
+      minValue = math.min(minValue, value);
+      maxValue = math.max(maxValue, value);
+    }
+
+    final range = (maxValue - minValue).abs();
+    final paddingValue =
+        range == 0 ? math.max(10, maxValue * 0.12) : range * 0.2;
+    final minY = minValue - paddingValue;
+    final maxY = maxValue + paddingValue;
+    final chartRect = Rect.fromLTWH(
+      6,
+      6,
+      size.width - 12,
+      size.height - 12,
+    );
+
+    final xStep = points.length > 1
+        ? chartRect.width / (points.length - 1)
+        : 0.0;
+
+    final path = Path();
+    final dots = <Offset>[];
+    var started = false;
+    for (var i = 0; i < points.length; i++) {
+      final value = points[i].value;
+      if (value == null) {
+        started = false;
+        continue;
+      }
+      final x = chartRect.left + xStep * i;
+      final t = ((value - minY) / (maxY - minY)).clamp(0.0, 1.0);
+      final y = chartRect.bottom - t * chartRect.height;
+      final point = Offset(x, y);
+      if (!started) {
+        path.moveTo(point.dx, point.dy);
+        started = true;
+      } else {
+        path.lineTo(point.dx, point.dy);
+      }
+      dots.add(point);
+    }
+
+    final linePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final dotPaint = Paint()
+      ..color = lineColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(path, linePaint);
+    for (final dot in dots) {
+      canvas.drawCircle(dot, 3, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CalorieHistoryPainter oldDelegate) {
+    if (oldDelegate.lineColor != lineColor) return true;
+    if (oldDelegate.points.length != points.length) return true;
+    for (var i = 0; i < points.length; i++) {
+      final oldPoint = oldDelegate.points[i];
+      final newPoint = points[i];
+      if (oldPoint.value != newPoint.value ||
+          !oldPoint.date.isAtSameMomentAs(newPoint.date)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
