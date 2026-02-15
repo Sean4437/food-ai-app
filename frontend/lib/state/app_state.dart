@@ -4189,8 +4189,9 @@ class AppState extends ChangeNotifier {
   }
 
   String? _supabaseRedirectUrl() {
-    if (kIsWeb) return null;
-    return kSupabaseEmailRedirectUrlApp;
+    return kIsWeb
+        ? kSupabaseEmailRedirectUrlWeb
+        : kSupabaseEmailRedirectUrlApp;
   }
 
   Future<void> updateNickname(String nickname) async {
