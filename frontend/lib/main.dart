@@ -130,10 +130,16 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   bool _looksLikeRecovery(Uri uri) {
-    final query = uri.queryParameters;
-    if (query['type'] == 'recovery' || query.containsKey('access_token')) {
-      return true;
+    bool hasRecovery(Map<String, String> params) {
+      if (params['type'] == 'recovery') return true;
+      if (params.containsKey('access_token')) return true;
+      if (params.containsKey('refresh_token')) return true;
+      if (params.containsKey('code')) return true;
+      return false;
     }
+
+    if (hasRecovery(uri.queryParameters)) return true;
+
     final fragment = uri.fragment;
     if (fragment.isEmpty) return false;
     final cleaned = fragment.startsWith('/') ? fragment.substring(1) : fragment;
@@ -141,8 +147,7 @@ class _AuthGateState extends State<AuthGate> {
         cleaned.contains('?') ? cleaned.split('?').last : cleaned;
     if (!queryPart.contains('=')) return false;
     final fragParams = Uri.splitQueryString(queryPart);
-    return fragParams['type'] == 'recovery' ||
-        fragParams.containsKey('access_token');
+    return hasRecovery(fragParams);
   }
 
   Future<void> _handleAuthLink(Uri uri) async {
