@@ -155,10 +155,30 @@ class _AuthGateState extends State<AuthGate> {
     if (_handlingRecoveryLink) return;
     _handlingRecoveryLink = true;
     try {
-      final response =
-          await Supabase.instance.client.auth.getSessionFromUrl(uri);
-      if (response.session != null && mounted) {
-        setState(() => _showResetPassword = true);
+      String? extractCode(Uri target) {
+        final code = target.queryParameters['code'];
+        if (code != null && code.isNotEmpty) return code;
+        final fragment = target.fragment;
+        if (fragment.isEmpty) return null;
+        final cleaned = fragment.startsWith('/') ? fragment.substring(1) : fragment;
+        final queryPart =
+            cleaned.contains('?') ? cleaned.split('?').last : cleaned;
+        if (!queryPart.contains('=')) return null;
+        final fragParams = Uri.splitQueryString(queryPart);
+        final fragCode = fragParams['code'];
+        return fragCode != null && fragCode.isNotEmpty ? fragCode : null;
+      }
+
+      final code = extractCode(uri);
+      if (code != null) {
+        await Supabase.instance.client.auth.exchangeCodeForSession(code);
+        if (mounted) setState(() => _showResetPassword = true);
+      } else {
+        final response =
+            await Supabase.instance.client.auth.getSessionFromUrl(uri);
+        if (response.session != null && mounted) {
+          setState(() => _showResetPassword = true);
+        }
       }
     } catch (_) {
       if (mounted) {
