@@ -836,5 +836,6 @@
   "chatAvatarUnset": "Not set",
   "chatAvatarSheetTitle": "Set chat avatar",
   "chatAvatarPick": "Choose photo",
-  "chatAvatarRemove": "Remove photo"
+  "chatAvatarRemove": "Remove photo",
+  "authResetLinkInvalid": "Reset link is invalid or expired. Please request a new email."
 }

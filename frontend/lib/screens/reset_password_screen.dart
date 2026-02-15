@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import '../design/text_styles.dart';
 import '../widgets/app_background.dart';
 import '../state/app_state.dart';
@@ -20,6 +21,46 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _loading = false;
   bool _showPassword = false;
   bool _showConfirm = false;
+
+  Future<bool> _ensureRecoverySession() async {
+    if (Supabase.instance.client.auth.currentSession != null) return true;
+    if (!kIsWeb) return false;
+
+    Uri? uri = Uri.base;
+    try {
+      String? extractParam(Uri target, String key) {
+        final direct = target.queryParameters[key];
+        if (direct != null && direct.isNotEmpty) return direct;
+        final fragment = target.fragment;
+        if (fragment.isEmpty) return null;
+        final cleaned =
+            fragment.startsWith('/') ? fragment.substring(1) : fragment;
+        final queryPart =
+            cleaned.contains('?') ? cleaned.split('?').last : cleaned;
+        if (!queryPart.contains('=')) return null;
+        final fragParams = Uri.splitQueryString(queryPart);
+        final value = fragParams[key];
+        return (value != null && value.isNotEmpty) ? value : null;
+      }
+
+      final tokenHash =
+          extractParam(uri, 'token') ?? extractParam(uri, 'token_hash');
+      final code = extractParam(uri, 'code');
+
+      if (tokenHash != null) {
+        await Supabase.instance.client.auth.verifyOTP(
+          tokenHash: tokenHash,
+          type: OtpType.recovery,
+        );
+      } else if (code != null) {
+        await Supabase.instance.client.auth.exchangeCodeForSession(code);
+      } else {
+        await Supabase.instance.client.auth.getSessionFromUrl(uri);
+      }
+    } catch (_) {}
+
+    return Supabase.instance.client.auth.currentSession != null;
+  }
 
   bool _isValidPassword(String value) {
     if (value.length < 8) return false;
@@ -59,6 +100,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
     setState(() => _loading = true);
     try {
+      final ready = await _ensureRecoverySession();
+      if (!ready) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(t.authResetLinkInvalid)));
+        return;
+      }
       await Supabase.instance.client.auth
           .updateUser(UserAttributes(password: password));
       if (!mounted) return;

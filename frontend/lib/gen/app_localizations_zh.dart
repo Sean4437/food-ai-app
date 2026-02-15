@@ -1570,6 +1570,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authResetPasswordAction => '更新密碼';
 
   @override
+  String get authResetLinkInvalid => '連結已失效，請重新寄送重設密碼信';
+
+  @override
   String get authResetSent => '?身撖Ⅳ靽∪歇撖嚗??亦?靽∠拳';
 
   @override

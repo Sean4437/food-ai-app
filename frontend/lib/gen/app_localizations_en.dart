@@ -1513,6 +1513,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authResetPasswordAction => 'Update password';
 
   @override
+  String get authResetLinkInvalid =>
+      'Reset link is invalid or expired. Please request a new email.';
+
+  @override
   String get authResetSent => 'Password reset email sent. Check your inbox.';
 
   @override

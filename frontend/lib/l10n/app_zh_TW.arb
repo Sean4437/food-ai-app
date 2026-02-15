@@ -836,5 +836,6 @@
   "authNewPasswordLabel": "新密碼",
   "authPasswordRequired": "請輸入密碼",
   "authPasswordUpdated": "密碼已更新",
-  "authResetPasswordAction": "更新密碼"
+  "authResetPasswordAction": "更新密碼",
+  "authResetLinkInvalid": "連結已失效，請重新寄送重設密碼信"
 }

@@ -2955,6 +2955,12 @@ abstract class AppLocalizations {
   /// **'更新密碼'**
   String get authResetPasswordAction;
 
+  /// No description provided for @authResetLinkInvalid.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'連結已失效，請重新寄送重設密碼信'**
+  String get authResetLinkInvalid;
+
   /// No description provided for @authResetSent.
   ///
   /// In zh_TW, this message translates to:
