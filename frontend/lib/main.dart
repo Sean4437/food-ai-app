@@ -135,6 +135,9 @@ class _AuthGateState extends State<AuthGate> {
       if (params.containsKey('access_token')) return true;
       if (params.containsKey('refresh_token')) return true;
       if (params.containsKey('code')) return true;
+      if (params.containsKey('token') || params.containsKey('token_hash')) {
+        return true;
+      }
       return false;
     }
 
@@ -155,6 +158,31 @@ class _AuthGateState extends State<AuthGate> {
     if (_handlingRecoveryLink) return;
     _handlingRecoveryLink = true;
     try {
+      String? extractParam(Uri target, String key) {
+        final direct = target.queryParameters[key];
+        if (direct != null && direct.isNotEmpty) return direct;
+        final fragment = target.fragment;
+        if (fragment.isEmpty) return null;
+        final cleaned = fragment.startsWith('/') ? fragment.substring(1) : fragment;
+        final queryPart =
+            cleaned.contains('?') ? cleaned.split('?').last : cleaned;
+        if (!queryPart.contains('=')) return null;
+        final fragParams = Uri.splitQueryString(queryPart);
+        final value = fragParams[key];
+        return (value != null && value.isNotEmpty) ? value : null;
+      }
+
+      final tokenHash = extractParam(uri, 'token') ?? extractParam(uri, 'token_hash');
+      final type = extractParam(uri, 'type');
+      if (tokenHash != null && (type == null || type == 'recovery')) {
+        await Supabase.instance.client.auth.verifyOTP(
+          tokenHash: tokenHash,
+          type: OtpType.recovery,
+        );
+        if (mounted) setState(() => _showResetPassword = true);
+        return;
+      }
+
       String? extractCode(Uri target) {
         final code = target.queryParameters['code'];
         if (code != null && code.isNotEmpty) return code;
