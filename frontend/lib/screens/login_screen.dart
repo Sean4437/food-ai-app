@@ -25,6 +25,10 @@ class _LoginScreenState extends State<LoginScreen> {
   int _resendCooldown = 0;
   DateTime? _lastAuthAttempt;
   Timer? _resendTimer;
+  String? _inlineEmailError;
+  String? _inlinePasswordError;
+  String? _bannerMessage;
+  bool _bannerIsError = false;
 
   @override
   void initState() {
@@ -93,10 +97,43 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _showBanner(String message, {bool isError = false}) {
+    setState(() {
+      _bannerMessage = message;
+      _bannerIsError = isError;
+    });
+  }
+
+  void _clearBanner() {
+    if (_bannerMessage == null) return;
+    setState(() {
+      _bannerMessage = null;
+      _bannerIsError = false;
+    });
+  }
+
+  void _setInlineEmailError(String? message) {
+    setState(() => _inlineEmailError = message);
+  }
+
+  void _setInlinePasswordError(String? message) {
+    setState(() => _inlinePasswordError = message);
+  }
+
+  void _clearInlineErrors() {
+    if (_inlineEmailError == null && _inlinePasswordError == null) return;
+    setState(() {
+      _inlineEmailError = null;
+      _inlinePasswordError = null;
+    });
+  }
+
   Future<void> _submit() async {
     if (_loading) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
+    _clearBanner();
+    _clearInlineErrors();
     if (_lastAuthAttempt != null &&
         DateTime.now().difference(_lastAuthAttempt!) < const Duration(seconds: 2)) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authTooManyAttempts)));
@@ -108,20 +145,23 @@ class _LoginScreenState extends State<LoginScreen> {
     final confirm = _confirmController.text;
     final nickname = _nicknameController.text.trim();
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailRequired)));
+      _setInlineEmailError(t.authEmailRequired);
       return;
     }
     if (!_isValidEmail(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailInvalid)));
+      _setInlineEmailError(t.authEmailInvalid);
       return;
     }
-    if (password.isEmpty) return;
+    if (password.isEmpty) {
+      _setInlinePasswordError(t.authPasswordRequired);
+      return;
+    }
     if (_isSignUp && !_isValidPassword(password)) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authPasswordInvalid)));
+      _setInlinePasswordError(t.authPasswordInvalid);
       return;
     }
     if (_isSignUp && password != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authPasswordMismatch)));
+      _setInlinePasswordError(t.authPasswordMismatch);
       return;
     }
     if (_isSignUp && nickname.isEmpty) {
@@ -149,7 +189,11 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (err) {
       if (mounted) {
         final message = _formatAuthError(err, t, isSignUp: _isSignUp);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        if (!_isSignUp && message == t.authLoginInvalid) {
+          _setInlinePasswordError(message);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        }
         if (!_isSignUp && message == t.authEmailNotVerified) {
           setState(() {
             _showVerifyPanel = true;
@@ -181,9 +225,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_loading || _resendCooldown > 0) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
+    _clearBanner();
+    _clearInlineErrors();
     final email = _emailController.text.trim();
     if (email.isEmpty || !_isValidEmail(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailInvalid)));
+      _setInlineEmailError(t.authEmailInvalid);
       return;
     }
     setState(() => _loading = true);
@@ -209,24 +255,26 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_loading) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
+    _clearBanner();
+    _clearInlineErrors();
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailRequired)));
+      _setInlineEmailError(t.authEmailRequired);
       return;
     }
     if (!_isValidEmail(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authEmailInvalid)));
+      _setInlineEmailError(t.authEmailInvalid);
       return;
     }
     setState(() => _loading = true);
     try {
       await app.resetSupabasePassword(email);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authResetSent)));
+        _showBanner(t.authResetSent, isError: false);
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authResetFailed)));
+        _showBanner(t.authResetFailed, isError: true);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -274,15 +322,56 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
                       textAlign: TextAlign.center,
                     ),
+                    if (_bannerMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: _bannerIsError
+                              ? const Color(0xFFFFE7E5)
+                              : const Color(0xFFE6F6EF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _bannerIsError
+                                ? const Color(0xFFF3B3AC)
+                                : const Color(0xFFBDE4D1),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _bannerMessage ?? '',
+                                style: AppTextStyles.caption(context).copyWith(
+                                  color: _bannerIsError
+                                      ? const Color(0xFFB42318)
+                                      : const Color(0xFF1E7A53),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: _clearBanner,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       enabled: !_loading,
+                      onChanged: (_) {
+                        if (_inlineEmailError != null) {
+                          _setInlineEmailError(null);
+                        }
+                      },
                       decoration: InputDecoration(
                         labelText: t.authEmailLabel,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        errorText: _inlineEmailError,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -290,11 +379,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       obscureText: !_showPassword,
                       enabled: !_loading,
+                      onChanged: (_) {
+                        if (_inlinePasswordError != null) {
+                          _setInlinePasswordError(null);
+                        }
+                      },
                       decoration: InputDecoration(
                         labelText: t.authPasswordLabel,
                         helperText: _isSignUp ? t.authPasswordRule : null,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        errorText: _inlinePasswordError,
                         suffixIcon: IconButton(
                           icon: Text(_showPassword ? '🙈' : '👁️'),
                           onPressed: _loading ? null : () => setState(() => _showPassword = !_showPassword),
@@ -317,6 +412,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _confirmController,
                         obscureText: !_showConfirm,
                         enabled: !_loading,
+                        onChanged: (_) {
+                          if (_inlinePasswordError != null) {
+                            _setInlinePasswordError(null);
+                          }
+                        },
                         decoration: InputDecoration(
                           labelText: t.authConfirmPasswordLabel,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
