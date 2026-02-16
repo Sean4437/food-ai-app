@@ -419,16 +419,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return t.syncRequireLogin;
     }
     if (text.contains('storage_upload_failed')) {
-      return '${t.syncError}: ??銝憭望?';
+      return '${t.syncError}: failed to upload data';
     }
     if (text.contains('sync_meta_write_failed')) {
-      return '${t.syncError}: ?郊??神?亙仃??;
+      return '${t.syncError}: failed to write sync metadata';
     }
     if (text.contains('PGRST') || text.contains('Postgrest')) {
-      return '${t.syncError}: 鞈?摨怠?甇亙仃??;
+      return '${t.syncError}: server error (PostgREST)';
     }
     if (text.contains('SocketException') || text.contains('TimeoutException') || text.contains('timeout')) {
-      return '${t.syncError}: 蝬脰楝???銝帘摰??暹?';
+      return '${t.syncError}: network timeout';
     }
     return '${t.syncError}: $text';
   }
@@ -438,17 +438,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isZh = locale.languageCode.startsWith('zh');
     if (isZh) {
       final parts = <String>[];
-      if (report.pushedMeals > 0) parts.add('銝擗? ${report.pushedMeals}');
-      if (report.pushedMealDeletes > 0) parts.add('?芷擗? ${report.pushedMealDeletes}');
-      if (report.pushedCustomFoods > 0) parts.add('銝?芾?憌 ${report.pushedCustomFoods}');
-      if (report.pushedCustomDeletes > 0) parts.add('?芷?芾?憌 ${report.pushedCustomDeletes}');
-      if (report.pushedSettings > 0) parts.add('銝閮剖? ${report.pushedSettings}');
-      if (report.pulledMeals > 0) parts.add('銝?擗? ${report.pulledMeals}');
-      if (report.pulledMealDeletes > 0) parts.add('銝??芷擗? ${report.pulledMealDeletes}');
-      if (report.pulledCustomFoods > 0) parts.add('銝??芾?憌 ${report.pulledCustomFoods}');
-      if (report.pulledCustomDeletes > 0) parts.add('銝??芷?芾?憌 ${report.pulledCustomDeletes}');
-      if (report.pulledSettings > 0) parts.add('銝?閮剖? ${report.pulledSettings}');
-      return parts.join('??);
+      if (report.pushedMeals > 0) parts.add('上傳餐點 ${report.pushedMeals}');
+      if (report.pushedMealDeletes > 0) parts.add('刪除餐點 ${report.pushedMealDeletes}');
+      if (report.pushedCustomFoods > 0) parts.add('上傳自訂食物 ${report.pushedCustomFoods}');
+      if (report.pushedCustomDeletes > 0) parts.add('刪除自訂食物 ${report.pushedCustomDeletes}');
+      if (report.pushedSettings > 0) parts.add('上傳設定 ${report.pushedSettings}');
+      if (report.pulledMeals > 0) parts.add('下載餐點 ${report.pulledMeals}');
+      if (report.pulledMealDeletes > 0) parts.add('下載餐點刪除 ${report.pulledMealDeletes}');
+      if (report.pulledCustomFoods > 0) parts.add('下載自訂食物 ${report.pulledCustomFoods}');
+      if (report.pulledCustomDeletes > 0) parts.add('下載自訂刪除 ${report.pulledCustomDeletes}');
+      if (report.pulledSettings > 0) parts.add('下載設定 ${report.pulledSettings}');
+      return parts.join('、');
     }
     final parts = <String>[];
     if (report.pushedMeals > 0) parts.add('upload meals ${report.pushedMeals}');
