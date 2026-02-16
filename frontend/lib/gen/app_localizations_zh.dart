@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -9,470 +9,470 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => '憌脤? AI MVP';
+  String get appTitle => '飲食 AI MVP';
 
   @override
-  String get takePhoto => '?蝝??;
+  String get takePhoto => '拍照紀錄';
 
   @override
-  String get uploadPhoto => '銝?抒?';
+  String get uploadPhoto => '上傳照片';
 
   @override
-  String get quickAdd => '敹恍憓??芸???嚗?;
+  String get quickAdd => '快速新增（自動分餐）';
 
   @override
-  String get breakfast => '?拚?';
+  String get breakfast => '早餐';
 
   @override
-  String get brunch => '?拙?擗?;
+  String get brunch => '早午餐';
 
   @override
-  String get lunch => '銝剝?';
+  String get lunch => '中餐';
 
   @override
-  String get afternoonTea => '銝???;
+  String get afternoonTea => '下午茶';
 
   @override
-  String get dinner => '??';
+  String get dinner => '晚餐';
 
   @override
-  String get lateSnack => '瘨?';
+  String get lateSnack => '消夜';
 
   @override
-  String get other => '?嗡?';
+  String get other => '其他';
 
   @override
-  String get timeLabel => '??';
+  String get timeLabel => '時間';
 
   @override
-  String get editTime => '靽格??';
+  String get editTime => '修改時間';
 
   @override
-  String get noEntries => '撠蝝??;
+  String get noEntries => '尚無紀錄';
 
   @override
-  String get mealTotal => '?祇?隡啗??梢?';
+  String get mealTotal => '本餐估計熱量';
 
   @override
-  String get mealSummaryTitle => '???';
+  String get mealSummaryTitle => '菜色摘要';
 
   @override
-  String get todayMeals => '隞擗?';
+  String get todayMeals => '今日餐點';
 
   @override
   String itemsCount(int count) {
-    return '$count 蝑?;
+    return '$count 筆';
   }
 
   @override
-  String get captureTitle => '?蝝??;
+  String get captureTitle => '拍照紀錄';
 
   @override
-  String get captureHint => '??雿迤?典???暺??;
+  String get captureHint => '拍下你正在吃的餐點即可';
 
   @override
-  String get optionalNoteLabel => '鋆?隤芣?嚗?賂?';
+  String get optionalNoteLabel => '補充說明（可選）';
 
   @override
-  String get notePlaceholder => '靘?嚗?????葆韏?;
+  String get notePlaceholder => '例如：只吃一半、打包帶走';
 
   @override
-  String get recentPhotos => '?餈??;
+  String get recentPhotos => '最近照片';
 
   @override
-  String get noPhotos => '撠?啣??抒?';
+  String get noPhotos => '尚未新增照片';
 
   @override
-  String get analysisTitle => '擗???';
+  String get analysisTitle => '餐點分析';
 
   @override
-  String get analysisEmpty => '?????摰對???銝撘萄';
+  String get analysisEmpty => '還沒有分析內容，先拍一張吧';
 
   @override
-  String get foodNameLabel => '憌?迂';
+  String get foodNameLabel => '食物名稱';
 
   @override
-  String get editFoodName => '靽格憌?迂';
+  String get editFoodName => '修改食物名稱';
 
   @override
-  String get reanalyzeLabel => '???';
+  String get reanalyzeLabel => '重新分析';
 
   @override
-  String get addLabel => '鋆?璅內';
+  String get addLabel => '補充標示';
 
   @override
-  String get removeLabel => '蝘駁璅內';
+  String get removeLabel => '移除標示';
 
   @override
-  String get labelInfoTitle => '?內鞈?';
+  String get labelInfoTitle => '标示資訊';
 
   @override
-  String get labelSummaryFallback => '撌脫?冽?蝷箄?閮?;
+  String get labelSummaryFallback => '已採用標示資訊';
 
   @override
-  String get customTabTitle => '?芾?蝢?;
+  String get customTabTitle => '自訂義';
 
   @override
-  String get customAdd => '??芾?蝢?;
+  String get customAdd => '加入自訂義';
 
   @override
-  String get customAdded => '撌脣??亥閮儔';
+  String get customAdded => '已加入自訂義';
 
   @override
-  String get customEmpty => '?桀?瘝??芾?蝢拚???;
+  String get customEmpty => '目前沒有自訂義項目';
 
   @override
-  String get customSelectTitle => '?豢??芾?蝢?;
+  String get customSelectTitle => '選擇自訂義';
 
   @override
-  String get customConfirmTitle => '蝣箄?擗????;
+  String get customConfirmTitle => '確認餐別與時間';
 
   @override
-  String get customConfirmDate => '?交?';
+  String get customConfirmDate => '日期';
 
   @override
-  String get customConfirmTime => '??';
+  String get customConfirmTime => '時間';
 
   @override
-  String get customConfirmMealType => '擗';
+  String get customConfirmMealType => '餐別';
 
   @override
-  String get customUse => '雿輻?芾?蝢?;
+  String get customUse => '使用自訂義';
 
   @override
-  String get customUseSaved => '撌脣摮閮儔擗?';
+  String get customUseSaved => '已儲存自訂義餐點';
 
   @override
-  String get customCountUnit => '蝑?;
+  String get customCountUnit => '筆';
 
   @override
-  String get customEditTitle => '蝺刻摩?芾?蝢?;
+  String get customEditTitle => '編輯自訂義';
 
   @override
-  String get customChangePhoto => '?湔??抒?';
+  String get customChangePhoto => '更換照片';
 
   @override
-  String get customSummaryLabel => '???';
+  String get customSummaryLabel => '菜色摘要';
 
   @override
-  String get customSuggestionLabel => '撱箄降';
+  String get customSuggestionLabel => '建議';
 
   @override
-  String get customDeleteTitle => '?芷?芾?蝢?;
+  String get customDeleteTitle => '刪除自訂義';
 
   @override
-  String get customDeleteConfirm => '蝣箏??芷?閮儔嚗?;
+  String get customDeleteConfirm => '確定刪除這個自訂義？';
 
   @override
-  String get unknownFood => '?芸??暺?;
+  String get unknownFood => '未命名餐點';
 
   @override
-  String get dietitianPrefix => '撱箄降嚗?;
+  String get dietitianPrefix => '建議：';
 
   @override
-  String get dietitianBalanced => '?湧??﹛嚗雁??胯?;
+  String get dietitianBalanced => '整體均衡，維持即可。';
 
   @override
-  String get dietitianProteinLow => '?鞈芸?雿?撱箄降鋆?擳???;
+  String get dietitianProteinLow => '蛋白質偏低，建議補豆魚蛋肉。';
 
   @override
-  String get dietitianFatHigh => '瘝寡???嚗?銝擗?瘛∪?瘝嫘?;
+  String get dietitianFatHigh => '油脂偏高，下一餐清淡少油。';
 
   @override
-  String get dietitianCarbHigh => '蝣單偌??嚗蜓憌???;
+  String get dietitianCarbHigh => '碳水偏多，主食減量。';
 
   @override
-  String get dietitianSodiumHigh => '???擃?皜?皝臬???撌亙???;
+  String get dietitianSodiumHigh => '鈉含量偏高，減少湯底與加工品。';
 
   @override
-  String get multiItemsLabel => '憭?憿?;
+  String get multiItemsLabel => '多品项';
 
   @override
-  String get goalAdviceLoseFat => '隞交???格?嚗?銝擗誑?鞈芾??祈??箔蜓??;
+  String get goalAdviceLoseFat => '以減脂為目標，下一餐以蛋白質與蔬菜為主。';
 
   @override
-  String get goalAdviceMaintain => '隞亦雁?銝鳴?瘜冽?隞賡???銵～?;
+  String get goalAdviceMaintain => '以維持為主，注意份量與均衡。';
 
   @override
-  String get overallLabel => '?湧??斗';
+  String get overallLabel => '整體判斷';
 
   @override
-  String get calorieLabel => '?梢????;
+  String get calorieLabel => '熱量區間';
 
   @override
-  String get editCalorieTitle => '蝺刻摩?梢?';
+  String get editCalorieTitle => '編輯熱量';
 
   @override
-  String get editCalorieHint => '靘? 450-600 kcal';
+  String get editCalorieHint => '例如 450-600 kcal';
 
   @override
-  String get editCalorieClear => '皜';
+  String get editCalorieClear => '清除';
 
   @override
-  String get macroLabel => '銝之??';
+  String get macroLabel => '三大營養';
 
   @override
-  String get levelLow => '雿?;
+  String get levelLow => '低';
 
   @override
-  String get levelMedium => '銝?;
+  String get levelMedium => '中';
 
   @override
-  String get levelHigh => '擃?;
+  String get levelHigh => '高';
 
   @override
   String get statusOk => 'OK';
 
   @override
-  String get statusWarn => '??';
+  String get statusWarn => '偏多';
 
   @override
-  String get statusOver => '??;
+  String get statusOver => '爆';
 
   @override
-  String get tagOily => '?硃';
+  String get tagOily => '偏油';
 
   @override
-  String get tagProteinOk => '?鞈芾雲';
+  String get tagProteinOk => '蛋白質足';
 
   @override
-  String get tagProteinLow => '?鞈芯?頞?;
+  String get tagProteinLow => '蛋白質不足';
 
   @override
-  String get tagCarbHigh => '蝣單偌??';
+  String get tagCarbHigh => '碳水偏多';
 
   @override
   String get tagOk => 'OK';
 
   @override
-  String get nextMealTitle => '銝?擗遣霅唳獐??;
+  String get nextMealTitle => '下一餐建議怎麼吃';
 
   @override
-  String get nextMealSectionTitle => '銝?擗遣霅唳獐??;
+  String get nextMealSectionTitle => '下一餐建議怎麼吃';
 
   @override
-  String get noLateSnackSelfCook => '銝遣霅唳?憭??交??皜僖?祈?撠遢';
+  String get noLateSnackSelfCook => '不建議消夜；若想吃，清湯蔬菜小份';
 
   @override
-  String get noLateSnackConvenience => '銝遣霅唳?憭??交???∠?鞊撚??隞賣???;
+  String get noLateSnackConvenience => '不建議消夜；若想吃，無糖豆漿或小份沙拉';
 
   @override
-  String get noLateSnackBento => '銝遣霅唳?憭??交???遢?祈?靘輻';
+  String get noLateSnackBento => '不建議消夜；若想吃，半份蔬菜便當';
 
   @override
-  String get noLateSnackOther => '銝遣霅唳?憭??交??撠?瘞湔??喳';
+  String get noLateSnackOther => '不建議消夜；若想吃，少量水果即可';
 
   @override
-  String get nextMealHint => '?訾????嫣噶?撘停憟?;
+  String get nextMealHint => '選一個最方便的方式就好';
 
   @override
-  String get nextSelfCookLabel => '?芰';
+  String get nextSelfCookLabel => '自煮';
 
   @override
-  String get nextConvenienceLabel => '靘踹摨?;
+  String get nextConvenienceLabel => '便利店';
 
   @override
-  String get nextBentoLabel => '靘輻';
+  String get nextBentoLabel => '便當';
 
   @override
-  String get nextOtherLabel => '?嗡?';
+  String get nextOtherLabel => '其他';
 
   @override
-  String get nextSelfCookHint => '皜/瘞渡嚗??撠硃撠';
+  String get nextSelfCookHint => '清蒸/水煮＋蔬菜，少油少醬';
 
   @override
-  String get nextConvenienceHint => '?嗉????∠?鞊撚/瘝?嚗??貊';
+  String get nextConvenienceHint => '茶葉蛋/無糖豆漿/沙拉，少炸物';
 
   @override
-  String get nextBentoHint => '?ㄞ?????遠';
+  String get nextBentoHint => '半飯、多菜、優先烤或滷';
 
   @override
-  String get nextOtherHint => '瘞湔?/?∠??芣/皜僖';
+  String get nextOtherHint => '水果/無糖優格/清湯';
 
   @override
-  String get mealItemsTitle => '餈??祇?';
+  String get mealItemsTitle => '返回本餐';
 
   @override
-  String get mealTimeSection => '擗活???;
+  String get mealTimeSection => '餐次區間';
 
   @override
-  String get breakfastStartLabel => '?拚???';
+  String get breakfastStartLabel => '早餐開始';
 
   @override
-  String get breakfastEndLabel => '?拚?蝯?';
+  String get breakfastEndLabel => '早餐結束';
 
   @override
-  String get brunchStartLabel => '?拙?擗?憪?;
+  String get brunchStartLabel => '早午餐開始';
 
   @override
-  String get brunchEndLabel => '?拙?擗???;
+  String get brunchEndLabel => '早午餐結束';
 
   @override
-  String get lunchStartLabel => '????';
+  String get lunchStartLabel => '午餐開始';
 
   @override
-  String get lunchEndLabel => '??蝯?';
+  String get lunchEndLabel => '午餐結束';
 
   @override
-  String get afternoonTeaStartLabel => '銝??園?憪?;
+  String get afternoonTeaStartLabel => '下午茶開始';
 
   @override
-  String get afternoonTeaEndLabel => '銝??嗥???;
+  String get afternoonTeaEndLabel => '下午茶結束';
 
   @override
-  String get dinnerStartLabel => '????';
+  String get dinnerStartLabel => '晚餐開始';
 
   @override
-  String get dinnerEndLabel => '??蝯?';
+  String get dinnerEndLabel => '晚餐結束';
 
   @override
-  String get lateSnackStartLabel => '瘨???';
+  String get lateSnackStartLabel => '消夜開始';
 
   @override
-  String get lateSnackEndLabel => '瘨?蝯?';
+  String get lateSnackEndLabel => '消夜結束';
 
   @override
-  String get optionConvenienceTitle => '靘踹??';
+  String get optionConvenienceTitle => '便利商店';
 
   @override
-  String get optionConvenienceDesc => '?貉??/?∠?鞊撚/瘝?嚗??貊';
+  String get optionConvenienceDesc => '選茶葉蛋/無糖豆漿/沙拉，少炸物';
 
   @override
-  String get optionBentoTitle => '靘輻摨?;
+  String get optionBentoTitle => '便當店';
 
   @override
-  String get optionBentoDesc => '?ㄞ???祈????斗?皛?;
+  String get optionBentoDesc => '半飯、多蔬菜、優先選烤或滷';
 
   @override
-  String get optionLightTitle => '皜楚?豢?';
+  String get optionLightTitle => '清淡選擇';
 
   @override
-  String get optionLightDesc => '皜僖??柴??祆?';
+  String get optionLightDesc => '清湯、蒸煮、少醬料';
 
   @override
-  String get summaryTitle => '隞蝮賜?';
+  String get summaryTitle => '今日總結';
 
   @override
-  String get summaryEmpty => '隞予??閮?擗???;
+  String get summaryEmpty => '今天還沒記錄餐點喔';
 
   @override
-  String get summaryOilyCarb => '隞予?硃?４瘞港???';
+  String get summaryOilyCarb => '今天偏油、碳水也偏多';
 
   @override
-  String get summaryOily => '隞予?硃';
+  String get summaryOily => '今天偏油';
 
   @override
-  String get summaryCarb => '隞予蝣單偌??';
+  String get summaryCarb => '今天碳水偏多';
 
   @override
-  String get summaryProteinOk => '?鞈?OK嚗?敺?暺??;
+  String get summaryProteinOk => '蛋白質 OK，記得補點蔬菜';
 
   @override
-  String get summaryNeutral => '隞予????荔?蝜潛?靽?';
+  String get summaryNeutral => '今天狀態不錯，繼續保持';
 
   @override
-  String get summaryBeverageOnly => '隞予?芾???憌脫?';
+  String get summaryBeverageOnly => '今天只記錄了飲料';
 
   @override
-  String get includesBeverages => '?恍ㄡ??;
+  String get includesBeverages => '含飲料';
 
   @override
-  String get proteinIntakeTodayLabel => '隞?鞈?;
+  String get proteinIntakeTodayLabel => '今日蛋白質';
 
   @override
   String proteinIntakeFormat(int consumed, int min, int max) {
-    return '撌脫???${consumed}g / ?格? $min-${max}g';
+    return '已攝取 ${consumed}g / 目標 $min-${max}g';
   }
 
   @override
-  String get smallPortionNote => '隞賡?銝?';
+  String get smallPortionNote => '份量不多';
 
   @override
-  String get mealsCountLabel => '撌脰???;
+  String get mealsCountLabel => '已記錄';
 
   @override
-  String get mealsLabel => '擗?;
+  String get mealsLabel => '餐';
 
   @override
-  String get tabCapture => '?';
+  String get tabCapture => '拍照';
 
   @override
-  String get tabAnalysis => '??';
+  String get tabAnalysis => '分析';
 
   @override
-  String get tabNext => '銝?擗?;
+  String get tabNext => '下一餐';
 
   @override
-  String get tabSummary => '??';
+  String get tabSummary => '摘要';
 
   @override
-  String get tabHome => '擐?';
+  String get tabHome => '首頁';
 
   @override
-  String get tabLog => '蝝??;
+  String get tabLog => '紀錄';
 
   @override
-  String get tabSuggest => '?單?撱箄降';
+  String get tabSuggest => '即拍建議';
 
   @override
-  String get tabCustom => '?芾?蝢?;
+  String get tabCustom => '自訂義';
 
   @override
-  String get tabSettings => '閮剖?';
+  String get tabSettings => '設定';
 
   @override
   String greetingTitle(String name) {
-    return '??$name嚗?憭拐??硃';
+    return '嗨 $name，今天也加油';
   }
 
   @override
   String streakLabel(int count) {
-    return '撌脤??蝝??$count 憭?;
+    return '已連續紀錄 $count 天';
   }
 
   @override
-  String get aiSuggest => 'AI 憌脤?撱箄降';
+  String get aiSuggest => 'AI 飲食建議';
 
   @override
-  String get latestMealTitle => '????擗?';
+  String get latestMealTitle => '剛剛吃的餐點';
 
   @override
-  String get latestMealEmpty => '隞予??閮?擗???;
+  String get latestMealEmpty => '今天還沒記錄餐點喔';
 
   @override
-  String get homeNextMealHint => '暺脣遣霅圈?嚗?銝?????獢?;
+  String get homeNextMealHint => '點進建議頁，挑一個最順手的方案';
 
   @override
-  String get logTitle => '蝝??;
+  String get logTitle => '紀錄';
 
   @override
-  String get logTopMealTitle => '?梢??擃?擗?;
+  String get logTopMealTitle => '熱量最高一餐';
 
   @override
-  String get logTopMealEmpty => '餈?7 憭拙??芣?摰蝝??;
+  String get logTopMealEmpty => '近 7 天尚未有完整紀錄';
 
   @override
   String logRecentDaysTag(String date) {
-    return '餈?7 憭?$date';
+    return '近 7 天 $date';
   }
 
   @override
-  String get logAddMealPrompt => '鋆???擗?;
+  String get logAddMealPrompt => '補記這一餐';
 
   @override
-  String get dailyCalorieRange => '隞?梢???';
+  String get dailyCalorieRange => '今日熱量攝取';
 
   @override
-  String get dayCardTitle => '瘥??';
+  String get dayCardTitle => '每日摘要';
 
   @override
-  String get dayMealsTitle => '餈??祆擗活';
+  String get dayMealsTitle => '返回本日餐次';
 
   @override
-  String get tomorrowAdviceTitle => '?予撱箄降';
+  String get tomorrowAdviceTitle => '明天建議';
 
   @override
-  String get dayCardDateLabel => '?交?嚗?;
+  String get dayCardDateLabel => '日期：';
 
   @override
   String get dayCardCalorieLabel => '能量狀態';
@@ -484,7 +484,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get calorieHistoryTitle => '熱量趨勢';
 
   @override
-  String calorieTrendTargetLabel(String min, String max) {
+  String calorieTrendTargetLabel(Object max, Object min) {
     return '目標 $min-$max';
   }
 
@@ -510,22 +510,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get calorieTrendSummaryNoData => '尚無資料';
 
   @override
-  String calorieTrendSummaryNoPrev(String avg) {
+  String calorieTrendSummaryNoPrev(Object avg) {
     return '平均攝取 $avg kcal，尚無前期資料。';
   }
 
   @override
-  String calorieTrendSummaryHigher(String avg, String period, String pct) {
+  String calorieTrendSummaryHigher(Object avg, Object pct, Object period) {
     return '平均攝取 $avg kcal，高於$period $pct%。';
   }
 
   @override
-  String calorieTrendSummaryLower(String avg, String period, String pct) {
+  String calorieTrendSummaryLower(Object avg, Object pct, Object period) {
     return '平均攝取 $avg kcal，低於$period $pct%。';
   }
 
   @override
-  String calorieTrendSummarySame(String avg, String period) {
+  String calorieTrendSummarySame(Object avg, Object period) {
     return '平均攝取 $avg kcal，與$period持平。';
   }
 
@@ -533,7 +533,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get proteinTrendTitle => '蛋白質趨勢';
 
   @override
-  String proteinTrendTargetLabel(String value) {
+  String proteinTrendTargetLabel(Object value) {
     return '目標 $value g';
   }
 
@@ -541,1018 +541,1360 @@ class AppLocalizationsZh extends AppLocalizations {
   String get proteinTrendSummaryNoData => '尚無資料';
 
   @override
-  String proteinTrendSummaryNoPrev(String avg) {
+  String proteinTrendSummaryNoPrev(Object avg) {
     return '平均攝取 $avg g，尚無前期資料。';
   }
 
   @override
-  String proteinTrendSummaryHigher(String avg, String period, String pct) {
+  String proteinTrendSummaryHigher(Object avg, Object pct, Object period) {
     return '平均攝取 $avg g，高於$period $pct%。';
   }
 
   @override
-  String proteinTrendSummaryLower(String avg, String period, String pct) {
+  String proteinTrendSummaryLower(Object avg, Object pct, Object period) {
     return '平均攝取 $avg g，低於$period $pct%。';
   }
 
   @override
-  String proteinTrendSummarySame(String avg, String period) {
+  String proteinTrendSummarySame(Object avg, Object period) {
     return '平均攝取 $avg g，與$period持平。';
   }
 
   @override
-  String calorieTrendTargetLabel(String min, String max) {
-    return '目標 $min-$max';
-  }
+  String get dayCardMealsLabel => '分析餐數：';
 
   @override
-  String get calorieTrendSummaryWeekTitle => '本週總結';
+  String get dayCardSummaryLabel => '今日總結';
 
   @override
-  String get calorieTrendSummaryTwoWeeksTitle => '兩週總結';
-
-  @override
-  String get calorieTrendSummaryMonthTitle => '本月總結';
-
-  @override
-  String get calorieTrendCompareLastWeek => '上週';
-
-  @override
-  String get calorieTrendCompareLastTwoWeeks => '前兩週';
-
-  @override
-  String get calorieTrendCompareLastMonth => '上月';
-
-  @override
-  String get calorieTrendSummaryNoData => '尚無資料';
-
-  @override
-  String calorieTrendSummaryNoPrev(String avg) {
-    return '平均攝取 $avg kcal，尚無前期資料。';
-  }
-
-  @override
-  String calorieTrendSummaryHigher(String avg, String period, String pct) {
-    return '平均攝取 $avg kcal，高於$period $pct%。';
-  }
-
-  @override
-  String calorieTrendSummaryLower(String avg, String period, String pct) {
-    return '平均攝取 $avg kcal，低於$period $pct%。';
-  }
-
-  @override
-  String calorieTrendSummarySame(String avg, String period) {
-    return '平均攝取 $avg kcal，與$period持平。';
-  }
-
-  @override
-  String get proteinTrendTitle => '蛋白質趨勢';
-
-  @override
-  String proteinTrendTargetLabel(String value) {
-    return '目標 $value g';
-  }
-
-  @override
-  String get proteinTrendSummaryNoData => '尚無資料';
-
-  @override
-  String proteinTrendSummaryNoPrev(String avg) {
-    return '平均攝取 $avg g，尚無前期資料。';
-  }
-
-  @override
-  String proteinTrendSummaryHigher(String avg, String period, String pct) {
-    return '平均攝取 $avg g，高於$period $pct%。';
-  }
-
-  @override
-  String proteinTrendSummaryLower(String avg, String period, String pct) {
-    return '平均攝取 $avg g，低於$period $pct%。';
-  }
-
-  @override
-  String proteinTrendSummarySame(String avg, String period) {
-    return '平均攝取 $avg g，與$period持平。';
-  }
-
-  @override
-  String get dayCardMealsLabel => '??擗嚗?;
-
-  @override
-  String get dayCardSummaryLabel => '隞蝮賜?';
-
-  @override
-  String get dayCardTomorrowLabel => '?撱箄降';
+  String get dayCardTomorrowLabel => '明日建議';
 
   @override
   String summaryPendingAt(Object time) {
-    return '撠 $time ?Ｙ?蝮賜?';
+    return '將於 $time 產生總結';
   }
 
   @override
   String weekSummaryPendingAt(Object day, Object time) {
-    return '撠 $day $time ?Ｙ?蝮賜?';
+    return '將於 $day $time 產生總結';
   }
 
   @override
-  String get finalizeDay => '??隞蝮賜?';
+  String get finalizeDay => '生成今日總結';
 
   @override
-  String get dishSummaryLabel => '?祇???';
+  String get dishSummaryLabel => '本餐摘要';
 
   @override
-  String get mealCountEmpty => '撠??擗活';
+  String get mealCountEmpty => '尚未分析餐次';
 
   @override
-  String get calorieUnknown => '?桀????摯蝞???;
+  String get calorieUnknown => '目前還沒有估算結果';
 
   @override
-  String get portionLabel => '隞賡?';
+  String get portionLabel => '份量';
 
   @override
-  String get portionFull => '?典?';
+  String get portionFull => '全吃';
 
   @override
-  String get portionHalf => '????;
+  String get portionHalf => '吃一半';
 
   @override
-  String get portionBite => '?芸?撟曉';
+  String get portionBite => '只吃幾口';
 
   @override
-  String get detailTitle => '閰喟敦蝝??;
+  String get detailTitle => '詳細紀錄';
 
   @override
-  String get detailAiLabel => 'AI ?斗隤芣?';
+  String get detailAiLabel => 'AI 判斷說明';
 
   @override
-  String get detailAiEmpty => '撠??鞈?';
+  String get detailAiEmpty => '尚無分析資料';
 
   @override
-  String get detailWhyLabel => '?箔?暻潮見?斗';
+  String get detailWhyLabel => '為什麼這樣判斷';
 
   @override
-  String get suggestTitle => '?單?撱箄降';
+  String get suggestTitle => '即拍建議';
 
   @override
-  String get suggestInstantHint => '??擐砌???嚗策雿???撱箄降';
+  String get suggestInstantHint => '拍完馬上分析，給你這餐吃法建議';
 
   @override
-  String get suggestInstantStart => '???';
+  String get suggestInstantStart => '開始拍照';
 
   @override
-  String get suggestInstantRetake => '??銝撘?;
+  String get suggestInstantRetake => '拍下一張';
 
   @override
-  String get suggestInstantPickGallery => '敺蝪輸??;
+  String get suggestInstantPickGallery => '從相簿選擇';
 
   @override
-  String get suggestInstantNowEat => '撱箄降??隞暻?;
+  String get suggestInstantNowEat => '建議我吃什麼';
 
   @override
-  String get suggestInstantNameHint => '頛詨憌?迂嚗?????臭誑嚗?;
+  String get suggestInstantNameHint => '輸入食物名稱（沒有照片也可以）';
 
   @override
-  String get suggestInstantNameSubmit => '?';
+  String get suggestInstantNameSubmit => '送出';
 
   @override
-  String get nameAnalyzeStart => '甇???';
+  String get nameAnalyzeStart => '正在分析';
 
   @override
-  String get nameAnalyzeEmpty => '隢撓?仿??拙?蝔?;
+  String get nameAnalyzeEmpty => '請輸入食物名稱';
 
   @override
-  String get suggestInstantStepDetect => '甇?颲刻?擗?';
+  String get suggestInstantStepDetect => '正在辨識餐點';
 
   @override
-  String get suggestInstantStepEstimate => '隡啁??梢??遢??;
+  String get suggestInstantStepEstimate => '估算熱量與份量';
 
   @override
-  String get suggestInstantStepAdvice => '?Ｙ???撱箄降';
+  String get suggestInstantStepAdvice => '產生吃法建議';
 
   @override
-  String get suggestInstantSavePrompt => '閬摮???';
+  String get suggestInstantSavePrompt => '要儲存這餐嗎？';
 
   @override
-  String get suggestInstantSave => '?脣?';
+  String get suggestInstantSave => '儲存';
 
   @override
-  String get suggestInstantSkipSave => '???脣?';
+  String get suggestInstantSkipSave => '先不儲存';
 
   @override
-  String get suggestInstantAdviceTitle => '餈遢憌????颲末';
+  String get suggestInstantAdviceTitle => '这份食物怎么吃比较好';
 
   @override
-  String get suggestInstantCanEat => '?剝?';
+  String get suggestInstantCanEat => '搭配';
 
   @override
-  String get suggestInstantCanDrink => '?臭誑??;
+  String get suggestInstantCanDrink => '可以喝';
 
   @override
-  String get suggestInstantAvoid => '銝遣霈?;
+  String get suggestInstantAvoid => '不建议';
 
   @override
-  String get suggestInstantAvoidDrink => '銝遣霈桀?';
+  String get suggestInstantAvoidDrink => '不建议喝';
 
   @override
-  String get suggestInstantLimit => '撱箄悅隞賡?';
+  String get suggestInstantLimit => '建议份量';
 
   @override
-  String get suggestInstantDrinkLimit => '撱箄悅隞賡?';
+  String get suggestInstantDrinkLimit => '建议份量';
 
   @override
-  String get suggestInstantDrinkAdviceTitle => '餈擖格?????颲末';
+  String get suggestInstantDrinkAdviceTitle => '这杯饮料怎么喝比较好';
 
   @override
-  String get suggestInstantCanEatInline => '?臭誑????;
+  String get suggestInstantCanEatInline => '可以怎么吃';
 
   @override
-  String get suggestInstantRiskInline => '?航隡??憸?;
+  String get suggestInstantRiskInline => '可能会有的问题';
 
   @override
-  String get suggestInstantLimitInline => '撱箄悅隞賡?';
+  String get suggestInstantLimitInline => '建议份量';
 
   @override
-  String get suggestInstantEnergyOk => '?舀??;
+  String get suggestInstantEnergyOk => '可接受';
 
   @override
-  String get suggestInstantEnergyHigh => '??';
+  String get suggestInstantEnergyHigh => '偏高';
 
   @override
-  String get suggestInstantMissing => '????????;
+  String get suggestInstantMissing => '還沒有分析結果';
 
   @override
-  String get suggestInstantNonFood => '餈?憟賢?銝憌?塚?閬?閬???甈∴?憒??啣銝?蝞?銋瓷?喟頂嚗???擖踹??伐?';
+  String get suggestInstantNonFood => '这张好像不是食物耶～要不要再拍一次？如果现在不打算吃也没关系，等肚子饿再来～';
 
   @override
-  String get suggestInstantReestimate => '?隡啁?';
+  String get suggestInstantReestimate => '重新估算';
 
   @override
-  String get suggestInstantRecentHint => '撱箄降撌脣???餈?7 憭抵?銝?擗?;
+  String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';
 
   @override
-  String get suggestAutoSaved => '撌脰?摮?;
+  String get suggestAutoSaved => '已自動儲存';
 
   @override
-  String get suggestTodayLabel => '隞?湧??斗';
+  String get suggestTodayLabel => '今日整體判斷';
 
   @override
-  String get suggestTodayHint => '隞予瘝寡???嚗?銝擗?瘛∩?暺?;
+  String get suggestTodayHint => '今天油脂偏高，下一餐清淡一點';
 
   @override
-  String get suggestTodayOilyCarb => '隞予?硃?４瘞港???';
+  String get suggestTodayOilyCarb => '今天偏油、碳水也偏多';
 
   @override
-  String get suggestTodayOily => '隞予?硃嚗?銝擗?瘛∩?暺?;
+  String get suggestTodayOily => '今天偏油，下一餐清淡一點';
 
   @override
-  String get suggestTodayCarb => '隞予蝣單偌??嚗?銝擗?瞉梁?';
+  String get suggestTodayCarb => '今天碳水偏多，下一餐少澱粉';
 
   @override
-  String get suggestTodayOk => '隞予????荔?靽?撠勗末';
+  String get suggestTodayOk => '今天狀態不錯，保持就好';
 
   @override
-  String get logThisMeal => '閮???';
+  String get logThisMeal => '記錄這餐';
 
   @override
-  String get settingsTitle => '閮剖?';
+  String get settingsTitle => '設定';
 
   @override
-  String get profileName => '撠?';
+  String get profileName => '小明';
 
   @override
   String get profileEmail => 'xiaoming123@gmail.com';
 
   @override
-  String get editProfile => '蝺刻摩?犖鞈?';
+  String get editProfile => '編輯個人資料';
 
   @override
-  String get nicknameLabel => '?梁迂';
+  String get nicknameLabel => '暱稱';
 
   @override
-  String get planSection => '閮閮剖?';
+  String get planSection => '計畫設定';
 
   @override
-  String get webTestSectionTitle => 'Web 皜祈岫';
+  String get webTestSectionTitle => 'Web 測試';
 
   @override
-  String get webTestSubscriptionLabel => '皜祈岫閮';
+  String get webTestSubscriptionLabel => '測試訂閱';
 
   @override
-  String get webTestEnabled => '撌脣???;
+  String get webTestEnabled => '已啟用';
 
   @override
-  String get webTestDisabled => '?芸???;
+  String get webTestDisabled => '未啟用';
 
   @override
-  String get webTestPlanMonthly => '??嚗葫閰佗?';
+  String get webTestPlanMonthly => '月訂（測試）';
 
   @override
-  String get webTestPlanYearly => '撟渲?嚗葫閰佗?';
+  String get webTestPlanYearly => '年訂（測試）';
 
   @override
-  String get webTestPlanNone => '?芾???;
+  String get webTestPlanNone => '未訂閱';
 
   @override
-  String get webTestAccessGraceLabel => '撽?撖祇???';
+  String get webTestAccessGraceLabel => '驗證寬限時間';
 
   @override
-  String get webTestAccessGraceDialogTitle => '撽?撖祇???嚗?-168 撠?嚗?;
+  String get webTestAccessGraceDialogTitle => '驗證寬限時間（1-168 小時）';
 
   @override
   String webTestAccessGraceValue(int hours) {
-    return '$hours 撠?';
+    return '$hours 小時';
   }
 
   @override
-  String get accessStatusFailed => '撽?憭望?嚗?蝔??岫';
+  String get accessStatusFailed => '驗證失敗，請稍後再試';
 
   @override
-  String get heightLabel => '頨恍?';
+  String get heightLabel => '身高';
 
   @override
-  String get weightLabel => '擃?';
+  String get weightLabel => '體重';
 
   @override
-  String get ageLabel => '撟湧翩';
+  String get ageLabel => '年齡';
 
   @override
-  String get genderLabel => '?批';
+  String get genderLabel => '性別';
 
   @override
-  String get genderUnspecified => '銝?摰?;
+  String get genderUnspecified => '不指定';
 
   @override
-  String get genderMale => '??;
+  String get genderMale => '男';
 
   @override
-  String get genderFemale => '憟?;
+  String get genderFemale => '女';
 
   @override
-  String get genderOther => '?嗡?';
+  String get genderOther => '其他';
 
   @override
   String get bmiLabel => 'BMI';
 
   @override
-  String get bmiUnderweight => '??';
+  String get bmiUnderweight => '偏低';
 
   @override
-  String get bmiNormal => '甇?虜';
+  String get bmiNormal => '正常';
 
   @override
-  String get bmiOverweight => '??';
+  String get bmiOverweight => '偏高';
 
   @override
-  String get bmiObese => '??';
+  String get bmiObese => '過高';
 
   @override
-  String get goalLabel => '?格?';
+  String get goalLabel => '目標';
 
   @override
-  String get goalLoseFat => '皜?????;
+  String get goalLoseFat => '減脂降體脂';
 
   @override
-  String get reminderSection => '??閮剖?';
+  String get reminderSection => '提醒設定';
 
   @override
-  String get reminderTimeNote => '??????擗活?????郊';
+  String get reminderTimeNote => '提醒時間會跟餐次開始時間同步';
 
   @override
-  String get reminderBreakfast => '?????拚?';
+  String get reminderBreakfast => '提醒拍攝早餐';
 
   @override
-  String get reminderLunch => '??????';
+  String get reminderLunch => '提醒拍攝午餐';
 
   @override
-  String get reminderDinner => '??????';
+  String get reminderDinner => '提醒拍攝晚餐';
 
   @override
-  String get subscriptionSection => '閮?隞?;
+  String get subscriptionSection => '訂閱與其他';
 
   @override
-  String get subscriptionPlan => '?桀??寞?';
+  String get subscriptionPlan => '目前方案';
 
   @override
-  String get planMonthly => '皜??冽 \$199/??;
+  String get planMonthly => '減脂周數 \$199/月';
 
   @override
-  String get languageLabel => '?湔?隤?';
+  String get languageLabel => '更換語言';
 
   @override
-  String get langZh => '蝜?銝剜?';
+  String get langZh => '繁體中文';
 
   @override
   String get langEn => 'English';
 
   @override
-  String get cancel => '??';
+  String get cancel => '取消';
 
   @override
-  String get save => '?脣?';
+  String get save => '儲存';
 
   @override
-  String get edit => '蝺刻摩';
+  String get edit => '編輯';
 
   @override
-  String get editDaySummaryTitle => '蝺刻摩隞??';
+  String get editDaySummaryTitle => '編輯今日摘要';
 
   @override
-  String get editMealAdviceTitle => '蝺刻摩銝?擗遣霅?;
+  String get editMealAdviceTitle => '編輯下一餐建議';
 
   @override
-  String get goalMaintain => '蝬剜?擃?';
+  String get goalMaintain => '維持體重';
 
   @override
-  String get planSpeedLabel => '皜??漲';
+  String get planSpeedLabel => '減脂速度';
 
   @override
-  String get adviceStyleSection => '撱箄降憸冽';
+  String get adviceStyleSection => '建議風格';
 
   @override
-  String get toneLabel => '撱箄降隤除';
+  String get toneLabel => '建議語氣';
 
   @override
-  String get personaLabel => '閫閬?';
+  String get personaLabel => '角色視角';
 
   @override
-  String get toneGentle => '皞怠?';
+  String get toneGentle => '溫和';
 
   @override
-  String get toneDirect => '?湔';
+  String get toneDirect => '直接';
 
   @override
-  String get toneEncouraging => '瞈??;
+  String get toneEncouraging => '激勵';
 
   @override
-  String get toneBullet => '皜?璇?';
+  String get toneBullet => '清楚條列';
 
   @override
-  String get toneStrict => '?游';
+  String get toneStrict => '嚴厲';
 
   @override
-  String get personaNutritionist => '??撣?;
+  String get personaNutritionist => '營養師';
 
   @override
-  String get personaCoach => '憭??毀';
+  String get personaCoach => '外食教練';
 
   @override
-  String get personaFriend => '??';
+  String get personaFriend => '朋友';
 
   @override
-  String get personaSystem => '蝎曄陛蝟餌絞';
+  String get personaSystem => '精簡系統';
 
   @override
-  String get summarySettingsSection => '蝮賜?閮剖?';
+  String get summarySettingsSection => '總結設定';
 
   @override
-  String get summaryTimeLabel => '瘥蝮賜?';
+  String get summaryTimeLabel => '每日總結';
 
   @override
-  String get weeklySummaryDayLabel => '瘥蝮賜?';
+  String get weeklySummaryDayLabel => '每周總結';
 
   @override
-  String get weekTopMealTitle => '?祇梁??擃?擗?;
+  String get weekTopMealTitle => '本週熱量最高一餐';
 
   @override
-  String get recentGuidanceTitle => '餈??寥?嚗? 7 憭抬?';
+  String get recentGuidanceTitle => '近期方針（近 7 天）';
 
   @override
-  String get weekSummaryTitle => '?祇梁蜇蝯?;
+  String get weekSummaryTitle => '本週總結';
 
   @override
-  String get nextWeekAdviceTitle => '銝勗遣霅?;
+  String get nextWeekAdviceTitle => '下週建議';
 
   @override
-  String get weekdayMon => '?曹?';
+  String get weekdayMon => '週一';
 
   @override
-  String get weekdayTue => '?曹?';
+  String get weekdayTue => '週二';
 
   @override
-  String get weekdayWed => '?曹?';
+  String get weekdayWed => '週三';
 
   @override
-  String get weekdayThu => '?勗?';
+  String get weekdayThu => '週四';
 
   @override
-  String get weekdayFri => '?曹?';
+  String get weekdayFri => '週五';
 
   @override
-  String get weekdaySat => '?勗';
+  String get weekdaySat => '週六';
 
   @override
-  String get weekdaySun => '?望';
+  String get weekdaySun => '週日';
 
   @override
-  String get planSpeedStable => '蝛拙?';
+  String get planSpeedStable => '穩定';
 
   @override
-  String get planSpeedGentle => '靽?';
+  String get planSpeedGentle => '保守';
 
   @override
-  String get activityLevelLabel => '?身瘣餃???;
+  String get activityLevelLabel => '預設活動量';
 
   @override
-  String get activityLabel => '瘣餃???;
+  String get activityLabel => '活動量';
 
   @override
-  String get activityCardTitle => '隞瘣餃???;
+  String get activityCardTitle => '今日活動量';
 
   @override
-  String get targetCalorieUnknown => '撠隡啗?';
+  String get targetCalorieUnknown => '尚未估計';
 
   @override
-  String get activitySedentary => '銋?';
+  String get activitySedentary => '久坐';
 
   @override
-  String get activityLight => '頛?';
+  String get activityLight => '輕量';
 
   @override
-  String get activityModerate => '銝剖漲';
+  String get activityModerate => '中度';
 
   @override
-  String get activityHigh => '擃?;
+  String get activityHigh => '高';
 
   @override
-  String get exerciseNoExercise => '?⊿???;
+  String get exerciseNoExercise => '無運動';
 
   @override
-  String get exerciseLabel => '?';
+  String get exerciseLabel => '運动';
 
   @override
-  String get exerciseMinutesLabel => '?園';
+  String get exerciseMinutesLabel => '时间';
 
   @override
-  String get exerciseMinutesUnit => '??';
+  String get exerciseMinutesUnit => '分钟';
 
   @override
-  String get exerciseMinutesHint => '颲????;
+  String get exerciseMinutesHint => '输入分钟数';
 
   @override
-  String get exerciseCaloriesLabel => '餈瘨?;
+  String get exerciseCaloriesLabel => '运动消耗';
 
   @override
-  String get exerciseNone => '?⊿???;
+  String get exerciseNone => '無運動';
 
   @override
-  String get exerciseWalking => '敹怨粥';
+  String get exerciseWalking => '快走';
 
   @override
-  String get exerciseJogging => '?Ｚ?';
+  String get exerciseJogging => '慢跑';
 
   @override
-  String get exerciseCycling => '?膠';
+  String get exerciseCycling => '单车';
 
   @override
-  String get exerciseSwimming => '皜豢陶';
+  String get exerciseSwimming => '游泳';
 
   @override
-  String get exerciseStrength => '??霈剔?';
+  String get exerciseStrength => '重量训练';
 
   @override
-  String get exerciseYoga => '?播';
+  String get exerciseYoga => '瑜伽';
 
   @override
-  String get exerciseHiit => '?湔?霈剔?';
+  String get exerciseHiit => '间歇训练';
 
   @override
-  String get exerciseBasketball => '蝭桃?';
+  String get exerciseBasketball => '篮球';
 
   @override
-  String get exerciseHiking => '?餃控';
+  String get exerciseHiking => '登山';
 
   @override
-  String get deltaUnknown => '撠隡啗恣';
+  String get deltaUnknown => '尚未估计';
 
   @override
-  String get deltaOk => '?亥??格?';
+  String get deltaOk => '接近目标';
 
   @override
   String deltaSurplus(int kcal) {
-    return '頞 $kcal kcal';
+    return '超出 $kcal kcal';
   }
 
   @override
   String deltaDeficit(int kcal) {
-    return '韏文? $kcal kcal';
+    return '赤字 $kcal kcal';
   }
 
   @override
-  String get commonExerciseLabel => '撣貊??';
+  String get commonExerciseLabel => '常用運動';
 
   @override
-  String get suggestRemainingTitle => '隞予???撠?;
+  String get suggestRemainingTitle => '今天還能吃多少';
 
   @override
   String suggestRemainingLeft(int cal) {
-    return '?隞亙? $cal kcal';
+    return '還可以吃 $cal kcal';
   }
 
   @override
   String suggestRemainingOver(int cal) {
-    return '撌脰???$cal kcal';
+    return '已超過 $cal kcal';
   }
 
   @override
   String proteinRemainingLeft(int grams) {
-    return '還可以吃  g';
+    return '還可以吃 $grams g';
   }
 
   @override
   String proteinRemainingOver(int grams) {
-    return '已超過  g';
+    return '已超過 $grams g';
   }
 
   @override
   String suggestExerciseHint(String exercise, int minutes) {
-    return '撱箄降??$exercise 蝝?$minutes ??';
+    return '建議做 $exercise 約 $minutes 分鐘';
   }
 
   @override
-  String get reminderLunchTime => '??????';
+  String get reminderLunchTime => '午餐提醒時間';
 
   @override
-  String get reminderDinnerTime => '??????';
+  String get reminderDinnerTime => '晚餐提醒時間';
 
   @override
-  String get reminderBreakfastTime => '?拚?????';
+  String get reminderBreakfastTime => '早餐提醒時間';
 
   @override
-  String get pickFromCamera => '?';
+  String get pickFromCamera => '拍照';
 
   @override
-  String get pickFromGallery => '敺蝪輸??;
+  String get pickFromGallery => '從相簿選擇';
 
   @override
-  String get addMeal => '?啣?';
+  String get addMeal => '新增';
 
   @override
-  String get noMealPrompt => '撠蝝????撘萎??臭誑';
+  String get noMealPrompt => '尚未紀錄，拍一張也可以';
 
   @override
-  String get layoutThemeLabel => '銝駁?????;
+  String get layoutThemeLabel => '主題與版面';
 
   @override
-  String get textSizeLabel => '摮?憭批?';
+  String get textSizeLabel => '字體大小';
 
   @override
-  String get textSizeSmall => '璅?';
+  String get textSizeSmall => '標準';
 
   @override
-  String get textSizeMedium => '?之';
+  String get textSizeMedium => '偏大';
 
   @override
-  String get textSizeLarge => '?孵之';
+  String get textSizeLarge => '特大';
 
   @override
-  String get themeClean => '皜??;
+  String get themeClean => '清爽藍';
 
   @override
-  String get glowToggleLabel => '???';
+  String get glowToggleLabel => '柔光背景';
 
   @override
-  String get themeGreen => '皜蝬?;
+  String get themeGreen => '清爽綠';
 
   @override
-  String get themeWarm => '??';
+  String get themeWarm => '暖橘';
 
   @override
-  String get themePink => '??';
+  String get themePink => '柔粉';
 
   @override
-  String get plateSection => '?文?璅??';
+  String get plateSection => '盤子樣式';
 
   @override
-  String get plateStyleLabel => '?文?甈曉?';
+  String get plateStyleLabel => '盤子款式';
 
   @override
-  String get plateDefaultLabel => '?身?瑞';
+  String get plateDefaultLabel => '預設瓷盤';
 
   @override
-  String get plateWarmLabel => '??嗥??;
+  String get plateWarmLabel => '暖色陶瓷盤';
 
   @override
-  String get apiSection => 'API ???';
+  String get apiSection => 'API 連線';
 
   @override
-  String get apiBaseUrlLabel => 'API 雿?';
+  String get apiBaseUrlLabel => 'API 位址';
 
   @override
-  String get apiBaseUrlReset => '皜??API 銝阡?閮?;
+  String get apiBaseUrlReset => '清除舊 API 並重設';
 
   @override
-  String get apiBaseUrlResetDone => '撌脤?閮?API 雿?';
+  String get apiBaseUrlResetDone => '已重設 API 位址';
 
   @override
-  String get delete => '?芷';
+  String get delete => '刪除';
 
   @override
-  String get deleteConfirm => '蝣箏?閬?斗迨蝝??嚗?;
+  String get deleteConfirm => '確定要刪除此紀錄嗎？';
 
   @override
-  String get logSuccess => '撌脰???';
+  String get logSuccess => '已記錄這餐';
 
   @override
-  String get viewLog => '?亦?蝝??;
+  String get viewLog => '查看紀錄';
 
   @override
-  String get calories => '?梢?';
+  String get calories => '熱量';
 
   @override
-  String get estimated => 'AI 隡啁?';
+  String get estimated => 'AI 估算';
 
   @override
-  String get protein => '?鞈?;
+  String get protein => '蛋白質';
 
   @override
-  String get carbs => '蝣單偌';
+  String get carbs => '碳水';
 
   @override
-  String get fat => '?';
+  String get fat => '脂肪';
 
   @override
-  String get sodium => '???;
+  String get sodium => '鈉含量';
 
   @override
-  String get tier => '撅斤?';
+  String get tier => '層級';
 
   @override
-  String get analyzeFailed => '?桀??⊥???';
+  String get analyzeFailed => '目前無法分析';
 
   @override
-  String get reestimateFailedKeepLast => '?隡啁?憭望?嚗歇靽?銝?????;
+  String get reestimateFailedKeepLast => '重新估算失敗，已保留上一版結果';
 
   @override
-  String get costEstimateLabel => '隡啁??梯祥';
+  String get costEstimateLabel => '估算花費';
 
   @override
-  String get usageSection => 'AI ?梯祥';
+  String get usageSection => 'AI 花費';
 
   @override
-  String get usageTotalLabel => '蝝航??梯祥';
+  String get usageTotalLabel => '累計花費';
 
   @override
-  String get usageViewLog => '?亦?蝝??;
+  String get usageViewLog => '查看紀錄';
 
   @override
-  String get usageEmpty => '撠?梯祥蝝??;
+  String get usageEmpty => '尚無花費紀錄';
 
   @override
-  String get usageLoading => '頛銝?..';
+  String get usageLoading => '載入中...';
 
   @override
-  String get mockPrefix => '?汗';
+  String get mockPrefix => '預覽';
 
   @override
-  String get versionSection => '?鞈?';
+  String get versionSection => '版本資訊';
 
   @override
-  String get versionBuild => '?湔??';
+  String get versionBuild => '更新時間';
 
   @override
-  String get versionCommit => '?隞?Ⅳ';
+  String get versionCommit => '版本代碼';
 
   @override
-  String get versionUnavailable => '?⊥????鞈?';
+  String get versionUnavailable => '無法取得版本資訊';
 
   @override
-  String get nutritionChartLabel => '???”';
+  String get nutritionChartLabel => '營養圖表';
 
   @override
-  String get nutritionValueLabel => '??憿舐內';
+  String get nutritionValueLabel => '營養顯示';
 
   @override
-  String get nutritionValuePercent => '?曉?瘥?;
+  String get nutritionValuePercent => '百分比';
 
   @override
-  String get nutritionValueAmount => '?詨?;
+  String get nutritionValueAmount => '數值';
 
   @override
-  String get chartRadar => '?琿???;
+  String get chartRadar => '雷達圖';
 
   @override
-  String get chartBars => '璇???;
+  String get chartBars => '條狀圖';
 
   @override
-  String get chartDonut => '???;
+  String get chartDonut => '圓環圖';
 
   @override
-  String get dataSection => '鞈?蝞∠?';
+  String get dataSection => '資料管理';
 
   @override
-  String get syncSection => '撣唾???甇?;
+  String get syncSection => '帳號與同步';
 
   @override
-  String get syncSignedInAs => '撌脩?伐?';
+  String get syncSignedInAs => '已登入：';
 
   @override
-  String get syncNotSignedIn => '撠?餃';
+  String get syncNotSignedIn => '尚未登入';
 
   @override
   String get syncEmailLabel => 'Email';
 
   @override
-  String get syncPasswordLabel => '撖Ⅳ';
+  String get syncPasswordLabel => '密碼';
 
   @override
-  String get syncSignIn => '?餃';
+  String get syncSignIn => '登入';
 
   @override
-  String get syncSignUp => '閮餃?';
+  String get syncSignUp => '註冊';
 
   @override
-  String get syncSignUpSuccess => '撌脣???霅縑嚗????縑蝞梢?霅?;
+  String get syncSignUpSuccess => '已寄送驗證信，請先完成信箱驗證';
 
   @override
-  String get syncSignInSuccess => '?餃??';
+  String get syncSignInSuccess => '登入成功';
 
   @override
-  String get syncForgotPassword => '敹?撖Ⅳ';
+  String get syncForgotPassword => '忘記密碼';
 
   @override
-  String get syncResetPasswordTitle => '?身撖Ⅳ';
+  String get syncResetPasswordTitle => '重設密碼';
 
   @override
-  String get syncResetPasswordHint => '頛詨閮餃?靽∠拳';
+  String get syncResetPasswordHint => '輸入註冊信箱';
 
   @override
-  String get syncResetPasswordSent => '撌脣???閮剖?蝣潮隞?;
+  String get syncResetPasswordSent => '已寄送重設密碼郵件';
 
   @override
-  String get syncSignOut => '?餃';
+  String get syncSignOut => '登出';
 
   @override
-  String get syncSwitchAccount => '??撣唾?';
+  String get syncSwitchAccount => '切換帳號';
 
   @override
-  String get syncSwitchAccountConfirmTitle => '??撣唾?';
+  String get syncSwitchAccountConfirmTitle => '切換帳號';
 
   @override
-  String get syncSwitchAccountConfirmMessage => '撠??斗璈??蒂?餃嚗Ⅱ摰???撣唾???';
+  String get syncSwitchAccountConfirmMessage => '將清除本機資料並登出，確定要切換帳號嗎？';
 
   @override
-  String get syncSwitchAccountConfirmAction => '??';
+  String get syncSwitchAccountConfirmAction => '切換';
 
   @override
-  String get syncSwitchAccountDone => '撌脣??董??鞈?撌脫?蝛箝?;
+  String get syncSwitchAccountDone => '已切換帳號，資料已清空。';
 
   @override
-  String get syncUpload => '銝?郊';
+  String get syncUpload => '上傳同步';
 
   @override
-  String get syncDownload => '銝??郊';
+  String get syncDownload => '下載同步';
 
   @override
-  String get syncNow => '?郊';
+  String get syncNow => '同步';
 
   @override
-  String get syncInProgress => '甇??芸??郊銝凌?;
+  String get syncInProgress => '正在努力同步中…';
 
   @override
-  String get syncLastSyncLabel => '銝活?郊嚗?;
+  String get syncLastSyncLabel => '上次同步：';
 
   @override
-  String get syncLastResultLabel => '銝活蝯?嚗?;
+  String get syncLastResultLabel => '上次結果：';
 
   @override
-  String get syncLastResultNone => '撠蝝??;
+  String get syncLastResultNone => '尚無紀錄';
 
   @override
-  String get syncLastResultNoChanges => '?∟???;
+  String get syncLastResultNoChanges => '無變更';
 
   @override
-  String get syncFailedItemsLabel => '憭望??嚗?;
+  String get syncFailedItemsLabel => '失敗項目：';
 
   @override
   String syncFailedItemsCount(int count) {
-    return '$count ??;
+    return '$count 項';
   }
 
   @override
-  String get syncRetryFailed => '?岫憭望???;
+  String get syncRetryFailed => '重試失敗項';
 
   @override
-  String get syncSuccess => '?郊摰???;
+  String get syncSuccess => '同步完成囉';
 
   @override
-  String get syncUpdated => '?湔摰?';
+  String get syncUpdated => '更新完成';
 
   @override
-  String get syncNoChanges => '?桀?瘝?閬?甇亦?鞈?';
+  String get syncNoChanges => '目前沒有要同步的資料';
 
   @override
-  String get syncError => '?郊憭望?嚗?蝔??岫';
+  String get syncError => '同步失敗，請稍後再試';
 
   @override
-  String get syncRequireLogin => '??交??賢?甇亙?';
+  String get syncRequireLogin => '先登入才能同步喔';
 
   @override
-  String get syncAuthTitleSignIn => '?餃撣唾?';
+  String get syncAuthTitleSignIn => '登入帳號';
 
   @override
-  String get syncAuthTitleSignUp => '閮餃?撣唾?';
+  String get syncAuthTitleSignUp => '註冊帳號';
 
   @override
-  String get exportData => '?臬鞈?';
+  String get exportData => '匯出資料';
 
   @override
-  String get clearData => '皜鞈?';
+  String get clearData => '清除資料';
 
   @override
-  String get clearDataConfirm => '蝣箏?閬??斗?????嚗?;
+  String get clearDataConfirm => '確定要清除所有資料嗎？';
 
   @override
-  String get exportDone => '撌脣??;
+  String get exportDone => '已匯出';
 
   @override
-  String get clearDone => '撌脫???;
+  String get clearDone => '已清除';
 
   @override
-  String get close => '??';
+  String get close => '關閉';
 
   @override
-  String get authTitle => '甇∟?雿輻 Food AI';
+  String get authTitle => '歡迎使用 Food AI';
 
   @override
-  String get authSubtitle => '?餃敺?臭蝙?典??游???;
+  String get authSubtitle => '登入後即可使用完整功能';
 
   @override
   String get authEmailLabel => 'Email';
 
   @override
-  String get authEmailRequired => '隢撓??Email';
+  String get authEmailRequired => '請輸入 Email';
 
   @override
-  String get authEmailInvalid => 'Email ?澆?銝迤蝣?;
+  String get authEmailInvalid => 'Email 格式不正確';
 
   @override
-  String get authPasswordLabel => '撖Ⅳ';
+  String get authPasswordLabel => '密碼';
 
   @override
-  String get authConfirmPasswordLabel => '蝣箄?撖Ⅳ';
+  String get authConfirmPasswordLabel => '確認密碼';
 
   @override
-  String get authSignIn => '?餃';
+  String get authSignIn => '登入';
 
   @override
-  String get authSignUp => '閮餃?';
+  String get authSignUp => '註冊';
 
   @override
-  String get authToggleToSignUp => '瘝?撣唾?嚗??唾酉??;
+  String get authToggleToSignUp => '沒有帳號？立即註冊';
 
   @override
-  String get authToggleToSignIn => '撌脫?撣唾?嚗????;
+  String get authToggleToSignIn => '已有帳號？返回登入';
 
   @override
-  String get authForgotPassword => '敹?撖Ⅳ';
+  String get authForgotPassword => '忘記密碼';
 
   @override
-  String get authSignInSuccess => '?餃??';
+  String get authSignInSuccess => '登入成功';
 
   @override
-  String get authSignUpSuccess => '閮餃?摰?';
+  String get authSignUpSuccess => '註冊完成';
 
   @override
-  String get authSignUpVerify => '閮餃?摰?嚗???靽∠拳摰?撽?';
+  String get authSignUpVerify => '註冊完成，請前往信箱完成驗證';
 
   @override
-  String get authEmailNotVerified => '甇?Email 撠撽?嚗????縑蝞梢?霅?;
+  String get authEmailNotVerified => '此 Email 尚未驗證，請先完成信箱驗證';
 
   @override
-  String get authVerifyTitle => '隢?霅縑蝞?;
+  String get authVerifyTitle => '請驗證信箱';
 
   @override
   String authVerifyBody(String email) {
-    return '?歇撖?霅縑??$email嚗???1-3 ???扳??銋?瑼Ｘ??萎辣/靽???;
+    return '我們已寄送驗證信到 $email，請在 1-3 分鐘內查看，也請檢查垃圾郵件/促銷匣。';
   }
 
   @override
-  String get authResend => '?撖?霅縑';
+  String get authResend => '重新寄送驗證信';
 
   @override
   String authResendCooldown(int seconds) {
-    return '?撖?${seconds}s嚗?;
+    return '重新寄送（${seconds}s）';
   }
 
   @override
-  String get authResendSent => '撽?靽∪歇?撖';
+  String get authResendSent => '驗證信已重新寄出';
 
   @override
-  String get authResendFailed => '?撖仃??隢?敺?閰?;
+  String get authResendFailed => '重新寄送失敗，請稍後再試';
 
   @override
-  String get authTooManyAttempts => '隢?敺?閰?;
+  String get authTooManyAttempts => '請稍後再試';
 
   @override
-  String get authPasswordMismatch => '?拇活撖Ⅳ銝???;
+  String get authPasswordMismatch => '兩次密碼不一致';
 
   @override
-  String get authPasswordRule => '撖Ⅳ?喳? 8 蝣潘?銝??臬蝛箇?葉??;
+  String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
 
   @override
-  String get authPasswordInvalid => '撖Ⅳ??喳? 8 蝣潘?銝??臬蝛箇?葉??;
+  String get authPasswordInvalid => '密碼需至少 8 碼，且不可含空白或中文';
+
+  @override
+  String get authResetSent => '重設密碼信已寄出，請查看信箱';
+
+  @override
+  String get authResetFailed => '重設失敗，請確認 Email 是否正確';
+
+  @override
+  String get authLoginInvalid => 'Email 或密碼錯誤';
+
+  @override
+  String get authEmailExists => '此 Email 已註冊';
+
+  @override
+  String get authNetworkError => '連線異常，請稍後再試';
+
+  @override
+  String get authSignUpFailed => '註冊失敗';
+
+  @override
+  String get authError => '登入失敗，請稍後再試';
+
+  @override
+  String get trialExpiredTitle => '試用期已結束';
+
+  @override
+  String get trialExpiredBody => '你已完成 2 天免費試用，請訂閱後繼續使用 AI 分析功能。';
+
+  @override
+  String get trialExpiredAction => '了解方案';
+
+  @override
+  String get signOut => '登出';
+
+  @override
+  String get dietPreferenceSection => '饮食偏好';
+
+  @override
+  String get dietTypeLabel => '饮食类型';
+
+  @override
+  String get dietNoteLabel => '偏好补充';
+
+  @override
+  String get dietTypeNone => '不限制';
+
+  @override
+  String get dietTypeVegetarian => '奶蛋素';
+
+  @override
+  String get dietTypeVegan => '全素';
+
+  @override
+  String get dietTypePescatarian => '海鲜素';
+
+  @override
+  String get dietTypeLowCarb => '低碳';
+
+  @override
+  String get dietTypeKeto => '生酮';
+
+  @override
+  String get dietTypeLowFat => '低脂';
+
+  @override
+  String get dietTypeHighProtein => '高蛋白';
+
+  @override
+  String get authNicknameRequired => '请输入昵称';
+
+  @override
+  String get containerSection => '常用容器';
+
+  @override
+  String get containerTypeLabel => '容器类型';
+
+  @override
+  String get containerSizeLabel => '容器尺寸';
+
+  @override
+  String get containerDepthLabel => '碗深度';
+
+  @override
+  String get containerDiameterLabel => '直径 (cm)';
+
+  @override
+  String get containerCapacityLabel => '容量 (ml)';
+
+  @override
+  String get containerTypeBowl => '碗';
+
+  @override
+  String get containerTypePlate => '盘';
+
+  @override
+  String get containerTypeBox => '便当盒';
+
+  @override
+  String get containerTypeCup => '杯';
+
+  @override
+  String get containerTypeUnknown => '不指定';
+
+  @override
+  String get containerSizeSmall => '小';
+
+  @override
+  String get containerSizeMedium => '中';
+
+  @override
+  String get containerSizeLarge => '大';
+
+  @override
+  String get containerSizeStandard => '标准';
+
+  @override
+  String get containerSizeCustom => '自订';
+
+  @override
+  String get containerDepthShallow => '浅';
+
+  @override
+  String get containerDepthMedium => '中';
+
+  @override
+  String get containerDepthDeep => '深';
+
+  @override
+  String get paywallTitle => '解鎖完整功能';
+
+  @override
+  String get paywallSubtitle => 'AI 分析、營養圖、週／月總結';
+
+  @override
+  String planMonthlyWithPrice(String price) {
+    return '月訂 $price';
+  }
+
+  @override
+  String planYearlyWithPrice(String price) {
+    return '年訂 $price';
+  }
+
+  @override
+  String get paywallYearlyBadge => '年訂省下約 30%';
+
+  @override
+  String get paywallRestore => '恢復購買';
+
+  @override
+  String get paywallDisclaimer => '訂閱將自動續訂，可隨時在 Apple ID 訂閱管理中取消。付款由 Apple 處理。';
+
+  @override
+  String get paywallStartMonthly => '開始月訂';
+
+  @override
+  String get paywallStartYearly => '開始年訂';
+
+  @override
+  String get paywallFeatureAiAnalysis => '完整 AI 分析';
+
+  @override
+  String get paywallFeatureNutritionAdvice => '熱量與營養建議';
+
+  @override
+  String get paywallFeatureSummaries => '週／月總結';
+
+  @override
+  String get paywallFeatureBestValue => '更划算的長期方案';
+
+  @override
+  String get paywallUnavailableTitle => '無法載入訂閱';
+
+  @override
+  String get paywallUnavailableBody => '目前無法取得 App Store 訂閱資訊，請稍後再試。';
+
+  @override
+  String get webPaywallTitle => '解鎖完整功能（Web 測試）';
+
+  @override
+  String get webPaywallTestBadge => '僅供測試，不會扣款';
+
+  @override
+  String get webPaywallCurrentPlanMonthly => '目前方案：月訂（測試）';
+
+  @override
+  String get webPaywallCurrentPlanYearly => '目前方案：年訂（測試）';
+
+  @override
+  String get webPaywallCurrentPlanNone => '目前方案：未訂閱';
+
+  @override
+  String get webPaywallTestNote => 'Web 測試版：此流程不會實際扣款。';
+
+  @override
+  String get webPaywallActivated => '已啟用測試訂閱';
+
+  @override
+  String get webPaywallSuccessTitle => '測試訂閱成功';
+
+  @override
+  String get webPaywallSuccessBody => '已解鎖完整功能（測試模式）。';
+
+  @override
+  String get webPaywallSuccessCta => '開始使用';
+
+  @override
+  String get dialogOk => '知道了';
+
+  @override
+  String get syncErrorUploadFailedDetail => '圖片上傳失敗';
+
+  @override
+  String get syncErrorSyncMetaFailedDetail => '同步狀態寫入失敗';
+
+  @override
+  String get syncErrorPostgrestDetail => '資料庫存取失敗';
+
+  @override
+  String get syncErrorNetworkDetail => '網路連線失敗';
+
+  @override
+  String syncSummaryUploadMeals(int count) {
+    return '上傳餐點 $count';
+  }
+
+  @override
+  String syncSummaryDeleteMeals(int count) {
+    return '刪除餐點 $count';
+  }
+
+  @override
+  String syncSummaryUploadCustom(int count) {
+    return '上傳自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDeleteCustom(int count) {
+    return '刪除自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryUploadSettings(int count) {
+    return '上傳設定 $count';
+  }
+
+  @override
+  String syncSummaryDownloadMeals(int count) {
+    return '下載餐點 $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedMeals(int count) {
+    return '下載刪除餐點 $count';
+  }
+
+  @override
+  String syncSummaryDownloadCustom(int count) {
+    return '下載自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDownloadDeletedCustom(int count) {
+    return '下載刪除自訂食物 $count';
+  }
+
+  @override
+  String syncSummaryDownloadSettings(int count) {
+    return '下載設定 $count';
+  }
+
+  @override
+  String get syncSummarySeparator => '、';
+
+  @override
+  String get plateJapanese02 => '日式盤 02';
+
+  @override
+  String get plateJapanese04 => '日式盤 04';
+
+  @override
+  String get plateChina01 => '中式盤 01';
+
+  @override
+  String get plateChina02 => '中式盤 02';
+
+  @override
+  String get placeholderDash => '--';
+
+  @override
+  String valueWithCm(int value) {
+    return '$value 公分';
+  }
+
+  @override
+  String valueWithKg(int value) {
+    return '$value 公斤';
+  }
+
+  @override
+  String valueWithMl(int value) {
+    return '$value 毫升';
+  }
+
+  @override
+  String get referenceObjectLabel => '參考物';
+
+  @override
+  String get referenceObjectNone => '無';
+
+  @override
+  String get referenceObjectCard => '信用卡';
+
+  @override
+  String get referenceObjectCoin10 => '10 元硬幣';
+
+  @override
+  String get referenceObjectCoin5 => '5 元硬幣';
+
+  @override
+  String get referenceObjectManual => '測距（公分）';
+
+  @override
+  String get referenceLengthLabel => '測距長度（公分）';
+
+  @override
+  String get referenceLengthHint => '輸入 iOS 測距量到的公分';
+
+  @override
+  String get referenceLengthApply => '套用';
+
+  @override
+  String get tabChatAssistant => '咚咚';
+
+  @override
+  String get chatEmptyHint => '嗨～我是咚咚，问我饮食或目标吧！';
+
+  @override
+  String chatEmptyHintWithName(Object name) {
+    return '嗨～我是$name，问我饮食或目标吧！';
+  }
+
+  @override
+  String get chatInputHint => '问问咚咚...';
+
+  @override
+  String get chatLockedTitle => '订阅即可开启聊天';
+
+  @override
+  String get chatLockedBody => '订阅后可获得个性化饮食建议与解答。';
+
+  @override
+  String get chatLockedAction => '查看订阅';
+
+  @override
+  String get chatClearTitle => '清除聊天记录？';
+
+  @override
+  String get chatClearBody => '这会移除本机上的对话内容。';
+
+  @override
+  String get chatClearConfirm => '清除';
+
+  @override
+  String get chatError => '聊天失败，请稍后再试';
+
+  @override
+  String get chatErrorAuth => '登入已过期，请重新登入';
+
+  @override
+  String get chatErrorQuota => '今日聊天额度已用完，请稍后再试';
+
+  @override
+  String get chatErrorServer => '喵嗚～我有点忙，稍后再试';
+
+  @override
+  String get chatErrorNetwork => '网路不稳定，请稍后再试';
+
+  @override
+  String get chatErrorReplyBase => '喵嗚～我刚刚有点累，稍后再问我一次好吗？';
+
+  @override
+  String get chatErrorReasonPrefix => '原因：';
+
+  @override
+  String get chatErrorReasonAuth => '登入已过期或权限不足';
+
+  @override
+  String get chatErrorReasonQuota => '请求太频繁或额度已用完';
+
+  @override
+  String get chatErrorReasonServer => '服务器忙碌或暂时出错';
+
+  @override
+  String get chatErrorReasonNetwork => '网路不稳定或连线中断';
+
+  @override
+  String get chatErrorReasonUnknown => '暂时无法判断';
+
+  @override
+  String get chatAvatarLabel => '聊天头像';
+
+  @override
+  String get chatAssistantNameLabel => '咚咚名称';
+
+  @override
+  String get chatAvatarSet => '已设置';
+
+  @override
+  String get chatAvatarUnset => '未设置';
+
+  @override
+  String get chatAvatarSheetTitle => '设置聊天头像';
+
+  @override
+  String get chatAvatarPick => '选择照片';
+
+  @override
+  String get chatAvatarRemove => '移除照片';
 
   @override
   String get authResetPasswordTitle => '重設密碼';
@@ -1571,425 +1913,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get authResetLinkInvalid => '連結已失效，請重新寄送重設密碼信';
-
-  @override
-  String get authResetSent => '?身撖Ⅳ靽∪歇撖嚗??亦?靽∠拳';
-
-  @override
-  String get authResetFailed => '?身憭望?嚗?蝣箄? Email ?臬甇?Ⅱ';
-
-  @override
-  String get authLoginInvalid => 'Email ??蝣潮隤?;
-
-  @override
-  String get authEmailExists => '甇?Email 撌脰酉??;
-
-  @override
-  String get authNetworkError => '????啣虜嚗?蝔??岫';
-
-  @override
-  String get authSignUpFailed => '閮餃?憭望?';
-
-  @override
-  String get authError => '?餃憭望?嚗?蝔??岫';
-
-  @override
-  String get trialExpiredTitle => '閰衣?歇蝯?';
-
-  @override
-  String get trialExpiredBody => '雿歇摰? 2 憭拙?鞎餉岫?剁?隢??勗?蝜潛?雿輻 AI ?????;
-
-  @override
-  String get trialExpiredAction => '鈭圾?寞?';
-
-  @override
-  String get signOut => '?餃';
-
-  @override
-  String get dietPreferenceSection => '擖桅??末';
-
-  @override
-  String get dietTypeLabel => '擖桅?蝐餃?';
-
-  @override
-  String get dietNoteLabel => '?末銵亙?';
-
-  @override
-  String get dietTypeNone => '銝???;
-
-  @override
-  String get dietTypeVegetarian => '憟嗉?蝝?;
-
-  @override
-  String get dietTypeVegan => '?函?';
-
-  @override
-  String get dietTypePescatarian => '瘚琿?蝝?;
-
-  @override
-  String get dietTypeLowCarb => '雿４';
-
-  @override
-  String get dietTypeKeto => '?';
-
-  @override
-  String get dietTypeLowFat => '雿?';
-
-  @override
-  String get dietTypeHighProtein => '擃???;
-
-  @override
-  String get authNicknameRequired => '霂瑁??交蝘?;
-
-  @override
-  String get containerSection => '撣貊摰孵';
-
-  @override
-  String get containerTypeLabel => '摰孵蝐餃?';
-
-  @override
-  String get containerSizeLabel => '摰孵撠箏站';
-
-  @override
-  String get containerDepthLabel => '蝣楛摨?;
-
-  @override
-  String get containerDiameterLabel => '?游? (cm)';
-
-  @override
-  String get containerCapacityLabel => '摰寥? (ml)';
-
-  @override
-  String get containerTypeBowl => '蝣?;
-
-  @override
-  String get containerTypePlate => '??;
-
-  @override
-  String get containerTypeBox => '靘踹???;
-
-  @override
-  String get containerTypeCup => '??;
-
-  @override
-  String get containerTypeUnknown => '銝?摰?;
-
-  @override
-  String get containerSizeSmall => '撠?;
-
-  @override
-  String get containerSizeMedium => '銝?;
-
-  @override
-  String get containerSizeLarge => '憭?;
-
-  @override
-  String get containerSizeStandard => '??';
-
-  @override
-  String get containerSizeCustom => '?芾恥';
-
-  @override
-  String get containerDepthShallow => '瘚?;
-
-  @override
-  String get containerDepthMedium => '銝?;
-
-  @override
-  String get containerDepthDeep => '瘛?;
-
-  @override
-  String get paywallTitle => '閫??摰?';
-
-  @override
-  String get paywallSubtitle => 'AI ????擗??梧??蜇蝯?;
-
-  @override
-  String planMonthlyWithPrice(String price) {
-    return '?? $price';
-  }
-
-  @override
-  String planYearlyWithPrice(String price) {
-    return '撟渲? $price';
-  }
-
-  @override
-  String get paywallYearlyBadge => '撟渲???蝝?30%';
-
-  @override
-  String get paywallRestore => '?Ｗ儔鞈潸眺';
-
-  @override
-  String get paywallDisclaimer => '閮撠??閮??舫? Apple ID 閮蝞∠?銝剖?瘨?甈曄 Apple ????;
-
-  @override
-  String get paywallStartMonthly => '????';
-
-  @override
-  String get paywallStartYearly => '??撟渲?';
-
-  @override
-  String get paywallFeatureAiAnalysis => '摰 AI ??';
-
-  @override
-  String get paywallFeatureNutritionAdvice => '?梢???擗遣霅?;
-
-  @override
-  String get paywallFeatureSummaries => '?梧??蜇蝯?;
-
-  @override
-  String get paywallFeatureBestValue => '?游?蝞??瑟??寞?';
-
-  @override
-  String get paywallUnavailableTitle => '?⊥?頛閮';
-
-  @override
-  String get paywallUnavailableBody => '?桀??⊥??? App Store 閮鞈?嚗?蝔??岫??;
-
-  @override
-  String get webPaywallTitle => '閫??摰?嚗eb 皜祈岫嚗?;
-
-  @override
-  String get webPaywallTestBadge => '??皜祈岫嚗??甈?;
-
-  @override
-  String get webPaywallCurrentPlanMonthly => '?桀??寞?嚗?閮?皜祈岫嚗?;
-
-  @override
-  String get webPaywallCurrentPlanYearly => '?桀??寞?嚗僑閮?皜祈岫嚗?;
-
-  @override
-  String get webPaywallCurrentPlanNone => '?桀??寞?嚗閮';
-
-  @override
-  String get webPaywallTestNote => 'Web 皜祈岫??甇斗?蝔??祕?甈整?;
-
-  @override
-  String get webPaywallActivated => '撌脣??冽葫閰西???;
-
-  @override
-  String get webPaywallSuccessTitle => '皜祈岫閮??';
-
-  @override
-  String get webPaywallSuccessBody => '撌脰圾???游??踝?皜祈岫璅∪?嚗?;
-
-  @override
-  String get webPaywallSuccessCta => '??雿輻';
-
-  @override
-  String get dialogOk => '?仿?鈭?;
-
-  @override
-  String get syncErrorUploadFailedDetail => '??銝憭望?';
-
-  @override
-  String get syncErrorSyncMetaFailedDetail => '?郊??神?亙仃??;
-
-  @override
-  String get syncErrorPostgrestDetail => '鞈?摨怠??仃??;
-
-  @override
-  String get syncErrorNetworkDetail => '蝬脰楝???憭望?';
-
-  @override
-  String syncSummaryUploadMeals(int count) {
-    return '銝擗? $count';
-  }
-
-  @override
-  String syncSummaryDeleteMeals(int count) {
-    return '?芷擗? $count';
-  }
-
-  @override
-  String syncSummaryUploadCustom(int count) {
-    return '銝?芾?憌 $count';
-  }
-
-  @override
-  String syncSummaryDeleteCustom(int count) {
-    return '?芷?芾?憌 $count';
-  }
-
-  @override
-  String syncSummaryUploadSettings(int count) {
-    return '銝閮剖? $count';
-  }
-
-  @override
-  String syncSummaryDownloadMeals(int count) {
-    return '銝?擗? $count';
-  }
-
-  @override
-  String syncSummaryDownloadDeletedMeals(int count) {
-    return '銝??芷擗? $count';
-  }
-
-  @override
-  String syncSummaryDownloadCustom(int count) {
-    return '銝??芾?憌 $count';
-  }
-
-  @override
-  String syncSummaryDownloadDeletedCustom(int count) {
-    return '銝??芷?芾?憌 $count';
-  }
-
-  @override
-  String syncSummaryDownloadSettings(int count) {
-    return '銝?閮剖? $count';
-  }
-
-  @override
-  String get syncSummarySeparator => '??;
-
-  @override
-  String get plateJapanese02 => '?亙???02';
-
-  @override
-  String get plateJapanese04 => '?亙???04';
-
-  @override
-  String get plateChina01 => '銝剖???01';
-
-  @override
-  String get plateChina02 => '銝剖???02';
-
-  @override
-  String get placeholderDash => '--';
-
-  @override
-  String valueWithCm(int value) {
-    return '$value ?砍?';
-  }
-
-  @override
-  String valueWithKg(int value) {
-    return '$value ?祆';
-  }
-
-  @override
-  String valueWithMl(int value) {
-    return '$value 瘥怠?';
-  }
-
-  @override
-  String get referenceObjectLabel => '?';
-
-  @override
-  String get referenceObjectNone => '??;
-
-  @override
-  String get referenceObjectCard => '靽∠??;
-
-  @override
-  String get referenceObjectCoin10 => '10 ?′撟?;
-
-  @override
-  String get referenceObjectCoin5 => '5 ?′撟?;
-
-  @override
-  String get referenceObjectManual => '皜祈?嚗??';
-
-  @override
-  String get referenceLengthLabel => '皜祈??瑕漲嚗??';
-
-  @override
-  String get referenceLengthHint => '頛詨 iOS 皜祈?????;
-
-  @override
-  String get referenceLengthApply => '憟';
-
-  @override
-  String get tabChatAssistant => '??';
-
-  @override
-  String get chatEmptyHint => '?剁????嚗?幼憌??格??改?';
-
-  @override
-  String chatEmptyHintWithName(Object name) {
-    return '?剁??$name嚗?幼憌??格??改?';
-  }
-
-  @override
-  String get chatInputHint => '?桅??...';
-
-  @override
-  String get chatLockedTitle => '霈ａ??喳撘?航?憭?;
-
-  @override
-  String get chatLockedBody => '霈ａ???瑕?銝芣批?擖桅?撱箄悅銝圾蝑?;
-
-  @override
-  String get chatLockedAction => '?亦?霈ａ?';
-
-  @override
-  String get chatClearTitle => '皜?予霈啣?嚗?;
-
-  @override
-  String get chatClearBody => '餈?蝘駁?祆銝?撖寡??捆??;
-
-  @override
-  String get chatClearConfirm => '皜';
-
-  @override
-  String get chatError => '?予憭梯揖嚗窈蝔???';
-
-  @override
-  String get chatErrorAuth => '?餃撌脰???霂琿??啁??;
-
-  @override
-  String get chatErrorQuota => '隞?予憸漲撌脩摰?霂瑞???霂?;
-
-  @override
-  String get chatErrorServer => '?萄?嚚??敹?蝔???';
-
-  @override
-  String get chatErrorNetwork => '蝵楝銝迅摰?霂瑞???霂?;
-
-  @override
-  String get chatErrorReplyBase => '?萄?嚚????蝝荔?蝔????甈∪末??';
-
-  @override
-  String get chatErrorReasonPrefix => '??嚗?;
-
-  @override
-  String get chatErrorReasonAuth => '?餃撌脰?????銝雲';
-
-  @override
-  String get chatErrorReasonQuota => '霂瑟?憭芷?蝜?憸漲撌脩摰?;
-
-  @override
-  String get chatErrorReasonServer => '??典?蝣???粹?';
-
-  @override
-  String get chatErrorReasonNetwork => '蝵楝銝迅摰?餈瑪銝剜';
-
-  @override
-  String get chatErrorReasonUnknown => '????斗';
-
-  @override
-  String get chatAvatarLabel => '?予憭游?';
-
-  @override
-  String get chatAssistantNameLabel => '???妍';
-
-  @override
-  String get chatAvatarSet => '撌脰挽蝵?;
-
-  @override
-  String get chatAvatarUnset => '?芾挽蝵?;
-
-  @override
-  String get chatAvatarSheetTitle => '霈曄蔭?予憭游?';
-
-  @override
-  String get chatAvatarPick => '??抒?';
-
-  @override
-  String get chatAvatarRemove => '蝘駁?抒?';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1997,470 +1920,470 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
 
   @override
-  String get appTitle => '憌脤? AI MVP';
+  String get appTitle => '飲食 AI MVP';
 
   @override
-  String get takePhoto => '?蝝??;
+  String get takePhoto => '拍照紀錄';
 
   @override
-  String get uploadPhoto => '銝?抒?';
+  String get uploadPhoto => '上傳照片';
 
   @override
-  String get quickAdd => '敹恍憓??芸???嚗?;
+  String get quickAdd => '快速新增（自動分餐）';
 
   @override
-  String get breakfast => '?拚?';
+  String get breakfast => '早餐';
 
   @override
-  String get brunch => '?拙?擗?;
+  String get brunch => '早午餐';
 
   @override
-  String get lunch => '銝剝?';
+  String get lunch => '中餐';
 
   @override
-  String get afternoonTea => '銝???;
+  String get afternoonTea => '下午茶';
 
   @override
-  String get dinner => '??';
+  String get dinner => '晚餐';
 
   @override
-  String get lateSnack => '瘨?';
+  String get lateSnack => '消夜';
 
   @override
-  String get other => '?嗡?';
+  String get other => '其他';
 
   @override
-  String get timeLabel => '??';
+  String get timeLabel => '時間';
 
   @override
-  String get editTime => '靽格??';
+  String get editTime => '修改時間';
 
   @override
-  String get noEntries => '撠蝝??;
+  String get noEntries => '尚無紀錄';
 
   @override
-  String get mealTotal => '?祇?隡啗??梢?';
+  String get mealTotal => '本餐估計熱量';
 
   @override
-  String get mealSummaryTitle => '???';
+  String get mealSummaryTitle => '菜色摘要';
 
   @override
-  String get todayMeals => '隞擗?';
+  String get todayMeals => '今日餐點';
 
   @override
   String itemsCount(int count) {
-    return '$count 蝑?;
+    return '$count 筆';
   }
 
   @override
-  String get captureTitle => '?蝝??;
+  String get captureTitle => '拍照紀錄';
 
   @override
-  String get captureHint => '??雿迤?典???暺??;
+  String get captureHint => '拍下你正在吃的餐點即可';
 
   @override
-  String get optionalNoteLabel => '鋆?隤芣?嚗?賂?';
+  String get optionalNoteLabel => '補充說明（可選）';
 
   @override
-  String get notePlaceholder => '靘?嚗?????葆韏?;
+  String get notePlaceholder => '例如：只吃一半、打包帶走';
 
   @override
-  String get recentPhotos => '?餈??;
+  String get recentPhotos => '最近照片';
 
   @override
-  String get noPhotos => '撠?啣??抒?';
+  String get noPhotos => '尚未新增照片';
 
   @override
-  String get analysisTitle => '擗???';
+  String get analysisTitle => '餐點分析';
 
   @override
-  String get analysisEmpty => '?????摰對???銝撘萄';
+  String get analysisEmpty => '還沒有分析內容，先拍一張吧';
 
   @override
-  String get foodNameLabel => '憌?迂';
+  String get foodNameLabel => '食物名稱';
 
   @override
-  String get editFoodName => '靽格憌?迂';
+  String get editFoodName => '修改食物名稱';
 
   @override
-  String get reanalyzeLabel => '???';
+  String get reanalyzeLabel => '重新分析';
 
   @override
-  String get addLabel => '鋆?璅內';
+  String get addLabel => '補充標示';
 
   @override
-  String get removeLabel => '蝘駁璅內';
+  String get removeLabel => '移除標示';
 
   @override
-  String get labelInfoTitle => '璅內鞈?';
+  String get labelInfoTitle => '標示資訊';
 
   @override
-  String get labelSummaryFallback => '撌脫?冽?蝷箄?閮?;
+  String get labelSummaryFallback => '已採用標示資訊';
 
   @override
-  String get customTabTitle => '?芾?蝢?;
+  String get customTabTitle => '自訂義';
 
   @override
-  String get customAdd => '??芾?蝢?;
+  String get customAdd => '加入自訂義';
 
   @override
-  String get customAdded => '撌脣??亥閮儔';
+  String get customAdded => '已加入自訂義';
 
   @override
-  String get customEmpty => '?桀?瘝??芾?蝢拚???;
+  String get customEmpty => '目前沒有自訂義項目';
 
   @override
-  String get customSelectTitle => '?豢??芾?蝢?;
+  String get customSelectTitle => '選擇自訂義';
 
   @override
-  String get customConfirmTitle => '蝣箄?擗????;
+  String get customConfirmTitle => '確認餐別與時間';
 
   @override
-  String get customConfirmDate => '?交?';
+  String get customConfirmDate => '日期';
 
   @override
-  String get customConfirmTime => '??';
+  String get customConfirmTime => '時間';
 
   @override
-  String get customConfirmMealType => '擗';
+  String get customConfirmMealType => '餐別';
 
   @override
-  String get customUse => '雿輻?芾?蝢?;
+  String get customUse => '使用自訂義';
 
   @override
-  String get customUseSaved => '撌脣摮閮儔擗?';
+  String get customUseSaved => '已儲存自訂義餐點';
 
   @override
-  String get customCountUnit => '蝑?;
+  String get customCountUnit => '筆';
 
   @override
-  String get customEditTitle => '蝺刻摩?芾?蝢?;
+  String get customEditTitle => '編輯自訂義';
 
   @override
-  String get customChangePhoto => '?湔??抒?';
+  String get customChangePhoto => '更換照片';
 
   @override
-  String get customSummaryLabel => '???';
+  String get customSummaryLabel => '菜色摘要';
 
   @override
-  String get customSuggestionLabel => '撱箄降';
+  String get customSuggestionLabel => '建議';
 
   @override
-  String get customDeleteTitle => '?芷?芾?蝢?;
+  String get customDeleteTitle => '刪除自訂義';
 
   @override
-  String get customDeleteConfirm => '蝣箏??芷?閮儔嚗?;
+  String get customDeleteConfirm => '確定刪除這個自訂義？';
 
   @override
-  String get unknownFood => '?芸??暺?;
+  String get unknownFood => '未命名餐點';
 
   @override
-  String get dietitianPrefix => '撱箄降嚗?;
+  String get dietitianPrefix => '建議：';
 
   @override
-  String get dietitianBalanced => '?湧??﹛嚗雁??胯?;
+  String get dietitianBalanced => '整體均衡，維持即可。';
 
   @override
-  String get dietitianProteinLow => '?鞈芸?雿?撱箄降鋆?擳???;
+  String get dietitianProteinLow => '蛋白質偏低，建議補豆魚蛋肉。';
 
   @override
-  String get dietitianFatHigh => '瘝寡???嚗?銝擗?瘛∪?瘝嫘?;
+  String get dietitianFatHigh => '油脂偏高，下一餐清淡少油。';
 
   @override
-  String get dietitianCarbHigh => '蝣單偌??嚗蜓憌???;
+  String get dietitianCarbHigh => '碳水偏多，主食減量。';
 
   @override
-  String get dietitianSodiumHigh => '???擃?皜?皝臬???撌亙???;
+  String get dietitianSodiumHigh => '鈉含量偏高，減少湯底與加工品。';
 
   @override
-  String get multiItemsLabel => '憭???;
+  String get multiItemsLabel => '多品項';
 
   @override
-  String get goalAdviceLoseFat => '隞交???格?嚗?銝擗誑?鞈芾??祈??箔蜓??;
+  String get goalAdviceLoseFat => '以減脂為目標，下一餐以蛋白質與蔬菜為主。';
 
   @override
-  String get goalAdviceMaintain => '隞亦雁?銝鳴?瘜冽?隞賡???銵～?;
+  String get goalAdviceMaintain => '以維持為主，注意份量與均衡。';
 
   @override
-  String get overallLabel => '?湧??斗';
+  String get overallLabel => '整體判斷';
 
   @override
-  String get calorieLabel => '?梢????;
+  String get calorieLabel => '熱量區間';
 
   @override
-  String get editCalorieTitle => '蝺刻摩?梢?';
+  String get editCalorieTitle => '編輯熱量';
 
   @override
-  String get editCalorieHint => '靘? 450-600 kcal';
+  String get editCalorieHint => '例如 450-600 kcal';
 
   @override
-  String get editCalorieClear => '皜';
+  String get editCalorieClear => '清除';
 
   @override
-  String get macroLabel => '銝之??';
+  String get macroLabel => '三大營養';
 
   @override
-  String get levelLow => '雿?;
+  String get levelLow => '低';
 
   @override
-  String get levelMedium => '銝?;
+  String get levelMedium => '中';
 
   @override
-  String get levelHigh => '擃?;
+  String get levelHigh => '高';
 
   @override
   String get statusOk => 'OK';
 
   @override
-  String get statusWarn => '??';
+  String get statusWarn => '偏多';
 
   @override
-  String get statusOver => '??;
+  String get statusOver => '爆';
 
   @override
-  String get tagOily => '?硃';
+  String get tagOily => '偏油';
 
   @override
-  String get tagProteinOk => '?鞈芾雲';
+  String get tagProteinOk => '蛋白質足';
 
   @override
-  String get tagProteinLow => '?鞈芯?頞?;
+  String get tagProteinLow => '蛋白質不足';
 
   @override
-  String get tagCarbHigh => '蝣單偌??';
+  String get tagCarbHigh => '碳水偏多';
 
   @override
   String get tagOk => 'OK';
 
   @override
-  String get nextMealTitle => '銝?擗遣霅唳獐??;
+  String get nextMealTitle => '下一餐建議怎麼吃';
 
   @override
-  String get nextMealSectionTitle => '銝?擗遣霅唳獐??;
+  String get nextMealSectionTitle => '下一餐建議怎麼吃';
 
   @override
-  String get noLateSnackSelfCook => '銝遣霅唳?憭??交??皜僖?祈?撠遢';
+  String get noLateSnackSelfCook => '不建議消夜；若想吃，清湯蔬菜小份';
 
   @override
-  String get noLateSnackConvenience => '銝遣霅唳?憭??交???∠?鞊撚??隞賣???;
+  String get noLateSnackConvenience => '不建議消夜；若想吃，無糖豆漿或小份沙拉';
 
   @override
-  String get noLateSnackBento => '銝遣霅唳?憭??交???遢?祈?靘輻';
+  String get noLateSnackBento => '不建議消夜；若想吃，半份蔬菜便當';
 
   @override
-  String get noLateSnackOther => '銝遣霅唳?憭??交??撠?瘞湔??喳';
+  String get noLateSnackOther => '不建議消夜；若想吃，少量水果即可';
 
   @override
-  String get nextMealHint => '?訾????嫣噶?撘停憟?;
+  String get nextMealHint => '選一個最方便的方式就好';
 
   @override
-  String get nextSelfCookLabel => '?芰';
+  String get nextSelfCookLabel => '自煮';
 
   @override
-  String get nextConvenienceLabel => '靘踹摨?;
+  String get nextConvenienceLabel => '便利店';
 
   @override
-  String get nextBentoLabel => '靘輻';
+  String get nextBentoLabel => '便當';
 
   @override
-  String get nextOtherLabel => '?嗡?';
+  String get nextOtherLabel => '其他';
 
   @override
-  String get nextSelfCookHint => '皜/瘞渡嚗??撠硃撠';
+  String get nextSelfCookHint => '清蒸/水煮＋蔬菜，少油少醬';
 
   @override
-  String get nextConvenienceHint => '?嗉????∠?鞊撚/瘝?嚗??貊';
+  String get nextConvenienceHint => '茶葉蛋/無糖豆漿/沙拉，少炸物';
 
   @override
-  String get nextBentoHint => '?ㄞ?????遠';
+  String get nextBentoHint => '半飯、多菜、優先烤或滷';
 
   @override
-  String get nextOtherHint => '瘞湔?/?∠??芣/皜僖';
+  String get nextOtherHint => '水果/無糖優格/清湯';
 
   @override
-  String get mealItemsTitle => '餈??祇?';
+  String get mealItemsTitle => '返回本餐';
 
   @override
-  String get mealTimeSection => '擗活???;
+  String get mealTimeSection => '餐次區間';
 
   @override
-  String get breakfastStartLabel => '?拚???';
+  String get breakfastStartLabel => '早餐開始';
 
   @override
-  String get breakfastEndLabel => '?拚?蝯?';
+  String get breakfastEndLabel => '早餐結束';
 
   @override
-  String get brunchStartLabel => '?拙?擗?憪?;
+  String get brunchStartLabel => '早午餐開始';
 
   @override
-  String get brunchEndLabel => '?拙?擗???;
+  String get brunchEndLabel => '早午餐結束';
 
   @override
-  String get lunchStartLabel => '????';
+  String get lunchStartLabel => '午餐開始';
 
   @override
-  String get lunchEndLabel => '??蝯?';
+  String get lunchEndLabel => '午餐結束';
 
   @override
-  String get afternoonTeaStartLabel => '銝??園?憪?;
+  String get afternoonTeaStartLabel => '下午茶開始';
 
   @override
-  String get afternoonTeaEndLabel => '銝??嗥???;
+  String get afternoonTeaEndLabel => '下午茶結束';
 
   @override
-  String get dinnerStartLabel => '????';
+  String get dinnerStartLabel => '晚餐開始';
 
   @override
-  String get dinnerEndLabel => '??蝯?';
+  String get dinnerEndLabel => '晚餐結束';
 
   @override
-  String get lateSnackStartLabel => '瘨???';
+  String get lateSnackStartLabel => '消夜開始';
 
   @override
-  String get lateSnackEndLabel => '瘨?蝯?';
+  String get lateSnackEndLabel => '消夜結束';
 
   @override
-  String get optionConvenienceTitle => '靘踹??';
+  String get optionConvenienceTitle => '便利商店';
 
   @override
-  String get optionConvenienceDesc => '?貉??/?∠?鞊撚/瘝?嚗??貊';
+  String get optionConvenienceDesc => '選茶葉蛋/無糖豆漿/沙拉，少炸物';
 
   @override
-  String get optionBentoTitle => '靘輻摨?;
+  String get optionBentoTitle => '便當店';
 
   @override
-  String get optionBentoDesc => '?ㄞ???祈????斗?皛?;
+  String get optionBentoDesc => '半飯、多蔬菜、優先選烤或滷';
 
   @override
-  String get optionLightTitle => '皜楚?豢?';
+  String get optionLightTitle => '清淡選擇';
 
   @override
-  String get optionLightDesc => '皜僖??柴??祆?';
+  String get optionLightDesc => '清湯、蒸煮、少醬料';
 
   @override
-  String get summaryTitle => '隞蝮賜?';
+  String get summaryTitle => '今日總結';
 
   @override
-  String get summaryEmpty => '隞予??閮?擗???;
+  String get summaryEmpty => '今天還沒記錄餐點喔';
 
   @override
-  String get summaryOilyCarb => '隞予?硃?４瘞港???';
+  String get summaryOilyCarb => '今天偏油、碳水也偏多';
 
   @override
-  String get summaryOily => '隞予?硃';
+  String get summaryOily => '今天偏油';
 
   @override
-  String get summaryCarb => '隞予蝣單偌??';
+  String get summaryCarb => '今天碳水偏多';
 
   @override
-  String get summaryProteinOk => '?鞈?OK嚗?敺?暺??;
+  String get summaryProteinOk => '蛋白質 OK，記得補點蔬菜';
 
   @override
-  String get summaryNeutral => '隞予????荔?蝜潛?靽?';
+  String get summaryNeutral => '今天狀態不錯，繼續保持';
 
   @override
-  String get summaryBeverageOnly => '隞予?芾???憌脫?';
+  String get summaryBeverageOnly => '今天只記錄了飲料';
 
   @override
-  String get includesBeverages => '?恍ㄡ??;
+  String get includesBeverages => '含飲料';
 
   @override
-  String get proteinIntakeTodayLabel => '隞?鞈?;
+  String get proteinIntakeTodayLabel => '今日蛋白質';
 
   @override
   String proteinIntakeFormat(int consumed, int min, int max) {
-    return '撌脫???${consumed}g / ?格? $min-${max}g';
+    return '已攝取 ${consumed}g / 目標 $min-${max}g';
   }
 
   @override
-  String get smallPortionNote => '隞賡?銝?';
+  String get smallPortionNote => '份量不多';
 
   @override
-  String get mealsCountLabel => '撌脰???;
+  String get mealsCountLabel => '已記錄';
 
   @override
-  String get mealsLabel => '擗?;
+  String get mealsLabel => '餐';
 
   @override
-  String get tabCapture => '?';
+  String get tabCapture => '拍照';
 
   @override
-  String get tabAnalysis => '??';
+  String get tabAnalysis => '分析';
 
   @override
-  String get tabNext => '銝?擗?;
+  String get tabNext => '下一餐';
 
   @override
-  String get tabSummary => '??';
+  String get tabSummary => '摘要';
 
   @override
-  String get tabHome => '擐?';
+  String get tabHome => '首頁';
 
   @override
-  String get tabLog => '蝝??;
+  String get tabLog => '紀錄';
 
   @override
-  String get tabSuggest => '?單?撱箄降';
+  String get tabSuggest => '即拍建議';
 
   @override
-  String get tabCustom => '?芾?蝢?;
+  String get tabCustom => '自訂義';
 
   @override
-  String get tabSettings => '閮剖?';
+  String get tabSettings => '設定';
 
   @override
   String greetingTitle(String name) {
-    return '??$name嚗?憭拐??硃';
+    return '嗨 $name，今天也加油';
   }
 
   @override
   String streakLabel(int count) {
-    return '撌脤??蝝??$count 憭?;
+    return '已連續紀錄 $count 天';
   }
 
   @override
-  String get aiSuggest => 'AI 憌脤?撱箄降';
+  String get aiSuggest => 'AI 飲食建議';
 
   @override
-  String get latestMealTitle => '????擗?';
+  String get latestMealTitle => '剛剛吃的餐點';
 
   @override
-  String get latestMealEmpty => '隞予??閮?擗???;
+  String get latestMealEmpty => '今天還沒記錄餐點喔';
 
   @override
-  String get homeNextMealHint => '暺脣遣霅圈?嚗?銝?????獢?;
+  String get homeNextMealHint => '點進建議頁，挑一個最順手的方案';
 
   @override
-  String get logTitle => '蝝??;
+  String get logTitle => '紀錄';
 
   @override
-  String get logTopMealTitle => '?梢??擃?擗?;
+  String get logTopMealTitle => '熱量最高一餐';
 
   @override
-  String get logTopMealEmpty => '餈?7 憭拙??芣?摰蝝??;
+  String get logTopMealEmpty => '近 7 天尚未有完整紀錄';
 
   @override
   String logRecentDaysTag(String date) {
-    return '餈?7 憭?$date';
+    return '近 7 天 $date';
   }
 
   @override
-  String get logAddMealPrompt => '鋆???擗?;
+  String get logAddMealPrompt => '補記這一餐';
 
   @override
-  String get dailyCalorieRange => '隞?梢???';
+  String get dailyCalorieRange => '今日熱量攝取';
 
   @override
-  String get dayCardTitle => '瘥??';
+  String get dayCardTitle => '每日摘要';
 
   @override
-  String get dayMealsTitle => '餈??祆擗活';
+  String get dayMealsTitle => '返回本日餐次';
 
   @override
-  String get tomorrowAdviceTitle => '?予撱箄降';
+  String get tomorrowAdviceTitle => '明天建議';
 
   @override
-  String get dayCardDateLabel => '?交?嚗?;
+  String get dayCardDateLabel => '日期：';
 
   @override
   String get dayCardCalorieLabel => '能量狀態';
@@ -2472,1339 +2395,1433 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get calorieHistoryTitle => '熱量趨勢';
 
   @override
-  String get dayCardMealsLabel => '??擗嚗?;
+  String calorieTrendTargetLabel(Object max, Object min) {
+    return '目標 $min-$max';
+  }
 
   @override
-  String get dayCardSummaryLabel => '隞蝮賜?';
+  String get calorieTrendSummaryWeekTitle => '本週總結';
 
   @override
-  String get dayCardTomorrowLabel => '?撱箄降';
+  String get calorieTrendSummaryTwoWeeksTitle => '兩週總結';
+
+  @override
+  String get calorieTrendSummaryMonthTitle => '本月總結';
+
+  @override
+  String get calorieTrendCompareLastWeek => '上週';
+
+  @override
+  String get calorieTrendCompareLastTwoWeeks => '前兩週';
+
+  @override
+  String get calorieTrendCompareLastMonth => '上月';
+
+  @override
+  String get calorieTrendSummaryNoData => '尚無資料';
+
+  @override
+  String calorieTrendSummaryNoPrev(Object avg) {
+    return '平均攝取 $avg kcal，尚無前期資料。';
+  }
+
+  @override
+  String calorieTrendSummaryHigher(Object avg, Object pct, Object period) {
+    return '平均攝取 $avg kcal，高於$period $pct%。';
+  }
+
+  @override
+  String calorieTrendSummaryLower(Object avg, Object pct, Object period) {
+    return '平均攝取 $avg kcal，低於$period $pct%。';
+  }
+
+  @override
+  String calorieTrendSummarySame(Object avg, Object period) {
+    return '平均攝取 $avg kcal，與$period持平。';
+  }
+
+  @override
+  String get proteinTrendTitle => '蛋白質趨勢';
+
+  @override
+  String proteinTrendTargetLabel(Object value) {
+    return '目標 $value g';
+  }
+
+  @override
+  String get proteinTrendSummaryNoData => '尚無資料';
+
+  @override
+  String proteinTrendSummaryNoPrev(Object avg) {
+    return '平均攝取 $avg g，尚無前期資料。';
+  }
+
+  @override
+  String proteinTrendSummaryHigher(Object avg, Object pct, Object period) {
+    return '平均攝取 $avg g，高於$period $pct%。';
+  }
+
+  @override
+  String proteinTrendSummaryLower(Object avg, Object pct, Object period) {
+    return '平均攝取 $avg g，低於$period $pct%。';
+  }
+
+  @override
+  String proteinTrendSummarySame(Object avg, Object period) {
+    return '平均攝取 $avg g，與$period持平。';
+  }
+
+  @override
+  String get dayCardMealsLabel => '分析餐數：';
+
+  @override
+  String get dayCardSummaryLabel => '今日總結';
+
+  @override
+  String get dayCardTomorrowLabel => '明日建議';
 
   @override
   String summaryPendingAt(Object time) {
-    return '撠 $time ?Ｙ?蝮賜?';
+    return '將於 $time 產生總結';
   }
 
   @override
   String weekSummaryPendingAt(Object day, Object time) {
-    return '撠 $day $time ?Ｙ?蝮賜?';
+    return '將於 $day $time 產生總結';
   }
 
   @override
-  String get finalizeDay => '??隞蝮賜?';
+  String get finalizeDay => '生成今日總結';
 
   @override
-  String get dishSummaryLabel => '?祇???';
+  String get dishSummaryLabel => '本餐摘要';
 
   @override
-  String get mealCountEmpty => '撠??擗活';
+  String get mealCountEmpty => '尚未分析餐次';
 
   @override
-  String get calorieUnknown => '?桀????摯蝞???;
+  String get calorieUnknown => '目前還沒有估算結果';
 
   @override
-  String get portionLabel => '隞賡?';
+  String get portionLabel => '份量';
 
   @override
-  String get portionFull => '?典?';
+  String get portionFull => '全吃';
 
   @override
-  String get portionHalf => '????;
+  String get portionHalf => '吃一半';
 
   @override
-  String get portionBite => '?芸?撟曉';
+  String get portionBite => '只吃幾口';
 
   @override
-  String get detailTitle => '閰喟敦蝝??;
+  String get detailTitle => '詳細紀錄';
 
   @override
-  String get detailAiLabel => 'AI ?斗隤芣?';
+  String get detailAiLabel => 'AI 判斷說明';
 
   @override
-  String get detailAiEmpty => '撠??鞈?';
+  String get detailAiEmpty => '尚無分析資料';
 
   @override
-  String get detailWhyLabel => '?箔?暻潮見?斗';
+  String get detailWhyLabel => '為什麼這樣判斷';
 
   @override
-  String get suggestTitle => '?單?撱箄降';
+  String get suggestTitle => '即拍建議';
 
   @override
-  String get suggestInstantHint => '??擐砌???嚗策雿???撱箄降';
+  String get suggestInstantHint => '拍完馬上分析，給你這餐吃法建議';
 
   @override
-  String get suggestInstantStart => '???';
+  String get suggestInstantStart => '開始拍照';
 
   @override
-  String get suggestInstantRetake => '??銝撘?;
+  String get suggestInstantRetake => '拍下一張';
 
   @override
-  String get suggestInstantPickGallery => '敺蝪輸??;
+  String get suggestInstantPickGallery => '從相簿選擇';
 
   @override
-  String get suggestInstantNowEat => '撱箄降??隞暻?;
+  String get suggestInstantNowEat => '建議我吃什麼';
 
   @override
-  String get suggestInstantNameHint => '頛詨憌?迂嚗?????臭誑嚗?;
+  String get suggestInstantNameHint => '輸入食物名稱（沒有照片也可以）';
 
   @override
-  String get suggestInstantNameSubmit => '?';
+  String get suggestInstantNameSubmit => '送出';
 
   @override
-  String get nameAnalyzeStart => '甇???';
+  String get nameAnalyzeStart => '正在分析';
 
   @override
-  String get nameAnalyzeEmpty => '隢撓?仿??拙?蝔?;
+  String get nameAnalyzeEmpty => '請輸入食物名稱';
 
   @override
-  String get suggestInstantStepDetect => '甇?颲刻?擗?';
+  String get suggestInstantStepDetect => '正在辨識餐點';
 
   @override
-  String get suggestInstantStepEstimate => '隡啁??梢??遢??;
+  String get suggestInstantStepEstimate => '估算熱量與份量';
 
   @override
-  String get suggestInstantStepAdvice => '?Ｙ???撱箄降';
+  String get suggestInstantStepAdvice => '產生吃法建議';
 
   @override
-  String get suggestInstantSavePrompt => '閬摮???';
+  String get suggestInstantSavePrompt => '要儲存這餐嗎？';
 
   @override
-  String get suggestInstantSave => '?脣?';
+  String get suggestInstantSave => '儲存';
 
   @override
-  String get suggestInstantSkipSave => '???脣?';
+  String get suggestInstantSkipSave => '先不儲存';
 
   @override
-  String get suggestInstantAdviceTitle => '?遢憌?獐??頛末';
+  String get suggestInstantAdviceTitle => '這份食物怎麼吃比較好';
 
   @override
-  String get suggestInstantCanEat => '?剝?';
+  String get suggestInstantCanEat => '搭配';
 
   @override
-  String get suggestInstantCanDrink => '?臭誑??;
+  String get suggestInstantCanDrink => '可以喝';
 
   @override
-  String get suggestInstantAvoid => '銝遣霅?;
+  String get suggestInstantAvoid => '不建議';
 
   @override
-  String get suggestInstantAvoidDrink => '銝遣霅啣?';
+  String get suggestInstantAvoidDrink => '不建議喝';
 
   @override
-  String get suggestInstantLimit => '撱箄降隞賡?';
+  String get suggestInstantLimit => '建議份量';
 
   @override
-  String get suggestInstantDrinkLimit => '撱箄降隞賡?';
+  String get suggestInstantDrinkLimit => '建議份量';
 
   @override
-  String get suggestInstantDrinkAdviceTitle => '?憌脫??獐??頛末';
+  String get suggestInstantDrinkAdviceTitle => '這杯飲料怎麼喝比較好';
 
   @override
-  String get suggestInstantCanEatInline => '?臭誑?獐??;
+  String get suggestInstantCanEatInline => '可以怎麼吃';
 
   @override
-  String get suggestInstantRiskInline => '?航????憿?;
+  String get suggestInstantRiskInline => '可能會有的問題';
 
   @override
-  String get suggestInstantLimitInline => '撱箄降隞賡?';
+  String get suggestInstantLimitInline => '建議份量';
 
   @override
-  String get suggestInstantEnergyOk => '?舀??;
+  String get suggestInstantEnergyOk => '可接受';
 
   @override
-  String get suggestInstantEnergyHigh => '??';
+  String get suggestInstantEnergyHigh => '偏高';
 
   @override
-  String get suggestInstantMissing => '????????;
+  String get suggestInstantMissing => '還沒有分析結果';
 
   @override
-  String get suggestInstantNonFood => '?撐憟賢?銝憌?塚?閬?閬???甈∴?憒??曉銝?蝞?銋???嚗???擗?靘?';
+  String get suggestInstantNonFood => '這張好像不是食物耶～要不要再拍一次？如果現在不打算吃也沒關係，等肚子餓再來～';
 
   @override
-  String get suggestInstantReestimate => '?隡啁?';
+  String get suggestInstantReestimate => '重新估算';
 
   @override
-  String get suggestInstantRecentHint => '撱箄降撌脣???餈?7 憭抵?銝?擗?;
+  String get suggestInstantRecentHint => '建議已參考最近 7 天與上一餐';
 
   @override
-  String get suggestAutoSaved => '撌脰?摮?;
+  String get suggestAutoSaved => '已自動儲存';
 
   @override
-  String get suggestTodayLabel => '隞?湧??斗';
+  String get suggestTodayLabel => '今日整體判斷';
 
   @override
-  String get suggestTodayHint => '隞予瘝寡???嚗?銝擗?瘛∩?暺?;
+  String get suggestTodayHint => '今天油脂偏高，下一餐清淡一點';
 
   @override
-  String get suggestTodayOilyCarb => '隞予?硃?４瘞港???';
+  String get suggestTodayOilyCarb => '今天偏油、碳水也偏多';
 
   @override
-  String get suggestTodayOily => '隞予?硃嚗?銝擗?瘛∩?暺?;
+  String get suggestTodayOily => '今天偏油，下一餐清淡一點';
 
   @override
-  String get suggestTodayCarb => '隞予蝣單偌??嚗?銝擗?瞉梁?';
+  String get suggestTodayCarb => '今天碳水偏多，下一餐少澱粉';
 
   @override
-  String get suggestTodayOk => '隞予????荔?靽?撠勗末';
+  String get suggestTodayOk => '今天狀態不錯，保持就好';
 
   @override
-  String get logThisMeal => '閮???';
+  String get logThisMeal => '記錄這餐';
 
   @override
-  String get settingsTitle => '閮剖?';
+  String get settingsTitle => '設定';
 
   @override
-  String get profileName => '撠?';
+  String get profileName => '小明';
 
   @override
   String get profileEmail => 'xiaoming123@gmail.com';
 
   @override
-  String get editProfile => '蝺刻摩?犖鞈?';
+  String get editProfile => '編輯個人資料';
 
   @override
-  String get nicknameLabel => '?梁迂';
+  String get nicknameLabel => '暱稱';
 
   @override
-  String get planSection => '閮閮剖?';
+  String get planSection => '計畫設定';
 
   @override
-  String get webTestSectionTitle => 'Web 皜祈岫';
+  String get webTestSectionTitle => 'Web 測試';
 
   @override
-  String get webTestSubscriptionLabel => '皜祈岫閮';
+  String get webTestSubscriptionLabel => '測試訂閱';
 
   @override
-  String get webTestEnabled => '撌脣???;
+  String get webTestEnabled => '已啟用';
 
   @override
-  String get webTestDisabled => '?芸???;
+  String get webTestDisabled => '未啟用';
 
   @override
-  String get webTestPlanMonthly => '??嚗葫閰佗?';
+  String get webTestPlanMonthly => '月訂（測試）';
 
   @override
-  String get webTestPlanYearly => '撟渲?嚗葫閰佗?';
+  String get webTestPlanYearly => '年訂（測試）';
 
   @override
-  String get webTestPlanNone => '?芾???;
+  String get webTestPlanNone => '未訂閱';
 
   @override
-  String get webTestAccessGraceLabel => '撽?撖祇???';
+  String get webTestAccessGraceLabel => '驗證寬限時間';
 
   @override
-  String get webTestAccessGraceDialogTitle => '撽?撖祇???嚗?-168 撠?嚗?;
+  String get webTestAccessGraceDialogTitle => '驗證寬限時間（1-168 小時）';
 
   @override
   String webTestAccessGraceValue(int hours) {
-    return '$hours 撠?';
+    return '$hours 小時';
   }
 
   @override
-  String get accessStatusFailed => '撽?憭望?嚗?蝔??岫';
+  String get accessStatusFailed => '驗證失敗，請稍後再試';
 
   @override
-  String get heightLabel => '頨恍?';
+  String get heightLabel => '身高';
 
   @override
-  String get weightLabel => '擃?';
+  String get weightLabel => '體重';
 
   @override
-  String get ageLabel => '撟湧翩';
+  String get ageLabel => '年齡';
 
   @override
-  String get genderLabel => '?批';
+  String get genderLabel => '性別';
 
   @override
-  String get genderUnspecified => '銝?摰?;
+  String get genderUnspecified => '不指定';
 
   @override
-  String get genderMale => '??;
+  String get genderMale => '男';
 
   @override
-  String get genderFemale => '憟?;
+  String get genderFemale => '女';
 
   @override
-  String get genderOther => '?嗡?';
+  String get genderOther => '其他';
 
   @override
   String get bmiLabel => 'BMI';
 
   @override
-  String get bmiUnderweight => '??';
+  String get bmiUnderweight => '偏低';
 
   @override
-  String get bmiNormal => '甇?虜';
+  String get bmiNormal => '正常';
 
   @override
-  String get bmiOverweight => '??';
+  String get bmiOverweight => '偏高';
 
   @override
-  String get bmiObese => '??';
+  String get bmiObese => '過高';
 
   @override
-  String get goalLabel => '?格?';
+  String get goalLabel => '目標';
 
   @override
-  String get goalLoseFat => '皜?????;
+  String get goalLoseFat => '減脂降體脂';
 
   @override
-  String get reminderSection => '??閮剖?';
+  String get reminderSection => '提醒設定';
 
   @override
-  String get reminderTimeNote => '??????擗活?????郊';
+  String get reminderTimeNote => '提醒時間會跟餐次開始時間同步';
 
   @override
-  String get reminderBreakfast => '?????拚?';
+  String get reminderBreakfast => '提醒拍攝早餐';
 
   @override
-  String get reminderLunch => '??????';
+  String get reminderLunch => '提醒拍攝午餐';
 
   @override
-  String get reminderDinner => '??????';
+  String get reminderDinner => '提醒拍攝晚餐';
 
   @override
-  String get subscriptionSection => '閮?隞?;
+  String get subscriptionSection => '訂閱與其他';
 
   @override
-  String get subscriptionPlan => '?桀??寞?';
+  String get subscriptionPlan => '目前方案';
 
   @override
-  String get planMonthly => '皜??冽 \$199/??;
+  String get planMonthly => '減脂周數 \$199/月';
 
   @override
-  String get languageLabel => '?湔?隤?';
+  String get languageLabel => '更換語言';
 
   @override
-  String get langZh => '蝜?銝剜?';
+  String get langZh => '繁體中文';
 
   @override
   String get langEn => 'English';
 
   @override
-  String get cancel => '??';
+  String get cancel => '取消';
 
   @override
-  String get save => '?脣?';
+  String get save => '儲存';
 
   @override
-  String get edit => '蝺刻摩';
+  String get edit => '編輯';
 
   @override
-  String get editDaySummaryTitle => '蝺刻摩隞??';
+  String get editDaySummaryTitle => '編輯今日摘要';
 
   @override
-  String get editMealAdviceTitle => '蝺刻摩銝?擗遣霅?;
+  String get editMealAdviceTitle => '編輯下一餐建議';
 
   @override
-  String get goalMaintain => '蝬剜?擃?';
+  String get goalMaintain => '維持體重';
 
   @override
-  String get planSpeedLabel => '皜??漲';
+  String get planSpeedLabel => '減脂速度';
 
   @override
-  String get adviceStyleSection => '撱箄降憸冽';
+  String get adviceStyleSection => '建議風格';
 
   @override
-  String get toneLabel => '撱箄降隤除';
+  String get toneLabel => '建議語氣';
 
   @override
-  String get personaLabel => '閫閬?';
+  String get personaLabel => '角色視角';
 
   @override
-  String get toneGentle => '皞怠?';
+  String get toneGentle => '溫和';
 
   @override
-  String get toneDirect => '?湔';
+  String get toneDirect => '直接';
 
   @override
-  String get toneEncouraging => '瞈??;
+  String get toneEncouraging => '激勵';
 
   @override
-  String get toneBullet => '皜?璇?';
+  String get toneBullet => '清楚條列';
 
   @override
-  String get toneStrict => '?游';
+  String get toneStrict => '嚴厲';
 
   @override
-  String get personaNutritionist => '??撣?;
+  String get personaNutritionist => '營養師';
 
   @override
-  String get personaCoach => '憭??毀';
+  String get personaCoach => '外食教練';
 
   @override
-  String get personaFriend => '??';
+  String get personaFriend => '朋友';
 
   @override
-  String get personaSystem => '蝎曄陛蝟餌絞';
+  String get personaSystem => '精簡系統';
 
   @override
-  String get summarySettingsSection => '蝮賜?閮剖?';
+  String get summarySettingsSection => '總結設定';
 
   @override
-  String get summaryTimeLabel => '瘥蝮賜?';
+  String get summaryTimeLabel => '每日總結';
 
   @override
-  String get weeklySummaryDayLabel => '瘥蝮賜?';
+  String get weeklySummaryDayLabel => '每周總結';
 
   @override
-  String get weekTopMealTitle => '?祇梁??擃?擗?;
+  String get weekTopMealTitle => '本週熱量最高一餐';
 
   @override
-  String get recentGuidanceTitle => '餈??寥?嚗? 7 憭抬?';
+  String get recentGuidanceTitle => '近期方針（近 7 天）';
 
   @override
-  String get weekSummaryTitle => '?祇梁蜇蝯?;
+  String get weekSummaryTitle => '本週總結';
 
   @override
-  String get nextWeekAdviceTitle => '銝勗遣霅?;
+  String get nextWeekAdviceTitle => '下週建議';
 
   @override
-  String get weekdayMon => '?曹?';
+  String get weekdayMon => '週一';
 
   @override
-  String get weekdayTue => '?曹?';
+  String get weekdayTue => '週二';
 
   @override
-  String get weekdayWed => '?曹?';
+  String get weekdayWed => '週三';
 
   @override
-  String get weekdayThu => '?勗?';
+  String get weekdayThu => '週四';
 
   @override
-  String get weekdayFri => '?曹?';
+  String get weekdayFri => '週五';
 
   @override
-  String get weekdaySat => '?勗';
+  String get weekdaySat => '週六';
 
   @override
-  String get weekdaySun => '?望';
+  String get weekdaySun => '週日';
 
   @override
-  String get planSpeedStable => '蝛拙?';
+  String get planSpeedStable => '穩定';
 
   @override
-  String get planSpeedGentle => '靽?';
+  String get planSpeedGentle => '保守';
 
   @override
-  String get activityLevelLabel => '?身瘣餃???;
+  String get activityLevelLabel => '預設活動量';
 
   @override
-  String get activityLabel => '瘣餃???;
+  String get activityLabel => '活動量';
 
   @override
-  String get activityCardTitle => '隞瘣餃???;
+  String get activityCardTitle => '今日活動量';
 
   @override
-  String get targetCalorieUnknown => '撠隡啗?';
+  String get targetCalorieUnknown => '尚未估計';
 
   @override
-  String get activitySedentary => '銋?';
+  String get activitySedentary => '久坐';
 
   @override
-  String get activityLight => '頛?';
+  String get activityLight => '輕量';
 
   @override
-  String get activityModerate => '銝剖漲';
+  String get activityModerate => '中度';
 
   @override
-  String get activityHigh => '擃?;
+  String get activityHigh => '高';
 
   @override
-  String get exerciseNoExercise => '?⊿???;
+  String get exerciseNoExercise => '無運動';
 
   @override
-  String get exerciseLabel => '??';
+  String get exerciseLabel => '運動';
 
   @override
-  String get exerciseMinutesLabel => '??';
+  String get exerciseMinutesLabel => '時間';
 
   @override
-  String get exerciseMinutesUnit => '??';
+  String get exerciseMinutesUnit => '分鐘';
 
   @override
-  String get exerciseMinutesHint => '頛詨????;
+  String get exerciseMinutesHint => '輸入分鐘數';
 
   @override
-  String get exerciseCaloriesLabel => '??瘨?;
+  String get exerciseCaloriesLabel => '運動消耗';
 
   @override
-  String get exerciseNone => '?⊿???;
+  String get exerciseNone => '無運動';
 
   @override
-  String get exerciseWalking => '敹怨粥';
+  String get exerciseWalking => '快走';
 
   @override
-  String get exerciseJogging => '?Ｚ?';
+  String get exerciseJogging => '慢跑';
 
   @override
-  String get exerciseCycling => '?株?';
+  String get exerciseCycling => '單車';
 
   @override
-  String get exerciseSwimming => '皜豢陶';
+  String get exerciseSwimming => '游泳';
 
   @override
-  String get exerciseStrength => '??閮毀';
+  String get exerciseStrength => '重量訓練';
 
   @override
-  String get exerciseYoga => '?播';
+  String get exerciseYoga => '瑜伽';
 
   @override
-  String get exerciseHiit => '??閮毀';
+  String get exerciseHiit => '間歇訓練';
 
   @override
-  String get exerciseBasketball => '蝐?';
+  String get exerciseBasketball => '籃球';
 
   @override
-  String get exerciseHiking => '?餃控';
+  String get exerciseHiking => '登山';
 
   @override
-  String get deltaUnknown => '撠隡啗?';
+  String get deltaUnknown => '尚未估計';
 
   @override
-  String get deltaOk => '?亥??格?';
+  String get deltaOk => '接近目標';
 
   @override
   String deltaSurplus(int kcal) {
-    return '頞 $kcal kcal';
+    return '超出 $kcal kcal';
   }
 
   @override
   String deltaDeficit(int kcal) {
-    return '韏文? $kcal kcal';
+    return '赤字 $kcal kcal';
   }
 
   @override
-  String get commonExerciseLabel => '撣貊??';
+  String get commonExerciseLabel => '常用運動';
 
   @override
-  String get suggestRemainingTitle => '隞予???撠?;
+  String get suggestRemainingTitle => '今天還能吃多少';
 
   @override
   String suggestRemainingLeft(int cal) {
-    return '?隞亙? $cal kcal';
+    return '還可以吃 $cal kcal';
   }
 
   @override
   String suggestRemainingOver(int cal) {
-    return '撌脰???$cal kcal';
+    return '已超過 $cal kcal';
   }
 
   @override
   String proteinRemainingLeft(int grams) {
-    return '還可以吃  g';
+    return '還可以吃 $grams g';
   }
 
   @override
   String proteinRemainingOver(int grams) {
-    return '已超過  g';
+    return '已超過 $grams g';
   }
 
   @override
   String suggestExerciseHint(String exercise, int minutes) {
-    return '撱箄降??$exercise 蝝?$minutes ??';
+    return '建議做 $exercise 約 $minutes 分鐘';
   }
 
   @override
-  String get reminderLunchTime => '??????';
+  String get reminderLunchTime => '午餐提醒時間';
 
   @override
-  String get reminderDinnerTime => '??????';
+  String get reminderDinnerTime => '晚餐提醒時間';
 
   @override
-  String get reminderBreakfastTime => '?拚?????';
+  String get reminderBreakfastTime => '早餐提醒時間';
 
   @override
-  String get pickFromCamera => '?';
+  String get pickFromCamera => '拍照';
 
   @override
-  String get pickFromGallery => '敺蝪輸??;
+  String get pickFromGallery => '從相簿選擇';
 
   @override
-  String get addMeal => '?啣?';
+  String get addMeal => '新增';
 
   @override
-  String get noMealPrompt => '撠蝝????撘萎??臭誑';
+  String get noMealPrompt => '尚未紀錄，拍一張也可以';
 
   @override
-  String get layoutThemeLabel => '銝駁?????;
+  String get layoutThemeLabel => '主題與版面';
 
   @override
-  String get textSizeLabel => '摮?憭批?';
+  String get textSizeLabel => '字體大小';
 
   @override
-  String get textSizeSmall => '璅?';
+  String get textSizeSmall => '標準';
 
   @override
-  String get textSizeMedium => '?之';
+  String get textSizeMedium => '偏大';
 
   @override
-  String get textSizeLarge => '?孵之';
+  String get textSizeLarge => '特大';
 
   @override
-  String get themeClean => '皜??;
+  String get themeClean => '清爽藍';
 
   @override
-  String get glowToggleLabel => '???';
+  String get glowToggleLabel => '柔光背景';
 
   @override
-  String get themeGreen => '皜蝬?;
+  String get themeGreen => '清爽綠';
 
   @override
-  String get themeWarm => '??';
+  String get themeWarm => '暖橘';
 
   @override
-  String get themePink => '??';
+  String get themePink => '柔粉';
 
   @override
-  String get plateSection => '?文?璅??';
+  String get plateSection => '盤子樣式';
 
   @override
-  String get plateStyleLabel => '?文?甈曉?';
+  String get plateStyleLabel => '盤子款式';
 
   @override
-  String get plateDefaultLabel => '?身?瑞';
+  String get plateDefaultLabel => '預設瓷盤';
 
   @override
-  String get plateWarmLabel => '??嗥??;
+  String get plateWarmLabel => '暖色陶瓷盤';
 
   @override
-  String get apiSection => 'API ???';
+  String get apiSection => 'API 連線';
 
   @override
-  String get apiBaseUrlLabel => 'API 雿?';
+  String get apiBaseUrlLabel => 'API 位址';
 
   @override
-  String get apiBaseUrlReset => '皜??API 銝阡?閮?;
+  String get apiBaseUrlReset => '清除舊 API 並重設';
 
   @override
-  String get apiBaseUrlResetDone => '撌脤?閮?API 雿?';
-
-
-  @override
-  String get delete => '?芷';
+  String get apiBaseUrlResetDone => '已重設 API 位址';
 
   @override
-  String get deleteConfirm => '蝣箏?閬?斗迨蝝??嚗?;
+  String get delete => '刪除';
 
   @override
-  String get logSuccess => '撌脰???';
+  String get deleteConfirm => '確定要刪除此紀錄嗎？';
 
   @override
-  String get viewLog => '?亦?蝝??;
+  String get logSuccess => '已記錄這餐';
 
   @override
-  String get calories => '?梢?';
+  String get viewLog => '查看紀錄';
 
   @override
-  String get estimated => 'AI 隡啁?';
+  String get calories => '熱量';
 
   @override
-  String get protein => '?鞈?;
+  String get estimated => 'AI 估算';
 
   @override
-  String get carbs => '蝣單偌';
+  String get protein => '蛋白質';
 
   @override
-  String get fat => '?';
+  String get carbs => '碳水';
 
   @override
-  String get sodium => '???;
+  String get fat => '脂肪';
 
   @override
-  String get tier => '撅斤?';
+  String get sodium => '鈉含量';
 
   @override
-  String get analyzeFailed => '?桀??⊥???';
+  String get tier => '層級';
 
   @override
-  String get reestimateFailedKeepLast => '?隡啁?憭望?嚗歇靽?銝?????;
+  String get analyzeFailed => '目前無法分析';
 
   @override
-  String get costEstimateLabel => '隡啁??梯祥';
+  String get reestimateFailedKeepLast => '重新估算失敗，已保留上一版結果';
 
   @override
-  String get usageSection => 'AI ?梯祥';
+  String get costEstimateLabel => '估算花費';
 
   @override
-  String get usageTotalLabel => '蝝航??梯祥';
+  String get usageSection => 'AI 花費';
 
   @override
-  String get usageViewLog => '?亦?蝝??;
+  String get usageTotalLabel => '累計花費';
 
   @override
-  String get usageEmpty => '撠?梯祥蝝??;
+  String get usageViewLog => '查看紀錄';
 
   @override
-  String get usageLoading => '頛銝?..';
+  String get usageEmpty => '尚無花費紀錄';
 
   @override
-  String get mockPrefix => '?汗';
+  String get usageLoading => '載入中...';
 
   @override
-  String get versionSection => '?鞈?';
+  String get mockPrefix => '預覽';
 
   @override
-  String get versionBuild => '?湔??';
+  String get versionSection => '版本資訊';
 
   @override
-  String get versionCommit => '?隞?Ⅳ';
+  String get versionBuild => '更新時間';
 
   @override
-  String get versionUnavailable => '?⊥????鞈?';
+  String get versionCommit => '版本代碼';
 
   @override
-  String get nutritionChartLabel => '???”';
+  String get versionUnavailable => '無法取得版本資訊';
 
   @override
-  String get nutritionValueLabel => '??憿舐內';
+  String get nutritionChartLabel => '營養圖表';
 
   @override
-  String get nutritionValuePercent => '?曉?瘥?;
+  String get nutritionValueLabel => '營養顯示';
 
   @override
-  String get nutritionValueAmount => '?詨?;
+  String get nutritionValuePercent => '百分比';
 
   @override
-  String get chartRadar => '?琿???;
+  String get nutritionValueAmount => '數值';
 
   @override
-  String get chartBars => '璇???;
+  String get chartRadar => '雷達圖';
 
   @override
-  String get chartDonut => '???;
+  String get chartBars => '條狀圖';
 
   @override
-  String get dataSection => '鞈?蝞∠?';
+  String get chartDonut => '圓環圖';
 
   @override
-  String get syncSection => '撣唾???甇?;
+  String get dataSection => '資料管理';
 
   @override
-  String get syncSignedInAs => '撌脩?伐?';
+  String get syncSection => '帳號與同步';
 
   @override
-  String get syncNotSignedIn => '撠?餃';
+  String get syncSignedInAs => '已登入：';
+
+  @override
+  String get syncNotSignedIn => '尚未登入';
 
   @override
   String get syncEmailLabel => 'Email';
 
   @override
-  String get syncPasswordLabel => '撖Ⅳ';
+  String get syncPasswordLabel => '密碼';
 
   @override
-  String get syncSignIn => '?餃';
+  String get syncSignIn => '登入';
 
   @override
-  String get syncSignUp => '閮餃?';
+  String get syncSignUp => '註冊';
 
   @override
-  String get syncSignUpSuccess => '撌脣???霅縑嚗????縑蝞梢?霅?;
+  String get syncSignUpSuccess => '已寄送驗證信，請先完成信箱驗證';
 
   @override
-  String get syncSignInSuccess => '?餃??';
+  String get syncSignInSuccess => '登入成功';
 
   @override
-  String get syncForgotPassword => '敹?撖Ⅳ';
+  String get syncForgotPassword => '忘記密碼';
 
   @override
-  String get syncResetPasswordTitle => '?身撖Ⅳ';
+  String get syncResetPasswordTitle => '重設密碼';
 
   @override
-  String get syncResetPasswordHint => '頛詨閮餃?靽∠拳';
+  String get syncResetPasswordHint => '輸入註冊信箱';
 
   @override
-  String get syncResetPasswordSent => '撌脣???閮剖?蝣潮隞?;
+  String get syncResetPasswordSent => '已寄送重設密碼郵件';
 
   @override
-  String get syncSignOut => '?餃';
+  String get syncSignOut => '登出';
 
   @override
-  String get syncSwitchAccount => '??撣唾?';
+  String get syncSwitchAccount => '切換帳號';
 
   @override
-  String get syncSwitchAccountConfirmTitle => '??撣唾?';
+  String get syncSwitchAccountConfirmTitle => '切換帳號';
 
   @override
-  String get syncSwitchAccountConfirmMessage => '撠??斗璈??蒂?餃嚗Ⅱ摰???撣唾???';
+  String get syncSwitchAccountConfirmMessage => '將清除本機資料並登出，確定要切換帳號嗎？';
 
   @override
-  String get syncSwitchAccountConfirmAction => '??';
+  String get syncSwitchAccountConfirmAction => '切換';
 
   @override
-  String get syncSwitchAccountDone => '撌脣??董??鞈?撌脫?蝛箝?;
+  String get syncSwitchAccountDone => '已切換帳號，資料已清空。';
 
   @override
-  String get syncUpload => '銝?郊';
+  String get syncUpload => '上傳同步';
 
   @override
-  String get syncDownload => '銝??郊';
+  String get syncDownload => '下載同步';
 
   @override
-  String get syncNow => '?郊';
+  String get syncNow => '同步';
 
   @override
-  String get syncInProgress => '甇??芸??郊銝凌?;
+  String get syncInProgress => '正在努力同步中…';
 
   @override
-  String get syncLastSyncLabel => '銝活?郊嚗?;
+  String get syncLastSyncLabel => '上次同步：';
 
   @override
-  String get syncLastResultLabel => '銝活蝯?嚗?;
+  String get syncLastResultLabel => '上次結果：';
 
   @override
-  String get syncLastResultNone => '撠蝝??;
+  String get syncLastResultNone => '尚無紀錄';
 
   @override
-  String get syncLastResultNoChanges => '?∟???;
+  String get syncLastResultNoChanges => '無變更';
 
   @override
-  String get syncFailedItemsLabel => '憭望??嚗?;
+  String get syncFailedItemsLabel => '失敗項目：';
 
   @override
   String syncFailedItemsCount(int count) {
-    return '$count ??;
+    return '$count 項';
   }
 
   @override
-  String get syncRetryFailed => '?岫憭望???;
+  String get syncRetryFailed => '重試失敗項';
 
   @override
-  String get syncSuccess => '?郊摰???;
+  String get syncSuccess => '同步完成囉';
 
   @override
-  String get syncUpdated => '?湔摰?';
+  String get syncUpdated => '更新完成';
 
   @override
-  String get syncNoChanges => '?桀?瘝?閬?甇亦?鞈?';
+  String get syncNoChanges => '目前沒有要同步的資料';
 
   @override
-  String get syncError => '?郊憭望?嚗?蝔??岫';
+  String get syncError => '同步失敗，請稍後再試';
 
   @override
-  String get syncRequireLogin => '??交??賢?甇亙?';
+  String get syncRequireLogin => '先登入才能同步喔';
 
   @override
-  String get syncAuthTitleSignIn => '?餃撣唾?';
+  String get syncAuthTitleSignIn => '登入帳號';
 
   @override
-  String get syncAuthTitleSignUp => '閮餃?撣唾?';
+  String get syncAuthTitleSignUp => '註冊帳號';
 
   @override
-  String get exportData => '?臬鞈?';
+  String get exportData => '匯出資料';
 
   @override
-  String get clearData => '皜鞈?';
+  String get clearData => '清除資料';
 
   @override
-  String get clearDataConfirm => '蝣箏?閬??斗?????嚗?;
+  String get clearDataConfirm => '確定要清除所有資料嗎？';
 
   @override
-  String get exportDone => '撌脣??;
+  String get exportDone => '已匯出';
 
   @override
-  String get clearDone => '撌脫???;
+  String get clearDone => '已清除';
 
   @override
-  String get close => '??';
+  String get close => '關閉';
 
   @override
-  String get authTitle => '甇∟?雿輻 Food AI';
+  String get authTitle => '歡迎使用 Food AI';
 
   @override
-  String get authSubtitle => '?餃敺?臭蝙?典??游???;
+  String get authSubtitle => '登入後即可使用完整功能';
 
   @override
   String get authEmailLabel => 'Email';
 
   @override
-  String get authEmailRequired => '隢撓??Email';
+  String get authEmailRequired => '請輸入 Email';
 
   @override
-  String get authEmailInvalid => 'Email ?澆?銝迤蝣?;
+  String get authEmailInvalid => 'Email 格式不正確';
 
   @override
-  String get authPasswordLabel => '撖Ⅳ';
+  String get authPasswordLabel => '密碼';
 
   @override
-  String get authConfirmPasswordLabel => '蝣箄?撖Ⅳ';
+  String get authConfirmPasswordLabel => '確認密碼';
 
   @override
-  String get authSignIn => '?餃';
+  String get authSignIn => '登入';
 
   @override
-  String get authSignUp => '閮餃?';
+  String get authSignUp => '註冊';
 
   @override
-  String get authToggleToSignUp => '瘝?撣唾?嚗??唾酉??;
+  String get authToggleToSignUp => '沒有帳號？立即註冊';
 
   @override
-  String get authToggleToSignIn => '撌脫?撣唾?嚗????;
+  String get authToggleToSignIn => '已有帳號？返回登入';
 
   @override
-  String get authForgotPassword => '敹?撖Ⅳ';
+  String get authForgotPassword => '忘記密碼';
 
   @override
-  String get authSignInSuccess => '?餃??';
+  String get authSignInSuccess => '登入成功';
 
   @override
-  String get authSignUpSuccess => '閮餃?摰?';
+  String get authSignUpSuccess => '註冊完成';
 
   @override
-  String get authSignUpVerify => '閮餃?摰?嚗???靽∠拳摰?撽?';
+  String get authSignUpVerify => '註冊完成，請前往信箱完成驗證';
 
   @override
-  String get authEmailNotVerified => '甇?Email 撠撽?嚗????縑蝞梢?霅?;
+  String get authEmailNotVerified => '此 Email 尚未驗證，請先完成信箱驗證';
 
   @override
-  String get authVerifyTitle => '隢?霅縑蝞?;
+  String get authVerifyTitle => '請驗證信箱';
 
   @override
   String authVerifyBody(String email) {
-    return '?歇撖?霅縑??$email嚗???1-3 ???扳??銋?瑼Ｘ??萎辣/靽???;
+    return '我們已寄送驗證信到 $email，請在 1-3 分鐘內查看，也請檢查垃圾郵件/促銷匣。';
   }
 
   @override
-  String get authResend => '?撖?霅縑';
+  String get authResend => '重新寄送驗證信';
 
   @override
   String authResendCooldown(int seconds) {
-    return '?撖?${seconds}s嚗?;
+    return '重新寄送（${seconds}s）';
   }
 
   @override
-  String get authResendSent => '撽?靽∪歇?撖';
+  String get authResendSent => '驗證信已重新寄出';
 
   @override
-  String get authResendFailed => '?撖仃??隢?敺?閰?;
+  String get authResendFailed => '重新寄送失敗，請稍後再試';
 
   @override
-  String get authTooManyAttempts => '隢?敺?閰?;
+  String get authTooManyAttempts => '請稍後再試';
 
   @override
-  String get authPasswordMismatch => '?拇活撖Ⅳ銝???;
+  String get authPasswordMismatch => '兩次密碼不一致';
 
   @override
-  String get authPasswordRule => '撖Ⅳ?喳? 8 蝣潘?銝??臬蝛箇?葉??;
+  String get authPasswordRule => '密碼至少 8 碼，且不可含空白或中文';
 
   @override
-  String get authPasswordInvalid => '撖Ⅳ??喳? 8 蝣潘?銝??臬蝛箇?葉??;
+  String get authPasswordInvalid => '密碼需至少 8 碼，且不可含空白或中文';
 
   @override
-  String get authResetSent => '?身撖Ⅳ靽∪歇撖嚗??亦?靽∠拳';
+  String get authResetSent => '重設密碼信已寄出，請查看信箱';
 
   @override
-  String get authResetFailed => '?身憭望?嚗?蝣箄? Email ?臬甇?Ⅱ';
+  String get authResetFailed => '重設失敗，請確認 Email 是否正確';
 
   @override
-  String get authLoginInvalid => 'Email ??蝣潮隤?;
+  String get authLoginInvalid => 'Email 或密碼錯誤';
 
   @override
-  String get authEmailExists => '甇?Email 撌脰酉??;
+  String get authEmailExists => '此 Email 已註冊';
 
   @override
-  String get authNetworkError => '????啣虜嚗?蝔??岫';
+  String get authNetworkError => '連線異常，請稍後再試';
 
   @override
-  String get authSignUpFailed => '閮餃?憭望?';
+  String get authSignUpFailed => '註冊失敗';
 
   @override
-  String get authError => '?餃憭望?嚗?蝔??岫';
+  String get authError => '登入失敗，請稍後再試';
 
   @override
-  String get trialExpiredTitle => '閰衣?歇蝯?';
+  String get trialExpiredTitle => '試用期已結束';
 
   @override
-  String get trialExpiredBody => '雿歇摰? 2 憭拙?鞎餉岫?剁?隢??勗?蝜潛?雿輻 AI ?????;
+  String get trialExpiredBody => '你已完成 2 天免費試用，請訂閱後繼續使用 AI 分析功能。';
 
   @override
-  String get trialExpiredAction => '鈭圾?寞?';
+  String get trialExpiredAction => '了解方案';
 
   @override
-  String get signOut => '?餃';
+  String get signOut => '登出';
 
   @override
-  String get dietPreferenceSection => '憌脤??末';
+  String get dietPreferenceSection => '飲食偏好';
 
   @override
-  String get dietTypeLabel => '憌脤?憿?';
+  String get dietTypeLabel => '飲食類型';
 
   @override
-  String get dietNoteLabel => '?末鋆?';
+  String get dietNoteLabel => '偏好補充';
 
   @override
-  String get dietTypeNone => '銝???;
+  String get dietTypeNone => '不限制';
 
   @override
-  String get dietTypeVegetarian => '憟嗉?蝝?;
+  String get dietTypeVegetarian => '奶蛋素';
 
   @override
-  String get dietTypeVegan => '?函?';
+  String get dietTypeVegan => '全素';
 
   @override
-  String get dietTypePescatarian => '瘚琿悅蝝?;
+  String get dietTypePescatarian => '海鮮素';
 
   @override
-  String get dietTypeLowCarb => '雿４';
+  String get dietTypeLowCarb => '低碳';
 
   @override
-  String get dietTypeKeto => '?';
+  String get dietTypeKeto => '生酮';
 
   @override
-  String get dietTypeLowFat => '雿?';
+  String get dietTypeLowFat => '低脂';
 
   @override
-  String get dietTypeHighProtein => '擃???;
+  String get dietTypeHighProtein => '高蛋白';
 
   @override
-  String get authNicknameRequired => '隢撓?交蝔?;
+  String get authNicknameRequired => '請輸入暱稱';
 
   @override
-  String get containerSection => '撣貊摰孵';
+  String get containerSection => '常用容器';
 
   @override
-  String get containerTypeLabel => '摰孵憿?';
+  String get containerTypeLabel => '容器類型';
 
   @override
-  String get containerSizeLabel => '摰孵撠箏站';
+  String get containerSizeLabel => '容器尺寸';
 
   @override
-  String get containerDepthLabel => '蝣楛摨?;
+  String get containerDepthLabel => '碗深度';
 
   @override
-  String get containerDiameterLabel => '?游? (cm)';
+  String get containerDiameterLabel => '直徑 (cm)';
 
   @override
-  String get containerCapacityLabel => '摰寥? (ml)';
+  String get containerCapacityLabel => '容量 (ml)';
 
   @override
-  String get containerTypeBowl => '蝣?;
+  String get containerTypeBowl => '碗';
 
   @override
-  String get containerTypePlate => '??;
+  String get containerTypePlate => '盤';
 
   @override
-  String get containerTypeBox => '靘輻??;
+  String get containerTypeBox => '便當盒';
 
   @override
-  String get containerTypeCup => '??;
+  String get containerTypeCup => '杯';
 
   @override
-  String get containerTypeUnknown => '銝?摰?;
+  String get containerTypeUnknown => '不指定';
 
   @override
-  String get containerSizeSmall => '撠?;
+  String get containerSizeSmall => '小';
 
   @override
-  String get containerSizeMedium => '銝?;
+  String get containerSizeMedium => '中';
 
   @override
-  String get containerSizeLarge => '憭?;
+  String get containerSizeLarge => '大';
 
   @override
-  String get containerSizeStandard => '璅?';
+  String get containerSizeStandard => '標準';
 
   @override
-  String get containerSizeCustom => '?芾?';
+  String get containerSizeCustom => '自訂';
 
   @override
-  String get containerDepthShallow => '瘛?;
+  String get containerDepthShallow => '淺';
 
   @override
-  String get containerDepthMedium => '銝?;
+  String get containerDepthMedium => '中';
 
   @override
-  String get containerDepthDeep => '瘛?;
+  String get containerDepthDeep => '深';
 
   @override
-  String get paywallTitle => '閫??摰?';
+  String get paywallTitle => '解鎖完整功能';
 
   @override
-  String get paywallSubtitle => 'AI ????擗??梧??蜇蝯?;
+  String get paywallSubtitle => 'AI 分析、營養圖、週／月總結';
 
   @override
   String planMonthlyWithPrice(String price) {
-    return '?? $price';
+    return '月訂 $price';
   }
 
   @override
   String planYearlyWithPrice(String price) {
-    return '撟渲? $price';
+    return '年訂 $price';
   }
 
   @override
-  String get paywallYearlyBadge => '撟渲???蝝?30%';
+  String get paywallYearlyBadge => '年訂省下約 30%';
 
   @override
-  String get paywallRestore => '?Ｗ儔鞈潸眺';
+  String get paywallRestore => '恢復購買';
 
   @override
-  String get paywallDisclaimer => '閮撠??閮??舫? Apple ID 閮蝞∠?銝剖?瘨?甈曄 Apple ????;
+  String get paywallDisclaimer => '訂閱將自動續訂，可隨時在 Apple ID 訂閱管理中取消。付款由 Apple 處理。';
 
   @override
-  String get paywallStartMonthly => '????';
+  String get paywallStartMonthly => '開始月訂';
 
   @override
-  String get paywallStartYearly => '??撟渲?';
+  String get paywallStartYearly => '開始年訂';
 
   @override
-  String get paywallFeatureAiAnalysis => '摰 AI ??';
+  String get paywallFeatureAiAnalysis => '完整 AI 分析';
 
   @override
-  String get paywallFeatureNutritionAdvice => '?梢???擗遣霅?;
+  String get paywallFeatureNutritionAdvice => '熱量與營養建議';
 
   @override
-  String get paywallFeatureSummaries => '?梧??蜇蝯?;
+  String get paywallFeatureSummaries => '週／月總結';
 
   @override
-  String get paywallFeatureBestValue => '?游?蝞??瑟??寞?';
+  String get paywallFeatureBestValue => '更划算的長期方案';
 
   @override
-  String get paywallUnavailableTitle => '?⊥?頛閮';
+  String get paywallUnavailableTitle => '無法載入訂閱';
 
   @override
-  String get paywallUnavailableBody => '?桀??⊥??? App Store 閮鞈?嚗?蝔??岫??;
+  String get paywallUnavailableBody => '目前無法取得 App Store 訂閱資訊，請稍後再試。';
 
   @override
-  String get webPaywallTitle => '閫??摰?嚗eb 皜祈岫嚗?;
+  String get webPaywallTitle => '解鎖完整功能（Web 測試）';
 
   @override
-  String get webPaywallTestBadge => '??皜祈岫嚗??甈?;
+  String get webPaywallTestBadge => '僅供測試，不會扣款';
 
   @override
-  String get webPaywallCurrentPlanMonthly => '?桀??寞?嚗?閮?皜祈岫嚗?;
+  String get webPaywallCurrentPlanMonthly => '目前方案：月訂（測試）';
 
   @override
-  String get webPaywallCurrentPlanYearly => '?桀??寞?嚗僑閮?皜祈岫嚗?;
+  String get webPaywallCurrentPlanYearly => '目前方案：年訂（測試）';
 
   @override
-  String get webPaywallCurrentPlanNone => '?桀??寞?嚗閮';
+  String get webPaywallCurrentPlanNone => '目前方案：未訂閱';
 
   @override
-  String get webPaywallTestNote => 'Web 皜祈岫??甇斗?蝔??祕?甈整?;
+  String get webPaywallTestNote => 'Web 測試版：此流程不會實際扣款。';
 
   @override
-  String get webPaywallActivated => '撌脣??冽葫閰西???;
+  String get webPaywallActivated => '已啟用測試訂閱';
 
   @override
-  String get webPaywallSuccessTitle => '皜祈岫閮??';
+  String get webPaywallSuccessTitle => '測試訂閱成功';
 
   @override
-  String get webPaywallSuccessBody => '撌脰圾???游??踝?皜祈岫璅∪?嚗?;
+  String get webPaywallSuccessBody => '已解鎖完整功能（測試模式）。';
 
   @override
-  String get webPaywallSuccessCta => '??雿輻';
+  String get webPaywallSuccessCta => '開始使用';
 
   @override
-  String get dialogOk => '?仿?鈭?;
+  String get dialogOk => '知道了';
 
   @override
-  String get syncErrorUploadFailedDetail => '??銝憭望?';
+  String get syncErrorUploadFailedDetail => '圖片上傳失敗';
 
   @override
-  String get syncErrorSyncMetaFailedDetail => '?郊??神?亙仃??;
+  String get syncErrorSyncMetaFailedDetail => '同步狀態寫入失敗';
 
   @override
-  String get syncErrorPostgrestDetail => '鞈?摨怠??仃??;
+  String get syncErrorPostgrestDetail => '資料庫存取失敗';
 
   @override
-  String get syncErrorNetworkDetail => '蝬脰楝???憭望?';
+  String get syncErrorNetworkDetail => '網路連線失敗';
 
   @override
   String syncSummaryUploadMeals(int count) {
-    return '銝擗? $count';
+    return '上傳餐點 $count';
   }
 
   @override
   String syncSummaryDeleteMeals(int count) {
-    return '?芷擗? $count';
+    return '刪除餐點 $count';
   }
 
   @override
   String syncSummaryUploadCustom(int count) {
-    return '銝?芾?憌 $count';
+    return '上傳自訂食物 $count';
   }
 
   @override
   String syncSummaryDeleteCustom(int count) {
-    return '?芷?芾?憌 $count';
+    return '刪除自訂食物 $count';
   }
 
   @override
   String syncSummaryUploadSettings(int count) {
-    return '銝閮剖? $count';
+    return '上傳設定 $count';
   }
 
   @override
   String syncSummaryDownloadMeals(int count) {
-    return '銝?擗? $count';
+    return '下載餐點 $count';
   }
 
   @override
   String syncSummaryDownloadDeletedMeals(int count) {
-    return '銝??芷擗? $count';
+    return '下載刪除餐點 $count';
   }
 
   @override
   String syncSummaryDownloadCustom(int count) {
-    return '銝??芾?憌 $count';
+    return '下載自訂食物 $count';
   }
 
   @override
   String syncSummaryDownloadDeletedCustom(int count) {
-    return '銝??芷?芾?憌 $count';
+    return '下載刪除自訂食物 $count';
   }
 
   @override
   String syncSummaryDownloadSettings(int count) {
-    return '銝?閮剖? $count';
+    return '下載設定 $count';
   }
 
   @override
-  String get syncSummarySeparator => '??;
+  String get syncSummarySeparator => '、';
 
   @override
-  String get plateJapanese02 => '?亙???02';
+  String get plateJapanese02 => '日式盤 02';
 
   @override
-  String get plateJapanese04 => '?亙???04';
+  String get plateJapanese04 => '日式盤 04';
 
   @override
-  String get plateChina01 => '銝剖???01';
+  String get plateChina01 => '中式盤 01';
 
   @override
-  String get plateChina02 => '銝剖???02';
+  String get plateChina02 => '中式盤 02';
 
   @override
   String get placeholderDash => '--';
 
   @override
   String valueWithCm(int value) {
-    return '$value ?砍?';
+    return '$value 公分';
   }
 
   @override
   String valueWithKg(int value) {
-    return '$value ?祆';
+    return '$value 公斤';
   }
 
   @override
   String valueWithMl(int value) {
-    return '$value 瘥怠?';
+    return '$value 毫升';
   }
 
   @override
-  String get referenceObjectLabel => '?';
+  String get referenceObjectLabel => '參考物';
 
   @override
-  String get referenceObjectNone => '??;
+  String get referenceObjectNone => '無';
 
   @override
-  String get referenceObjectCard => '靽∠??;
+  String get referenceObjectCard => '信用卡';
 
   @override
-  String get referenceObjectCoin10 => '10 ?′撟?;
+  String get referenceObjectCoin10 => '10 元硬幣';
 
   @override
-  String get referenceObjectCoin5 => '5 ?′撟?;
+  String get referenceObjectCoin5 => '5 元硬幣';
 
   @override
-  String get referenceObjectManual => '皜祈?嚗??';
+  String get referenceObjectManual => '測距（公分）';
 
   @override
-  String get referenceLengthLabel => '皜祈??瑕漲嚗??';
+  String get referenceLengthLabel => '測距長度（公分）';
 
   @override
-  String get referenceLengthHint => '頛詨 iOS 皜祈?????;
+  String get referenceLengthHint => '輸入 iOS 測距量到的公分';
 
   @override
-  String get referenceLengthApply => '憟';
+  String get referenceLengthApply => '套用';
 
   @override
-  String get tabChatAssistant => '??';
+  String get tabChatAssistant => '咚咚';
 
   @override
-  String get chatEmptyHint => '?剁????嚗??ㄡ憌??格??改?';
+  String get chatEmptyHint => '嗨～我是咚咚，問我飲食或目標吧！';
 
   @override
   String chatEmptyHintWithName(Object name) {
-    return '?剁??$name嚗??ㄡ憌??格??改?';
+    return '嗨～我是$name，問我飲食或目標吧！';
   }
 
   @override
-  String get chatInputHint => '????...';
+  String get chatInputHint => '問問咚咚...';
 
   @override
-  String get chatLockedTitle => '閮?喳???予';
+  String get chatLockedTitle => '訂閱即可開啟聊天';
 
   @override
-  String get chatLockedBody => '閮敺?脣??犖?ㄡ憌遣霅啗?閫????;
+  String get chatLockedBody => '訂閱後可獲得個人化飲食建議與解答。';
 
   @override
-  String get chatLockedAction => '?亦?閮';
+  String get chatLockedAction => '查看訂閱';
 
   @override
-  String get chatClearTitle => '皜?予蝝??';
+  String get chatClearTitle => '清除聊天紀錄？';
 
   @override
-  String get chatClearBody => '??蝘駁?祆?銝?撠店?批捆??;
+  String get chatClearBody => '這會移除本機上的對話內容。';
 
   @override
-  String get chatClearConfirm => '皜';
+  String get chatClearConfirm => '清除';
 
   @override
-  String get chatError => '?予憭望?嚗?蝔??岫';
+  String get chatError => '聊天失敗，請稍後再試';
 
   @override
-  String get chatErrorAuth => '?餃撌脤???隢??啁??;
+  String get chatErrorAuth => '登入已過期，請重新登入';
 
   @override
-  String get chatErrorQuota => '隞?予憿漲撌脩摰?隢?敺?閰?;
+  String get chatErrorQuota => '今日聊天額度已用完，請稍後再試';
 
   @override
-  String get chatErrorServer => '?萄?嚚???敹?蝔??岫';
+  String get chatErrorServer => '喵嗚～我有點忙，稍後再試';
 
   @override
-  String get chatErrorNetwork => '蝬脰楝銝帘摰?隢?敺?閰?;
+  String get chatErrorNetwork => '網路不穩定，請稍後再試';
 
   @override
-  String get chatErrorReplyBase => '?萄?嚚?????蝝荔?蝔?????甈∪末??';
+  String get chatErrorReplyBase => '喵嗚～我剛剛有點累，稍後再問我一次好嗎？';
 
   @override
-  String get chatErrorReasonPrefix => '??嚗?;
+  String get chatErrorReasonPrefix => '原因：';
 
   @override
-  String get chatErrorReasonAuth => '?餃撌脤???甈?銝雲';
+  String get chatErrorReasonAuth => '登入已過期或權限不足';
 
   @override
-  String get chatErrorReasonQuota => '隢?憭芷蝜?憿漲撌脩摰?;
+  String get chatErrorReasonQuota => '請求太頻繁或額度已用完';
 
   @override
-  String get chatErrorReasonServer => '隡箸??典?蝣??急??粹';
+  String get chatErrorReasonServer => '伺服器忙碌或暫時出錯';
 
   @override
-  String get chatErrorReasonNetwork => '蝬脰楝銝帘摰????銝剜';
+  String get chatErrorReasonNetwork => '網路不穩定或連線中斷';
 
   @override
-  String get chatErrorReasonUnknown => '?急??⊥??斗';
+  String get chatErrorReasonUnknown => '暫時無法判斷';
 
   @override
-  String get chatAvatarLabel => '?予?剖?';
+  String get chatAvatarLabel => '聊天頭像';
 
   @override
-  String get chatAssistantNameLabel => '???迂';
+  String get chatAssistantNameLabel => '咚咚名稱';
 
   @override
-  String get chatAvatarSet => '撌脰身摰?;
+  String get chatAvatarSet => '已設定';
 
   @override
-  String get chatAvatarUnset => '?芾身摰?;
+  String get chatAvatarUnset => '未設定';
 
   @override
-  String get chatAvatarSheetTitle => '閮剖??予?剖?';
+  String get chatAvatarSheetTitle => '設定聊天頭像';
 
   @override
-  String get chatAvatarPick => '?豢??抒?';
+  String get chatAvatarPick => '選擇照片';
 
   @override
-  String get chatAvatarRemove => '蝘駁?抒?';
+  String get chatAvatarRemove => '移除照片';
+
+  @override
+  String get authResetPasswordTitle => '重設密碼';
+
+  @override
+  String get authNewPasswordLabel => '新密碼';
+
+  @override
+  String get authPasswordRequired => '請輸入密碼';
+
+  @override
+  String get authPasswordUpdated => '密碼已更新';
+
+  @override
+  String get authResetPasswordAction => '更新密碼';
+
+  @override
+  String get authResetLinkInvalid => '連結已失效，請重新寄送重設密碼信';
 }

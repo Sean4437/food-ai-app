@@ -1,4 +1,4 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
 
@@ -86,7 +86,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analysisTitle => 'Meal analysis';
 
   @override
-  String get analysisEmpty => 'No analysis yet ??take a photo to start';
+  String get analysisEmpty => 'No analysis yet — take a photo to start';
 
   @override
   String get foodNameLabel => 'Food name';
@@ -359,7 +359,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get optionLightDesc => 'Soup, steamed foods, less sauce.';
 
   @override
-  String get summaryTitle => 'Today? summary';
+  String get summaryTitle => 'Today’s summary';
 
   @override
   String get summaryEmpty => 'No meals recorded today yet';
@@ -374,10 +374,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get summaryCarb => 'Carb-heavy today';
 
   @override
-  String get summaryProteinOk => 'Protein looks OK ??add some veggies';
+  String get summaryProteinOk => 'Protein looks OK — add some veggies';
 
   @override
-  String get summaryNeutral => 'You?e doing well today, keep it up';
+  String get summaryNeutral => 'You’re doing well today, keep it up';
 
   @override
   String get summaryBeverageOnly => 'Only beverages recorded today';
@@ -431,7 +431,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String greetingTitle(String name) {
-    return 'Hi $name, you?e got this';
+    return 'Hi $name, you’ve got this';
   }
 
   @override
@@ -493,7 +493,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calorieHistoryTitle => 'Calorie Trend';
 
   @override
-  String calorieTrendTargetLabel(String min, String max) {
+  String calorieTrendTargetLabel(Object max, Object min) {
     return 'Target $min-$max';
   }
 
@@ -519,22 +519,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calorieTrendSummaryNoData => 'No data yet.';
 
   @override
-  String calorieTrendSummaryNoPrev(String avg) {
+  String calorieTrendSummaryNoPrev(Object avg) {
     return 'Avg intake $avg kcal, no previous period data.';
   }
 
   @override
-  String calorieTrendSummaryHigher(String avg, String period, String pct) {
+  String calorieTrendSummaryHigher(Object avg, Object pct, Object period) {
     return 'Avg intake $avg kcal, higher than $period by $pct%.';
   }
 
   @override
-  String calorieTrendSummaryLower(String avg, String period, String pct) {
+  String calorieTrendSummaryLower(Object avg, Object pct, Object period) {
     return 'Avg intake $avg kcal, lower than $period by $pct%.';
   }
 
   @override
-  String calorieTrendSummarySame(String avg, String period) {
+  String calorieTrendSummarySame(Object avg, Object period) {
     return 'Avg intake $avg kcal, same as $period.';
   }
 
@@ -542,7 +542,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proteinTrendTitle => 'Protein Trend';
 
   @override
-  String proteinTrendTargetLabel(String value) {
+  String proteinTrendTargetLabel(Object value) {
     return 'Target $value g';
   }
 
@@ -550,22 +550,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proteinTrendSummaryNoData => 'No data yet.';
 
   @override
-  String proteinTrendSummaryNoPrev(String avg) {
+  String proteinTrendSummaryNoPrev(Object avg) {
     return 'Avg intake $avg g, no previous period data.';
   }
 
   @override
-  String proteinTrendSummaryHigher(String avg, String period, String pct) {
+  String proteinTrendSummaryHigher(Object avg, Object pct, Object period) {
     return 'Avg intake $avg g, higher than $period by $pct%.';
   }
 
   @override
-  String proteinTrendSummaryLower(String avg, String period, String pct) {
+  String proteinTrendSummaryLower(Object avg, Object pct, Object period) {
     return 'Avg intake $avg g, lower than $period by $pct%.';
   }
 
   @override
-  String proteinTrendSummarySame(String avg, String period) {
+  String proteinTrendSummarySame(Object avg, Object period) {
     return 'Avg intake $avg g, same as $period.';
   }
 
@@ -716,7 +716,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestInstantNonFood =>
-      'This doesn\'t look like food?ant to try another shot? If you\'re not eating now, come back when you\'re hungry.';
+      'This doesn\'t look like food—want to try another shot? If you\'re not eating now, come back when you\'re hungry.';
 
   @override
   String get suggestInstantReestimate => 'Re-estimate';
@@ -733,7 +733,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestTodayHint =>
-      'Fat is a bit high today ??keep the next meal lighter';
+      'Fat is a bit high today — keep the next meal lighter';
 
   @override
   String get suggestTodayOilyCarb => 'Oily and carb-heavy today';
@@ -745,7 +745,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestTodayCarb => 'Carbs are high today, go lighter on starch';
 
   @override
-  String get suggestTodayOk => 'You?e doing well today ??keep it up';
+  String get suggestTodayOk => 'You’re doing well today — keep it up';
 
   @override
   String get logThisMeal => 'Log this meal';
@@ -1348,7 +1348,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncNow => 'Sync now';
 
   @override
-  String get syncInProgress => 'Syncing??;
+  String get syncInProgress => 'Syncing…';
 
   @override
   String get syncLastSyncLabel => 'Last sync:';
@@ -1466,7 +1466,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String authVerifyBody(String email) {
-    return 'We sent a verification email to $email. Please check your inbox in 1?? minutes and also check spam/promotions.';
+    return 'We sent a verification email to $email. Please check your inbox in 1–3 minutes and also check spam/promotions.';
   }
 
   @override
@@ -1496,25 +1496,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authPasswordInvalid =>
       'Password must be at least 8 characters and contain no spaces or Chinese characters';
-
-  @override
-  String get authResetPasswordTitle => 'Reset password';
-
-  @override
-  String get authNewPasswordLabel => 'New password';
-
-  @override
-  String get authPasswordRequired => 'Please enter a password';
-
-  @override
-  String get authPasswordUpdated => 'Password updated';
-
-  @override
-  String get authResetPasswordAction => 'Update password';
-
-  @override
-  String get authResetLinkInvalid =>
-      'Reset link is invalid or expired. Please request a new email.';
 
   @override
   String get authResetSent => 'Password reset email sent. Check your inbox.';
@@ -1943,4 +1924,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatAvatarRemove => 'Remove photo';
+
+  @override
+  String get authResetPasswordTitle => 'Reset password';
+
+  @override
+  String get authNewPasswordLabel => 'New password';
+
+  @override
+  String get authPasswordRequired => 'Please enter a password';
+
+  @override
+  String get authPasswordUpdated => 'Password updated';
+
+  @override
+  String get authResetPasswordAction => 'Update password';
+
+  @override
+  String get authResetLinkInvalid =>
+      'Reset link is invalid or expired. Please request a new email.';
 }
