@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import '../design/text_styles.dart';
 import '../widgets/app_background.dart';
-import '../state/app_state.dart';
 import '../gen/app_localizations.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -21,6 +20,28 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _loading = false;
   bool _showPassword = false;
   bool _showConfirm = false;
+
+  String _classifyResetErrorCode(Object err) {
+    final lower = err.toString().toLowerCase();
+    if (lower.contains('socketexception') ||
+        lower.contains('timeout') ||
+        lower.contains('failed host lookup') ||
+        lower.contains('clientexception') ||
+        lower.contains('network')) {
+      return 'network';
+    }
+    if (lower.contains('rate limit') || lower.contains('too many')) {
+      return 'rate_limited';
+    }
+    if (lower.contains('expired') ||
+        lower.contains('invalid') ||
+        lower.contains('otp') ||
+        lower.contains('flow_state')) {
+      return 'link_expired';
+    }
+    if (lower.contains('weak password')) return 'weak_password';
+    return 'unknown';
+  }
 
   Future<bool> _ensureRecoverySession() async {
     if (Supabase.instance.client.auth.currentSession != null) return true;
@@ -113,10 +134,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(t.authPasswordUpdated)));
       widget.onDone();
-    } catch (_) {
+    } catch (err) {
       if (!mounted) return;
+      final code = _classifyResetErrorCode(err);
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(t.authResetFailed)));
+          .showSnackBar(SnackBar(content: Text('${t.authResetFailed} ($code)')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

@@ -68,6 +68,19 @@ class _LoginScreenState extends State<LoginScreen> {
         lower.contains('network');
   }
 
+  String _classifyResetErrorCode(Object err) {
+    final lower = err.toString().toLowerCase();
+    if (_isNetworkError(lower)) return 'network';
+    if (lower.contains('rate limit') || lower.contains('too many')) {
+      return 'rate_limited';
+    }
+    if (lower.contains('expired') || lower.contains('invalid') || lower.contains('otp')) {
+      return 'link_expired';
+    }
+    if (lower.contains('not found') || lower.contains('user')) return 'email_not_found';
+    return 'unknown';
+  }
+
   String _formatAuthError(Object err, AppLocalizations t, {required bool isSignUp}) {
     final text = err.toString();
     final lower = text.toLowerCase();
@@ -272,9 +285,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         _showBanner(t.authResetSent, isError: false);
       }
-    } catch (_) {
+    } catch (err) {
       if (mounted) {
-        _showBanner(t.authResetFailed, isError: true);
+        final code = _classifyResetErrorCode(err);
+        _showBanner('${t.authResetFailed} ($code)', isError: true);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
