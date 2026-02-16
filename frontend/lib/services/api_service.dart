@@ -4,6 +4,16 @@ import 'dart:typed_data';
 import '../models/analysis_result.dart';
 import '../models/label_result.dart';
 
+class ApiException implements Exception {
+  final int statusCode;
+  final String code;
+  final String message;
+  ApiException(this.statusCode, this.code, this.message);
+
+  @override
+  String toString() => 'ApiException($statusCode, $code): $message';
+}
+
 class ApiService {
   final String baseUrl;
   ApiService({required this.baseUrl});
@@ -149,7 +159,16 @@ class ApiService {
     final body = await response.stream.bytesToString();
 
     if (response.statusCode != 200) {
-      throw Exception('Analyze failed: ${response.statusCode}');
+      String code = 'unknown';
+      String message = body;
+      try {
+        final decoded = json.decode(body);
+        if (decoded is Map<String, dynamic>) {
+          code = (decoded['detail'] ?? decoded['code'] ?? code).toString();
+          message = (decoded['message'] ?? decoded['detail'] ?? message).toString();
+        }
+      } catch (_) {}
+      throw ApiException(response.statusCode, code, message);
     }
 
     final jsonMap = json.decode(body) as Map<String, dynamic>;

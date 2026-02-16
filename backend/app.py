@@ -27,9 +27,26 @@ load_dotenv(dotenv_path=_env_path, override=True)
 
 app = FastAPI(title="Food AI MVP")
 
+def _parse_origins(value: str | None) -> list[str]:
+    if not value:
+        return []
+    parts = [v.strip() for v in value.split(",")]
+    return [p for p in parts if p]
+
+
+_default_origins = {
+    "https://sean4437.github.io",
+    "capacitor://localhost",
+    "http://localhost",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+}
+
+ALLOWED_ORIGINS = set(_parse_origins(os.getenv("ALLOWED_ORIGINS"))) or _default_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(ALLOWED_ORIGINS),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -198,6 +215,7 @@ TEST_BYPASS_EMAILS = {
     if email.strip()
 }
 TRIAL_DAYS = int(os.getenv("TRIAL_DAYS", "2"))
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
 
 _client = OpenAI(api_key=API_KEY) if API_KEY else None
 logging.basicConfig(level=logging.INFO)
@@ -206,6 +224,9 @@ _jwks_client: Optional[PyJWKClient] = None
 _chat_rate_state: dict[str, list[float]] = {}
 _chat_rate_limit = int(os.getenv("CHAT_RATE_LIMIT_PER_MIN", "5"))
 _chat_rate_window_sec = int(os.getenv("CHAT_RATE_WINDOW_SEC", "60"))
+_analysis_rate_state: dict[str, list[float]] = {}
+_analysis_rate_limit = int(os.getenv("ANALYZE_RATE_LIMIT_PER_MIN", "6"))
+_analysis_rate_window_sec = int(os.getenv("ANALYZE_RATE_WINDOW_SEC", "60"))
 
 _chat_blocklist = {
     "色情",
@@ -833,6 +854,17 @@ def _supabase_headers() -> dict:
     }
 
 
+def _require_admin(request: Request) -> None:
+    if ADMIN_API_KEY:
+        provided = request.headers.get("x-admin-key") or request.headers.get("X-Admin-Key")
+        if not provided or provided.strip() != ADMIN_API_KEY:
+            raise HTTPException(status_code=401, detail="admin_required")
+        return
+    client_host = request.client.host if request.client else ""
+    if client_host not in {"127.0.0.1", "::1", "localhost"}:
+        raise HTTPException(status_code=401, detail="admin_required")
+
+
 def _get_jwks_client() -> PyJWKClient:
     global _jwks_client
     if _jwks_client is not None:
@@ -864,12 +896,20 @@ def _decode_bearer_token(token: str) -> dict:
 def _trial_start_from_profile(user_id: str) -> Optional[datetime]:
     headers = _supabase_headers()
     url = f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}&select=trial_start"
-    with httpx.Client(timeout=10) as client:
-        resp = client.get(url, headers=headers)
+    try:
+        with httpx.Client(timeout=10) as client:
+            resp = client.get(url, headers=headers)
+    except Exception as exc:
+        logging.warning("Supabase profiles fetch error (fallback to local): %s", exc)
+        return None
     if resp.status_code >= 400:
-        logging.error("Supabase profiles fetch failed: %s", resp.text)
-        raise HTTPException(status_code=500, detail="profile_fetch_failed")
-    data = resp.json()
+        logging.warning("Supabase profiles fetch failed (%s), fallback to local", resp.status_code)
+        return None
+    try:
+        data = resp.json()
+    except Exception:
+        logging.warning("Supabase profiles parse failed, fallback to local")
+        return None
     if not data:
         return None
     raw = data[0].get("trial_start")
@@ -890,11 +930,13 @@ def _upsert_profile_trial(user_id: str, email: str, trial_start: datetime) -> No
         "trial_start": trial_start.isoformat(),
     }]
     url = f"{SUPABASE_URL}/rest/v1/profiles"
-    with httpx.Client(timeout=10) as client:
-        resp = client.post(url, headers=headers, json=payload)
-    if resp.status_code >= 400:
-        logging.error("Supabase profiles upsert failed: %s", resp.text)
-        raise HTTPException(status_code=500, detail="profile_upsert_failed")
+    try:
+        with httpx.Client(timeout=10) as client:
+            resp = client.post(url, headers=headers, json=payload)
+        if resp.status_code >= 400:
+            logging.warning("Supabase profiles upsert failed (%s): %s", resp.status_code, resp.text)
+    except Exception as exc:
+        logging.warning("Supabase profiles upsert error (ignored): %s", exc)
 
 
 def _ensure_trial_start(user_id: str, email: str) -> datetime:
@@ -1389,29 +1431,39 @@ def _hash_image(image_bytes: bytes) -> str:
     return hashlib.sha1(image_bytes).hexdigest()
 
 
-def _should_use_ai() -> bool:
+def _should_use_ai(user_id: str | None) -> bool:
     if not CALL_REAL_AI:
         return False
     if FREE_DAILY_LIMIT <= 0:
         return True
     counts = _load_daily_counts()
     today = datetime.now(timezone.utc).date().isoformat()
-    return int(counts.get(today, 0)) < FREE_DAILY_LIMIT
+    today_counts = counts.get(today, {})
+    if isinstance(today_counts, dict):
+        current = int(today_counts.get(user_id or "_global", 0))
+    else:
+        current = int(today_counts or 0)
+    return current < FREE_DAILY_LIMIT
 
 
-def _ensure_ai_available() -> None:
+def _ensure_ai_available(user_id: str | None) -> None:
     if not CALL_REAL_AI:
         raise HTTPException(status_code=503, detail="ai_disabled")
     if _client is None:
         raise HTTPException(status_code=503, detail="ai_not_configured")
-    if not _should_use_ai():
+    if not _should_use_ai(user_id):
         raise HTTPException(status_code=429, detail="ai_quota_exceeded")
 
 
-def _increment_daily_count() -> None:
+def _increment_daily_count(user_id: str | None) -> None:
     counts = _load_daily_counts()
     today = datetime.now(timezone.utc).date().isoformat()
-    counts[today] = int(counts.get(today, 0)) + 1
+    today_counts = counts.get(today)
+    if not isinstance(today_counts, dict):
+        today_counts = {}
+    key = user_id or "_global"
+    today_counts[key] = int(today_counts.get(key, 0)) + 1
+    counts[today] = today_counts
     _save_daily_counts(counts)
 
 
@@ -1427,6 +1479,21 @@ def _chat_rate_allowed(user_id: str) -> bool:
         return False
     entries.append(now)
     _chat_rate_state[user_id] = entries
+    return True
+
+
+def _analysis_rate_allowed(user_id: str) -> bool:
+    if _analysis_rate_limit <= 0:
+        return True
+    now = time.time()
+    window = _analysis_rate_window_sec
+    entries = _analysis_rate_state.get(user_id, [])
+    entries = [t for t in entries if now - t <= window]
+    if len(entries) >= _analysis_rate_limit:
+        _analysis_rate_state[user_id] = entries
+        return False
+    entries.append(now)
+    _analysis_rate_state[user_id] = entries
     return True
 
 
@@ -1875,6 +1942,9 @@ async def analyze_image(
     reference_length_cm: Optional[float] = Form(default=None),
     analyze_reason: Optional[str] = Form(default=None),
 ):
+    user_id = _auth.get("user_id", "")
+    if user_id and not _analysis_rate_allowed(user_id):
+        raise HTTPException(status_code=429, detail="analyze_rate_limited")
     image_bytes = await image.read()
     image_hash = _hash_image(image_bytes)
 
@@ -1943,7 +2013,7 @@ async def analyze_image(
                 container_guess_size=container_guess_size,
             )
 
-    _ensure_ai_available()
+    _ensure_ai_available(_auth.get("user_id"))
     profile = {
         "height_cm": height_cm,
         "weight_kg": weight_kg,
@@ -2004,7 +2074,7 @@ async def analyze_image(
             }
         )
         final_name = food_name or payload["result"]["food_name"]
-        _increment_daily_count()
+        _increment_daily_count(_auth.get("user_id"))
         cache = _load_analysis_cache()
         is_beverage, is_food = _coerce_food_flags(payload["result"])
         normalized_macros = _normalize_macros(payload["result"], use_lang)
@@ -2062,6 +2132,9 @@ async def analyze_name(
     payload: NameAnalyzeRequest,
     _auth: dict = Depends(_require_auth),
 ):
+    user_id = _auth.get("user_id", "")
+    if user_id and not _analysis_rate_allowed(user_id):
+        raise HTTPException(status_code=429, detail="analyze_rate_limited")
     raw_name = (payload.food_name or "").strip()
     if not raw_name:
         raise HTTPException(status_code=400, detail="missing_food_name")
@@ -2070,7 +2143,7 @@ async def analyze_name(
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
 
-    _ensure_ai_available()
+    _ensure_ai_available(_auth.get("user_id"))
     profile = payload.profile or {}
     try:
         prompt = _build_name_prompt(
@@ -2124,7 +2197,7 @@ async def analyze_name(
                 "cost_estimate_usd": cost_estimate,
             }
         )
-        _increment_daily_count()
+        _increment_daily_count(_auth.get("user_id"))
         is_beverage, is_food = _coerce_food_flags(data)
         normalized_macros = _normalize_macros(data, use_lang)
         calorie_range = _normalize_calorie_range(
@@ -2168,13 +2241,16 @@ async def analyze_label(
     image: UploadFile = File(...),
     lang: str = Query(default=None, description="Language code, e.g. zh-TW, en"),
 ):
+    user_id = _auth.get("user_id", "")
+    if user_id and not _analysis_rate_allowed(user_id):
+        raise HTTPException(status_code=429, detail="analyze_rate_limited")
     image_bytes = await image.read()
 
     use_lang = lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
 
-    _ensure_ai_available()
+    _ensure_ai_available(_auth.get("user_id"))
     try:
         payload = await asyncio.to_thread(_analyze_label_with_openai, image_bytes, use_lang)
         if not payload or not payload.get("result"):
@@ -2202,7 +2278,7 @@ async def analyze_label(
                 "image_bytes": len(image_bytes),
             }
         )
-        _increment_daily_count()
+        _increment_daily_count(_auth.get("user_id"))
         return LabelResult(
             label_name=payload["result"].get("label_name"),
             calorie_range=payload["result"].get("calorie_range", ""),
@@ -2227,7 +2303,7 @@ async def summarize_day(
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
-    _ensure_ai_available()
+    _ensure_ai_available(_auth.get("user_id"))
     try:
         prompt = _build_day_prompt(
             use_lang,
@@ -2272,7 +2348,7 @@ async def summarize_week(
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
-    _ensure_ai_available()
+    _ensure_ai_available(_auth.get("user_id"))
     try:
         prompt = _build_week_prompt(
             use_lang,
@@ -2356,7 +2432,7 @@ async def suggest_meal(
                 "cost_estimate_usd": cost_estimate,
             }
         )
-        _increment_daily_count()
+        _increment_daily_count(_auth.get("user_id"))
         return MealAdviceResponse(
             self_cook=str(data.get("self_cook", "")).strip(),
             convenience=str(data.get("convenience", "")).strip(),
@@ -2404,7 +2480,7 @@ async def chat(
             confidence=1.0,
         )
     try:
-        _ensure_ai_available()
+        _ensure_ai_available(_auth.get("user_id"))
     except HTTPException as exc:
         if exc.detail in {"ai_disabled", "ai_not_configured", "ai_quota_exceeded"}:
             logging.warning("Chat AI unavailable: user=%s reason=%s", user_id or "-", exc.detail)
@@ -2470,7 +2546,7 @@ async def chat(
                 "cost_estimate_usd": cost_estimate,
             }
         )
-        _increment_daily_count()
+        _increment_daily_count(_auth.get("user_id"))
         return ChatResponse(
             reply=str(data.get("reply", "")).strip(),
             summary=str(data.get("summary", "")).strip(),
@@ -2551,7 +2627,7 @@ def root():
 </html>"""
 
 @app.get("/health")
-def health():
+def health(_admin: None = Depends(_require_admin)):
     file_env = dotenv_values(_env_path)
     return {
         "call_real_ai": CALL_REAL_AI,
@@ -2584,12 +2660,12 @@ def _read_usage_records(limit: int) -> list[dict]:
 
 
 @app.get("/usage")
-def usage(limit: int = 50):
+def usage(limit: int = 50, _admin: None = Depends(_require_admin)):
     return {"records": _read_usage_records(limit)}
 
 
 @app.get("/usage/summary")
-def usage_summary():
+def usage_summary(_admin: None = Depends(_require_admin)):
     total_cost = 0.0
     total_input = 0
     total_output = 0
