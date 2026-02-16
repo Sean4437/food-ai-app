@@ -399,16 +399,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (_isSignUp) ...[
                       const SizedBox(height: 10),
                       TextField(
-                        controller: _nicknameController,
-                        enabled: !_loading,
-                        decoration: InputDecoration(
-                          labelText: t.nicknameLabel,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextField(
                         controller: _confirmController,
                         obscureText: !_showConfirm,
                         enabled: !_loading,
@@ -425,6 +415,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             icon: Text(_showConfirm ? '🙈' : '👁️'),
                             onPressed: _loading ? null : () => setState(() => _showConfirm = !_showConfirm),
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _nicknameController,
+                        enabled: !_loading,
+                        decoration: InputDecoration(
+                          labelText: t.nicknameLabel,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
                       ),
                     ],
