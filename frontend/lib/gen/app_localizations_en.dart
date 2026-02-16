@@ -1568,6 +1568,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authNicknameRequired => 'Please enter a nickname';
 
   @override
+  String get authNicknameInvalid => 'Nickname must be 2-24 characters';
+
+  @override
   String get containerSection => 'Common container';
 
   @override

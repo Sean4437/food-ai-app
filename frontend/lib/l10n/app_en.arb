@@ -621,6 +621,7 @@
   "dietTypeLowFat": "Low fat",
   "dietTypeHighProtein": "High protein",
   "authNicknameRequired": "Please enter a nickname",
+  "authNicknameInvalid": "Nickname must be 2-24 characters",
   "containerSection": "Common container",
   "containerTypeLabel": "Container type",
   "containerSizeLabel": "Container size",

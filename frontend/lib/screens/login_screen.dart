@@ -27,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Timer? _resendTimer;
   String? _inlineEmailError;
   String? _inlinePasswordError;
+  String? _inlineNicknameError;
   String? _bannerMessage;
   bool _bannerIsError = false;
 
@@ -73,6 +74,14 @@ class _LoginScreenState extends State<LoginScreen> {
     if (value.length < 8) return false;
     if (value.contains(RegExp(r'\s'))) return false;
     if (value.contains(RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]'))) return false;
+    return true;
+  }
+
+  bool _isValidNickname(String value) {
+    final nickname = value.trim();
+    if (nickname.length < 2 || nickname.length > 24) return false;
+    if (RegExp(r'[\x00-\x1F\x7F]').hasMatch(nickname)) return false;
+    if (RegExp(r'[\u200B-\u200F\uFEFF]').hasMatch(nickname)) return false;
     return true;
   }
 
@@ -159,11 +168,20 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _inlinePasswordError = message);
   }
 
+  void _setInlineNicknameError(String? message) {
+    setState(() => _inlineNicknameError = message);
+  }
+
   void _clearInlineErrors() {
-    if (_inlineEmailError == null && _inlinePasswordError == null) return;
+    if (_inlineEmailError == null &&
+        _inlinePasswordError == null &&
+        _inlineNicknameError == null) {
+      return;
+    }
     setState(() {
       _inlineEmailError = null;
       _inlinePasswordError = null;
+      _inlineNicknameError = null;
     });
   }
 
@@ -204,7 +222,11 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     if (_isSignUp && nickname.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authNicknameRequired)));
+      _setInlineNicknameError(t.authNicknameRequired);
+      return;
+    }
+    if (_isSignUp && !_isValidNickname(nickname)) {
+      _setInlineNicknameError(t.authNicknameInvalid);
       return;
     }
     setState(() => _loading = true);
@@ -463,10 +485,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextField(
                         controller: _nicknameController,
                         enabled: !_loading,
+                        onChanged: (_) {
+                          if (_inlineNicknameError != null) {
+                            _setInlineNicknameError(null);
+                          }
+                        },
                         decoration: InputDecoration(
                           labelText: t.nicknameLabel,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          errorText: _inlineNicknameError,
                         ),
                       ),
                     ],

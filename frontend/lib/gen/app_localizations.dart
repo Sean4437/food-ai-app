@@ -3063,6 +3063,12 @@ abstract class AppLocalizations {
   /// **'請輸入暱稱'**
   String get authNicknameRequired;
 
+  /// No description provided for @authNicknameInvalid.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'暱稱需 2-24 個字'**
+  String get authNicknameInvalid;
+
   /// No description provided for @containerSection.
   ///
   /// In zh_TW, this message translates to:

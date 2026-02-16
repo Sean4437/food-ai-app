@@ -616,6 +616,7 @@
   "dietTypeLowFat": "低脂",
   "dietTypeHighProtein": "高蛋白",
   "authNicknameRequired": "請輸入暱稱",
+  "authNicknameInvalid": "暱稱需 2-24 個字",
   "containerSection": "常用容器",
   "containerTypeLabel": "容器類型",
   "containerSizeLabel": "容器尺寸",

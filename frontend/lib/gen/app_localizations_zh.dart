@@ -1547,6 +1547,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authNicknameRequired => '请输入昵称';
 
   @override
+  String get authNicknameInvalid => '昵称需 2-24 个字';
+
+  @override
   String get containerSection => '常用容器';
 
   @override
@@ -3456,6 +3459,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get authNicknameRequired => '請輸入暱稱';
+
+  @override
+  String get authNicknameInvalid => '暱稱需 2-24 個字';
 
   @override
   String get containerSection => '常用容器';
