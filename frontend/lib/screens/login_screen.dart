@@ -51,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = value.trim();
     if (email.isEmpty) return false;
     // Basic structure check + enforce TLD >= 2 chars.
-    if (!RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$').hasMatch(email)) return false;
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$').hasMatch(email)) return false;
     // Global length limits.
     if (email.length > 254) return false;
     if (email.contains('..')) return false;
