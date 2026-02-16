@@ -49,7 +49,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isValidEmail(String value) {
     final email = value.trim();
     if (email.isEmpty) return false;
-    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
+    // Require a TLD with at least 2 chars to avoid "gmail.c" passing.
+    return RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$').hasMatch(email);
   }
 
   bool _isValidPassword(String value) {
