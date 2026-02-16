@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 
@@ -10,6 +11,9 @@ class SupabaseService {
     await Supabase.initialize(
       url: kSupabaseUrl,
       anonKey: kSupabaseAnonKey,
+      authOptions: FlutterAuthClientOptions(
+        authFlowType: kIsWeb ? AuthFlowType.implicit : AuthFlowType.pkce,
+      ),
     );
     _initialized = true;
   }
