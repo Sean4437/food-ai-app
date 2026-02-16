@@ -89,6 +89,15 @@ class _LoginScreenState extends State<LoginScreen> {
       return t.authEmailNotVerified;
     }
     if (isSignUp) {
+      if (lower.contains('invalid email') ||
+          lower.contains('not a valid email') ||
+          lower.contains('validate email') ||
+          lower.contains('email is invalid')) {
+        return t.authEmailInvalid;
+      }
+      if (lower.contains('password') && lower.contains('least')) {
+        return t.authPasswordInvalid;
+      }
       if (lower.contains('already registered') || lower.contains('already exists') || lower.contains('user exists')) {
         return t.authEmailExists;
       }
@@ -204,6 +213,8 @@ class _LoginScreenState extends State<LoginScreen> {
         final message = _formatAuthError(err, t, isSignUp: _isSignUp);
         if (!_isSignUp && message == t.authLoginInvalid) {
           _setInlinePasswordError(message);
+        } else if (_isSignUp && message == t.authEmailInvalid) {
+          _setInlineEmailError(message);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
         }
