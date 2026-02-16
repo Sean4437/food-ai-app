@@ -49,8 +49,24 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isValidEmail(String value) {
     final email = value.trim();
     if (email.isEmpty) return false;
-    // Require a TLD with at least 2 chars to avoid "gmail.c" passing.
-    return RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$').hasMatch(email);
+    // Basic structure check + enforce TLD >= 2 chars.
+    if (!RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$').hasMatch(email)) return false;
+    // Global length limits.
+    if (email.length > 254) return false;
+    if (email.contains('..')) return false;
+    final parts = email.split('@');
+    if (parts.length != 2) return false;
+    final local = parts[0];
+    final domain = parts[1];
+    if (local.isEmpty || domain.isEmpty) return false;
+    if (local.length > 64) return false;
+    if (local.startsWith('.') || local.endsWith('.')) return false;
+    if (domain.startsWith('.') || domain.endsWith('.')) return false;
+    // Domain labels must not be empty or start/end with '-'.
+    final labels = domain.split('.');
+    if (labels.any((label) => label.isEmpty)) return false;
+    if (labels.any((label) => label.startsWith('-') || label.endsWith('-'))) return false;
+    return true;
   }
 
   bool _isValidPassword(String value) {
