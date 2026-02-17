@@ -136,17 +136,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  int _streakDays(AppState app) {
   void _openOverflow(String action, AppState app, AppLocalizations t) {
-    if (action == "settings") {
+    if (action == 'settings') {
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
-    } else if (action == "custom") {
+    } else if (action == 'custom') {
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CustomFoodsScreen()));
-    } else if (action == "reset_mock") {
+    } else if (action == 'reset_mock') {
       app.setMockSubscriptionActive(false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Test subscription cleared")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Test subscription cleared')));
     }
   }
+
+  int _streakDays(AppState app) {
     if (app.entries.isEmpty) return 0;
     final loggedDates = app.entries
         .map((e) => DateTime(e.time.year, e.time.month, e.time.day))
