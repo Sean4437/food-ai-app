@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import '../state/tab_state.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
