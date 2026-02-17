@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -13,6 +13,8 @@ import '../widgets/app_background.dart';
 import '../widgets/daily_overview_cards.dart';
 import 'day_meals_screen.dart';
 import 'meal_items_screen.dart';
+import 'custom_foods_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -135,6 +137,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   int _streakDays(AppState app) {
+  void _openOverflow(String action, AppState app, AppLocalizations t) {
+    if (action == "settings") {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+    } else if (action == "custom") {
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CustomFoodsScreen()));
+    } else if (action == "reset_mock") {
+      app.setMockSubscriptionActive(false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Test subscription cleared")));
+    }
+  }
     if (app.entries.isEmpty) return 0;
     final loggedDates = app.entries
         .map((e) => DateTime(e.time.year, e.time.month, e.time.day))
@@ -426,6 +438,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   _statusPill(t.aiSuggest, theme.colorScheme.primary),
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_horiz),
+                    onSelected: (value) => _openOverflow(value, app, t),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(value: 'settings', child: Text(t.settingsTitle)),
+                      PopupMenuItem(value: 'custom', child: Text(t.customTabTitle)),
+                      if (kIsWeb)
+                        const PopupMenuItem(
+                            value: 'reset_mock', child: Text('Reset test subscription')),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
