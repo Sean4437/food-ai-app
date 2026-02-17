@@ -549,34 +549,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
         )
         .key;
     final currentThemeAsset = profile.themeAsset;
-    final colorScheme = Theme.of(context).colorScheme;
     final isSubscribed = app.iapSubscriptionActive;
     final isMockSubscription = app.mockSubscriptionActive;
     final isWhitelisted = app.isWhitelisted;
     final isTrialExpired = app.trialExpired;
     final trialEndAt = app.trialEndAt;
+    final isZh = Localizations.localeOf(context).languageCode.toLowerCase().startsWith('zh');
     late final String subscriptionStatus;
     late final Color subscriptionColor;
     if (isSubscribed) {
-      subscriptionStatus = 'Subscribed (iOS)';
+      subscriptionStatus = isZh ? '已訂閱（iOS）' : 'Subscribed (iOS)';
       subscriptionColor = Colors.green;
     } else if (isMockSubscription) {
-      subscriptionStatus = 'Test subscription';
+      subscriptionStatus = isZh ? '測試訂閱' : 'Test subscription';
       subscriptionColor = Colors.blue;
     } else if (isWhitelisted) {
-      subscriptionStatus = 'Whitelisted';
+      subscriptionStatus = isZh ? '白名單' : 'Whitelisted';
       subscriptionColor = Colors.indigo;
     } else if (!isTrialExpired) {
       final dateText = _formatDateShort(trialEndAt);
-      subscriptionStatus = dateText == '--' ? 'Trial active' : 'Trial until $dateText';
+      subscriptionStatus =
+          dateText == '--' ? (isZh ? '試用中' : 'Trial active') : (isZh ? '試用中（到 $dateText）' : 'Trial until $dateText');
       subscriptionColor = Colors.orange;
     } else {
-      subscriptionStatus = 'Expired';
+      subscriptionStatus = isZh ? '已過期' : 'Expired';
       subscriptionColor = Colors.red;
     }
     final subscriptionLabelColor = subscriptionColor.withOpacity(0.9);
     final subscriptionPlanLabel = isSubscribed
-        ? 'App Store'
+        ? (isZh ? 'App Store（正式）' : 'App Store')
         : isMockSubscription
             ? (app.mockSubscriptionPlanId == kIapYearlyId ? t.webTestPlanYearly : t.webTestPlanMonthly)
             : t.webTestPlanNone;
@@ -1386,7 +1387,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 8),
                       _row(
                         context,
-                        'Trial ends',
+                        isZh ? '試用到期' : 'Trial ends',
                         _formatDateShort(trialEndAt),
                         icon: Icons.timer_outlined,
                         showChevron: false,
@@ -1394,8 +1395,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(height: 8),
                       _row(
                         context,
-                        'Whitelist',
-                        isWhitelisted ? 'Yes' : 'No',
+                        isZh ? '白名單' : 'Whitelist',
+                        isWhitelisted ? (isZh ? '是' : 'Yes') : (isZh ? '否' : 'No'),
                         icon: Icons.verified_user_outlined,
                         showChevron: false,
                       ),
@@ -1403,7 +1404,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const SizedBox(height: 8),
                         _row(
                           context,
-                          'Test plan',
+                          isZh ? '測試方案' : 'Test plan',
                           app.mockSubscriptionPlanId == kIapYearlyId ? t.webTestPlanYearly : t.webTestPlanMonthly,
                           icon: Icons.science_outlined,
                           showChevron: false,
@@ -1414,10 +1415,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: FilledButton.tonal(
                             onPressed: () {
                               app.setMockSubscriptionActive(false);
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(content: Text('Test subscription cleared')));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(isZh ? '已清除測試訂閱' : 'Test subscription cleared')),
+                              );
                             },
-                            child: const Text('Reset test subscription'),
+                            child: Text(isZh ? '清除測試訂閱' : 'Reset test subscription'),
                           ),
                         ),
                       ],

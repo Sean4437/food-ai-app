@@ -15,8 +15,6 @@ import '../widgets/app_background.dart';
 import '../widgets/daily_overview_cards.dart';
 import 'day_meals_screen.dart';
 import 'meal_items_screen.dart';
-import 'custom_foods_screen.dart';
-import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -140,13 +138,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openOverflow(String action, AppState app, AppLocalizations t) {
     final tabState = TabScope.of(context);
+    final isZh = Localizations.localeOf(context).languageCode.toLowerCase().startsWith('zh');
     if (action == 'settings') {
       tabState.setIndex(5); // Settings tab
     } else if (action == 'custom') {
       tabState.setIndex(4); // Custom tab
     } else if (action == 'reset_mock') {
       app.setMockSubscriptionActive(false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Test subscription cleared')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isZh ? '已清除測試訂閱' : 'Test subscription cleared')),
+      );
     }
   }
 
@@ -448,9 +449,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context) => [
                       PopupMenuItem(value: 'settings', child: Text(t.settingsTitle)),
                       PopupMenuItem(value: 'custom', child: Text(t.customTabTitle)),
-                      if (kIsWeb)
-                        const PopupMenuItem(
-                            value: 'reset_mock', child: Text('Reset test subscription')),
+                      if (kIsWeb && app.mockSubscriptionActive)
+                        PopupMenuItem(
+                          value: 'reset_mock',
+                          child: Text(
+                            Localizations.localeOf(context)
+                                    .languageCode
+                                    .toLowerCase()
+                                    .startsWith('zh')
+                                ? '清除測試訂閱'
+                                : 'Reset test subscription',
+                          ),
+                        ),
                     ],
                   ),
                 ],
