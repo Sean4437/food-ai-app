@@ -198,25 +198,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _resetApiUrl(BuildContext context, AppState app) async {
-    final t = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.apiBaseUrlReset),
-        content: const Text('Support only: reset API endpoint to production and clear cached overrides.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.apiBaseUrlReset)),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    await app.resetApiBaseUrlToDefault();
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.apiBaseUrlResetDone)));
-  }
-
   Future<void> _showResetPasswordDialog(BuildContext context, AppState app) async {
     final t = AppLocalizations.of(context)!;
     final controller = TextEditingController();
@@ -1456,44 +1437,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     current: profile.language == 'zh-TW' ? t.langZh : t.langEn,
                     options: [t.langZh, t.langEn],
                     onSave: (value) => app.updateField((p) => p.language = value == t.langZh ? 'zh-TW' : 'en'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _sectionTitle(context, t.apiSection),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.link, size: 18, color: Colors.black54),
-                          const SizedBox(width: 8),
-                          Text(
-                            t.apiBaseUrlReset,
-                            style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Support only: resets API endpoint to production and clears cached overrides.',
-                        style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                      ),
-                      const SizedBox(height: 10),
-                      FilledButton.tonal(
-                        onPressed: () => _resetApiUrl(context, app),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: colorScheme.primaryContainer,
-                          foregroundColor: colorScheme.onPrimaryContainer,
-                        ),
-                        child: Text(t.apiBaseUrlReset),
-                      ),
-                    ],
                   ),
                 ),
                 const SizedBox(height: 12),
