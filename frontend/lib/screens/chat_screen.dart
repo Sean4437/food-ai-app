@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:math';
+import '../config/feature_flags.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/chat_message.dart';
@@ -48,16 +49,16 @@ class _ChatScreenState extends State<ChatScreen> {
     final rand = Random(seed);
     if (t.localeName.startsWith('en')) {
       final today = [
-        'Give me a quick summary of today’s eating.',
+        'Give me a quick summary of today��s eating.',
         'How did I do today? Just the key points.',
-        'One‑sentence recap of today’s meals.',
+        'One?sentence recap of today��s meals.',
         'Did I go over today? Quick check.',
       ];
       final tomorrow = [
         'How should I eat tomorrow to stay on track?',
         'Give me a simple plan for tomorrow.',
-        '3 quick tips for tomorrow’s meals.',
-        'Keep it light tomorrow—any suggestions?',
+        '3 quick tips for tomorrow��s meals.',
+        'Keep it light tomorrow�Xany suggestions?',
       ];
       final week = [
         'How was my eating this week? Key takeaways.',
@@ -67,9 +68,9 @@ class _ChatScreenState extends State<ChatScreen> {
       ];
       final nextWeek = [
         'What should I focus on next week?',
-        '3 reminders for next week’s meals.',
-        'I want to eat cleaner next week—guidance?',
-        'Give me one sentence for next week’s direction.',
+        '3 reminders for next week��s meals.',
+        'I want to eat cleaner next week�Xguidance?',
+        'Give me one sentence for next week��s direction.',
       ];
       final activity = [
         'Based on today, what exercise should I do and how long?',
@@ -93,40 +94,40 @@ class _ChatScreenState extends State<ChatScreen> {
       ];
     }
     final today = [
-      '幫我用一句話整理今天吃得怎麼樣',
-      '今天我吃得還可以嗎？給我重點',
-      '今天飲食狀況懶人包一下',
-      '今天有沒有超標？快速看一下',
+      '���ڥΤ@�y�ܾ�z���ѦY�o����',
+      '���ѧڦY�o�٥i�H�ܡH���ڭ��I',
+      '���Ѷ������p�i�H�]�@�U',
+      '���Ѧ��S���W�СH�ֳt�ݤ@�U',
     ];
     final tomorrow = [
-      '明天我怎麼吃會比較穩？',
-      '幫我規劃明天的吃法（簡短版）',
-      '明天想清爽一點，你給方向',
-      '明天給我 3 個簡單建議',
+      '���ѧګ��Y�|���í�H',
+      '���ڳW�����Ѫ��Y�k�]²�u���^',
+      '���ѷQ�M�n�@�I�A�A����V',
+      '���ѵ��� 3 ��²���ĳ',
     ];
     final week = [
-      '這週我吃得怎麼樣？給重點',
-      '本週飲食總體評語是什麼？',
-      '幫我抓這週的優點跟需要改的',
-      '這週有超標或不均衡嗎？',
+      '�o�g�ڦY�o���ˡH�����I',
+      '���g�����`����y�O����H',
+      '���ڧ�o�g���u�I��ݭn�諸',
+      '�o�g���W�ЩΤ����ŶܡH',
     ];
     final nextWeek = [
-      '下週我該怎麼調整比較好？',
-      '給我下週 3 個最重要提醒',
-      '下週想更健康一點，怎麼吃？',
-      '下週方向給我一句話就好',
+      '�U�g�ڸӫ��վ����n�H',
+      '���ڤU�g 3 �ӳ̭��n����',
+      '�U�g�Q�󰷱d�@�I�A���Y�H',
+      '�U�g��V���ڤ@�y�ܴN�n',
     ];
     final activity = [
-      '根據今天狀況，建議我做什麼運動？多久？',
-      '依我的設定，今天適合做哪種運動與時長？',
-      '今天活動量建議給我一個方向',
-      '今天要運動多久比較好？',
+      '�ھڤ��Ѫ��p�A��ĳ�ڰ�����B�ʡH�h�[�H',
+      '�̧ڪ��]�w�A���ѾA�X�����عB�ʻP�ɪ��H',
+      '���Ѭ��ʶq��ĳ���ڤ@�Ӥ�V',
+      '���ѭn�B�ʦh�[����n�H',
     ];
     final whatToEat = [
-      '依照今天狀況，建議我現在吃什麼？',
-      '我今天可以吃什麼？給我選項',
-      '下一餐吃什麼比較適合？',
-      '今天還能吃什麼才不超標？',
+      '�̷Ӥ��Ѫ��p�A��ĳ�ڲ{�b�Y����H',
+      '�ڤ��ѥi�H�Y����H���ڿﶵ',
+      '�U�@�\�Y�������A�X�H',
+      '�����ٯ�Y����~���W�СH',
     ];
     return [
       today[rand.nextInt(today.length)],
@@ -243,13 +244,13 @@ class _ChatScreenState extends State<ChatScreen> {
   String _genderEmoji(String gender) {
     switch (gender) {
       case 'male':
-        return '👨';
+        return '??';
       case 'female':
-        return '👩';
+        return '??';
       case 'other':
-        return '🧑';
+        return '??';
       default:
-        return '🙂';
+        return '??';
     }
   }
 
@@ -482,6 +483,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _showPaywall(BuildContext context, AppState app, AppLocalizations t) async {
     if (kIsWeb) {
+      if (!kEnableWebMockSubscription) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.webPaywallTestNote)));
+        }
+        return;
+      }
       await _showMockPaywall(context, app, t);
       return;
     }
@@ -765,7 +772,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('✅', style: TextStyle(fontSize: 14)),
+                    const Text('?', style: TextStyle(fontSize: 14)),
                     const SizedBox(width: 6),
                     Expanded(child: Text(text, style: AppTextStyles.body(context).copyWith(fontSize: 13))),
                   ],

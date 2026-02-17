@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import '../config/feature_flags.dart';
 import '../design/text_styles.dart';
 import '../widgets/app_background.dart';
 import '../state/app_state.dart';
@@ -283,7 +284,7 @@ class TrialExpiredScreen extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('✅', style: TextStyle(fontSize: 14)),
+                    const Text('?', style: TextStyle(fontSize: 14)),
                     const SizedBox(width: 6),
                     Expanded(child: Text(text, style: AppTextStyles.body(context).copyWith(fontSize: 13))),
                   ],
@@ -401,6 +402,10 @@ class TrialExpiredScreen extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () {
                         if (kIsWeb) {
+                      if (!kEnableWebMockSubscription) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.webPaywallTestNote)));
+                        return;
+                      }
                           _showMockPaywall(context, app, t);
                           return;
                         }

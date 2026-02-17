@@ -1427,6 +1427,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           icon: Icons.science_outlined,
                           showChevron: false,
                         ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.tonal(
+                            onPressed: () {
+                              app.setMockSubscriptionActive(false);
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(content: Text('Test subscription cleared')));
+                            },
+                            child: const Text('Reset test subscription'),
+                          ),
+                        ),
                       ],
                     ],
                   ),
