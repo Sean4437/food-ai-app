@@ -141,9 +141,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _openOverflow(String action, AppState app, AppLocalizations t) {
     final tabState = TabScope.of(context);
     if (action == 'settings') {
-      tabState.setIndex(3); // Settings tab
+      tabState.setIndex(5); // Settings tab
     } else if (action == 'custom') {
-      tabState.setIndex(2); // Custom tab
+      tabState.setIndex(4); // Custom tab
     } else if (action == 'reset_mock') {
       app.setMockSubscriptionActive(false);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Test subscription cleared')));
