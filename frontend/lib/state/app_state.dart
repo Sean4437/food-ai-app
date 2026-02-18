@@ -2683,8 +2683,6 @@ class AppState extends ChangeNotifier {
       ..breakfastReminderEnabled = reset.breakfastReminderEnabled
       ..lunchReminderEnabled = reset.lunchReminderEnabled
       ..dinnerReminderEnabled = reset.dinnerReminderEnabled
-      ..lunchReminderTime = reset.lunchReminderTime
-      ..dinnerReminderTime = reset.dinnerReminderTime
       ..breakfastStart = reset.breakfastStart
       ..breakfastEnd = reset.breakfastEnd
       ..brunchStart = reset.brunchStart
@@ -2788,8 +2786,6 @@ class AppState extends ChangeNotifier {
       ..breakfastReminderEnabled = updated.breakfastReminderEnabled
       ..lunchReminderEnabled = updated.lunchReminderEnabled
       ..dinnerReminderEnabled = updated.dinnerReminderEnabled
-      ..lunchReminderTime = updated.lunchReminderTime
-      ..dinnerReminderTime = updated.dinnerReminderTime
       ..language = updated.language
       ..apiBaseUrl = updated.apiBaseUrl
       ..plateAsset = updated.plateAsset
@@ -5711,8 +5707,6 @@ class AppState extends ChangeNotifier {
       'breakfast_reminder_enabled': profile.breakfastReminderEnabled,
       'lunch_reminder_enabled': profile.lunchReminderEnabled,
       'dinner_reminder_enabled': profile.dinnerReminderEnabled,
-      'lunch_reminder_time': _timeToString(profile.lunchReminderTime),
-      'dinner_reminder_time': _timeToString(profile.dinnerReminderTime),
       'breakfast_start': _timeToString(profile.breakfastStart),
       'breakfast_end': _timeToString(profile.breakfastEnd),
       'brunch_start': _timeToString(profile.brunchStart),
@@ -5779,10 +5773,6 @@ class AppState extends ChangeNotifier {
           profile.lunchReminderEnabled
       ..dinnerReminderEnabled = (data['dinner_reminder_enabled'] as bool?) ??
           profile.dinnerReminderEnabled
-      ..lunchReminderTime = _parseTime(
-          data['lunch_reminder_time'] as String?, profile.lunchReminderTime)
-      ..dinnerReminderTime = _parseTime(
-          data['dinner_reminder_time'] as String?, profile.dinnerReminderTime)
       ..breakfastStart =
           _parseTime(data['breakfast_start'] as String?, profile.breakfastStart)
       ..breakfastEnd =
@@ -6038,8 +6028,6 @@ class UserProfile {
     required this.breakfastReminderEnabled,
     required this.lunchReminderEnabled,
     required this.dinnerReminderEnabled,
-    required this.lunchReminderTime,
-    required this.dinnerReminderTime,
     required this.breakfastStart,
     required this.breakfastEnd,
     required this.brunchStart,
@@ -6089,8 +6077,6 @@ class UserProfile {
   bool breakfastReminderEnabled;
   bool lunchReminderEnabled;
   bool dinnerReminderEnabled;
-  TimeOfDay lunchReminderTime;
-  TimeOfDay dinnerReminderTime;
   TimeOfDay breakfastStart;
   TimeOfDay breakfastEnd;
   TimeOfDay brunchStart;
@@ -6141,8 +6127,6 @@ class UserProfile {
       breakfastReminderEnabled: true,
       lunchReminderEnabled: true,
       dinnerReminderEnabled: true,
-      lunchReminderTime: const TimeOfDay(hour: 12, minute: 15),
-      dinnerReminderTime: const TimeOfDay(hour: 18, minute: 45),
       breakfastStart: const TimeOfDay(hour: 6, minute: 0),
       breakfastEnd: const TimeOfDay(hour: 10, minute: 0),
       brunchStart: const TimeOfDay(hour: 10, minute: 0),
