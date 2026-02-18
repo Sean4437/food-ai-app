@@ -835,6 +835,7 @@ class AppState extends ChangeNotifier {
     entries
       ..clear()
       ..addAll(loaded);
+    _syncSelectedDateToLatestEntryIfNeeded();
     bool changed = false;
     for (final entry in entries) {
       if (entry.mealId == null || entry.mealId!.isEmpty) {
@@ -3912,6 +3913,15 @@ class AppState extends ChangeNotifier {
     return '$seed-$rand';
   }
 
+  void _syncSelectedDateToLatestEntryIfNeeded() {
+    if (entries.isEmpty) return;
+    final target = _dateOnly(_selectedDate);
+    final hasDataOnSelected = entries.any((entry) => _isSameDate(entry.time, target));
+    if (hasDataOnSelected) return;
+    final latest = entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
+    _selectedDate = _dateOnly(latest.time);
+  }
+
   String _dayKey(DateTime date) {
     final d = _dateOnly(date);
     return 'day:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -4509,6 +4519,8 @@ class AppState extends ChangeNotifier {
     updateField((p) => p.email = trimmedEmail);
     _applySupabaseNickname(_supabase.currentUser);
     await refreshAccessStatus();
+    await _runAutoSync();
+    _syncSelectedDateToLatestEntryIfNeeded();
     notifyListeners();
   }
 
@@ -5120,6 +5132,7 @@ class AppState extends ChangeNotifier {
       notifyListeners();
       await _saveOverrides();
     }
+    _syncSelectedDateToLatestEntryIfNeeded();
     notifyListeners();
   }
 
