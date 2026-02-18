@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:math';
 import '../config/feature_flags.dart';
@@ -21,7 +21,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final FocusNode _inputFocus = FocusNode();
   final GlobalKey _inputKey = GlobalKey();
   int _lastMessageCount = 0;
-  final _rand = Random();
   List<String> _quickPrompts = [];
   String _quickLocale = '';
   String _quickDate = '';
@@ -44,92 +43,88 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  List<String> _generateQuickPrompts(AppLocalizations t,
-      {required int seed}) {
+  List<String> _generateQuickPrompts(AppLocalizations t, {required int seed}) {
     final rand = Random(seed);
-    if (t.localeName.startsWith('en')) {
-      final today = [
-        'Give me a quick summary of today��s eating.',
-        'How did I do today? Just the key points.',
-        'One?sentence recap of today��s meals.',
-        'Did I go over today? Quick check.',
-      ];
-      final tomorrow = [
-        'How should I eat tomorrow to stay on track?',
-        'Give me a simple plan for tomorrow.',
-        '3 quick tips for tomorrow��s meals.',
-        'Keep it light tomorrow�Xany suggestions?',
-      ];
-      final week = [
-        'How was my eating this week? Key takeaways.',
-        'Weekly summary, short and clear.',
-        'What did I do well and what to fix this week?',
-        'Any imbalance or overages this week?',
-      ];
-      final nextWeek = [
-        'What should I focus on next week?',
-        '3 reminders for next week��s meals.',
-        'I want to eat cleaner next week�Xguidance?',
-        'Give me one sentence for next week��s direction.',
-      ];
-      final activity = [
-        'Based on today, what exercise should I do and how long?',
-        'Suggest a workout for today based on my profile.',
-        'How much exercise is appropriate for me today?',
-        'Pick an activity and duration for today.',
-      ];
-      final whatToEat = [
-        'What can I eat today given my current status?',
-        'Suggest what I should eat next today.',
-        'Any food ideas for today based on what I ate?',
-        'What should I eat now to stay on track?',
-      ];
-      return [
-        today[rand.nextInt(today.length)],
-        tomorrow[rand.nextInt(tomorrow.length)],
-        week[rand.nextInt(week.length)],
-        nextWeek[rand.nextInt(nextWeek.length)],
-        activity[rand.nextInt(activity.length)],
-        whatToEat[rand.nextInt(whatToEat.length)],
-      ];
-    }
-    final today = [
-      '���ڥΤ@�y�ܾ�z���ѦY�o����',
-      '���ѧڦY�o�٥i�H�ܡH���ڭ��I',
-      '���Ѷ������p�i�H�]�@�U',
-      '���Ѧ��S���W�СH�ֳt�ݤ@�U',
-    ];
-    final tomorrow = [
-      '���ѧګ��Y�|���í�H',
-      '���ڳW�����Ѫ��Y�k�]²�u���^',
-      '���ѷQ�M�n�@�I�A�A����V',
-      '���ѵ��� 3 ��²���ĳ',
-    ];
-    final week = [
-      '�o�g�ڦY�o���ˡH�����I',
-      '���g�����`����y�O����H',
-      '���ڧ�o�g���u�I��ݭn�諸',
-      '�o�g���W�ЩΤ����ŶܡH',
-    ];
-    final nextWeek = [
-      '�U�g�ڸӫ��վ����n�H',
-      '���ڤU�g 3 �ӳ̭��n����',
-      '�U�g�Q�󰷱d�@�I�A���Y�H',
-      '�U�g��V���ڤ@�y�ܴN�n',
-    ];
-    final activity = [
-      '�ھڤ��Ѫ��p�A��ĳ�ڰ�����B�ʡH�h�[�H',
-      '�̧ڪ��]�w�A���ѾA�X�����عB�ʻP�ɪ��H',
-      '���Ѭ��ʶq��ĳ���ڤ@�Ӥ�V',
-      '���ѭn�B�ʦh�[����n�H',
-    ];
-    final whatToEat = [
-      '�̷Ӥ��Ѫ��p�A��ĳ�ڲ{�b�Y����H',
-      '�ڤ��ѥi�H�Y����H���ڿﶵ',
-      '�U�@�\�Y�������A�X�H',
-      '�����ٯ�Y����~���W�СH',
-    ];
-    return [
+    final isEnglish = t.localeName.toLowerCase().startsWith('en');
+    final today = isEnglish
+        ? <String>[
+            "Give me a quick summary of today's meals.",
+            'How did I do today? Just the key points.',
+            "One-sentence recap of today's eating.",
+            'Did I go over today? Quick check.',
+          ]
+        : <String>[
+            '幫我快速總結今天的飲食重點。',
+            '今天我吃得如何？只要重點就好。',
+            '用一句話回顧我今天的飲食。',
+            '我今天有沒有超標？幫我快速檢查。',
+          ];
+    final tomorrow = isEnglish
+        ? <String>[
+            'How should I eat tomorrow to stay on track?',
+            'Give me a simple plan for tomorrow.',
+            "Give me 3 quick tips for tomorrow's meals.",
+            'Keep it light tomorrow. Any suggestions?',
+          ]
+        : <String>[
+            '明天我要怎麼吃比較能維持目標？',
+            '幫我安排一個簡單的明日飲食方向。',
+            '給我 3 個明天飲食的快速建議。',
+            '明天想吃清爽一點，給我建議。',
+          ];
+    final week = isEnglish
+        ? <String>[
+            'How was my eating this week? Key takeaways.',
+            'Give me a short weekly summary.',
+            'What did I do well and what should I fix this week?',
+            'Any imbalance or overages this week?',
+          ]
+        : <String>[
+            '我這週的飲食整體如何？重點整理給我。',
+            '幫我做一個簡短的週總結。',
+            '我這週做得好的和要改善的是什麼？',
+            '這週有沒有失衡或超標的地方？',
+          ];
+    final nextWeek = isEnglish
+        ? <String>[
+            'What should I focus on next week?',
+            "Give me 3 reminders for next week's meals.",
+            'I want to eat cleaner next week. Any guidance?',
+            'Give me one sentence for next week direction.',
+          ]
+        : <String>[
+            '下週我應該優先注意什麼？',
+            '給我 3 個下週飲食提醒。',
+            '下週想吃得更乾淨，請給我方向。',
+            '請用一句話告訴我下週策略。',
+          ];
+    final activity = isEnglish
+        ? <String>[
+            'Based on today, what exercise should I do and how long?',
+            'Suggest a workout for today based on my profile.',
+            'How much exercise is appropriate for me today?',
+            'Pick an activity and duration for today.',
+          ]
+        : <String>[
+            '根據我今天狀態，建議我做什麼運動、多久？',
+            '依我的設定，幫我安排今天的運動建議。',
+            '我今天適合的運動量大概多少？',
+            '幫我決定今天的運動種類和時間。',
+          ];
+    final whatToEat = isEnglish
+        ? <String>[
+            'What can I eat today given my current status?',
+            'Suggest what I should eat next today.',
+            'Any meal ideas for today based on what I ate?',
+            'What should I eat now to stay on track?',
+          ]
+        : <String>[
+            '以我目前狀態，今天接下來可以吃什麼？',
+            '幫我建議今天下一餐要吃什麼。',
+            '根據我今天已吃內容，給我餐點建議。',
+            '我現在吃什麼比較能維持目標？',
+          ];
+    return <String>[
       today[rand.nextInt(today.length)],
       tomorrow[rand.nextInt(tomorrow.length)],
       week[rand.nextInt(week.length)],
@@ -185,7 +180,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _showQuickMenu(AppState app, AppLocalizations t) async {
     if (_quickMenuOpen || _quickPrompts.isEmpty) return;
     final box = _inputKey.currentContext?.findRenderObject() as RenderBox?;
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox?;
     if (box == null || overlay == null) return;
     _quickMenuOpen = true;
     final position = box.localToGlobal(Offset.zero, ancestor: overlay);
@@ -232,7 +228,8 @@ class _ChatScreenState extends State<ChatScreen> {
             const SizedBox(height: 12),
             Text(
               t.chatEmptyHintWithName(name),
-              style: AppTextStyles.body(context).copyWith(color: Colors.black54),
+              style:
+                  AppTextStyles.body(context).copyWith(color: Colors.black54),
               textAlign: TextAlign.center,
             ),
           ],
@@ -259,7 +256,8 @@ class _ChatScreenState extends State<ChatScreen> {
     final bytes = app.chatAvatarBytes;
     if (bytes != null && bytes.isNotEmpty) {
       return ClipOval(
-        child: Image.memory(bytes, width: size, height: size, fit: BoxFit.cover),
+        child:
+            Image.memory(bytes, width: size, height: size, fit: BoxFit.cover),
       );
     }
     return Container(
@@ -277,13 +275,16 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
       child: Center(
-        child: Text(_genderEmoji(app.profile.gender), style: const TextStyle(fontSize: 32)),
+        child: Text(_genderEmoji(app.profile.gender),
+            style: const TextStyle(fontSize: 32)),
       ),
     );
   }
 
-  Widget _buildBubble(ChatMessage msg, bool isUser, ThemeData theme, AppState app) {
-    final bubbleColor = isUser ? theme.colorScheme.primary.withOpacity(0.9) : Colors.white;
+  Widget _buildBubble(
+      ChatMessage msg, bool isUser, ThemeData theme, AppState app) {
+    final bubbleColor =
+        isUser ? theme.colorScheme.primary.withOpacity(0.9) : Colors.white;
     final textColor = isUser ? Colors.white : Colors.black87;
     final radius = Radius.circular(16);
     final bubble = Container(
@@ -306,7 +307,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: Text(
         msg.content,
-        style: AppTextStyles.body(context).copyWith(color: textColor, height: 1.4),
+        style:
+            AppTextStyles.body(context).copyWith(color: textColor, height: 1.4),
       ),
     );
     final bubbleWithCat = Stack(
@@ -323,7 +325,8 @@ class _ChatScreenState extends State<ChatScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Flexible(child: isUser ? bubble : bubbleWithCat),
@@ -361,7 +364,8 @@ class _ChatScreenState extends State<ChatScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Text(
               app.chatError!,
-              style: AppTextStyles.body(context).copyWith(color: Colors.redAccent, fontSize: 12),
+              style: AppTextStyles.body(context)
+                  .copyWith(color: Colors.redAccent, fontSize: 12),
             ),
           ),
         SafeArea(
@@ -387,7 +391,8 @@ class _ChatScreenState extends State<ChatScreen> {
                           hintText: t.chatInputHint,
                           filled: true,
                           fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -400,18 +405,21 @@ class _ChatScreenState extends State<ChatScreen> {
                       width: 44,
                       height: 44,
                       child: ElevatedButton(
-                        onPressed: app.chatSending ? null : () => _sendMessage(app, t),
+                        onPressed:
+                            app.chatSending ? null : () => _sendMessage(app, t),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
                           padding: EdgeInsets.zero,
                         ),
                         child: app.chatSending
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
                               )
                             : const Icon(Icons.send, size: 18),
                       ),
@@ -457,7 +465,8 @@ class _ChatScreenState extends State<ChatScreen> {
               const SizedBox(height: 8),
               Text(
                 t.chatLockedBody,
-                style: AppTextStyles.body(context).copyWith(color: Colors.black87),
+                style:
+                    AppTextStyles.body(context).copyWith(color: Colors.black87),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -469,9 +478,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text(t.chatLockedAction, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  child: Text(t.chatLockedAction,
+                      style: const TextStyle(fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -481,11 +492,13 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Future<void> _showPaywall(BuildContext context, AppState app, AppLocalizations t) async {
+  Future<void> _showPaywall(
+      BuildContext context, AppState app, AppLocalizations t) async {
     if (kIsWeb) {
       if (!kEnableWebMockSubscription) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.webPaywallTestNote)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(t.webPaywallTestNote)));
         }
         return;
       }
@@ -497,7 +510,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _showMockPaywall(BuildContext context, AppState app, AppLocalizations t) async {
+  Future<void> _showMockPaywall(
+      BuildContext context, AppState app, AppLocalizations t) async {
     final title = t.webPaywallTitle;
     final subtitle = t.paywallSubtitle;
     final monthly = t.planMonthlyWithPrice(r'$5.99');
@@ -513,22 +527,31 @@ class _ChatScreenState extends State<ChatScreen> {
             : t.webPaywallCurrentPlanNone;
     final chosen = await showModalBottomSheet<String>(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 8),
-            Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8))),
+            Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(8))),
             const SizedBox(height: 12),
-            Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w700)),
+            Text(title,
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: AppTextStyles.body(context).copyWith(color: Colors.black54, fontSize: 13),
+                style: AppTextStyles.body(context)
+                    .copyWith(color: Colors.black54, fontSize: 13),
               ),
             ),
             const SizedBox(height: 6),
@@ -537,7 +560,8 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Text(
                 currentPlanLabel,
                 textAlign: TextAlign.center,
-                style: AppTextStyles.body(context).copyWith(color: Colors.black54, fontSize: 12),
+                style: AppTextStyles.body(context)
+                    .copyWith(color: Colors.black54, fontSize: 12),
               ),
             ),
             const SizedBox(height: 12),
@@ -577,7 +601,8 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Text(
                 t.webPaywallTestNote,
                 textAlign: TextAlign.center,
-                style: AppTextStyles.body(context).copyWith(color: Colors.black45, fontSize: 12),
+                style: AppTextStyles.body(context)
+                    .copyWith(color: Colors.black45, fontSize: 12),
               ),
             ),
             const SizedBox(height: 6),
@@ -627,7 +652,8 @@ class _ChatScreenState extends State<ChatScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
       builder: (context) => SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 12),
@@ -635,16 +661,24 @@ class _ChatScreenState extends State<ChatScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 8),
-              Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8))),
+              Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(8))),
               const SizedBox(height: 12),
-              Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w700)),
+              Text(title,
+                  style: AppTextStyles.body(context)
+                      .copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 child: Text(
                   subtitle,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.body(context).copyWith(color: Colors.black54, fontSize: 13),
+                  style: AppTextStyles.body(context)
+                      .copyWith(color: Colors.black54, fontSize: 13),
                 ),
               ),
               const SizedBox(height: 12),
@@ -690,7 +724,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Text(
                   disclaimer,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.body(context).copyWith(color: Colors.black45, fontSize: 12),
+                  style: AppTextStyles.body(context)
+                      .copyWith(color: Colors.black45, fontSize: 12),
                 ),
               ),
               if ((app.iapLastError ?? '').isNotEmpty)
@@ -699,12 +734,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Text(
                     app.iapLastError!,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.body(context).copyWith(color: Colors.redAccent, fontSize: 12),
+                    style: AppTextStyles.body(context)
+                        .copyWith(color: Colors.redAccent, fontSize: 12),
                   ),
                 ),
               const SizedBox(height: 6),
               TextButton(
-                onPressed: app.iapProcessing ? null : () => app.restoreIapPurchases(),
+                onPressed:
+                    app.iapProcessing ? null : () => app.restoreIapPurchases(),
                 child: Text(restoreLabel),
               ),
               const SizedBox(height: 4),
@@ -749,18 +786,22 @@ class _ChatScreenState extends State<ChatScreen> {
             Row(
               children: [
                 Expanded(
-                  child: Text(title, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w700)),
+                  child: Text(title,
+                      style: AppTextStyles.body(context)
+                          .copyWith(fontWeight: FontWeight.w700)),
                 ),
                 if (badge != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
                       badge,
-                      style: AppTextStyles.body(context).copyWith(fontSize: 11, color: theme.colorScheme.primary),
+                      style: AppTextStyles.body(context).copyWith(
+                          fontSize: 11, color: theme.colorScheme.primary),
                     ),
                   ),
               ],
@@ -774,7 +815,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   children: [
                     const Text('?', style: TextStyle(fontSize: 14)),
                     const SizedBox(width: 6),
-                    Expanded(child: Text(text, style: AppTextStyles.body(context).copyWith(fontSize: 13))),
+                    Expanded(
+                        child: Text(text,
+                            style: AppTextStyles.body(context)
+                                .copyWith(fontSize: 13))),
                   ],
                 ),
               ),
@@ -790,7 +834,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                     child: Text(ctaLoading ? '...' : ctaLabel),
                   ),
@@ -802,7 +847,8 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Future<void> _showMockSuccess(BuildContext context, {required AppLocalizations t}) {
+  Future<void> _showMockSuccess(BuildContext context,
+      {required AppLocalizations t}) {
     return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -820,7 +866,8 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Future<void> _showIapUnavailable(BuildContext context, {required AppLocalizations t}) {
+  Future<void> _showIapUnavailable(BuildContext context,
+      {required AppLocalizations t}) {
     return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -853,7 +900,9 @@ class _ChatScreenState extends State<ChatScreen> {
           backgroundColor: Colors.transparent,
           actions: [
             IconButton(
-              onPressed: app.chatMessages.isEmpty ? null : () => _confirmClearChat(context, app, t),
+              onPressed: app.chatMessages.isEmpty
+                  ? null
+                  : () => _confirmClearChat(context, app, t),
               icon: const Icon(Icons.delete_outline),
             ),
           ],
@@ -873,15 +922,20 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Future<void> _confirmClearChat(BuildContext context, AppState app, AppLocalizations t) async {
+  Future<void> _confirmClearChat(
+      BuildContext context, AppState app, AppLocalizations t) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(t.chatClearTitle),
         content: Text(t.chatClearBody),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.chatClearConfirm)),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(t.cancel)),
+          ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(t.chatClearConfirm)),
         ],
       ),
     );
