@@ -1068,6 +1068,7 @@ class _LogScreenState extends State<LogScreen> {
     final resolvedRadius = borderRadius ?? BorderRadius.circular(radius);
     return SizedBox(
       width: photoWidth,
+      height: photoWidth,
       child: ClipRRect(
         borderRadius: resolvedRadius,
         child: showPlaceholder
@@ -1082,8 +1083,8 @@ class _LogScreenState extends State<LogScreen> {
               )
             : Image.memory(
                 bytes,
-                width: double.infinity,
-                height: double.infinity,
+                width: photoWidth,
+                height: photoWidth,
                 fit: BoxFit.cover,
               ),
       ),
@@ -1337,36 +1338,60 @@ class _LogScreenState extends State<LogScreen> {
     if (groups.isEmpty) {
       return const SizedBox.shrink();
     }
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(_mealLabel(type, t),
-              style: AppTextStyles.body(context)
-                  .copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          Column(
-            children: [
-              for (final group in groups)
-                for (final entry in group) _mealRow(context, app, entry, group),
-            ],
-          ),
-        ],
-      ),
-    );
+    try {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(_mealLabel(type, t),
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Column(
+              children: [
+                for (final group in groups)
+                  for (final entry in group) _mealRow(context, app, entry, group),
+              ],
+            ),
+          ],
+        ),
+      );
+    } catch (err, stack) {
+      debugPrint('LogScreen meal section failed: $err');
+      debugPrintStack(stackTrace: stack);
+      return Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Text(
+          t.noEntries,
+          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+        ),
+      );
+    }
   }
 
   Widget _buildTopCards(
@@ -1438,6 +1463,47 @@ class _LogScreenState extends State<LogScreen> {
         ),
       );
     }
+  }
+
+  Widget _buildEmergencyDebugCard(BuildContext context, AppState app) {
+    final latest = app.entries.isNotEmpty
+        ? app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b)
+        : null;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Log fallback mode',
+            style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'entries: ${app.entries.length}, selected: ${_selectedDate.toIso8601String().split('T').first}',
+            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+          ),
+          if (latest != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'latest: ${latest.time.toIso8601String()}',
+              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Future<void> _quickRecord(BuildContext context, AppState app) async {
@@ -1546,6 +1612,10 @@ class _LogScreenState extends State<LogScreen> {
                     const SizedBox(height: 12),
                     _buildTopCards(context, app, t, appTheme, theme),
                     const SizedBox(height: 16),
+                    if (!hasAnyGroup && app.entries.isNotEmpty) ...[
+                      _buildEmergencyDebugCard(context, app),
+                      const SizedBox(height: 12),
+                    ],
                     _buildMonthHeader(context, app),
                     const SizedBox(height: 6),
                     LayoutBuilder(
