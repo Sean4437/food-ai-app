@@ -407,6 +407,9 @@ class _LogScreenState extends State<LogScreen> {
         lastDay, (i) => DateTime(month.year, month.month, i + 1));
   }
 
+  bool _isSameDate(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
   bool _isSameMonth(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month;
 
@@ -1392,6 +1395,22 @@ class _LogScreenState extends State<LogScreen> {
     final days = _currentMonthDays;
     final groupsByType = app.mealGroupsByTypeForDate(_selectedDate);
     final hasAnyGroup = groupsByType.values.any((groups) => groups.isNotEmpty);
+    // 若目前日期沒有任何紀錄但整體有資料，改跳到最新有紀錄的日期，避免頁面空白。
+    if (!hasAnyGroup && app.entries.isNotEmpty) {
+      final latest = app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
+      final next = DateTime(latest.time.year, latest.time.month, latest.time.day);
+      if (!_isSameDate(_selectedDate, next)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() {
+            _selectedDate = next;
+            _currentMonth = DateTime(next.year, next.month, 1);
+            _currentMonthDays = _daysInMonth(_currentMonth);
+            _lastJumpKey = '';
+          });
+        });
+      }
+    }
     if (!app.trialChecked && app.isSupabaseSignedIn) {
       return AppBackground(
         child: Scaffold(
