@@ -160,12 +160,16 @@ class DailyOverviewCards extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(
-                    app.activityLabel(current, t),
-                    style: AppTextStyles.caption(context)
-                        .copyWith(fontWeight: FontWeight.w600),
+                  Expanded(
+                    child: Text(
+                      app.activityLabel(current, t),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption(context)
+                          .copyWith(fontWeight: FontWeight.w600),
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 6),
                   const Icon(Icons.chevron_right,
                       color: Colors.black45, size: 18),
                 ],
@@ -187,14 +191,18 @@ class DailyOverviewCards extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(
-                    shortExercise,
-                    style: AppTextStyles.caption(context).copyWith(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Text(
+                      shortExercise,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption(context).copyWith(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 6),
                   const Icon(Icons.chevron_right,
                       color: Colors.black45, size: 18),
                 ],
@@ -216,17 +224,27 @@ class DailyOverviewCards extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(
-                    t.exerciseMinutesLabel,
-                    style: AppTextStyles.caption(context)
-                        .copyWith(fontWeight: FontWeight.w600),
+                  Expanded(
+                    child: Text(
+                      t.exerciseMinutesLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption(context)
+                          .copyWith(fontWeight: FontWeight.w600),
+                    ),
                   ),
-                  const Spacer(),
-                  Text(
-                    '$exerciseMinutes ${t.exerciseMinutesUnit}',
-                    style: AppTextStyles.caption(context)
-                        .copyWith(fontWeight: FontWeight.w600),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      '$exerciseMinutes ${t.exerciseMinutesUnit}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      style: AppTextStyles.caption(context)
+                          .copyWith(fontWeight: FontWeight.w600),
+                    ),
                   ),
+                  const SizedBox(width: 4),
                   const Icon(Icons.chevron_right,
                       color: Colors.black45, size: 18),
                 ],
@@ -253,7 +271,7 @@ class DailyOverviewCards extends StatelessWidget {
         : isOver
             ? t.suggestRemainingOver((-remaining!).round())
             : t.suggestRemainingLeft(remaining!.round());
-    const gaugeSize = 156.0;
+    const gaugeSize = 146.0;
     const innerSize = 73.0;
     const innerRadius = innerSize / 2;
     final gaugeKey = ValueKey('gauge-${date.toIso8601String()}');
@@ -396,7 +414,7 @@ class DailyOverviewCards extends StatelessWidget {
         : isOver
             ? t.proteinRemainingOver((-remaining!).round())
             : t.proteinRemainingLeft(remaining!.round());
-    const gaugeSize = 156.0;
+    const gaugeSize = 146.0;
     const innerSize = 73.0;
     const innerRadius = innerSize / 2;
     const proteinCapPadding = 50.0;

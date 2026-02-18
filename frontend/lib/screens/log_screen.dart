@@ -1221,12 +1221,23 @@ class _LogScreenState extends State<LogScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('${date.month}/${date.day}',
-                    style:
-                        TextStyle(color: fgColor, fontWeight: FontWeight.w600)),
+                Text(
+                  '${date.month}/${date.day}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: fgColor, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 4),
-                Text(isCentered ? selectedLabel : idleLabel,
-                    style: TextStyle(color: fgColor, fontSize: 11)),
+                SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    isCentered ? selectedLabel : idleLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: fgColor, fontSize: 11),
+                  ),
+                ),
               ],
             ),
           ),
@@ -1465,47 +1476,6 @@ class _LogScreenState extends State<LogScreen> {
     }
   }
 
-  Widget _buildEmergencyDebugCard(BuildContext context, AppState app) {
-    final latest = app.entries.isNotEmpty
-        ? app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b)
-        : null;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Log fallback mode',
-            style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'entries: ${app.entries.length}, selected: ${_selectedDate.toIso8601String().split('T').first}',
-            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-          ),
-          if (latest != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'latest: ${latest.time.toIso8601String()}',
-              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   Future<void> _quickRecord(BuildContext context, AppState app) async {
     final t = AppLocalizations.of(context)!;
     final pickedDate = await showDatePicker(
@@ -1612,10 +1582,6 @@ class _LogScreenState extends State<LogScreen> {
                     const SizedBox(height: 12),
                     _buildTopCards(context, app, t, appTheme, theme),
                     const SizedBox(height: 16),
-                    if (!hasAnyGroup && app.entries.isNotEmpty) ...[
-                      _buildEmergencyDebugCard(context, app),
-                      const SizedBox(height: 12),
-                    ],
                     _buildMonthHeader(context, app),
                     const SizedBox(height: 6),
                     LayoutBuilder(
