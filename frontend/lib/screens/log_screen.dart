@@ -1392,25 +1392,27 @@ class _LogScreenState extends State<LogScreen> {
     final app = AppStateScope.of(context);
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
-    final days = _currentMonthDays;
-    final groupsByType = app.mealGroupsByTypeForDate(_selectedDate);
-    final hasAnyGroup = groupsByType.values.any((groups) => groups.isNotEmpty);
-    // 若目前日期沒有任何紀錄但整體有資料，改跳到最新有紀錄的日期，避免頁面空白。
+    var effectiveDate = _selectedDate;
+    var effectiveMonth = _currentMonth;
+    var effectiveDays = _currentMonthDays;
+    var groupsByType = app.mealGroupsByTypeForDate(effectiveDate);
+    var hasAnyGroup = groupsByType.values.any((groups) => groups.isNotEmpty);
     if (!hasAnyGroup && app.entries.isNotEmpty) {
       final latest = app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
-      final next = DateTime(latest.time.year, latest.time.month, latest.time.day);
-      if (!_isSameDate(_selectedDate, next)) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          setState(() {
-            _selectedDate = next;
-            _currentMonth = DateTime(next.year, next.month, 1);
-            _currentMonthDays = _daysInMonth(_currentMonth);
-            _lastJumpKey = '';
-          });
-        });
-      }
+      effectiveDate = DateTime(latest.time.year, latest.time.month, latest.time.day);
+      effectiveMonth = DateTime(effectiveDate.year, effectiveDate.month, 1);
+      effectiveDays = _daysInMonth(effectiveMonth);
+      groupsByType = app.mealGroupsByTypeForDate(effectiveDate);
+      hasAnyGroup = groupsByType.values.any((groups) => groups.isNotEmpty);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _selectedDate = effectiveDate;
+        _currentMonth = effectiveMonth;
+        _currentMonthDays = effectiveDays;
+        _lastJumpKey = '';
+      });
     }
+    final days = effectiveDays;
     if (!app.trialChecked && app.isSupabaseSignedIn) {
       return AppBackground(
         child: Scaffold(
