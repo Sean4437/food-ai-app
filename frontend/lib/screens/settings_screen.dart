@@ -1574,46 +1574,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: Text(t.reminderLunch),
                     secondary: const Icon(Icons.lunch_dining),
                   ),
-                  _row(
-                    context,
-                    t.reminderLunchTime,
-                    profile.lunchReminderTime.format(context),
-                    icon: Icons.lunch_dining,
-                    onTap: () => _pickTime(
-                      context,
-                      initial: profile.lunchReminderTime,
-                      onSave: (time) =>
-                          app.updateField((p) => p.lunchReminderTime = time),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
                   SwitchListTile(
                     value: profile.dinnerReminderEnabled,
                     onChanged: (value) =>
                         app.updateField((p) => p.dinnerReminderEnabled = value),
                     title: Text(t.reminderDinner),
                     secondary: const Icon(Icons.nightlight_round),
-                  ),
-                  _row(
-                    context,
-                    t.reminderDinnerTime,
-                    profile.dinnerReminderTime.format(context),
-                    icon: Icons.nightlight_round,
-                    onTap: () => _pickTime(
-                      context,
-                      initial: profile.dinnerReminderTime,
-                      onSave: (time) =>
-                          app.updateField((p) => p.dinnerReminderTime = time),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      t.reminderTimeNote,
-                      style: AppTextStyles.caption(context)
-                          .copyWith(color: Colors.black54),
-                    ),
                   ),
                   _sectionTitle(context, t.subscriptionSection),
                   Container(
