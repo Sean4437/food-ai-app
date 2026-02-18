@@ -1209,16 +1209,38 @@ class AppState extends ChangeNotifier {
     List<Map<String, dynamic>> catalogItems = const [];
     bool catalogLookupFailed = false;
     String? catalogLookupErrorCode;
-    try {
-      catalogItems = await _api.searchFoods(
-        trimmed,
-        accessToken: _accessToken(),
-        lang: locale,
-        limit: 8,
-      );
-    } on CatalogSearchException catch (err) {
-      catalogLookupFailed = true;
-      catalogLookupErrorCode = err.code;
+    final mergedCatalogItems = <String, Map<String, dynamic>>{};
+    for (final candidate in _catalogLookupCandidates(trimmed)) {
+      try {
+        final found = await _api.searchFoods(
+          candidate,
+          accessToken: _accessToken(),
+          lang: locale,
+          limit: 8,
+        );
+        for (final item in found) {
+          final key = ((item['food_id'] ?? item['id'] ?? item['food_name'] ?? '')
+                  .toString()
+                  .trim())
+              .toLowerCase();
+          if (key.isEmpty) continue;
+          final existing = mergedCatalogItems[key];
+          if (existing == null ||
+              _catalogMatchScore(item) > _catalogMatchScore(existing)) {
+            mergedCatalogItems[key] = item;
+          }
+        }
+      } on CatalogSearchException catch (err) {
+        catalogLookupFailed = true;
+        catalogLookupErrorCode = err.code;
+      }
+      if (mergedCatalogItems.length >= 8) {
+        break;
+      }
+    }
+    if (mergedCatalogItems.isNotEmpty) {
+      catalogItems = mergedCatalogItems.values.toList()
+        ..sort((a, b) => _catalogMatchScore(b).compareTo(_catalogMatchScore(a)));
     }
     final catalogMatch = _bestCatalogFoodMatch(trimmed, catalogItems);
     if (catalogMatch != null) {
@@ -1298,32 +1320,107 @@ class AppState extends ChangeNotifier {
     return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 
+  List<String> _catalogLookupCandidates(String rawInput) {
+    final candidates = <String>[];
+    final seen = <String>{};
+    void add(String value) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return;
+      final key = _normalizeFoodLookupText(trimmed);
+      if (key.isEmpty || seen.contains(key)) return;
+      seen.add(key);
+      candidates.add(trimmed);
+    }
+
+    final normalized = _normalizeFoodLookupText(rawInput);
+    add(rawInput);
+    add(normalized);
+
+    final collapsed = normalized.replaceAll(' ', '');
+    add(collapsed);
+
+    final simplified = _stripDrinkModifiers(collapsed);
+    add(simplified);
+    add(_normalizeFoodLookupText(simplified));
+
+    if (candidates.length > 5) {
+      return candidates.take(5).toList();
+    }
+    return candidates;
+  }
+
+  String _stripDrinkModifiers(String text) {
+    var value = text.trim();
+    if (value.isEmpty) return value;
+
+    final hasDrinkHint = RegExp(
+      r'(茶|奶茶|咖啡|拿鐵|可可|可樂|汽水|果汁|豆漿|飲|紅茶|綠茶|青茶|烏龍|美式|latte|tea|coffee|drink|去冰|少冰|微冰|半糖|少糖|微糖|無糖|全糖)',
+      caseSensitive: false,
+    ).hasMatch(value);
+    if (!hasDrinkHint) return value;
+
+    final patterns = <RegExp>[
+      RegExp(r'(去冰|少冰|微冰|多冰|正常冰|常溫|熱飲|冷飲|熱|溫)'),
+      RegExp(r'(無糖|微糖|半糖|少糖|全糖|正常糖)'),
+      RegExp(r'(大杯|中杯|小杯|特大杯|特大)'),
+      RegExp(r'(加珍珠|加椰果|加寒天|加粉角|加布丁|加奶蓋)'),
+    ];
+    for (final pattern in patterns) {
+      value = value.replaceAll(pattern, '');
+    }
+    value = value.replaceAll(RegExp(r'\s+'), '');
+    return value.trim();
+  }
+
   Map<String, dynamic>? _bestCatalogFoodMatch(
     String query,
     List<Map<String, dynamic>> items,
   ) {
     if (items.isEmpty) return null;
     final normalizedQuery = _normalizeFoodLookupText(query);
+    final compactQuery = normalizedQuery.replaceAll(' ', '');
     Map<String, dynamic>? bestPrefix;
     double bestPrefixScore = -1;
+    Map<String, dynamic>? bestByScore;
+    double bestScore = -1;
     for (final item in items) {
       final alias = _normalizeFoodLookupText((item['alias'] as String?) ?? '');
       final foodName =
           _normalizeFoodLookupText((item['food_name'] as String?) ?? '');
+      final aliasCompact = alias.replaceAll(' ', '');
+      final foodCompact = foodName.replaceAll(' ', '');
+      final score = _catalogMatchScore(item);
       if (alias == normalizedQuery || foodName == normalizedQuery) {
         return item;
       }
-      final startsWith = (alias.isNotEmpty && alias.startsWith(normalizedQuery)) ||
-          (foodName.isNotEmpty && foodName.startsWith(normalizedQuery));
+      // 支援「主名稱 + 修飾詞」輸入，例如「青茶半糖去冰」命中「青茶」。
+      final startsWith =
+          (alias.isNotEmpty &&
+                  (alias.startsWith(normalizedQuery) ||
+                      aliasCompact.startsWith(compactQuery) ||
+                      normalizedQuery.startsWith(alias) ||
+                      compactQuery.startsWith(aliasCompact))) ||
+              (foodName.isNotEmpty &&
+                  (foodName.startsWith(normalizedQuery) ||
+                      foodCompact.startsWith(compactQuery) ||
+                      normalizedQuery.startsWith(foodName) ||
+                      compactQuery.startsWith(foodCompact)));
       if (!startsWith) continue;
-      final score = _catalogMatchScore(item);
       if (score > bestPrefixScore) {
         bestPrefix = item;
         bestPrefixScore = score;
       }
+      if (score > bestScore) {
+        bestByScore = item;
+        bestScore = score;
+      }
     }
     if (bestPrefix != null && bestPrefixScore >= 3.5) {
       return bestPrefix;
+    }
+    // 沒有 prefix 時，允許高分第一名（避免明顯正解卻被過嚴條件漏掉）。
+    if (bestByScore != null && bestScore >= 4.0) {
+      return bestByScore;
     }
     return null;
   }
