@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'dart:math';
 import '../config/feature_flags.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -281,11 +282,56 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  String _formatMessageTime(DateTime createdAt, Locale locale) {
+    return DateFormat.Hm(locale.toLanguageTag()).format(createdAt.toLocal());
+  }
+
+  String _dateDividerLabel(DateTime createdAt, Locale locale) {
+    final local = createdAt.toLocal();
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+    final isZh = locale.languageCode.toLowerCase().startsWith('zh');
+    if (DateUtils.isSameDay(local, now)) {
+      return isZh ? '今天' : 'Today';
+    }
+    if (DateUtils.isSameDay(local, yesterday)) {
+      return isZh ? '昨天' : 'Yesterday';
+    }
+    return DateFormat.yMMMd(locale.toLanguageTag()).format(local);
+  }
+
+  Widget _buildDateDivider(DateTime createdAt, Locale locale) {
+    final label = _dateDividerLabel(createdAt, locale);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            label,
+            style:
+                AppTextStyles.caption(context).copyWith(color: Colors.black54),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBubble(
-      ChatMessage msg, bool isUser, ThemeData theme, AppState app) {
+    ChatMessage msg,
+    bool isUser,
+    ThemeData theme,
+    AppState app,
+    Locale locale,
+  ) {
     final bubbleColor =
         isUser ? theme.colorScheme.primary.withOpacity(0.9) : Colors.white;
     final textColor = isUser ? Colors.white : Colors.black87;
+    final timeLabel = _formatMessageTime(msg.createdAt, locale);
     final radius = Radius.circular(16);
     final bubble = Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -324,16 +370,28 @@ class _ChatScreenState extends State<ChatScreen> {
     );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment:
+            isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          Flexible(child: isUser ? bubble : bubbleWithCat),
-          if (isUser) ...[
-            const SizedBox(width: 10),
-            _buildUserAvatar(app),
-          ],
+          Row(
+            mainAxisAlignment:
+                isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Flexible(child: isUser ? bubble : bubbleWithCat),
+              if (isUser) ...[
+                const SizedBox(width: 10),
+                _buildUserAvatar(app),
+              ],
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            timeLabel,
+            style:
+                AppTextStyles.caption(context).copyWith(color: Colors.black45),
+          ),
         ],
       ),
     );
@@ -341,6 +399,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildChat(AppState app, AppLocalizations t, ThemeData theme) {
     final messages = app.chatMessages;
+    final locale = Localizations.localeOf(context);
     _ensureQuickPrompts(t);
     _maybeScroll(app);
     return Column(
@@ -354,8 +413,19 @@ class _ChatScreenState extends State<ChatScreen> {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index];
+                    final prev = index > 0 ? messages[index - 1] : null;
+                    final showDateDivider = prev == null ||
+                        !DateUtils.isSameDay(
+                            prev.createdAt.toLocal(), msg.createdAt.toLocal());
                     final isUser = msg.role == 'user';
-                    return _buildBubble(msg, isUser, theme, app);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (showDateDivider)
+                          _buildDateDivider(msg.createdAt, locale),
+                        _buildBubble(msg, isUser, theme, app, locale),
+                      ],
+                    );
                   },
                 ),
         ),
