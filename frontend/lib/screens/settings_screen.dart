@@ -683,7 +683,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         )
         .key;
     final assistantDisplayName = profile.chatAssistantName.trim().isEmpty
-        ? t.tabChatAssistant
+        ? t.chatAssistantDefaultName
         : profile.chatAssistantName.trim();
     final hasChatAvatar =
         app.chatAvatarBytes != null && app.chatAvatarBytes!.isNotEmpty;
@@ -1043,7 +1043,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _sectionTitle(context, t.tabChatAssistant),
+                  _sectionTitle(context, t.chatSettingsSection),
                   _row(
                     context,
                     t.chatAssistantNameLabel,

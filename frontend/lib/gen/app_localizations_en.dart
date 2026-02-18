@@ -1836,7 +1836,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referenceLengthApply => 'Apply';
 
   @override
+  String get tabChat => 'Chat';
+
+  @override
   String get tabChatAssistant => 'Dongdong';
+
+  @override
+  String get chatSettingsSection => 'Chat settings';
+
+  @override
+  String get chatAssistantDefaultName => 'Dongdong';
 
   @override
   String get chatEmptyHint =>

@@ -3531,11 +3531,29 @@ abstract class AppLocalizations {
   /// **'套用'**
   String get referenceLengthApply;
 
+  /// No description provided for @tabChat.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'聊天'**
+  String get tabChat;
+
   /// No description provided for @tabChatAssistant.
   ///
   /// In zh_TW, this message translates to:
   /// **'咚咚'**
   String get tabChatAssistant;
+
+  /// No description provided for @chatSettingsSection.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'聊天設定'**
+  String get chatSettingsSection;
+
+  /// No description provided for @chatAssistantDefaultName.
+  ///
+  /// In zh_TW, this message translates to:
+  /// **'咚咚'**
+  String get chatAssistantDefaultName;
 
   /// No description provided for @chatEmptyHint.
   ///
@@ -3672,7 +3690,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatAssistantNameLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'咚咚名稱'**
+  /// **'助手名稱'**
   String get chatAssistantNameLabel;
 
   /// No description provided for @chatAvatarSet.

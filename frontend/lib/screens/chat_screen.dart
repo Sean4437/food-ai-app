@@ -213,7 +213,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String _assistantName(AppState app, AppLocalizations t) {
     final name = app.profile.chatAssistantName.trim();
-    return name.isEmpty ? t.tabChatAssistant : name;
+    return name.isEmpty ? t.chatAssistantDefaultName : name;
   }
 
   Widget _buildEmpty(AppState app, AppLocalizations t) {

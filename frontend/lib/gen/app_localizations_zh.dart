@@ -1811,7 +1811,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get referenceLengthApply => '套用';
 
   @override
+  String get tabChat => '聊天';
+
+  @override
   String get tabChatAssistant => '咚咚';
+
+  @override
+  String get chatSettingsSection => '聊天设置';
+
+  @override
+  String get chatAssistantDefaultName => '咚咚';
 
   @override
   String get chatEmptyHint => '嗨～我是咚咚，问我饮食或目标吧！';
@@ -1882,7 +1891,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatAvatarLabel => '聊天头像';
 
   @override
-  String get chatAssistantNameLabel => '咚咚名称';
+  String get chatAssistantNameLabel => '助手名称';
 
   @override
   String get chatAvatarSet => '已设置';
@@ -3725,7 +3734,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get referenceLengthApply => '套用';
 
   @override
+  String get tabChat => '聊天';
+
+  @override
   String get tabChatAssistant => '咚咚';
+
+  @override
+  String get chatSettingsSection => '聊天設定';
+
+  @override
+  String get chatAssistantDefaultName => '咚咚';
 
   @override
   String get chatEmptyHint => '嗨～我是咚咚，問我飲食或目標吧！';
@@ -3796,7 +3814,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get chatAvatarLabel => '聊天頭像';
 
   @override
-  String get chatAssistantNameLabel => '咚咚名稱';
+  String get chatAssistantNameLabel => '助手名稱';
 
   @override
   String get chatAvatarSet => '已設定';

@@ -804,7 +804,10 @@
   "referenceLengthLabel": "Measured length (cm)",
   "referenceLengthHint": "Enter the measured length in cm",
   "referenceLengthApply": "Apply",
+  "tabChat": "Chat",
   "tabChatAssistant": "Dongdong",
+  "chatSettingsSection": "Chat settings",
+  "chatAssistantDefaultName": "Dongdong",
   "chatEmptyHint": "Hi! I'm Dongdong. Ask me about your meals or goals.",
   "chatEmptyHintWithName": "Hi! I'm {name}. Ask me about your meals or goals.",
   "@chatEmptyHintWithName": {
