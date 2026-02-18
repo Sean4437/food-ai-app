@@ -32,6 +32,7 @@ class _LogScreenState extends State<LogScreen> {
   bool _isSnapping = false;
   int _historyDays = 7;
   bool _historyDaysLoaded = false;
+  bool _initialDateSynced = false;
 
   static const double _dateItemWidth = 78;
   static const double _dateItemGap = 6;
@@ -286,12 +287,31 @@ class _LogScreenState extends State<LogScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_historyDaysLoaded) return;
     final app = AppStateScope.of(context);
+    if (!_initialDateSynced) {
+      _syncInitialDateFromEntries(app);
+      _initialDateSynced = true;
+    }
+    if (_historyDaysLoaded) return;
     final saved = app.profile.calorieHistoryDays;
     _historyDays =
         _historyDayOptions.contains(saved) ? saved : _historyDayOptions.first;
     _historyDaysLoaded = true;
+  }
+
+  void _syncInitialDateFromEntries(AppState app) {
+    DateTime next = app.selectedDate;
+    final selectedEntries = app.entriesForDate(next);
+    if (selectedEntries.isEmpty && app.entries.isNotEmpty) {
+      final latest =
+          app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
+      next = DateTime(latest.time.year, latest.time.month, latest.time.day);
+    } else {
+      next = DateTime(next.year, next.month, next.day);
+    }
+    _selectedDate = next;
+    _currentMonth = DateTime(next.year, next.month, 1);
+    _currentMonthDays = _daysInMonth(_currentMonth);
   }
 
   @override
@@ -1371,7 +1391,8 @@ class _LogScreenState extends State<LogScreen> {
     final appTheme = theme.extension<AppTheme>()!;
     final days = _currentMonthDays;
     final groupsByType = app.mealGroupsByTypeForDate(_selectedDate);
-    if (!app.trialChecked) {
+    final hasAnyGroup = groupsByType.values.any((groups) => groups.isNotEmpty);
+    if (!app.trialChecked && app.isSupabaseSignedIn) {
       return AppBackground(
         child: Scaffold(
           backgroundColor: Colors.transparent,
@@ -1538,6 +1559,39 @@ class _LogScreenState extends State<LogScreen> {
                         groupsByType[MealType.lateSnack] ?? const []),
                     _mealSection(context, app, MealType.other,
                         groupsByType[MealType.other] ?? const []),
+                    if (!hasAnyGroup)
+                      Container(
+                        margin: const EdgeInsets.only(top: 6),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.info_outline,
+                              color: Colors.black45,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                t.noEntries,
+                                style: AppTextStyles.caption(context)
+                                    .copyWith(color: Colors.black54),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1869,4 +1923,3 @@ class _CalorieHistoryPainter extends CustomPainter {
     return false;
   }
 }
-
