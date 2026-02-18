@@ -221,6 +221,26 @@ class _LogScreenState extends State<LogScreen> {
     }
   }
 
+  List<String> _displayTags(MealEntry entry, AppLocalizations t) {
+    final raw = entry.result?.judgementTags ?? const <String>[];
+    final tags = <String>[];
+    for (final tag in raw) {
+      final normalized = tag.trim().toLowerCase();
+      if (normalized.isEmpty) continue;
+      if (normalized == 'custom') {
+        tags.add('📌 ${t.customTabTitle}');
+        continue;
+      }
+      tags.add(_tagWithEmoji(tag));
+    }
+    final source =
+        (entry.result?.nutritionSource ?? entry.result?.source ?? '').trim();
+    if (tags.isEmpty && source == 'custom') {
+      tags.add('📌 ${t.customTabTitle}');
+    }
+    return tags;
+  }
+
   Widget _buildSkeleton() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -480,7 +500,8 @@ class _LogScreenState extends State<LogScreen> {
               ),
               _squarePhoto(
                 entry.imageBytes,
-                fallbackSize: 72,
+                photoWidth: 88,
+                showPlaceholder: app.isNamePlaceholderImage(entry.imageBytes),
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(18),
                   bottomRight: Radius.circular(18),
@@ -995,23 +1016,31 @@ class _LogScreenState extends State<LogScreen> {
     Uint8List bytes, {
     BorderRadius? borderRadius,
     double radius = 0,
-    required double fallbackSize,
+    required double photoWidth,
+    bool showPlaceholder = false,
   }) {
     final resolvedRadius = borderRadius ?? BorderRadius.circular(radius);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final size = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : fallbackSize;
-        return SizedBox(
-          width: size,
-          height: size,
-          child: ClipRRect(
-            borderRadius: resolvedRadius,
-            child: Image.memory(bytes, fit: BoxFit.cover),
-          ),
-        );
-      },
+    return SizedBox(
+      width: photoWidth,
+      child: ClipRRect(
+        borderRadius: resolvedRadius,
+        child: showPlaceholder
+            ? Container(
+                color: const Color(0xFFF0F4F2),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.restaurant_menu_rounded,
+                  color: Color(0xFF7A9A8B),
+                  size: 26,
+                ),
+              )
+            : Image.memory(
+                bytes,
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+              ),
+      ),
     );
   }
 
@@ -1167,7 +1196,7 @@ class _LogScreenState extends State<LogScreen> {
     final mid = app.entryCalorieMid(entry);
     final calorie =
         _withEmoji('🔥', mid == null ? '—' : mid.round().toString());
-    final tags = entry.result?.judgementTags ?? const <String>[];
+    final tags = _displayTags(entry, t);
     return GestureDetector(
       onTap: () {
         final initialIndex = group.indexOf(entry);
@@ -1183,6 +1212,7 @@ class _LogScreenState extends State<LogScreen> {
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
+        constraints: const BoxConstraints(minHeight: 88),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -1202,7 +1232,8 @@ class _LogScreenState extends State<LogScreen> {
               children: [
                 _squarePhoto(
                   entry.imageBytes,
-                  fallbackSize: 56,
+                  photoWidth: 92,
+                  showPlaceholder: app.isNamePlaceholderImage(entry.imageBytes),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
                     bottomLeft: Radius.circular(16),
@@ -1234,14 +1265,15 @@ class _LogScreenState extends State<LogScreen> {
                                     .copyWith(color: Colors.black54)),
                           ],
                         ),
-                        if (tags.isNotEmpty) ...[
-                          const SizedBox(height: 6),
+                        const SizedBox(height: 6),
+                        if (tags.isNotEmpty)
                           Text(
-                            tags.map(_tagWithEmoji).join(' · '),
+                            tags.join(' · '),
                             style: AppTextStyles.caption(context)
                                 .copyWith(color: Colors.black45),
-                          ),
-                        ],
+                          )
+                        else
+                          const SizedBox(height: 16),
                       ],
                     ),
                   ),
@@ -1837,3 +1869,4 @@ class _CalorieHistoryPainter extends CustomPainter {
     return false;
   }
 }
+

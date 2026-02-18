@@ -1158,6 +1158,7 @@ class AppState extends ChangeNotifier {
       foodName: food.name,
       calorieRange: food.calorieRange,
       macros: Map<String, double>.from(food.macros),
+      judgementTags: const ['custom'],
       dishSummary: food.summary,
       suggestion: food.suggestion,
       tier: 'custom',
@@ -3212,6 +3213,18 @@ class AppState extends ChangeNotifier {
 
   String _hashBytes(List<int> bytes) {
     return sha1.convert(bytes).toString();
+  }
+
+  bool isNamePlaceholderImage(List<int> bytes) {
+    if (bytes.length != _namePlaceholderBytes.length) {
+      return false;
+    }
+    for (var i = 0; i < bytes.length; i++) {
+      if (bytes[i] != _namePlaceholderBytes[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   double _macroBaselineForKey(String key) {
