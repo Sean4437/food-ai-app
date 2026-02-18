@@ -868,6 +868,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
           orElse: () => MapEntry(t.exerciseWalking, 'walking'),
         )
         .key;
+    final goalOptions = <String, String>{
+      t.goalLoseFat: kGoalValueLoseFat,
+      t.goalMaintain: kGoalValueMaintain,
+    };
+    final currentGoalValue = AppState.normalizeGoalValue(profile.goal);
+    final currentGoalLabel = goalOptions.entries
+        .firstWhere(
+          (entry) => entry.value == currentGoalValue,
+          orElse: () => MapEntry(t.goalLoseFat, kGoalValueLoseFat),
+        )
+        .key;
+    final planSpeedOptions = <String, String>{
+      t.planSpeedStable: kPlanSpeedValueStable,
+      t.planSpeedGentle: kPlanSpeedValueGentle,
+    };
+    final currentPlanSpeedValue =
+        AppState.normalizePlanSpeedValue(profile.planSpeed);
+    final currentPlanSpeedLabel = planSpeedOptions.entries
+        .firstWhere(
+          (entry) => entry.value == currentPlanSpeedValue,
+          orElse: () => MapEntry(t.planSpeedStable, kPlanSpeedValueStable),
+        )
+        .key;
     final isSupabaseSignedIn = app.isSupabaseSignedIn;
     final isSyncing = app.syncInProgress;
     final supabaseEmail = app.supabaseUserEmail ?? '';
@@ -1110,29 +1133,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _row(
                       context,
                       t.goalLabel,
-                      profile.goal,
+                      currentGoalLabel,
                       icon: Icons.flag,
                       onTap: () => _selectOption(
                         context,
                         title: t.goalLabel,
-                        current: profile.goal,
-                        options: [t.goalLoseFat, t.goalMaintain],
-                        onSave: (value) =>
-                            app.updateField((p) => p.goal = value),
+                        current: currentGoalLabel,
+                        options: goalOptions.keys.toList(),
+                        onSave: (value) => app.updateField((p) =>
+                            p.goal = goalOptions[value] ?? kGoalValueLoseFat),
                       ),
                     ),
                     _row(
                       context,
                       t.planSpeedLabel,
-                      profile.planSpeed,
+                      currentPlanSpeedLabel,
                       icon: Icons.speed,
                       onTap: () => _selectOption(
                         context,
                         title: t.planSpeedLabel,
-                        current: profile.planSpeed,
-                        options: [t.planSpeedStable, t.planSpeedGentle],
-                        onSave: (value) =>
-                            app.updateField((p) => p.planSpeed = value),
+                        current: currentPlanSpeedLabel,
+                        options: planSpeedOptions.keys.toList(),
+                        onSave: (value) => app.updateField((p) => p.planSpeed =
+                            planSpeedOptions[value] ?? kPlanSpeedValueStable),
                       ),
                     ),
                     _row(

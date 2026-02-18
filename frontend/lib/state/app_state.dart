@@ -36,6 +36,10 @@ const String kIapYearlyId = 'com.foodieeye.subscription.yearly';
 const String kDefaultPlateAsset = 'assets/plates/plate_Japanese_02.png';
 const String kDefaultThemeAsset = 'assets/themes/theme_clean.json';
 const double kDefaultTextScale = 1.0;
+const String kGoalValueLoseFat = 'lose_fat';
+const String kGoalValueMaintain = 'maintain';
+const String kPlanSpeedValueStable = 'stable';
+const String kPlanSpeedValueGentle = 'gentle';
 const String _kMacroUnitMetaKey = 'macro_unit';
 const String _kSettingsUpdatedAtKey = 'settings_updated_at';
 const String _kMockSubscriptionKey = 'mock_subscription_active';
@@ -453,6 +457,59 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  static String normalizeGoalValue(String rawValue) {
+    final value = rawValue.trim();
+    if (value.isEmpty) return kGoalValueLoseFat;
+    final lower = value.toLowerCase();
+    if (lower == kGoalValueLoseFat || lower == 'losefat') {
+      return kGoalValueLoseFat;
+    }
+    if (lower == kGoalValueMaintain || lower == 'maintenance') {
+      return kGoalValueMaintain;
+    }
+    if (value.contains('維持') || lower.contains('maintain')) {
+      return kGoalValueMaintain;
+    }
+    if (value.contains('減脂') || lower.contains('lose')) {
+      return kGoalValueLoseFat;
+    }
+    return kGoalValueLoseFat;
+  }
+
+  static String normalizePlanSpeedValue(String rawValue) {
+    final value = rawValue.trim();
+    if (value.isEmpty) return kPlanSpeedValueStable;
+    final lower = value.toLowerCase();
+    if (lower == kPlanSpeedValueGentle) {
+      return kPlanSpeedValueGentle;
+    }
+    if (lower == kPlanSpeedValueStable || lower == 'steady') {
+      return kPlanSpeedValueStable;
+    }
+    if (value.contains('保守') || lower.contains('gentle')) {
+      return kPlanSpeedValueGentle;
+    }
+    if (value.contains('穩定') || lower.contains('stable')) {
+      return kPlanSpeedValueStable;
+    }
+    return kPlanSpeedValueStable;
+  }
+
+  bool _normalizeProfileGoalAndPlan() {
+    final normalizedGoal = normalizeGoalValue(profile.goal);
+    final normalizedPlan = normalizePlanSpeedValue(profile.planSpeed);
+    var changed = false;
+    if (profile.goal != normalizedGoal) {
+      profile.goal = normalizedGoal;
+      changed = true;
+    }
+    if (profile.planSpeed != normalizedPlan) {
+      profile.planSpeed = normalizedPlan;
+      changed = true;
+    }
+    return changed;
+  }
+
   String? targetCalorieRangeValue(DateTime date) {
     final weight = profile.weightKg;
     final height = profile.heightCm;
@@ -471,13 +528,11 @@ class AppState extends ChangeNotifier {
     final activity = dailyActivityLevel(date);
     final factor = _activityFactor(activity);
     double target = bmr * factor;
-    final goal = profile.goal;
-    final plan = profile.planSpeed;
-    final isMaintain =
-        goal.contains('維持') || goal.toLowerCase().contains('maintain');
+    final goal = normalizeGoalValue(profile.goal);
+    final plan = normalizePlanSpeedValue(profile.planSpeed);
+    final isMaintain = goal == kGoalValueMaintain;
     if (!isMaintain) {
-      final isGentle =
-          plan.contains('保守') || plan.toLowerCase().contains('gentle');
+      final isGentle = plan == kPlanSpeedValueGentle;
       target -= isGentle ? 300 : 500;
     }
     target += dailyExerciseCalories(date);
@@ -739,14 +794,17 @@ class AppState extends ChangeNotifier {
   Future<void> init() async {
     await _store.init();
     await _settings.init();
+    bool profileChanged = false;
     final profileMap = await _settings.loadProfile();
     final hadProfile = profileMap != null;
     if (profileMap != null) {
       _applyProfile(profileMap);
+      if (_normalizeProfileGoalAndPlan()) {
+        profileChanged = true;
+      }
     }
     _refreshChatAvatarBytes();
     final didMigrateApi = _migrateApiBaseUrlIfNeeded();
-    bool profileChanged = false;
     if (profile.nutritionValueMode != 'amount') {
       profile.nutritionValueMode = 'amount';
       profileChanged = true;
@@ -2739,6 +2797,7 @@ class AppState extends ChangeNotifier {
       ..textScale = updated.textScale
       ..nutritionChartStyle = updated.nutritionChartStyle
       ..glowEnabled = updated.glowEnabled;
+    _normalizeProfileGoalAndPlan();
     _refreshChatAvatarBytes();
     notifyListeners();
     _touchSettingsUpdatedAt();
@@ -2750,6 +2809,7 @@ class AppState extends ChangeNotifier {
 
   void updateField(void Function(UserProfile profile) updater) {
     updater(profile);
+    _normalizeProfileGoalAndPlan();
     notifyListeners();
     _scheduleAutoFinalize();
     _scheduleAutoFinalizeWeek();
@@ -3548,10 +3608,7 @@ class AppState extends ChangeNotifier {
     if (_isHigh(sodium)) advice.add(t.dietitianSodiumHigh);
     final line =
         advice.isEmpty ? t.dietitianBalanced : advice.take(2).join('、');
-    final goalLower = profile.goal.toLowerCase();
-    final loseFat = profile.goal == t.goalLoseFat ||
-        goalLower.contains('減脂') ||
-        goalLower.contains('lose');
+    final loseFat = normalizeGoalValue(profile.goal) == kGoalValueLoseFat;
     final goalHint = loseFat ? t.goalAdviceLoseFat : t.goalAdviceMaintain;
     return '${t.dietitianPrefix}$line ${goalHint}';
   }
@@ -4666,6 +4723,7 @@ class AppState extends ChangeNotifier {
         } else if (profileJson is Map) {
           _applyProfile(profileJson.map((k, v) => MapEntry(k.toString(), v)));
         }
+        _normalizeProfileGoalAndPlan();
         final overridesJson = settingsRow['overrides_json'];
         if (overridesJson is Map<String, dynamic>) {
           _applySettingsOverrides(overridesJson);
@@ -6076,8 +6134,8 @@ class UserProfile {
       heightCm: 170,
       weightKg: 72,
       age: 30,
-      goal: '減脂',
-      planSpeed: '穩定',
+      goal: kGoalValueLoseFat,
+      planSpeed: kPlanSpeedValueStable,
       dailySummaryTime: const TimeOfDay(hour: 21, minute: 0),
       weeklySummaryWeekday: DateTime.sunday,
       breakfastReminderEnabled: true,
