@@ -1360,6 +1360,11 @@ class _LogScreenState extends State<LogScreen> {
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        floatingActionButton: FloatingActionButton(
+          heroTag: 'log_quick_record_fab',
+          onPressed: () => _quickRecord(context, app),
+          child: const Icon(Icons.add),
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
