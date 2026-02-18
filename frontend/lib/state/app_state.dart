@@ -43,10 +43,22 @@ const String _kMockSubscriptionPlanKey = 'mock_subscription_plan';
 const String _kIapSubscriptionKey = 'iap_subscription_active';
 const String _kAccessCheckAtKey = 'access_check_at';
 const String _kAccessGraceHoursKey = 'access_grace_hours';
+const String _kAccessPlanKey = 'access_plan';
+const String _kAccessEntitlementsKey = 'access_entitlements';
 const String _kChatHistoryKey = 'chat_history';
 const String _kChatSummaryKey = 'chat_summary';
 const String _kMealReminderKeyPrefix = 'last_meal_reminder';
 const int _kAccessGraceHoursDefault = 24;
+const String _kEntitlementAnalyze = 'ai_analyze';
+const String _kEntitlementChat = 'ai_chat';
+const String _kEntitlementSummary = 'ai_summary';
+const String _kEntitlementSuggest = 'ai_suggest';
+const Set<String> _kAiEntitlements = {
+  _kEntitlementAnalyze,
+  _kEntitlementChat,
+  _kEntitlementSummary,
+  _kEntitlementSuggest,
+};
 const String _kMacroUnitGrams = 'grams';
 const String _kMacroUnitPercent = 'percent';
 const double _kMacroBaselineProteinG = 30;
@@ -56,6 +68,13 @@ const double _kMacroBaselineSodiumMg = 2300;
 const int _kSmallPortionThreshold = 35;
 const String _kNamePlaceholderBase64 =
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/Pi3n1wAAAABJRU5ErkJggg==';
+
+enum AppFeature {
+  analyze,
+  chat,
+  summary,
+  suggest,
+}
 
 class AppState extends ChangeNotifier {
   AppState()
@@ -77,6 +96,8 @@ class AppState extends ChangeNotifier {
   String? _mockSubscriptionPlanId;
   bool _iapSubscriptionActive = false;
   bool _accessStatusFailed = false;
+  String _accessPlan = 'unknown';
+  final Set<String> _backendEntitlements = <String>{};
   bool _iapAvailable = false;
   bool _iapProcessing = false;
   bool _iapInitialized = false;
@@ -143,6 +164,10 @@ class AppState extends ChangeNotifier {
       _whitelisted = false;
       _trialEnd = null;
       _accessStatusFailed = false;
+      _accessPlan = 'unknown';
+      _backendEntitlements.clear();
+      _meta.remove(_kAccessPlanKey);
+      _meta.remove(_kAccessEntitlementsKey);
       notifyListeners();
       return;
     }
@@ -154,7 +179,34 @@ class AppState extends ChangeNotifier {
       _trialExpired = !active;
       final endRaw = response['trial_end'] as String?;
       _trialEnd = endRaw == null ? null : DateTime.tryParse(endRaw);
+      final planRaw = (response['plan'] as String?)?.trim();
+      if (planRaw != null && planRaw.isNotEmpty) {
+        _accessPlan = planRaw;
+      } else if (_whitelisted) {
+        _accessPlan = 'whitelisted';
+      } else {
+        _accessPlan = active ? 'trial' : 'free';
+      }
+      final entitlements = <String>{};
+      final rawEntitlements = response['entitlements'];
+      if (rawEntitlements is List) {
+        for (final item in rawEntitlements) {
+          final value = item.toString().trim();
+          if (value.isNotEmpty) {
+            entitlements.add(value);
+          }
+        }
+      }
+      if (entitlements.isEmpty && active) {
+        entitlements.addAll(_kAiEntitlements);
+      }
+      _backendEntitlements
+        ..clear()
+        ..addAll(entitlements);
       _meta[_kAccessCheckAtKey] = DateTime.now().toUtc().toIso8601String();
+      _meta[_kAccessPlanKey] = _accessPlan;
+      final orderedEntitlements = _backendEntitlements.toList()..sort();
+      _meta[_kAccessEntitlementsKey] = orderedEntitlements.join(',');
       _accessStatusFailed = false;
       _touchSettingsUpdatedAt();
       // ignore: discarded_futures
@@ -172,6 +224,10 @@ class AppState extends ChangeNotifier {
         _trialExpired = true;
         _whitelisted = false;
         _trialEnd = null;
+        _accessPlan = 'unknown';
+        _backendEntitlements.clear();
+        _meta.remove(_kAccessPlanKey);
+        _meta.remove(_kAccessEntitlementsKey);
         _accessStatusFailed = true;
       } else {
         _accessStatusFailed = false;
@@ -184,7 +240,8 @@ class AppState extends ChangeNotifier {
       _trialChecked &&
       _trialExpired &&
       !_mockSubscriptionActive &&
-      !_iapSubscriptionActive;
+      !_iapSubscriptionActive &&
+      !_hasAnyAiEntitlementFromBackend;
 
   bool get trialChecked => _trialChecked;
 
@@ -193,6 +250,8 @@ class AppState extends ChangeNotifier {
   bool get mockSubscriptionActive => _mockSubscriptionActive;
   String? get mockSubscriptionPlanId => _mockSubscriptionPlanId;
   bool get accessStatusFailed => _accessStatusFailed;
+  String get accessPlan => _accessPlan;
+  Set<String> get accessEntitlements => Set.unmodifiable(_backendEntitlements);
   int get accessGraceHours {
     final raw = _meta[_kAccessGraceHoursKey];
     final parsed = int.tryParse(raw ?? '');
@@ -207,12 +266,40 @@ class AppState extends ChangeNotifier {
   List<ProductDetails> get iapProducts => List.unmodifiable(_iapProducts);
 
   DateTime? get trialEndAt => _trialEnd;
-  bool get chatAvailable =>
-      _iapSubscriptionActive || _mockSubscriptionActive || _whitelisted;
+  bool get chatAvailable => canUseFeature(AppFeature.chat);
   bool get chatSending => _chatSending;
   String? get chatError => _chatError;
   List<ChatMessage> get chatMessages => List.unmodifiable(_chatMessages);
   Uint8List? get chatAvatarBytes => _chatAvatarBytes;
+
+  bool get _hasAnyAiEntitlementFromBackend {
+    for (final entitlement in _kAiEntitlements) {
+      if (_backendEntitlements.contains(entitlement)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  String _featureEntitlement(AppFeature feature) {
+    switch (feature) {
+      case AppFeature.analyze:
+        return _kEntitlementAnalyze;
+      case AppFeature.chat:
+        return _kEntitlementChat;
+      case AppFeature.summary:
+        return _kEntitlementSummary;
+      case AppFeature.suggest:
+        return _kEntitlementSuggest;
+    }
+  }
+
+  bool canUseFeature(AppFeature feature) {
+    if (_iapSubscriptionActive || _mockSubscriptionActive || _whitelisted) {
+      return true;
+    }
+    return _backendEntitlements.contains(_featureEntitlement(feature));
+  }
 
   String buildAiContext() {
     final now = DateTime.now();
@@ -473,6 +560,9 @@ class AppState extends ChangeNotifier {
     String? referenceObject,
     double? referenceLengthCm,
   }) async {
+    if (!canUseFeature(AppFeature.analyze)) {
+      throw Exception('subscription_required');
+    }
     final originalBytes = await file.readAsBytes();
     final time = await _resolveImageTime(file, originalBytes);
     final mealType = resolveMealType(time);
@@ -527,6 +617,9 @@ class AppState extends ChangeNotifier {
     String? referenceObject,
     double? referenceLengthCm,
   }) async {
+    if (!canUseFeature(AppFeature.analyze)) {
+      throw Exception('subscription_required');
+    }
     final filename =
         analysis.file.name.isNotEmpty ? analysis.file.name : 'upload.jpg';
     final selectedContainerType = containerType ?? profile.containerType;
@@ -1028,6 +1121,9 @@ class AppState extends ChangeNotifier {
     String locale, {
     String? historyContext,
   }) async {
+    if (!canUseFeature(AppFeature.analyze)) {
+      throw Exception('subscription_required');
+    }
     final trimmed = foodName.trim();
     if (trimmed.isEmpty) {
       throw Exception('Food name is empty');
@@ -1401,6 +1497,9 @@ class AppState extends ChangeNotifier {
 
   Future<bool> finalizeDay(
       DateTime date, String locale, AppLocalizations t) async {
+    if (!canUseFeature(AppFeature.summary)) {
+      return false;
+    }
     final dayKey = _dayKey(date);
     final hadOverride = _dayOverrides.containsKey(dayKey);
     final groups = mealGroupsForDateAll(date);
@@ -1534,6 +1633,9 @@ class AppState extends ChangeNotifier {
 
   Future<bool> finalizeWeek(
       DateTime date, String locale, AppLocalizations t) async {
+    if (!canUseFeature(AppFeature.summary)) {
+      return false;
+    }
     final weekStart = _weekStartFor(date);
     final weekKey = _weekKey(weekStart);
     final hadOverride = _weekOverrides.containsKey(weekKey);
@@ -2487,6 +2589,8 @@ class AppState extends ChangeNotifier {
     _mockSubscriptionActive = false;
     _mockSubscriptionPlanId = null;
     _iapSubscriptionActive = false;
+    _accessPlan = 'unknown';
+    _backendEntitlements.clear();
 
     final reset = UserProfile.initial()
       ..apiBaseUrl = apiBaseUrl
@@ -2676,6 +2780,9 @@ class AppState extends ChangeNotifier {
     bool force = false,
     String reason = 'auto',
   }) async {
+    if (!canUseFeature(AppFeature.analyze)) {
+      return;
+    }
     final noteKey = entry.note ?? '';
     final nameKey = entry.overrideFoodName ?? '';
     if (!force &&
@@ -3684,6 +3791,21 @@ class AppState extends ChangeNotifier {
         }
       }
     }
+    _mockSubscriptionActive = _meta[_kMockSubscriptionKey] == 'true';
+    _mockSubscriptionPlanId = _meta[_kMockSubscriptionPlanKey];
+    _iapSubscriptionActive = _meta[_kIapSubscriptionKey] == 'true';
+    final rawPlan = (_meta[_kAccessPlanKey] ?? '').trim();
+    _accessPlan = rawPlan.isEmpty ? 'unknown' : rawPlan;
+    _backendEntitlements.clear();
+    final rawEntitlements = _meta[_kAccessEntitlementsKey];
+    if (rawEntitlements != null && rawEntitlements.trim().isNotEmpty) {
+      for (final part in rawEntitlements.split(',')) {
+        final value = part.trim();
+        if (value.isNotEmpty) {
+          _backendEntitlements.add(value);
+        }
+      }
+    }
     _loadChatFromMeta();
   }
 
@@ -3859,8 +3981,9 @@ class AppState extends ChangeNotifier {
             (entry.overrideFoodName ?? result?.foodName ?? '').trim();
         final calorieRange =
             (entry.overrideCalorieRange ?? result?.calorieRange ?? '').trim();
-        final macros =
-            result?.macros.isNotEmpty == true ? _roundMacros(result!.macros) : null;
+        final macros = result?.macros.isNotEmpty == true
+            ? _roundMacros(result!.macros)
+            : null;
         items.add({
           'time': entry.time.toIso8601String(),
           'food_name': foodName,
@@ -3911,6 +4034,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> sendChatMessage(
       String message, String locale, AppLocalizations t) async {
+    if (!canUseFeature(AppFeature.chat)) return;
     final text = message.trim();
     if (text.isEmpty) return;
     if (_chatSending) return;
@@ -3984,6 +4108,9 @@ class AppState extends ChangeNotifier {
 
   Future<MealAdvice> suggestNowMealAdvice(
       AppLocalizations t, String locale) async {
+    if (!canUseFeature(AppFeature.suggest)) {
+      throw Exception('subscription_required');
+    }
     final now = DateTime.now();
     final mealType = resolveMealType(now);
     final mealDate = _dateOnly(now);
@@ -4189,9 +4316,7 @@ class AppState extends ChangeNotifier {
   }
 
   String? _supabaseRedirectUrl() {
-    return kIsWeb
-        ? kSupabaseEmailRedirectUrlWeb
-        : kSupabaseEmailRedirectUrlApp;
+    return kIsWeb ? kSupabaseEmailRedirectUrlWeb : kSupabaseEmailRedirectUrlApp;
   }
 
   Future<void> updateNickname(String nickname) async {
@@ -5267,7 +5392,9 @@ class AppState extends ChangeNotifier {
         key == _kMockSubscriptionPlanKey ||
         key == _kIapSubscriptionKey ||
         key == _kAccessCheckAtKey ||
-        key == _kAccessGraceHoursKey;
+        key == _kAccessGraceHoursKey ||
+        key == _kAccessPlanKey ||
+        key == _kAccessEntitlementsKey;
   }
 
   Map<String, String> _settingsMetaToSync() {
@@ -5333,6 +5460,18 @@ class AppState extends ChangeNotifier {
     _mockSubscriptionActive = _meta[_kMockSubscriptionKey] == 'true';
     _mockSubscriptionPlanId = _meta[_kMockSubscriptionPlanKey];
     _iapSubscriptionActive = _meta[_kIapSubscriptionKey] == 'true';
+    final rawPlan = (_meta[_kAccessPlanKey] ?? '').trim();
+    _accessPlan = rawPlan.isEmpty ? 'unknown' : rawPlan;
+    _backendEntitlements.clear();
+    final rawEntitlements = _meta[_kAccessEntitlementsKey];
+    if (rawEntitlements != null && rawEntitlements.trim().isNotEmpty) {
+      for (final part in rawEntitlements.split(',')) {
+        final value = part.trim();
+        if (value.isNotEmpty) {
+          _backendEntitlements.add(value);
+        }
+      }
+    }
   }
 
   void setMockSubscriptionActive(bool value, {String? planId}) {

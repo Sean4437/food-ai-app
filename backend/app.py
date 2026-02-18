@@ -216,6 +216,12 @@ TEST_BYPASS_EMAILS = {
 }
 TRIAL_DAYS = int(os.getenv("TRIAL_DAYS", "2"))
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
+_AI_ENTITLEMENTS = (
+    "ai_analyze",
+    "ai_chat",
+    "ai_summary",
+    "ai_suggest",
+)
 
 _client = OpenAI(api_key=API_KEY) if API_KEY else None
 logging.basicConfig(level=logging.INFO)
@@ -968,11 +974,43 @@ def _require_auth(request: Request) -> dict:
     if not user_id or not email:
         raise HTTPException(status_code=401, detail="invalid_token")
     if _is_whitelisted(email):
-        return {"user_id": user_id, "email": email, "whitelisted": True}
+        return {"user_id": user_id, "email": email, "whitelisted": True, "trial_start": None}
     trial_start = _ensure_trial_start(user_id, email)
-    if datetime.now(timezone.utc) - trial_start > timedelta(days=TRIAL_DAYS):
-        raise HTTPException(status_code=402, detail="trial_expired")
     return {"user_id": user_id, "email": email, "whitelisted": False, "trial_start": trial_start}
+
+
+def _build_access_status(auth: dict) -> dict:
+    now = datetime.now(timezone.utc)
+    if auth.get("whitelisted"):
+        return {
+            "plan": "whitelisted",
+            "trial_active": True,
+            "trial_start": None,
+            "trial_end": None,
+            "whitelisted": True,
+            "entitlements": list(_AI_ENTITLEMENTS),
+        }
+    trial_start = auth.get("trial_start")
+    if trial_start is None:
+        trial_start = now
+    trial_end = trial_start + timedelta(days=TRIAL_DAYS)
+    trial_active = now <= trial_end
+    return {
+        "plan": "trial" if trial_active else "free",
+        "trial_active": trial_active,
+        "trial_start": trial_start.isoformat(),
+        "trial_end": trial_end.isoformat(),
+        "whitelisted": False,
+        "entitlements": list(_AI_ENTITLEMENTS) if trial_active else [],
+    }
+
+
+def _require_entitlement(auth: dict, entitlement: str) -> dict:
+    access = _build_access_status(auth)
+    entitlements = set(access.get("entitlements") or [])
+    if entitlement not in entitlements:
+        raise HTTPException(status_code=402, detail="subscription_required")
+    return access
 
 
 def _build_day_prompt(
@@ -1942,6 +1980,7 @@ async def analyze_image(
     reference_length_cm: Optional[float] = Form(default=None),
     analyze_reason: Optional[str] = Form(default=None),
 ):
+    _require_entitlement(_auth, "ai_analyze")
     user_id = _auth.get("user_id", "")
     if user_id and not _analysis_rate_allowed(user_id):
         raise HTTPException(status_code=429, detail="analyze_rate_limited")
@@ -2132,6 +2171,7 @@ async def analyze_name(
     payload: NameAnalyzeRequest,
     _auth: dict = Depends(_require_auth),
 ):
+    _require_entitlement(_auth, "ai_analyze")
     user_id = _auth.get("user_id", "")
     if user_id and not _analysis_rate_allowed(user_id):
         raise HTTPException(status_code=429, detail="analyze_rate_limited")
@@ -2241,6 +2281,7 @@ async def analyze_label(
     image: UploadFile = File(...),
     lang: str = Query(default=None, description="Language code, e.g. zh-TW, en"),
 ):
+    _require_entitlement(_auth, "ai_analyze")
     user_id = _auth.get("user_id", "")
     if user_id and not _analysis_rate_allowed(user_id):
         raise HTTPException(status_code=429, detail="analyze_rate_limited")
@@ -2300,6 +2341,7 @@ async def summarize_day(
     payload: DaySummaryRequest,
     _auth: dict = Depends(_require_auth),
 ):
+    _require_entitlement(_auth, "ai_summary")
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
@@ -2345,6 +2387,7 @@ async def summarize_week(
     payload: WeekSummaryRequest,
     _auth: dict = Depends(_require_auth),
 ):
+    _require_entitlement(_auth, "ai_summary")
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
@@ -2388,6 +2431,7 @@ async def suggest_meal(
     payload: MealAdviceRequest,
     _auth: dict = Depends(_require_auth),
 ):
+    _require_entitlement(_auth, "ai_suggest")
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
@@ -2458,6 +2502,7 @@ async def chat(
     payload: ChatRequest,
     _auth: dict = Depends(_require_auth),
 ):
+    _require_entitlement(_auth, "ai_chat")
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
@@ -2571,23 +2616,7 @@ async def chat(
 
 @app.get("/access_status")
 def access_status(_auth: dict = Depends(_require_auth)):
-    if _auth.get("whitelisted"):
-        return {
-            "trial_active": True,
-            "trial_start": None,
-            "trial_end": None,
-            "whitelisted": True,
-        }
-    trial_start = _auth.get("trial_start")
-    if trial_start is None:
-        trial_start = datetime.now(timezone.utc)
-    trial_end = trial_start + timedelta(days=TRIAL_DAYS)
-    return {
-        "trial_active": datetime.now(timezone.utc) <= trial_end,
-        "trial_start": trial_start.isoformat(),
-        "trial_end": trial_end.isoformat(),
-        "whitelisted": False,
-    }
+    return _build_access_status(_auth)
 
 
 

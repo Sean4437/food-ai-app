@@ -13,7 +13,6 @@ import 'screens/chat_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/custom_foods_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/trial_expired_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'state/app_state.dart';
 import 'design/theme_controller.dart';
@@ -146,8 +145,7 @@ class _AuthGateState extends State<AuthGate> {
     final fragment = uri.fragment;
     if (fragment.isEmpty) return false;
     final cleaned = fragment.startsWith('/') ? fragment.substring(1) : fragment;
-    final queryPart =
-        cleaned.contains('?') ? cleaned.split('?').last : cleaned;
+    final queryPart = cleaned.contains('?') ? cleaned.split('?').last : cleaned;
     if (!queryPart.contains('=')) return false;
     final fragParams = Uri.splitQueryString(queryPart);
     return hasRecovery(fragParams);
@@ -163,7 +161,8 @@ class _AuthGateState extends State<AuthGate> {
         if (direct != null && direct.isNotEmpty) return direct;
         final fragment = target.fragment;
         if (fragment.isEmpty) return null;
-        final cleaned = fragment.startsWith('/') ? fragment.substring(1) : fragment;
+        final cleaned =
+            fragment.startsWith('/') ? fragment.substring(1) : fragment;
         final queryPart =
             cleaned.contains('?') ? cleaned.split('?').last : cleaned;
         if (!queryPart.contains('=')) return null;
@@ -172,7 +171,8 @@ class _AuthGateState extends State<AuthGate> {
         return (value != null && value.isNotEmpty) ? value : null;
       }
 
-      final tokenHash = extractParam(uri, 'token') ?? extractParam(uri, 'token_hash');
+      final tokenHash =
+          extractParam(uri, 'token') ?? extractParam(uri, 'token_hash');
       final type = extractParam(uri, 'type');
       if (tokenHash != null && (type == null || type == 'recovery')) {
         await Supabase.instance.client.auth.verifyOTP(
@@ -188,7 +188,8 @@ class _AuthGateState extends State<AuthGate> {
         if (code != null && code.isNotEmpty) return code;
         final fragment = target.fragment;
         if (fragment.isEmpty) return null;
-        final cleaned = fragment.startsWith('/') ? fragment.substring(1) : fragment;
+        final cleaned =
+            fragment.startsWith('/') ? fragment.substring(1) : fragment;
         final queryPart =
             cleaned.contains('?') ? cleaned.split('?').last : cleaned;
         if (!queryPart.contains('=')) return null;
@@ -244,9 +245,6 @@ class _AuthGateState extends State<AuthGate> {
             app.refreshAccessStatus();
           }
           return const MainShell();
-        }
-        if (app.trialExpired && !app.isWhitelisted) {
-          return const TrialExpiredScreen();
         }
         return const MainShell();
       },

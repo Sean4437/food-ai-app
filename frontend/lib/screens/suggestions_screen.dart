@@ -45,6 +45,23 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   Timer? _progressTimer;
   Timer? _statusTimer;
 
+  String _subscriptionRequiredMessage() {
+    final isZh = Localizations.localeOf(context).languageCode.toLowerCase().startsWith('zh');
+    return isZh ? '此功能需訂閱後才能使用' : 'This feature requires subscription.';
+  }
+
+  bool _ensureFeatureAccess(AppState app, AppFeature feature) {
+    if (app.canUseFeature(feature)) return true;
+    final message = _subscriptionRequiredMessage();
+    setState(() {
+      _error = message;
+      _loading = false;
+      _previewBytes = null;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    return false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +84,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   Future<void> _startCapture({required ImageSource source}) async {
     if (!mounted) return;
+    final app = AppStateScope.of(context);
+    if (!_ensureFeatureAccess(app, AppFeature.analyze)) return;
     setState(() {
       _loading = false;
       _error = null;
@@ -93,7 +112,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _previewBytes = preview;
     });
     _startSmartProgress();
-    final app = AppStateScope.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
     final historyContext = app.buildAiContext();
     try {
@@ -149,6 +167,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     if (!mounted) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
+    if (!_ensureFeatureAccess(app, AppFeature.suggest)) return;
     final locale = Localizations.localeOf(context).toLanguageTag();
     setState(() {
       _loading = true;
@@ -208,6 +227,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     if (_analysis == null) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
+    if (!_ensureFeatureAccess(app, AppFeature.analyze)) return;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final controller = TextEditingController(text: _analysis!.result.foodName);
     final result = await showDialog<String>(
