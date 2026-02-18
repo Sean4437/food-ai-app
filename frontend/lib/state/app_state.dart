@@ -1205,12 +1205,20 @@ class AppState extends ChangeNotifier {
       return saveCustomFoodUsage(matched, now, mealType);
     }
 
-    final catalogItems = await _api.searchFoods(
-      trimmed,
-      accessToken: _accessToken(),
-      lang: locale,
-      limit: 8,
-    );
+    List<Map<String, dynamic>> catalogItems = const [];
+    bool catalogLookupFailed = false;
+    String? catalogLookupErrorCode;
+    try {
+      catalogItems = await _api.searchFoods(
+        trimmed,
+        accessToken: _accessToken(),
+        lang: locale,
+        limit: 8,
+      );
+    } on CatalogSearchException catch (err) {
+      catalogLookupFailed = true;
+      catalogLookupErrorCode = err.code;
+    }
     final catalogMatch = _bestCatalogFoodMatch(trimmed, catalogItems);
     if (catalogMatch != null) {
       final catalogResult = _catalogItemToAnalysisResult(
@@ -1259,14 +1267,30 @@ class AppState extends ChangeNotifier {
         'plan_speed': profile.planSpeed,
       },
     );
+    final fallbackNote = catalogLookupFailed
+        ? _nameCatalogFallbackNote(locale, catalogLookupErrorCode)
+        : null;
     return _saveNameOnlyEntry(
       time: now,
       mealType: mealType,
       mealId: mealId,
       inputFoodName: trimmed,
       result: result,
-      reason: 'name_only',
+      reason: catalogLookupFailed ? 'name_ai_catalog_error' : 'name_only',
+      lastAnalyzedNote: fallbackNote,
     );
+  }
+
+  String _nameCatalogFallbackNote(String locale, String? code) {
+    final detail = (code ?? 'unknown').trim();
+    if (locale.toLowerCase().startsWith('zh')) {
+      return detail.isEmpty
+          ? '資料庫查詢失敗，已改用 AI 估算。'
+          : '資料庫查詢失敗（$detail），已改用 AI 估算。';
+    }
+    return detail.isEmpty
+        ? 'Catalog lookup failed, switched to AI estimate.'
+        : 'Catalog lookup failed ($detail), switched to AI estimate.';
   }
 
   String _normalizeFoodLookupText(String value) {
@@ -1279,19 +1303,34 @@ class AppState extends ChangeNotifier {
   ) {
     if (items.isEmpty) return null;
     final normalizedQuery = _normalizeFoodLookupText(query);
+    Map<String, dynamic>? bestPrefix;
+    double bestPrefixScore = -1;
     for (final item in items) {
       final alias = _normalizeFoodLookupText((item['alias'] as String?) ?? '');
       final foodName =
           _normalizeFoodLookupText((item['food_name'] as String?) ?? '');
-      final canonical =
-          _normalizeFoodLookupText((item['canonical_name'] as String?) ?? '');
-      if (alias == normalizedQuery ||
-          foodName == normalizedQuery ||
-          canonical == normalizedQuery) {
+      if (alias == normalizedQuery || foodName == normalizedQuery) {
         return item;
       }
+      final startsWith = (alias.isNotEmpty && alias.startsWith(normalizedQuery)) ||
+          (foodName.isNotEmpty && foodName.startsWith(normalizedQuery));
+      if (!startsWith) continue;
+      final score = _catalogMatchScore(item);
+      if (score > bestPrefixScore) {
+        bestPrefix = item;
+        bestPrefixScore = score;
+      }
     }
-    return items.first;
+    if (bestPrefix != null && bestPrefixScore >= 3.5) {
+      return bestPrefix;
+    }
+    return null;
+  }
+
+  double _catalogMatchScore(Map<String, dynamic> item) {
+    final raw = item['match_score'];
+    if (raw is num) return raw.toDouble();
+    return 0;
   }
 
   AnalysisResult _catalogItemToAnalysisResult(
@@ -1355,6 +1394,7 @@ class AppState extends ChangeNotifier {
     required String inputFoodName,
     required AnalysisResult result,
     required String reason,
+    String? lastAnalyzedNote,
   }) async {
     final entry = MealEntry(
       id: _newId(),
@@ -1371,6 +1411,7 @@ class AppState extends ChangeNotifier {
     entry.result = _resolveNutritionResult(result);
     entry.lastAnalyzedAt = DateTime.now().toIso8601String();
     entry.lastAnalyzeReason = reason;
+    entry.lastAnalyzedNote = lastAnalyzedNote;
     entries.insert(0, entry);
     markMealInteraction(mealId);
     _selectedDate = _dateOnly(time);

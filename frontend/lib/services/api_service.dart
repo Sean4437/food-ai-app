@@ -14,6 +14,22 @@ class ApiException implements Exception {
   String toString() => 'ApiException($statusCode, $code): $message';
 }
 
+class CatalogSearchException implements Exception {
+  CatalogSearchException(
+    this.code, {
+    this.statusCode,
+    this.message,
+  });
+
+  final String code;
+  final int? statusCode;
+  final String? message;
+
+  @override
+  String toString() =>
+      'CatalogSearchException(code=$code, status=$statusCode, message=$message)';
+}
+
 class ApiService {
   final String baseUrl;
   ApiService({required this.baseUrl});
@@ -294,12 +310,27 @@ class ApiService {
         headers: _authHeaders(accessToken),
       );
       if (response.statusCode != 200) {
-        return const [];
+        String detail = response.body;
+        try {
+          final decoded = json.decode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            detail = (decoded['detail'] ?? decoded['message'] ?? detail).toString();
+          }
+        } catch (_) {}
+        throw CatalogSearchException(
+          'http_error',
+          statusCode: response.statusCode,
+          message: detail,
+        );
       }
       final decoded = json.decode(response.body);
-      if (decoded is! Map<String, dynamic>) return const [];
+      if (decoded is! Map<String, dynamic>) {
+        throw CatalogSearchException('invalid_payload', message: 'response is not an object');
+      }
       final rawItems = decoded['items'];
-      if (rawItems is! List) return const [];
+      if (rawItems is! List) {
+        throw CatalogSearchException('invalid_payload', message: 'items is not a list');
+      }
       final items = <Map<String, dynamic>>[];
       for (final row in rawItems) {
         if (row is Map<String, dynamic>) {
@@ -309,8 +340,10 @@ class ApiService {
         }
       }
       return items;
-    } catch (_) {
-      return const [];
+    } on CatalogSearchException {
+      rethrow;
+    } catch (err) {
+      throw CatalogSearchException('network_error', message: err.toString());
     }
   }
 

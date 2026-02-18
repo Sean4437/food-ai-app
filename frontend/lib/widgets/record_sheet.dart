@@ -61,6 +61,13 @@ Future<String?> _promptFoodName(BuildContext context, AppLocalizations t) async 
   return trimmed;
 }
 
+String _catalogFallbackMessage(BuildContext context) {
+  final isEn = Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
+  return isEn
+      ? 'Catalog lookup failed. Switched to AI estimate.'
+      : '資料庫查詢失敗，已改用 AI 估算。';
+}
+
 Future<RecordResult?> showRecordSheet(
   BuildContext context,
   AppState app, {
@@ -149,6 +156,12 @@ Future<RecordResult?> showRecordSheet(
     final mealId = entry.mealId ?? entry.id;
     final date = DateTime(entry.time.year, entry.time.month, entry.time.day);
     final count = app.entriesForMealId(mealId).length;
+    if ((entry.lastAnalyzeReason ?? '').trim().toLowerCase() == 'name_ai_catalog_error') {
+      final message = (entry.lastAnalyzedNote ?? '').trim();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message.isEmpty ? _catalogFallbackMessage(context) : message)),
+      );
+    }
     return RecordResult(
       entry: entry,
       mealId: mealId,

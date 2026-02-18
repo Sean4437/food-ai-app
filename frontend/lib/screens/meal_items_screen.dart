@@ -354,6 +354,56 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     return code == 'en' ? 'Nutrition' : '營養成分';
   }
 
+  bool _isEnglish(BuildContext context) {
+    return Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
+  }
+
+  String _analysisSourceLabel(BuildContext context, MealEntry? entry) {
+    final isEn = _isEnglish(context);
+    if (entry == null || entry.result == null) {
+      return isEn ? 'Unknown source' : '來源未知';
+    }
+    final reason = (entry.lastAnalyzeReason ?? '').trim().toLowerCase();
+    final source = (entry.result?.source ?? '').trim().toLowerCase();
+    final nutritionSource = (entry.result?.nutritionSource ?? '').trim().toLowerCase();
+    if (reason == 'name_ai_catalog_error') {
+      return isEn ? 'AI estimate (catalog unavailable)' : 'AI估算（資料庫異常）';
+    }
+    if (nutritionSource == 'catalog' || source == 'catalog' || reason == 'name_catalog') {
+      return isEn ? 'Catalog' : '資料庫';
+    }
+    if (nutritionSource == 'custom' || source == 'custom' || reason == 'custom_use') {
+      return isEn ? 'Custom' : '自訂';
+    }
+    if (nutritionSource == 'label' || source == 'label') {
+      return isEn ? 'Nutrition label' : '營養標示';
+    }
+    if (source == 'ai' || reason == 'name_only') {
+      return isEn ? 'AI estimate' : 'AI估算';
+    }
+    return isEn ? 'Unknown source' : '來源未知';
+  }
+
+  Color _analysisSourceColor(MealEntry? entry) {
+    final reason = (entry?.lastAnalyzeReason ?? '').trim().toLowerCase();
+    final source = (entry?.result?.source ?? '').trim().toLowerCase();
+    final nutritionSource = (entry?.result?.nutritionSource ?? '').trim().toLowerCase();
+    if (reason == 'name_ai_catalog_error') return const Color(0xFFD16A00);
+    if (nutritionSource == 'catalog' || source == 'catalog' || reason == 'name_catalog') {
+      return const Color(0xFF2E9B66);
+    }
+    if (nutritionSource == 'custom' || source == 'custom' || reason == 'custom_use') {
+      return const Color(0xFF2F80ED);
+    }
+    if (nutritionSource == 'label' || source == 'label') {
+      return const Color(0xFF6C7A89);
+    }
+    if (source == 'ai' || reason == 'name_only') {
+      return const Color(0xFFB26A00);
+    }
+    return const Color(0xFF8A8A8A);
+  }
+
   NutritionChartStyle _chartStyle(String value) {
     switch (value) {
       case 'bars':
@@ -388,7 +438,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final currentEntry = sorted.isEmpty ? null : sorted[_pageIndex];
     final screenWidth = MediaQuery.of(context).size.width;
     final contentWidth = math.max(0.0, screenWidth - 32);
-    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
+    final isEnglish = _isEnglish(context);
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -457,6 +507,16 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
+                              if ((currentEntry?.lastAnalyzedNote ?? '').trim().isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  currentEntry!.lastAnalyzedNote!.trim(),
+                                  style: AppTextStyles.caption(context).copyWith(
+                                    color: const Color(0xFFD16A00),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                               if (currentEntry?.result?.judgementTags.isNotEmpty == true) ...[
                                 const SizedBox(height: 10),
                                 Wrap(
@@ -491,16 +551,36 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.14),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(
-                            currentEntry == null ? t.calorieUnknown : app.entryCalorieRangeLabel(currentEntry, t),
-                            style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _analysisSourceColor(currentEntry).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                _analysisSourceLabel(context, currentEntry),
+                                style: AppTextStyles.caption(context).copyWith(
+                                  color: _analysisSourceColor(currentEntry),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withOpacity(0.14),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                currentEntry == null ? t.calorieUnknown : app.entryCalorieRangeLabel(currentEntry, t),
+                                style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
