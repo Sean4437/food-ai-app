@@ -4,6 +4,12 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 
+enum _RecordInputMode {
+  camera,
+  gallery,
+  name,
+}
+
 class RecordResult {
   const RecordResult({
     required this.entry,
@@ -22,6 +28,39 @@ class RecordResult {
   final bool isMulti;
 }
 
+Future<String?> _promptFoodName(BuildContext context, AppLocalizations t) async {
+  final controller = TextEditingController();
+  final value = await showDialog<String>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(t.foodNameLabel),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(hintText: t.suggestInstantNameHint),
+          onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(t.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: Text(t.suggestInstantNameSubmit),
+          ),
+        ],
+      );
+    },
+  );
+  controller.dispose();
+  final trimmed = value?.trim() ?? '';
+  if (trimmed.isEmpty) return null;
+  return trimmed;
+}
+
 Future<RecordResult?> showRecordSheet(
   BuildContext context,
   AppState app, {
@@ -29,7 +68,7 @@ Future<RecordResult?> showRecordSheet(
   DateTime? overrideTime,
 }) async {
   final t = AppLocalizations.of(context)!;
-  final source = await showModalBottomSheet<ImageSource>(
+  final mode = await showModalBottomSheet<_RecordInputMode>(
     context: context,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
@@ -40,20 +79,33 @@ Future<RecordResult?> showRecordSheet(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 8),
-            Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(8))),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.black12,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             const SizedBox(height: 12),
             ListTile(
-              leading: const Text('📷', style: TextStyle(fontSize: 18)),
+              leading: const Icon(Icons.photo_camera_outlined),
               title: Text(t.pickFromCamera),
-              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+              onTap: () => Navigator.of(context).pop(_RecordInputMode.camera),
             ),
             ListTile(
-              leading: const Text('🖼️', style: TextStyle(fontSize: 18)),
+              leading: const Icon(Icons.photo_library_outlined),
               title: Text(t.pickFromGallery),
-              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+              onTap: () => Navigator.of(context).pop(_RecordInputMode.gallery),
             ),
             ListTile(
-              leading: const Text('✖️', style: TextStyle(fontSize: 18)),
+              leading: const Icon(Icons.edit_note),
+              title: Text(t.suggestInstantNameSubmit),
+              subtitle: Text(t.suggestInstantNameHint),
+              onTap: () => Navigator.of(context).pop(_RecordInputMode.name),
+            ),
+            ListTile(
+              leading: const Icon(Icons.close),
               title: Text(t.cancel),
               onTap: () => Navigator.of(context).pop(),
             ),
@@ -64,15 +116,61 @@ Future<RecordResult?> showRecordSheet(
     },
   );
 
-  if (source == null) return null;
+  if (mode == null) return null;
+  if (!context.mounted) return null;
   final picker = ImagePicker();
-  bool isMulti = false;
-  if (source == ImageSource.gallery) {
+  var isMulti = false;
+
+  if (mode == _RecordInputMode.name) {
+    final foodName = await _promptFoodName(context, t);
+    if (!context.mounted) return null;
+    if (foodName == null || foodName.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.nameAnalyzeEmpty)),
+      );
+      return null;
+    }
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    MealEntry entry;
+    try {
+      entry = await app.analyzeNameAndSave(
+        foodName.trim(),
+        locale,
+        overrideTime: overrideTime,
+        fixedType: fixedType,
+      );
+    } catch (_) {
+      if (!context.mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.analyzeFailed)),
+      );
+      return null;
+    }
+    final mealId = entry.mealId ?? entry.id;
+    final date = DateTime(entry.time.year, entry.time.month, entry.time.day);
+    final count = app.entriesForMealId(mealId).length;
+    return RecordResult(
+      entry: entry,
+      mealId: mealId,
+      mealType: entry.type,
+      date: date,
+      mealCount: count,
+      isMulti: false,
+    );
+  }
+
+  if (mode == _RecordInputMode.gallery) {
     final files = await picker.pickMultiImage();
+    if (!context.mounted) return null;
     if (files.isEmpty) return null;
     isMulti = files.length > 1;
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final entry = await app.addEntryFromFiles(files, locale, fixedType: fixedType, overrideTime: overrideTime);
+    final entry = await app.addEntryFromFiles(
+      files,
+      locale,
+      fixedType: fixedType,
+      overrideTime: overrideTime,
+    );
     if (entry == null) return null;
     final mealId = entry.mealId ?? entry.id;
     final date = DateTime(entry.time.year, entry.time.month, entry.time.day);
@@ -87,10 +185,16 @@ Future<RecordResult?> showRecordSheet(
     );
   }
 
-  final xfile = await picker.pickImage(source: source);
+  final xfile = await picker.pickImage(source: ImageSource.camera);
+  if (!context.mounted) return null;
   if (xfile == null) return null;
   final locale = Localizations.localeOf(context).toLanguageTag();
-  final entry = await app.addEntry(xfile, locale, fixedType: fixedType, overrideTime: overrideTime);
+  final entry = await app.addEntry(
+    xfile,
+    locale,
+    fixedType: fixedType,
+    overrideTime: overrideTime,
+  );
   if (entry == null) return null;
   final mealId = entry.mealId ?? entry.id;
   final date = DateTime(entry.time.year, entry.time.month, entry.time.day);

@@ -274,6 +274,46 @@ class ApiService {
     return AnalysisResult.fromJson(jsonMap);
   }
 
+  Future<List<Map<String, dynamic>>> searchFoods(
+    String query, {
+    String? accessToken,
+    String? lang,
+    int limit = 8,
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return const [];
+    final params = <String, String>{
+      'q': trimmed,
+      'limit': limit.clamp(1, 20).toString(),
+      if (lang != null && lang.trim().isNotEmpty) 'lang': lang.trim(),
+    };
+    final uri = Uri.parse('$baseUrl/foods/search').replace(queryParameters: params);
+    try {
+      final response = await http.get(
+        uri,
+        headers: _authHeaders(accessToken),
+      );
+      if (response.statusCode != 200) {
+        return const [];
+      }
+      final decoded = json.decode(response.body);
+      if (decoded is! Map<String, dynamic>) return const [];
+      final rawItems = decoded['items'];
+      if (rawItems is! List) return const [];
+      final items = <Map<String, dynamic>>[];
+      for (final row in rawItems) {
+        if (row is Map<String, dynamic>) {
+          items.add(row);
+        } else if (row is Map) {
+          items.add(row.map((key, value) => MapEntry(key.toString(), value)));
+        }
+      }
+      return items;
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<Map<String, dynamic>> suggestMeal(
     Map<String, dynamic> payload,
     String? accessToken,

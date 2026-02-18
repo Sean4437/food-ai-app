@@ -1,7 +1,7 @@
 ﻿from fastapi import FastAPI, UploadFile, File, Query, Form, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, Optional, List
+from typing import Any, Dict, Optional, List
 from dotenv import load_dotenv, dotenv_values
 from pathlib import Path
 from openai import OpenAI
@@ -196,6 +196,26 @@ class NameAnalyzeRequest(BaseModel):
     container_depth: Optional[str] = None
     container_diameter_cm: Optional[int] = None
     container_capacity_ml: Optional[int] = None
+
+
+class FoodSearchItem(BaseModel):
+    food_id: str
+    food_name: str
+    alias: Optional[str] = None
+    lang: Optional[str] = None
+    calorie_range: str
+    macros: Dict[str, float]
+    dish_summary: Optional[str] = None
+    suggestion: str
+    source: str = "catalog"
+    nutrition_source: str = "catalog"
+    is_beverage: Optional[bool] = None
+    is_food: Optional[bool] = True
+    match_score: Optional[float] = None
+
+
+class FoodSearchResponse(BaseModel):
+    items: List[FoodSearchItem]
 
 FREE_DAILY_LIMIT = int(os.getenv("FREE_DAILY_LIMIT", "1"))
 CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
@@ -856,6 +876,121 @@ def _supabase_headers() -> dict:
         "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
         "Content-Type": "application/json",
     }
+
+
+def _normalize_food_query(value: str) -> str:
+    return " ".join((value or "").strip().lower().split())
+
+
+def _safe_float(value: Any) -> Optional[float]:
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.strip())
+        except Exception:
+            return None
+    return None
+
+
+def _catalog_default_summary(food_name: str, lang: str) -> str:
+    if lang == "zh-TW":
+        return f"{food_name}（資料庫）"
+    return f"{food_name} (catalog)"
+
+
+def _catalog_default_suggestion(lang: str) -> str:
+    if lang == "zh-TW":
+        return "來自資料庫估算，可再補充份量或品牌讓結果更準確。"
+    return "Estimated from the food catalog. Add portion or brand details for better accuracy."
+
+
+def _catalog_calorie_range(row: dict) -> str:
+    raw = str(row.get("calorie_range") or "").strip()
+    if raw:
+        return raw
+    kcal = _safe_float(row.get("kcal_100g"))
+    if kcal is None or kcal <= 0:
+        return "0-0 kcal"
+    low = max(1, int(round(kcal * 0.9)))
+    high = max(low, int(round(kcal * 1.1)))
+    return f"{low}-{high} kcal"
+
+
+def _catalog_macros(row: dict) -> dict[str, float]:
+    raw = row.get("macros")
+    parsed: dict[str, float] = {}
+    if isinstance(raw, dict):
+        for key, value in raw.items():
+            parsed[str(key)] = _normalize_macro_value(value, str(key))
+    if parsed:
+        return parsed
+    protein = _safe_float(row.get("protein_100g"))
+    carbs = _safe_float(row.get("carbs_100g"))
+    fat = _safe_float(row.get("fat_100g"))
+    sodium = _safe_float(row.get("sodium_mg_100g"))
+    return {
+        "protein": max(0.0, protein or 0.0),
+        "carbs": max(0.0, carbs or 0.0),
+        "fat": max(0.0, fat or 0.0),
+        "sodium": max(0.0, sodium or 0.0),
+    }
+
+
+def _supabase_rest_list(table: str, params: list[tuple[str, str]]) -> list[dict]:
+    try:
+        headers = _supabase_headers()
+    except HTTPException:
+        return []
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
+    try:
+        with httpx.Client(timeout=10) as client:
+            resp = client.get(url, headers=headers, params=params)
+    except Exception as exc:
+        logging.warning("Supabase %s query error: %s", table, exc)
+        return []
+    if resp.status_code >= 400:
+        logging.warning("Supabase %s query failed (%s): %s", table, resp.status_code, resp.text)
+        return []
+    try:
+        data = resp.json()
+    except Exception:
+        return []
+    if not isinstance(data, list):
+        return []
+    normalized: list[dict] = []
+    for row in data:
+        if isinstance(row, dict):
+            normalized.append({str(k): v for k, v in row.items()})
+    return normalized
+
+
+def _food_match_score(query_norm: str, alias_row: dict, catalog_row: dict, lang: str) -> float:
+    alias = str(alias_row.get("alias") or "").strip()
+    alias_norm = _normalize_food_query(alias)
+    food_name = str(catalog_row.get("food_name") or catalog_row.get("canonical_name") or "").strip()
+    food_norm = _normalize_food_query(food_name)
+    alias_lang = str(alias_row.get("lang") or "").strip()
+
+    score = 0.0
+    if alias_lang and alias_lang == lang:
+        score += 0.8
+    if alias_norm == query_norm:
+        score += 4.0
+    elif alias_norm.startswith(query_norm):
+        score += 3.0
+    elif query_norm in alias_norm:
+        score += 2.0
+    if food_norm == query_norm:
+        score += 1.5
+    elif food_norm.startswith(query_norm):
+        score += 1.0
+    elif query_norm in food_norm:
+        score += 0.7
+    verified = _safe_float(catalog_row.get("verified_level"))
+    if verified is not None and verified > 0:
+        score += min(verified, 5.0) / 10.0
+    return score
 
 
 def _require_admin(request: Request) -> None:
@@ -2271,6 +2406,160 @@ async def analyze_name(
         _last_ai_error = str(exc)
         logging.exception("Name analyze failed: %s", exc)
         raise HTTPException(status_code=502, detail="ai_failed")
+
+
+@app.get("/foods/search", response_model=FoodSearchResponse)
+def foods_search(
+    q: str = Query(..., min_length=1, max_length=80),
+    lang: str = Query(default=None),
+    limit: int = Query(default=8, ge=1, le=20),
+    _auth: dict = Depends(_require_auth),
+):
+    query_norm = _normalize_food_query(q)
+    if not query_norm:
+        return FoodSearchResponse(items=[])
+
+    use_lang = lang or DEFAULT_LANG
+    if use_lang not in _supported_langs:
+        use_lang = "zh-TW"
+
+    catalog_select = (
+        "id,food_name,canonical_name,calorie_range,macros,dish_summary,suggestion,"
+        "is_beverage,is_food,source,verified_level,kcal_100g,protein_100g,carbs_100g,fat_100g,sodium_mg_100g"
+    )
+
+    alias_rows = _supabase_rest_list(
+        "food_aliases",
+        [
+            ("select", "food_id,alias,lang"),
+            ("alias", f"ilike.*{query_norm}*"),
+            ("limit", str(max(20, limit * 6))),
+        ],
+    )
+
+    direct_rows: list[dict] = []
+    if not alias_rows:
+        direct_rows = _supabase_rest_list(
+            "food_catalog",
+            [
+                ("select", catalog_select),
+                ("food_name", f"ilike.*{query_norm}*"),
+                ("limit", str(limit)),
+            ],
+        )
+        if not direct_rows:
+            direct_rows = _supabase_rest_list(
+                "food_catalog",
+                [
+                    ("select", catalog_select),
+                    ("canonical_name", f"ilike.*{query_norm}*"),
+                    ("limit", str(limit)),
+                ],
+            )
+        items = []
+        for row in direct_rows:
+            food_id = str(row.get("id") or "").strip()
+            food_name = str(row.get("food_name") or row.get("canonical_name") or q).strip()
+            if not food_id or not food_name:
+                continue
+            macros = _catalog_macros(row)
+            score = 4.0 if _normalize_food_query(food_name) == query_norm else 2.0
+            items.append(
+                FoodSearchItem(
+                    food_id=food_id,
+                    food_name=food_name,
+                    alias=food_name,
+                    lang=use_lang,
+                    calorie_range=_catalog_calorie_range(row),
+                    macros=macros,
+                    dish_summary=str(row.get("dish_summary") or "").strip()
+                    or _catalog_default_summary(food_name, use_lang),
+                    suggestion=str(row.get("suggestion") or "").strip()
+                    or _catalog_default_suggestion(use_lang),
+                    source=str(row.get("source") or "catalog").strip() or "catalog",
+                    nutrition_source="catalog",
+                    is_beverage=row.get("is_beverage")
+                    if isinstance(row.get("is_beverage"), bool)
+                    else None,
+                    is_food=row.get("is_food")
+                    if isinstance(row.get("is_food"), bool)
+                    else True,
+                    match_score=score,
+                )
+            )
+        items.sort(key=lambda item: item.match_score or 0.0, reverse=True)
+        return FoodSearchResponse(items=items[:limit])
+
+    food_ids: list[str] = []
+    for row in alias_rows:
+        food_id = str(row.get("food_id") or "").strip()
+        if food_id and food_id not in food_ids:
+            food_ids.append(food_id)
+    if not food_ids:
+        return FoodSearchResponse(items=[])
+
+    catalog_rows = _supabase_rest_list(
+        "food_catalog",
+        [
+            ("select", catalog_select),
+            ("id", f"in.({','.join(food_ids)})"),
+            ("limit", str(len(food_ids))),
+        ],
+    )
+    if not catalog_rows:
+        return FoodSearchResponse(items=[])
+
+    catalog_by_id = {
+        str(row.get("id") or "").strip(): row
+        for row in catalog_rows
+        if str(row.get("id") or "").strip()
+    }
+
+    best_items: dict[str, FoodSearchItem] = {}
+    for alias_row in alias_rows:
+        food_id = str(alias_row.get("food_id") or "").strip()
+        if not food_id:
+            continue
+        catalog_row = catalog_by_id.get(food_id)
+        if catalog_row is None:
+            continue
+        food_name = str(
+            catalog_row.get("food_name")
+            or catalog_row.get("canonical_name")
+            or alias_row.get("alias")
+            or q
+        ).strip()
+        if not food_name:
+            continue
+        score = _food_match_score(query_norm, alias_row, catalog_row, use_lang)
+        candidate = FoodSearchItem(
+            food_id=food_id,
+            food_name=food_name,
+            alias=str(alias_row.get("alias") or "").strip() or None,
+            lang=str(alias_row.get("lang") or "").strip() or None,
+            calorie_range=_catalog_calorie_range(catalog_row),
+            macros=_catalog_macros(catalog_row),
+            dish_summary=str(catalog_row.get("dish_summary") or "").strip()
+            or _catalog_default_summary(food_name, use_lang),
+            suggestion=str(catalog_row.get("suggestion") or "").strip()
+            or _catalog_default_suggestion(use_lang),
+            source=str(catalog_row.get("source") or "catalog").strip() or "catalog",
+            nutrition_source="catalog",
+            is_beverage=catalog_row.get("is_beverage")
+            if isinstance(catalog_row.get("is_beverage"), bool)
+            else None,
+            is_food=catalog_row.get("is_food")
+            if isinstance(catalog_row.get("is_food"), bool)
+            else True,
+            match_score=score,
+        )
+        existing = best_items.get(food_id)
+        if existing is None or (candidate.match_score or 0.0) > (existing.match_score or 0.0):
+            best_items[food_id] = candidate
+
+    items = list(best_items.values())
+    items.sort(key=lambda item: item.match_score or 0.0, reverse=True)
+    return FoodSearchResponse(items=items[:limit])
 
 
 @app.post("/analyze_label", response_model=LabelResult)

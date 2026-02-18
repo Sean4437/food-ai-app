@@ -1178,6 +1178,8 @@ class AppState extends ChangeNotifier {
     String foodName,
     String locale, {
     String? historyContext,
+    DateTime? overrideTime,
+    MealType? fixedType,
   }) async {
     if (!canUseFeature(AppFeature.analyze)) {
       throw Exception('subscription_required');
@@ -1186,19 +1188,43 @@ class AppState extends ChangeNotifier {
     if (trimmed.isEmpty) {
       throw Exception('Food name is empty');
     }
-    final now = DateTime.now();
-    final mealType = resolveMealType(now);
+    final now = overrideTime ?? DateTime.now();
+    final mealType = fixedType ?? resolveMealType(now);
     final mealId = _assignMealId(now, mealType);
+    final normalizedInput = _normalizeFoodLookupText(trimmed);
 
     CustomFood? matched;
     for (final item in customFoods) {
-      if (item.name.trim() == trimmed) {
+      if (_normalizeFoodLookupText(item.name) == normalizedInput) {
         matched = item;
         break;
       }
     }
     if (matched != null) {
       return saveCustomFoodUsage(matched, now, mealType);
+    }
+
+    final catalogItems = await _api.searchFoods(
+      trimmed,
+      accessToken: _accessToken(),
+      lang: locale,
+      limit: 8,
+    );
+    final catalogMatch = _bestCatalogFoodMatch(trimmed, catalogItems);
+    if (catalogMatch != null) {
+      final catalogResult = _catalogItemToAnalysisResult(
+        catalogMatch,
+        locale,
+        fallbackName: trimmed,
+      );
+      return _saveNameOnlyEntry(
+        time: now,
+        mealType: mealType,
+        mealId: mealId,
+        inputFoodName: trimmed,
+        result: catalogResult,
+        reason: 'name_catalog',
+      );
     }
 
     final result = await _api.analyzeName(
@@ -1232,25 +1258,121 @@ class AppState extends ChangeNotifier {
         'plan_speed': profile.planSpeed,
       },
     );
+    return _saveNameOnlyEntry(
+      time: now,
+      mealType: mealType,
+      mealId: mealId,
+      inputFoodName: trimmed,
+      result: result,
+      reason: 'name_only',
+    );
+  }
 
+  String _normalizeFoodLookupText(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  Map<String, dynamic>? _bestCatalogFoodMatch(
+    String query,
+    List<Map<String, dynamic>> items,
+  ) {
+    if (items.isEmpty) return null;
+    final normalizedQuery = _normalizeFoodLookupText(query);
+    for (final item in items) {
+      final alias = _normalizeFoodLookupText((item['alias'] as String?) ?? '');
+      final foodName =
+          _normalizeFoodLookupText((item['food_name'] as String?) ?? '');
+      final canonical =
+          _normalizeFoodLookupText((item['canonical_name'] as String?) ?? '');
+      if (alias == normalizedQuery ||
+          foodName == normalizedQuery ||
+          canonical == normalizedQuery) {
+        return item;
+      }
+    }
+    return items.first;
+  }
+
+  AnalysisResult _catalogItemToAnalysisResult(
+    Map<String, dynamic> item,
+    String locale, {
+    required String fallbackName,
+  }) {
+    final rawFoodName = (item['food_name'] ?? '').toString().trim();
+    final foodName = rawFoodName.isNotEmpty ? rawFoodName : fallbackName;
+    String calorieRange = ((item['calorie_range'] as String?) ?? '').trim();
+    if (calorieRange.isEmpty) {
+      final kcalRaw = item['kcal_100g'];
+      final kcal = kcalRaw is num ? kcalRaw.toDouble() : null;
+      if (kcal != null && kcal > 0) {
+        final low = (kcal * 0.9).round();
+        final high = (kcal * 1.1).round();
+        calorieRange = '$low-$high kcal';
+      }
+    }
+    if (calorieRange.isEmpty) {
+      calorieRange = '0-0 kcal';
+    }
+    final parsedMacros = _parseMacros(item['macros']);
+    final macros = <String, double>{
+      'protein': parsedMacros['protein'] ?? 0,
+      'carbs': parsedMacros['carbs'] ?? 0,
+      'fat': parsedMacros['fat'] ?? 0,
+      'sodium': parsedMacros['sodium'] ?? 0,
+    };
+    final suggestionRaw = ((item['suggestion'] as String?) ?? '').trim();
+    final summaryRaw = ((item['dish_summary'] as String?) ?? '').trim();
+    final matchScore = item['match_score'];
+    final sourceRaw = ((item['source'] as String?) ?? '').trim();
+    return AnalysisResult(
+      foodName: foodName,
+      calorieRange: calorieRange,
+      macros: macros,
+      foodItems: [foodName],
+      judgementTags: const ['catalog'],
+      dishSummary: summaryRaw.isNotEmpty ? summaryRaw : null,
+      suggestion: suggestionRaw.isNotEmpty
+          ? suggestionRaw
+          : (locale.startsWith('zh')
+              ? '來自資料庫估算，可再補充份量或品牌提升準確度。'
+              : 'Estimated from the food catalog. Add portion or brand details for better accuracy.'),
+      tier: 'catalog',
+      source: sourceRaw.isNotEmpty ? sourceRaw : 'catalog',
+      nutritionSource: 'catalog',
+      confidence: matchScore is num ? matchScore.toDouble() : null,
+      isBeverage:
+          item['is_beverage'] is bool ? item['is_beverage'] as bool : null,
+      isFood: item['is_food'] is bool ? item['is_food'] as bool : true,
+      referenceUsed: locale.startsWith('zh') ? '資料庫' : 'catalog',
+    );
+  }
+
+  Future<MealEntry> _saveNameOnlyEntry({
+    required DateTime time,
+    required MealType mealType,
+    required String mealId,
+    required String inputFoodName,
+    required AnalysisResult result,
+    required String reason,
+  }) async {
     final entry = MealEntry(
       id: _newId(),
       imageBytes: _namePlaceholderBytes,
       filename: 'name_only.png',
-      time: now,
+      time: time,
       type: mealType,
       portionPercent: 100,
       updatedAt: DateTime.now().toUtc(),
       mealId: mealId,
       imageHash: _hashBytes(_namePlaceholderBytes),
-      lastAnalyzedFoodName: trimmed,
+      lastAnalyzedFoodName: inputFoodName,
     );
     entry.result = _resolveNutritionResult(result);
     entry.lastAnalyzedAt = DateTime.now().toIso8601String();
-    entry.lastAnalyzeReason = 'name_only';
+    entry.lastAnalyzeReason = reason;
     entries.insert(0, entry);
     markMealInteraction(mealId);
-    _selectedDate = _dateOnly(now);
+    _selectedDate = _dateOnly(time);
     notifyListeners();
     await _store.upsert(entry);
     return entry;
