@@ -5018,7 +5018,8 @@ class AppState extends ChangeNotifier {
         }
         await _store.upsert(entry);
       }
-      if (since == null && allowPrune) {
+      // 只有在「全量同步」且遠端確實有資料列時才清理本機缺席的資料
+      if (since == null && allowPrune && remoteIds.isNotEmpty) {
         // Remove local entries that no longer exist remotely (full sync only)
         final toRemove =
             entries.where((e) => !remoteIds.contains(e.id)).toList();
@@ -5118,7 +5119,7 @@ class AppState extends ChangeNotifier {
           if (report != null) report.pulledCustomFoods += 1;
         }
       }
-      if (since == null && allowPrune) {
+      if (since == null && allowPrune && remoteFoodIds.isNotEmpty) {
         final toRemove = existingFoods.keys
             .where((id) => !remoteFoodIds.contains(id))
             .toList();
@@ -5165,7 +5166,9 @@ class AppState extends ChangeNotifier {
     final remoteSettingsUpdatedAt =
         await _fetchRemoteSettingsUpdatedAt(user.id);
     final hasLocalSettings = localSettingsUpdatedAt != null;
-    final hasLocalData = entries.isNotEmpty || customFoods.isNotEmpty;
+    final hasLocalMeals = entries.isNotEmpty;
+    final hasLocalCustomFoods = customFoods.isNotEmpty;
+    final hasLocalData = hasLocalMeals || hasLocalCustomFoods;
 
     bool changed = false;
     if (remoteSyncAt == null) {
@@ -5215,12 +5218,22 @@ class AppState extends ChangeNotifier {
     final shouldPullSettings = remoteSettingsUpdatedAt != null &&
         (localSettingsUpdatedAt == null ||
             remoteSettingsUpdatedAt.isAfter(localSettingsUpdatedAt));
-    final shouldPull = shouldPullData || shouldPullSettings;
+    // 如果本機沒有任何餐點資料（例如重新安裝或資料被清空），即便同步指紋顯示「已最新」也強制拉一遍全量，
+    // 避免因 last_sync_at 沒更新導致畫面空白。
+    final needFullMealPull = !hasLocalMeals;
+    final shouldPull = shouldPullData || shouldPullSettings || needFullMealPull;
     if (shouldPull) {
+      final isFullPull = needFullMealPull;
       await syncFromSupabase(
-          report: report, sinceOverride: localSyncAt, allowPrune: true);
+        report: report,
+        sinceOverride: isFullPull ? null : localSyncAt,
+        // 沒有本機資料時不做 prune，以免遠端也空時誤刪。
+        allowPrune: !isFullPull,
+      );
       if (remoteSyncAt != null &&
-          (localSyncAt == null || remoteSyncAt.isAfter(localSyncAt))) {
+          (localSyncAt == null ||
+              remoteSyncAt.isAfter(localSyncAt) ||
+              isFullPull)) {
         await _storeLocalSyncAt(remoteSyncAt);
       }
       changed = true;

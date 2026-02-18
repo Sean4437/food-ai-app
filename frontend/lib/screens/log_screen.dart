@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
-import 'package:intl/intl.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import 'meal_items_screen.dart';
@@ -361,6 +360,32 @@ class _LogScreenState extends State<LogScreen> {
 
   String _timeLabel(DateTime time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _shortDateLabel(DateTime date) {
+    return '${date.month}/${date.day}';
+  }
+
+  String _monthLabel(DateTime date, String localeTag) {
+    if (localeTag.startsWith('zh')) {
+      return '${date.year}年${date.month}月';
+    }
+    const enMonths = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final month = date.month >= 1 && date.month <= 12 ? enMonths[date.month - 1] : date.month.toString();
+    return '$month ${date.year}';
   }
 
   List<int>? _parseCalorieRange(String text) {
@@ -818,7 +843,6 @@ class _LogScreenState extends State<LogScreen> {
         ? null
         : t.calorieTrendTargetLabel(
             targetRange[0].toString(), targetRange[1].toString());
-    final dateFormat = DateFormat('M/d');
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -873,10 +897,10 @@ class _LogScreenState extends State<LogScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(dateFormat.format(points.first.date),
+                    Text(_shortDateLabel(points.first.date),
                         style: AppTextStyles.caption(context)
                             .copyWith(color: Colors.black45)),
-                    Text(dateFormat.format(points.last.date),
+                    Text(_shortDateLabel(points.last.date),
                         style: AppTextStyles.caption(context)
                             .copyWith(color: Colors.black45)),
                   ],
@@ -926,7 +950,6 @@ class _LogScreenState extends State<LogScreen> {
     final targetLabel = targetMid == null
         ? null
         : t.proteinTrendTargetLabel(targetMid.round().toString());
-    final dateFormat = DateFormat('M/d');
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -981,10 +1004,10 @@ class _LogScreenState extends State<LogScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(dateFormat.format(points.first.date),
+                    Text(_shortDateLabel(points.first.date),
                         style: AppTextStyles.caption(context)
                             .copyWith(color: Colors.black45)),
-                    Text(dateFormat.format(points.last.date),
+                    Text(_shortDateLabel(points.last.date),
                         style: AppTextStyles.caption(context)
                             .copyWith(color: Colors.black45)),
                   ],
@@ -1069,8 +1092,7 @@ class _LogScreenState extends State<LogScreen> {
 
   Widget _buildMonthHeader(BuildContext context, AppState app) {
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final isZh = locale.startsWith('zh');
-    final formatter = DateFormat(isZh ? 'yyyy年M月' : 'MMM yyyy', locale);
+    final monthLabel = _monthLabel(_currentMonth, locale);
     return Row(
       children: [
         IconButton(
@@ -1079,7 +1101,7 @@ class _LogScreenState extends State<LogScreen> {
         ),
         Expanded(
           child: Text(
-            formatter.format(_currentMonth),
+            monthLabel,
             textAlign: TextAlign.center,
             style: AppTextStyles.body(context)
                 .copyWith(fontWeight: FontWeight.w600),
@@ -1347,6 +1369,77 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
+  Widget _buildTopCards(
+    BuildContext context,
+    AppState app,
+    AppLocalizations t,
+    AppTheme appTheme,
+    ThemeData theme,
+  ) {
+    try {
+      final overview = DailyOverviewCards(
+        date: _selectedDate,
+        app: app,
+        t: t,
+        appTheme: appTheme,
+        theme: theme,
+        onSelectActivityLevel: () =>
+            _selectActivityLevel(context, app, _selectedDate, t),
+        onSelectExerciseType: () =>
+            _selectExerciseType(context, app, _selectedDate, t),
+        onSelectExerciseMinutes: () =>
+            _selectExerciseMinutes(context, app, _selectedDate, t),
+      );
+      final pages = [
+        overview.calorieCard(context),
+        _buildCalorieHistoryCard(context, app, t, appTheme, theme),
+        overview.proteinCard(context),
+        _buildProteinHistoryCard(context, app, t, appTheme, theme),
+        _buildHighlightCard(context, app, t),
+      ];
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: _topCardHeight,
+            child: PageView.builder(
+              controller: _topCardController,
+              onPageChanged: (index) => setState(() => _topCardIndex = index),
+              itemCount: pages.length,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: pages[index],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _pageDots(pages.length),
+        ],
+      );
+    } catch (err, stack) {
+      debugPrint('LogScreen top cards failed: $err');
+      debugPrintStack(stackTrace: stack);
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Text(
+          t.noEntries,
+          style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+        ),
+      );
+    }
+  }
+
   Future<void> _quickRecord(BuildContext context, AppState app) async {
     final t = AppLocalizations.of(context)!;
     final pickedDate = await showDatePicker(
@@ -1451,51 +1544,7 @@ class _LogScreenState extends State<LogScreen> {
                     Text(_withEmoji('📔', t.logTitle),
                         style: AppTextStyles.title1(context)),
                     const SizedBox(height: 12),
-                    Builder(builder: (context) {
-                      final overview = DailyOverviewCards(
-                        date: _selectedDate,
-                        app: app,
-                        t: t,
-                        appTheme: appTheme,
-                        theme: theme,
-                        onSelectActivityLevel: () => _selectActivityLevel(
-                            context, app, _selectedDate, t),
-                        onSelectExerciseType: () => _selectExerciseType(
-                            context, app, _selectedDate, t),
-                        onSelectExerciseMinutes: () => _selectExerciseMinutes(
-                            context, app, _selectedDate, t),
-                      );
-                      final pages = [
-                        overview.calorieCard(context),
-                        _buildCalorieHistoryCard(
-                            context, app, t, appTheme, theme),
-                        overview.proteinCard(context),
-                        _buildProteinHistoryCard(
-                            context, app, t, appTheme, theme),
-                        _buildHighlightCard(context, app, t),
-                      ];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(
-                            height: _topCardHeight,
-                            child: PageView.builder(
-                              controller: _topCardController,
-                              onPageChanged: (index) =>
-                                  setState(() => _topCardIndex = index),
-                              itemCount: pages.length,
-                              itemBuilder: (context, index) => Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 2),
-                                child: pages[index],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _pageDots(pages.length),
-                        ],
-                      );
-                    }),
+                    _buildTopCards(context, app, t, appTheme, theme),
                     const SizedBox(height: 16),
                     _buildMonthHeader(context, app),
                     const SizedBox(height: 6),
