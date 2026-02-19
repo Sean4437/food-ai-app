@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -28,57 +30,179 @@ class RecordResult {
   final bool isMulti;
 }
 
-Future<String?> _promptFoodName(BuildContext context, AppLocalizations t) async {
+Future<String?> _promptFoodName(
+  BuildContext context,
+  AppState app,
+  AppLocalizations t,
+) async {
   final controller = TextEditingController();
+  final locale = Localizations.localeOf(context).toLanguageTag();
+  final isEn =
+      Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
+
+  Timer? debounce;
+  var requestToken = 0;
+  var suggestions = <String>[];
+  var isSearching = false;
+
+  Future<void> refreshSuggestions(
+    String keyword,
+    BuildContext dialogContext,
+    void Function(VoidCallback fn) setDialogState,
+  ) async {
+    final query = keyword.trim();
+    final token = ++requestToken;
+
+    if (query.isEmpty) {
+      if (!dialogContext.mounted) return;
+      setDialogState(() {
+        suggestions = const [];
+        isSearching = false;
+      });
+      return;
+    }
+
+    if (dialogContext.mounted) {
+      setDialogState(() => isSearching = true);
+    }
+
+    final result = await app.suggestFoodNames(query, locale, limit: 8);
+    if (!dialogContext.mounted || token != requestToken) return;
+
+    setDialogState(() {
+      suggestions = result;
+      isSearching = false;
+    });
+  }
+
   final value = await showDialog<String>(
     context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: Text(t.foodNameLabel),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textInputAction: TextInputAction.done,
-          decoration: InputDecoration(hintText: t.suggestInstantNameHint),
-          onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(t.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: Text(t.suggestInstantNameSubmit),
-          ),
-        ],
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          final hasInput = controller.text.trim().isNotEmpty;
+          return AlertDialog(
+            title: Text(t.foodNameLabel),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      hintText: t.suggestInstantNameHint,
+                      prefixIcon: const Icon(Icons.search),
+                    ),
+                    onChanged: (_) {
+                      debounce?.cancel();
+                      debounce = Timer(const Duration(milliseconds: 250), () {
+                        refreshSuggestions(
+                          controller.text,
+                          dialogContext,
+                          setDialogState,
+                        );
+                      });
+                    },
+                    onSubmitted: (v) =>
+                        Navigator.of(dialogContext).pop(v.trim()),
+                  ),
+                  if (isSearching) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(minHeight: 2),
+                  ],
+                  if (hasInput) ...[
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 220),
+                      child: suggestions.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 8),
+                              child: Text(
+                                isEn
+                                    ? 'No database suggestions yet. You can still submit this name.'
+                                    : '目前沒有資料庫建議，你仍可直接送出此名稱。',
+                                style: Theme.of(dialogContext)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: Colors.black54),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: suggestions.length,
+                              separatorBuilder: (_, __) => const Divider(
+                                height: 1,
+                                thickness: 0.5,
+                              ),
+                              itemBuilder: (context, index) {
+                                final suggestion = suggestions[index];
+                                return ListTile(
+                                  dense: true,
+                                  leading: const Icon(
+                                    Icons.search,
+                                    size: 18,
+                                  ),
+                                  title: Text(suggestion),
+                                  onTap: () =>
+                                      Navigator.of(dialogContext).pop(suggestion),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(t.cancel),
+              ),
+              ElevatedButton(
+                onPressed: () =>
+                    Navigator.of(dialogContext).pop(controller.text.trim()),
+                child: Text(t.suggestInstantNameSubmit),
+              ),
+            ],
+          );
+        },
       );
     },
   );
+
+  debounce?.cancel();
   controller.dispose();
+
   final trimmed = value?.trim() ?? '';
   if (trimmed.isEmpty) return null;
   return trimmed;
 }
 
 String _catalogFallbackMessage(BuildContext context) {
-  final isEn = Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
+  final isEn =
+      Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
   return isEn
       ? 'Catalog lookup failed. Switched to AI estimate.'
       : '資料庫查詢失敗，已改用 AI 估算。';
 }
 
 String _nameLookupErrorMessage(BuildContext context, String code) {
-  final isEn = Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
+  final isEn =
+      Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
   switch (code) {
     case 'catalog_not_found':
       return isEn
           ? 'No match found in the food database. Try a shorter name or add a custom food.'
-          : '資料庫找不到這個食物，請改用較短名稱或先新增自訂食物。';
+          : '找不到符合的資料庫餐點，請改用更短名稱或先建立自訂食物。';
     case 'catalog_unavailable':
       return isEn
           ? 'Food database is temporarily unavailable. Please try again later.'
-          : '資料庫暫時無法使用，請稍後再試。';
+          : '資料庫目前暫時無法使用，請稍後再試。';
     default:
       return isEn ? 'Name lookup failed.' : '名稱查詢失敗。';
   }
@@ -145,7 +269,7 @@ Future<RecordResult?> showRecordSheet(
   var isMulti = false;
 
   if (mode == _RecordInputMode.name) {
-    final foodName = await _promptFoodName(context, t);
+    final foodName = await _promptFoodName(context, app, t);
     if (!context.mounted) return null;
     if (foodName == null || foodName.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -178,10 +302,14 @@ Future<RecordResult?> showRecordSheet(
     final mealId = entry.mealId ?? entry.id;
     final date = DateTime(entry.time.year, entry.time.month, entry.time.day);
     final count = app.entriesForMealId(mealId).length;
-    if ((entry.lastAnalyzeReason ?? '').trim().toLowerCase() == 'name_ai_catalog_error') {
+    if (!context.mounted) return null;
+    if ((entry.lastAnalyzeReason ?? '').trim().toLowerCase() ==
+        'name_ai_catalog_error') {
       final message = (entry.lastAnalyzedNote ?? '').trim();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message.isEmpty ? _catalogFallbackMessage(context) : message)),
+        SnackBar(
+            content:
+                Text(message.isEmpty ? _catalogFallbackMessage(context) : message)),
       );
     }
     return RecordResult(

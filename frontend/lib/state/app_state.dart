@@ -1271,6 +1271,143 @@ class AppState extends ChangeNotifier {
     throw NameLookupException('catalog_not_found');
   }
 
+  Future<List<String>> suggestFoodNames(
+    String query,
+    String locale, {
+    int limit = 8,
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return const [];
+
+    final maxCount = limit.clamp(1, 20);
+    final normalizedQuery = _normalizeFoodLookupText(trimmed);
+    final compactQuery = normalizedQuery.replaceAll(' ', '');
+    final suggestions = <String>[];
+    final seen = <String>{};
+
+    void addSuggestion(String value) {
+      final text = value.trim();
+      if (text.isEmpty) return;
+      final key = _normalizeFoodLookupText(text);
+      if (key.isEmpty || seen.contains(key)) return;
+      seen.add(key);
+      suggestions.add(text);
+    }
+
+    final customMatches = customFoods
+        .where((food) {
+          final normalized = _normalizeFoodLookupText(food.name);
+          final compact = normalized.replaceAll(' ', '');
+          return normalized.contains(normalizedQuery) ||
+              compact.contains(compactQuery);
+        })
+        .toList()
+      ..sort((a, b) => _nameSuggestionScore(b.name, normalizedQuery)
+          .compareTo(_nameSuggestionScore(a.name, normalizedQuery)));
+
+    for (final food in customMatches) {
+      addSuggestion(food.name);
+      if (suggestions.length >= maxCount) {
+        return suggestions.take(maxCount).toList();
+      }
+    }
+
+    final candidates = <String>[];
+    final candidateSeen = <String>{};
+    void addCandidate(String value) {
+      final text = value.trim();
+      if (text.isEmpty) return;
+      final key = _normalizeFoodLookupText(text);
+      if (key.isEmpty || candidateSeen.contains(key)) return;
+      candidateSeen.add(key);
+      candidates.add(text);
+    }
+
+    addCandidate(trimmed);
+    addCandidate(normalizedQuery);
+    addCandidate(compactQuery);
+
+    final mergedCatalogItems = <String, Map<String, dynamic>>{};
+    for (final candidate in candidates) {
+      try {
+        final found = await _api.searchFoods(
+          candidate,
+          accessToken: _accessToken(),
+          lang: locale,
+          limit: maxCount,
+        );
+        for (final item in found) {
+          final key = ((item['food_id'] ?? item['id'] ?? item['food_name'] ?? item['alias'] ?? '')
+                  .toString()
+                  .trim())
+              .toLowerCase();
+          if (key.isEmpty) continue;
+          final existing = mergedCatalogItems[key];
+          if (existing == null ||
+              _catalogSuggestionScore(item, normalizedQuery) >
+                  _catalogSuggestionScore(existing, normalizedQuery)) {
+            mergedCatalogItems[key] = item;
+          }
+        }
+      } on CatalogSearchException {
+        // Ignore remote lookup errors in suggestion mode.
+      } catch (_) {
+        // Ignore remote lookup errors in suggestion mode.
+      }
+      if (mergedCatalogItems.length >= maxCount * 2) {
+        break;
+      }
+    }
+
+    final catalogItems = mergedCatalogItems.values.toList()
+      ..sort((a, b) => _catalogSuggestionScore(b, normalizedQuery)
+          .compareTo(_catalogSuggestionScore(a, normalizedQuery)));
+
+    for (final item in catalogItems) {
+      final foodName = (item['food_name'] ?? '').toString().trim();
+      if (foodName.isNotEmpty) {
+        addSuggestion(foodName);
+      }
+      if (suggestions.length >= maxCount) break;
+      final alias = (item['alias'] ?? '').toString().trim();
+      if (alias.isNotEmpty) {
+        addSuggestion(alias);
+      }
+      if (suggestions.length >= maxCount) break;
+    }
+
+    return suggestions.take(maxCount).toList();
+  }
+
+  double _catalogSuggestionScore(
+    Map<String, dynamic> item,
+    String normalizedQuery,
+  ) {
+    final foodName = (item['food_name'] ?? '').toString();
+    final alias = (item['alias'] ?? '').toString();
+    final nameScore = max(
+      _nameSuggestionScore(foodName, normalizedQuery),
+      _nameSuggestionScore(alias, normalizedQuery),
+    );
+    return (nameScore * 10) + _catalogMatchScore(item);
+  }
+
+  double _nameSuggestionScore(String value, String normalizedQuery) {
+    final normalized = _normalizeFoodLookupText(value);
+    if (normalized.isEmpty || normalizedQuery.isEmpty) return 0;
+    final compact = normalized.replaceAll(' ', '');
+    final queryCompact = normalizedQuery.replaceAll(' ', '');
+    if (normalized == normalizedQuery || compact == queryCompact) return 10;
+    if (normalized.startsWith(normalizedQuery) ||
+        compact.startsWith(queryCompact)) {
+      return 8;
+    }
+    if (normalized.contains(normalizedQuery) || compact.contains(queryCompact)) {
+      return 6;
+    }
+    return 0;
+  }
+
   String _normalizeFoodLookupText(String value) {
     return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
