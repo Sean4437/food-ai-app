@@ -1413,31 +1413,140 @@ class AppState extends ChangeNotifier {
       'fat': parsedMacros['fat'] ?? 0,
       'sodium': parsedMacros['sodium'] ?? 0,
     };
+
+    final foodItems = _parseStringListValue(item['food_items']);
+    if (foodItems.isEmpty) {
+      foodItems.add(foodName);
+    }
+
+    final judgementTags = _parseStringListValue(item['judgement_tags']);
+    if (judgementTags.isEmpty) {
+      judgementTags.addAll(_parseStringListValue(item['summary_tags']));
+    }
+    if (judgementTags.isEmpty) {
+      judgementTags.addAll(
+        _catalogFallbackJudgementTags(
+          macros: macros,
+          calorieRange: calorieRange,
+          locale: locale,
+        ),
+      );
+    }
+
     final suggestionRaw = ((item['suggestion'] as String?) ?? '').trim();
     final summaryRaw = ((item['dish_summary'] as String?) ?? '').trim();
-    final matchScore = item['match_score'];
-    final sourceRaw = ((item['source'] as String?) ?? '').trim();
+    final matchScoreRaw = item['match_score'];
+    final confidence = matchScoreRaw is num
+        ? matchScoreRaw.toDouble()
+        : double.tryParse(matchScoreRaw?.toString() ?? '');
+    final sourceRaw = (item['source'] ?? '').toString().trim();
+    final nutritionSourceRaw = (item['nutrition_source'] ?? '').toString().trim();
+    final referenceUsedRaw = (item['reference_used'] ?? '').toString().trim();
+
     return AnalysisResult(
       foodName: foodName,
       calorieRange: calorieRange,
       macros: macros,
-      foodItems: [foodName],
-      judgementTags: const ['catalog'],
+      foodItems: foodItems,
+      judgementTags: judgementTags.take(3).toList(),
       dishSummary: summaryRaw.isNotEmpty ? summaryRaw : null,
       suggestion: suggestionRaw.isNotEmpty
           ? suggestionRaw
           : (locale.startsWith('zh')
-              ? '來自資料庫估算，可再補充份量或品牌提升準確度。'
+              ? '來自資料庫估算，可再補充份量或品牌讓結果更準確。'
               : 'Estimated from the food catalog. Add portion or brand details for better accuracy.'),
       tier: 'catalog',
       source: sourceRaw.isNotEmpty ? sourceRaw : 'catalog',
-      nutritionSource: 'catalog',
-      confidence: matchScore is num ? matchScore.toDouble() : null,
+      nutritionSource: nutritionSourceRaw.isNotEmpty ? nutritionSourceRaw : 'catalog',
+      confidence: confidence,
       isBeverage:
           item['is_beverage'] is bool ? item['is_beverage'] as bool : null,
       isFood: item['is_food'] is bool ? item['is_food'] as bool : true,
-      referenceUsed: locale.startsWith('zh') ? '資料庫' : 'catalog',
+      referenceUsed: referenceUsedRaw.isNotEmpty
+          ? referenceUsedRaw
+          : (locale.startsWith('zh') ? '資料庫' : 'catalog'),
     );
+  }
+
+  List<String> _parseStringListValue(dynamic raw) {
+    final parsed = <String>[];
+
+    void addItem(dynamic value) {
+      final text = value?.toString().trim() ?? '';
+      if (text.isEmpty || parsed.contains(text)) return;
+      parsed.add(text);
+    }
+
+    if (raw is List) {
+      for (final item in raw) {
+        addItem(item);
+      }
+      return parsed;
+    }
+
+    final text = raw?.toString().trim() ?? '';
+    if (text.isEmpty) return parsed;
+
+    if (text.startsWith('[') && text.endsWith(']')) {
+      try {
+        final decoded = jsonDecode(text);
+        if (decoded is List) {
+          for (final item in decoded) {
+            addItem(item);
+          }
+          return parsed;
+        }
+      } catch (_) {
+        // Continue with delimiter split fallback.
+      }
+    }
+
+    final normalized = text
+        .replaceAll('，', ',')
+        .replaceAll('、', ',')
+        .replaceAll('；', ',')
+        .replaceAll(';', ',');
+    for (final part in normalized.split(',')) {
+      addItem(part);
+    }
+    return parsed;
+  }
+
+  List<String> _catalogFallbackJudgementTags({
+    required Map<String, double> macros,
+    required String calorieRange,
+    required String locale,
+  }) {
+    final protein = (macros['protein'] ?? 0).clamp(0, double.infinity);
+    final carbs = (macros['carbs'] ?? 0).clamp(0, double.infinity);
+    final fat = (macros['fat'] ?? 0).clamp(0, double.infinity);
+
+    var calorieMid = calorieRangeMid(calorieRange) ?? 0;
+    if (calorieMid <= 0) {
+      calorieMid = (protein * 4) + (carbs * 4) + (fat * 9);
+    }
+
+    double fatPct = 0;
+    double carbPct = 0;
+    double proteinPct = 0;
+    if (calorieMid > 0) {
+      fatPct = (fat * 9 / calorieMid) * 100;
+      carbPct = (carbs * 4 / calorieMid) * 100;
+      proteinPct = (protein * 4 / calorieMid) * 100;
+    }
+
+    final isZh = locale.startsWith('zh');
+    final tags = <String>[];
+    if (fatPct >= 35) tags.add(isZh ? '偏油' : 'Heavier oil');
+    if (carbPct >= 55) tags.add(isZh ? '碳水偏多' : 'Higher carbs');
+    if ((proteinPct > 0 && proteinPct < 16) ||
+        (proteinPct == 0 && protein < 12)) {
+      tags.add(isZh ? '蛋白不足' : 'Low protein');
+    }
+    if (tags.isEmpty) {
+      tags.add(isZh ? '清淡' : 'Light');
+    }
+    return tags.take(3).toList();
   }
 
   Future<MealEntry> _saveNameOnlyEntry({
@@ -5272,6 +5381,7 @@ class AppState extends ChangeNotifier {
             remoteSettingsUpdatedAt.isAfter(localSettingsUpdatedAt));
     // 如果本機沒有任何餐點資料（例如重新安裝或資料被清空），即便同步指紋顯示「已最新」也強制拉一遍全量，
     // 避免因 last_sync_at 沒更新導致畫面空白。
+    // If local has no meals, force a full pull regardless of last_sync_at.
     final needFullMealPull = !hasLocalMeals;
     final shouldPull = shouldPullData || shouldPullSettings || needFullMealPull;
     if (shouldPull) {
@@ -5279,7 +5389,7 @@ class AppState extends ChangeNotifier {
       await syncFromSupabase(
         report: report,
         sinceOverride: isFullPull ? null : localSyncAt,
-        // 沒有本機資料時不做 prune，以免遠端也空時誤刪。
+        // Skip prune during full pull to avoid deleting local-only rows prematurely.
         allowPrune: !isFullPull,
       );
       if (remoteSyncAt != null &&

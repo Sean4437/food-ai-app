@@ -9,6 +9,8 @@ create table if not exists public.food_catalog (
   canonical_name text,
   calorie_range text not null default '',
   macros jsonb not null default '{}'::jsonb,
+  food_items jsonb not null default '[]'::jsonb,
+  judgement_tags jsonb not null default '[]'::jsonb,
   dish_summary text not null default '',
   suggestion text not null default '',
   kcal_100g numeric,
@@ -23,6 +25,12 @@ create table if not exists public.food_catalog (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.food_catalog
+  add column if not exists food_items jsonb not null default '[]'::jsonb;
+
+alter table public.food_catalog
+  add column if not exists judgement_tags jsonb not null default '[]'::jsonb;
 
 create index if not exists idx_food_catalog_food_name
   on public.food_catalog (food_name);

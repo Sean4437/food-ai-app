@@ -205,10 +205,13 @@ class FoodSearchItem(BaseModel):
     lang: Optional[str] = None
     calorie_range: str
     macros: Dict[str, float]
+    food_items: Optional[List[str]] = None
+    judgement_tags: Optional[List[str]] = None
     dish_summary: Optional[str] = None
     suggestion: str
     source: str = "catalog"
     nutrition_source: str = "catalog"
+    reference_used: Optional[str] = None
     is_beverage: Optional[bool] = None
     is_food: Optional[bool] = True
     match_score: Optional[float] = None
@@ -935,6 +938,112 @@ def _catalog_macros(row: dict) -> dict[str, float]:
         "fat": max(0.0, fat or 0.0),
         "sodium": max(0.0, sodium or 0.0),
     }
+
+
+def _to_string_list(value: Any) -> list[str]:
+    if isinstance(value, list):
+        result: list[str] = []
+        for item in value:
+            text = str(item).strip()
+            if text and text not in result:
+                result.append(text)
+        return result
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return []
+        if text.startswith("[") and text.endswith("]"):
+            try:
+                return _to_string_list(json.loads(text))
+            except Exception:
+                pass
+        normalized = (
+            text.replace("，", ",")
+            .replace("、", ",")
+            .replace("；", ",")
+            .replace(";", ",")
+        )
+        result: list[str] = []
+        for part in normalized.split(","):
+            item = part.strip()
+            if item and item not in result:
+                result.append(item)
+        return result
+    return []
+
+
+def _catalog_food_items(row: dict, food_name: str) -> list[str]:
+    items = _to_string_list(row.get("food_items"))
+    if not items:
+        items = _to_string_list(row.get("ingredients"))
+    if items:
+        return items[:5]
+    if food_name:
+        return [food_name]
+    return []
+
+
+def _catalog_judgement_tags(
+    row: dict,
+    macros: dict[str, float],
+    calorie_range: str,
+    lang: str,
+) -> list[str]:
+    raw_tags = _to_string_list(row.get("judgement_tags"))
+    if not raw_tags:
+        raw_tags = _to_string_list(row.get("summary_tags"))
+    if raw_tags:
+        return raw_tags[:3]
+
+    protein = max(0.0, _safe_float(macros.get("protein")) or 0.0)
+    carbs = max(0.0, _safe_float(macros.get("carbs")) or 0.0)
+    fat = max(0.0, _safe_float(macros.get("fat")) or 0.0)
+
+    calorie_mid = 0.0
+    parsed = _parse_calorie_range(calorie_range)
+    if parsed is not None:
+        calorie_mid = max(0.0, (parsed[0] + parsed[1]) / 2)
+    if calorie_mid <= 0:
+        calorie_mid = (protein * 4) + (carbs * 4) + (fat * 9)
+
+    fat_pct = 0.0
+    carb_pct = 0.0
+    protein_pct = 0.0
+    if calorie_mid > 0:
+        fat_pct = (fat * 9 / calorie_mid) * 100
+        carb_pct = (carbs * 4 / calorie_mid) * 100
+        protein_pct = (protein * 4 / calorie_mid) * 100
+
+    if lang == "zh-TW":
+        tag_fat = "偏油"
+        tag_carb = "碳水偏多"
+        tag_protein_low = "蛋白不足"
+        tag_light = "清淡"
+    else:
+        tag_fat = "Heavier oil"
+        tag_carb = "Higher carbs"
+        tag_protein_low = "Low protein"
+        tag_light = "Light"
+
+    tags: list[str] = []
+    if fat_pct >= 35:
+        tags.append(tag_fat)
+    if carb_pct >= 55:
+        tags.append(tag_carb)
+    if protein_pct > 0 and protein_pct < 16:
+        tags.append(tag_protein_low)
+    elif protein_pct == 0 and protein < 12:
+        tags.append(tag_protein_low)
+
+    if not tags:
+        tags.append(tag_light)
+    return tags[:3]
+
+
+def _catalog_reference_used(lang: str) -> str:
+    if lang == "zh-TW":
+        return "資料庫"
+    return "catalog"
 
 
 def _supabase_rest_list(table: str, params: list[tuple[str, str]]) -> list[dict]:
@@ -2423,10 +2532,8 @@ def foods_search(
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
 
-    catalog_select = (
-        "id,food_name,canonical_name,calorie_range,macros,dish_summary,suggestion,"
-        "is_beverage,is_food,source,verified_level,kcal_100g,protein_100g,carbs_100g,fat_100g,sodium_mg_100g"
-    )
+    # Use "*" so optional columns (e.g. food_items/judgement_tags) do not break older schemas.
+    catalog_select = "*"
 
     alias_rows = _supabase_rest_list(
         "food_aliases",
@@ -2462,7 +2569,13 @@ def foods_search(
             food_name = str(row.get("food_name") or row.get("canonical_name") or q).strip()
             if not food_id or not food_name:
                 continue
+            calorie_range = _catalog_calorie_range(row)
             macros = _catalog_macros(row)
+            food_items = _catalog_food_items(row, food_name)
+            judgement_tags = _catalog_judgement_tags(row, macros, calorie_range, use_lang)
+            reference_used = (
+                str(row.get("reference_used") or "").strip() or _catalog_reference_used(use_lang)
+            )
             score = 4.0 if _normalize_food_query(food_name) == query_norm else 2.0
             items.append(
                 FoodSearchItem(
@@ -2470,14 +2583,17 @@ def foods_search(
                     food_name=food_name,
                     alias=food_name,
                     lang=use_lang,
-                    calorie_range=_catalog_calorie_range(row),
+                    calorie_range=calorie_range,
                     macros=macros,
+                    food_items=food_items,
+                    judgement_tags=judgement_tags,
                     dish_summary=str(row.get("dish_summary") or "").strip()
                     or _catalog_default_summary(food_name, use_lang),
                     suggestion=str(row.get("suggestion") or "").strip()
                     or _catalog_default_suggestion(use_lang),
                     source=str(row.get("source") or "catalog").strip() or "catalog",
                     nutrition_source="catalog",
+                    reference_used=reference_used,
                     is_beverage=row.get("is_beverage")
                     if isinstance(row.get("is_beverage"), bool)
                     else None,
@@ -2532,19 +2648,30 @@ def foods_search(
         if not food_name:
             continue
         score = _food_match_score(query_norm, alias_row, catalog_row, use_lang)
+        calorie_range = _catalog_calorie_range(catalog_row)
+        macros = _catalog_macros(catalog_row)
+        food_items = _catalog_food_items(catalog_row, food_name)
+        judgement_tags = _catalog_judgement_tags(catalog_row, macros, calorie_range, use_lang)
+        reference_used = (
+            str(catalog_row.get("reference_used") or "").strip()
+            or _catalog_reference_used(use_lang)
+        )
         candidate = FoodSearchItem(
             food_id=food_id,
             food_name=food_name,
             alias=str(alias_row.get("alias") or "").strip() or None,
             lang=str(alias_row.get("lang") or "").strip() or None,
-            calorie_range=_catalog_calorie_range(catalog_row),
-            macros=_catalog_macros(catalog_row),
+            calorie_range=calorie_range,
+            macros=macros,
+            food_items=food_items,
+            judgement_tags=judgement_tags,
             dish_summary=str(catalog_row.get("dish_summary") or "").strip()
             or _catalog_default_summary(food_name, use_lang),
             suggestion=str(catalog_row.get("suggestion") or "").strip()
             or _catalog_default_suggestion(use_lang),
             source=str(catalog_row.get("source") or "catalog").strip() or "catalog",
             nutrition_source="catalog",
+            reference_used=reference_used,
             is_beverage=catalog_row.get("is_beverage")
             if isinstance(catalog_row.get("is_beverage"), bool)
             else None,
