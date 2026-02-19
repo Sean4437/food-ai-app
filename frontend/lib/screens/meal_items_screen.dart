@@ -447,6 +447,11 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         reason == 'name_catalog') {
       return isEn ? 'Catalog' : '資料庫';
     }
+    if (nutritionSource == 'beverage_formula' ||
+        source == 'beverage_formula' ||
+        reason == 'name_beverage_formula') {
+      return isEn ? 'Beverage formula' : '飲料規則估算';
+    }
     if (nutritionSource == 'custom' ||
         source == 'custom' ||
         reason == 'custom_use') {
@@ -471,6 +476,11 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         source == 'catalog' ||
         reason == 'name_catalog') {
       return const Color(0xFF2E9B66);
+    }
+    if (nutritionSource == 'beverage_formula' ||
+        source == 'beverage_formula' ||
+        reason == 'name_beverage_formula') {
+      return const Color(0xFF0D8A87);
     }
     if (nutritionSource == 'custom' ||
         source == 'custom' ||

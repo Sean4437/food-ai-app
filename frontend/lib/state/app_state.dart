@@ -88,6 +88,78 @@ class NameLookupException implements Exception {
   String toString() => 'NameLookupException($code)';
 }
 
+class _BeverageProfile {
+  const _BeverageProfile({
+    required this.key,
+    required this.nameZh,
+    required this.nameEn,
+    required this.tokens,
+    required this.baseProtein,
+    required this.baseCarbs,
+    required this.baseFat,
+    required this.baseSodium,
+    required this.fullSugarCarbs,
+    required this.defaultSugarRatio,
+    required this.sugarAdjustable,
+  });
+
+  final String key;
+  final String nameZh;
+  final String nameEn;
+  final List<String> tokens;
+  final double baseProtein;
+  final double baseCarbs;
+  final double baseFat;
+  final double baseSodium;
+  final double fullSugarCarbs;
+  final double defaultSugarRatio;
+  final bool sugarAdjustable;
+}
+
+class _BeverageToppingProfile {
+  const _BeverageToppingProfile({
+    required this.key,
+    required this.nameZh,
+    required this.nameEn,
+    required this.tokens,
+    required this.protein,
+    required this.carbs,
+    required this.fat,
+    required this.sodium,
+  });
+
+  final String key;
+  final String nameZh;
+  final String nameEn;
+  final List<String> tokens;
+  final double protein;
+  final double carbs;
+  final double fat;
+  final double sodium;
+}
+
+class _BeverageParseResult {
+  const _BeverageParseResult({
+    required this.profile,
+    required this.sizeFactor,
+    required this.sizeLabel,
+    required this.sugarRatio,
+    required this.sugarLabel,
+    required this.iceLabel,
+    required this.toppings,
+    required this.explicitSugar,
+  });
+
+  final _BeverageProfile profile;
+  final double sizeFactor;
+  final String sizeLabel;
+  final double sugarRatio;
+  final String sugarLabel;
+  final String iceLabel;
+  final List<_BeverageToppingProfile> toppings;
+  final bool explicitSugar;
+}
+
 class AppState extends ChangeNotifier {
   AppState()
       : _api = ApiService(baseUrl: _resolveBaseUrl()),
@@ -101,6 +173,207 @@ class AppState extends ChangeNotifier {
   final List<MealEntry> entries = [];
   static final Uint8List _namePlaceholderBytes =
       Uint8List.fromList(base64Decode(_kNamePlaceholderBase64));
+  static const List<_BeverageProfile> _kBeverageProfiles = [
+    _BeverageProfile(
+      key: 'fresh_milk_tea',
+      nameZh: '鮮奶茶',
+      nameEn: 'fresh milk tea',
+      tokens: ['鮮奶茶', '鮮乳茶', 'fresh milk tea'],
+      baseProtein: 5,
+      baseCarbs: 8,
+      baseFat: 6,
+      baseSodium: 85,
+      fullSugarCarbs: 28,
+      defaultSugarRatio: 1.0,
+      sugarAdjustable: true,
+    ),
+    _BeverageProfile(
+      key: 'milk_tea',
+      nameZh: '奶茶',
+      nameEn: 'milk tea',
+      tokens: ['奶茶', '奶綠', '奶青', 'milk tea'],
+      baseProtein: 3,
+      baseCarbs: 6,
+      baseFat: 4,
+      baseSodium: 65,
+      fullSugarCarbs: 28,
+      defaultSugarRatio: 1.0,
+      sugarAdjustable: true,
+    ),
+    _BeverageProfile(
+      key: 'soy_milk',
+      nameZh: '豆漿',
+      nameEn: 'soy milk',
+      tokens: ['豆漿', 'soy milk'],
+      baseProtein: 8,
+      baseCarbs: 5,
+      baseFat: 4,
+      baseSodium: 90,
+      fullSugarCarbs: 16,
+      defaultSugarRatio: 0.4,
+      sugarAdjustable: true,
+    ),
+    _BeverageProfile(
+      key: 'latte',
+      nameZh: '拿鐵',
+      nameEn: 'latte',
+      tokens: ['拿鐵', 'latte'],
+      baseProtein: 6,
+      baseCarbs: 9,
+      baseFat: 6,
+      baseSodium: 75,
+      fullSugarCarbs: 20,
+      defaultSugarRatio: 0.2,
+      sugarAdjustable: true,
+    ),
+    _BeverageProfile(
+      key: 'americano',
+      nameZh: '美式咖啡',
+      nameEn: 'americano',
+      tokens: ['美式', '黑咖啡', 'americano', 'black coffee'],
+      baseProtein: 0,
+      baseCarbs: 0,
+      baseFat: 0,
+      baseSodium: 10,
+      fullSugarCarbs: 22,
+      defaultSugarRatio: 0.0,
+      sugarAdjustable: true,
+    ),
+    _BeverageProfile(
+      key: 'tea',
+      nameZh: '茶飲',
+      nameEn: 'tea',
+      tokens: [
+        '青茶',
+        '綠茶',
+        '紅茶',
+        '烏龍',
+        '烏龍茶',
+        '四季春',
+        '茉莉綠',
+        'tea',
+        'green tea',
+        'black tea',
+        'oolong'
+      ],
+      baseProtein: 0,
+      baseCarbs: 0,
+      baseFat: 0,
+      baseSodium: 10,
+      fullSugarCarbs: 35,
+      defaultSugarRatio: 0.0,
+      sugarAdjustable: true,
+    ),
+    _BeverageProfile(
+      key: 'fruit_juice',
+      nameZh: '果汁',
+      nameEn: 'juice',
+      tokens: ['果汁', '柳橙汁', 'apple juice', 'orange juice', 'juice'],
+      baseProtein: 1,
+      baseCarbs: 34,
+      baseFat: 0,
+      baseSodium: 15,
+      fullSugarCarbs: 0,
+      defaultSugarRatio: 1.0,
+      sugarAdjustable: false,
+    ),
+    _BeverageProfile(
+      key: 'sparkling',
+      nameZh: '汽水',
+      nameEn: 'soda',
+      tokens: ['汽水', '可樂', '雪碧', 'soda', 'cola', 'sprite'],
+      baseProtein: 0,
+      baseCarbs: 36,
+      baseFat: 0,
+      baseSodium: 40,
+      fullSugarCarbs: 0,
+      defaultSugarRatio: 1.0,
+      sugarAdjustable: false,
+    ),
+    _BeverageProfile(
+      key: 'cocoa',
+      nameZh: '可可',
+      nameEn: 'cocoa',
+      tokens: ['可可', '巧克力飲', 'cocoa', 'chocolate drink'],
+      baseProtein: 4,
+      baseCarbs: 26,
+      baseFat: 6,
+      baseSodium: 110,
+      fullSugarCarbs: 0,
+      defaultSugarRatio: 1.0,
+      sugarAdjustable: false,
+    ),
+  ];
+  static const List<_BeverageToppingProfile> _kBeverageToppings = [
+    _BeverageToppingProfile(
+      key: 'boba',
+      nameZh: '珍珠',
+      nameEn: 'boba',
+      tokens: ['珍珠', '波霸', 'boba', 'pearl'],
+      protein: 0,
+      carbs: 35,
+      fat: 0,
+      sodium: 25,
+    ),
+    _BeverageToppingProfile(
+      key: 'coconut_jelly',
+      nameZh: '椰果',
+      nameEn: 'coconut jelly',
+      tokens: ['椰果', 'coconut jelly'],
+      protein: 0,
+      carbs: 17,
+      fat: 0,
+      sodium: 8,
+    ),
+    _BeverageToppingProfile(
+      key: 'pudding',
+      nameZh: '布丁',
+      nameEn: 'pudding',
+      tokens: ['布丁', 'pudding'],
+      protein: 2,
+      carbs: 18,
+      fat: 3,
+      sodium: 70,
+    ),
+    _BeverageToppingProfile(
+      key: 'grass_jelly',
+      nameZh: '仙草',
+      nameEn: 'grass jelly',
+      tokens: ['仙草', 'grass jelly'],
+      protein: 0,
+      carbs: 8,
+      fat: 0,
+      sodium: 8,
+    ),
+    _BeverageToppingProfile(
+      key: 'cheese_foam',
+      nameZh: '奶蓋',
+      nameEn: 'cheese foam',
+      tokens: ['奶蓋', 'cheese foam', 'foam'],
+      protein: 2,
+      carbs: 6,
+      fat: 8,
+      sodium: 90,
+    ),
+  ];
+  static const List<String> _kBeverageHintTokens = [
+    '飲',
+    '茶',
+    '咖啡',
+    '豆漿',
+    '奶茶',
+    '果汁',
+    '可可',
+    '汽水',
+    'latte',
+    'tea',
+    'coffee',
+    'drink',
+    'juice',
+    'soda',
+    'boba',
+    'smoothie',
+  ];
   bool _trialExpired = false;
   bool _trialChecked = false;
   bool _whitelisted = false;
@@ -1267,6 +1540,17 @@ class AppState extends ChangeNotifier {
         reason: 'name_catalog',
       );
     }
+    final beverageFormulaResult = _buildBeverageFormulaResult(trimmed, locale);
+    if (beverageFormulaResult != null) {
+      return _saveNameOnlyEntry(
+        time: now,
+        mealType: mealType,
+        mealId: mealId,
+        inputFoodName: trimmed,
+        result: beverageFormulaResult,
+        reason: 'name_beverage_formula',
+      );
+    }
     if (catalogLookupFailed && catalogItems.isEmpty) {
       await _reportCatalogSearchMiss(
         trimmed,
@@ -1554,6 +1838,289 @@ class AppState extends ChangeNotifier {
     }
     value = value.replaceAll(RegExp(r'\s+'), '');
     return value.trim();
+  }
+
+  bool _matchesLookupToken(
+    String normalized,
+    String compact,
+    String token,
+  ) {
+    final normalizedToken = _normalizeFoodLookupText(token);
+    if (normalizedToken.isEmpty) return false;
+    final compactToken = normalizedToken.replaceAll(' ', '');
+    if (normalized.contains(normalizedToken)) return true;
+    if (compact.contains(compactToken)) return true;
+    return false;
+  }
+
+  _BeverageParseResult? _parseBeverageName(String input, String locale) {
+    final normalized = _normalizeFoodLookupText(input);
+    final compact = normalized.replaceAll(' ', '');
+    final isZh = locale.toLowerCase().startsWith('zh');
+    final hasHint = _kBeverageHintTokens
+        .any((token) => _matchesLookupToken(normalized, compact, token));
+    if (!hasHint) return null;
+
+    _BeverageProfile? profile;
+    for (final candidate in _kBeverageProfiles) {
+      if (candidate.tokens
+          .any((token) => _matchesLookupToken(normalized, compact, token))) {
+        profile = candidate;
+        break;
+      }
+    }
+    if (profile == null) {
+      return null;
+    }
+
+    final (sizeFactor, sizeLabel) =
+        _detectBeverageSize(normalized, compact, isZh);
+    final (sugarRatio, sugarLabel, explicitSugar) =
+        _detectBeverageSugar(normalized, compact, profile, isZh);
+    final iceLabel = _detectBeverageIce(normalized, compact, isZh);
+    final toppings = _detectBeverageToppings(normalized, compact);
+    return _BeverageParseResult(
+      profile: profile,
+      sizeFactor: sizeFactor,
+      sizeLabel: sizeLabel,
+      sugarRatio: sugarRatio,
+      sugarLabel: sugarLabel,
+      iceLabel: iceLabel,
+      toppings: toppings,
+      explicitSugar: explicitSugar,
+    );
+  }
+
+  (double, String) _detectBeverageSize(
+    String normalized,
+    String compact,
+    bool isZh,
+  ) {
+    if (_matchesLookupToken(normalized, compact, '特大杯') ||
+        _matchesLookupToken(normalized, compact, '超大杯') ||
+        _matchesLookupToken(normalized, compact, 'xlarge') ||
+        _matchesLookupToken(normalized, compact, 'xl')) {
+      return (1.45, isZh ? '特大杯' : 'x-large');
+    }
+    if (_matchesLookupToken(normalized, compact, '大杯') ||
+        _matchesLookupToken(normalized, compact, 'large')) {
+      return (1.25, isZh ? '大杯' : 'large');
+    }
+    if (_matchesLookupToken(normalized, compact, '小杯') ||
+        _matchesLookupToken(normalized, compact, 'small')) {
+      return (0.8, isZh ? '小杯' : 'small');
+    }
+    return (1.0, isZh ? '中杯' : 'medium');
+  }
+
+  (double, String, bool) _detectBeverageSugar(
+    String normalized,
+    String compact,
+    _BeverageProfile profile,
+    bool isZh,
+  ) {
+    double ratio = profile.defaultSugarRatio;
+    bool explicit = false;
+
+    if (_matchesLookupToken(normalized, compact, '無糖') ||
+        _matchesLookupToken(normalized, compact, '零糖') ||
+        _matchesLookupToken(normalized, compact, 'no sugar') ||
+        _matchesLookupToken(normalized, compact, 'sugar free') ||
+        _matchesLookupToken(normalized, compact, 'unsweetened')) {
+      ratio = 0.0;
+      explicit = true;
+    } else if (_matchesLookupToken(normalized, compact, '微糖') ||
+        _matchesLookupToken(normalized, compact, '一分糖') ||
+        _matchesLookupToken(normalized, compact, 'quarter sugar')) {
+      ratio = 0.25;
+      explicit = true;
+    } else if (_matchesLookupToken(normalized, compact, '少糖') ||
+        _matchesLookupToken(normalized, compact, '三分糖') ||
+        _matchesLookupToken(normalized, compact, 'less sugar')) {
+      ratio = 0.3;
+      explicit = true;
+    } else if (_matchesLookupToken(normalized, compact, '半糖') ||
+        _matchesLookupToken(normalized, compact, '五分糖') ||
+        _matchesLookupToken(normalized, compact, 'half sugar')) {
+      ratio = 0.5;
+      explicit = true;
+    } else if (_matchesLookupToken(normalized, compact, '七分糖')) {
+      ratio = 0.7;
+      explicit = true;
+    } else if (_matchesLookupToken(normalized, compact, '全糖') ||
+        _matchesLookupToken(normalized, compact, '正常糖') ||
+        _matchesLookupToken(normalized, compact, 'full sugar') ||
+        _matchesLookupToken(normalized, compact, 'regular sugar')) {
+      ratio = 1.0;
+      explicit = true;
+    }
+
+    ratio = ratio.clamp(0.0, 1.0);
+    final percent = (ratio * 100).round();
+    final sugarLabel = isZh ? '${percent}%糖' : '$percent% sugar';
+    return (ratio, sugarLabel, explicit);
+  }
+
+  String _detectBeverageIce(
+    String normalized,
+    String compact,
+    bool isZh,
+  ) {
+    if (_matchesLookupToken(normalized, compact, '去冰') ||
+        _matchesLookupToken(normalized, compact, 'no ice')) {
+      return isZh ? '去冰' : 'no ice';
+    }
+    if (_matchesLookupToken(normalized, compact, '少冰') ||
+        _matchesLookupToken(normalized, compact, 'light ice')) {
+      return isZh ? '少冰' : 'light ice';
+    }
+    if (_matchesLookupToken(normalized, compact, '微冰')) {
+      return isZh ? '微冰' : 'mild ice';
+    }
+    if (_matchesLookupToken(normalized, compact, '熱') ||
+        _matchesLookupToken(normalized, compact, 'hot')) {
+      return isZh ? '熱飲' : 'hot';
+    }
+    if (_matchesLookupToken(normalized, compact, '常溫') ||
+        _matchesLookupToken(normalized, compact, 'room temperature')) {
+      return isZh ? '常溫' : 'room temperature';
+    }
+    return '';
+  }
+
+  List<_BeverageToppingProfile> _detectBeverageToppings(
+    String normalized,
+    String compact,
+  ) {
+    final matched = <_BeverageToppingProfile>[];
+    for (final topping in _kBeverageToppings) {
+      final hit = topping.tokens
+          .any((token) => _matchesLookupToken(normalized, compact, token));
+      if (hit) {
+        matched.add(topping);
+      }
+    }
+    return matched;
+  }
+
+  AnalysisResult? _buildBeverageFormulaResult(String input, String locale) {
+    final parsed = _parseBeverageName(input, locale);
+    if (parsed == null) return null;
+    final isZh = locale.toLowerCase().startsWith('zh');
+    final profile = parsed.profile;
+
+    var protein = profile.baseProtein * parsed.sizeFactor;
+    var carbs = profile.baseCarbs * parsed.sizeFactor;
+    var fat = profile.baseFat * parsed.sizeFactor;
+    var sodium = profile.baseSodium * parsed.sizeFactor;
+
+    if (profile.sugarAdjustable) {
+      carbs += profile.fullSugarCarbs * parsed.sugarRatio * parsed.sizeFactor;
+    }
+
+    for (final topping in parsed.toppings) {
+      protein += topping.protein;
+      carbs += topping.carbs;
+      fat += topping.fat;
+      sodium += topping.sodium;
+    }
+
+    protein = max(0, protein);
+    carbs = max(0, carbs);
+    fat = max(0, fat);
+    sodium = max(0, sodium);
+
+    final kcal = (protein * 4.0) + (carbs * 4.0) + (fat * 9.0);
+    final low = max(30, (kcal * 0.9).round());
+    final high = max(low + 20, (kcal * 1.1).round());
+    final calorieRange = '$low-$high kcal';
+
+    final toppingNames = parsed.toppings
+        .map((item) => isZh ? item.nameZh : item.nameEn)
+        .toList(growable: false);
+    final foodItems = <String>[isZh ? profile.nameZh : profile.nameEn];
+    foodItems.addAll(toppingNames);
+
+    final summaryParts = <String>[
+      isZh ? profile.nameZh : profile.nameEn,
+      parsed.sizeLabel,
+      parsed.sugarLabel,
+      if (parsed.iceLabel.isNotEmpty) parsed.iceLabel,
+      if (toppingNames.isNotEmpty)
+        (isZh
+            ? '加${toppingNames.join('、')}'
+            : 'with ${toppingNames.join(', ')}'),
+    ];
+
+    final judgementTags = <String>[];
+    if (carbs >= 45) judgementTags.add(isZh ? '碳水偏多' : 'Higher carbs');
+    if (parsed.sugarRatio >= 0.7 || (parsed.explicitSugar && carbs >= 35)) {
+      judgementTags.add(isZh ? '高糖' : 'High sugar');
+    }
+    if (fat >= 18) judgementTags.add(isZh ? '偏油' : 'Higher fat');
+    if (judgementTags.isEmpty) {
+      judgementTags.add(isZh ? '清淡' : 'Light');
+    }
+
+    final suggestion = _buildBeverageSuggestion(
+      isZh: isZh,
+      carbs: carbs,
+      sugarRatio: parsed.sugarRatio,
+      toppings: parsed.toppings,
+      profile: profile,
+    );
+
+    return AnalysisResult(
+      foodName: input,
+      calorieRange: calorieRange,
+      macros: {
+        'protein': ((protein * 10).round() / 10),
+        'carbs': ((carbs * 10).round() / 10),
+        'fat': ((fat * 10).round() / 10),
+        'sodium': ((sodium * 10).round() / 10),
+      },
+      foodItems: foodItems,
+      judgementTags: judgementTags.take(3).toList(),
+      dishSummary: isZh
+          ? '飲料規則估算：${summaryParts.join('，')}'
+          : 'Beverage rule estimate: ${summaryParts.join(', ')}',
+      suggestion: suggestion,
+      tier: 'catalog',
+      source: 'beverage_formula',
+      nutritionSource: 'beverage_formula',
+      referenceUsed: isZh ? '飲料規則估算' : 'beverage rules',
+      confidence: 0.62,
+      isBeverage: true,
+      isFood: true,
+    );
+  }
+
+  String _buildBeverageSuggestion({
+    required bool isZh,
+    required double carbs,
+    required double sugarRatio,
+    required List<_BeverageToppingProfile> toppings,
+    required _BeverageProfile profile,
+  }) {
+    if (isZh) {
+      if (sugarRatio >= 0.7 || carbs >= 45) {
+        return '這杯糖量偏高，建議下次改半糖或少糖，並避免再加含糖點心。';
+      }
+      if (toppings.isNotEmpty) {
+        return '你有加配料，熱量主要來自配料碳水；若在控脂期可改無配料。';
+      }
+      if (profile.key == 'soy_milk' || profile.key == 'latte') {
+        return '這杯蛋白質相對較好，可搭配低糖主食，讓整餐更平衡。';
+      }
+      return '建議和正餐錯開，並優先選擇低糖版本，避免影響整日熱量控制。';
+    }
+    if (sugarRatio >= 0.7 || carbs >= 45) {
+      return 'Sugar load is high. Next time consider half/less sugar and skip extra sweet snacks.';
+    }
+    if (toppings.isNotEmpty) {
+      return 'Most extra calories come from toppings. Remove toppings if you are cutting.';
+    }
+    return 'Prefer lower sugar options and pair with balanced meals to keep daily intake stable.';
   }
 
   Map<String, dynamic>? _bestCatalogFoodMatch(
