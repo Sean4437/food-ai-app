@@ -552,6 +552,8 @@ class _LogScreenState extends State<LogScreen> {
                 entry.imageBytes,
                 photoWidth: 88,
                 showPlaceholder: app.isNamePlaceholderImage(entry.imageBytes),
+                fallbackImageUrl: entry.result?.catalogThumbUrl ??
+                    entry.result?.catalogImageUrl,
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(18),
                   bottomRight: Radius.circular(18),
@@ -1048,23 +1050,41 @@ class _LogScreenState extends State<LogScreen> {
     double radius = 0,
     required double photoWidth,
     bool showPlaceholder = false,
+    String? fallbackImageUrl,
   }) {
     final resolvedRadius = borderRadius ?? BorderRadius.circular(radius);
+    final imageUrl = fallbackImageUrl?.trim() ?? '';
     return SizedBox(
       width: photoWidth,
       height: photoWidth,
       child: ClipRRect(
         borderRadius: resolvedRadius,
         child: showPlaceholder
-            ? Container(
-                color: const Color(0xFFF0F4F2),
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.restaurant_menu_rounded,
-                  color: Color(0xFF7A9A8B),
-                  size: 26,
-                ),
-              )
+            ? (imageUrl.isNotEmpty
+                ? Image.network(
+                    imageUrl,
+                    width: photoWidth,
+                    height: photoWidth,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: const Color(0xFFF0F4F2),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.restaurant_menu_rounded,
+                        color: Color(0xFF7A9A8B),
+                        size: 26,
+                      ),
+                    ),
+                  )
+                : Container(
+                    color: const Color(0xFFF0F4F2),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.restaurant_menu_rounded,
+                      color: Color(0xFF7A9A8B),
+                      size: 26,
+                    ),
+                  ))
             : Image.memory(
                 bytes,
                 width: photoWidth,
@@ -1273,6 +1293,8 @@ class _LogScreenState extends State<LogScreen> {
                   entry.imageBytes,
                   photoWidth: 92,
                   showPlaceholder: app.isNamePlaceholderImage(entry.imageBytes),
+                  fallbackImageUrl: entry.result?.catalogThumbUrl ??
+                      entry.result?.catalogImageUrl,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
                     bottomLeft: Radius.circular(16),

@@ -1,4 +1,4 @@
-﻿class AnalysisResult {
+class AnalysisResult {
   final String foodName;
   final String calorieRange;
   final Map<String, double> macros;
@@ -19,6 +19,10 @@
   final String? referenceUsed;
   final String? containerGuessType;
   final String? containerGuessSize;
+  final String? catalogImageUrl;
+  final String? catalogThumbUrl;
+  final String? catalogImageSource;
+  final String? catalogImageLicense;
 
   AnalysisResult({
     required this.foodName,
@@ -41,6 +45,10 @@
     this.referenceUsed,
     this.containerGuessType,
     this.containerGuessSize,
+    this.catalogImageUrl,
+    this.catalogThumbUrl,
+    this.catalogImageSource,
+    this.catalogImageLicense,
   });
 
   factory AnalysisResult.fromJson(Map<String, dynamic> json) {
@@ -52,21 +60,28 @@
     final rawOriginalMacros = (json['ai_original_macros'] as Map?) ?? {};
     final parsedOriginalMacros = <String, double>{};
     rawOriginalMacros.forEach((key, value) {
-      parsedOriginalMacros[key.toString()] = _parseMacroValue(value, key.toString());
+      parsedOriginalMacros[key.toString()] =
+          _parseMacroValue(value, key.toString());
     });
     return AnalysisResult(
       foodName: json['food_name'] as String,
       calorieRange: json['calorie_range'] as String,
       macros: parsedMacros,
-      foodItems: (json['food_items'] as List?)?.map((e) => e.toString()).toList() ?? const [],
-      judgementTags: (json['judgement_tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      foodItems:
+          (json['food_items'] as List?)?.map((e) => e.toString()).toList() ??
+              const [],
+      judgementTags: (json['judgement_tags'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       dishSummary: json['dish_summary'] as String?,
       suggestion: json['suggestion'] as String,
       tier: json['tier'] as String,
       source: (json['source'] as String?) ?? 'mock',
       nutritionSource: json['nutrition_source'] as String?,
       aiOriginalCalorieRange: json['ai_original_calorie_range'] as String?,
-      aiOriginalMacros: parsedOriginalMacros.isEmpty ? null : parsedOriginalMacros,
+      aiOriginalMacros:
+          parsedOriginalMacros.isEmpty ? null : parsedOriginalMacros,
       costEstimateUsd: (json['cost_estimate_usd'] as num?)?.toDouble(),
       confidence: (json['confidence'] as num?)?.toDouble(),
       isBeverage: json['is_beverage'] as bool?,
@@ -75,6 +90,14 @@
       referenceUsed: json['reference_used'] as String?,
       containerGuessType: json['container_guess_type'] as String?,
       containerGuessSize: json['container_guess_size'] as String?,
+      catalogImageUrl: (json['catalog_image_url'] as String?) ??
+          (json['image_url'] as String?),
+      catalogThumbUrl: (json['catalog_thumb_url'] as String?) ??
+          (json['thumb_url'] as String?),
+      catalogImageSource: (json['catalog_image_source'] as String?) ??
+          (json['image_source'] as String?),
+      catalogImageLicense: (json['catalog_image_license'] as String?) ??
+          (json['image_license'] as String?),
     );
   }
 
@@ -100,6 +123,10 @@
       'reference_used': referenceUsed,
       'container_guess_type': containerGuessType,
       'container_guess_size': containerGuessSize,
+      'catalog_image_url': catalogImageUrl,
+      'catalog_thumb_url': catalogThumbUrl,
+      'catalog_image_source': catalogImageSource,
+      'catalog_image_license': catalogImageLicense,
     };
   }
 }

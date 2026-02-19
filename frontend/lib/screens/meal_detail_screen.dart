@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
@@ -21,8 +21,12 @@ class MealDetailScreen extends StatelessWidget {
         title: Text(t.delete),
         content: Text(t.deleteConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.delete)),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(t.cancel)),
+          ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(t.delete)),
         ],
       ),
     );
@@ -42,6 +46,22 @@ class MealDetailScreen extends StatelessWidget {
       return '${grams.round()}mg';
     }
     return '${grams.round()}g';
+  }
+
+  String? _catalogImageForEntry(
+    AppState app,
+    MealEntry entry, {
+    required bool preferThumb,
+  }) {
+    if (!app.isNamePlaceholderImage(entry.imageBytes)) {
+      return null;
+    }
+    final thumb = entry.result?.catalogThumbUrl?.trim() ?? '';
+    final full = entry.result?.catalogImageUrl?.trim() ?? '';
+    if (preferThumb && thumb.isNotEmpty) return thumb;
+    if (full.isNotEmpty) return full;
+    if (thumb.isNotEmpty) return thumb;
+    return null;
   }
 
   Widget _nutrientValue(
@@ -65,17 +85,22 @@ class MealDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _radarChart(BuildContext context, MealEntry entry, AppLocalizations t) {
+  Widget _radarChart(
+      BuildContext context, MealEntry entry, AppLocalizations t) {
     final app = AppStateScope.of(context);
     final result = entry.result;
     final protein = result?.macros['protein'] ?? 0;
     final carbs = result?.macros['carbs'] ?? 0;
     final fat = result?.macros['fat'] ?? 0;
     final sodium = result?.macros['sodium'] ?? 0;
-    final proteinRatio = _ratioFromPercent(result == null ? 0 : app.macroPercentFromResult(result, 'protein'));
-    final carbsRatio = _ratioFromPercent(result == null ? 0 : app.macroPercentFromResult(result, 'carbs'));
-    final fatRatio = _ratioFromPercent(result == null ? 0 : app.macroPercentFromResult(result, 'fat'));
-    final sodiumRatio = _ratioFromPercent(result == null ? 0 : app.macroPercentFromResult(result, 'sodium'));
+    final proteinRatio = _ratioFromPercent(
+        result == null ? 0 : app.macroPercentFromResult(result, 'protein'));
+    final carbsRatio = _ratioFromPercent(
+        result == null ? 0 : app.macroPercentFromResult(result, 'carbs'));
+    final fatRatio = _ratioFromPercent(
+        result == null ? 0 : app.macroPercentFromResult(result, 'fat'));
+    final sodiumRatio = _ratioFromPercent(
+        result == null ? 0 : app.macroPercentFromResult(result, 'sodium'));
     final values = [proteinRatio, carbsRatio, fatRatio, sodiumRatio];
 
     return Column(
@@ -146,12 +171,15 @@ class MealDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _portionSelector(BuildContext context, AppState app, AppLocalizations t) {
+  Widget _portionSelector(
+      BuildContext context, AppState app, AppLocalizations t) {
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('${entry.portionPercent}%', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        Text('${entry.portionPercent}%',
+            style: AppTextStyles.body(context)
+                .copyWith(fontWeight: FontWeight.w600)),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: 8,
@@ -180,13 +208,20 @@ class MealDetailScreen extends StatelessWidget {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final theme = Theme.of(context);
-    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
+    final plateAsset = app.profile.plateAsset.isEmpty
+        ? kDefaultPlateAsset
+        : app.profile.plateAsset;
     final mealGroup = app.entriesForMeal(entry);
     final mealSummary = app.buildMealSummary(mealGroup, t);
-    final mealCalorieMid = mealSummary == null ? null : app.calorieRangeMid(mealSummary.calorieRange);
+    final mealCalorieMid = mealSummary == null
+        ? null
+        : app.calorieRangeMid(mealSummary.calorieRange);
     final referenceUsed = (entry.result?.referenceUsed ?? '').trim();
-    final referenceLabel = referenceUsed.isEmpty ? t.referenceObjectNone : referenceUsed;
+    final referenceLabel =
+        referenceUsed.isEmpty ? t.referenceObjectNone : referenceUsed;
     final prefix = entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
+    final catalogImageUrl =
+        _catalogImageForEntry(app, entry, preferThumb: false);
 
     return AppBackground(
       child: Scaffold(
@@ -242,14 +277,22 @@ class MealDetailScreen extends StatelessWidget {
                                     '${prefix}${entry.overrideFoodName ?? entry.result!.foodName}',
                                     style: AppTextStyles.title2(context),
                                   ),
-                                  if ((entry.result!.dishSummary ?? '').trim().isNotEmpty) ...[
+                                  if ((entry.result!.dishSummary ?? '')
+                                      .trim()
+                                      .isNotEmpty) ...[
                                     const SizedBox(height: 4),
-                                    Text(entry.result!.dishSummary!, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                                    Text(entry.result!.dishSummary!,
+                                        style: AppTextStyles.caption(context)
+                                            .copyWith(color: Colors.black54)),
                                   ],
                                 ] else
-                                  Text(t.unknownFood, style: AppTextStyles.title2(context)),
+                                  Text(t.unknownFood,
+                                      style: AppTextStyles.title2(context)),
                                 const SizedBox(height: 10),
-                                Text('${t.portionLabel} ${entry.portionPercent}%', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                                Text(
+                                    '${t.portionLabel} ${entry.portionPercent}%',
+                                    style: AppTextStyles.caption(context)
+                                        .copyWith(color: Colors.black54)),
                                 const SizedBox(height: 6),
                                 _portionSelector(context, app, t),
                               ],
@@ -259,6 +302,7 @@ class MealDetailScreen extends StatelessWidget {
                         PlatePhoto(
                           imageBytes: entry.imageBytes,
                           plateAsset: plateAsset,
+                          imageUrl: catalogImageUrl,
                           plateSize: 320,
                           imageSize: 230,
                           tilt: -0.08,
@@ -285,30 +329,43 @@ class MealDetailScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     t.mealSummaryTitle,
-                                    style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                                    style: AppTextStyles.body(context)
+                                        .copyWith(fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
                                     mealSummary?.advice ?? t.detailAiEmpty,
-                                    style: AppTextStyles.title1(context).copyWith(color: Colors.black87, fontWeight: FontWeight.w600),
+                                    style: AppTextStyles.title1(context)
+                                        .copyWith(
+                                            color: Colors.black87,
+                                            fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
                                     '${t.referenceObjectLabel}：$referenceLabel',
-                                    style: AppTextStyles.caption(context).copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
+                                    style: AppTextStyles.caption(context)
+                                        .copyWith(
+                                            color: Colors.black54,
+                                            fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withOpacity(0.14),
+                                color:
+                                    theme.colorScheme.primary.withOpacity(0.14),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
-                                mealCalorieMid == null ? t.calorieUnknown : mealCalorieMid.round().toString(),
-                                style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+                                mealCalorieMid == null
+                                    ? t.calorieUnknown
+                                    : mealCalorieMid.round().toString(),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.colorScheme.primary),
                               ),
                             ),
                           ],
@@ -333,18 +390,24 @@ class MealDetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(t.detailWhyLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                        Text(t.detailWhyLabel,
+                            style: AppTextStyles.body(context)
+                                .copyWith(fontWeight: FontWeight.w600)),
                         if (entry.error != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
-                            child: Text(entry.error!, style: AppTextStyles.caption(context).copyWith(color: Colors.red)),
+                            child: Text(entry.error!,
+                                style: AppTextStyles.caption(context)
+                                    .copyWith(color: Colors.red)),
                           )
                         else if (entry.result != null)
                           _radarChart(context, entry, t)
                         else
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
-                            child: Text(t.detailAiEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                            child: Text(t.detailAiEmpty,
+                                style: AppTextStyles.caption(context)
+                                    .copyWith(color: Colors.black54)),
                           ),
                       ],
                     ),
@@ -386,7 +449,8 @@ class _RadarPainter extends CustomPainter {
       final path = Path();
       for (int j = 0; j < axes; j++) {
         final angle = (2 * math.pi / axes) * j - math.pi / 2;
-        final point = Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
+        final point = Offset(
+            center.dx + r * math.cos(angle), center.dy + r * math.sin(angle));
         if (j == 0) {
           path.moveTo(point.dx, point.dy);
         } else {

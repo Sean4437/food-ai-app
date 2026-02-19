@@ -1,4 +1,4 @@
-﻿import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
 import '../models/analysis_result.dart';
@@ -79,7 +79,8 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/analyze$query');
     final request = http.MultipartRequest('POST', uri);
     request.headers.addAll(_authHeaders(accessToken));
-    request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
+    request.files.add(
+        http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
     if (foodName != null && foodName.trim().isNotEmpty) {
       request.fields['food_name'] = foodName.trim();
     }
@@ -181,7 +182,8 @@ class ApiService {
         final decoded = json.decode(body);
         if (decoded is Map<String, dynamic>) {
           code = (decoded['detail'] ?? decoded['code'] ?? code).toString();
-          message = (decoded['message'] ?? decoded['detail'] ?? message).toString();
+          message =
+              (decoded['message'] ?? decoded['detail'] ?? message).toString();
         }
       } catch (_) {}
       throw ApiException(response.statusCode, code, message);
@@ -198,7 +200,10 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/summarize_day');
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json', ..._authHeaders(accessToken)},
+      headers: {
+        'Content-Type': 'application/json',
+        ..._authHeaders(accessToken)
+      },
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
@@ -214,7 +219,10 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/summarize_week');
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json', ..._authHeaders(accessToken)},
+      headers: {
+        'Content-Type': 'application/json',
+        ..._authHeaders(accessToken)
+      },
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
@@ -233,7 +241,8 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/analyze_label$query');
     final request = http.MultipartRequest('POST', uri);
     request.headers.addAll(_authHeaders(accessToken));
-    request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
+    request.files.add(
+        http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
 
     final response = await request.send();
     final body = await response.stream.bytesToString();
@@ -268,19 +277,29 @@ class ApiService {
       if (lang != null && lang.trim().isNotEmpty) 'lang': lang,
       if (note != null && note.trim().isNotEmpty) 'note': note,
       if (context != null && context.trim().isNotEmpty) 'context': context,
-      if (portionPercent != null && portionPercent > 0) 'portion_percent': portionPercent,
+      if (portionPercent != null && portionPercent > 0)
+        'portion_percent': portionPercent,
       if (mealType != null && mealType.trim().isNotEmpty) 'meal_type': mealType,
-      if (adviceMode != null && adviceMode.trim().isNotEmpty) 'advice_mode': adviceMode,
-      if (containerType != null && containerType.trim().isNotEmpty) 'container_type': containerType,
-      if (containerSize != null && containerSize.trim().isNotEmpty) 'container_size': containerSize,
-      if (containerDepth != null && containerDepth.trim().isNotEmpty) 'container_depth': containerDepth,
-      if (containerDiameterCm != null && containerDiameterCm > 0) 'container_diameter_cm': containerDiameterCm,
-      if (containerCapacityMl != null && containerCapacityMl > 0) 'container_capacity_ml': containerCapacityMl,
+      if (adviceMode != null && adviceMode.trim().isNotEmpty)
+        'advice_mode': adviceMode,
+      if (containerType != null && containerType.trim().isNotEmpty)
+        'container_type': containerType,
+      if (containerSize != null && containerSize.trim().isNotEmpty)
+        'container_size': containerSize,
+      if (containerDepth != null && containerDepth.trim().isNotEmpty)
+        'container_depth': containerDepth,
+      if (containerDiameterCm != null && containerDiameterCm > 0)
+        'container_diameter_cm': containerDiameterCm,
+      if (containerCapacityMl != null && containerCapacityMl > 0)
+        'container_capacity_ml': containerCapacityMl,
       if (profile != null) 'profile': profile,
     };
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json', ..._authHeaders(accessToken)},
+      headers: {
+        'Content-Type': 'application/json',
+        ..._authHeaders(accessToken)
+      },
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
@@ -303,7 +322,8 @@ class ApiService {
       'limit': limit.clamp(1, 20).toString(),
       if (lang != null && lang.trim().isNotEmpty) 'lang': lang.trim(),
     };
-    final uri = Uri.parse('$baseUrl/foods/search').replace(queryParameters: params);
+    final uri =
+        Uri.parse('$baseUrl/foods/search').replace(queryParameters: params);
     try {
       final response = await http.get(
         uri,
@@ -314,7 +334,8 @@ class ApiService {
         try {
           final decoded = json.decode(response.body);
           if (decoded is Map<String, dynamic>) {
-            detail = (decoded['detail'] ?? decoded['message'] ?? detail).toString();
+            detail =
+                (decoded['detail'] ?? decoded['message'] ?? detail).toString();
           }
         } catch (_) {}
         throw CatalogSearchException(
@@ -325,11 +346,13 @@ class ApiService {
       }
       final decoded = json.decode(response.body);
       if (decoded is! Map<String, dynamic>) {
-        throw CatalogSearchException('invalid_payload', message: 'response is not an object');
+        throw CatalogSearchException('invalid_payload',
+            message: 'response is not an object');
       }
       final rawItems = decoded['items'];
       if (rawItems is! List) {
-        throw CatalogSearchException('invalid_payload', message: 'items is not a list');
+        throw CatalogSearchException('invalid_payload',
+            message: 'items is not a list');
       }
       final items = <Map<String, dynamic>>[];
       for (final row in rawItems) {
@@ -347,6 +370,34 @@ class ApiService {
     }
   }
 
+  Future<void> reportFoodSearchMiss(
+    String query, {
+    String? accessToken,
+    String? lang,
+    String source = 'name_input',
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+    final uri = Uri.parse('$baseUrl/foods/search_miss');
+    final payload = <String, dynamic>{
+      'query': trimmed,
+      if (lang != null && lang.trim().isNotEmpty) 'lang': lang.trim(),
+      'source': source,
+    };
+    try {
+      await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          ..._authHeaders(accessToken)
+        },
+        body: json.encode(payload),
+      );
+    } catch (_) {
+      // Ignore telemetry failures.
+    }
+  }
+
   Future<Map<String, dynamic>> suggestMeal(
     Map<String, dynamic> payload,
     String? accessToken,
@@ -354,7 +405,10 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/suggest_meal');
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json', ..._authHeaders(accessToken)},
+      headers: {
+        'Content-Type': 'application/json',
+        ..._authHeaders(accessToken)
+      },
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
@@ -386,7 +440,10 @@ class ApiService {
     final uri = Uri.parse('$baseUrl/chat');
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json', ..._authHeaders(accessToken)},
+      headers: {
+        'Content-Type': 'application/json',
+        ..._authHeaders(accessToken)
+      },
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {

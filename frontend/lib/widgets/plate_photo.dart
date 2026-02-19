@@ -8,6 +8,7 @@ class PlatePhoto extends StatelessWidget {
     super.key,
     required this.imageBytes,
     required this.plateAsset,
+    this.imageUrl,
     this.plateSize = 300,
     this.imageSize = 210,
     this.tilt = -0.08,
@@ -16,6 +17,7 @@ class PlatePhoto extends StatelessWidget {
 
   final Uint8List imageBytes;
   final String plateAsset;
+  final String? imageUrl;
   final double plateSize;
   final double imageSize;
   final double tilt;
@@ -24,6 +26,7 @@ class PlatePhoto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showBadge = (badgeCount ?? 0) > 0;
+    final normalizedUrl = imageUrl?.trim() ?? '';
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -68,14 +71,29 @@ class PlatePhoto extends StatelessWidget {
                     ),
                   ),
                   ClipOval(
-                    child: Image.memory(
-                      imageBytes,
-                      width: imageSize,
-                      height: imageSize,
-                      fit: BoxFit.cover,
-                      cacheWidth: (imageSize * 2).round(),
-                      gaplessPlayback: true,
-                    ),
+                    child: normalizedUrl.isNotEmpty
+                        ? Image.network(
+                            normalizedUrl,
+                            width: imageSize,
+                            height: imageSize,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Image.memory(
+                              imageBytes,
+                              width: imageSize,
+                              height: imageSize,
+                              fit: BoxFit.cover,
+                              cacheWidth: (imageSize * 2).round(),
+                              gaplessPlayback: true,
+                            ),
+                          )
+                        : Image.memory(
+                            imageBytes,
+                            width: imageSize,
+                            height: imageSize,
+                            fit: BoxFit.cover,
+                            cacheWidth: (imageSize * 2).round(),
+                            gaplessPlayback: true,
+                          ),
                   ),
                 ],
               ),
@@ -92,7 +110,9 @@ class PlatePhoto extends StatelessWidget {
                 color: Colors.black.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Text('+$badgeCount', style: AppTextStyles.caption(context).copyWith(color: Colors.white)),
+              child: Text('+$badgeCount',
+                  style: AppTextStyles.caption(context)
+                      .copyWith(color: Colors.white)),
             ),
           ),
       ],

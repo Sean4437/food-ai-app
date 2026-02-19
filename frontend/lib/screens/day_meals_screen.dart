@@ -94,9 +94,13 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
       ..sort((a, b) => a.time.compareTo(b.time));
     final selectedIndex = (_groupSelectedIndex[groupIndex] ?? 0)
         .clamp(0, displayGroup.length - 1);
+    final imageUrls = displayGroup
+        .map((entry) => _catalogImageForEntry(app, entry, preferThumb: false))
+        .toList();
     return PlatePolygonStack(
       images: displayGroup.map((entry) => entry.imageBytes).toList(),
       plateAsset: plateAsset,
+      imageUrls: imageUrls,
       selectedIndex: selectedIndex,
       onSelect: (index) =>
           setState(() => _groupSelectedIndex[groupIndex] = index),
@@ -164,13 +168,38 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
         itemCount: items.length,
         itemBuilder: (context, index) {
           final entry = items[index];
+          final app = AppStateScope.of(context);
+          final imageUrl = _catalogImageForEntry(app, entry, preferThumb: true);
           return ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.memory(entry.imageBytes, fit: BoxFit.cover),
+            child: imageUrl != null
+                ? Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        Image.memory(entry.imageBytes, fit: BoxFit.cover),
+                  )
+                : Image.memory(entry.imageBytes, fit: BoxFit.cover),
           );
         },
       ),
     );
+  }
+
+  String? _catalogImageForEntry(
+    AppState app,
+    MealEntry entry, {
+    required bool preferThumb,
+  }) {
+    if (!app.isNamePlaceholderImage(entry.imageBytes)) {
+      return null;
+    }
+    final thumb = entry.result?.catalogThumbUrl?.trim() ?? '';
+    final full = entry.result?.catalogImageUrl?.trim() ?? '';
+    if (preferThumb && thumb.isNotEmpty) return thumb;
+    if (full.isNotEmpty) return full;
+    if (thumb.isNotEmpty) return thumb;
+    return null;
   }
 
   Widget _dishSummaryBlock(List<MealEntry> group, AppLocalizations t) {

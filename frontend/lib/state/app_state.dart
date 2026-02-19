@@ -999,7 +999,7 @@ class AppState extends ChangeNotifier {
     if (t.localeName.startsWith('en')) {
       return 'It is $mealLabel time. Based on my logged meals today, remaining calories, and time since last meal, give 2-4 short suggestions. If I am already over, clearly advise me to stop eating. Do not ask questions or request photos. Follow my persona and tone, and occasionally add a meow/nya.';
     }
-    return '現在是$mealLabel時間。請根據我今天已記錄的餐點、剩餘熱量與距離上一餐時間，給我 2-4 句簡短飲食建議。若今天已超量或不建議再吃，請明確提醒。不要提問或要求照片。請符合我的角色與語氣設定，偶爾加入喵／喵嗚口癖。';
+    return '現在是$mealLabel時間。請根據我今天已記錄的飲食、剩餘熱量與距離上次進食時間，給我 2-4 個簡短建議；若我已超標請明確叫我先停止進食。不要反問，也不要要求拍照。請維持我的角色語氣，並可偶爾加喵。';
   }
 
   MealType? _currentReminderMealType(DateTime time) {
@@ -1268,8 +1268,18 @@ class AppState extends ChangeNotifier {
       );
     }
     if (catalogLookupFailed && catalogItems.isEmpty) {
+      await _reportCatalogSearchMiss(
+        trimmed,
+        locale,
+        source: 'catalog_unavailable',
+      );
       throw NameLookupException('catalog_unavailable');
     }
+    await _reportCatalogSearchMiss(
+      trimmed,
+      locale,
+      source: 'catalog_not_found',
+    );
     throw NameLookupException('catalog_not_found');
   }
 
@@ -1379,6 +1389,10 @@ class AppState extends ChangeNotifier {
           'food_name': foodName,
           'alias': foodName,
           'source': (row['source'] ?? 'catalog').toString(),
+          'image_url': (row['image_url'] ?? '').toString(),
+          'thumb_url': (row['thumb_url'] ?? '').toString(),
+          'image_source': (row['image_source'] ?? '').toString(),
+          'image_license': (row['image_license'] ?? '').toString(),
           'match_score': _nameSuggestionScore(foodName, normalizedQuery),
         };
       }
@@ -1412,7 +1426,8 @@ class AppState extends ChangeNotifier {
       final pattern = query.trim().replaceAll(',', ' ');
       final rows = await _supabase.client
           .from('food_catalog')
-          .select('id,food_name,canonical_name,source')
+          .select(
+              'id,food_name,canonical_name,source,image_url,thumb_url,image_source,image_license')
           .or('food_name.ilike.*$pattern*,canonical_name.ilike.*$pattern*')
           .limit(limit.clamp(1, 20));
       if (rows is! List) return const [];
@@ -1427,6 +1442,25 @@ class AppState extends ChangeNotifier {
       return mapped;
     } catch (_) {
       return const [];
+    }
+  }
+
+  Future<void> _reportCatalogSearchMiss(
+    String query,
+    String locale, {
+    required String source,
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+    try {
+      await _api.reportFoodSearchMiss(
+        trimmed,
+        accessToken: _accessToken(),
+        lang: locale,
+        source: source,
+      );
+    } catch (_) {
+      // Ignore telemetry failures.
     }
   }
 
@@ -1498,16 +1532,22 @@ class AppState extends ChangeNotifier {
     if (value.isEmpty) return value;
 
     final hasDrinkHint = RegExp(
-      r'(茶|奶茶|咖啡|拿鐵|可可|可樂|汽水|果汁|豆漿|飲|紅茶|綠茶|青茶|烏龍|美式|latte|tea|coffee|drink|去冰|少冰|微冰|半糖|少糖|微糖|無糖|全糖)',
+      r'(飲|喝|茶|咖啡|奶|豆漿|果汁|可可|latte|tea|coffee|drink|beverage|milk|juice|soda|boba|smoothie)',
       caseSensitive: false,
     ).hasMatch(value);
     if (!hasDrinkHint) return value;
 
     final patterns = <RegExp>[
-      RegExp(r'(去冰|少冰|微冰|多冰|正常冰|常溫|熱飲|冷飲|熱|溫)'),
-      RegExp(r'(無糖|微糖|半糖|少糖|全糖|正常糖)'),
-      RegExp(r'(大杯|中杯|小杯|特大杯|特大)'),
-      RegExp(r'(加珍珠|加椰果|加寒天|加粉角|加布丁|加奶蓋)'),
+      // Common drink options and serving modifiers.
+      RegExp(
+        r'(無糖|微糖|半糖|少糖|全糖|正常糖|去冰|少冰|微冰|常溫|熱飲|冰飲|熱|冷|大杯|中杯|小杯|加料|珍珠|椰果|布丁|奶蓋|去奶|加奶|extra|less|no)\s*',
+        caseSensitive: false,
+      ),
+      // Common beverage base words.
+      RegExp(
+        r'(豆漿|鮮奶茶|奶茶|紅茶|綠茶|青茶|烏龍|美式|拿鐵|可可|咖啡|果汁|氣泡飲|latte|tea|coffee|drink|beverage|milk|juice|soda|boba|smoothie)\s*',
+        caseSensitive: false,
+      ),
     ];
     for (final pattern in patterns) {
       value = value.replaceAll(pattern, '');
@@ -1537,7 +1577,8 @@ class AppState extends ChangeNotifier {
       if (alias == normalizedQuery || foodName == normalizedQuery) {
         return item;
       }
-      // 支援「主名稱 + 修飾詞」輸入，例如「青茶半糖去冰」命中「青茶」。
+      // Prefix matching: supports both "query starts with alias" and
+      // "alias starts with query" so type-ahead can catch partial terms.
       final startsWith = (alias.isNotEmpty &&
               (alias.startsWith(normalizedQuery) ||
                   aliasCompact.startsWith(compactQuery) ||
@@ -1561,7 +1602,7 @@ class AppState extends ChangeNotifier {
     if (bestPrefix != null && bestPrefixScore >= 3.5) {
       return bestPrefix;
     }
-    // 沒有 prefix 時，允許高分第一名（避免明顯正解卻被過嚴條件漏掉）。
+    // No prefix hit: allow a strong score-only fallback match.
     if (bestByScore != null && bestScore >= 4.0) {
       return bestByScore;
     }
@@ -1631,6 +1672,12 @@ class AppState extends ChangeNotifier {
     final nutritionSourceRaw =
         (item['nutrition_source'] ?? '').toString().trim();
     final referenceUsedRaw = (item['reference_used'] ?? '').toString().trim();
+    final catalogImageUrlRaw = (item['image_url'] ?? '').toString().trim();
+    final catalogThumbUrlRaw = (item['thumb_url'] ?? '').toString().trim();
+    final catalogImageSourceRaw =
+        (item['image_source'] ?? '').toString().trim();
+    final catalogImageLicenseRaw =
+        (item['image_license'] ?? '').toString().trim();
 
     return AnalysisResult(
       foodName: foodName,
@@ -1642,7 +1689,7 @@ class AppState extends ChangeNotifier {
       suggestion: suggestionRaw.isNotEmpty
           ? suggestionRaw
           : (locale.startsWith('zh')
-              ? '來自資料庫估算，可再補充份量或品牌讓結果更準確。'
+              ? '此結果由資料庫估算，若補充份量或品牌資訊會更準確。'
               : 'Estimated from the food catalog. Add portion or brand details for better accuracy.'),
       tier: 'catalog',
       source: sourceRaw.isNotEmpty ? sourceRaw : 'catalog',
@@ -1652,6 +1699,14 @@ class AppState extends ChangeNotifier {
       isBeverage:
           item['is_beverage'] is bool ? item['is_beverage'] as bool : null,
       isFood: item['is_food'] is bool ? item['is_food'] as bool : true,
+      catalogImageUrl:
+          catalogImageUrlRaw.isNotEmpty ? catalogImageUrlRaw : null,
+      catalogThumbUrl:
+          catalogThumbUrlRaw.isNotEmpty ? catalogThumbUrlRaw : null,
+      catalogImageSource:
+          catalogImageSourceRaw.isNotEmpty ? catalogImageSourceRaw : null,
+      catalogImageLicense:
+          catalogImageLicenseRaw.isNotEmpty ? catalogImageLicenseRaw : null,
       referenceUsed: referenceUsedRaw.isNotEmpty
           ? referenceUsedRaw
           : (locale.startsWith('zh') ? '資料庫' : 'catalog'),
@@ -3880,6 +3935,10 @@ class AppState extends ChangeNotifier {
         costEstimateUsd: base.costEstimateUsd,
         confidence: base.confidence,
         isBeverage: isBeverage,
+        catalogImageUrl: base.catalogImageUrl,
+        catalogThumbUrl: base.catalogThumbUrl,
+        catalogImageSource: base.catalogImageSource,
+        catalogImageLicense: base.catalogImageLicense,
       );
     }
     if (label != null) {
@@ -3903,6 +3962,10 @@ class AppState extends ChangeNotifier {
         costEstimateUsd: base.costEstimateUsd,
         confidence: base.confidence,
         isBeverage: label.isBeverage ?? isBeverage,
+        catalogImageUrl: base.catalogImageUrl,
+        catalogThumbUrl: base.catalogThumbUrl,
+        catalogImageSource: base.catalogImageSource,
+        catalogImageLicense: base.catalogImageLicense,
       );
     }
     final resolvedSource = base.nutritionSource ??
@@ -3929,6 +3992,10 @@ class AppState extends ChangeNotifier {
       costEstimateUsd: base.costEstimateUsd,
       confidence: base.confidence,
       isBeverage: isBeverage,
+      catalogImageUrl: base.catalogImageUrl,
+      catalogThumbUrl: base.catalogThumbUrl,
+      catalogImageSource: base.catalogImageSource,
+      catalogImageLicense: base.catalogImageLicense,
     );
   }
 
@@ -4024,7 +4091,7 @@ class AppState extends ChangeNotifier {
     final count = group.length;
     final isZh = locale.toLowerCase().startsWith('zh');
     if (isZh) {
-      return '此餐共有 $count 張照片，請視為同一餐並保持前後一致。';
+      return '這餐共有 $count 張照片，請視為同一餐並保持建議一致。';
     }
     return 'This meal has $count photos. Treat them as one meal and keep advice consistent.';
   }
@@ -4247,7 +4314,7 @@ class AppState extends ChangeNotifier {
     final joiner = t.localeName.startsWith('en') ? ', ' : '、';
     final prefix = shown.join(joiner);
     final suffix =
-        t.localeName.startsWith('en') ? '... + $total items' : '...等${total}道';
+        t.localeName.startsWith('en') ? '... + $total items' : '...等 $total 項';
     return ['$prefix$suffix'];
   }
 
@@ -5363,7 +5430,7 @@ class AppState extends ChangeNotifier {
         }
         await _store.upsert(entry);
       }
-      // 只有在「全量同步」且遠端確實有資料列時才清理本機缺席的資料
+      // Remove local entries missing from remote on full sync only.
       if (since == null && allowPrune && remoteIds.isNotEmpty) {
         // Remove local entries that no longer exist remotely (full sync only)
         final toRemove =
@@ -5563,9 +5630,8 @@ class AppState extends ChangeNotifier {
     final shouldPullSettings = remoteSettingsUpdatedAt != null &&
         (localSettingsUpdatedAt == null ||
             remoteSettingsUpdatedAt.isAfter(localSettingsUpdatedAt));
-    // 如果本機沒有任何餐點資料（例如重新安裝或資料被清空），即便同步指紋顯示「已最新」也強制拉一遍全量，
-    // 避免因 last_sync_at 沒更新導致畫面空白。
-    // If local has no meals, force a full pull regardless of last_sync_at.
+    // If local has no meal entries (e.g., reinstall/cleared local cache),
+    // force one full pull even when sync fingerprint says up-to-date.
     final needFullMealPull = !hasLocalMeals;
     final shouldPull = shouldPullData || shouldPullSettings || needFullMealPull;
     if (shouldPull) {

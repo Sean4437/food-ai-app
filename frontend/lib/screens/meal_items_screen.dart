@@ -233,6 +233,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                 PlatePhoto(
                   imageBytes: entry.imageBytes,
                   plateAsset: plateAsset,
+                  imageUrl:
+                      _catalogImageForEntry(app, entry, preferThumb: false),
                   plateSize: plateSize,
                   imageSize: imageSize,
                   tilt: -0.08,
@@ -246,6 +248,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   }
 
   Future<void> _showImagePreview(BuildContext context, MealEntry entry) async {
+    final app = AppStateScope.of(context);
+    final imageUrl = _catalogImageForEntry(app, entry, preferThumb: false);
     await showDialog<void>(
       context: context,
       builder: (context) => Dialog(
@@ -258,12 +262,35 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
             maxScale: 3,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.memory(entry.imageBytes, fit: BoxFit.contain),
+              child: imageUrl != null
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) =>
+                          Image.memory(entry.imageBytes, fit: BoxFit.contain),
+                    )
+                  : Image.memory(entry.imageBytes, fit: BoxFit.contain),
             ),
           ),
         ),
       ),
     );
+  }
+
+  String? _catalogImageForEntry(
+    AppState app,
+    MealEntry entry, {
+    required bool preferThumb,
+  }) {
+    if (!app.isNamePlaceholderImage(entry.imageBytes)) {
+      return null;
+    }
+    final thumb = entry.result?.catalogThumbUrl?.trim() ?? '';
+    final full = entry.result?.catalogImageUrl?.trim() ?? '';
+    if (preferThumb && thumb.isNotEmpty) return thumb;
+    if (full.isNotEmpty) return full;
+    if (thumb.isNotEmpty) return thumb;
+    return null;
   }
 
   Future<void> _editFoodName(

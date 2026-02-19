@@ -9,6 +9,7 @@ class PlatePolygonStack extends StatelessWidget {
     super.key,
     required this.images,
     required this.plateAsset,
+    this.imageUrls,
     this.selectedIndex = 0,
     this.onSelect,
     this.onOpen,
@@ -18,6 +19,7 @@ class PlatePolygonStack extends StatelessWidget {
 
   final List<Uint8List> images;
   final String plateAsset;
+  final List<String?>? imageUrls;
   final int selectedIndex;
   final ValueChanged<int>? onSelect;
   final ValueChanged<int>? onOpen;
@@ -30,6 +32,7 @@ class PlatePolygonStack extends StatelessWidget {
       builder: (context, constraints) {
         final count = images.length;
         if (count == 0) return const SizedBox.shrink();
+        final urls = imageUrls;
         var plateSize = maxPlateSize * 0.85;
         final maxWidth = constraints.maxWidth;
         if (maxWidth > 0) {
@@ -56,7 +59,8 @@ class PlatePolygonStack extends StatelessWidget {
           final startAngle = -math.pi / 2;
           for (var i = 0; i < outerCount; i++) {
             final angle = startAngle + outerStep * i;
-            positions.add(center + Offset(radius * math.cos(angle), radius * math.sin(angle)));
+            positions.add(center +
+                Offset(radius * math.cos(angle), radius * math.sin(angle)));
           }
           if (innerCount > 0) {
             final innerRadius = radius * 0.48;
@@ -64,14 +68,17 @@ class PlatePolygonStack extends StatelessWidget {
             final innerStart = -math.pi / 2 + innerStep / 2;
             for (var i = 0; i < innerCount; i++) {
               final angle = innerStart + innerStep * i;
-              positions.add(center + Offset(innerRadius * math.cos(angle), innerRadius * math.sin(angle)));
+              positions.add(center +
+                  Offset(innerRadius * math.cos(angle),
+                      innerRadius * math.sin(angle)));
             }
           }
         }
 
         final safeSelected = selectedIndex.clamp(0, count - 1);
         final drawOrder = <int>[
-          for (var i = 0; i < count; i++) if (i != safeSelected) i,
+          for (var i = 0; i < count; i++)
+            if (i != safeSelected) i,
           safeSelected,
         ];
 
@@ -87,23 +94,29 @@ class PlatePolygonStack extends StatelessWidget {
                   top: positions[index].dy - plateSize / 2,
                   child: GestureDetector(
                     onTap: onOpen == null ? null : () => onOpen!(index),
-                    onLongPress: onSelect == null ? null : () => onSelect!(index),
-                      child: Transform.scale(
-                        scale: index == safeSelected ? 1.08 : 0.85,
+                    onLongPress:
+                        onSelect == null ? null : () => onSelect!(index),
+                    child: Transform.scale(
+                      scale: index == safeSelected ? 1.08 : 0.85,
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(index == safeSelected ? 0.18 : 0.08),
+                              color: Colors.black.withOpacity(
+                                  index == safeSelected ? 0.18 : 0.08),
                               blurRadius: index == safeSelected ? 26 : 16,
-                              offset: Offset(0, index == safeSelected ? 16 : 10),
+                              offset:
+                                  Offset(0, index == safeSelected ? 16 : 10),
                             ),
                           ],
                         ),
                         child: PlatePhoto(
                           imageBytes: images[index],
                           plateAsset: plateAsset,
+                          imageUrl: urls != null && index < urls.length
+                              ? urls[index]
+                              : null,
                           plateSize: plateSize,
                           imageSize: imageSize,
                           tilt: index == safeSelected ? -0.08 : -0.02,

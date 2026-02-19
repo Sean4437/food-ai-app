@@ -212,6 +212,10 @@ class FoodSearchItem(BaseModel):
     source: str = "catalog"
     nutrition_source: str = "catalog"
     reference_used: Optional[str] = None
+    image_url: Optional[str] = None
+    thumb_url: Optional[str] = None
+    image_source: Optional[str] = None
+    image_license: Optional[str] = None
     is_beverage: Optional[bool] = None
     is_food: Optional[bool] = True
     match_score: Optional[float] = None
@@ -219,6 +223,12 @@ class FoodSearchItem(BaseModel):
 
 class FoodSearchResponse(BaseModel):
     items: List[FoodSearchItem]
+
+
+class FoodSearchMissRequest(BaseModel):
+    query: str
+    lang: Optional[str] = None
+    source: Optional[str] = None
 
 FREE_DAILY_LIMIT = int(os.getenv("FREE_DAILY_LIMIT", "1"))
 CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
@@ -1072,6 +1082,26 @@ def _supabase_rest_list(table: str, params: list[tuple[str, str]]) -> list[dict]
         if isinstance(row, dict):
             normalized.append({str(k): v for k, v in row.items()})
     return normalized
+
+
+def _supabase_rest_insert(table: str, payload: dict) -> bool:
+    try:
+        headers = _supabase_headers()
+    except HTTPException:
+        return False
+    headers["Prefer"] = "return=minimal"
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
+    body = {str(k): v for k, v in payload.items()}
+    try:
+        with httpx.Client(timeout=10) as client:
+            resp = client.post(url, headers=headers, json=body)
+    except Exception as exc:
+        logging.warning("Supabase %s insert error: %s", table, exc)
+        return False
+    if resp.status_code >= 400:
+        logging.warning("Supabase %s insert failed (%s): %s", table, resp.status_code, resp.text)
+        return False
+    return True
 
 
 def _food_match_score(query_norm: str, alias_row: dict, catalog_row: dict, lang: str) -> float:
@@ -2593,6 +2623,10 @@ def foods_search(
                     source=str(row.get("source") or "catalog").strip() or "catalog",
                     nutrition_source="catalog",
                     reference_used=reference_used,
+                    image_url=str(row.get("image_url") or "").strip() or None,
+                    thumb_url=str(row.get("thumb_url") or "").strip() or None,
+                    image_source=str(row.get("image_source") or "").strip() or None,
+                    image_license=str(row.get("image_license") or "").strip() or None,
                     is_beverage=row.get("is_beverage")
                     if isinstance(row.get("is_beverage"), bool)
                     else None,
@@ -2671,6 +2705,10 @@ def foods_search(
             source=str(catalog_row.get("source") or "catalog").strip() or "catalog",
             nutrition_source="catalog",
             reference_used=reference_used,
+            image_url=str(catalog_row.get("image_url") or "").strip() or None,
+            thumb_url=str(catalog_row.get("thumb_url") or "").strip() or None,
+            image_source=str(catalog_row.get("image_source") or "").strip() or None,
+            image_license=str(catalog_row.get("image_license") or "").strip() or None,
             is_beverage=catalog_row.get("is_beverage")
             if isinstance(catalog_row.get("is_beverage"), bool)
             else None,
@@ -2686,6 +2724,54 @@ def foods_search(
     items = list(best_items.values())
     items.sort(key=lambda item: item.match_score or 0.0, reverse=True)
     return FoodSearchResponse(items=items[:limit])
+
+
+@app.post("/foods/search_miss")
+def foods_search_miss(payload: FoodSearchMissRequest, request: Request):
+    raw_query = (payload.query or "").strip()
+    if not raw_query:
+        raise HTTPException(status_code=400, detail="missing_query")
+    query_norm = _normalize_food_query(raw_query)
+    if not query_norm:
+        raise HTTPException(status_code=400, detail="missing_query")
+    use_lang = (payload.lang or DEFAULT_LANG).strip()
+    if use_lang not in _supported_langs:
+        use_lang = "zh-TW"
+    source = (payload.source or "name_input").strip().lower()
+    if not source:
+        source = "name_input"
+    if len(source) > 40:
+        source = source[:40]
+
+    user_id: Optional[str] = None
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
+    if auth_header and auth_header.lower().startswith("bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+        if token:
+            try:
+                token_payload = _decode_bearer_token(token)
+                candidate = str(token_payload.get("sub") or "").strip()
+                if candidate:
+                    user_id = candidate
+            except Exception:
+                user_id = None
+
+    meta = {
+        "user_agent": str(request.headers.get("user-agent") or "")[:160],
+        "referer": str(request.headers.get("referer") or "")[:240],
+    }
+    inserted = _supabase_rest_insert(
+        "food_search_miss",
+        {
+            "query": raw_query[:80],
+            "query_norm": query_norm[:80],
+            "lang": use_lang,
+            "source": source,
+            "user_id": user_id,
+            "meta": meta,
+        },
+    )
+    return {"ok": inserted}
 
 
 @app.post("/analyze_label", response_model=LabelResult)
