@@ -1359,6 +1359,29 @@ class AppState extends ChangeNotifier {
       }
     }
 
+    if (mergedCatalogItems.isEmpty) {
+      final directRows =
+          await _searchFoodCatalogFromSupabase(trimmed, limit: maxCount);
+      for (final row in directRows) {
+        final foodName = (row['food_name'] ?? row['canonical_name'] ?? '')
+            .toString()
+            .trim();
+        if (foodName.isEmpty) continue;
+        final key = ((row['id'] ?? row['food_id'] ?? foodName)
+                .toString()
+                .trim())
+            .toLowerCase();
+        if (key.isEmpty) continue;
+        mergedCatalogItems[key] = {
+          'food_id': (row['id'] ?? row['food_id'] ?? '').toString(),
+          'food_name': foodName,
+          'alias': foodName,
+          'source': (row['source'] ?? 'catalog').toString(),
+          'match_score': _nameSuggestionScore(foodName, normalizedQuery),
+        };
+      }
+    }
+
     final catalogItems = mergedCatalogItems.values.toList()
       ..sort((a, b) => _catalogSuggestionScore(b, normalizedQuery)
           .compareTo(_catalogSuggestionScore(a, normalizedQuery)));
@@ -1377,6 +1400,34 @@ class AppState extends ChangeNotifier {
     }
 
     return suggestions.take(maxCount).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> _searchFoodCatalogFromSupabase(
+    String query, {
+    required int limit,
+  }) async {
+    final user = _supabase.currentUser;
+    if (user == null) return const [];
+    try {
+      final pattern = query.trim().replaceAll(',', ' ');
+      final rows = await _supabase.client
+          .from('food_catalog')
+          .select('id,food_name,canonical_name,source')
+          .or('food_name.ilike.*$pattern*,canonical_name.ilike.*$pattern*')
+          .limit(limit.clamp(1, 20));
+      if (rows is! List) return const [];
+      final mapped = <Map<String, dynamic>>[];
+      for (final row in rows) {
+        if (row is Map<String, dynamic>) {
+          mapped.add(row);
+        } else if (row is Map) {
+          mapped.add(row.map((k, v) => MapEntry(k.toString(), v)));
+        }
+      }
+      return mapped;
+    } catch (_) {
+      return const [];
+    }
   }
 
   double _catalogSuggestionScore(

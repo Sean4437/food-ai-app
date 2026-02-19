@@ -2522,7 +2522,6 @@ def foods_search(
     q: str = Query(..., min_length=1, max_length=80),
     lang: str = Query(default=None),
     limit: int = Query(default=8, ge=1, le=20),
-    _auth: dict = Depends(_require_auth),
 ):
     query_norm = _normalize_food_query(q)
     if not query_norm:
