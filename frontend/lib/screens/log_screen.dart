@@ -384,7 +384,9 @@ class _LogScreenState extends State<LogScreen> {
       'Nov',
       'Dec',
     ];
-    final month = date.month >= 1 && date.month <= 12 ? enMonths[date.month - 1] : date.month.toString();
+    final month = date.month >= 1 && date.month <= 12
+        ? enMonths[date.month - 1]
+        : date.month.toString();
     return '$month ${date.year}';
   }
 
@@ -576,8 +578,7 @@ class _LogScreenState extends State<LogScreen> {
     return points;
   }
 
-  List<int>? _averageTargetRange(
-      AppState app, DateTime endDate, int days) {
+  List<int>? _averageTargetRange(AppState app, DateTime endDate, int days) {
     final base = DateTime(endDate.year, endDate.month, endDate.day);
     final start = base.subtract(Duration(days: days - 1));
     var minSum = 0;
@@ -620,10 +621,8 @@ class _LogScreenState extends State<LogScreen> {
         points.add(_HistoryPoint(date: date, value: null));
         continue;
       }
-      final value = app.dailyProteinConsumedGrams(date,
-          excludeBeverages: true);
-      points.add(_HistoryPoint(
-          date: date, value: value <= 0 ? null : value));
+      final value = app.dailyProteinConsumedGrams(date, excludeBeverages: true);
+      points.add(_HistoryPoint(date: date, value: value <= 0 ? null : value));
     }
     return points;
   }
@@ -634,8 +633,7 @@ class _LogScreenState extends State<LogScreen> {
     int days,
   ) {
     final points = _buildProteinHistoryPoints(app, endDate, days);
-    final values =
-        points.map((p) => p.value).whereType<double>().toList();
+    final values = points.map((p) => p.value).whereType<double>().toList();
     if (values.isEmpty) return null;
     final sum = values.reduce((a, b) => a + b);
     return sum / values.length;
@@ -648,8 +646,7 @@ class _LogScreenState extends State<LogScreen> {
     AppLocalizations t,
   ) {
     final points = _buildHistoryPoints(app, endDate, days, t);
-    final values =
-        points.map((p) => p.value).whereType<double>().toList();
+    final values = points.map((p) => p.value).whereType<double>().toList();
     if (values.isEmpty) return null;
     final sum = values.reduce((a, b) => a + b);
     return sum / values.length;
@@ -659,25 +656,20 @@ class _LogScreenState extends State<LogScreen> {
     AppState app,
     AppLocalizations t,
   ) {
-    final currentAvg = _averageProteinHistory(
-        app, _selectedDate, _historyDays);
+    final currentAvg = _averageProteinHistory(app, _selectedDate, _historyDays);
     if (currentAvg == null) {
       return t.proteinTrendSummaryNoData;
     }
-    final previousEnd =
-        _selectedDate.subtract(Duration(days: _historyDays));
-    final previousAvg =
-        _averageProteinHistory(app, previousEnd, _historyDays);
+    final previousEnd = _selectedDate.subtract(Duration(days: _historyDays));
+    final previousAvg = _averageProteinHistory(app, previousEnd, _historyDays);
     final avgRounded = currentAvg.round();
     if (previousAvg == null || previousAvg <= 0) {
       return t.proteinTrendSummaryNoPrev(avgRounded.toString());
     }
-    final diff =
-        ((currentAvg - previousAvg) / previousAvg * 100).round();
+    final diff = ((currentAvg - previousAvg) / previousAvg * 100).round();
     final periodLabel = _historyCompareLabel(t);
     if (diff == 0) {
-      return t.proteinTrendSummarySame(
-          avgRounded.toString(), periodLabel);
+      return t.proteinTrendSummarySame(avgRounded.toString(), periodLabel);
     }
     if (diff > 0) {
       return t.proteinTrendSummaryHigher(
@@ -718,20 +710,16 @@ class _LogScreenState extends State<LogScreen> {
     if (currentAvg == null) {
       return t.calorieTrendSummaryNoData;
     }
-    final previousEnd =
-        _selectedDate.subtract(Duration(days: _historyDays));
-    final previousAvg =
-        _averageHistoryValue(app, previousEnd, _historyDays, t);
+    final previousEnd = _selectedDate.subtract(Duration(days: _historyDays));
+    final previousAvg = _averageHistoryValue(app, previousEnd, _historyDays, t);
     final avgRounded = currentAvg.round();
     if (previousAvg == null || previousAvg <= 0) {
       return t.calorieTrendSummaryNoPrev(avgRounded.toString());
     }
-    final diff =
-        ((currentAvg - previousAvg) / previousAvg * 100).round();
+    final diff = ((currentAvg - previousAvg) / previousAvg * 100).round();
     final periodLabel = _historyCompareLabel(t);
     if (diff == 0) {
-      return t.calorieTrendSummarySame(
-          avgRounded.toString(), periodLabel);
+      return t.calorieTrendSummarySame(avgRounded.toString(), periodLabel);
     }
     if (diff > 0) {
       return t.calorieTrendSummaryHigher(
@@ -788,8 +776,7 @@ class _LogScreenState extends State<LogScreen> {
   ) {
     final selected = _historyDays == days;
     final color = selected ? Colors.white : Colors.transparent;
-    final textColor =
-        selected ? theme.colorScheme.primary : Colors.black54;
+    final textColor = selected ? theme.colorScheme.primary : Colors.black54;
     return InkWell(
       borderRadius: BorderRadius.circular(999),
       onTap: () {
@@ -834,11 +821,9 @@ class _LogScreenState extends State<LogScreen> {
     AppTheme appTheme,
     ThemeData theme,
   ) {
-    final points =
-        _buildHistoryPoints(app, _selectedDate, _historyDays, t);
+    final points = _buildHistoryPoints(app, _selectedDate, _historyDays, t);
     final hasData = points.any((p) => p.value != null);
-    final targetRange =
-        _averageTargetRange(app, _selectedDate, _historyDays);
+    final targetRange = _averageTargetRange(app, _selectedDate, _historyDays);
     final targetLabel = targetRange == null
         ? null
         : t.calorieTrendTargetLabel(
@@ -943,8 +928,7 @@ class _LogScreenState extends State<LogScreen> {
     AppTheme appTheme,
     ThemeData theme,
   ) {
-    final points =
-        _buildProteinHistoryPoints(app, _selectedDate, _historyDays);
+    final points = _buildProteinHistoryPoints(app, _selectedDate, _historyDays);
     final hasData = points.any((p) => p.value != null);
     final targetMid = _proteinTargetMid(app);
     final targetLabel = targetMid == null
@@ -1256,13 +1240,11 @@ class _LogScreenState extends State<LogScreen> {
     final tags = _displayTags(entry, t);
     return GestureDetector(
       onTap: () {
-        final initialIndex = group.indexOf(entry);
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => MealItemsScreen(
               group: group,
-              initialIndex:
-                  initialIndex >= 0 ? (group.length - 1 - initialIndex) : null,
+              initialEntryId: entry.id,
             ),
           ),
         );
@@ -1374,7 +1356,8 @@ class _LogScreenState extends State<LogScreen> {
             Column(
               children: [
                 for (final group in groups)
-                  for (final entry in group) _mealRow(context, app, entry, group),
+                  for (final entry in group)
+                    _mealRow(context, app, entry, group),
               ],
             ),
           ],
@@ -1527,8 +1510,10 @@ class _LogScreenState extends State<LogScreen> {
     var groupsByType = app.mealGroupsByTypeForDate(effectiveDate);
     var hasAnyGroup = groupsByType.values.any((groups) => groups.isNotEmpty);
     if (!hasAnyGroup && app.entries.isNotEmpty) {
-      final latest = app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
-      effectiveDate = DateTime(latest.time.year, latest.time.month, latest.time.day);
+      final latest =
+          app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
+      effectiveDate =
+          DateTime(latest.time.year, latest.time.month, latest.time.day);
       effectiveMonth = DateTime(effectiveDate.year, effectiveDate.month, 1);
       effectiveDays = _daysInMonth(effectiveMonth);
       groupsByType = app.mealGroupsByTypeForDate(effectiveDate);
@@ -1797,9 +1782,8 @@ class _CalorieHistoryPainter extends CustomPainter {
       size.height - 10,
     );
 
-    final xStep = points.length > 1
-        ? chartRect.width / (points.length - 1)
-        : 0.0;
+    final xStep =
+        points.length > 1 ? chartRect.width / (points.length - 1) : 0.0;
 
     final segments = <List<Offset>>[];
     var current = <Offset>[];
@@ -1839,7 +1823,8 @@ class _CalorieHistoryPainter extends CustomPainter {
 
     for (final segment in segments) {
       if (segment.length == 1) {
-        canvas.drawCircle(segment.first, 3, linePaint..style = PaintingStyle.fill);
+        canvas.drawCircle(
+            segment.first, 3, linePaint..style = PaintingStyle.fill);
         linePaint.style = PaintingStyle.stroke;
         continue;
       }
@@ -1889,8 +1874,7 @@ class _CalorieHistoryPainter extends CustomPainter {
       ),
       textDirection: ui.TextDirection.ltr,
     )..layout(maxWidth: chartRect.width);
-    final labelY =
-        ((yMin + yMax) / 2) - textPainter.height / 2;
+    final labelY = ((yMin + yMax) / 2) - textPainter.height / 2;
     textPainter.paint(canvas, Offset(chartRect.left, labelY));
   }
 
@@ -1913,9 +1897,8 @@ class _CalorieHistoryPainter extends CustomPainter {
       }
     }
     if (minValue == null || maxValue == null) return;
-    final xStep = points.length > 1
-        ? chartRect.width / (points.length - 1)
-        : 0.0;
+    final xStep =
+        points.length > 1 ? chartRect.width / (points.length - 1) : 0.0;
     final minT = ((minValue! - minY) / (maxY - minY)).clamp(0.0, 1.0);
     final maxT = ((maxValue! - minY) / (maxY - minY)).clamp(0.0, 1.0);
     final minPoint = Offset(
@@ -1946,14 +1929,12 @@ class _CalorieHistoryPainter extends CustomPainter {
     _drawValueLabel(canvas, chartRect, maxPoint, maxValue!.round().toString(),
         isAbove: true);
     if (minIndex != maxIndex) {
-      _drawValueLabel(canvas, chartRect, minPoint,
-          minValue!.round().toString(),
+      _drawValueLabel(canvas, chartRect, minPoint, minValue!.round().toString(),
           isAbove: false);
     }
   }
 
-  void _drawValueLabel(Canvas canvas, Rect chartRect, Offset point,
-      String text,
+  void _drawValueLabel(Canvas canvas, Rect chartRect, Offset point, String text,
       {required bool isAbove}) {
     final painter = TextPainter(
       text: TextSpan(
@@ -1968,9 +1949,7 @@ class _CalorieHistoryPainter extends CustomPainter {
     )..layout();
     var dx = point.dx - painter.width / 2;
     dx = dx.clamp(chartRect.left, chartRect.right - painter.width);
-    final dy = isAbove
-        ? point.dy - painter.height - 6
-        : point.dy + 6;
+    final dy = isAbove ? point.dy - painter.height - 6 : point.dy + 6;
     painter.paint(canvas, Offset(dx, dy));
   }
 
@@ -1996,8 +1975,7 @@ class _CalorieHistoryPainter extends CustomPainter {
     return path;
   }
 
-  void _drawDashedLine(
-      Canvas canvas, Offset start, Offset end, Paint paint) {
+  void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint) {
     const dashWidth = 4.0;
     const dashGap = 4.0;
     final distance = (end.dx - start.dx).abs();

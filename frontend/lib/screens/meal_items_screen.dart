@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -16,6 +16,7 @@ class MealItemsScreen extends StatefulWidget {
     super.key,
     required this.group,
     this.initialIndex,
+    this.initialEntryId,
     this.autoReturnToDayMeals = false,
     this.autoReturnDate,
     this.autoReturnMealId,
@@ -23,6 +24,7 @@ class MealItemsScreen extends StatefulWidget {
 
   final List<MealEntry> group;
   final int? initialIndex;
+  final String? initialEntryId;
   final bool autoReturnToDayMeals;
   final DateTime? autoReturnDate;
   final String? autoReturnMealId;
@@ -38,7 +40,14 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   Timer? _autoTimer;
   bool _autoTimerStarted = false;
 
-  Future<void> _confirmDelete(BuildContext context, AppState app, MealEntry entry) async {
+  int _entryOrderAsc(MealEntry a, MealEntry b) {
+    final byTime = a.time.compareTo(b.time);
+    if (byTime != 0) return byTime;
+    return a.id.compareTo(b.id);
+  }
+
+  Future<void> _confirmDelete(
+      BuildContext context, AppState app, MealEntry entry) async {
     final t = AppLocalizations.of(context)!;
     final result = await showDialog<bool>(
       context: context,
@@ -46,8 +55,12 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
         title: Text(t.delete),
         content: Text(t.deleteConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.delete)),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(t.cancel)),
+          ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(t.delete)),
         ],
       ),
     );
@@ -60,9 +73,20 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   @override
   void initState() {
     super.initState();
-    final maxIndex = math.max(0, widget.group.length - 1);
-    _pageIndex = (widget.initialIndex ?? 0).clamp(0, maxIndex);
-    _pageController = PageController(viewportFraction: 1, initialPage: _pageIndex);
+    final sortedForInit = List<MealEntry>.from(widget.group)
+      ..sort(_entryOrderAsc);
+    final maxIndex = math.max(0, sortedForInit.length - 1);
+    int resolvedIndex = widget.initialIndex ?? 0;
+    final targetId = widget.initialEntryId?.trim() ?? '';
+    if (targetId.isNotEmpty) {
+      final idIndex = sortedForInit.indexWhere((entry) => entry.id == targetId);
+      if (idIndex >= 0) {
+        resolvedIndex = idIndex;
+      }
+    }
+    _pageIndex = resolvedIndex.clamp(0, maxIndex);
+    _pageController =
+        PageController(viewportFraction: 1, initialPage: _pageIndex);
   }
 
   @override
@@ -95,7 +119,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     });
   }
 
-  Widget _itemCard(BuildContext context, AppState app, MealEntry entry, String plateAsset) {
+  Widget _itemCard(
+      BuildContext context, AppState app, MealEntry entry, String plateAsset) {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     return GestureDetector(
@@ -134,18 +159,23 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood,
+                                entry.overrideFoodName ??
+                                    entry.result?.foodName ??
+                                    t.unknownFood,
                                 style: AppTextStyles.title2(context),
                               ),
                             ),
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
                               child: IconButton(
-                                onPressed: () => _editFoodName(context, app, entry),
-                                icon: const Text('✏️', style: TextStyle(fontSize: 16)),
+                                onPressed: () =>
+                                    _editFoodName(context, app, entry),
+                                icon: const Text('✏️',
+                                    style: TextStyle(fontSize: 16)),
                                 tooltip: t.editFoodName,
                                 padding: const EdgeInsets.all(6),
-                                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                                constraints: const BoxConstraints(
+                                    minWidth: 40, minHeight: 40),
                               ),
                             ),
                             Padding(
@@ -158,30 +188,38 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                     SnackBar(content: Text(t.customAdded)),
                                   );
                                 },
-                                icon: const Text('📌', style: TextStyle(fontSize: 16)),
+                                icon: const Text('📌',
+                                    style: TextStyle(fontSize: 16)),
                                 tooltip: t.customAdd,
                                 padding: const EdgeInsets.all(6),
-                                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                                constraints: const BoxConstraints(
+                                    minWidth: 40, minHeight: 40),
                               ),
                             ),
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
                               child: IconButton(
-                                onPressed: () => _reanalyzeEntry(context, app, entry),
-                                icon: const Text('🔄', style: TextStyle(fontSize: 16)),
+                                onPressed: () =>
+                                    _reanalyzeEntry(context, app, entry),
+                                icon: const Text('🔄',
+                                    style: TextStyle(fontSize: 16)),
                                 tooltip: t.reanalyzeLabel,
                                 padding: const EdgeInsets.all(6),
-                                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                                constraints: const BoxConstraints(
+                                    minWidth: 40, minHeight: 40),
                               ),
                             ),
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
                               child: IconButton(
-                                onPressed: () => _confirmDelete(context, app, entry),
-                                icon: const Text('🗑️', style: TextStyle(fontSize: 16)),
+                                onPressed: () =>
+                                    _confirmDelete(context, app, entry),
+                                icon: const Text('🗑️',
+                                    style: TextStyle(fontSize: 16)),
                                 tooltip: t.delete,
                                 padding: const EdgeInsets.all(6),
-                                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                                constraints: const BoxConstraints(
+                                    minWidth: 40, minHeight: 40),
                               ),
                             ),
                           ],
@@ -228,9 +266,11 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
   }
 
-  Future<void> _editFoodName(BuildContext context, AppState app, MealEntry entry) async {
+  Future<void> _editFoodName(
+      BuildContext context, AppState app, MealEntry entry) async {
     final t = AppLocalizations.of(context)!;
-    final controller = TextEditingController(text: entry.overrideFoodName ?? entry.result?.foodName ?? '');
+    final controller = TextEditingController(
+        text: entry.overrideFoodName ?? entry.result?.foodName ?? '');
     final locale = Localizations.localeOf(context).toLanguageTag();
     final result = await showDialog<String>(
       context: context,
@@ -256,7 +296,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     await app.updateEntryFoodName(entry, result, locale);
   }
 
-  Future<void> _editEntryTime(BuildContext context, AppState app, MealEntry entry) async {
+  Future<void> _editEntryTime(
+      BuildContext context, AppState app, MealEntry entry) async {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: entry.time,
@@ -279,7 +320,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     app.updateEntryTime(entry, nextTime);
   }
 
-  Future<void> _pickLabelImage(BuildContext context, AppState app, MealEntry entry) async {
+  Future<void> _pickLabelImage(
+      BuildContext context, AppState app, MealEntry entry) async {
     final t = AppLocalizations.of(context)!;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -308,7 +350,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     await app.addLabelToEntry(entry, file, locale);
   }
 
-  Future<void> _reanalyzeEntry(BuildContext context, AppState app, MealEntry entry) async {
+  Future<void> _reanalyzeEntry(
+      BuildContext context, AppState app, MealEntry entry) async {
     final locale = Localizations.localeOf(context).toLanguageTag();
     await app.reanalyzeEntry(entry, locale);
   }
@@ -322,7 +365,9 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   ) {
     return Row(
       children: [
-        Text('${t.portionLabel}${entry.portionPercent}%', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        Text('${t.portionLabel}${entry.portionPercent}%',
+            style: AppTextStyles.body(context)
+                .copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(width: 12),
         Expanded(
           child: SliderTheme(
@@ -365,14 +410,19 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     }
     final reason = (entry.lastAnalyzeReason ?? '').trim().toLowerCase();
     final source = (entry.result?.source ?? '').trim().toLowerCase();
-    final nutritionSource = (entry.result?.nutritionSource ?? '').trim().toLowerCase();
+    final nutritionSource =
+        (entry.result?.nutritionSource ?? '').trim().toLowerCase();
     if (reason == 'name_ai_catalog_error') {
       return isEn ? 'AI estimate (catalog unavailable)' : 'AI估算（資料庫異常）';
     }
-    if (nutritionSource == 'catalog' || source == 'catalog' || reason == 'name_catalog') {
+    if (nutritionSource == 'catalog' ||
+        source == 'catalog' ||
+        reason == 'name_catalog') {
       return isEn ? 'Catalog' : '資料庫';
     }
-    if (nutritionSource == 'custom' || source == 'custom' || reason == 'custom_use') {
+    if (nutritionSource == 'custom' ||
+        source == 'custom' ||
+        reason == 'custom_use') {
       return isEn ? 'Custom' : '自訂';
     }
     if (nutritionSource == 'label' || source == 'label') {
@@ -387,12 +437,17 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
   Color _analysisSourceColor(MealEntry? entry) {
     final reason = (entry?.lastAnalyzeReason ?? '').trim().toLowerCase();
     final source = (entry?.result?.source ?? '').trim().toLowerCase();
-    final nutritionSource = (entry?.result?.nutritionSource ?? '').trim().toLowerCase();
+    final nutritionSource =
+        (entry?.result?.nutritionSource ?? '').trim().toLowerCase();
     if (reason == 'name_ai_catalog_error') return const Color(0xFFD16A00);
-    if (nutritionSource == 'catalog' || source == 'catalog' || reason == 'name_catalog') {
+    if (nutritionSource == 'catalog' ||
+        source == 'catalog' ||
+        reason == 'name_catalog') {
       return const Color(0xFF2E9B66);
     }
-    if (nutritionSource == 'custom' || source == 'custom' || reason == 'custom_use') {
+    if (nutritionSource == 'custom' ||
+        source == 'custom' ||
+        reason == 'custom_use') {
       return const Color(0xFF2F80ED);
     }
     if (nutritionSource == 'label' || source == 'label') {
@@ -430,8 +485,10 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final theme = Theme.of(context);
-    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
-    final sorted = List<MealEntry>.from(widget.group)..sort((a, b) => a.time.compareTo(b.time));
+    final plateAsset = app.profile.plateAsset.isEmpty
+        ? kDefaultPlateAsset
+        : app.profile.plateAsset;
+    final sorted = List<MealEntry>.from(widget.group)..sort(_entryOrderAsc);
     if (_pageIndex >= sorted.length) {
       _pageIndex = 0;
     }
@@ -459,7 +516,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                   controller: _pageController,
                   onPageChanged: (index) => setState(() => _pageIndex = index),
                   itemCount: sorted.length,
-                  itemBuilder: (context, index) => _itemCard(context, app, sorted[index], plateAsset),
+                  itemBuilder: (context, index) =>
+                      _itemCard(context, app, sorted[index], plateAsset),
                 ),
               ),
               const SizedBox(height: 12),
@@ -468,7 +526,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                 child: SizedBox(
                   width: contentWidth,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 18),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
@@ -494,11 +553,19 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                               const SizedBox(height: 8),
                               Text(
                                 () {
-                                  final summary = currentEntry?.result?.dishSummary?.trim() ?? '';
+                                  final summary = currentEntry
+                                          ?.result?.dishSummary
+                                          ?.trim() ??
+                                      '';
                                   if (summary.isNotEmpty) return summary;
-                                  final labelName = (currentEntry?.labelResult?.labelName ?? '').trim();
+                                  final labelName =
+                                      (currentEntry?.labelResult?.labelName ??
+                                              '')
+                                          .trim();
                                   if (currentEntry?.labelResult != null) {
-                                    return labelName.isNotEmpty ? '${t.labelSummaryFallback}：$labelName' : t.labelSummaryFallback;
+                                    return labelName.isNotEmpty
+                                        ? '${t.labelSummaryFallback}：$labelName'
+                                        : t.labelSummaryFallback;
                                   }
                                   return t.detailAiEmpty;
                                 }(),
@@ -507,31 +574,40 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              if ((currentEntry?.lastAnalyzedNote ?? '').trim().isNotEmpty) ...[
+                              if ((currentEntry?.lastAnalyzedNote ?? '')
+                                  .trim()
+                                  .isNotEmpty) ...[
                                 const SizedBox(height: 8),
                                 Text(
                                   currentEntry!.lastAnalyzedNote!.trim(),
-                                  style: AppTextStyles.caption(context).copyWith(
+                                  style:
+                                      AppTextStyles.caption(context).copyWith(
                                     color: const Color(0xFFD16A00),
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
-                              if (currentEntry?.result?.judgementTags.isNotEmpty == true) ...[
+                              if (currentEntry
+                                      ?.result?.judgementTags.isNotEmpty ==
+                                  true) ...[
                                 const SizedBox(height: 10),
                                 Wrap(
                                   spacing: 6,
                                   runSpacing: 6,
-                                  children: currentEntry!.result!.judgementTags.map((tag) {
+                                  children: currentEntry!.result!.judgementTags
+                                      .map((tag) {
                                     return Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: theme.colorScheme.primary.withOpacity(0.12),
+                                        color: theme.colorScheme.primary
+                                            .withOpacity(0.12),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
                                         tag,
-                                        style: AppTextStyles.caption(context).copyWith(
+                                        style: AppTextStyles.caption(context)
+                                            .copyWith(
                                           color: theme.colorScheme.primary,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -540,11 +616,13 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                   }).toList(),
                                 ),
                               ],
-                              if (currentEntry?.result?.foodItems.isNotEmpty == true) ...[
+                              if (currentEntry?.result?.foodItems.isNotEmpty ==
+                                  true) ...[
                                 const SizedBox(height: 8),
                                 Text(
                                   '${isEnglish ? 'Foods' : '食物'}：${currentEntry!.result!.foodItems.join('、')}',
-                                  style: AppTextStyles.caption(context).copyWith(color: Colors.black87),
+                                  style: AppTextStyles.caption(context)
+                                      .copyWith(color: Colors.black87),
                                 ),
                               ],
                             ],
@@ -555,9 +633,11 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: _analysisSourceColor(currentEntry).withOpacity(0.15),
+                                color: _analysisSourceColor(currentEntry)
+                                    .withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
@@ -570,14 +650,21 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                             ),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withOpacity(0.14),
+                                color:
+                                    theme.colorScheme.primary.withOpacity(0.14),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
-                                currentEntry == null ? t.calorieUnknown : app.entryCalorieRangeLabel(currentEntry, t),
-                                style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
+                                currentEntry == null
+                                    ? t.calorieUnknown
+                                    : app.entryCalorieRangeLabel(
+                                        currentEntry, t),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.colorScheme.primary),
                               ),
                             ),
                           ],
@@ -619,8 +706,10 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                               ),
                               if (currentEntry != null)
                                 TextButton.icon(
-                                  onPressed: () => _pickLabelImage(context, app, currentEntry),
-                                  icon: const Text('🧾', style: TextStyle(fontSize: 16)),
+                                  onPressed: () => _pickLabelImage(
+                                      context, app, currentEntry),
+                                  icon: const Text('🧾',
+                                      style: TextStyle(fontSize: 16)),
                                   label: Text(t.addLabel),
                                 ),
                             ],
@@ -629,8 +718,10 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                           NutritionChart(
                             macros: app.scaledMacrosForEntry(currentEntry!),
                             style: _chartStyle(app.profile.nutritionChartStyle),
-                            valueMode: _valueMode(app.profile.nutritionValueMode),
-                            calories: app.calorieRangeMid(currentEntry!.result?.calorieRange),
+                            valueMode:
+                                _valueMode(app.profile.nutritionValueMode),
+                            calories: app.calorieRangeMid(
+                                currentEntry!.result?.calorieRange),
                             t: t,
                           ),
                         ],
@@ -669,7 +760,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                 fit: BoxFit.cover,
                               ),
                             ),
-                          if (currentEntry!.labelImageBytes != null) const SizedBox(width: 12),
+                          if (currentEntry!.labelImageBytes != null)
+                            const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,25 +775,35 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                       ),
                                     ),
                                     IconButton(
-                                      onPressed: () => app.removeLabelFromEntry(currentEntry, Localizations.localeOf(context).toLanguageTag()),
-                                      icon: const Text('🗑️', style: TextStyle(fontSize: 16)),
+                                      onPressed: () => app.removeLabelFromEntry(
+                                          currentEntry,
+                                          Localizations.localeOf(context)
+                                              .toLanguageTag()),
+                                      icon: const Text('🗑️',
+                                          style: TextStyle(fontSize: 16)),
                                       tooltip: t.removeLabel,
                                       padding: const EdgeInsets.all(6),
-                                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                                      constraints: const BoxConstraints(
+                                          minWidth: 36, minHeight: 36),
                                     ),
                                   ],
                                 ),
-                                if ((currentEntry!.labelResult!.labelName ?? '').trim().isNotEmpty) ...[
+                                if ((currentEntry!.labelResult!.labelName ?? '')
+                                    .trim()
+                                    .isNotEmpty) ...[
                                   const SizedBox(height: 6),
                                   Text(
-                                    currentEntry!.labelResult!.labelName!.trim(),
-                                    style: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600),
+                                    currentEntry!.labelResult!.labelName!
+                                        .trim(),
+                                    style: AppTextStyles.caption(context)
+                                        .copyWith(fontWeight: FontWeight.w600),
                                   ),
                                 ],
                                 const SizedBox(height: 6),
                                 Text(
                                   '${t.calorieLabel}：${currentEntry!.labelResult!.calorieRange}',
-                                  style: AppTextStyles.caption(context).copyWith(color: Colors.black87),
+                                  style: AppTextStyles.caption(context)
+                                      .copyWith(color: Colors.black87),
                                 ),
                               ],
                             ),

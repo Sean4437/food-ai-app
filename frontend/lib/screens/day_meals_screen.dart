@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -37,10 +37,15 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
       children: [
         SizedBox(
           width: 64,
-          child: Text(label, style: AppTextStyles.caption(context).copyWith(color: Colors.black54, fontWeight: FontWeight.w600)),
+          child: Text(label,
+              style: AppTextStyles.caption(context).copyWith(
+                  color: Colors.black54, fontWeight: FontWeight.w600)),
         ),
         const SizedBox(width: 6),
-        Expanded(child: Text(value, style: AppTextStyles.caption(context).copyWith(color: Colors.black54))),
+        Expanded(
+            child: Text(value,
+                style: AppTextStyles.caption(context)
+                    .copyWith(color: Colors.black54))),
       ],
     );
   }
@@ -54,7 +59,6 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     }
     return '${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - ${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}';
   }
-
 
   @override
   void dispose() {
@@ -83,19 +87,25 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
 
   Widget _photoStack(List<MealEntry> group, int groupIndex) {
     final app = AppStateScope.of(context);
-    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
-    final displayGroup = List<MealEntry>.from(group)..sort((a, b) => a.time.compareTo(b.time));
-    final selectedIndex = (_groupSelectedIndex[groupIndex] ?? 0).clamp(0, displayGroup.length - 1);
+    final plateAsset = app.profile.plateAsset.isEmpty
+        ? kDefaultPlateAsset
+        : app.profile.plateAsset;
+    final displayGroup = List<MealEntry>.from(group)
+      ..sort((a, b) => a.time.compareTo(b.time));
+    final selectedIndex = (_groupSelectedIndex[groupIndex] ?? 0)
+        .clamp(0, displayGroup.length - 1);
     return PlatePolygonStack(
       images: displayGroup.map((entry) => entry.imageBytes).toList(),
       plateAsset: plateAsset,
       selectedIndex: selectedIndex,
-      onSelect: (index) => setState(() => _groupSelectedIndex[groupIndex] = index),
+      onSelect: (index) =>
+          setState(() => _groupSelectedIndex[groupIndex] = index),
       onOpen: (index) => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => MealItemsScreen(
             group: displayGroup,
             initialIndex: index,
+            initialEntryId: displayGroup[index].id,
           ),
         ),
       ),
@@ -104,7 +114,8 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     );
   }
 
-  Widget _mealPreviewCard(BuildContext context, List<MealEntry> group, int groupIndex) {
+  Widget _mealPreviewCard(
+      BuildContext context, List<MealEntry> group, int groupIndex) {
     return SizedBox(
       height: 300,
       child: Center(child: _photoStack(group, groupIndex)),
@@ -112,7 +123,8 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
   }
 
   Widget _thumbnailRow(List<MealEntry> group) {
-    final sorted = List<MealEntry>.from(group)..sort((a, b) => b.time.compareTo(a.time));
+    final sorted = List<MealEntry>.from(group)
+      ..sort((a, b) => b.time.compareTo(a.time));
     if (sorted.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -169,11 +181,14 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
         items.add(summary);
         continue;
       }
-      final fallback = entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
+      final fallback =
+          entry.overrideFoodName ?? entry.result?.foodName ?? t.unknownFood;
       if (fallback.isNotEmpty) items.add(fallback);
     }
     if (items.isEmpty) {
-      return Text(t.detailAiEmpty, style: AppTextStyles.caption(context).copyWith(color: Colors.black54));
+      return Text(t.detailAiEmpty,
+          style:
+              AppTextStyles.caption(context).copyWith(color: Colors.black54));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +196,9 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
         for (final item in items)
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
-            child: Text('• $item', style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+            child: Text('• $item',
+                style: AppTextStyles.caption(context)
+                    .copyWith(color: Colors.black54)),
           ),
       ],
     );
@@ -193,9 +210,12 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     final app = AppStateScope.of(context);
     final theme = Theme.of(context);
     final groups = app.mealGroupsForDateAll(widget.date);
-    if (widget.initialMealId != null && !_didApplyInitial && groups.isNotEmpty) {
+    if (widget.initialMealId != null &&
+        !_didApplyInitial &&
+        groups.isNotEmpty) {
       final initialIndex = groups.indexWhere(
-        (group) => (group.first.mealId ?? group.first.id) == widget.initialMealId,
+        (group) =>
+            (group.first.mealId ?? group.first.id) == widget.initialMealId,
       );
       if (initialIndex >= 0) {
         _pageIndex = initialIndex;
@@ -212,9 +232,12 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
       _pageIndex = 0;
     }
     final currentGroup = groups.isNotEmpty ? groups[_pageIndex] : null;
-    final summary = currentGroup == null ? null : app.buildMealSummary(currentGroup, t);
-    final advice = currentGroup == null ? null : app.mealAdviceForGroup(currentGroup, t);
-    final formatter = DateFormat('yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
+    final summary =
+        currentGroup == null ? null : app.buildMealSummary(currentGroup, t);
+    final advice =
+        currentGroup == null ? null : app.mealAdviceForGroup(currentGroup, t);
+    final formatter = DateFormat(
+        'yyyy/MM/dd', Localizations.localeOf(context).toLanguageTag());
     if (currentGroup != null) {
       final locale = Localizations.localeOf(context).toLanguageTag();
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -240,181 +263,194 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            if (groups.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(t.noEntries, style: AppTextStyles.caption(context)),
-                ),
-              )
-            else ...[
-              SizedBox(
-                height: 400,
-                child: PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (index) => setState(() => _pageIndex = index),
-                  itemCount: groups.length,
-                  itemBuilder: (context, index) => Center(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: _mealPreviewCard(context, groups[index], index),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.topCenter,
-                child: SizedBox(
-                  width: contentWidth,
+              if (groups.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Column(
+                    child: Text(t.noEntries,
+                        style: AppTextStyles.caption(context)),
+                  ),
+                )
+              else ...[
+                SizedBox(
+                  height: 400,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) =>
+                        setState(() => _pageIndex = index),
+                    itemCount: groups.length,
+                    itemBuilder: (context, index) => Center(
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child:
+                              _mealPreviewCard(context, groups[index], index),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: contentWidth,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (currentGroup != null)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  _mealTypeLabel(currentGroup.first.type, t),
+                                  style: AppTextStyles.title2(context),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _groupTimeLabel(currentGroup),
+                                  style: AppTextStyles.caption(context)
+                                      .copyWith(color: Colors.black45),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.14),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Text(
+                                    summary?.calorieRange ?? t.calorieUnknown,
+                                    style: AppTextStyles.body(context).copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: theme.colorScheme.primary),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (currentGroup != null) ...[],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: contentWidth,
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (currentGroup != null)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                _mealTypeLabel(currentGroup.first.type, t),
-                                style: AppTextStyles.title2(context),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _groupTimeLabel(currentGroup),
-                                style: AppTextStyles.caption(context).copyWith(color: Colors.black45),
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary.withOpacity(0.14),
-                                  borderRadius: BorderRadius.circular(16),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
                                 ),
-                                child: Text(
-                                  summary?.calorieRange ?? t.calorieUnknown,
-                                  style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w700, color: theme.colorScheme.primary),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(t.dishSummaryLabel,
+                                    style: AppTextStyles.title2(context)),
+                                const SizedBox(height: 6),
+                                _dishSummaryBlock(currentGroup ?? const [], t),
+                              ],
+                            ),
                           ),
+                        ),
                         if (currentGroup != null) ...[
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: _thumbnailRow(currentGroup),
+                          ),
                         ],
                       ],
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.topCenter,
-                child: SizedBox(
-                  width: contentWidth,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 12,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: contentWidth,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(t.dishSummaryLabel, style: AppTextStyles.title2(context)),
-                              const SizedBox(height: 6),
-                              _dishSummaryBlock(currentGroup ?? const [], t),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
-                      if (currentGroup != null) ...[
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 12,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: _thumbnailRow(currentGroup),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.topCenter,
-                child: SizedBox(
-                  width: contentWidth,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.nextMealSectionTitle, style: AppTextStyles.title2(context)),
-                        const SizedBox(height: 6),
-                        _adviceRow(t.nextSelfCookLabel, advice?.selfCook ?? t.nextSelfCookHint),
-                        const SizedBox(height: 6),
-                        _adviceRow(t.nextConvenienceLabel, advice?.convenience ?? t.nextConvenienceHint),
-                        const SizedBox(height: 6),
-                        _adviceRow(t.nextBentoLabel, advice?.bento ?? t.nextBentoHint),
-                        const SizedBox(height: 6),
-                        _adviceRow(t.nextOtherLabel, advice?.other ?? t.nextOtherHint),
-                      ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t.nextMealSectionTitle,
+                              style: AppTextStyles.title2(context)),
+                          const SizedBox(height: 6),
+                          _adviceRow(t.nextSelfCookLabel,
+                              advice?.selfCook ?? t.nextSelfCookHint),
+                          const SizedBox(height: 6),
+                          _adviceRow(t.nextConvenienceLabel,
+                              advice?.convenience ?? t.nextConvenienceHint),
+                          const SizedBox(height: 6),
+                          _adviceRow(t.nextBentoLabel,
+                              advice?.bento ?? t.nextBentoHint),
+                          const SizedBox(height: 6),
+                          _adviceRow(t.nextOtherLabel,
+                              advice?.other ?? t.nextOtherHint),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
             ],
           ),
         ),
