@@ -68,6 +68,22 @@ String _catalogFallbackMessage(BuildContext context) {
       : '資料庫查詢失敗，已改用 AI 估算。';
 }
 
+String _nameLookupErrorMessage(BuildContext context, String code) {
+  final isEn = Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
+  switch (code) {
+    case 'catalog_not_found':
+      return isEn
+          ? 'No match found in the food database. Try a shorter name or add a custom food.'
+          : '資料庫找不到這個食物，請改用較短名稱或先新增自訂食物。';
+    case 'catalog_unavailable':
+      return isEn
+          ? 'Food database is temporarily unavailable. Please try again later.'
+          : '資料庫暫時無法使用，請稍後再試。';
+    default:
+      return isEn ? 'Name lookup failed.' : '名稱查詢失敗。';
+  }
+}
+
 Future<RecordResult?> showRecordSheet(
   BuildContext context,
   AppState app, {
@@ -146,6 +162,12 @@ Future<RecordResult?> showRecordSheet(
         overrideTime: overrideTime,
         fixedType: fixedType,
       );
+    } on NameLookupException catch (err) {
+      if (!context.mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_nameLookupErrorMessage(context, err.code))),
+      );
+      return null;
     } catch (_) {
       if (!context.mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(

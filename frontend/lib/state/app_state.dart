@@ -80,6 +80,14 @@ enum AppFeature {
   suggest,
 }
 
+class NameLookupException implements Exception {
+  NameLookupException(this.code);
+  final String code;
+
+  @override
+  String toString() => 'NameLookupException($code)';
+}
+
 class AppState extends ChangeNotifier {
   AppState()
       : _api = ApiService(baseUrl: _resolveBaseUrl()),
@@ -1208,7 +1216,6 @@ class AppState extends ChangeNotifier {
 
     List<Map<String, dynamic>> catalogItems = const [];
     bool catalogLookupFailed = false;
-    String? catalogLookupErrorCode;
     final mergedCatalogItems = <String, Map<String, dynamic>>{};
     for (final candidate in _catalogLookupCandidates(trimmed)) {
       try {
@@ -1232,7 +1239,7 @@ class AppState extends ChangeNotifier {
         }
       } on CatalogSearchException catch (err) {
         catalogLookupFailed = true;
-        catalogLookupErrorCode = err.code;
+        debugPrint('catalog search failed: ${err.code}');
       }
       if (mergedCatalogItems.length >= 8) {
         break;
@@ -1258,62 +1265,10 @@ class AppState extends ChangeNotifier {
         reason: 'name_catalog',
       );
     }
-
-    final result = await _api.analyzeName(
-      trimmed,
-      accessToken: _accessToken(),
-      lang: locale,
-      context: historyContext,
-      mealType: _mealTypeKey(mealType),
-      portionPercent: 100,
-      adviceMode: 'current_meal',
-      containerType: profile.containerType,
-      containerSize: profile.containerSize,
-      containerDepth: profile.containerDepth,
-      containerDiameterCm: profile.containerDiameterCm,
-      containerCapacityMl: profile.containerCapacityMl,
-      profile: {
-        'height_cm': profile.heightCm,
-        'weight_kg': profile.weightKg,
-        'age': profile.age,
-        'gender': profile.gender,
-        'container_type': profile.containerType,
-        'container_size': profile.containerSize,
-        'container_depth': profile.containerDepth,
-        'container_diameter_cm': profile.containerDiameterCm,
-        'container_capacity_ml': profile.containerCapacityMl,
-        'tone': profile.tone,
-        'persona': profile.persona,
-        'activity_level': dailyActivityLevel(now),
-        'target_calorie_range': targetCalorieRangeValue(now),
-        'goal': profile.goal,
-        'plan_speed': profile.planSpeed,
-      },
-    );
-    final fallbackNote = catalogLookupFailed
-        ? _nameCatalogFallbackNote(locale, catalogLookupErrorCode)
-        : null;
-    return _saveNameOnlyEntry(
-      time: now,
-      mealType: mealType,
-      mealId: mealId,
-      inputFoodName: trimmed,
-      result: result,
-      reason: catalogLookupFailed ? 'name_ai_catalog_error' : 'name_only',
-      lastAnalyzedNote: fallbackNote,
-    );
-  }
-
-  String _nameCatalogFallbackNote(String locale, String? code) {
-    final detail = (code ?? 'unknown').trim();
-    if (locale.toLowerCase().startsWith('zh')) {
-      return detail.isEmpty
-          ? '資料庫查詢失敗，已改用 AI 估算。'
-          : '資料庫查詢失敗（$detail），已改用 AI 估算。';
+    if (catalogLookupFailed && catalogItems.isEmpty) {
+      throw NameLookupException('catalog_unavailable');
     }
-    return detail.isEmpty
-        ? 'Catalog lookup failed, switched to AI estimate.'
-        : 'Catalog lookup failed ($detail), switched to AI estimate.';
+    throw NameLookupException('catalog_not_found');
   }
 
   String _normalizeFoodLookupText(String value) {
