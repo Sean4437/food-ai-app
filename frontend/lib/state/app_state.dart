@@ -1226,10 +1226,11 @@ class AppState extends ChangeNotifier {
           limit: 8,
         );
         for (final item in found) {
-          final key = ((item['food_id'] ?? item['id'] ?? item['food_name'] ?? '')
-                  .toString()
-                  .trim())
-              .toLowerCase();
+          final key =
+              ((item['food_id'] ?? item['id'] ?? item['food_name'] ?? '')
+                      .toString()
+                      .trim())
+                  .toLowerCase();
           if (key.isEmpty) continue;
           final existing = mergedCatalogItems[key];
           if (existing == null ||
@@ -1247,7 +1248,8 @@ class AppState extends ChangeNotifier {
     }
     if (mergedCatalogItems.isNotEmpty) {
       catalogItems = mergedCatalogItems.values.toList()
-        ..sort((a, b) => _catalogMatchScore(b).compareTo(_catalogMatchScore(a)));
+        ..sort(
+            (a, b) => _catalogMatchScore(b).compareTo(_catalogMatchScore(a)));
     }
     final catalogMatch = _bestCatalogFoodMatch(trimmed, catalogItems);
     if (catalogMatch != null) {
@@ -1294,14 +1296,12 @@ class AppState extends ChangeNotifier {
       suggestions.add(text);
     }
 
-    final customMatches = customFoods
-        .where((food) {
-          final normalized = _normalizeFoodLookupText(food.name);
-          final compact = normalized.replaceAll(' ', '');
-          return normalized.contains(normalizedQuery) ||
-              compact.contains(compactQuery);
-        })
-        .toList()
+    final customMatches = customFoods.where((food) {
+      final normalized = _normalizeFoodLookupText(food.name);
+      final compact = normalized.replaceAll(' ', '');
+      return normalized.contains(normalizedQuery) ||
+          compact.contains(compactQuery);
+    }).toList()
       ..sort((a, b) => _nameSuggestionScore(b.name, normalizedQuery)
           .compareTo(_nameSuggestionScore(a.name, normalizedQuery)));
 
@@ -1337,7 +1337,11 @@ class AppState extends ChangeNotifier {
           limit: maxCount,
         );
         for (final item in found) {
-          final key = ((item['food_id'] ?? item['id'] ?? item['food_name'] ?? item['alias'] ?? '')
+          final key = ((item['food_id'] ??
+                      item['id'] ??
+                      item['food_name'] ??
+                      item['alias'] ??
+                      '')
                   .toString()
                   .trim())
               .toLowerCase();
@@ -1363,14 +1367,12 @@ class AppState extends ChangeNotifier {
       final directRows =
           await _searchFoodCatalogFromSupabase(trimmed, limit: maxCount);
       for (final row in directRows) {
-        final foodName = (row['food_name'] ?? row['canonical_name'] ?? '')
-            .toString()
-            .trim();
+        final foodName =
+            (row['food_name'] ?? row['canonical_name'] ?? '').toString().trim();
         if (foodName.isEmpty) continue;
-        final key = ((row['id'] ?? row['food_id'] ?? foodName)
-                .toString()
-                .trim())
-            .toLowerCase();
+        final key =
+            ((row['id'] ?? row['food_id'] ?? foodName).toString().trim())
+                .toLowerCase();
         if (key.isEmpty) continue;
         mergedCatalogItems[key] = {
           'food_id': (row['id'] ?? row['food_id'] ?? '').toString(),
@@ -1406,8 +1408,6 @@ class AppState extends ChangeNotifier {
     String query, {
     required int limit,
   }) async {
-    final user = _supabase.currentUser;
-    if (user == null) return const [];
     try {
       final pattern = query.trim().replaceAll(',', ' ');
       final rows = await _supabase.client
@@ -1453,7 +1453,8 @@ class AppState extends ChangeNotifier {
         compact.startsWith(queryCompact)) {
       return 8;
     }
-    if (normalized.contains(normalizedQuery) || compact.contains(queryCompact)) {
+    if (normalized.contains(normalizedQuery) ||
+        compact.contains(queryCompact)) {
       return 6;
     }
     return 0;
@@ -1537,17 +1538,16 @@ class AppState extends ChangeNotifier {
         return item;
       }
       // 支援「主名稱 + 修飾詞」輸入，例如「青茶半糖去冰」命中「青茶」。
-      final startsWith =
-          (alias.isNotEmpty &&
-                  (alias.startsWith(normalizedQuery) ||
-                      aliasCompact.startsWith(compactQuery) ||
-                      normalizedQuery.startsWith(alias) ||
-                      compactQuery.startsWith(aliasCompact))) ||
-              (foodName.isNotEmpty &&
-                  (foodName.startsWith(normalizedQuery) ||
-                      foodCompact.startsWith(compactQuery) ||
-                      normalizedQuery.startsWith(foodName) ||
-                      compactQuery.startsWith(foodCompact)));
+      final startsWith = (alias.isNotEmpty &&
+              (alias.startsWith(normalizedQuery) ||
+                  aliasCompact.startsWith(compactQuery) ||
+                  normalizedQuery.startsWith(alias) ||
+                  compactQuery.startsWith(aliasCompact))) ||
+          (foodName.isNotEmpty &&
+              (foodName.startsWith(normalizedQuery) ||
+                  foodCompact.startsWith(compactQuery) ||
+                  normalizedQuery.startsWith(foodName) ||
+                  compactQuery.startsWith(foodCompact)));
       if (!startsWith) continue;
       if (score > bestPrefixScore) {
         bestPrefix = item;
@@ -1628,7 +1628,8 @@ class AppState extends ChangeNotifier {
         ? matchScoreRaw.toDouble()
         : double.tryParse(matchScoreRaw?.toString() ?? '');
     final sourceRaw = (item['source'] ?? '').toString().trim();
-    final nutritionSourceRaw = (item['nutrition_source'] ?? '').toString().trim();
+    final nutritionSourceRaw =
+        (item['nutrition_source'] ?? '').toString().trim();
     final referenceUsedRaw = (item['reference_used'] ?? '').toString().trim();
 
     return AnalysisResult(
@@ -1645,7 +1646,8 @@ class AppState extends ChangeNotifier {
               : 'Estimated from the food catalog. Add portion or brand details for better accuracy.'),
       tier: 'catalog',
       source: sourceRaw.isNotEmpty ? sourceRaw : 'catalog',
-      nutritionSource: nutritionSourceRaw.isNotEmpty ? nutritionSourceRaw : 'catalog',
+      nutritionSource:
+          nutritionSourceRaw.isNotEmpty ? nutritionSourceRaw : 'catalog',
       confidence: confidence,
       isBeverage:
           item['is_beverage'] is bool ? item['is_beverage'] as bool : null,
@@ -2550,19 +2552,12 @@ class AppState extends ChangeNotifier {
     }
     final normalized = _normalizeApiBaseUrl(profile.apiBaseUrl);
     final normalizedDefault = _normalizeApiBaseUrl(kDefaultApiBaseUrl);
-    if (normalized.contains('trycloudflare.com') &&
-        normalized != normalizedDefault) {
+    if (normalized != normalizedDefault) {
       profile.apiBaseUrl = kDefaultApiBaseUrl;
       return true;
     }
-    final deprecatedNormalized =
-        kDeprecatedApiBaseUrls.map(_normalizeApiBaseUrl);
-    if (deprecatedNormalized.contains(normalized)) {
+    if (profile.apiBaseUrl != kDefaultApiBaseUrl) {
       profile.apiBaseUrl = kDefaultApiBaseUrl;
-      return true;
-    }
-    if (normalized != profile.apiBaseUrl) {
-      profile.apiBaseUrl = normalized;
       return true;
     }
     return false;
@@ -2601,7 +2596,7 @@ class AppState extends ChangeNotifier {
       // ignore: discarded_futures
       _saveOverrides();
     }
-    if (!kDebugMode && profile.apiBaseUrl != kDefaultApiBaseUrl) {
+    if (profile.apiBaseUrl != kDefaultApiBaseUrl) {
       profile.apiBaseUrl = kDefaultApiBaseUrl;
       _touchSettingsUpdatedAt();
       // ignore: discarded_futures
@@ -3130,7 +3125,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _clearLocalDataForAccountSwitch() async {
-    final apiBaseUrl = profile.apiBaseUrl;
+    final apiBaseUrl = kDefaultApiBaseUrl;
     final language = profile.language;
     final plateAsset = profile.plateAsset;
     final themeAsset = profile.themeAsset;
@@ -3301,7 +3296,7 @@ class AppState extends ChangeNotifier {
       ..lunchReminderEnabled = updated.lunchReminderEnabled
       ..dinnerReminderEnabled = updated.dinnerReminderEnabled
       ..language = updated.language
-      ..apiBaseUrl = updated.apiBaseUrl
+      ..apiBaseUrl = kDefaultApiBaseUrl
       ..plateAsset = updated.plateAsset
       ..themeAsset = updated.themeAsset
       ..textScale = updated.textScale
@@ -4265,7 +4260,8 @@ class AppState extends ChangeNotifier {
   void _syncSelectedDateToLatestEntryIfNeeded() {
     if (entries.isEmpty) return;
     final target = _dateOnly(_selectedDate);
-    final hasDataOnSelected = entries.any((entry) => _isSameDate(entry.time, target));
+    final hasDataOnSelected =
+        entries.any((entry) => _isSameDate(entry.time, target));
     if (hasDataOnSelected) return;
     final latest = entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
     _selectedDate = _dateOnly(latest.time);
@@ -6272,7 +6268,6 @@ class AppState extends ChangeNotifier {
       'late_snack_start': _timeToString(profile.lateSnackStart),
       'late_snack_end': _timeToString(profile.lateSnackEnd),
       'language': profile.language,
-      'api_base_url': profile.apiBaseUrl,
       'plate_asset': profile.plateAsset,
       'theme_asset': profile.themeAsset,
       'text_scale': profile.textScale,
@@ -6366,7 +6361,7 @@ class AppState extends ChangeNotifier {
     if (profile.nutritionValueMode == 'percent') {
       profile.nutritionValueMode = 'amount';
     }
-    if (!kDebugMode && profile.apiBaseUrl != kDefaultApiBaseUrl) {
+    if (profile.apiBaseUrl != kDefaultApiBaseUrl) {
       profile.apiBaseUrl = kDefaultApiBaseUrl;
     }
   }
