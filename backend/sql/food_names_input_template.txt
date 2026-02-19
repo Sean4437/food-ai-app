@@ -1,0 +1,8 @@
+# One line per food. Optional format:
+# food_name|alias_zh_1,alias_zh_2|alias_en_1,alias_en_2
+
+牛肉麵|紅燒牛肉麵,牛肉湯麵|beef noodle soup,braised beef noodles
+無糖豆漿|豆漿|unsweetened soy milk,soy milk
+雞胸肉便當|舒肥雞胸便當|chicken breast bento
+皮蛋瘦肉粥||century egg pork congee
+青茶半糖去冰|半糖青茶,青茶|green tea half sugar no ice
