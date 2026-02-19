@@ -3048,6 +3048,7 @@ def health(_admin: None = Depends(_require_admin)):
         "file_call_real_ai": file_env.get("CALL_REAL_AI"),
         "env_call_real_ai": os.getenv("CALL_REAL_AI"),
         "last_ai_error": _last_ai_error if RETURN_AI_ERROR else None,
+        "supabase_catalog_probe": _probe_supabase_catalog(),
     }
 
 
@@ -3068,6 +3069,80 @@ def _read_usage_records(limit: int) -> list[dict]:
         if len(records) >= limit:
             break
     return records
+
+
+def _supabase_key_kind(key: str) -> str:
+    raw = (key or "").strip()
+    if not raw:
+        return "missing"
+    if raw.startswith("sb_publishable_"):
+        return "publishable"
+    if raw.startswith("sb_secret_"):
+        return "secret"
+    if raw.startswith("eyJ"):
+        return "jwt"
+    return "unknown"
+
+
+def _probe_supabase_catalog() -> dict:
+    key_kind = _supabase_key_kind(SUPABASE_SERVICE_ROLE_KEY)
+    if not SUPABASE_URL:
+        return {"ok": False, "reason": "missing_supabase_url", "key_kind": key_kind}
+    if not SUPABASE_SERVICE_ROLE_KEY:
+        return {"ok": False, "reason": "missing_service_role_key", "key_kind": key_kind}
+    try:
+        headers = _supabase_headers()
+    except HTTPException as exc:
+        return {"ok": False, "reason": str(exc.detail), "key_kind": key_kind}
+
+    probe_url = f"{SUPABASE_URL}/rest/v1/food_catalog"
+    try:
+        with httpx.Client(timeout=10) as client:
+            probe_resp = client.get(
+                probe_url,
+                headers=headers,
+                params=[("select", "id,food_name"), ("limit", "5")],
+            )
+    except Exception as exc:
+        return {"ok": False, "reason": "request_error", "error": str(exc), "key_kind": key_kind}
+
+    if probe_resp.status_code >= 400:
+        return {
+            "ok": False,
+            "reason": "http_error",
+            "status_code": probe_resp.status_code,
+            "body": probe_resp.text[:180],
+            "key_kind": key_kind,
+        }
+
+    try:
+        rows = probe_resp.json()
+    except Exception:
+        return {"ok": False, "reason": "invalid_json", "key_kind": key_kind}
+
+    if not isinstance(rows, list):
+        return {"ok": False, "reason": "unexpected_payload", "key_kind": key_kind}
+
+    sample = []
+    for row in rows[:3]:
+        if isinstance(row, dict):
+            sample.append(
+                {
+                    "id": str(row.get("id") or ""),
+                    "food_name": str(row.get("food_name") or row.get("canonical_name") or ""),
+                }
+            )
+    keyword_rows = _supabase_rest_list(
+        "food_catalog",
+        [("select", "id,food_name"), ("food_name", "ilike.*牛*"), ("limit", "3")],
+    )
+    return {
+        "ok": True,
+        "key_kind": key_kind,
+        "row_count": len(rows),
+        "sample": sample,
+        "keyword_niu_count": len(keyword_rows),
+    }
 
 
 @app.get("/usage")
