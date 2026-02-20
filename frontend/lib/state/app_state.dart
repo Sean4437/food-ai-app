@@ -1606,6 +1606,18 @@ class AppState extends ChangeNotifier {
       }
     }
 
+    final beverageSuggestions = _localBeverageSuggestions(
+      trimmed,
+      locale,
+      limit: maxCount,
+    );
+    for (final name in beverageSuggestions) {
+      addSuggestion(name);
+      if (suggestions.length >= maxCount) {
+        return suggestions.take(maxCount).toList();
+      }
+    }
+
     final candidates = <String>[];
     final candidateSeen = <String>{};
     void addCandidate(String value) {
@@ -1889,6 +1901,73 @@ class AppState extends ChangeNotifier {
       toppings: toppings,
       explicitSugar: explicitSugar,
     );
+  }
+
+  List<String> _localBeverageSuggestions(
+    String query,
+    String locale, {
+    int limit = 8,
+  }) {
+    final normalizedQuery = _normalizeFoodLookupText(query);
+    if (normalizedQuery.isEmpty) return const [];
+    final compactQuery = normalizedQuery.replaceAll(' ', '');
+    final isZh = locale.toLowerCase().startsWith('zh');
+
+    final results = <String>[];
+    final seen = <String>{};
+    void add(String value) {
+      final text = value.trim();
+      if (text.isEmpty) return;
+      final key = _normalizeFoodLookupText(text);
+      if (key.isEmpty || seen.contains(key)) return;
+      final score = _nameSuggestionScore(text, normalizedQuery);
+      if (score <= 0) return;
+      seen.add(key);
+      results.add(text);
+    }
+
+    for (final profile in _kBeverageProfiles) {
+      final matched = profile.tokens.any(
+          (token) => _matchesLookupToken(normalizedQuery, compactQuery, token));
+      if (!matched) continue;
+
+      final base = isZh ? profile.nameZh : profile.nameEn;
+      add(base);
+      if (isZh) {
+        add('$base 無糖去冰');
+        add('$base 半糖去冰');
+        add('$base 微糖少冰');
+      } else {
+        add('$base unsweetened');
+        add('$base half sugar no ice');
+        add('$base light sugar less ice');
+      }
+
+      if (profile.key == 'tea' && isZh) {
+        add('青茶');
+        add('紅茶');
+        add('綠茶');
+        add('烏龍茶');
+      }
+      if (results.length >= limit * 2) break;
+    }
+
+    for (final topping in _kBeverageToppings) {
+      final matched = topping.tokens.any(
+          (token) => _matchesLookupToken(normalizedQuery, compactQuery, token));
+      if (!matched) continue;
+      if (isZh) {
+        add('奶茶加${topping.nameZh}');
+        add('青茶加${topping.nameZh}');
+      } else {
+        add('milk tea with ${topping.nameEn}');
+      }
+      if (results.length >= limit * 2) break;
+    }
+
+    results.sort((a, b) => _nameSuggestionScore(b, normalizedQuery)
+        .compareTo(_nameSuggestionScore(a, normalizedQuery)));
+    return results.take(limit).toList();
   }
 
   (double, String) _detectBeverageSize(
