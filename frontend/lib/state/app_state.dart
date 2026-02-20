@@ -1921,6 +1921,21 @@ class AppState extends ChangeNotifier {
 
     final results = <String>[];
     final seen = <String>{};
+    bool tokenMatchesQuery(String token) {
+      final normalizedToken = _normalizeFoodLookupText(token);
+      if (normalizedToken.isEmpty) return false;
+      final compactToken = normalizedToken.replaceAll(' ', '');
+      if (normalizedToken.contains(normalizedQuery) ||
+          compactToken.contains(compactQuery)) {
+        return true;
+      }
+      if (normalizedQuery.contains(normalizedToken) ||
+          compactQuery.contains(compactToken)) {
+        return true;
+      }
+      return false;
+    }
+
     void add(String value) {
       final text = value.trim();
       if (text.isEmpty) return;
@@ -1933,8 +1948,7 @@ class AppState extends ChangeNotifier {
     }
 
     for (final profile in _kBeverageProfiles) {
-      final matched = profile.tokens.any(
-          (token) => _matchesLookupToken(normalizedQuery, compactQuery, token));
+      final matched = profile.tokens.any(tokenMatchesQuery);
       if (!matched) continue;
 
       final base = isZh ? profile.nameZh : profile.nameEn;
@@ -1959,8 +1973,7 @@ class AppState extends ChangeNotifier {
     }
 
     for (final topping in _kBeverageToppings) {
-      final matched = topping.tokens.any(
-          (token) => _matchesLookupToken(normalizedQuery, compactQuery, token));
+      final matched = topping.tokens.any(tokenMatchesQuery);
       if (!matched) continue;
       if (isZh) {
         add('奶茶加${topping.nameZh}');
