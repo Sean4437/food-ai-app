@@ -45,6 +45,7 @@ class InputFood:
     food_name: str
     alias_zh: list[str]
     alias_en: list[str]
+    portion_hint: str
 
 
 class DraftError(RuntimeError):
@@ -73,6 +74,44 @@ def _is_zh_text(value: str) -> bool:
     return re.search(r"[\u4e00-\u9fff]", value) is not None
 
 
+def _auto_portion_hint(food_name: str) -> str:
+    text = food_name.strip()
+    lower = text.lower()
+    if not text:
+        return "1 serving"
+
+    beverage_tokens = [
+        "茶",
+        "咖啡",
+        "豆漿",
+        "果汁",
+        "奶茶",
+        "拿鐵",
+        "可樂",
+        "汽水",
+        "飲",
+        "tea",
+        "coffee",
+        "juice",
+        "latte",
+        "soda",
+        "drink",
+    ]
+    soup_noodle_tokens = ["麵", "拉麵", "粥", "湯", "鍋", "麵線", "米粉湯"]
+    rice_bowl_tokens = ["飯", "便當", "丼", "炒飯", "餐盒", "壽司"]
+    light_tokens = ["沙拉", "水果", "地瓜", "香蕉", "蘋果", "芭樂", "茶葉蛋"]
+
+    if any(t in text for t in beverage_tokens) or any(t in lower for t in beverage_tokens):
+        return "medium cup (500 ml)"
+    if any(t in text for t in soup_noodle_tokens):
+        return "1 bowl (about 550 g)"
+    if any(t in text for t in rice_bowl_tokens):
+        return "1 meal box / bowl (about 420 g)"
+    if any(t in text for t in light_tokens):
+        return "1 serving (about 180 g)"
+    return "1 serving (about 300 g)"
+
+
 def load_input(path: Path) -> list[InputFood]:
     if not path.exists():
         raise DraftError(f"input not found: {path}")
@@ -92,11 +131,15 @@ def load_input(path: Path) -> list[InputFood]:
                 if key in seen:
                     continue
                 seen.add(key)
+                portion_hint = (row.get("portion_hint") or "").strip()
+                if not portion_hint:
+                    portion_hint = _auto_portion_hint(name)
                 foods.append(
                     InputFood(
                         food_name=name,
                         alias_zh=_split_aliases((row.get("alias_zh") or "").strip()),
                         alias_en=_split_aliases((row.get("alias_en") or "").strip()),
+                        portion_hint=portion_hint,
                     )
                 )
         return foods
@@ -108,7 +151,7 @@ def load_input(path: Path) -> list[InputFood]:
                 continue
             # text format:
             # food_name
-            # food_name|alias_zh_1,alias_zh_2|alias_en_1,alias_en_2
+            # food_name|alias_zh_1,alias_zh_2|alias_en_1,alias_en_2|portion_hint
             parts = [p.strip() for p in line.split("|")]
             name = parts[0]
             if not name:
@@ -119,7 +162,17 @@ def load_input(path: Path) -> list[InputFood]:
             seen.add(key)
             alias_zh = _split_aliases(parts[1]) if len(parts) >= 2 else []
             alias_en = _split_aliases(parts[2]) if len(parts) >= 3 else []
-            foods.append(InputFood(food_name=name, alias_zh=alias_zh, alias_en=alias_en))
+            portion_hint = parts[3].strip() if len(parts) >= 4 else ""
+            if not portion_hint:
+                portion_hint = _auto_portion_hint(name)
+            foods.append(
+                InputFood(
+                    food_name=name,
+                    alias_zh=alias_zh,
+                    alias_en=alias_en,
+                    portion_hint=portion_hint,
+                )
+            )
     return foods
 
 
@@ -146,7 +199,12 @@ def _extract_json(text: str) -> dict[str, Any]:
     return parsed
 
 
-def _openai_chat_completion(api_key: str, model: str, food_name: str) -> dict[str, Any]:
+def _openai_chat_completion(
+    api_key: str,
+    model: str,
+    food_name: str,
+    portion_hint: str,
+) -> dict[str, Any]:
     system_prompt = (
         "You are a nutrition data drafting assistant. "
         "Return only one JSON object with no markdown."
@@ -154,13 +212,14 @@ def _openai_chat_completion(api_key: str, model: str, food_name: str) -> dict[st
     user_prompt = (
         "Create a draft entry for food catalog import.\n"
         f"Food name: {food_name}\n\n"
+        f"Portion baseline: {portion_hint}\n\n"
         "Rules:\n"
         "1) Use Traditional Chinese for dish_summary_zh, suggestion_zh, aliases_zh.\n"
         "2) Use short plain text.\n"
         "3) calorie_min_kcal <= calorie_max_kcal.\n"
         "4) sodium_mg is in mg. protein/carbs/fat are in grams.\n"
         "5) judgement_tags_zh must be from: 清淡, 偏油, 碳水偏多, 蛋白不足, 高鈉, 高糖, 纖維不足.\n"
-        "6) Return reasonable serving-level estimates.\n\n"
+        "6) All nutrition values must follow the portion baseline above.\n\n"
         "Return JSON schema:\n"
         "{\n"
         '  "canonical_name_en": "string",\n'
@@ -315,6 +374,9 @@ def _build_rows(food: InputFood, draft: dict[str, Any]) -> tuple[dict[str, Any],
         dish_summary = f"{food.food_name}（AI 草稿）"
     if not suggestion:
         suggestion = "可補充份量與品牌，讓估算更準確。"
+    portion_note = f"（份量基準：{food.portion_hint}）"
+    if portion_note not in dish_summary:
+        dish_summary = f"{dish_summary}{portion_note}"
 
     food_items = _normalize_string_list(draft.get("food_items_zh"), limit=8)
     if not food_items:
@@ -407,7 +469,12 @@ def cmd_draft(args: argparse.Namespace) -> int:
     for idx, food in enumerate(foods, start=1):
         print(f"[{idx}/{len(foods)}] drafting: {food.food_name}")
         try:
-            draft = _openai_chat_completion(api_key=api_key, model=args.model, food_name=food.food_name)
+            draft = _openai_chat_completion(
+                api_key=api_key,
+                model=args.model,
+                food_name=food.food_name,
+                portion_hint=food.portion_hint,
+            )
             catalog_row, alias_batch = _build_rows(food, draft)
             catalog_rows.append(catalog_row)
             alias_rows.extend(alias_batch)
@@ -591,6 +658,26 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return 1 if errors else 0
 
 
+def cmd_portionize(args: argparse.Namespace) -> int:
+    foods = load_input(Path(args.input))
+    if not foods:
+        raise DraftError("no food items found in input")
+    out = Path(args.output)
+    rows: list[dict[str, str]] = []
+    for food in foods:
+        rows.append(
+            {
+                "food_name": food.food_name,
+                "portion_hint": food.portion_hint,
+                "alias_zh": ",".join(food.alias_zh),
+                "alias_en": ",".join(food.alias_en),
+            }
+        )
+    write_csv(out, ["food_name", "portion_hint", "alias_zh", "alias_en"], rows)
+    print(f"wrote {len(rows)} rows -> {out}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate and validate food catalog/alias CSV files for Supabase import."
@@ -619,6 +706,18 @@ def build_parser() -> argparse.ArgumentParser:
     validate.add_argument("--catalog", required=True, help="Catalog CSV path.")
     validate.add_argument("--alias", required=True, help="Alias CSV path.")
     validate.set_defaults(func=cmd_validate)
+
+    portionize = sub.add_parser(
+        "portionize",
+        help="Convert txt/csv input into a reviewable CSV with auto portion hints.",
+    )
+    portionize.add_argument("--input", required=True, help="Input txt/csv path.")
+    portionize.add_argument(
+        "--output",
+        default="backend/sql/food_names_with_portion.csv",
+        help="Output CSV path.",
+    )
+    portionize.set_defaults(func=cmd_portionize)
     return parser
 
 
