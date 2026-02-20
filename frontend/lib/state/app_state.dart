@@ -1618,6 +1618,12 @@ class AppState extends ChangeNotifier {
       }
     }
 
+    // Fast-path for short input: return local suggestions immediately
+    // to avoid remote timeout latency while the user is still typing.
+    if (suggestions.isNotEmpty && compactQuery.length <= 2) {
+      return suggestions.take(maxCount).toList();
+    }
+
     final candidates = <String>[];
     final candidateSeen = <String>{};
     void addCandidate(String value) {
