@@ -213,6 +213,19 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                               padding: const EdgeInsets.only(left: 4),
                               child: IconButton(
                                 onPressed: () =>
+                                    _editEntryTime(context, app, entry),
+                                icon: const Icon(Icons.access_time_rounded,
+                                    size: 18),
+                                tooltip: t.editTime,
+                                padding: const EdgeInsets.all(6),
+                                constraints: const BoxConstraints(
+                                    minWidth: 40, minHeight: 40),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: IconButton(
+                                onPressed: () =>
                                     _confirmDelete(context, app, entry),
                                 icon: const Text('🗑️',
                                     style: TextStyle(fontSize: 16)),
