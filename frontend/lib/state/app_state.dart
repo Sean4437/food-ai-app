@@ -160,6 +160,40 @@ class _BeverageParseResult {
   final bool explicitSugar;
 }
 
+class _PieceFoodProfile {
+  const _PieceFoodProfile({
+    required this.key,
+    required this.tokens,
+    required this.defaultPieceCount,
+    required this.kcalPerPiece,
+    required this.proteinPerPiece,
+    required this.carbsPerPiece,
+    required this.fatPerPiece,
+    required this.sodiumPerPiece,
+  });
+
+  final String key;
+  final List<String> tokens;
+  final int defaultPieceCount;
+  final double kcalPerPiece;
+  final double proteinPerPiece;
+  final double carbsPerPiece;
+  final double fatPerPiece;
+  final double sodiumPerPiece;
+}
+
+class _PieceFoodEstimate {
+  const _PieceFoodEstimate({
+    required this.profile,
+    required this.count,
+    required this.usedDefaultCount,
+  });
+
+  final _PieceFoodProfile profile;
+  final int count;
+  final bool usedDefaultCount;
+}
+
 class AppState extends ChangeNotifier {
   AppState()
       : _api = ApiService(baseUrl: _resolveBaseUrl()),
@@ -374,6 +408,74 @@ class AppState extends ChangeNotifier {
     'boba',
     'smoothie',
   ];
+  static const List<_PieceFoodProfile> _kPieceFoodProfiles = [
+    _PieceFoodProfile(
+      key: 'boiled_dumpling',
+      tokens: ['水餃', 'dumpling', 'gyoza'],
+      defaultPieceCount: 10,
+      kcalPerPiece: 45,
+      proteinPerPiece: 2.2,
+      carbsPerPiece: 6.4,
+      fatPerPiece: 1.4,
+      sodiumPerPiece: 90,
+    ),
+    _PieceFoodProfile(
+      key: 'fried_dumpling',
+      tokens: ['煎餃', '鍋貼', 'potsticker'],
+      defaultPieceCount: 8,
+      kcalPerPiece: 62,
+      proteinPerPiece: 2.6,
+      carbsPerPiece: 6.8,
+      fatPerPiece: 2.9,
+      sodiumPerPiece: 110,
+    ),
+    _PieceFoodProfile(
+      key: 'soup_dumpling',
+      tokens: ['湯包', '小籠包', 'xiao long bao'],
+      defaultPieceCount: 8,
+      kcalPerPiece: 68,
+      proteinPerPiece: 3.0,
+      carbsPerPiece: 7.2,
+      fatPerPiece: 3.0,
+      sodiumPerPiece: 120,
+    ),
+    _PieceFoodProfile(
+      key: 'wonton',
+      tokens: ['餛飩', '抄手', 'wonton'],
+      defaultPieceCount: 8,
+      kcalPerPiece: 38,
+      proteinPerPiece: 1.7,
+      carbsPerPiece: 5.3,
+      fatPerPiece: 1.1,
+      sodiumPerPiece: 85,
+    ),
+  ];
+  static const Map<String, int> _kChineseCountDigits = {
+    '一': 1,
+    '二': 2,
+    '兩': 2,
+    '三': 3,
+    '四': 4,
+    '五': 5,
+    '六': 6,
+    '七': 7,
+    '八': 8,
+    '九': 9,
+    '十': 10,
+  };
+  static final RegExp _kPieceCountNumericPattern = RegExp(
+    r'(\d{1,2})\s*(顆|粒|個|只|pcs?|pieces?)',
+    caseSensitive: false,
+  );
+  static final RegExp _kPieceCountChinesePattern = RegExp(
+    r'([一二兩三四五六七八九十]{1,3})\s*(顆|粒|個|只)',
+  );
+  static final RegExp _kBasketNumericPattern = RegExp(
+    r'(\d{1,2})\s*籠',
+    caseSensitive: false,
+  );
+  static final RegExp _kBasketChinesePattern =
+      RegExp(r'([一二兩三四五六七八九十]{1,3})\s*籠');
   bool _trialExpired = false;
   bool _trialChecked = false;
   bool _whitelisted = false;
@@ -938,7 +1040,7 @@ class AppState extends ChangeNotifier {
       imageBytes: bytes,
       time: time,
       mealType: mealType,
-      result: result,
+      result: _resolveNutritionResult(result),
     );
   }
 
@@ -996,7 +1098,7 @@ class AppState extends ChangeNotifier {
       imageBytes: analysis.imageBytes,
       time: analysis.time,
       mealType: analysis.mealType,
-      result: result,
+      result: _resolveNutritionResult(result),
     );
   }
 
@@ -4570,6 +4672,217 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
+  _PieceFoodEstimate? _estimatePieceFood(AnalysisResult result) {
+    final joined = <String>[
+      result.foodName,
+      if ((result.dishSummary ?? '').trim().isNotEmpty) result.dishSummary!,
+      ...result.foodItems,
+    ].join(' ');
+    final normalized = joined.toLowerCase();
+
+    _PieceFoodProfile? matchedProfile;
+    for (final profile in _kPieceFoodProfiles) {
+      final hit = profile.tokens.any((token) {
+        final trimmed = token.trim();
+        if (trimmed.isEmpty) return false;
+        final lowerToken = trimmed.toLowerCase();
+        return joined.contains(trimmed) || normalized.contains(lowerToken);
+      });
+      if (hit) {
+        matchedProfile = profile;
+        break;
+      }
+    }
+    if (matchedProfile == null) return null;
+
+    int? explicitCount;
+    for (final match in _kPieceCountNumericPattern.allMatches(joined)) {
+      final parsed = int.tryParse(match.group(1) ?? '');
+      if (parsed != null && parsed > 0) {
+        explicitCount = parsed;
+        break;
+      }
+    }
+    if (explicitCount == null) {
+      for (final match in _kPieceCountChinesePattern.allMatches(joined)) {
+        final parsed = _parseChineseCountToken(match.group(1) ?? '');
+        if (parsed != null && parsed > 0) {
+          explicitCount = parsed;
+          break;
+        }
+      }
+    }
+
+    if (explicitCount != null) {
+      return _PieceFoodEstimate(
+        profile: matchedProfile,
+        count: explicitCount.clamp(1, 60),
+        usedDefaultCount: false,
+      );
+    }
+
+    int basketCount = 0;
+    for (final match in _kBasketNumericPattern.allMatches(joined)) {
+      final parsed = int.tryParse(match.group(1) ?? '');
+      if (parsed != null && parsed > 0) {
+        basketCount = parsed;
+        break;
+      }
+    }
+    if (basketCount <= 0) {
+      for (final match in _kBasketChinesePattern.allMatches(joined)) {
+        final parsed = _parseChineseCountToken(match.group(1) ?? '');
+        if (parsed != null && parsed > 0) {
+          basketCount = parsed;
+          break;
+        }
+      }
+    }
+    if (basketCount > 0) {
+      return _PieceFoodEstimate(
+        profile: matchedProfile,
+        count: (basketCount * matchedProfile.defaultPieceCount).clamp(1, 60),
+        usedDefaultCount: false,
+      );
+    }
+
+    return _PieceFoodEstimate(
+      profile: matchedProfile,
+      count: matchedProfile.defaultPieceCount.clamp(1, 60),
+      usedDefaultCount: true,
+    );
+  }
+
+  int? _parseChineseCountToken(String raw) {
+    final token = raw.trim();
+    if (token.isEmpty) return null;
+    final direct = _kChineseCountDigits[token];
+    if (direct != null) return direct;
+
+    if (token == '十') return 10;
+    if (token.length == 2 && token.startsWith('十')) {
+      final ones = _kChineseCountDigits[token.substring(1)];
+      if (ones != null) return 10 + ones;
+    }
+    if (token.length == 2 && token.endsWith('十')) {
+      final tens = _kChineseCountDigits[token.substring(0, 1)];
+      if (tens != null) return tens * 10;
+    }
+    if (token.length == 3 && token.substring(1, 2) == '十') {
+      final tens = _kChineseCountDigits[token.substring(0, 1)];
+      final ones = _kChineseCountDigits[token.substring(2)];
+      if (tens != null && ones != null) return (tens * 10) + ones;
+    }
+    return null;
+  }
+
+  double _macroKcalEstimate(Map<String, double> macros) {
+    final protein = (macros['protein'] ?? 0).clamp(0, double.infinity);
+    final carbs = (macros['carbs'] ?? 0).clamp(0, double.infinity);
+    final fat = (macros['fat'] ?? 0).clamp(0, double.infinity);
+    return (protein * 4) + (carbs * 4) + (fat * 9);
+  }
+
+  double _round1(double value) {
+    return (value * 10).round() / 10.0;
+  }
+
+  AnalysisResult _applyPieceFoodGuard(AnalysisResult result) {
+    final source = result.source.trim().toLowerCase();
+    final nutritionSource = (result.nutritionSource ?? '').trim().toLowerCase();
+    final isAiLike = source == 'ai' ||
+        source == 'mock' ||
+        source == 'cache' ||
+        nutritionSource.isEmpty ||
+        nutritionSource == 'ai';
+    if (!isAiLike) return result;
+
+    final estimate = _estimatePieceFood(result);
+    if (estimate == null) return result;
+
+    final joined = <String>[
+      result.foodName,
+      if ((result.dishSummary ?? '').trim().isNotEmpty) result.dishSummary!,
+      ...result.foodItems,
+      result.suggestion,
+    ].join(' ');
+    final lower = joined.toLowerCase();
+    var modifier = 1.0;
+    if (estimate.profile.key != 'fried_dumpling' &&
+        (joined.contains('煎') ||
+            joined.contains('炸') ||
+            lower.contains('fried') ||
+            lower.contains('pan-fried'))) {
+      modifier += 0.18;
+    }
+    if (joined.contains('醬') ||
+        joined.contains('辣油') ||
+        lower.contains('sauce')) {
+      modifier += 0.08;
+    }
+
+    final targetMid =
+        estimate.profile.kcalPerPiece * estimate.count.clamp(1, 60) * modifier;
+    if (targetMid <= 0) return result;
+    final currentMid = calorieRangeMid(result.calorieRange) ??
+        _macroKcalEstimate(result.macros);
+    final highLimit = targetMid * 1.75;
+    final lowLimit = targetMid * 0.32;
+    final needsCorrection =
+        currentMid <= 0 || currentMid > highLimit || currentMid < lowLimit;
+    if (!needsCorrection) return result;
+
+    final low = max(20, (targetMid * 0.85).round());
+    final high = max(low + 20, (targetMid * 1.15).round());
+    final factor = estimate.count * modifier;
+    final guardedMacros = <String, double>{
+      'protein': _round1(estimate.profile.proteinPerPiece * factor),
+      'carbs': _round1(estimate.profile.carbsPerPiece * factor),
+      'fat': _round1(estimate.profile.fatPerPiece * factor),
+      'sodium': _round1(estimate.profile.sodiumPerPiece * factor),
+    };
+
+    final aiOriginalCalories =
+        result.aiOriginalCalorieRange ?? result.calorieRange;
+    final aiOriginalMacros = result.aiOriginalMacros == null
+        ? Map<String, double>.from(result.macros)
+        : Map<String, double>.from(result.aiOriginalMacros!);
+    final guardNote = estimate.usedDefaultCount
+        ? 'unit_guard:${estimate.profile.key}:default'
+        : 'unit_guard:${estimate.profile.key}:${estimate.count}pcs';
+    final existingReference = (result.referenceUsed ?? '').trim();
+    final referenceUsed = existingReference.isEmpty
+        ? guardNote
+        : '$existingReference | $guardNote';
+
+    return AnalysisResult(
+      foodName: result.foodName,
+      calorieRange: '$low-$high kcal',
+      macros: guardedMacros,
+      foodItems: result.foodItems,
+      judgementTags: result.judgementTags,
+      dishSummary: result.dishSummary,
+      suggestion: result.suggestion,
+      tier: result.tier,
+      source: result.source,
+      nutritionSource: result.nutritionSource ?? 'ai',
+      aiOriginalCalorieRange: aiOriginalCalories,
+      aiOriginalMacros: aiOriginalMacros,
+      costEstimateUsd: result.costEstimateUsd,
+      confidence: result.confidence,
+      isBeverage: result.isBeverage,
+      isFood: result.isFood,
+      nonFoodReason: result.nonFoodReason,
+      referenceUsed: referenceUsed,
+      containerGuessType: result.containerGuessType,
+      containerGuessSize: result.containerGuessSize,
+      catalogImageUrl: result.catalogImageUrl,
+      catalogThumbUrl: result.catalogThumbUrl,
+      catalogImageSource: result.catalogImageSource,
+      catalogImageLicense: result.catalogImageLicense,
+    );
+  }
+
   AnalysisResult _resolveNutritionResult(
     AnalysisResult base, {
     CustomFood? custom,
@@ -4600,6 +4913,11 @@ class AppState extends ChangeNotifier {
         costEstimateUsd: base.costEstimateUsd,
         confidence: base.confidence,
         isBeverage: isBeverage,
+        isFood: base.isFood,
+        nonFoodReason: base.nonFoodReason,
+        referenceUsed: base.referenceUsed,
+        containerGuessType: base.containerGuessType,
+        containerGuessSize: base.containerGuessSize,
         catalogImageUrl: base.catalogImageUrl,
         catalogThumbUrl: base.catalogThumbUrl,
         catalogImageSource: base.catalogImageSource,
@@ -4627,40 +4945,51 @@ class AppState extends ChangeNotifier {
         costEstimateUsd: base.costEstimateUsd,
         confidence: base.confidence,
         isBeverage: label.isBeverage ?? isBeverage,
+        isFood: base.isFood,
+        nonFoodReason: base.nonFoodReason,
+        referenceUsed: base.referenceUsed,
+        containerGuessType: base.containerGuessType,
+        containerGuessSize: base.containerGuessSize,
         catalogImageUrl: base.catalogImageUrl,
         catalogThumbUrl: base.catalogThumbUrl,
         catalogImageSource: base.catalogImageSource,
         catalogImageLicense: base.catalogImageLicense,
       );
     }
-    final resolvedSource = base.nutritionSource ??
-        (base.source == 'label'
+    final adjusted = _applyPieceFoodGuard(base);
+    final resolvedSource = adjusted.nutritionSource ??
+        (adjusted.source == 'label'
             ? 'label'
-            : base.source == 'custom'
+            : adjusted.source == 'custom'
                 ? 'custom'
                 : 'ai');
     return AnalysisResult(
-      foodName: base.foodName,
-      calorieRange: base.calorieRange,
-      macros: base.macros,
-      foodItems: base.foodItems,
-      judgementTags: base.judgementTags,
-      dishSummary: base.dishSummary,
-      suggestion: base.suggestion,
-      tier: base.tier,
-      source: base.source,
+      foodName: adjusted.foodName,
+      calorieRange: adjusted.calorieRange,
+      macros: adjusted.macros,
+      foodItems: adjusted.foodItems,
+      judgementTags: adjusted.judgementTags,
+      dishSummary: adjusted.dishSummary,
+      suggestion: adjusted.suggestion,
+      tier: adjusted.tier,
+      source: adjusted.source,
       nutritionSource: resolvedSource,
-      aiOriginalCalorieRange: base.aiOriginalCalorieRange,
-      aiOriginalMacros: base.aiOriginalMacros == null
+      aiOriginalCalorieRange: adjusted.aiOriginalCalorieRange,
+      aiOriginalMacros: adjusted.aiOriginalMacros == null
           ? null
-          : Map<String, double>.from(base.aiOriginalMacros!),
-      costEstimateUsd: base.costEstimateUsd,
-      confidence: base.confidence,
+          : Map<String, double>.from(adjusted.aiOriginalMacros!),
+      costEstimateUsd: adjusted.costEstimateUsd,
+      confidence: adjusted.confidence,
       isBeverage: isBeverage,
-      catalogImageUrl: base.catalogImageUrl,
-      catalogThumbUrl: base.catalogThumbUrl,
-      catalogImageSource: base.catalogImageSource,
-      catalogImageLicense: base.catalogImageLicense,
+      isFood: adjusted.isFood,
+      nonFoodReason: adjusted.nonFoodReason,
+      referenceUsed: adjusted.referenceUsed,
+      containerGuessType: adjusted.containerGuessType,
+      containerGuessSize: adjusted.containerGuessSize,
+      catalogImageUrl: adjusted.catalogImageUrl,
+      catalogThumbUrl: adjusted.catalogThumbUrl,
+      catalogImageSource: adjusted.catalogImageSource,
+      catalogImageLicense: adjusted.catalogImageLicense,
     );
   }
 
