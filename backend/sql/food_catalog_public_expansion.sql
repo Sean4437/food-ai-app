@@ -7,6 +7,15 @@ alter table public.food_catalog
   add column if not exists image_url text;
 
 alter table public.food_catalog
+  add column if not exists lang text not null default 'zh-TW';
+
+alter table public.food_catalog
+  add column if not exists is_active boolean not null default true;
+
+alter table public.food_catalog
+  add column if not exists deprecated_at timestamptz;
+
+alter table public.food_catalog
   add column if not exists thumb_url text;
 
 alter table public.food_catalog
@@ -50,6 +59,12 @@ create index if not exists idx_food_search_miss_created_at
 create index if not exists idx_food_search_miss_lang
   on public.food_search_miss (lang);
 
+create index if not exists idx_food_catalog_lang_active
+  on public.food_catalog (lang, is_active);
+
+create index if not exists idx_food_catalog_updated_at
+  on public.food_catalog (updated_at desc);
+
 create index if not exists idx_food_catalog_food_name_trgm
   on public.food_catalog using gin (food_name gin_trgm_ops);
 
@@ -58,6 +73,21 @@ create index if not exists idx_food_catalog_canonical_name_trgm
 
 create index if not exists idx_food_aliases_alias_trgm
   on public.food_aliases using gin (alias gin_trgm_ops);
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_food_catalog_set_updated_at on public.food_catalog;
+create trigger trg_food_catalog_set_updated_at
+before update on public.food_catalog
+for each row execute function public.set_updated_at();
 
 alter table public.food_search_miss enable row level security;
 

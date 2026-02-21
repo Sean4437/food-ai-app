@@ -1763,8 +1763,11 @@ class AppState extends ChangeNotifier {
     }
 
     if (mergedCatalogItems.isEmpty) {
-      final directRows =
-          await _searchFoodCatalogFromSupabase(trimmed, limit: maxCount);
+      final directRows = await _searchFoodCatalogFromSupabase(
+        trimmed,
+        locale: locale,
+        limit: maxCount,
+      );
       for (final row in directRows) {
         final foodName =
             (row['food_name'] ?? row['canonical_name'] ?? '').toString().trim();
@@ -1809,14 +1812,19 @@ class AppState extends ChangeNotifier {
 
   Future<List<Map<String, dynamic>>> _searchFoodCatalogFromSupabase(
     String query, {
+    required String locale,
     required int limit,
   }) async {
+    final pattern = query.trim().replaceAll(',', ' ');
+    if (pattern.isEmpty) return const [];
+    final lang = _catalogLangFromLocale(locale);
     try {
-      final pattern = query.trim().replaceAll(',', ' ');
       final rows = await _supabase.client
           .from('food_catalog')
           .select(
               'id,food_name,canonical_name,source,image_url,thumb_url,image_source,image_license')
+          .eq('lang', lang)
+          .eq('is_active', true)
           .or('food_name.ilike.*$pattern*,canonical_name.ilike.*$pattern*')
           .limit(limit.clamp(1, 20));
       if (rows is! List) return const [];
@@ -1830,7 +1838,27 @@ class AppState extends ChangeNotifier {
       }
       return mapped;
     } catch (_) {
-      return const [];
+      // Backward compatible fallback for older schemas without lang/is_active.
+      try {
+        final rows = await _supabase.client
+            .from('food_catalog')
+            .select(
+                'id,food_name,canonical_name,source,image_url,thumb_url,image_source,image_license')
+            .or('food_name.ilike.*$pattern*,canonical_name.ilike.*$pattern*')
+            .limit(limit.clamp(1, 20));
+        if (rows is! List) return const [];
+        final mapped = <Map<String, dynamic>>[];
+        for (final row in rows) {
+          if (row is Map<String, dynamic>) {
+            mapped.add(row);
+          } else if (row is Map) {
+            mapped.add(row.map((k, v) => MapEntry(k.toString(), v)));
+          }
+        }
+        return mapped;
+      } catch (_) {
+        return const [];
+      }
     }
   }
 
@@ -1885,6 +1913,12 @@ class AppState extends ChangeNotifier {
 
   String _normalizeFoodLookupText(String value) {
     return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  String _catalogLangFromLocale(String locale) {
+    final lower = locale.toLowerCase();
+    if (lower.startsWith('en')) return 'en';
+    return 'zh-TW';
   }
 
   List<String> _beveragePresetSuggestions(

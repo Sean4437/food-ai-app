@@ -3806,6 +3806,7 @@ def foods_search(
             [
                 ("select", "food_id,alias,lang"),
                 ("alias", f"ilike.*{query_norm}*"),
+                ("lang", f"eq.{use_lang}"),
                 ("limit", str(query_limit)),
             ],
         )
@@ -3817,6 +3818,8 @@ def foods_search(
             [
                 ("select", catalog_select),
                 ("or", f"food_name.ilike.*{query_norm}*,canonical_name.ilike.*{query_norm}*"),
+                ("lang", f"eq.{use_lang}"),
+                ("is_active", "eq.true"),
                 ("limit", str(query_limit)),
             ],
         )
@@ -3844,6 +3847,8 @@ def foods_search(
             [
                 ("select", catalog_select),
                 ("id", f"in.({','.join(alias_needed_ids)})"),
+                ("lang", f"eq.{use_lang}"),
+                ("is_active", "eq.true"),
                 ("limit", str(len(alias_needed_ids))),
             ],
         )
