@@ -935,6 +935,21 @@ _BEVERAGE_HINT_TOKENS = (
     "beverage",
     "boba",
     "smoothie",
+    "50嵐",
+    "五十嵐",
+    "清心",
+    "可不可",
+    "麻古",
+    "迷客夏",
+    "茶湯會",
+    "五桐號",
+    "龜記",
+    "得正",
+    "50lan",
+    "kebuke",
+    "milksha",
+    "tp tea",
+    "woo tea",
 )
 
 _BEVERAGE_TOPPINGS = (
@@ -1162,6 +1177,25 @@ _ZH_NUMERIC_MAP = {
     "十": 10,
 }
 
+_BEVERAGE_BASE_CANDIDATES = (
+    (("檸檬綠茶", "lemon green tea", "lemon tea"), "檸檬綠茶"),
+    (("豆漿", "soy milk", "soymilk"), "無糖豆漿"),
+    (("奶茶", "milk tea"), "奶茶"),
+    (("拿鐵", "latte"), "拿鐵"),
+    (("熟成紅茶", "大正紅茶", "老實人紅茶"), "紅茶"),
+    (("多多綠", "yakult green tea"), "綠茶"),
+    (("翡翠檸檬",), "檸檬綠茶"),
+    (("金萱", "jin xuan", "jinxuan"), "烏龍茶"),
+    (("觀音", "tieguanyin"), "烏龍茶"),
+    (("雪花冷露",), "奶茶"),
+    (("青茶", "green tea"), "青茶"),
+    (("紅茶", "black tea"), "紅茶"),
+    (("綠茶",), "綠茶"),
+    (("烏龍", "oolong"), "烏龍茶"),
+    (("冬瓜", "winter melon"), "冬瓜茶"),
+    (("咖啡", "coffee", "americano"), "美式咖啡"),
+)
+
 
 def _contains_any_token(text: str, tokens: tuple[str, ...]) -> bool:
     return any(token in text for token in tokens)
@@ -1187,12 +1221,38 @@ def _strip_beverage_modifiers(text: str) -> str:
         r"(\d{1,3}\s*%?\s*(糖|sugar))",
         r"(去冰|少冰|微冰|正常冰|常溫|溫|熱飲|熱的|熱|no ice|less ice|light ice|regular ice|room temperature|warm|hot)",
         r"(加珍珠|加小珍珠|加白玉|加波霸|加粉圓|加粉角|加粉條|加椰果|加布丁|加仙草|加奶蓋|加奶霜|加芝士奶蓋|加愛玉|加寒天|加蒟蒻|加紅豆|加綠豆|加芋圓|加地瓜圓|加粉粿|加蘆薈|加西米露|加茶凍|加咖啡凍|加黑糖凍|加桂花凍|加杏仁凍|加爆爆珠|加啵啵珠|with\s+boba|with\s+mini boba|with\s+pearls?|with\s+coconut jelly|with\s+pudding|with\s+grass jelly|with\s+foam|with\s+milk foam|with\s+aiyu|with\s+agar|with\s+konjac|with\s+red bean|with\s+mung bean|with\s+taro balls?|with\s+aloe|with\s+sago|with\s+tea jelly|with\s+coffee jelly|with\s+brown sugar jelly|with\s+osmanthus jelly|with\s+almond jelly|with\s+popping boba)",
+        r"(50嵐|五十嵐|清心福全|清心|可不可熟成紅茶|可不可|麻古茶坊|麻古|迷客夏|茶湯會|五桐號|龜記|得正|50lan|chingshin|kebuke|macu|milksha|tp\s*tea|woo\s*tea)",
     ]
     for pattern in patterns:
         value = re.sub(pattern, " ", value)
 
     value = re.sub(r"[\s,;:+/_\-]+", " ", value)
     return value.strip()
+
+
+def _extract_beverage_base_candidates(text: str) -> list[str]:
+    normalized = _normalize_food_query(text)
+    if not normalized:
+        return []
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    def add(value: str) -> None:
+        token = _normalize_food_query(value)
+        if not token or token in seen:
+            return
+        seen.add(token)
+        candidates.append(token)
+
+    for tokens, canonical in _BEVERAGE_BASE_CANDIDATES:
+        if any(token in normalized for token in tokens):
+            add(canonical)
+
+    # Weak fallback for brand menu item names that still contain generic tea words.
+    if "茶" in normalized and not candidates:
+        add("青茶")
+
+    return candidates[:4]
 
 
 def _food_search_query_candidates(raw_query: str) -> list[str]:
@@ -1216,8 +1276,12 @@ def _food_search_query_candidates(raw_query: str) -> list[str]:
         stripped = _strip_beverage_modifiers(normalized)
         add(stripped)
         add(stripped.replace(" ", ""))
+        for inferred in _extract_beverage_base_candidates(normalized):
+            add(inferred)
+        for inferred in _extract_beverage_base_candidates(stripped):
+            add(inferred)
 
-    return candidates[:4]
+    return candidates[:8]
 
 
 def _parse_zh_numeric_token(token: str) -> Optional[int]:

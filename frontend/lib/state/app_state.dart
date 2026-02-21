@@ -2132,6 +2132,16 @@ class AppState extends ChangeNotifier {
             '\u5e03\u4e01',
             '\u5976\u84cb',
             '\u52a0\u6599',
+            '\u0035\u0030\u5d50',
+            '\u4e94\u5341\u5d50',
+            '\u6e05\u5fc3',
+            '\u53ef\u4e0d\u53ef',
+            '\u9ebb\u53e4',
+            '\u8ff7\u5ba2\u590f',
+            '\u8336\u6e6f\u6703',
+            '\u4e94\u6850\u865f',
+            '\u9f9c\u8a18',
+            '\u5f97\u6b63',
           ]
         : const <String>[
             'tea',
@@ -2150,6 +2160,84 @@ class AppState extends ChangeNotifier {
             'foam',
             'topping',
           ];
+
+    final brandProfiles = isZh
+        ? const <Map<String, dynamic>>[
+            {
+              'name': '\u0035\u0030\u5d50',
+              'tokens': ['\u0035\u0030\u5d50', '\u4e94\u5341\u5d50', '50lan'],
+              'signatures': [
+                '\u56db\u5b63\u6625\u9752\u8336',
+                '\u73cd\u73e0\u5976\u8336',
+                '\u6ce2\u9738\u5976\u8336',
+                '\u6ab8\u6aac\u7da0\u8336',
+              ],
+            },
+            {
+              'name': '\u6e05\u5fc3\u798f\u5168',
+              'tokens': [
+                '\u6e05\u5fc3',
+                '\u6e05\u5fc3\u798f\u5168',
+                'chingshin'
+              ],
+              'signatures': [
+                '\u70cf\u9f8d\u7da0\u8336',
+                '\u51ac\u74dc\u8336',
+                '\u591a\u591a\u7da0\u8336',
+                '\u73cd\u73e0\u7d05\u8336',
+              ],
+            },
+            {
+              'name': '\u53ef\u4e0d\u53ef',
+              'tokens': [
+                '\u53ef\u4e0d\u53ef',
+                '\u53ef\u4e0d\u53ef\u719f\u6210\u7d05\u8336',
+                'kebuke'
+              ],
+              'signatures': [
+                '\u719f\u6210\u7d05\u8336',
+                '\u6625\u82bd\u7da0\u8336',
+                '\u96ea\u82b1\u51b7\u9732',
+              ],
+            },
+            {
+              'name': '\u9ebb\u53e4',
+              'tokens': ['\u9ebb\u53e4', '\u9ebb\u53e4\u8336\u574a', 'macu'],
+              'signatures': [
+                '\u91d1\u8431\u96d9Q',
+                '\u829d\u829d\u91d1\u8431',
+                '\u694a\u679d\u7518\u9732 2.0',
+              ],
+            },
+            {
+              'name': '\u8ff7\u5ba2\u590f',
+              'tokens': ['\u8ff7\u5ba2\u590f', 'milksha'],
+              'signatures': [
+                '\u5927\u6b63\u7d05\u8336\u62ff\u9435',
+                '\u73cd\u73e0\u7d05\u8336\u62ff\u9435',
+                '\u9752\u6ab8\u9999\u8336',
+              ],
+            },
+            {
+              'name': '\u8336\u6e6f\u6703',
+              'tokens': ['\u8336\u6e6f\u6703', 'tp tea'],
+              'signatures': [
+                '\u89c0\u97f3\u62ff\u9435',
+                '\u7fe1\u7fe0\u6ab8\u6aac',
+                '\u73cd\u73e0\u5976\u8336',
+              ],
+            },
+            {
+              'name': '\u4e94\u6850\u865f',
+              'tokens': ['\u4e94\u6850\u865f', 'woo tea'],
+              'signatures': [
+                '\u8001\u5be6\u4eba\u7d05\u8336',
+                '\u4e94\u6850\u5976\u8336',
+                '\u694a\u679d\u7518\u9732',
+              ],
+            },
+          ]
+        : const <Map<String, dynamic>>[];
 
     final likelyBeverage =
         hintTokens.any(tokenMatches) || compactQuery.length <= 2;
@@ -2344,6 +2432,20 @@ class AppState extends ChangeNotifier {
       matchedBases.add(isZh ? '\u9752\u8336' : 'green tea');
     }
 
+    final matchedBrands = <Map<String, dynamic>>[];
+    if (isZh && brandProfiles.isNotEmpty) {
+      for (final profile in brandProfiles) {
+        final name = (profile['name'] ?? '').toString().trim();
+        if (name.isEmpty) continue;
+        final tokens = (profile['tokens'] as List<dynamic>? ?? const [])
+            .map((e) => e.toString())
+            .toList();
+        final matched =
+            tokenMatches(name) || tokens.any((token) => tokenMatches(token));
+        if (matched) matchedBrands.add(profile);
+      }
+    }
+
     final suggestions = <String>[];
     final seen = <String>{};
     void addSuggestion(String value) {
@@ -2353,6 +2455,28 @@ class AppState extends ChangeNotifier {
       if (key.isEmpty || seen.contains(key)) return;
       seen.add(key);
       suggestions.add(text);
+    }
+
+    if (isZh && matchedBrands.isNotEmpty) {
+      for (final brand in matchedBrands.take(3)) {
+        final brandName = (brand['name'] ?? '').toString().trim();
+        if (brandName.isEmpty) continue;
+        final signatures = (brand['signatures'] as List<dynamic>? ?? const [])
+            .map((e) => e.toString())
+            .where((e) => e.trim().isNotEmpty)
+            .toList();
+        for (final drink in signatures.take(4)) {
+          addSuggestion('$brandName $drink');
+          addSuggestion('$brandName $drink \u534a\u7cd6\u5c11\u51b0');
+          addSuggestion('$brandName $drink \u5fae\u7cd6\u53bb\u51b0');
+          if (queryWantsTopping) {
+            for (final topping in activeToppings.take(3)) {
+              addSuggestion(
+                  '$brandName $drink \u534a\u7cd6\u5c11\u51b0\u52a0$topping');
+            }
+          }
+        }
+      }
     }
 
     for (final base in matchedBases.take(4)) {
