@@ -2120,6 +2120,9 @@ class AppState extends ChangeNotifier {
             '\u70cf\u9f8d',
             '\u5976\u8336',
             '\u8c46\u6f3f',
+            '\u8c46\u6f3f\u7d05\u8336',
+            '\u8c46\u4e73',
+            '\u9bae\u5976',
             '\u5496\u5561',
             '\u62ff\u9435',
             '\u679c\u6c41',
@@ -2142,6 +2145,12 @@ class AppState extends ChangeNotifier {
             '\u4e94\u6850\u865f',
             '\u9f9c\u8a18',
             '\u5f97\u6b63',
+            '\u842c\u6ce2',
+            '\u4e00\u6c90\u65e5',
+            '\u518d\u7761\u0035\u5206\u9418',
+            '\u8001\u8cf4',
+            'comebuy',
+            'coco',
           ]
         : const <String>[
             'tea',
@@ -2236,6 +2245,78 @@ class AppState extends ChangeNotifier {
                 '\u694a\u679d\u7518\u9732',
               ],
             },
+            {
+              'name': 'CoCo\u90fd\u53ef',
+              'tokens': ['coco', 'coco\u90fd\u53ef', '\u90fd\u53ef'],
+              'signatures': [
+                '\u767e\u9999\u96d9\u97ff\u70ae',
+                '\u73cd\u73e0\u5976\u8336',
+                '\u9bae\u767e\u9999\u7da0\u8336',
+              ],
+            },
+            {
+              'name': 'COMEBUY',
+              'tokens': ['comebuy', '\u7981\u6cbb\u8336', '\u73fe\u6ce1\u8336'],
+              'signatures': [
+                '\u6d77\u795e',
+                '\u7d55\u4ee3\u96d9Q\u5976\u8336',
+                '\u78a7\u87ba\u6625',
+              ],
+            },
+            {
+              'name': '\u842c\u6ce2',
+              'tokens': ['\u842c\u6ce2', 'wanpo'],
+              'signatures': [
+                '\u6975\u54c1\u51ac\u74dc\u9732',
+                '\u6975\u54c1\u5976\u8336',
+                '\u689d\u5b50\u8001\u4eba\u8336',
+              ],
+            },
+            {
+              'name': '\u4e00\u6c90\u65e5',
+              'tokens': ['\u4e00\u6c90\u65e5', 'aniceholiday'],
+              'signatures': [
+                '\u7c89\u7cbf\u9ea5\u8336',
+                '\u8c46\u6f3f\u7d05\u8336',
+                '\u6cb9\u5207\u70cf\u9f8d',
+              ],
+            },
+            {
+              'name': '\u518d\u7761\u0035\u5206\u9418',
+              'tokens': ['\u518d\u7761\u0035\u5206\u9418', 'nap tea'],
+              'signatures': [
+                '\u68c9\u88ab\u5348\u8317\u7da0',
+                '\u65e5\u5b89\u7d05\u6f38\u5c64\u9bae\u5976',
+                '\u68c9\u88ab\u53ef\u53ef',
+              ],
+            },
+            {
+              'name': '\u8001\u8cf4\u8336\u68e7',
+              'tokens': ['\u8001\u8cf4', '\u8001\u8cf4\u8336\u68e7', 'laolai'],
+              'signatures': [
+                '\u8c46\u6f3f\u7d05\u8336',
+                '\u73cd\u73e0\u8c46\u6f3f\u7d05\u8336',
+                '\u8001\u8cf4\u7d05\u8336',
+              ],
+            },
+            {
+              'name': '\u9f9c\u8a18',
+              'tokens': ['\u9f9c\u8a18', '\u9f9c\u8a18\u8317\u54c1'],
+              'signatures': [
+                '\u7d05\u67da\u7fe1\u7fe0',
+                '\u4e09\u5341\u4e09\u8336\u738b',
+                '\u860b\u679c\u7d05\u8431',
+              ],
+            },
+            {
+              'name': '\u5f97\u6b63',
+              'tokens': ['\u5f97\u6b63', 'dejeng'],
+              'signatures': [
+                '\u8f15\u70cf\u9f8d\u9bae\u5976',
+                '\u6625\u70cf\u9f8d',
+                '\u820a\u57ce\u7d05\u8336',
+              ],
+            },
           ]
         : const <Map<String, dynamic>>[];
 
@@ -2266,6 +2347,14 @@ class AppState extends ChangeNotifier {
               'tokens': ['\u5976\u8336', 'milk tea'],
             },
             {
+              'name': '\u9bae\u5976\u8336',
+              'tokens': [
+                '\u9bae\u5976\u8336',
+                '\u9bae\u5976',
+                'fresh milk tea'
+              ],
+            },
+            {
               'name': '\u73cd\u73e0\u5976\u8336',
               'tokens': [
                 '\u73cd\u73e0\u5976\u8336',
@@ -2278,6 +2367,21 @@ class AppState extends ChangeNotifier {
                 '\u8c46\u6f3f',
                 '\u7121\u7cd6\u8c46\u6f3f',
                 'soy milk'
+              ],
+            },
+            {
+              'name': '\u8c46\u6f3f\u7d05\u8336',
+              'tokens': [
+                '\u8c46\u6f3f\u7d05\u8336',
+                '\u8c46\u4e73\u7d05\u8336',
+                'soy black tea',
+              ],
+            },
+            {
+              'name': '\u8c46\u6f3f\u5976\u8336',
+              'tokens': [
+                '\u8c46\u6f3f\u5976\u8336',
+                '\u8c46\u4e73\u5976\u8336'
               ],
             },
             {
@@ -2297,8 +2401,36 @@ class AppState extends ChangeNotifier {
               'tokens': ['\u6ab8\u6aac\u7da0\u8336', '\u6ab8\u6aac'],
             },
             {
+              'name': '\u6ab8\u6aac\u7d05\u8336',
+              'tokens': ['\u6ab8\u6aac\u7d05\u8336'],
+            },
+            {
               'name': '\u591a\u591a\u7da0',
               'tokens': ['\u591a\u591a\u7da0', 'yakult'],
+            },
+            {
+              'name': '\u6885\u5b50\u7da0\u8336',
+              'tokens': ['\u6885\u5b50\u7da0\u8336', '\u6885\u7da0'],
+            },
+            {
+              'name': '\u767e\u9999\u7da0\u8336',
+              'tokens': ['\u767e\u9999\u7da0\u8336', '\u767e\u9999'],
+            },
+            {
+              'name': '\u8702\u871c\u6ab8\u6aac',
+              'tokens': ['\u8702\u871c\u6ab8\u6aac', '\u8702\u871c'],
+            },
+            {
+              'name': '\u6c34\u679c\u8336',
+              'tokens': ['\u6c34\u679c\u8336', '\u7d9c\u5408\u679c\u8336'],
+            },
+            {
+              'name': '\u695a\u9580\u70cf\u9f8d',
+              'tokens': [
+                '\u695a\u9580\u70cf\u9f8d',
+                '\u91d1\u8431',
+                '\u89c0\u97f3'
+              ],
             },
           ]
         : const <Map<String, dynamic>>[
@@ -2404,6 +2536,8 @@ class AppState extends ChangeNotifier {
     final queryWantsTopping = isZh
         ? normalizedQuery.contains('\u52a0') ||
             normalizedQuery.contains('\u6599') ||
+            normalizedQuery.contains('\u96d9Q') ||
+            normalizedQuery.contains('\u96d9\u6599') ||
             toppingOptions.any(tokenMatches)
         : normalizedQuery.contains('with') ||
             normalizedQuery.contains('topping') ||
@@ -2469,10 +2603,21 @@ class AppState extends ChangeNotifier {
           addSuggestion('$brandName $drink');
           addSuggestion('$brandName $drink \u534a\u7cd6\u5c11\u51b0');
           addSuggestion('$brandName $drink \u5fae\u7cd6\u53bb\u51b0');
+          addSuggestion('$brandName $drink \u7121\u7cd6\u53bb\u51b0');
+          addSuggestion(
+              '$brandName $drink \u4e2d\u676f\u534a\u7cd6\u5c11\u51b0');
+          addSuggestion(
+              '$brandName $drink \u5927\u676f\u5fae\u7cd6\u53bb\u51b0');
           if (queryWantsTopping) {
             for (final topping in activeToppings.take(3)) {
               addSuggestion(
                   '$brandName $drink \u534a\u7cd6\u5c11\u51b0\u52a0$topping');
+            }
+            if (activeToppings.length >= 2) {
+              final first = activeToppings[0];
+              final second = activeToppings[1];
+              addSuggestion(
+                  '$brandName $drink \u534a\u7cd6\u5c11\u51b0\u52a0$first\u52a0$second');
             }
           }
         }
@@ -2488,6 +2633,8 @@ class AppState extends ChangeNotifier {
           '\u5fae\u7cd6\u5c11\u51b0',
           '\u5c11\u7cd6\u53bb\u51b0',
           '\u5c11\u7cd6\u5fae\u51b0',
+          '\u4e00\u5206\u7cd6\u53bb\u51b0',
+          '\u4e09\u5206\u7cd6\u5c11\u51b0',
           '\u534a\u7cd6\u53bb\u51b0',
           '\u534a\u7cd6\u5c11\u51b0',
           '\u4e03\u5206\u7cd6\u5c11\u51b0',
@@ -2510,6 +2657,14 @@ class AppState extends ChangeNotifier {
           addSuggestion('$base \u52a0$topping');
           addSuggestion('$base \u534a\u7cd6\u53bb\u51b0\u52a0$topping');
           addSuggestion('$base \u5fae\u7cd6\u5c11\u51b0\u52a0$topping');
+        }
+        if (activeToppings.length >= 2) {
+          final first = activeToppings[0];
+          final second = activeToppings[1];
+          addSuggestion(
+              '$base \u534a\u7cd6\u5c11\u51b0\u52a0$first\u52a0$second');
+          addSuggestion(
+              '$base \u5fae\u7cd6\u53bb\u51b0\u52a0$first\u52a0$second');
         }
         if (base.contains('\u5976\u8336') || base.contains('\u62ff\u9435')) {
           addSuggestion('$base \u534a\u7cd6\u5c11\u51b0\u52a0\u5976\u84cb');
