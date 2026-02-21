@@ -2123,6 +2123,14 @@ class AppState extends ChangeNotifier {
             '\u694a\u679d',
             '\u5496\u5561',
             '\u62ff\u9435',
+            '\u7f8e\u5f0f',
+            '\u51b7\u8403',
+            '\u5361\u5e03',
+            '\u5361\u5e03\u5947\u8afe',
+            '\u6469\u5361',
+            '\u746a\u5947\u6735',
+            '\u99e5\u5217\u767d',
+            '\u897f\u897f\u91cc',
             '\u679c\u6c41',
             '\u98f2\u6599',
             '\u73cd\u73e0',
@@ -2169,6 +2177,14 @@ class AppState extends ChangeNotifier {
             'soy',
             'coffee',
             'latte',
+            'americano',
+            'espresso',
+            'cappuccino',
+            'flat white',
+            'macchiato',
+            'mocha',
+            'cold brew',
+            'coldbrew',
             'juice',
             'drink',
             'boba',
@@ -2511,6 +2527,38 @@ class AppState extends ChangeNotifier {
               'tokens': ['\u62ff\u9435', 'latte'],
             },
             {
+              'name': '\u51b7\u8403\u5496\u5561',
+              'tokens': ['\u51b7\u8403\u5496\u5561', '\u51b7\u8403', 'cold brew'],
+            },
+            {
+              'name': '\u6fc3\u7e2e\u5496\u5561',
+              'tokens': ['\u6fc3\u7e2e\u5496\u5561', '\u7fa9\u5f0f\u6fc3\u7e2e', 'espresso'],
+            },
+            {
+              'name': '\u5361\u5e03\u5947\u8afe',
+              'tokens': ['\u5361\u5e03\u5947\u8afe', '\u5361\u5e03', 'cappuccino'],
+            },
+            {
+              'name': '\u99e5\u5217\u767d',
+              'tokens': ['\u99e5\u5217\u767d', 'flat white'],
+            },
+            {
+              'name': '\u7126\u7cd6\u746a\u5947\u6735',
+              'tokens': ['\u7126\u7cd6\u746a\u5947\u6735', '\u746a\u5947\u6735', 'macchiato'],
+            },
+            {
+              'name': '\u6469\u5361\u5496\u5561',
+              'tokens': ['\u6469\u5361\u5496\u5561', '\u6469\u5361', 'mocha'],
+            },
+            {
+              'name': '\u897f\u897f\u91cc\u5496\u5561',
+              'tokens': ['\u897f\u897f\u91cc\u5496\u5561', '\u897f\u897f\u91cc'],
+            },
+            {
+              'name': '\u71d5\u9ea5\u62ff\u9435',
+              'tokens': ['\u71d5\u9ea5\u62ff\u9435', '\u71d5\u9ea5', 'oat latte'],
+            },
+            {
               'name': '\u51ac\u74dc\u8336',
               'tokens': ['\u51ac\u74dc\u8336', '\u51ac\u74dc'],
             },
@@ -2737,6 +2785,30 @@ class AppState extends ChangeNotifier {
               'tokens': ['latte', 'coffee'],
             },
             {
+              'name': 'cold brew coffee',
+              'tokens': ['cold brew', 'coldbrew'],
+            },
+            {
+              'name': 'espresso',
+              'tokens': ['espresso'],
+            },
+            {
+              'name': 'cappuccino',
+              'tokens': ['cappuccino', 'cap'],
+            },
+            {
+              'name': 'flat white',
+              'tokens': ['flat white'],
+            },
+            {
+              'name': 'caramel macchiato',
+              'tokens': ['macchiato', 'caramel macchiato'],
+            },
+            {
+              'name': 'mocha',
+              'tokens': ['mocha'],
+            },
+            {
               'name': 'winter melon tea',
               'tokens': ['winter melon tea', 'winter melon'],
             },
@@ -2825,6 +2897,15 @@ class AppState extends ChangeNotifier {
             '\u5496\u5561\u62ff\u9435',
             '\u7f8e\u5f0f\u5496\u5561',
             '\u51b7\u8403\u5496\u5561',
+            '\u6fc3\u7e2e\u5496\u5561',
+            '\u5361\u5e03\u5947\u8afe',
+            '\u99e5\u5217\u767d',
+            '\u7126\u7cd6\u746a\u5947\u6735',
+            '\u6469\u5361\u5496\u5561',
+            '\u897f\u897f\u91cc\u5496\u5561',
+            '\u9999\u8349\u62ff\u9435',
+            '\u7126\u7cd6\u62ff\u9435',
+            '\u9ed1\u7cd6\u71d5\u9ea5\u62ff\u9435',
             '\u6d77\u9e7d\u5976\u84cb\u9752',
             '\u6d77\u9e7d\u5976\u84cb\u7d05',
             '\u73cd\u73e0\u7d05\u8336\u62ff\u9435',
@@ -3051,11 +3132,22 @@ class AppState extends ChangeNotifier {
 
     if (isZh && matchedPopularItems.isNotEmpty) {
       for (final item in matchedPopularItems.take(28)) {
+        final isCoffeeItem = item.contains('\u5496\u5561') ||
+            item.contains('\u62ff\u9435') ||
+            item.contains('\u5361\u5e03') ||
+            item.contains('\u746a\u5947\u6735') ||
+            item.contains('\u99e5\u5217\u767d') ||
+            item.contains('\u6469\u5361') ||
+            item.contains('\u7f8e\u5f0f') ||
+            item.contains('\u51b7\u8403');
         addSuggestion(item);
         addSuggestion('$item \u534a\u7cd6');
         addSuggestion('$item \u5fae\u7cd6');
         addSuggestion('$item \u7121\u7cd6');
-        if (queryWantsTopping) {
+        if (isCoffeeItem) {
+          addSuggestion('$item \u7121\u7cd6\u52a0\u71d5\u9ea5\u5976');
+          addSuggestion('$item \u7121\u7cd6\u52a0\u4e00\u4efd\u6fc3\u7e2e');
+        } else if (queryWantsTopping) {
           for (final topping in activeToppings.take(3)) {
             addSuggestion('$item \u534a\u7cd6\u52a0$topping');
           }
@@ -3119,6 +3211,15 @@ class AppState extends ChangeNotifier {
     for (final base in matchedBases.take(6)) {
       addSuggestion(base);
       if (isZh) {
+        final isCoffeeBase = base.contains('\u5496\u5561') ||
+            base.contains('\u62ff\u9435') ||
+            base.contains('\u5361\u5e03') ||
+            base.contains('\u746a\u5947\u6735') ||
+            base.contains('\u99e5\u5217\u767d') ||
+            base.contains('\u6469\u5361') ||
+            base.contains('\u7f8e\u5f0f') ||
+            base.contains('\u51b7\u8403') ||
+            base.contains('\u6fc3\u7e2e');
         const sugarVariants = <String>[
           '\u7121\u7cd6',
           '\u5fae\u7cd6',
@@ -3142,22 +3243,35 @@ class AppState extends ChangeNotifier {
           addSuggestion('$base $size \u534a\u7cd6');
         }
 
-        final toppingCount = queryWantsTopping ? 16 : 8;
-        for (final topping in activeToppings.take(toppingCount)) {
-          addSuggestion('$base \u52a0$topping');
-          addSuggestion('$base \u534a\u7cd6\u52a0$topping');
-          addSuggestion('$base \u5fae\u7cd6\u52a0$topping');
-        }
-        if (activeToppings.length >= 2) {
-          final first = activeToppings[0];
-          final second = activeToppings[1];
-          addSuggestion('$base \u534a\u7cd6\u52a0$first\u52a0$second');
-          addSuggestion('$base \u5fae\u7cd6\u52a0$first\u52a0$second');
-        }
-        if (base.contains('\u5976\u8336') || base.contains('\u62ff\u9435')) {
-          addSuggestion('$base \u534a\u7cd6\u52a0\u5976\u84cb');
-          addSuggestion('$base \u534a\u7cd6\u52a0\u5e03\u4e01');
-          addSuggestion('$base \u534a\u7cd6\u52a0\u5c0f\u73cd\u73e0');
+        if (isCoffeeBase) {
+          const coffeeOptions = <String>[
+            '\u7121\u7cd6\u52a0\u71d5\u9ea5\u5976',
+            '\u7121\u7cd6\u52a0\u8c46\u4e73',
+            '\u7121\u7cd6\u52a0\u4e00\u4efd\u6fc3\u7e2e',
+            '\u7121\u7cd6\u52a0\u5169\u4efd\u6fc3\u7e2e',
+            '\u5fae\u7cd6\u52a0\u4f4e\u8102\u5976',
+          ];
+          for (final option in coffeeOptions) {
+            addSuggestion('$base $option');
+          }
+        } else {
+          final toppingCount = queryWantsTopping ? 16 : 8;
+          for (final topping in activeToppings.take(toppingCount)) {
+            addSuggestion('$base \u52a0$topping');
+            addSuggestion('$base \u534a\u7cd6\u52a0$topping');
+            addSuggestion('$base \u5fae\u7cd6\u52a0$topping');
+          }
+          if (activeToppings.length >= 2) {
+            final first = activeToppings[0];
+            final second = activeToppings[1];
+            addSuggestion('$base \u534a\u7cd6\u52a0$first\u52a0$second');
+            addSuggestion('$base \u5fae\u7cd6\u52a0$first\u52a0$second');
+          }
+          if (base.contains('\u5976\u8336') || base.contains('\u62ff\u9435')) {
+            addSuggestion('$base \u534a\u7cd6\u52a0\u5976\u84cb');
+            addSuggestion('$base \u534a\u7cd6\u52a0\u5e03\u4e01');
+            addSuggestion('$base \u534a\u7cd6\u52a0\u5c0f\u73cd\u73e0');
+          }
         }
       } else {
         const sugarVariants = <String>[

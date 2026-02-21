@@ -962,12 +962,28 @@ _BEVERAGE_HINT_TOKENS = (
     "冬瓜檸檬",
     "多多綠",
     "拿鐵",
+    "美式",
+    "冷萃",
+    "卡布",
+    "卡布奇諾",
+    "摩卡",
+    "瑪奇朵",
+    "馥列白",
+    "西西里",
     "可可",
     "果汁",
     "飲料",
     "飲",
     "milk tea",
     "latte",
+    "americano",
+    "espresso",
+    "cappuccino",
+    "flat white",
+    "macchiato",
+    "mocha",
+    "cold brew",
+    "coldbrew",
     "tea",
     "coffee",
     "juice",
@@ -1316,6 +1332,15 @@ _BEVERAGE_BASE_CANDIDATES = (
     (("奶茶", "milk tea"), "奶茶"),
     (("烏龍奶", "烏龍奶茶"), "奶茶"),
     (("拿鐵", "latte"), "拿鐵"),
+    (("燕麥拿鐵", "oat latte", "oatmilk latte"), "拿鐵"),
+    (("美式咖啡", "americano"), "美式咖啡"),
+    (("冷萃咖啡", "cold brew", "coldbrew"), "美式咖啡"),
+    (("義式濃縮", "濃縮咖啡", "espresso"), "美式咖啡"),
+    (("卡布奇諾", "卡布", "cappuccino"), "拿鐵"),
+    (("馥列白", "flat white"), "拿鐵"),
+    (("摩卡", "mocha"), "拿鐵"),
+    (("焦糖瑪奇朵", "瑪奇朵", "macchiato", "caramel macchiato"), "拿鐵"),
+    (("西西里咖啡", "西西里", "sicilian coffee"), "美式咖啡"),
     (("抹茶拿鐵", "matcha latte"), "拿鐵"),
     (("焙茶拿鐵", "hojicha latte"), "拿鐵"),
     (("黑糖鮮奶",), "奶茶"),
@@ -1452,6 +1477,42 @@ def _extract_beverage_base_candidates(text: str) -> list[str]:
         add("無糖豆漿")
     if "奶茶" in normalized or "鮮奶" in normalized or "milk tea" in normalized:
         add("奶茶")
+    if any(
+        token in normalized
+        for token in (
+            "拿鐵",
+            "latte",
+            "卡布",
+            "卡布奇諾",
+            "cappuccino",
+            "馥列白",
+            "flat white",
+            "瑪奇朵",
+            "macchiato",
+            "摩卡",
+            "mocha",
+            "燕麥拿鐵",
+            "oat latte",
+            "oatmilk latte",
+        )
+    ):
+        add("拿鐵")
+    if any(
+        token in normalized
+        for token in (
+            "美式",
+            "咖啡",
+            "coffee",
+            "americano",
+            "冷萃",
+            "cold brew",
+            "coldbrew",
+            "濃縮",
+            "espresso",
+            "西西里",
+        )
+    ):
+        add("美式咖啡")
     if "紅茶" in normalized or "black tea" in normalized:
         add("紅茶")
     if "綠茶" in normalized or "green tea" in normalized:
@@ -1534,7 +1595,30 @@ def _beverage_profile_defaults(food_name_norm: str) -> dict[str, Any]:
             "full_sugar_carbs": 28.0,
             "sugar_adjustable": True,
         }
-    if any(token in food_name_norm for token in ("拿鐵", "latte")):
+    if any(token in food_name_norm for token in ("摩卡", "mocha")):
+        return {
+            "base_ml": 500.0,
+            "default_sugar_ratio": 0.6,
+            "full_sugar_carbs": 28.0,
+            "sugar_adjustable": True,
+        }
+    if any(
+        token in food_name_norm
+        for token in (
+            "拿鐵",
+            "latte",
+            "卡布",
+            "卡布奇諾",
+            "cappuccino",
+            "馥列白",
+            "flat white",
+            "瑪奇朵",
+            "macchiato",
+            "燕麥拿鐵",
+            "oat latte",
+            "oatmilk latte",
+        )
+    ):
         return {
             "base_ml": 500.0,
             "default_sugar_ratio": 0.2,
@@ -1548,7 +1632,28 @@ def _beverage_profile_defaults(food_name_norm: str) -> dict[str, Any]:
             "full_sugar_carbs": 0.0,
             "sugar_adjustable": False,
         }
-    if any(token in food_name_norm for token in ("茶", "coffee", "americano")):
+    if any(
+        token in food_name_norm
+        for token in (
+            "咖啡",
+            "coffee",
+            "americano",
+            "美式",
+            "冷萃",
+            "cold brew",
+            "coldbrew",
+            "濃縮",
+            "espresso",
+            "西西里",
+        )
+    ):
+        return {
+            "base_ml": 500.0,
+            "default_sugar_ratio": 0.0,
+            "full_sugar_carbs": 24.0,
+            "sugar_adjustable": True,
+        }
+    if any(token in food_name_norm for token in ("茶",)):
         return {
             "base_ml": 500.0,
             "default_sugar_ratio": 0.0,
