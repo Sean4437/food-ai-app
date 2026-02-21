@@ -34,6 +34,11 @@ class ApiService {
   final String baseUrl;
   ApiService({required this.baseUrl});
 
+  String _bodyText(http.Response response) =>
+      utf8.decode(response.bodyBytes, allowMalformed: true);
+
+  dynamic _decodeJson(http.Response response) => json.decode(_bodyText(response));
+
   Map<String, String> _authHeaders(String? accessToken) {
     if (accessToken == null || accessToken.isEmpty) return {};
     return {'Authorization': 'Bearer $accessToken'};
@@ -209,7 +214,7 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Summarize failed: ${response.statusCode}');
     }
-    return json.decode(response.body) as Map<String, dynamic>;
+    return _decodeJson(response) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> summarizeWeek(
@@ -228,7 +233,7 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Summarize week failed: ${response.statusCode}');
     }
-    return json.decode(response.body) as Map<String, dynamic>;
+    return _decodeJson(response) as Map<String, dynamic>;
   }
 
   Future<LabelResult> analyzeLabel(
@@ -305,7 +310,7 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Analyze name failed: ${response.statusCode}');
     }
-    final jsonMap = json.decode(response.body) as Map<String, dynamic>;
+    final jsonMap = _decodeJson(response) as Map<String, dynamic>;
     return AnalysisResult.fromJson(jsonMap);
   }
 
@@ -330,9 +335,9 @@ class ApiService {
         headers: _authHeaders(accessToken),
       );
       if (response.statusCode != 200) {
-        String detail = response.body;
+        String detail = _bodyText(response);
         try {
-          final decoded = json.decode(response.body);
+          final decoded = _decodeJson(response);
           if (decoded is Map<String, dynamic>) {
             detail =
                 (decoded['detail'] ?? decoded['message'] ?? detail).toString();
@@ -344,7 +349,7 @@ class ApiService {
           message: detail,
         );
       }
-      final decoded = json.decode(response.body);
+      final decoded = _decodeJson(response);
       if (decoded is! Map<String, dynamic>) {
         throw CatalogSearchException('invalid_payload',
             message: 'response is not an object');
@@ -414,7 +419,7 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Suggest meal failed: ${response.statusCode}');
     }
-    return json.decode(response.body) as Map<String, dynamic>;
+    return _decodeJson(response) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> accessStatus({
@@ -430,7 +435,7 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Access status failed: ${response.statusCode}');
     }
-    return json.decode(response.body) as Map<String, dynamic>;
+    return _decodeJson(response) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> chat(
@@ -447,9 +452,9 @@ class ApiService {
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
-      throw ChatApiException(response.statusCode, response.body);
+      throw ChatApiException(response.statusCode, _bodyText(response));
     }
-    return json.decode(response.body) as Map<String, dynamic>;
+    return _decodeJson(response) as Map<String, dynamic>;
   }
 }
 
