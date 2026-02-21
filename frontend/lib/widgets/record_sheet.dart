@@ -66,7 +66,7 @@ Future<String?> _promptFoodName(
       setDialogState(() => isSearching = true);
     }
 
-    final result = await app.suggestFoodNames(query, locale, limit: 8);
+    final result = await app.suggestFoodNames(query, locale, limit: 16);
     if (!dialogContext.mounted || token != requestToken) return;
 
     setDialogState(() {
@@ -117,7 +117,7 @@ Future<String?> _promptFoodName(
                   if (hasInput) ...[
                     const SizedBox(height: 8),
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 220),
+                      constraints: const BoxConstraints(maxHeight: 300),
                       child: suggestions.isEmpty
                           ? Padding(
                               padding: const EdgeInsets.symmetric(
@@ -148,8 +148,8 @@ Future<String?> _promptFoodName(
                                     size: 18,
                                   ),
                                   title: Text(suggestion),
-                                  onTap: () =>
-                                      Navigator.of(dialogContext).pop(suggestion),
+                                  onTap: () => Navigator.of(dialogContext)
+                                      .pop(suggestion),
                                 );
                               },
                             ),
@@ -308,8 +308,8 @@ Future<RecordResult?> showRecordSheet(
       final message = (entry.lastAnalyzedNote ?? '').trim();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content:
-                Text(message.isEmpty ? _catalogFallbackMessage(context) : message)),
+            content: Text(
+                message.isEmpty ? _catalogFallbackMessage(context) : message)),
       );
     }
     return RecordResult(

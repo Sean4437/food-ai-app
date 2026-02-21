@@ -1708,7 +1708,7 @@ class AppState extends ChangeNotifier {
       }
     }
 
-    final beverageSuggestions = _beveragePresetSuggestions(
+    final beverageSuggestions = _beveragePresetSuggestionsV2(
       trimmed,
       locale,
       limit: maxCount,
@@ -2087,6 +2087,346 @@ class AppState extends ChangeNotifier {
 
     suggestions.sort((a, b) => _nameSuggestionScore(b, normalizedQuery)
         .compareTo(_nameSuggestionScore(a, normalizedQuery)));
+    return suggestions.take(maxCount).toList();
+  }
+
+  List<String> _beveragePresetSuggestionsV2(
+    String query,
+    String locale, {
+    int limit = 8,
+  }) {
+    final normalizedQuery = _normalizeFoodLookupText(query);
+    if (normalizedQuery.isEmpty) return const [];
+    final compactQuery = normalizedQuery.replaceAll(' ', '');
+    final isZh = locale.toLowerCase().startsWith('zh');
+    final maxCount = limit.clamp(1, 20);
+
+    bool tokenMatches(String token) {
+      final normalizedToken = _normalizeFoodLookupText(token);
+      if (normalizedToken.isEmpty) return false;
+      final compactToken = normalizedToken.replaceAll(' ', '');
+      return normalizedToken.contains(normalizedQuery) ||
+          normalizedQuery.contains(normalizedToken) ||
+          compactToken.contains(compactQuery) ||
+          compactQuery.contains(compactToken);
+    }
+
+    final hintTokens = isZh
+        ? const <String>[
+            '\u8336',
+            '\u9752',
+            '\u7d05',
+            '\u7da0',
+            '\u70cf\u9f8d',
+            '\u5976\u8336',
+            '\u8c46\u6f3f',
+            '\u5496\u5561',
+            '\u62ff\u9435',
+            '\u679c\u6c41',
+            '\u6c7d\u6c34',
+            '\u98f2\u6599',
+            '\u73cd\u73e0',
+            '\u6ce2\u9738',
+            '\u6930\u679c',
+            '\u4ed9\u8349',
+            '\u5e03\u4e01',
+            '\u5976\u84cb',
+            '\u52a0\u6599',
+          ]
+        : const <String>[
+            'tea',
+            'milk tea',
+            'soy',
+            'coffee',
+            'latte',
+            'juice',
+            'soda',
+            'drink',
+            'boba',
+            'pearl',
+            'coconut jelly',
+            'grass jelly',
+            'pudding',
+            'foam',
+            'topping',
+          ];
+
+    final likelyBeverage =
+        hintTokens.any(tokenMatches) || compactQuery.length <= 2;
+    if (!likelyBeverage) return const [];
+
+    final baseProfiles = isZh
+        ? const <Map<String, dynamic>>[
+            {
+              'name': '\u9752\u8336',
+              'tokens': ['\u9752\u8336', '\u9752', 'tea', 'green tea'],
+            },
+            {
+              'name': '\u7d05\u8336',
+              'tokens': ['\u7d05\u8336', '\u7d05', 'black tea'],
+            },
+            {
+              'name': '\u7da0\u8336',
+              'tokens': ['\u7da0\u8336', '\u7da0', 'green tea'],
+            },
+            {
+              'name': '\u70cf\u9f8d\u8336',
+              'tokens': ['\u70cf\u9f8d\u8336', '\u70cf\u9f8d', 'oolong tea'],
+            },
+            {
+              'name': '\u5976\u8336',
+              'tokens': ['\u5976\u8336', 'milk tea'],
+            },
+            {
+              'name': '\u73cd\u73e0\u5976\u8336',
+              'tokens': [
+                '\u73cd\u73e0\u5976\u8336',
+                '\u6ce2\u9738\u5976\u8336'
+              ],
+            },
+            {
+              'name': '\u7121\u7cd6\u8c46\u6f3f',
+              'tokens': [
+                '\u8c46\u6f3f',
+                '\u7121\u7cd6\u8c46\u6f3f',
+                'soy milk'
+              ],
+            },
+            {
+              'name': '\u7f8e\u5f0f\u5496\u5561',
+              'tokens': ['\u7f8e\u5f0f', '\u5496\u5561', 'americano', 'coffee'],
+            },
+            {
+              'name': '\u62ff\u9435',
+              'tokens': ['\u62ff\u9435', 'latte'],
+            },
+            {
+              'name': '\u51ac\u74dc\u8336',
+              'tokens': ['\u51ac\u74dc\u8336', '\u51ac\u74dc'],
+            },
+            {
+              'name': '\u6ab8\u6aac\u7da0\u8336',
+              'tokens': ['\u6ab8\u6aac\u7da0\u8336', '\u6ab8\u6aac'],
+            },
+            {
+              'name': '\u591a\u591a\u7da0',
+              'tokens': ['\u591a\u591a\u7da0', 'yakult'],
+            },
+          ]
+        : const <Map<String, dynamic>>[
+            {
+              'name': 'green tea',
+              'tokens': ['green tea', 'tea', 'green'],
+            },
+            {
+              'name': 'black tea',
+              'tokens': ['black tea', 'tea', 'black'],
+            },
+            {
+              'name': 'oolong tea',
+              'tokens': ['oolong tea', 'oolong'],
+            },
+            {
+              'name': 'milk tea',
+              'tokens': ['milk tea', 'tea'],
+            },
+            {
+              'name': 'soy milk',
+              'tokens': ['soy milk', 'soy'],
+            },
+            {
+              'name': 'americano',
+              'tokens': ['americano', 'coffee'],
+            },
+            {
+              'name': 'latte',
+              'tokens': ['latte', 'coffee'],
+            },
+            {
+              'name': 'winter melon tea',
+              'tokens': ['winter melon tea', 'winter melon'],
+            },
+            {
+              'name': 'lemon green tea',
+              'tokens': ['lemon green tea', 'lemon tea'],
+            },
+          ];
+
+    final toppingOptions = isZh
+        ? const <String>[
+            '\u73cd\u73e0',
+            '\u5c0f\u73cd\u73e0',
+            '\u767d\u7389',
+            '\u6ce2\u9738',
+            '\u7c89\u89d2',
+            '\u7c89\u689d',
+            '\u6930\u679c',
+            '\u4ed9\u8349\u51cd',
+            '\u611b\u7389',
+            '\u5bd2\u5929',
+            '\u849f\u84bb',
+            '\u5e03\u4e01',
+            '\u5976\u84cb',
+            '\u5976\u971c',
+            '\u829d\u58eb\u5976\u84cb',
+            '\u7d05\u8c46',
+            '\u7da0\u8c46',
+            '\u828b\u5713',
+            '\u5730\u74dc\u5713',
+            '\u7c89\u7cbf',
+            '\u8606\u8588',
+            '\u897f\u7c73\u9732',
+            '\u8336\u51cd',
+            '\u5496\u5561\u51cd',
+            '\u9ed1\u7cd6\u51cd',
+            '\u6842\u82b1\u51cd',
+            '\u674f\u4ec1\u51cd',
+            '\u7206\u7206\u73e0',
+            '\u5575\u5575\u73e0',
+          ]
+        : const <String>[
+            'boba',
+            'pearl',
+            'mini boba',
+            'white pearl',
+            'coconut jelly',
+            'grass jelly',
+            'aiyu jelly',
+            'agar jelly',
+            'konjac jelly',
+            'pudding',
+            'cheese foam',
+            'milk foam',
+            'red bean',
+            'mung bean',
+            'taro balls',
+            'sweet potato balls',
+            'rice jelly',
+            'rice noodle jelly',
+            'aloe',
+            'sago pearls',
+            'tea jelly',
+            'coffee jelly',
+            'brown sugar jelly',
+            'osmanthus jelly',
+            'almond jelly',
+            'popping boba',
+          ];
+
+    final queryWantsTopping = isZh
+        ? normalizedQuery.contains('\u52a0') ||
+            normalizedQuery.contains('\u6599') ||
+            toppingOptions.any(tokenMatches)
+        : normalizedQuery.contains('with') ||
+            normalizedQuery.contains('topping') ||
+            toppingOptions.any(tokenMatches);
+
+    final explicitToppings =
+        toppingOptions.where((value) => tokenMatches(value)).toList();
+    final activeToppings = explicitToppings.isNotEmpty
+        ? explicitToppings
+        : toppingOptions.take(queryWantsTopping ? 14 : 8).toList();
+
+    final matchedBases = <String>[];
+    for (final profile in baseProfiles) {
+      final name = (profile['name'] ?? '').toString().trim();
+      if (name.isEmpty) continue;
+      final tokens = (profile['tokens'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString())
+          .toList();
+      final matched =
+          tokenMatches(name) || tokens.any((token) => tokenMatches(token));
+      if (matched && !matchedBases.contains(name)) {
+        matchedBases.add(name);
+      }
+    }
+    if (matchedBases.isEmpty) {
+      matchedBases.add(isZh ? '\u9752\u8336' : 'green tea');
+    }
+
+    final suggestions = <String>[];
+    final seen = <String>{};
+    void addSuggestion(String value) {
+      final text = value.trim();
+      if (text.isEmpty) return;
+      final key = _normalizeFoodLookupText(text);
+      if (key.isEmpty || seen.contains(key)) return;
+      seen.add(key);
+      suggestions.add(text);
+    }
+
+    for (final base in matchedBases.take(4)) {
+      addSuggestion(base);
+      if (isZh) {
+        const sugarIceVariants = <String>[
+          '\u7121\u7cd6\u53bb\u51b0',
+          '\u5fae\u7cd6\u53bb\u51b0',
+          '\u5fae\u7cd6\u5c11\u51b0',
+          '\u5c11\u7cd6\u53bb\u51b0',
+          '\u5c11\u7cd6\u5fae\u51b0',
+          '\u534a\u7cd6\u53bb\u51b0',
+          '\u534a\u7cd6\u5c11\u51b0',
+          '\u4e03\u5206\u7cd6\u5c11\u51b0',
+          '\u6b63\u5e38\u7cd6\u6b63\u5e38\u51b0',
+        ];
+        const sizeVariants = <String>[
+          '\u4e2d\u676f',
+          '\u5927\u676f',
+          '\u5c0f\u676f',
+        ];
+        for (final variant in sugarIceVariants) {
+          addSuggestion('$base $variant');
+        }
+        for (final size in sizeVariants) {
+          addSuggestion('$base $size \u534a\u7cd6\u53bb\u51b0');
+        }
+
+        final toppingCount = queryWantsTopping ? 12 : 6;
+        for (final topping in activeToppings.take(toppingCount)) {
+          addSuggestion('$base \u52a0$topping');
+          addSuggestion('$base \u534a\u7cd6\u53bb\u51b0\u52a0$topping');
+          addSuggestion('$base \u5fae\u7cd6\u5c11\u51b0\u52a0$topping');
+        }
+        if (base.contains('\u5976\u8336') || base.contains('\u62ff\u9435')) {
+          addSuggestion('$base \u534a\u7cd6\u5c11\u51b0\u52a0\u5976\u84cb');
+          addSuggestion('$base \u534a\u7cd6\u53bb\u51b0\u52a0\u5e03\u4e01');
+          addSuggestion(
+              '$base \u534a\u7cd6\u5c11\u51b0\u52a0\u5c0f\u73cd\u73e0');
+        }
+      } else {
+        const sugarIceVariants = <String>[
+          'unsweetened no ice',
+          'light sugar no ice',
+          'light sugar less ice',
+          'less sugar less ice',
+          'half sugar no ice',
+          'half sugar less ice',
+          'regular sugar regular ice',
+        ];
+        for (final variant in sugarIceVariants) {
+          addSuggestion('$base $variant');
+        }
+        for (final topping in activeToppings.take(queryWantsTopping ? 12 : 6)) {
+          addSuggestion('$base with $topping');
+          addSuggestion('$base half sugar no ice with $topping');
+        }
+      }
+      if (suggestions.length >= maxCount * 6) break;
+    }
+
+    int suggestionScore(String value) {
+      var score = (_nameSuggestionScore(value, normalizedQuery) * 10).round();
+      final normalized = _normalizeFoodLookupText(value);
+      if (normalized.startsWith(normalizedQuery)) score += 20;
+      if (queryWantsTopping &&
+          (isZh ? value.contains('\u52a0') : value.contains('with'))) {
+        score += 8;
+      }
+      return score;
+    }
+
+    suggestions
+        .sort((a, b) => suggestionScore(b).compareTo(suggestionScore(a)));
     return suggestions.take(maxCount).toList();
   }
 
