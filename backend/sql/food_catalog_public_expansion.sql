@@ -13,6 +13,21 @@ alter table public.food_catalog
 alter table public.food_catalog
   add column if not exists image_license text;
 
+alter table public.food_catalog
+  add column if not exists beverage_base_ml numeric;
+
+alter table public.food_catalog
+  add column if not exists beverage_full_sugar_carbs numeric;
+
+alter table public.food_catalog
+  add column if not exists beverage_default_sugar_ratio numeric;
+
+alter table public.food_catalog
+  add column if not exists beverage_sugar_adjustable boolean;
+
+alter table public.food_catalog
+  add column if not exists beverage_profile jsonb not null default '{}'::jsonb;
+
 create table if not exists public.food_search_miss (
   id bigserial primary key,
   query text not null,

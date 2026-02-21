@@ -19,6 +19,7 @@ uvicorn app:app --reload --host 0.0.0.0 --port 8000
 - GET /foods/search
   - 參數：`q`, `lang?`, `limit?`
   - 用途：公開資料庫搜尋（alias + food_name + canonical_name）
+  - 飲料加值：若 `q` 含「半糖/少冰/大杯/珍珠」等字樣，且命中 `is_beverage=true` 的 catalog，會套用飲料參數公式回傳調整後營養
   - 回傳：`items[]`（含 calorie/macros/source/image 等）
 
 - POST /foods/search_miss
@@ -35,6 +36,9 @@ uvicorn app:app --reload --host 0.0.0.0 --port 8000
 ```bash
 # 1) 搜尋公開資料庫
 curl "http://127.0.0.1:8000/foods/search?q=牛肉麵&limit=5"
+
+# 1-1) 飲料參數搜尋（會套用糖/冰/杯量/加料）
+curl "http://127.0.0.1:8000/foods/search?q=青茶半糖去冰加珍珠&limit=5"
 
 # 2) 查熱門 miss（管理用）
 curl -H "X-Admin-Key: <ADMIN_API_KEY>" "http://127.0.0.1:8000/foods/miss_top?days=30&limit=20"

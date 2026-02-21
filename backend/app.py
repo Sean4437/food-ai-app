@@ -10,6 +10,7 @@ import asyncio
 import base64
 import json
 import os
+import re
 import uuid
 import hashlib
 import time
@@ -912,6 +913,509 @@ def _normalize_food_query(value: str) -> str:
     return " ".join((value or "").strip().lower().split())
 
 
+_BEVERAGE_HINT_TOKENS = (
+    "茶",
+    "咖啡",
+    "豆漿",
+    "豆奶",
+    "奶茶",
+    "拿鐵",
+    "可可",
+    "果汁",
+    "汽水",
+    "飲料",
+    "飲",
+    "milk tea",
+    "latte",
+    "tea",
+    "coffee",
+    "juice",
+    "soda",
+    "drink",
+    "beverage",
+    "boba",
+    "smoothie",
+)
+
+_BEVERAGE_TOPPINGS = (
+    {
+        "tokens": ("珍珠", "波霸", "粉圓", "pearl", "boba", "tapioca"),
+        "zh": "珍珠",
+        "en": "boba",
+        "protein": 0.0,
+        "carbs": 35.0,
+        "fat": 0.0,
+        "sodium": 25.0,
+    },
+    {
+        "tokens": ("椰果", "coconut jelly"),
+        "zh": "椰果",
+        "en": "coconut jelly",
+        "protein": 0.0,
+        "carbs": 17.0,
+        "fat": 0.0,
+        "sodium": 8.0,
+    },
+    {
+        "tokens": ("布丁", "pudding"),
+        "zh": "布丁",
+        "en": "pudding",
+        "protein": 2.0,
+        "carbs": 18.0,
+        "fat": 3.0,
+        "sodium": 70.0,
+    },
+    {
+        "tokens": ("仙草", "grass jelly"),
+        "zh": "仙草",
+        "en": "grass jelly",
+        "protein": 0.0,
+        "carbs": 8.0,
+        "fat": 0.0,
+        "sodium": 8.0,
+    },
+    {
+        "tokens": ("奶蓋", "cheese foam", "foam"),
+        "zh": "奶蓋",
+        "en": "cheese foam",
+        "protein": 2.0,
+        "carbs": 6.0,
+        "fat": 8.0,
+        "sodium": 90.0,
+    },
+)
+
+_ZH_NUMERIC_MAP = {
+    "零": 0,
+    "一": 1,
+    "二": 2,
+    "兩": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十": 10,
+}
+
+
+def _contains_any_token(text: str, tokens: tuple[str, ...]) -> bool:
+    return any(token in text for token in tokens)
+
+
+def _is_probably_beverage_text(text: str) -> bool:
+    normalized = _normalize_food_query(text)
+    if not normalized:
+        return False
+    return _contains_any_token(normalized, _BEVERAGE_HINT_TOKENS)
+
+
+def _strip_beverage_modifiers(text: str) -> str:
+    value = _normalize_food_query(text)
+    if not value:
+        return ""
+
+    patterns = [
+        r"(特大杯|超大杯|大杯|中杯|小杯|x-large|xlarge|large|medium|small|xl|lg|md|sm)",
+        r"(\d{2,4}\s*(ml|cc))",
+        r"(無糖|微糖|少糖|半糖|全糖|正常糖|去糖|減糖|不加糖|sugar[\s\-]*free|no sugar|light sugar|less sugar|half sugar|full sugar|regular sugar|unsweetened)",
+        r"([一二兩三四五六七八九十\d]{1,3}\s*分糖)",
+        r"(\d{1,3}\s*%?\s*(糖|sugar))",
+        r"(去冰|少冰|微冰|正常冰|常溫|溫|熱飲|熱的|熱|no ice|less ice|light ice|regular ice|room temperature|warm|hot)",
+        r"(加珍珠|加波霸|加粉圓|加椰果|加布丁|加仙草|加奶蓋|with\s+boba|with\s+pearls?|with\s+coconut jelly|with\s+pudding|with\s+grass jelly|with\s+foam)",
+    ]
+    for pattern in patterns:
+        value = re.sub(pattern, " ", value)
+
+    value = re.sub(r"[\s,;:+/_\-]+", " ", value)
+    return value.strip()
+
+
+def _food_search_query_candidates(raw_query: str) -> list[str]:
+    normalized = _normalize_food_query(raw_query)
+    if not normalized:
+        return []
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    def add(value: str) -> None:
+        token = _normalize_food_query(value)
+        if not token or token in seen:
+            return
+        seen.add(token)
+        candidates.append(token)
+
+    add(normalized)
+    add(normalized.replace(" ", ""))
+
+    if _is_probably_beverage_text(normalized):
+        stripped = _strip_beverage_modifiers(normalized)
+        add(stripped)
+        add(stripped.replace(" ", ""))
+
+    return candidates[:4]
+
+
+def _parse_zh_numeric_token(token: str) -> Optional[int]:
+    text = token.strip()
+    if not text:
+        return None
+    if text.isdigit():
+        return int(text)
+    if text == "十":
+        return 10
+    if len(text) == 2 and text[0] == "十" and text[1] in _ZH_NUMERIC_MAP:
+        return 10 + int(_ZH_NUMERIC_MAP[text[1]])
+    if len(text) == 2 and text[1] == "十" and text[0] in _ZH_NUMERIC_MAP:
+        return int(_ZH_NUMERIC_MAP[text[0]]) * 10
+    if len(text) == 3 and text[1] == "十" and text[0] in _ZH_NUMERIC_MAP and text[2] in _ZH_NUMERIC_MAP:
+        return (int(_ZH_NUMERIC_MAP[text[0]]) * 10) + int(_ZH_NUMERIC_MAP[text[2]])
+    if len(text) == 1 and text in _ZH_NUMERIC_MAP:
+        return int(_ZH_NUMERIC_MAP[text])
+    return None
+
+
+def _beverage_profile_defaults(food_name_norm: str) -> dict[str, Any]:
+    if any(token in food_name_norm for token in ("果汁", "juice", "汽水", "soda", "cola")):
+        return {
+            "base_ml": 500.0,
+            "default_sugar_ratio": 1.0,
+            "full_sugar_carbs": 0.0,
+            "sugar_adjustable": False,
+        }
+    if any(token in food_name_norm for token in ("豆漿", "soy milk", "soymilk")):
+        return {
+            "base_ml": 500.0,
+            "default_sugar_ratio": 0.4,
+            "full_sugar_carbs": 16.0,
+            "sugar_adjustable": True,
+        }
+    if any(token in food_name_norm for token in ("奶茶", "milk tea")):
+        return {
+            "base_ml": 500.0,
+            "default_sugar_ratio": 1.0,
+            "full_sugar_carbs": 28.0,
+            "sugar_adjustable": True,
+        }
+    if any(token in food_name_norm for token in ("拿鐵", "latte")):
+        return {
+            "base_ml": 500.0,
+            "default_sugar_ratio": 0.2,
+            "full_sugar_carbs": 20.0,
+            "sugar_adjustable": True,
+        }
+    if any(token in food_name_norm for token in ("可可", "cocoa", "chocolate")):
+        return {
+            "base_ml": 500.0,
+            "default_sugar_ratio": 1.0,
+            "full_sugar_carbs": 0.0,
+            "sugar_adjustable": False,
+        }
+    if any(token in food_name_norm for token in ("茶", "coffee", "americano")):
+        return {
+            "base_ml": 500.0,
+            "default_sugar_ratio": 0.0,
+            "full_sugar_carbs": 35.0,
+            "sugar_adjustable": True,
+        }
+    return {
+        "base_ml": 500.0,
+        "default_sugar_ratio": 0.5,
+        "full_sugar_carbs": 24.0,
+        "sugar_adjustable": True,
+    }
+
+
+def _pick_bool(value: Any, fallback: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"true", "1", "yes", "on"}:
+            return True
+        if normalized in {"false", "0", "no", "off"}:
+            return False
+    return fallback
+
+
+def _pick_float(value: Any, fallback: float) -> float:
+    parsed = _safe_float(value)
+    if parsed is None:
+        return fallback
+    return parsed
+
+
+def _parse_beverage_size(query_norm: str, base_ml: float, lang: str) -> tuple[float, str, bool]:
+    ml_match = re.search(r"(\d{2,4})\s*(ml|cc)", query_norm)
+    if ml_match is not None:
+        amount = int(ml_match.group(1))
+        if 120 <= amount <= 1200 and base_ml > 0:
+            factor = amount / base_ml
+            label = f"{amount} ml"
+            return factor, label, True
+
+    rules = (
+        (("特大杯", "超大杯", "x-large", "xlarge", "xl"), 1.45, "特大杯", "x-large"),
+        (("大杯", "large", "lg"), 1.25, "大杯", "large"),
+        (("中杯", "medium", "md"), 1.0, "中杯", "medium"),
+        (("小杯", "small", "sm"), 0.8, "小杯", "small"),
+    )
+    for tokens, factor, zh_label, en_label in rules:
+        if any(token in query_norm for token in tokens):
+            return factor, (zh_label if lang == "zh-TW" else en_label), True
+
+    default_label = "中杯" if lang == "zh-TW" else "medium"
+    return 1.0, default_label, False
+
+
+def _parse_beverage_sugar(query_norm: str, default_ratio: float, lang: str) -> tuple[float, str, bool]:
+    explicit = False
+    ratio = max(0.0, min(default_ratio, 1.0))
+
+    if any(token in query_norm for token in ("無糖", "不加糖", "去糖", "no sugar", "sugar-free", "sugar free", "unsweetened")):
+        ratio = 0.0
+        explicit = True
+    elif any(token in query_norm for token in ("微糖", "light sugar")):
+        ratio = 0.25
+        explicit = True
+    elif any(token in query_norm for token in ("少糖", "less sugar")):
+        ratio = 0.3
+        explicit = True
+    elif any(token in query_norm for token in ("半糖", "half sugar")):
+        ratio = 0.5
+        explicit = True
+    elif any(token in query_norm for token in ("七分糖",)):
+        ratio = 0.7
+        explicit = True
+    elif any(token in query_norm for token in ("全糖", "正常糖", "full sugar", "regular sugar")):
+        ratio = 1.0
+        explicit = True
+
+    if not explicit:
+        zh_fraction = re.search(r"([一二兩三四五六七八九十\d]{1,3})\s*分糖", query_norm)
+        if zh_fraction is not None:
+            number = _parse_zh_numeric_token(zh_fraction.group(1))
+            if number is not None:
+                ratio = max(0.0, min(number / 10.0, 1.0))
+                explicit = True
+
+    if not explicit:
+        percent_match = re.search(r"(\d{1,3})\s*%?\s*(糖|sugar)", query_norm)
+        if percent_match is not None:
+            number = int(percent_match.group(1))
+            ratio = max(0.0, min(number / 100.0, 1.0))
+            explicit = True
+
+    percent = int(round(max(0.0, min(ratio, 1.0)) * 100))
+    label = f"{percent}%糖" if lang == "zh-TW" else f"{percent}% sugar"
+    return ratio, label, explicit
+
+
+def _parse_beverage_ice(query_norm: str, lang: str) -> tuple[str, bool]:
+    rules = (
+        (("去冰", "no ice"), "去冰", "no ice"),
+        (("少冰", "less ice"), "少冰", "less ice"),
+        (("微冰", "light ice"), "微冰", "light ice"),
+        (("正常冰", "regular ice"), "正常冰", "regular ice"),
+        (("常溫", "room temperature"), "常溫", "room temperature"),
+        (("熱飲", "熱的", "熱", "hot", "warm"), "熱飲", "hot"),
+    )
+    for tokens, zh_label, en_label in rules:
+        if any(token in query_norm for token in tokens):
+            return (zh_label if lang == "zh-TW" else en_label), True
+    return "", False
+
+
+def _parse_beverage_toppings(query_norm: str, lang: str) -> list[dict[str, Any]]:
+    matched: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for topping in _BEVERAGE_TOPPINGS:
+        key = str(topping.get("zh") or topping.get("en") or "")
+        if not key:
+            continue
+        if key in seen:
+            continue
+        tokens = tuple(str(token) for token in topping.get("tokens") or [])
+        if any(token in query_norm for token in tokens):
+            seen.add(key)
+            matched.append(
+                {
+                    "name": topping.get("zh") if lang == "zh-TW" else topping.get("en"),
+                    "protein": float(topping.get("protein") or 0.0),
+                    "carbs": float(topping.get("carbs") or 0.0),
+                    "fat": float(topping.get("fat") or 0.0),
+                    "sodium": float(topping.get("sodium") or 0.0),
+                }
+            )
+    return matched
+
+
+def _beverage_calorie_range_from_macros(macros: dict[str, float]) -> str:
+    protein = max(0.0, _safe_float(macros.get("protein")) or 0.0)
+    carbs = max(0.0, _safe_float(macros.get("carbs")) or 0.0)
+    fat = max(0.0, _safe_float(macros.get("fat")) or 0.0)
+    kcal = (protein * 4.0) + (carbs * 4.0) + (fat * 9.0)
+    if kcal <= 0:
+        return "0-20 kcal"
+    low = max(0, int(round(kcal * 0.9)))
+    high = max(low + 10, int(round(kcal * 1.1)))
+    return f"{low}-{high} kcal"
+
+
+def _build_beverage_formula_summary(
+    base_name: str,
+    size_label: str,
+    sugar_label: str,
+    ice_label: str,
+    topping_names: list[str],
+    lang: str,
+) -> str:
+    if lang == "zh-TW":
+        parts = [f"飲料參數：{base_name}", size_label, sugar_label]
+        if ice_label:
+            parts.append(ice_label)
+        if topping_names:
+            parts.append(f"加料 {', '.join(topping_names)}")
+        return "、".join(parts)
+    parts = [f"Beverage options: {base_name}", size_label, sugar_label]
+    if ice_label:
+        parts.append(ice_label)
+    if topping_names:
+        parts.append(f"toppings {', '.join(topping_names)}")
+    return ", ".join(parts)
+
+
+def _build_beverage_formula_suggestion(
+    carbs: float,
+    sugar_ratio: float,
+    toppings: list[dict[str, Any]],
+    lang: str,
+) -> str:
+    if lang == "zh-TW":
+        if sugar_ratio >= 0.7 or carbs >= 45:
+            return "本杯糖量偏高，建議下次改半糖以下，並減少甜點搭配。"
+        if toppings:
+            return "主要熱量來自加料，若想控熱量可先拿掉加料。"
+        return "可優先選低糖與中杯，讓全天熱量更穩定。"
+    if sugar_ratio >= 0.7 or carbs >= 45:
+        return "Sugar load is high. Next time choose half sugar or less."
+    if toppings:
+        return "Most extra calories are from toppings. Remove toppings when cutting."
+    return "Prefer lower sugar and medium size for steadier daily intake."
+
+
+def _apply_beverage_formula(
+    raw_query: str,
+    catalog_row: dict,
+    macros: dict[str, float],
+    use_lang: str,
+) -> Optional[dict[str, Any]]:
+    is_beverage = catalog_row.get("is_beverage") if isinstance(catalog_row.get("is_beverage"), bool) else False
+    if not is_beverage:
+        return None
+    query_norm = _normalize_food_query(raw_query)
+    if not query_norm or not _is_probably_beverage_text(query_norm):
+        return None
+
+    row_profile_raw = catalog_row.get("beverage_profile")
+    row_profile: dict[str, Any] = row_profile_raw if isinstance(row_profile_raw, dict) else {}
+    name_norm = _normalize_food_query(str(catalog_row.get("food_name") or catalog_row.get("canonical_name") or ""))
+    defaults = _beverage_profile_defaults(name_norm)
+
+    base_ml = _pick_float(
+        row_profile.get("base_ml", catalog_row.get("beverage_base_ml")),
+        float(defaults.get("base_ml", 500.0)),
+    )
+    if base_ml <= 0:
+        base_ml = 500.0
+    default_sugar_ratio = max(
+        0.0,
+        min(
+            1.0,
+            _pick_float(
+                row_profile.get("default_sugar_ratio", catalog_row.get("beverage_default_sugar_ratio")),
+                float(defaults.get("default_sugar_ratio", 0.5)),
+            ),
+        ),
+    )
+    full_sugar_carbs = max(
+        0.0,
+        _pick_float(
+            row_profile.get("full_sugar_carbs", catalog_row.get("beverage_full_sugar_carbs")),
+            float(defaults.get("full_sugar_carbs", 24.0)),
+        ),
+    )
+    sugar_adjustable = _pick_bool(
+        row_profile.get("sugar_adjustable", catalog_row.get("beverage_sugar_adjustable")),
+        bool(defaults.get("sugar_adjustable", True)),
+    )
+
+    size_factor, size_label, has_size = _parse_beverage_size(query_norm, base_ml, use_lang)
+    sugar_ratio, sugar_label, has_sugar = _parse_beverage_sugar(query_norm, default_sugar_ratio, use_lang)
+    ice_label, has_ice = _parse_beverage_ice(query_norm, use_lang)
+    toppings = _parse_beverage_toppings(query_norm, use_lang)
+    has_modifier = has_size or has_sugar or has_ice or bool(toppings)
+    if not has_modifier:
+        return None
+
+    protein = max(0.0, (_safe_float(macros.get("protein")) or 0.0) * size_factor)
+    carbs = max(0.0, (_safe_float(macros.get("carbs")) or 0.0) * size_factor)
+    fat = max(0.0, (_safe_float(macros.get("fat")) or 0.0) * size_factor)
+    sodium = max(0.0, (_safe_float(macros.get("sodium")) or 0.0) * size_factor)
+
+    if sugar_adjustable and has_sugar and full_sugar_carbs > 0:
+        carbs += (sugar_ratio - default_sugar_ratio) * full_sugar_carbs * size_factor
+        carbs = max(0.0, carbs)
+
+    topping_names: list[str] = []
+    for topping in toppings:
+        topping_names.append(str(topping.get("name") or "").strip())
+        protein += max(0.0, _safe_float(topping.get("protein")) or 0.0)
+        carbs += max(0.0, _safe_float(topping.get("carbs")) or 0.0)
+        fat += max(0.0, _safe_float(topping.get("fat")) or 0.0)
+        sodium += max(0.0, _safe_float(topping.get("sodium")) or 0.0)
+
+    adjusted_macros = {
+        "protein": round(protein, 1),
+        "carbs": round(carbs, 1),
+        "fat": round(fat, 1),
+        "sodium": round(sodium, 1),
+    }
+    base_name = str(catalog_row.get("food_name") or catalog_row.get("canonical_name") or "").strip()
+    if not base_name:
+        base_name = raw_query.strip()
+    adjusted_items = _catalog_food_items(catalog_row, base_name)
+    for topping_name in topping_names:
+        if topping_name and topping_name not in adjusted_items:
+            adjusted_items.append(topping_name)
+
+    summary = _build_beverage_formula_summary(
+        base_name=base_name,
+        size_label=size_label,
+        sugar_label=sugar_label,
+        ice_label=ice_label,
+        topping_names=[name for name in topping_names if name],
+        lang=use_lang,
+    )
+    suggestion = _build_beverage_formula_suggestion(
+        carbs=adjusted_macros["carbs"],
+        sugar_ratio=sugar_ratio,
+        toppings=toppings,
+        lang=use_lang,
+    )
+
+    return {
+        "food_name": raw_query.strip() or base_name,
+        "calorie_range": _beverage_calorie_range_from_macros(adjusted_macros),
+        "macros": adjusted_macros,
+        "food_items": adjusted_items[:6],
+        "dish_summary": summary,
+        "suggestion": suggestion,
+    }
+
+
 def _safe_float(value: Any) -> Optional[float]:
     if isinstance(value, (int, float)):
         return float(value)
@@ -1182,6 +1686,7 @@ def _build_food_search_item(
     use_lang: str,
     alias_row: Optional[dict] = None,
     score: Optional[float] = None,
+    raw_query: Optional[str] = None,
 ) -> Optional[FoodSearchItem]:
     food_id = str(catalog_row.get("id") or "").strip()
     if not food_id:
@@ -1193,8 +1698,50 @@ def _build_food_search_item(
     calorie_range = _catalog_calorie_range(catalog_row)
     macros = _catalog_macros(catalog_row)
     food_items = _catalog_food_items(catalog_row, food_name)
-    judgement_tags = _catalog_judgement_tags(catalog_row, macros, calorie_range, use_lang)
+    suggestion = str(catalog_row.get("suggestion") or "").strip() or _catalog_default_suggestion(use_lang)
+    dish_summary = (
+        str(catalog_row.get("dish_summary") or "").strip()
+        or _catalog_default_summary(food_name, use_lang)
+    )
+    nutrition_source = "catalog"
     reference_used = str(catalog_row.get("reference_used") or "").strip() or _catalog_reference_used(use_lang)
+
+    if raw_query:
+        beverage_result = _apply_beverage_formula(
+            raw_query=raw_query,
+            catalog_row=catalog_row,
+            macros=macros,
+            use_lang=use_lang,
+        )
+        if beverage_result is not None:
+            food_name = str(beverage_result.get("food_name") or food_name).strip() or food_name
+            calorie_range = str(beverage_result.get("calorie_range") or calorie_range).strip() or calorie_range
+            adjusted_macros = beverage_result.get("macros")
+            if isinstance(adjusted_macros, dict):
+                macros = {
+                    "protein": max(0.0, _safe_float(adjusted_macros.get("protein")) or 0.0),
+                    "carbs": max(0.0, _safe_float(adjusted_macros.get("carbs")) or 0.0),
+                    "fat": max(0.0, _safe_float(adjusted_macros.get("fat")) or 0.0),
+                    "sodium": max(0.0, _safe_float(adjusted_macros.get("sodium")) or 0.0),
+                }
+            adjusted_items = beverage_result.get("food_items")
+            if isinstance(adjusted_items, list):
+                food_items = _to_string_list(adjusted_items)
+            suggestion = (
+                str(beverage_result.get("suggestion") or "").strip()
+                or suggestion
+            )
+            dish_summary = (
+                str(beverage_result.get("dish_summary") or "").strip()
+                or dish_summary
+            )
+            nutrition_source = "catalog_formula"
+            if use_lang == "zh-TW":
+                reference_used = "資料庫 + 飲料參數公式"
+            else:
+                reference_used = "catalog + beverage formula"
+
+    judgement_tags = _catalog_judgement_tags(catalog_row, macros, calorie_range, use_lang)
 
     if score is None:
         if alias_row is None:
@@ -1217,12 +1764,10 @@ def _build_food_search_item(
         macros=macros,
         food_items=food_items,
         judgement_tags=judgement_tags,
-        dish_summary=str(catalog_row.get("dish_summary") or "").strip()
-        or _catalog_default_summary(food_name, use_lang),
-        suggestion=str(catalog_row.get("suggestion") or "").strip()
-        or _catalog_default_suggestion(use_lang),
+        dish_summary=dish_summary,
+        suggestion=suggestion,
         source=str(catalog_row.get("source") or "catalog").strip() or "catalog",
-        nutrition_source="catalog",
+        nutrition_source=nutrition_source,
         reference_used=reference_used,
         image_url=str(catalog_row.get("image_url") or "").strip() or None,
         thumb_url=str(catalog_row.get("thumb_url") or "").strip() or None,
@@ -2659,8 +3204,8 @@ def foods_search(
     lang: str = Query(default=None),
     limit: int = Query(default=8, ge=1, le=20),
 ):
-    query_norm = _normalize_food_query(q)
-    if not query_norm:
+    query_candidates = _food_search_query_candidates(q)
+    if not query_candidates:
         return FoodSearchResponse(items=[])
 
     use_lang = lang or DEFAULT_LANG
@@ -2671,43 +3216,62 @@ def foods_search(
     catalog_select = "*"
     query_limit = max(20, limit * 6)
 
-    alias_rows = _supabase_rest_list(
-        "food_aliases",
-        [
-            ("select", "food_id,alias,lang"),
-            ("alias", f"ilike.*{query_norm}*"),
-            ("limit", str(query_limit)),
-        ],
-    )
+    alias_candidates: list[tuple[str, dict]] = []
     direct_by_id: dict[str, dict] = {}
-    direct_food_name_rows = _supabase_rest_list(
-        "food_catalog",
-        [
-            ("select", catalog_select),
-            ("food_name", f"ilike.*{query_norm}*"),
-            ("limit", str(query_limit)),
-        ],
-    )
-    for row in direct_food_name_rows:
-        food_id = str(row.get("id") or "").strip()
-        if food_id:
-            direct_by_id[food_id] = row
+    direct_best_score: dict[str, float] = {}
+    direct_best_query: dict[str, str] = {}
+    for query_norm in query_candidates:
+        alias_rows = _supabase_rest_list(
+            "food_aliases",
+            [
+                ("select", "food_id,alias,lang"),
+                ("alias", f"ilike.*{query_norm}*"),
+                ("limit", str(query_limit)),
+            ],
+        )
+        for row in alias_rows:
+            alias_candidates.append((query_norm, row))
 
-    direct_canonical_rows = _supabase_rest_list(
-        "food_catalog",
-        [
-            ("select", catalog_select),
-            ("canonical_name", f"ilike.*{query_norm}*"),
-            ("limit", str(query_limit)),
-        ],
-    )
-    for row in direct_canonical_rows:
-        food_id = str(row.get("id") or "").strip()
-        if food_id and food_id not in direct_by_id:
-            direct_by_id[food_id] = row
+        direct_food_name_rows = _supabase_rest_list(
+            "food_catalog",
+            [
+                ("select", catalog_select),
+                ("food_name", f"ilike.*{query_norm}*"),
+                ("limit", str(query_limit)),
+            ],
+        )
+        for row in direct_food_name_rows:
+            food_id = str(row.get("id") or "").strip()
+            if not food_id:
+                continue
+            score = _direct_food_match_score(query_norm, row)
+            previous = direct_best_score.get(food_id, -1.0)
+            if score > previous:
+                direct_best_score[food_id] = score
+                direct_best_query[food_id] = query_norm
+                direct_by_id[food_id] = row
+
+        direct_canonical_rows = _supabase_rest_list(
+            "food_catalog",
+            [
+                ("select", catalog_select),
+                ("canonical_name", f"ilike.*{query_norm}*"),
+                ("limit", str(query_limit)),
+            ],
+        )
+        for row in direct_canonical_rows:
+            food_id = str(row.get("id") or "").strip()
+            if not food_id:
+                continue
+            score = _direct_food_match_score(query_norm, row)
+            previous = direct_best_score.get(food_id, -1.0)
+            if score > previous:
+                direct_best_score[food_id] = score
+                direct_best_query[food_id] = query_norm
+                direct_by_id[food_id] = row
 
     alias_food_ids: list[str] = []
-    for row in alias_rows:
+    for _, row in alias_candidates:
         food_id = str(row.get("food_id") or "").strip()
         if food_id and food_id not in alias_food_ids:
             alias_food_ids.append(food_id)
@@ -2727,25 +3291,28 @@ def foods_search(
             if food_id and food_id not in direct_by_id:
                 direct_by_id[food_id] = row
 
-    if not alias_rows and not direct_by_id:
+    if not alias_candidates and not direct_by_id:
         return FoodSearchResponse(items=[])
 
     best_items: dict[str, FoodSearchItem] = {}
 
     # Candidate set A: direct match from food_name/canonical_name.
     for food_id, catalog_row in direct_by_id.items():
+        candidate_query = direct_best_query.get(food_id) or query_candidates[0]
         candidate = _build_food_search_item(
-            query_norm=query_norm,
+            query_norm=candidate_query,
             catalog_row=catalog_row,
             use_lang=use_lang,
             alias_row=None,
+            score=direct_best_score.get(food_id),
+            raw_query=q,
         )
         if candidate is None:
             continue
         best_items[food_id] = candidate
 
     # Candidate set B: alias match (can outrank direct match).
-    for alias_row in alias_rows:
+    for query_norm, alias_row in alias_candidates:
         food_id = str(alias_row.get("food_id") or "").strip()
         if not food_id:
             continue
@@ -2757,6 +3324,7 @@ def foods_search(
             catalog_row=catalog_row,
             use_lang=use_lang,
             alias_row=alias_row,
+            raw_query=q,
         )
         if candidate is None:
             continue
