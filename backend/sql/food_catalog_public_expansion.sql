@@ -1,5 +1,7 @@
-﻿-- Public food catalog expansion: image fields + search miss telemetry.
+-- Public food catalog expansion: image fields + search miss telemetry.
 -- Safe to run multiple times in Supabase SQL Editor.
+
+create extension if not exists pg_trgm;
 
 alter table public.food_catalog
   add column if not exists image_url text;
@@ -48,6 +50,15 @@ create index if not exists idx_food_search_miss_created_at
 create index if not exists idx_food_search_miss_lang
   on public.food_search_miss (lang);
 
+create index if not exists idx_food_catalog_food_name_trgm
+  on public.food_catalog using gin (food_name gin_trgm_ops);
+
+create index if not exists idx_food_catalog_canonical_name_trgm
+  on public.food_catalog using gin (canonical_name gin_trgm_ops);
+
+create index if not exists idx_food_aliases_alias_trgm
+  on public.food_aliases using gin (alias gin_trgm_ops);
+
 alter table public.food_search_miss enable row level security;
 
 drop policy if exists "food_search_miss_read_authenticated" on public.food_search_miss;
@@ -67,3 +78,4 @@ select
 from public.food_search_miss
 where created_at >= (now() - interval '30 days')
 group by query_norm, lang;
+

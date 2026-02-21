@@ -272,12 +272,25 @@ _client = OpenAI(api_key=API_KEY) if API_KEY else None
 logging.basicConfig(level=logging.INFO)
 _last_ai_error: Optional[str] = None
 _jwks_client: Optional[PyJWKClient] = None
+_supabase_http_client: Optional[httpx.Client] = None
 _chat_rate_state: dict[str, list[float]] = {}
 _chat_rate_limit = int(os.getenv("CHAT_RATE_LIMIT_PER_MIN", "5"))
 _chat_rate_window_sec = int(os.getenv("CHAT_RATE_WINDOW_SEC", "60"))
 _analysis_rate_state: dict[str, list[float]] = {}
 _analysis_rate_limit = int(os.getenv("ANALYZE_RATE_LIMIT_PER_MIN", "6"))
 _analysis_rate_window_sec = int(os.getenv("ANALYZE_RATE_WINDOW_SEC", "60"))
+
+
+@app.on_event("shutdown")
+def _shutdown_clients() -> None:
+    global _supabase_http_client
+    if _supabase_http_client is not None:
+        try:
+            _supabase_http_client.close()
+        except Exception:
+            pass
+        _supabase_http_client = None
+
 
 _chat_blocklist = {
     "色情",
@@ -909,6 +922,13 @@ def _supabase_headers() -> dict:
     }
 
 
+def _get_supabase_http_client() -> httpx.Client:
+    global _supabase_http_client
+    if _supabase_http_client is None:
+        _supabase_http_client = httpx.Client(timeout=10)
+    return _supabase_http_client
+
+
 def _normalize_food_query(value: str) -> str:
     return " ".join((value or "").strip().lower().split())
 
@@ -1470,7 +1490,7 @@ def _food_search_query_candidates(raw_query: str) -> list[str]:
         for inferred in _extract_beverage_base_candidates(stripped):
             add(inferred)
 
-    return candidates[:12]
+    return candidates[:6]
 
 
 def _parse_zh_numeric_token(token: str) -> Optional[int]:
@@ -2041,8 +2061,8 @@ def _supabase_rest_list(table: str, params: list[tuple[str, str]]) -> list[dict]
         return []
     url = f"{SUPABASE_URL}/rest/v1/{table}"
     try:
-        with httpx.Client(timeout=10) as client:
-            resp = client.get(url, headers=headers, params=params)
+        client = _get_supabase_http_client()
+        resp = client.get(url, headers=headers, params=params)
     except Exception as exc:
         logging.warning("Supabase %s query error: %s", table, exc)
         return []
@@ -2070,8 +2090,8 @@ def _supabase_rest_insert(table: str, payload: dict) -> bool:
     url = f"{SUPABASE_URL}/rest/v1/{table}"
     body = {str(k): v for k, v in payload.items()}
     try:
-        with httpx.Client(timeout=10) as client:
-            resp = client.post(url, headers=headers, json=body)
+        client = _get_supabase_http_client()
+        resp = client.post(url, headers=headers, json=body)
     except Exception as exc:
         logging.warning("Supabase %s insert error: %s", table, exc)
         return False
@@ -3669,7 +3689,7 @@ def foods_search(
 
     # Use "*" so optional columns (e.g. food_items/judgement_tags) do not break older schemas.
     catalog_select = "*"
-    query_limit = max(20, limit * 6)
+    query_limit = min(60, max(20, limit * 3))
 
     alias_candidates: list[tuple[str, dict]] = []
     direct_by_id: dict[str, dict] = {}
@@ -3687,34 +3707,15 @@ def foods_search(
         for row in alias_rows:
             alias_candidates.append((query_norm, row))
 
-        direct_food_name_rows = _supabase_rest_list(
+        direct_rows = _supabase_rest_list(
             "food_catalog",
             [
                 ("select", catalog_select),
-                ("food_name", f"ilike.*{query_norm}*"),
+                ("or", f"food_name.ilike.*{query_norm}*,canonical_name.ilike.*{query_norm}*"),
                 ("limit", str(query_limit)),
             ],
         )
-        for row in direct_food_name_rows:
-            food_id = str(row.get("id") or "").strip()
-            if not food_id:
-                continue
-            score = _direct_food_match_score(query_norm, row)
-            previous = direct_best_score.get(food_id, -1.0)
-            if score > previous:
-                direct_best_score[food_id] = score
-                direct_best_query[food_id] = query_norm
-                direct_by_id[food_id] = row
-
-        direct_canonical_rows = _supabase_rest_list(
-            "food_catalog",
-            [
-                ("select", catalog_select),
-                ("canonical_name", f"ilike.*{query_norm}*"),
-                ("limit", str(query_limit)),
-            ],
-        )
-        for row in direct_canonical_rows:
+        for row in direct_rows:
             food_id = str(row.get("id") or "").strip()
             if not food_id:
                 continue

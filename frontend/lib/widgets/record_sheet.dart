@@ -99,7 +99,7 @@ Future<String?> _promptFoodName(
                     ),
                     onChanged: (_) {
                       debounce?.cancel();
-                      debounce = Timer(const Duration(milliseconds: 250), () {
+                      debounce = Timer(const Duration(milliseconds: 400), () {
                         refreshSuggestions(
                           controller.text,
                           dialogContext,

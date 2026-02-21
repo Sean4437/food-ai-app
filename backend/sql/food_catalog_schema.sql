@@ -2,6 +2,7 @@
 -- Apply in Supabase SQL editor.
 
 create extension if not exists pgcrypto;
+create extension if not exists pg_trgm;
 
 create table if not exists public.food_catalog (
   id uuid primary key default gen_random_uuid(),
@@ -58,6 +59,12 @@ create index if not exists idx_food_catalog_food_name
 create index if not exists idx_food_catalog_canonical_name
   on public.food_catalog (canonical_name);
 
+create index if not exists idx_food_catalog_food_name_trgm
+  on public.food_catalog using gin (food_name gin_trgm_ops);
+
+create index if not exists idx_food_catalog_canonical_name_trgm
+  on public.food_catalog using gin (canonical_name gin_trgm_ops);
+
 create table if not exists public.food_aliases (
   id bigserial primary key,
   food_id uuid not null references public.food_catalog(id) on delete cascade,
@@ -70,6 +77,9 @@ create table if not exists public.food_aliases (
 
 create index if not exists idx_food_aliases_alias_norm
   on public.food_aliases (alias_norm);
+
+create index if not exists idx_food_aliases_alias_trgm
+  on public.food_aliases using gin (alias gin_trgm_ops);
 
 create index if not exists idx_food_aliases_food_id
   on public.food_aliases (food_id);
