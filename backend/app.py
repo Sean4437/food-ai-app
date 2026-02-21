@@ -1592,6 +1592,37 @@ def _parse_json_response_utf8(resp: httpx.Response) -> Any:
         return None
 
 
+def _contains_cjk(text: str) -> bool:
+    for ch in text:
+        code = ord(ch)
+        if 0x3400 <= code <= 0x9FFF:
+            return True
+    return False
+
+
+def _fix_mojibake_value(value: Any) -> Any:
+    if isinstance(value, str):
+        text = value
+        if not text or _contains_cjk(text):
+            return text
+        # Common UTF-8-as-latin1 mojibake signatures.
+        has_latin1 = any(0x00C0 <= ord(ch) <= 0x00FF for ch in text)
+        if not has_latin1:
+            return text
+        try:
+            repaired = text.encode("latin1").decode("utf-8")
+        except Exception:
+            return text
+        if repaired and _contains_cjk(repaired):
+            return repaired
+        return text
+    if isinstance(value, list):
+        return [_fix_mojibake_value(item) for item in value]
+    if isinstance(value, dict):
+        return {str(k): _fix_mojibake_value(v) for k, v in value.items()}
+    return value
+
+
 def _supabase_rest_list(table: str, params: list[tuple[str, str]]) -> list[dict]:
     try:
         headers = _supabase_headers()
@@ -1615,7 +1646,7 @@ def _supabase_rest_list(table: str, params: list[tuple[str, str]]) -> list[dict]
     normalized: list[dict] = []
     for row in data:
         if isinstance(row, dict):
-            normalized.append({str(k): v for k, v in row.items()})
+            normalized.append({str(k): _fix_mojibake_value(v) for k, v in row.items()})
     return normalized
 
 
@@ -3905,7 +3936,11 @@ def _probe_supabase_catalog() -> dict:
             sample.append(
                 {
                     "id": str(row.get("id") or ""),
-                    "food_name": str(row.get("food_name") or row.get("canonical_name") or ""),
+                    "food_name": str(
+                        _fix_mojibake_value(
+                            row.get("food_name") or row.get("canonical_name") or ""
+                        )
+                    ),
                 }
             )
     keyword_rows = _supabase_rest_list(
