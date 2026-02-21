@@ -1577,6 +1577,21 @@ def _catalog_reference_used(lang: str) -> str:
     return "catalog"
 
 
+def _parse_json_response_utf8(resp: httpx.Response) -> Any:
+    # Supabase JSON may be returned without explicit charset. Force UTF-8 first
+    # to avoid mojibake on Traditional Chinese text.
+    raw = resp.content
+    if isinstance(raw, (bytes, bytearray)):
+        try:
+            return json.loads(raw.decode("utf-8"))
+        except Exception:
+            pass
+    try:
+        return resp.json()
+    except Exception:
+        return None
+
+
 def _supabase_rest_list(table: str, params: list[tuple[str, str]]) -> list[dict]:
     try:
         headers = _supabase_headers()
@@ -1592,9 +1607,8 @@ def _supabase_rest_list(table: str, params: list[tuple[str, str]]) -> list[dict]
     if resp.status_code >= 400:
         logging.warning("Supabase %s query failed (%s): %s", table, resp.status_code, resp.text)
         return []
-    try:
-        data = resp.json()
-    except Exception:
+    data = _parse_json_response_utf8(resp)
+    if data is None:
         return []
     if not isinstance(data, list):
         return []
@@ -1834,9 +1848,8 @@ def _trial_start_from_profile(user_id: str) -> Optional[datetime]:
     if resp.status_code >= 400:
         logging.warning("Supabase profiles fetch failed (%s), fallback to local", resp.status_code)
         return None
-    try:
-        data = resp.json()
-    except Exception:
+    data = _parse_json_response_utf8(resp)
+    if data is None:
         logging.warning("Supabase profiles parse failed, fallback to local")
         return None
     if not data:
@@ -3879,9 +3892,8 @@ def _probe_supabase_catalog() -> dict:
             "key_kind": key_kind,
         }
 
-    try:
-        rows = probe_resp.json()
-    except Exception:
+    rows = _parse_json_response_utf8(probe_resp)
+    if rows is None:
         return {"ok": False, "reason": "invalid_json", "key_kind": key_kind}
 
     if not isinstance(rows, list):
