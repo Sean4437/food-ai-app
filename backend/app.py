@@ -944,7 +944,6 @@ _BEVERAGE_HINT_TOKENS = (
     "拿鐵",
     "可可",
     "果汁",
-    "汽水",
     "飲料",
     "飲",
     "milk tea",
@@ -952,7 +951,6 @@ _BEVERAGE_HINT_TOKENS = (
     "tea",
     "coffee",
     "juice",
-    "soda",
     "drink",
     "beverage",
     "boba",
@@ -1495,7 +1493,7 @@ def _parse_zh_numeric_token(token: str) -> Optional[int]:
 
 
 def _beverage_profile_defaults(food_name_norm: str) -> dict[str, Any]:
-    if any(token in food_name_norm for token in ("果汁", "juice", "汽水", "soda", "cola")):
+    if any(token in food_name_norm for token in ("果汁", "juice")):
         return {
             "base_ml": 500.0,
             "default_sugar_ratio": 1.0,

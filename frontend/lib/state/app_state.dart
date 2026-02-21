@@ -312,19 +312,6 @@ class AppState extends ChangeNotifier {
       sugarAdjustable: false,
     ),
     _BeverageProfile(
-      key: 'sparkling',
-      nameZh: '汽水',
-      nameEn: 'soda',
-      tokens: ['汽水', '可樂', '雪碧', 'soda', 'cola', 'sprite'],
-      baseProtein: 0,
-      baseCarbs: 36,
-      baseFat: 0,
-      baseSodium: 40,
-      fullSugarCarbs: 0,
-      defaultSugarRatio: 1.0,
-      sugarAdjustable: false,
-    ),
-    _BeverageProfile(
       key: 'cocoa',
       nameZh: '可可',
       nameEn: 'cocoa',
@@ -398,13 +385,11 @@ class AppState extends ChangeNotifier {
     '奶茶',
     '果汁',
     '可可',
-    '汽水',
     'latte',
     'tea',
     'coffee',
     'drink',
     'juice',
-    'soda',
     'boba',
     'smoothie',
   ];
@@ -1935,7 +1920,6 @@ class AppState extends ChangeNotifier {
             '咖啡',
             '拿鐵',
             '果汁',
-            '汽水',
             '飲料',
             '珍珠',
             '椰果',
@@ -1950,7 +1934,6 @@ class AppState extends ChangeNotifier {
             'coffee',
             'latte',
             'juice',
-            'soda',
             'drink',
             'boba',
             'pearl',
@@ -2141,7 +2124,6 @@ class AppState extends ChangeNotifier {
             '\u5496\u5561',
             '\u62ff\u9435',
             '\u679c\u6c41',
-            '\u6c7d\u6c34',
             '\u98f2\u6599',
             '\u73cd\u73e0',
             '\u6ce2\u9738',
@@ -2188,7 +2170,6 @@ class AppState extends ChangeNotifier {
             'coffee',
             'latte',
             'juice',
-            'soda',
             'drink',
             'boba',
             'pearl',
@@ -2808,7 +2789,6 @@ class AppState extends ChangeNotifier {
             '\u694a\u679d\u7518\u9732',
             '\u6c34\u679c\u8336',
             '\u7d9c\u5408\u679c\u8336',
-            '\u6c34\u679c\u6c23\u6ce1\u98f2',
             '\u8354\u679d\u70cf\u9f8d',
             '\u767d\u6843\u70cf\u9f8d',
             '\u8461\u8404\u70cf\u9f8d',
@@ -3248,7 +3228,7 @@ class AppState extends ChangeNotifier {
     if (value.isEmpty) return value;
 
     final hasDrinkHint = RegExp(
-      r'(飲|喝|茶|咖啡|奶|豆漿|果汁|可可|latte|tea|coffee|drink|beverage|milk|juice|soda|boba|smoothie)',
+      r'(飲|喝|茶|咖啡|奶|豆漿|果汁|可可|latte|tea|coffee|drink|beverage|milk|juice|boba|smoothie)',
       caseSensitive: false,
     ).hasMatch(value);
     if (!hasDrinkHint) return value;
@@ -3261,7 +3241,7 @@ class AppState extends ChangeNotifier {
       ),
       // Common beverage base words.
       RegExp(
-        r'(豆漿|鮮奶茶|奶茶|紅茶|綠茶|青茶|烏龍|美式|拿鐵|可可|咖啡|果汁|氣泡飲|latte|tea|coffee|drink|beverage|milk|juice|soda|boba|smoothie)\s*',
+        r'(豆漿|鮮奶茶|奶茶|紅茶|綠茶|青茶|烏龍|美式|拿鐵|可可|咖啡|果汁|latte|tea|coffee|drink|beverage|milk|juice|boba|smoothie)\s*',
         caseSensitive: false,
       ),
     ];
