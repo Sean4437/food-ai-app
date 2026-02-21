@@ -230,6 +230,19 @@ class FoodSearchMissRequest(BaseModel):
     lang: Optional[str] = None
     source: Optional[str] = None
 
+
+class FoodSearchMissTopItem(BaseModel):
+    query_norm: str
+    sample_query: str
+    lang: str
+    miss_count: int
+    last_seen_at: Optional[str] = None
+
+
+class FoodSearchMissTopResponse(BaseModel):
+    days: int
+    items: List[FoodSearchMissTopItem]
+
 FREE_DAILY_LIMIT = int(os.getenv("FREE_DAILY_LIMIT", "1"))
 CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
 DEFAULT_LANG = os.getenv("DEFAULT_LANG", "zh-TW")
@@ -1134,6 +1147,95 @@ def _food_match_score(query_norm: str, alias_row: dict, catalog_row: dict, lang:
     if verified is not None and verified > 0:
         score += min(verified, 5.0) / 10.0
     return score
+
+
+def _direct_food_match_score(query_norm: str, catalog_row: dict) -> float:
+    food_name = str(catalog_row.get("food_name") or "").strip()
+    canonical_name = str(catalog_row.get("canonical_name") or "").strip()
+    food_norm = _normalize_food_query(food_name)
+    canonical_norm = _normalize_food_query(canonical_name)
+
+    score = 0.0
+    if food_norm == query_norm:
+        score += 4.0
+    elif food_norm.startswith(query_norm):
+        score += 3.2
+    elif query_norm in food_norm:
+        score += 2.0
+
+    if canonical_norm == query_norm:
+        score += 3.2
+    elif canonical_norm.startswith(query_norm):
+        score += 2.4
+    elif query_norm in canonical_norm:
+        score += 1.6
+
+    verified = _safe_float(catalog_row.get("verified_level"))
+    if verified is not None and verified > 0:
+        score += min(verified, 5.0) / 10.0
+    return score
+
+
+def _build_food_search_item(
+    query_norm: str,
+    catalog_row: dict,
+    use_lang: str,
+    alias_row: Optional[dict] = None,
+    score: Optional[float] = None,
+) -> Optional[FoodSearchItem]:
+    food_id = str(catalog_row.get("id") or "").strip()
+    if not food_id:
+        return None
+    food_name = str(catalog_row.get("food_name") or catalog_row.get("canonical_name") or "").strip()
+    if not food_name:
+        return None
+
+    calorie_range = _catalog_calorie_range(catalog_row)
+    macros = _catalog_macros(catalog_row)
+    food_items = _catalog_food_items(catalog_row, food_name)
+    judgement_tags = _catalog_judgement_tags(catalog_row, macros, calorie_range, use_lang)
+    reference_used = str(catalog_row.get("reference_used") or "").strip() or _catalog_reference_used(use_lang)
+
+    if score is None:
+        if alias_row is None:
+            score = _direct_food_match_score(query_norm, catalog_row)
+        else:
+            score = _food_match_score(query_norm, alias_row, catalog_row, use_lang)
+
+    alias = None
+    alias_lang = None
+    if alias_row is not None:
+        alias = str(alias_row.get("alias") or "").strip() or None
+        alias_lang = str(alias_row.get("lang") or "").strip() or None
+
+    return FoodSearchItem(
+        food_id=food_id,
+        food_name=food_name,
+        alias=alias or food_name,
+        lang=alias_lang or use_lang,
+        calorie_range=calorie_range,
+        macros=macros,
+        food_items=food_items,
+        judgement_tags=judgement_tags,
+        dish_summary=str(catalog_row.get("dish_summary") or "").strip()
+        or _catalog_default_summary(food_name, use_lang),
+        suggestion=str(catalog_row.get("suggestion") or "").strip()
+        or _catalog_default_suggestion(use_lang),
+        source=str(catalog_row.get("source") or "catalog").strip() or "catalog",
+        nutrition_source="catalog",
+        reference_used=reference_used,
+        image_url=str(catalog_row.get("image_url") or "").strip() or None,
+        thumb_url=str(catalog_row.get("thumb_url") or "").strip() or None,
+        image_source=str(catalog_row.get("image_source") or "").strip() or None,
+        image_license=str(catalog_row.get("image_license") or "").strip() or None,
+        is_beverage=catalog_row.get("is_beverage")
+        if isinstance(catalog_row.get("is_beverage"), bool)
+        else None,
+        is_food=catalog_row.get("is_food")
+        if isinstance(catalog_row.get("is_food"), bool)
+        else True,
+        match_score=score,
+    )
 
 
 def _require_admin(request: Request) -> None:
@@ -2567,160 +2669,97 @@ def foods_search(
 
     # Use "*" so optional columns (e.g. food_items/judgement_tags) do not break older schemas.
     catalog_select = "*"
+    query_limit = max(20, limit * 6)
 
     alias_rows = _supabase_rest_list(
         "food_aliases",
         [
             ("select", "food_id,alias,lang"),
             ("alias", f"ilike.*{query_norm}*"),
-            ("limit", str(max(20, limit * 6))),
+            ("limit", str(query_limit)),
         ],
     )
-
-    direct_rows: list[dict] = []
-    if not alias_rows:
-        direct_rows = _supabase_rest_list(
-            "food_catalog",
-            [
-                ("select", catalog_select),
-                ("food_name", f"ilike.*{query_norm}*"),
-                ("limit", str(limit)),
-            ],
-        )
-        if not direct_rows:
-            direct_rows = _supabase_rest_list(
-                "food_catalog",
-                [
-                    ("select", catalog_select),
-                    ("canonical_name", f"ilike.*{query_norm}*"),
-                    ("limit", str(limit)),
-                ],
-            )
-        items = []
-        for row in direct_rows:
-            food_id = str(row.get("id") or "").strip()
-            food_name = str(row.get("food_name") or row.get("canonical_name") or q).strip()
-            if not food_id or not food_name:
-                continue
-            calorie_range = _catalog_calorie_range(row)
-            macros = _catalog_macros(row)
-            food_items = _catalog_food_items(row, food_name)
-            judgement_tags = _catalog_judgement_tags(row, macros, calorie_range, use_lang)
-            reference_used = (
-                str(row.get("reference_used") or "").strip() or _catalog_reference_used(use_lang)
-            )
-            score = 4.0 if _normalize_food_query(food_name) == query_norm else 2.0
-            items.append(
-                FoodSearchItem(
-                    food_id=food_id,
-                    food_name=food_name,
-                    alias=food_name,
-                    lang=use_lang,
-                    calorie_range=calorie_range,
-                    macros=macros,
-                    food_items=food_items,
-                    judgement_tags=judgement_tags,
-                    dish_summary=str(row.get("dish_summary") or "").strip()
-                    or _catalog_default_summary(food_name, use_lang),
-                    suggestion=str(row.get("suggestion") or "").strip()
-                    or _catalog_default_suggestion(use_lang),
-                    source=str(row.get("source") or "catalog").strip() or "catalog",
-                    nutrition_source="catalog",
-                    reference_used=reference_used,
-                    image_url=str(row.get("image_url") or "").strip() or None,
-                    thumb_url=str(row.get("thumb_url") or "").strip() or None,
-                    image_source=str(row.get("image_source") or "").strip() or None,
-                    image_license=str(row.get("image_license") or "").strip() or None,
-                    is_beverage=row.get("is_beverage")
-                    if isinstance(row.get("is_beverage"), bool)
-                    else None,
-                    is_food=row.get("is_food")
-                    if isinstance(row.get("is_food"), bool)
-                    else True,
-                    match_score=score,
-                )
-            )
-        items.sort(key=lambda item: item.match_score or 0.0, reverse=True)
-        return FoodSearchResponse(items=items[:limit])
-
-    food_ids: list[str] = []
-    for row in alias_rows:
-        food_id = str(row.get("food_id") or "").strip()
-        if food_id and food_id not in food_ids:
-            food_ids.append(food_id)
-    if not food_ids:
-        return FoodSearchResponse(items=[])
-
-    catalog_rows = _supabase_rest_list(
+    direct_by_id: dict[str, dict] = {}
+    direct_food_name_rows = _supabase_rest_list(
         "food_catalog",
         [
             ("select", catalog_select),
-            ("id", f"in.({','.join(food_ids)})"),
-            ("limit", str(len(food_ids))),
+            ("food_name", f"ilike.*{query_norm}*"),
+            ("limit", str(query_limit)),
         ],
     )
-    if not catalog_rows:
+    for row in direct_food_name_rows:
+        food_id = str(row.get("id") or "").strip()
+        if food_id:
+            direct_by_id[food_id] = row
+
+    direct_canonical_rows = _supabase_rest_list(
+        "food_catalog",
+        [
+            ("select", catalog_select),
+            ("canonical_name", f"ilike.*{query_norm}*"),
+            ("limit", str(query_limit)),
+        ],
+    )
+    for row in direct_canonical_rows:
+        food_id = str(row.get("id") or "").strip()
+        if food_id and food_id not in direct_by_id:
+            direct_by_id[food_id] = row
+
+    alias_food_ids: list[str] = []
+    for row in alias_rows:
+        food_id = str(row.get("food_id") or "").strip()
+        if food_id and food_id not in alias_food_ids:
+            alias_food_ids.append(food_id)
+
+    alias_needed_ids = [food_id for food_id in alias_food_ids if food_id not in direct_by_id]
+    if alias_needed_ids:
+        fetched_alias_rows = _supabase_rest_list(
+            "food_catalog",
+            [
+                ("select", catalog_select),
+                ("id", f"in.({','.join(alias_needed_ids)})"),
+                ("limit", str(len(alias_needed_ids))),
+            ],
+        )
+        for row in fetched_alias_rows:
+            food_id = str(row.get("id") or "").strip()
+            if food_id and food_id not in direct_by_id:
+                direct_by_id[food_id] = row
+
+    if not alias_rows and not direct_by_id:
         return FoodSearchResponse(items=[])
 
-    catalog_by_id = {
-        str(row.get("id") or "").strip(): row
-        for row in catalog_rows
-        if str(row.get("id") or "").strip()
-    }
-
     best_items: dict[str, FoodSearchItem] = {}
+
+    # Candidate set A: direct match from food_name/canonical_name.
+    for food_id, catalog_row in direct_by_id.items():
+        candidate = _build_food_search_item(
+            query_norm=query_norm,
+            catalog_row=catalog_row,
+            use_lang=use_lang,
+            alias_row=None,
+        )
+        if candidate is None:
+            continue
+        best_items[food_id] = candidate
+
+    # Candidate set B: alias match (can outrank direct match).
     for alias_row in alias_rows:
         food_id = str(alias_row.get("food_id") or "").strip()
         if not food_id:
             continue
-        catalog_row = catalog_by_id.get(food_id)
+        catalog_row = direct_by_id.get(food_id)
         if catalog_row is None:
             continue
-        food_name = str(
-            catalog_row.get("food_name")
-            or catalog_row.get("canonical_name")
-            or alias_row.get("alias")
-            or q
-        ).strip()
-        if not food_name:
+        candidate = _build_food_search_item(
+            query_norm=query_norm,
+            catalog_row=catalog_row,
+            use_lang=use_lang,
+            alias_row=alias_row,
+        )
+        if candidate is None:
             continue
-        score = _food_match_score(query_norm, alias_row, catalog_row, use_lang)
-        calorie_range = _catalog_calorie_range(catalog_row)
-        macros = _catalog_macros(catalog_row)
-        food_items = _catalog_food_items(catalog_row, food_name)
-        judgement_tags = _catalog_judgement_tags(catalog_row, macros, calorie_range, use_lang)
-        reference_used = (
-            str(catalog_row.get("reference_used") or "").strip()
-            or _catalog_reference_used(use_lang)
-        )
-        candidate = FoodSearchItem(
-            food_id=food_id,
-            food_name=food_name,
-            alias=str(alias_row.get("alias") or "").strip() or None,
-            lang=str(alias_row.get("lang") or "").strip() or None,
-            calorie_range=calorie_range,
-            macros=macros,
-            food_items=food_items,
-            judgement_tags=judgement_tags,
-            dish_summary=str(catalog_row.get("dish_summary") or "").strip()
-            or _catalog_default_summary(food_name, use_lang),
-            suggestion=str(catalog_row.get("suggestion") or "").strip()
-            or _catalog_default_suggestion(use_lang),
-            source=str(catalog_row.get("source") or "catalog").strip() or "catalog",
-            nutrition_source="catalog",
-            reference_used=reference_used,
-            image_url=str(catalog_row.get("image_url") or "").strip() or None,
-            thumb_url=str(catalog_row.get("thumb_url") or "").strip() or None,
-            image_source=str(catalog_row.get("image_source") or "").strip() or None,
-            image_license=str(catalog_row.get("image_license") or "").strip() or None,
-            is_beverage=catalog_row.get("is_beverage")
-            if isinstance(catalog_row.get("is_beverage"), bool)
-            else None,
-            is_food=catalog_row.get("is_food")
-            if isinstance(catalog_row.get("is_food"), bool)
-            else True,
-            match_score=score,
-        )
         existing = best_items.get(food_id)
         if existing is None or (candidate.match_score or 0.0) > (existing.match_score or 0.0):
             best_items[food_id] = candidate
@@ -2776,6 +2815,73 @@ def foods_search_miss(payload: FoodSearchMissRequest, request: Request):
         },
     )
     return {"ok": inserted}
+
+
+@app.get("/foods/miss_top", response_model=FoodSearchMissTopResponse)
+def foods_miss_top(
+    days: int = Query(default=30, ge=1, le=365),
+    limit: int = Query(default=50, ge=1, le=500),
+    lang: Optional[str] = Query(default=None),
+    _admin: None = Depends(_require_admin),
+):
+    use_lang = (lang or "").strip()
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    rows = _supabase_rest_list(
+        "food_search_miss",
+        [
+            ("select", "query_norm,query,lang,created_at"),
+            ("created_at", f"gte.{cutoff}"),
+            ("order", "created_at.desc"),
+            ("limit", "5000"),
+        ],
+    )
+
+    aggregate: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in rows:
+        query_norm = str(row.get("query_norm") or "").strip()
+        sample_query = str(row.get("query") or "").strip()
+        row_lang = str(row.get("lang") or "").strip() or DEFAULT_LANG
+        created_at = str(row.get("created_at") or "").strip()
+        if not query_norm:
+            continue
+        if use_lang and row_lang != use_lang:
+            continue
+        key = (query_norm, row_lang)
+        existing = aggregate.get(key)
+        if existing is None:
+            aggregate[key] = {
+                "query_norm": query_norm,
+                "sample_query": sample_query or query_norm,
+                "lang": row_lang,
+                "miss_count": 1,
+                "last_seen_at": created_at or None,
+            }
+            continue
+        existing["miss_count"] = int(existing.get("miss_count") or 0) + 1
+        if created_at and str(existing.get("last_seen_at") or "") < created_at:
+            existing["last_seen_at"] = created_at
+            if sample_query:
+                existing["sample_query"] = sample_query
+
+    items = [
+        FoodSearchMissTopItem(
+            query_norm=str(item.get("query_norm") or ""),
+            sample_query=str(item.get("sample_query") or ""),
+            lang=str(item.get("lang") or DEFAULT_LANG),
+            miss_count=int(item.get("miss_count") or 0),
+            last_seen_at=str(item.get("last_seen_at") or "") or None,
+        )
+        for item in aggregate.values()
+        if str(item.get("query_norm") or "")
+    ]
+    items.sort(
+        key=lambda item: (
+            -(item.miss_count or 0),
+            item.last_seen_at or "",
+            item.query_norm,
+        )
+    )
+    return FoodSearchMissTopResponse(days=days, items=items[:limit])
 
 
 @app.post("/analyze_label", response_model=LabelResult)
