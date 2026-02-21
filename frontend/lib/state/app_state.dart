@@ -1708,7 +1708,7 @@ class AppState extends ChangeNotifier {
       }
     }
 
-    final beverageSuggestions = _localBeverageSuggestions(
+    final beverageSuggestions = _beveragePresetSuggestions(
       trimmed,
       locale,
       limit: maxCount,
@@ -1900,6 +1900,194 @@ class AppState extends ChangeNotifier {
 
   String _normalizeFoodLookupText(String value) {
     return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  List<String> _beveragePresetSuggestions(
+    String query,
+    String locale, {
+    int limit = 8,
+  }) {
+    final normalizedQuery = _normalizeFoodLookupText(query);
+    if (normalizedQuery.isEmpty) return const [];
+    final compactQuery = normalizedQuery.replaceAll(' ', '');
+    final isZh = locale.toLowerCase().startsWith('zh');
+    final maxCount = limit.clamp(1, 20);
+
+    bool tokenMatches(String token) {
+      final normalizedToken = _normalizeFoodLookupText(token);
+      if (normalizedToken.isEmpty) return false;
+      final compactToken = normalizedToken.replaceAll(' ', '');
+      return normalizedToken.contains(normalizedQuery) ||
+          normalizedQuery.contains(normalizedToken) ||
+          compactToken.contains(compactQuery) ||
+          compactQuery.contains(compactToken);
+    }
+
+    final hintTokens = isZh
+        ? <String>[
+            '茶',
+            '青',
+            '紅',
+            '綠',
+            '烏龍',
+            '奶茶',
+            '豆漿',
+            '咖啡',
+            '拿鐵',
+            '果汁',
+            '汽水',
+            '飲料',
+            '珍珠',
+            '椰果',
+            '仙草',
+            '布丁',
+            '奶蓋',
+          ]
+        : <String>[
+            'tea',
+            'milk tea',
+            'soy',
+            'coffee',
+            'latte',
+            'juice',
+            'soda',
+            'drink',
+            'boba',
+            'pearl',
+            'coconut jelly',
+            'grass jelly',
+            'pudding',
+            'foam',
+          ];
+
+    final likelyBeverage =
+        hintTokens.any(tokenMatches) || compactQuery.length <= 2;
+    if (!likelyBeverage) return const [];
+
+    final baseProfiles = isZh
+        ? <Map<String, dynamic>>[
+            {
+              'name': '青茶',
+              'tokens': ['青茶', '青', 'tea', 'green tea'],
+            },
+            {
+              'name': '紅茶',
+              'tokens': ['紅茶', '紅', 'black tea'],
+            },
+            {
+              'name': '綠茶',
+              'tokens': ['綠茶', '綠', 'green tea'],
+            },
+            {
+              'name': '烏龍茶',
+              'tokens': ['烏龍', '烏龍茶', 'oolong'],
+            },
+            {
+              'name': '奶茶',
+              'tokens': ['奶茶', 'milk tea'],
+            },
+            {
+              'name': '無糖豆漿',
+              'tokens': ['豆漿', 'soy milk'],
+            },
+            {
+              'name': '美式咖啡',
+              'tokens': ['咖啡', '美式', 'americano', 'coffee'],
+            },
+            {
+              'name': '拿鐵',
+              'tokens': ['拿鐵', 'latte'],
+            },
+          ]
+        : <Map<String, dynamic>>[
+            {
+              'name': 'green tea',
+              'tokens': ['green tea', 'tea', 'green'],
+            },
+            {
+              'name': 'black tea',
+              'tokens': ['black tea', 'tea', 'black'],
+            },
+            {
+              'name': 'oolong tea',
+              'tokens': ['oolong', 'tea'],
+            },
+            {
+              'name': 'milk tea',
+              'tokens': ['milk tea', 'tea'],
+            },
+            {
+              'name': 'soy milk',
+              'tokens': ['soy milk', 'soy'],
+            },
+            {
+              'name': 'americano',
+              'tokens': ['americano', 'coffee'],
+            },
+            {
+              'name': 'latte',
+              'tokens': ['latte', 'coffee'],
+            },
+          ];
+
+    final matchedBases = <String>[];
+    for (final profile in baseProfiles) {
+      final name = (profile['name'] ?? '').toString().trim();
+      if (name.isEmpty) continue;
+      final tokens = (profile['tokens'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString())
+          .toList();
+      final matched =
+          tokenMatches(name) || tokens.any((token) => tokenMatches(token));
+      if (matched && !matchedBases.contains(name)) {
+        matchedBases.add(name);
+      }
+    }
+
+    if (matchedBases.isEmpty) {
+      matchedBases.add(
+        isZh ? '青茶' : 'green tea',
+      );
+    }
+
+    final suggestions = <String>[];
+    final seen = <String>{};
+    void addSuggestion(String value) {
+      final text = value.trim();
+      if (text.isEmpty) return;
+      final key = _normalizeFoodLookupText(text);
+      if (key.isEmpty || seen.contains(key)) return;
+      seen.add(key);
+      suggestions.add(text);
+    }
+
+    for (final base in matchedBases.take(3)) {
+      addSuggestion(base);
+      if (isZh) {
+        addSuggestion('$base 無糖去冰');
+        addSuggestion('$base 微糖少冰');
+        addSuggestion('$base 半糖去冰');
+        addSuggestion('$base 半糖少冰');
+        addSuggestion('$base 半糖去冰加珍珠');
+        addSuggestion('$base 無糖去冰加椰果');
+        addSuggestion('$base 無糖去冰加仙草');
+        if (base.contains('奶茶') || base.contains('拿鐵')) {
+          addSuggestion('$base 半糖少冰加奶蓋');
+        }
+      } else {
+        addSuggestion('$base unsweetened no ice');
+        addSuggestion('$base light sugar less ice');
+        addSuggestion('$base half sugar no ice');
+        addSuggestion('$base half sugar less ice');
+        addSuggestion('$base half sugar no ice with boba');
+        addSuggestion('$base unsweetened no ice with coconut jelly');
+      }
+      if (suggestions.length >= maxCount * 2) break;
+    }
+
+    suggestions.sort((a, b) => _nameSuggestionScore(b, normalizedQuery)
+        .compareTo(_nameSuggestionScore(a, normalizedQuery)));
+    return suggestions.take(maxCount).toList();
   }
 
   List<String> _catalogLookupCandidates(String rawInput) {
