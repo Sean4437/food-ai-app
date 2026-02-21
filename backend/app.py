@@ -930,6 +930,16 @@ _BEVERAGE_HINT_TOKENS = (
     "蜂蜜",
     "檸檬",
     "百香",
+    "芭樂",
+    "葡萄柚",
+    "紅柚",
+    "楊枝",
+    "荔枝",
+    "柳橙",
+    "金桔",
+    "梅綠",
+    "青梅",
+    "冬瓜檸檬",
     "多多綠",
     "拿鐵",
     "可可",
@@ -1337,6 +1347,27 @@ _BEVERAGE_BASE_CANDIDATES = (
     (("咖啡", "coffee", "americano"), "美式咖啡"),
 )
 
+_FRUIT_HINT_TOKENS = (
+    "檸檬",
+    "百香",
+    "葡萄柚",
+    "紅柚",
+    "芭樂",
+    "芒果",
+    "鳳梨",
+    "蘋果",
+    "白桃",
+    "荔枝",
+    "柳橙",
+    "金桔",
+    "桑葚",
+    "梅子",
+    "烏梅",
+    "水蜜桃",
+    "楊枝",
+    "果茶",
+)
+
 
 def _contains_any_token(text: str, tokens: tuple[str, ...]) -> bool:
     return any(token in text for token in tokens)
@@ -1388,6 +1419,16 @@ def _extract_beverage_base_candidates(text: str) -> list[str]:
     for tokens, canonical in _BEVERAGE_BASE_CANDIDATES:
         if any(token in normalized for token in tokens):
             add(canonical)
+
+    if any(token in normalized for token in _FRUIT_HINT_TOKENS):
+        if "青茶" in normalized or "四季春" in normalized:
+            add("青茶")
+        elif "紅茶" in normalized:
+            add("紅茶")
+        elif "烏龍" in normalized or "金萱" in normalized or "觀音" in normalized:
+            add("烏龍茶")
+        else:
+            add("綠茶")
 
     if "豆漿" in normalized or "豆乳" in normalized or "soy" in normalized:
         add("無糖豆漿")
@@ -1650,14 +1691,10 @@ def _build_beverage_formula_summary(
 ) -> str:
     if lang == "zh-TW":
         parts = [f"飲料參數：{base_name}", size_label, sugar_label]
-        if ice_label:
-            parts.append(ice_label)
         if topping_names:
             parts.append(f"加料 {', '.join(topping_names)}")
         return "、".join(parts)
     parts = [f"Beverage options: {base_name}", size_label, sugar_label]
-    if ice_label:
-        parts.append(ice_label)
     if topping_names:
         parts.append(f"toppings {', '.join(topping_names)}")
     return ", ".join(parts)
@@ -1730,9 +1767,9 @@ def _apply_beverage_formula(
 
     size_factor, size_label, has_size = _parse_beverage_size(query_norm, base_ml, use_lang)
     sugar_ratio, sugar_label, has_sugar = _parse_beverage_sugar(query_norm, default_sugar_ratio, use_lang)
-    ice_label, has_ice = _parse_beverage_ice(query_norm, use_lang)
+    ice_label = ""
     toppings = _parse_beverage_toppings(query_norm, use_lang)
-    has_modifier = has_size or has_sugar or has_ice or bool(toppings)
+    has_modifier = has_size or has_sugar or bool(toppings)
     if not has_modifier:
         return None
 

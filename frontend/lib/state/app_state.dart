@@ -2126,6 +2126,18 @@ class AppState extends ChangeNotifier {
             '\u9187\u5976',
             '\u679c\u8336',
             '\u690d\u7269\u5976',
+            '\u6ab8\u6aac',
+            '\u767e\u9999',
+            '\u8292\u679c',
+            '\u82ad\u6a02',
+            '\u8461\u8404\u67da',
+            '\u7d05\u67da',
+            '\u91d1\u6854',
+            '\u6885\u7da0',
+            '\u9752\u6885',
+            '\u8354\u679d',
+            '\u67f3\u6a59',
+            '\u694a\u679d',
             '\u5496\u5561',
             '\u62ff\u9435',
             '\u679c\u6c41',
@@ -3004,6 +3016,48 @@ class AppState extends ChangeNotifier {
       }
     }
 
+    const fruitTokens = <String>[
+      '\u6ab8\u6aac',
+      '\u767e\u9999',
+      '\u8461\u8404\u67da',
+      '\u7d05\u67da',
+      '\u8292\u679c',
+      '\u82ad\u6a02',
+      '\u9cf3\u68a8',
+      '\u860b\u679c',
+      '\u767d\u6843',
+      '\u8354\u679d',
+      '\u67f3\u6a59',
+      '\u91d1\u6854',
+      '\u6851\u845a',
+      '\u6885\u5b50',
+      '\u70cf\u6885',
+      '\u6c34\u871c\u6843',
+      '\u694a\u679d',
+      '\u7d42\u5408\u679c',
+    ];
+    const teaTokens = <String>[
+      '\u7da0\u8336',
+      '\u9752\u8336',
+      '\u7d05\u8336',
+      '\u70cf\u9f8d\u8336',
+      '\u56db\u5b63\u6625',
+      '\u91d1\u8431',
+      '\u89c0\u97f3',
+    ];
+
+    final matchedFruitTokens = isZh
+        ? fruitTokens.where((value) => tokenMatches(value)).toList()
+        : const <String>[];
+    final matchedTeaTokens = isZh
+        ? teaTokens.where((value) => tokenMatches(value)).toList()
+        : const <String>[];
+    final wantsFruitTea = isZh &&
+        (normalizedQuery.contains('\u679c') ||
+            normalizedQuery.contains('\u8336') ||
+            matchedFruitTokens.isNotEmpty ||
+            matchedTeaTokens.isNotEmpty);
+
     final suggestions = <String>[];
     final seen = <String>{};
     void addSuggestion(String value) {
@@ -3018,12 +3072,35 @@ class AppState extends ChangeNotifier {
     if (isZh && matchedPopularItems.isNotEmpty) {
       for (final item in matchedPopularItems.take(28)) {
         addSuggestion(item);
-        addSuggestion('$item \u534a\u7cd6\u5c11\u51b0');
-        addSuggestion('$item \u5fae\u7cd6\u53bb\u51b0');
-        addSuggestion('$item \u7121\u7cd6\u53bb\u51b0');
+        addSuggestion('$item \u534a\u7cd6');
+        addSuggestion('$item \u5fae\u7cd6');
+        addSuggestion('$item \u7121\u7cd6');
         if (queryWantsTopping) {
           for (final topping in activeToppings.take(3)) {
-            addSuggestion('$item \u534a\u7cd6\u5c11\u51b0\u52a0$topping');
+            addSuggestion('$item \u534a\u7cd6\u52a0$topping');
+          }
+        }
+      }
+    }
+
+    if (wantsFruitTea) {
+      final fruits = matchedFruitTokens.isNotEmpty
+          ? matchedFruitTokens
+          : fruitTokens.take(10).toList();
+      final teas = matchedTeaTokens.isNotEmpty
+          ? matchedTeaTokens
+          : teaTokens.take(5).toList();
+      for (final fruit in fruits.take(12)) {
+        for (final tea in teas.take(5)) {
+          final combo = '$fruit$tea';
+          addSuggestion(combo);
+          addSuggestion('$combo \u534a\u7cd6');
+          addSuggestion('$combo \u5fae\u7cd6');
+          addSuggestion('$combo \u7121\u7cd6');
+          if (queryWantsTopping) {
+            for (final topping in activeToppings.take(2)) {
+              addSuggestion('$combo \u534a\u7cd6\u52a0$topping');
+            }
           }
         }
       }
@@ -3039,23 +3116,20 @@ class AppState extends ChangeNotifier {
             .toList();
         for (final drink in signatures.take(6)) {
           addSuggestion('$brandName $drink');
-          addSuggestion('$brandName $drink \u534a\u7cd6\u5c11\u51b0');
-          addSuggestion('$brandName $drink \u5fae\u7cd6\u53bb\u51b0');
-          addSuggestion('$brandName $drink \u7121\u7cd6\u53bb\u51b0');
-          addSuggestion(
-              '$brandName $drink \u4e2d\u676f\u534a\u7cd6\u5c11\u51b0');
-          addSuggestion(
-              '$brandName $drink \u5927\u676f\u5fae\u7cd6\u53bb\u51b0');
+          addSuggestion('$brandName $drink \u534a\u7cd6');
+          addSuggestion('$brandName $drink \u5fae\u7cd6');
+          addSuggestion('$brandName $drink \u7121\u7cd6');
+          addSuggestion('$brandName $drink \u4e2d\u676f\u534a\u7cd6');
+          addSuggestion('$brandName $drink \u5927\u676f\u5fae\u7cd6');
           if (queryWantsTopping) {
             for (final topping in activeToppings.take(5)) {
-              addSuggestion(
-                  '$brandName $drink \u534a\u7cd6\u5c11\u51b0\u52a0$topping');
+              addSuggestion('$brandName $drink \u534a\u7cd6\u52a0$topping');
             }
             if (activeToppings.length >= 2) {
               final first = activeToppings[0];
               final second = activeToppings[1];
               addSuggestion(
-                  '$brandName $drink \u534a\u7cd6\u5c11\u51b0\u52a0$first\u52a0$second');
+                  '$brandName $drink \u534a\u7cd6\u52a0$first\u52a0$second');
             }
           }
         }
@@ -3065,67 +3139,60 @@ class AppState extends ChangeNotifier {
     for (final base in matchedBases.take(6)) {
       addSuggestion(base);
       if (isZh) {
-        const sugarIceVariants = <String>[
-          '\u7121\u7cd6\u53bb\u51b0',
-          '\u5fae\u7cd6\u53bb\u51b0',
-          '\u5fae\u7cd6\u5c11\u51b0',
-          '\u5c11\u7cd6\u53bb\u51b0',
-          '\u5c11\u7cd6\u5fae\u51b0',
-          '\u4e00\u5206\u7cd6\u53bb\u51b0',
-          '\u4e09\u5206\u7cd6\u5c11\u51b0',
-          '\u534a\u7cd6\u53bb\u51b0',
-          '\u534a\u7cd6\u5c11\u51b0',
-          '\u4e03\u5206\u7cd6\u5c11\u51b0',
-          '\u6b63\u5e38\u7cd6\u6b63\u5e38\u51b0',
+        const sugarVariants = <String>[
+          '\u7121\u7cd6',
+          '\u5fae\u7cd6',
+          '\u5c11\u7cd6',
+          '\u4e00\u5206\u7cd6',
+          '\u4e09\u5206\u7cd6',
+          '\u534a\u7cd6',
+          '\u4e03\u5206\u7cd6',
+          '\u5168\u7cd6',
+          '\u6b63\u5e38\u7cd6',
         ];
         const sizeVariants = <String>[
           '\u4e2d\u676f',
           '\u5927\u676f',
           '\u5c0f\u676f',
         ];
-        for (final variant in sugarIceVariants) {
+        for (final variant in sugarVariants) {
           addSuggestion('$base $variant');
         }
         for (final size in sizeVariants) {
-          addSuggestion('$base $size \u534a\u7cd6\u53bb\u51b0');
+          addSuggestion('$base $size \u534a\u7cd6');
         }
 
         final toppingCount = queryWantsTopping ? 16 : 8;
         for (final topping in activeToppings.take(toppingCount)) {
           addSuggestion('$base \u52a0$topping');
-          addSuggestion('$base \u534a\u7cd6\u53bb\u51b0\u52a0$topping');
-          addSuggestion('$base \u5fae\u7cd6\u5c11\u51b0\u52a0$topping');
+          addSuggestion('$base \u534a\u7cd6\u52a0$topping');
+          addSuggestion('$base \u5fae\u7cd6\u52a0$topping');
         }
         if (activeToppings.length >= 2) {
           final first = activeToppings[0];
           final second = activeToppings[1];
-          addSuggestion(
-              '$base \u534a\u7cd6\u5c11\u51b0\u52a0$first\u52a0$second');
-          addSuggestion(
-              '$base \u5fae\u7cd6\u53bb\u51b0\u52a0$first\u52a0$second');
+          addSuggestion('$base \u534a\u7cd6\u52a0$first\u52a0$second');
+          addSuggestion('$base \u5fae\u7cd6\u52a0$first\u52a0$second');
         }
         if (base.contains('\u5976\u8336') || base.contains('\u62ff\u9435')) {
-          addSuggestion('$base \u534a\u7cd6\u5c11\u51b0\u52a0\u5976\u84cb');
-          addSuggestion('$base \u534a\u7cd6\u53bb\u51b0\u52a0\u5e03\u4e01');
-          addSuggestion(
-              '$base \u534a\u7cd6\u5c11\u51b0\u52a0\u5c0f\u73cd\u73e0');
+          addSuggestion('$base \u534a\u7cd6\u52a0\u5976\u84cb');
+          addSuggestion('$base \u534a\u7cd6\u52a0\u5e03\u4e01');
+          addSuggestion('$base \u534a\u7cd6\u52a0\u5c0f\u73cd\u73e0');
         }
       } else {
-        const sugarIceVariants = <String>[
-          'unsweetened no ice',
-          'light sugar no ice',
-          'light sugar less ice',
-          'less sugar less ice',
-          'half sugar no ice',
-          'half sugar less ice',
-          'regular sugar regular ice',
+        const sugarVariants = <String>[
+          'unsweetened',
+          'light sugar',
+          'less sugar',
+          'half sugar',
+          'regular sugar',
         ];
-        for (final variant in sugarIceVariants) {
+        for (final variant in sugarVariants) {
           addSuggestion('$base $variant');
         }
         for (final topping in activeToppings.take(queryWantsTopping ? 16 : 8)) {
           addSuggestion('$base with $topping');
-          addSuggestion('$base half sugar no ice with $topping');
+          addSuggestion('$base half sugar with $topping');
         }
       }
       if (suggestions.length >= maxCount * 6) break;
