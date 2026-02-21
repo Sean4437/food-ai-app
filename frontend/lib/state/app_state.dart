@@ -1677,7 +1677,7 @@ class AppState extends ChangeNotifier {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return const [];
 
-    final maxCount = limit.clamp(1, 20);
+    final maxCount = limit.clamp(1, 30);
     final normalizedQuery = _normalizeFoodLookupText(trimmed);
     final compactQuery = normalizedQuery.replaceAll(' ', '');
     final suggestions = <String>[];
@@ -2123,6 +2123,9 @@ class AppState extends ChangeNotifier {
             '\u8c46\u6f3f\u7d05\u8336',
             '\u8c46\u4e73',
             '\u9bae\u5976',
+            '\u9187\u5976',
+            '\u679c\u8336',
+            '\u690d\u7269\u5976',
             '\u5496\u5561',
             '\u62ff\u9435',
             '\u679c\u6c41',
@@ -2149,8 +2152,22 @@ class AppState extends ChangeNotifier {
             '\u4e00\u6c90\u65e5',
             '\u518d\u7761\u0035\u5206\u9418',
             '\u8001\u8cf4',
+            '\u5927\u82d1\u5b50',
+            '\u73cd\u716e\u4e39',
+            '\u4e0a\u5b87\u6797',
+            '\u9db4\u8336\u6a13',
+            '\u5148\u559d\u9053',
+            '\u65e5\u51fa\u8336\u592a',
+            '\u8336\u805a',
+            '\u6a02\u6cd5',
+            '\u559d\u8336\u5c0f\u8216',
+            '\u6625\u6c34\u5802',
+            '\u9f8d\u89d2',
+            '\u8336\u9b54',
             'comebuy',
             'coco',
+            'chatime',
+            'kung fu tea',
           ]
         : const <String>[
             'tea',
@@ -2317,6 +2334,114 @@ class AppState extends ChangeNotifier {
                 '\u820a\u57ce\u7d05\u8336',
               ],
             },
+            {
+              'name': '\u5927\u82d1\u5b50',
+              'tokens': ['\u5927\u82d1\u5b50', 'dayungs'],
+              'signatures': [
+                '\u82ad\u6a02\u6885\u7da0',
+                '\u67da\u7f8e\u7c92',
+                '\u91d1\u6843\u82ad\u6a02',
+              ],
+            },
+            {
+              'name': '\u73cd\u716e\u4e39',
+              'tokens': ['\u73cd\u716e\u4e39', 'jenjudan'],
+              'signatures': [
+                '\u9ed1\u7cd6\u73cd\u73e0\u9bae\u5976',
+                '\u8001\u6d3e\u5341\u5206\u8336',
+                '\u9ed1\u7cd6\u9bae\u5976\u8336',
+              ],
+            },
+            {
+              'name': '\u4e0a\u5b87\u6797',
+              'tokens': ['\u4e0a\u5b87\u6797', 'shang yulin'],
+              'signatures': [
+                '\u592a\u6975\u9bae\u5976\u8336',
+                '\u9f8d\u773c\u871c\u70cf\u9f8d',
+                '\u8f9b\u9999\u70cf\u9f8d',
+              ],
+            },
+            {
+              'name': '\u9db4\u8336\u6a13',
+              'tokens': ['\u9db4\u8336\u6a13', 'hechalou'],
+              'signatures': [
+                '\u9db4\u9802\u7d05\u8336',
+                '\u9f8d\u773c\u871c\u8336',
+                '\u9db4\u9802\u90a3\u63d0',
+              ],
+            },
+            {
+              'name': '\u5148\u559d\u9053',
+              'tokens': ['\u5148\u559d\u9053', 'xianhidao'],
+              'signatures': [
+                '\u51ac\u74dc\u6ab8\u6aac',
+                '\u82f1\u5f0f\u7d05\u8336',
+                '\u70cf\u9f8d\u9bae\u5976',
+              ],
+            },
+            {
+              'name': '\u65e5\u51fa\u8336\u592a',
+              'tokens': ['\u65e5\u51fa\u8336\u592a', 'chatime'],
+              'signatures': [
+                '\u73cd\u73e0\u5976\u8336',
+                '\u91d1\u6843\u6c34\u679c\u8336',
+                '\u9752\u8336\u51cd\u9732',
+              ],
+            },
+            {
+              'name': '\u8336\u805a',
+              'tokens': ['\u8336\u805a', 'chage'],
+              'signatures': [
+                '\u6d3b\u83cc\u591a\u591a\u7da0',
+                '\u9178\u67d1\u9752\u8336',
+                '\u871c\u9999\u7d05\u8336',
+              ],
+            },
+            {
+              'name': '\u6a02\u6cd5',
+              'tokens': ['\u6a02\u6cd5', 'le phare'],
+              'signatures': [
+                '\u6a02\u6cd5\u9bae\u679c\u8336',
+                '\u9e97\u6625\u7d05\u8336',
+                '\u6ab8\u6aac\u7da0\u8336',
+              ],
+            },
+            {
+              'name': '\u559d\u8336\u5c0f\u8216',
+              'tokens': ['\u559d\u8336\u5c0f\u8216', 'teashop168'],
+              'signatures': [
+                '\u82f1\u5f0f\u7d05\u8336',
+                '\u51ac\u74dc\u9752\u8336',
+                '\u73cd\u73e0\u9bae\u5976\u8336',
+              ],
+            },
+            {
+              'name': '\u6625\u6c34\u5802',
+              'tokens': ['\u6625\u6c34\u5802', 'chun shui tang'],
+              'signatures': [
+                '\u73cd\u73e0\u5976\u8336',
+                '\u9435\u89c0\u97f3\u5976\u8336',
+                '\u9f8d\u773c\u871c\u6ab8\u6aac',
+              ],
+            },
+            {
+              'name': '\u9f8d\u89d2',
+              'tokens': ['\u9f8d\u89d2', 'dragon horn'],
+              'signatures': [
+                '\u9f8d\u89d2\u9ed1\u8336',
+                '\u829d\u58eb\u4e73\u8336',
+                '\u9ed1\u7cd6\u9f8d\u73e0',
+              ],
+            },
+            {
+              'name': '\u8336\u9b54',
+              'tokens': ['\u8336\u9b54', 'teamag'],
+              'signatures': [
+                '\u62db\u724c\u7d05\u8336',
+                '\u9999\u67da\u7da0\u8336',
+                '\u6d77\u9e7d\u5976\u84cb\u9752',
+              ],
+            },
           ]
         : const <Map<String, dynamic>>[];
 
@@ -2432,6 +2557,162 @@ class AppState extends ChangeNotifier {
                 '\u89c0\u97f3'
               ],
             },
+            {
+              'name': '\u56db\u5b63\u6625\u9752\u8336',
+              'tokens': [
+                '\u56db\u5b63\u6625',
+                '\u56db\u5b63\u6625\u9752\u8336'
+              ],
+            },
+            {
+              'name': '\u8702\u871c\u7da0\u8336',
+              'tokens': [
+                '\u8702\u871c\u7da0\u8336',
+                '\u8702\u871c\u9752\u8336'
+              ],
+            },
+            {
+              'name': '\u871c\u9999\u7d05\u8336',
+              'tokens': ['\u871c\u9999\u7d05\u8336', '\u871c\u9999\u7d05'],
+            },
+            {
+              'name': '\u70cf\u9f8d\u9bae\u5976',
+              'tokens': ['\u70cf\u9f8d\u9bae\u5976', '\u70cf\u9f8d\u5976'],
+            },
+            {
+              'name': '\u9435\u89c0\u97f3\u5976\u8336',
+              'tokens': [
+                '\u9435\u89c0\u97f3',
+                '\u9435\u89c0\u97f3\u5976\u8336'
+              ],
+            },
+            {
+              'name': '\u62b9\u8336\u62ff\u9435',
+              'tokens': ['\u62b9\u8336\u62ff\u9435', '\u62b9\u8336'],
+            },
+            {
+              'name': '\u7119\u8336\u62ff\u9435',
+              'tokens': ['\u7119\u8336\u62ff\u9435', '\u7119\u8336'],
+            },
+            {
+              'name': '\u53ef\u53ef\u9bae\u5976',
+              'tokens': [
+                '\u53ef\u53ef\u9bae\u5976',
+                '\u53ef\u53ef\u725b\u5976'
+              ],
+            },
+            {
+              'name': '\u9ed1\u7cd6\u9bae\u5976',
+              'tokens': [
+                '\u9ed1\u7cd6\u9bae\u5976',
+                '\u9ed1\u7cd6\u725b\u5976'
+              ],
+            },
+            {
+              'name': '\u9ed1\u7cd6\u73cd\u73e0\u9bae\u5976',
+              'tokens': [
+                '\u9ed1\u7cd6\u73cd\u73e0\u9bae\u5976',
+                '\u9ed1\u7cd6\u6ce2\u9738\u9bae\u5976'
+              ],
+            },
+            {
+              'name': '\u591a\u591a\u7da0\u8336',
+              'tokens': [
+                '\u591a\u591a\u7da0\u8336',
+                '\u990a\u6a02\u591a\u7da0'
+              ],
+            },
+            {
+              'name': '\u91d1\u6854\u6ab8\u6aac',
+              'tokens': ['\u91d1\u6854\u6ab8\u6aac', '\u91d1\u6854'],
+            },
+            {
+              'name': '\u91d1\u6854\u7da0\u8336',
+              'tokens': ['\u91d1\u6854\u7da0\u8336'],
+            },
+            {
+              'name': '\u8461\u8404\u67da\u7da0\u8336',
+              'tokens': [
+                '\u8461\u8404\u67da\u7da0\u8336',
+                '\u7d05\u67da\u7da0'
+              ],
+            },
+            {
+              'name': '\u767e\u9999\u96d9\u97ff\u70ae',
+              'tokens': [
+                '\u767e\u9999\u96d9\u97ff\u70ae',
+                '\u96d9\u97ff\u70ae'
+              ],
+            },
+            {
+              'name': '\u51ac\u74dc\u9752\u8336',
+              'tokens': ['\u51ac\u74dc\u9752\u8336'],
+            },
+            {
+              'name': '\u51ac\u74dc\u6ab8\u6aac',
+              'tokens': [
+                '\u51ac\u74dc\u6ab8\u6aac',
+                '\u6ab8\u6aac\u51ac\u74dc'
+              ],
+            },
+            {
+              'name': '\u6885\u5b50\u7d05\u8336',
+              'tokens': ['\u6885\u5b50\u7d05\u8336', '\u6885\u7d05'],
+            },
+            {
+              'name': '\u6d1b\u795e\u82b1\u8336',
+              'tokens': ['\u6d1b\u795e\u82b1\u8336', '\u6d1b\u795e'],
+            },
+            {
+              'name': '\u70cf\u6885\u6c41',
+              'tokens': ['\u70cf\u6885\u6c41', '\u9178\u6885\u6c41'],
+            },
+            {
+              'name': '\u9ea5\u9999\u7d05\u8336',
+              'tokens': ['\u9ea5\u9999\u7d05\u8336'],
+            },
+            {
+              'name': '\u9ea5\u8336',
+              'tokens': ['\u9ea5\u8336'],
+            },
+            {
+              'name': '\u82ad\u6a02\u7da0\u8336',
+              'tokens': ['\u82ad\u6a02\u7da0\u8336', '\u82ad\u6a02'],
+            },
+            {
+              'name': '\u8292\u679c\u7da0\u8336',
+              'tokens': ['\u8292\u679c\u7da0\u8336', '\u8292\u679c'],
+            },
+            {
+              'name': '\u694a\u679d\u7518\u9732',
+              'tokens': [
+                '\u694a\u679d\u7518\u9732',
+                '\u8292\u679c\u67da\u5b50\u897f\u7c73\u9732'
+              ],
+            },
+            {
+              'name': '\u6c34\u679c\u6c23\u6ce1\u98f2',
+              'tokens': ['\u6c34\u679c\u6c23\u6ce1', '\u6c23\u6ce1\u98f2'],
+            },
+            {
+              'name': '\u6a58\u5b50\u7da0\u8336',
+              'tokens': [
+                '\u67da\u5b50\u7da0\u8336',
+                '\u6a58\u5b50\u7da0\u8336'
+              ],
+            },
+            {
+              'name': '\u860b\u679c\u7d05\u8336',
+              'tokens': ['\u860b\u679c\u7d05\u8336'],
+            },
+            {
+              'name': '\u9cf3\u68a8\u9752\u8336',
+              'tokens': ['\u9cf3\u68a8\u9752\u8336', '\u9cf3\u68a8'],
+            },
+            {
+              'name': '\u897f\u74dc\u9752\u8336',
+              'tokens': ['\u897f\u74dc\u9752\u8336', '\u897f\u74dc'],
+            },
           ]
         : const <Map<String, dynamic>>[
             {
@@ -2498,9 +2779,16 @@ class AppState extends ChangeNotifier {
             '\u897f\u7c73\u9732',
             '\u8336\u51cd',
             '\u5496\u5561\u51cd',
+            '\u7da0\u8336\u51cd',
+            '\u871c\u9999\u51cd',
+            '\u8354\u679d\u51cd',
             '\u9ed1\u7cd6\u51cd',
             '\u6842\u82b1\u51cd',
             '\u674f\u4ec1\u51cd',
+            '\u5976\u916a',
+            '\u82cb\u6ce5',
+            '\u5947\u4e9e\u7c7d',
+            '\u8461\u8404\u67da\u679c\u7c92',
             '\u7206\u7206\u73e0',
             '\u5575\u5575\u73e0',
           ]
@@ -2527,9 +2815,16 @@ class AppState extends ChangeNotifier {
             'sago pearls',
             'tea jelly',
             'coffee jelly',
+            'green tea jelly',
+            'honey jelly',
+            'lychee jelly',
             'brown sugar jelly',
             'osmanthus jelly',
             'almond jelly',
+            'panna cotta',
+            'taro paste',
+            'chia seeds',
+            'grapefruit pulp',
             'popping boba',
           ];
 
@@ -2538,6 +2833,8 @@ class AppState extends ChangeNotifier {
             normalizedQuery.contains('\u6599') ||
             normalizedQuery.contains('\u96d9Q') ||
             normalizedQuery.contains('\u96d9\u6599') ||
+            normalizedQuery.contains('\u96d9\u62fc') ||
+            normalizedQuery.contains('q') ||
             toppingOptions.any(tokenMatches)
         : normalizedQuery.contains('with') ||
             normalizedQuery.contains('topping') ||
@@ -2547,7 +2844,7 @@ class AppState extends ChangeNotifier {
         toppingOptions.where((value) => tokenMatches(value)).toList();
     final activeToppings = explicitToppings.isNotEmpty
         ? explicitToppings
-        : toppingOptions.take(queryWantsTopping ? 14 : 8).toList();
+        : toppingOptions.take(queryWantsTopping ? 20 : 12).toList();
 
     final matchedBases = <String>[];
     for (final profile in baseProfiles) {
@@ -2592,14 +2889,14 @@ class AppState extends ChangeNotifier {
     }
 
     if (isZh && matchedBrands.isNotEmpty) {
-      for (final brand in matchedBrands.take(3)) {
+      for (final brand in matchedBrands.take(5)) {
         final brandName = (brand['name'] ?? '').toString().trim();
         if (brandName.isEmpty) continue;
         final signatures = (brand['signatures'] as List<dynamic>? ?? const [])
             .map((e) => e.toString())
             .where((e) => e.trim().isNotEmpty)
             .toList();
-        for (final drink in signatures.take(4)) {
+        for (final drink in signatures.take(6)) {
           addSuggestion('$brandName $drink');
           addSuggestion('$brandName $drink \u534a\u7cd6\u5c11\u51b0');
           addSuggestion('$brandName $drink \u5fae\u7cd6\u53bb\u51b0');
@@ -2609,7 +2906,7 @@ class AppState extends ChangeNotifier {
           addSuggestion(
               '$brandName $drink \u5927\u676f\u5fae\u7cd6\u53bb\u51b0');
           if (queryWantsTopping) {
-            for (final topping in activeToppings.take(3)) {
+            for (final topping in activeToppings.take(5)) {
               addSuggestion(
                   '$brandName $drink \u534a\u7cd6\u5c11\u51b0\u52a0$topping');
             }
@@ -2624,7 +2921,7 @@ class AppState extends ChangeNotifier {
       }
     }
 
-    for (final base in matchedBases.take(4)) {
+    for (final base in matchedBases.take(6)) {
       addSuggestion(base);
       if (isZh) {
         const sugarIceVariants = <String>[
@@ -2652,7 +2949,7 @@ class AppState extends ChangeNotifier {
           addSuggestion('$base $size \u534a\u7cd6\u53bb\u51b0');
         }
 
-        final toppingCount = queryWantsTopping ? 12 : 6;
+        final toppingCount = queryWantsTopping ? 16 : 8;
         for (final topping in activeToppings.take(toppingCount)) {
           addSuggestion('$base \u52a0$topping');
           addSuggestion('$base \u534a\u7cd6\u53bb\u51b0\u52a0$topping');
@@ -2685,7 +2982,7 @@ class AppState extends ChangeNotifier {
         for (final variant in sugarIceVariants) {
           addSuggestion('$base $variant');
         }
-        for (final topping in activeToppings.take(queryWantsTopping ? 12 : 6)) {
+        for (final topping in activeToppings.take(queryWantsTopping ? 16 : 8)) {
           addSuggestion('$base with $topping');
           addSuggestion('$base half sugar no ice with $topping');
         }

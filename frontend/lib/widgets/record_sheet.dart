@@ -66,7 +66,7 @@ Future<String?> _promptFoodName(
       setDialogState(() => isSearching = true);
     }
 
-    final result = await app.suggestFoodNames(query, locale, limit: 24);
+    final result = await app.suggestFoodNames(query, locale, limit: 30);
     if (!dialogContext.mounted || token != requestToken) return;
 
     setDialogState(() {

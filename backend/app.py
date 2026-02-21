@@ -923,6 +923,14 @@ _BEVERAGE_HINT_TOKENS = (
     "豆乳",
     "奶茶",
     "鮮奶茶",
+    "烏龍奶",
+    "鮮奶綠",
+    "鮮奶紅",
+    "果茶",
+    "蜂蜜",
+    "檸檬",
+    "百香",
+    "多多綠",
     "拿鐵",
     "可可",
     "果汁",
@@ -953,6 +961,18 @@ _BEVERAGE_HINT_TOKENS = (
     "一沐日",
     "再睡5分鐘",
     "老賴",
+    "大苑子",
+    "珍煮丹",
+    "上宇林",
+    "鶴茶樓",
+    "先喝道",
+    "日出茶太",
+    "茶聚",
+    "樂法",
+    "喫茶小舖",
+    "春水堂",
+    "龍角",
+    "茶魔",
     "coco",
     "comebuy",
     "50lan",
@@ -962,6 +982,10 @@ _BEVERAGE_HINT_TOKENS = (
     "woo tea",
     "wanpo",
     "nap tea",
+    "chatime",
+    "dayungs",
+    "jenjudan",
+    "kung fu tea",
 )
 
 _BEVERAGE_TOPPINGS = (
@@ -1137,6 +1161,33 @@ _BEVERAGE_TOPPINGS = (
         "sodium": 6.0,
     },
     {
+        "tokens": ("綠茶凍", "green tea jelly"),
+        "zh": "綠茶凍",
+        "en": "green tea jelly",
+        "protein": 0.0,
+        "carbs": 8.0,
+        "fat": 0.0,
+        "sodium": 6.0,
+    },
+    {
+        "tokens": ("蜜香凍", "honey jelly"),
+        "zh": "蜜香凍",
+        "en": "honey jelly",
+        "protein": 0.0,
+        "carbs": 11.0,
+        "fat": 0.0,
+        "sodium": 6.0,
+    },
+    {
+        "tokens": ("荔枝凍", "lychee jelly"),
+        "zh": "荔枝凍",
+        "en": "lychee jelly",
+        "protein": 0.0,
+        "carbs": 12.0,
+        "fat": 0.0,
+        "sodium": 6.0,
+    },
+    {
         "tokens": ("黑糖凍", "brown sugar jelly"),
         "zh": "黑糖凍",
         "en": "brown sugar jelly",
@@ -1162,6 +1213,42 @@ _BEVERAGE_TOPPINGS = (
         "carbs": 9.0,
         "fat": 1.0,
         "sodium": 8.0,
+    },
+    {
+        "tokens": ("奶酪", "panna cotta"),
+        "zh": "奶酪",
+        "en": "panna cotta",
+        "protein": 2.0,
+        "carbs": 12.0,
+        "fat": 4.0,
+        "sodium": 30.0,
+    },
+    {
+        "tokens": ("芋泥", "taro paste"),
+        "zh": "芋泥",
+        "en": "taro paste",
+        "protein": 1.5,
+        "carbs": 20.0,
+        "fat": 1.0,
+        "sodium": 12.0,
+    },
+    {
+        "tokens": ("奇亞籽", "chia seeds"),
+        "zh": "奇亞籽",
+        "en": "chia seeds",
+        "protein": 1.5,
+        "carbs": 5.0,
+        "fat": 2.0,
+        "sodium": 2.0,
+    },
+    {
+        "tokens": ("葡萄柚果粒", "grapefruit pulp"),
+        "zh": "葡萄柚果粒",
+        "en": "grapefruit pulp",
+        "protein": 0.5,
+        "carbs": 9.0,
+        "fat": 0.0,
+        "sodium": 2.0,
     },
     {
         "tokens": ("爆爆珠", "啵啵珠", "popping boba"),
@@ -1196,9 +1283,21 @@ _BEVERAGE_BASE_CANDIDATES = (
     (("豆漿奶茶", "豆乳奶茶", "soy milk tea"), "無糖豆漿"),
     (("豆漿", "soy milk", "soymilk"), "無糖豆漿"),
     (("鮮奶茶", "fresh milk tea"), "奶茶"),
+    (("鮮奶綠",), "綠茶"),
+    (("鮮奶紅",), "紅茶"),
     (("奶茶", "milk tea"), "奶茶"),
+    (("烏龍奶", "烏龍奶茶"), "奶茶"),
     (("拿鐵", "latte"), "拿鐵"),
+    (("抹茶拿鐵", "matcha latte"), "拿鐵"),
+    (("焙茶拿鐵", "hojicha latte"), "拿鐵"),
+    (("黑糖鮮奶",), "奶茶"),
+    (("黑糖珍珠鮮奶",), "奶茶"),
+    (("可可鮮奶", "cocoa milk"), "奶茶"),
     (("熟成紅茶", "大正紅茶", "老實人紅茶"), "紅茶"),
+    (("伯爵紅茶",), "紅茶"),
+    (("阿薩姆紅茶",), "紅茶"),
+    (("蜜香紅茶",), "紅茶"),
+    (("英式紅茶",), "紅茶"),
     (("多多綠", "yakult green tea"), "綠茶"),
     (("翡翠檸檬",), "檸檬綠茶"),
     (("海神",), "烏龍茶"),
@@ -1209,8 +1308,24 @@ _BEVERAGE_BASE_CANDIDATES = (
     (("雪花冷露",), "奶茶"),
     (("百香", "passion fruit"), "綠茶"),
     (("蜂蜜檸檬",), "檸檬綠茶"),
+    (("蜂蜜綠茶",), "綠茶"),
+    (("蜂蜜青茶",), "青茶"),
     (("紅柚", "grapefruit"), "綠茶"),
+    (("葡萄柚綠茶",), "綠茶"),
+    (("柳橙綠茶",), "綠茶"),
+    (("金桔檸檬",), "檸檬綠茶"),
+    (("金桔綠茶",), "綠茶"),
+    (("冬瓜青茶",), "青茶"),
     (("楊枝甘露", "mango pomelo sago"), "奶茶"),
+    (("百香雙響炮",), "綠茶"),
+    (("水果茶", "綜合果茶"), "綠茶"),
+    (("洛神花茶",), "綠茶"),
+    (("烏梅汁", "酸梅汁"), "綠茶"),
+    (("麥香紅茶",), "紅茶"),
+    (("麥茶",), "綠茶"),
+    (("蘋果紅萱", "蘋果紅茶"), "紅茶"),
+    (("鳳梨青茶",), "青茶"),
+    (("西瓜青茶",), "青茶"),
     (("四季春",), "青茶"),
     (("春芽",), "綠茶"),
     (("冬瓜檸檬",), "檸檬綠茶"),
@@ -1246,8 +1361,8 @@ def _strip_beverage_modifiers(text: str) -> str:
         r"([一二兩三四五六七八九十\d]{1,3}\s*分糖)",
         r"(\d{1,3}\s*%?\s*(糖|sugar))",
         r"(去冰|少冰|微冰|正常冰|常溫|溫|熱飲|熱的|熱|no ice|less ice|light ice|regular ice|room temperature|warm|hot)",
-        r"(加珍珠|加小珍珠|加白玉|加波霸|加粉圓|加粉角|加粉條|加椰果|加布丁|加仙草|加奶蓋|加奶霜|加芝士奶蓋|加愛玉|加寒天|加蒟蒻|加紅豆|加綠豆|加芋圓|加地瓜圓|加粉粿|加蘆薈|加西米露|加茶凍|加咖啡凍|加黑糖凍|加桂花凍|加杏仁凍|加爆爆珠|加啵啵珠|with\s+boba|with\s+mini boba|with\s+pearls?|with\s+coconut jelly|with\s+pudding|with\s+grass jelly|with\s+foam|with\s+milk foam|with\s+aiyu|with\s+agar|with\s+konjac|with\s+red bean|with\s+mung bean|with\s+taro balls?|with\s+aloe|with\s+sago|with\s+tea jelly|with\s+coffee jelly|with\s+brown sugar jelly|with\s+osmanthus jelly|with\s+almond jelly|with\s+popping boba)",
-        r"(50嵐|五十嵐|清心福全|清心|可不可熟成紅茶|可不可|麻古茶坊|麻古|迷客夏|茶湯會|五桐號|龜記|得正|萬波|一沐日|再睡5分鐘|老賴茶棧|老賴|coco都可|coco|comebuy|50lan|chingshin|kebuke|macu|milksha|tp\s*tea|woo\s*tea|wanpo|nap\s*tea|laolai)",
+        r"(加珍珠|加小珍珠|加白玉|加波霸|加粉圓|加粉角|加粉條|加椰果|加布丁|加仙草|加奶蓋|加奶霜|加芝士奶蓋|加愛玉|加寒天|加蒟蒻|加紅豆|加綠豆|加芋圓|加地瓜圓|加粉粿|加蘆薈|加西米露|加茶凍|加咖啡凍|加綠茶凍|加蜜香凍|加荔枝凍|加黑糖凍|加桂花凍|加杏仁凍|加奶酪|加芋泥|加奇亞籽|加葡萄柚果粒|加爆爆珠|加啵啵珠|with\s+boba|with\s+mini boba|with\s+pearls?|with\s+coconut jelly|with\s+pudding|with\s+grass jelly|with\s+foam|with\s+milk foam|with\s+aiyu|with\s+agar|with\s+konjac|with\s+red bean|with\s+mung bean|with\s+taro balls?|with\s+aloe|with\s+sago|with\s+tea jelly|with\s+coffee jelly|with\s+green tea jelly|with\s+honey jelly|with\s+lychee jelly|with\s+brown sugar jelly|with\s+osmanthus jelly|with\s+almond jelly|with\s+panna cotta|with\s+taro paste|with\s+chia seeds|with\s+grapefruit pulp|with\s+popping boba)",
+        r"(50嵐|五十嵐|清心福全|清心|可不可熟成紅茶|可不可|麻古茶坊|麻古|迷客夏|茶湯會|五桐號|龜記|得正|萬波|一沐日|再睡5分鐘|老賴茶棧|老賴|大苑子|珍煮丹|上宇林|鶴茶樓|先喝道|日出茶太|茶聚|樂法|喫茶小舖|春水堂|龍角|茶魔|coco都可|coco|comebuy|50lan|chingshin|kebuke|macu|milksha|tp\s*tea|woo\s*tea|wanpo|nap\s*tea|laolai|dayungs|jenjudan|chatime|kung\s*fu\s*tea)",
     ]
     for pattern in patterns:
         value = re.sub(pattern, " ", value)
@@ -1273,6 +1388,15 @@ def _extract_beverage_base_candidates(text: str) -> list[str]:
     for tokens, canonical in _BEVERAGE_BASE_CANDIDATES:
         if any(token in normalized for token in tokens):
             add(canonical)
+
+    if "豆漿" in normalized or "豆乳" in normalized or "soy" in normalized:
+        add("無糖豆漿")
+    if "奶茶" in normalized or "鮮奶" in normalized or "milk tea" in normalized:
+        add("奶茶")
+    if "紅茶" in normalized or "black tea" in normalized:
+        add("紅茶")
+    if "綠茶" in normalized or "green tea" in normalized:
+        add("綠茶")
 
     # Weak fallback for brand menu item names that still contain generic tea words.
     if "茶" in normalized and not candidates:
@@ -1307,7 +1431,7 @@ def _food_search_query_candidates(raw_query: str) -> list[str]:
         for inferred in _extract_beverage_base_candidates(stripped):
             add(inferred)
 
-    return candidates[:8]
+    return candidates[:12]
 
 
 def _parse_zh_numeric_token(token: str) -> Optional[int]:
