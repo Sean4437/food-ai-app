@@ -937,6 +937,10 @@ def _normalize_food_query(value: str) -> str:
 _BEVERAGE_HINT_TOKENS = (
     "茶",
     "咖啡",
+    "鮮奶",
+    "牛奶",
+    "奶蓋",
+    "奶霜",
     "豆漿",
     "豆漿紅茶",
     "豆漿奶茶",
@@ -1413,6 +1417,81 @@ _FRUIT_HINT_TOKENS = (
 )
 
 
+_BEVERAGE_INTRINSIC_COMPONENTS = (
+    {
+        "key": "sugarcane_base",
+        "tokens": ("甘蔗", "sugarcane"),
+        "name_zh": "甘蔗原汁",
+        "name_en": "sugarcane base",
+        "protein": 0.0,
+        "carbs": 24.0,
+        "fat": 0.0,
+        "sodium": 12.0,
+    },
+    {
+        "key": "winter_melon_base",
+        "tokens": ("冬瓜", "winter melon"),
+        "name_zh": "冬瓜糖漿",
+        "name_en": "winter melon syrup",
+        "protein": 0.0,
+        "carbs": 18.0,
+        "fat": 0.0,
+        "sodium": 18.0,
+    },
+    {
+        "key": "honey_base",
+        "tokens": ("蜂蜜", "honey"),
+        "name_zh": "蜂蜜",
+        "name_en": "honey",
+        "protein": 0.0,
+        "carbs": 12.0,
+        "fat": 0.0,
+        "sodium": 6.0,
+    },
+    {
+        "key": "yakult_base",
+        "tokens": ("多多", "養樂多", "yakult"),
+        "name_zh": "乳酸飲基底",
+        "name_en": "yakult base",
+        "protein": 1.0,
+        "carbs": 11.0,
+        "fat": 0.0,
+        "sodium": 32.0,
+    },
+    {
+        "key": "brown_sugar_base",
+        "tokens": ("黑糖", "brown sugar"),
+        "name_zh": "黑糖糖漿",
+        "name_en": "brown sugar syrup",
+        "protein": 0.0,
+        "carbs": 14.0,
+        "fat": 0.0,
+        "sodium": 8.0,
+    },
+    {
+        "key": "mango_pomelo_sago",
+        "tokens": ("楊枝甘露", "mango pomelo sago"),
+        "name_zh": "芒果西米露",
+        "name_en": "mango pomelo sago base",
+        "protein": 1.5,
+        "carbs": 36.0,
+        "fat": 1.5,
+        "sodium": 24.0,
+    },
+)
+
+_BEVERAGE_INTRINSIC_FRUIT_COMPONENT = {
+    "key": "fruit_pulp_base",
+    "tokens": (),
+    "name_zh": "果肉/果汁基底",
+    "name_en": "fruit juice/pulp base",
+    "protein": 0.0,
+    "carbs": 8.0,
+    "fat": 0.0,
+    "sodium": 6.0,
+}
+
+
 def _contains_any_token(text: str, tokens: tuple[str, ...]) -> bool:
     return any(token in text for token in tokens)
 
@@ -1793,6 +1872,53 @@ def _parse_beverage_toppings(query_norm: str, lang: str) -> list[dict[str, Any]]
     return matched
 
 
+def _parse_beverage_intrinsic_components(
+    query_norm: str,
+    base_name_norm: str,
+    lang: str,
+) -> list[dict[str, Any]]:
+    matched: list[dict[str, Any]] = []
+    seen_keys: set[str] = set()
+
+    def add_component(raw: dict[str, Any]) -> None:
+        key = str(raw.get("key") or "").strip()
+        if not key or key in seen_keys:
+            return
+        seen_keys.add(key)
+        matched.append(
+            {
+                "name": raw.get("name_zh") if lang == "zh-TW" else raw.get("name_en"),
+                "protein": float(raw.get("protein") or 0.0),
+                "carbs": float(raw.get("carbs") or 0.0),
+                "fat": float(raw.get("fat") or 0.0),
+                "sodium": float(raw.get("sodium") or 0.0),
+            }
+        )
+
+    for component in _BEVERAGE_INTRINSIC_COMPONENTS:
+        tokens = tuple(str(token) for token in component.get("tokens") or ())
+        if not tokens:
+            continue
+        if not any(token in query_norm for token in tokens):
+            continue
+        # If the matched catalog base already contains this ingredient keyword,
+        # assume those macros are already baked into the row and avoid double count.
+        if base_name_norm and any(token in base_name_norm for token in tokens):
+            continue
+        add_component(component)
+
+    has_fruit_hint = any(token in query_norm for token in _FRUIT_HINT_TOKENS)
+    base_has_fruit_hint = (
+        any(token in base_name_norm for token in _FRUIT_HINT_TOKENS)
+        or ("果汁" in base_name_norm)
+        or ("juice" in base_name_norm)
+    )
+    if has_fruit_hint and not base_has_fruit_hint:
+        add_component(_BEVERAGE_INTRINSIC_FRUIT_COMPONENT)
+
+    return matched
+
+
 def _beverage_calorie_range_from_macros(macros: dict[str, float]) -> str:
     protein = max(0.0, _safe_float(macros.get("protein")) or 0.0)
     carbs = max(0.0, _safe_float(macros.get("carbs")) or 0.0)
@@ -1893,7 +2019,8 @@ def _apply_beverage_formula(
     sugar_ratio, sugar_label, has_sugar = _parse_beverage_sugar(query_norm, default_sugar_ratio, use_lang)
     ice_label = ""
     toppings = _parse_beverage_toppings(query_norm, use_lang)
-    has_modifier = has_size or has_sugar or bool(toppings)
+    intrinsic_components = _parse_beverage_intrinsic_components(query_norm, name_norm, use_lang)
+    has_modifier = has_size or has_sugar or bool(toppings) or bool(intrinsic_components)
     if not has_modifier:
         return None
 
@@ -1914,6 +2041,14 @@ def _apply_beverage_formula(
         fat += max(0.0, _safe_float(topping.get("fat")) or 0.0)
         sodium += max(0.0, _safe_float(topping.get("sodium")) or 0.0)
 
+    intrinsic_names: list[str] = []
+    for component in intrinsic_components:
+        intrinsic_names.append(str(component.get("name") or "").strip())
+        protein += max(0.0, _safe_float(component.get("protein")) or 0.0) * size_factor
+        carbs += max(0.0, _safe_float(component.get("carbs")) or 0.0) * size_factor
+        fat += max(0.0, _safe_float(component.get("fat")) or 0.0) * size_factor
+        sodium += max(0.0, _safe_float(component.get("sodium")) or 0.0) * size_factor
+
     adjusted_macros = {
         "protein": round(protein, 1),
         "carbs": round(carbs, 1),
@@ -1927,6 +2062,9 @@ def _apply_beverage_formula(
     for topping_name in topping_names:
         if topping_name and topping_name not in adjusted_items:
             adjusted_items.append(topping_name)
+    for intrinsic_name in intrinsic_names:
+        if intrinsic_name and intrinsic_name not in adjusted_items:
+            adjusted_items.append(intrinsic_name)
 
     summary = _build_beverage_formula_summary(
         base_name=base_name,
@@ -1936,6 +2074,13 @@ def _apply_beverage_formula(
         topping_names=[name for name in topping_names if name],
         lang=use_lang,
     )
+    if intrinsic_names:
+        effective_intrinsic_names = [name for name in intrinsic_names if name]
+        if effective_intrinsic_names:
+            if use_lang == "zh-TW":
+                summary = f"{summary}、天然糖來源 {', '.join(effective_intrinsic_names)}"
+            else:
+                summary = f"{summary}, intrinsic sugar from {', '.join(effective_intrinsic_names)}"
     suggestion = _build_beverage_formula_suggestion(
         carbs=adjusted_macros["carbs"],
         sugar_ratio=sugar_ratio,
