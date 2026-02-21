@@ -273,6 +273,7 @@ logging.basicConfig(level=logging.INFO)
 _last_ai_error: Optional[str] = None
 _jwks_client: Optional[PyJWKClient] = None
 _supabase_http_client: Optional[httpx.Client] = None
+_catalog_lang_active_filter_supported: Optional[bool] = None
 _chat_rate_state: dict[str, list[float]] = {}
 _chat_rate_limit = int(os.getenv("CHAT_RATE_LIMIT_PER_MIN", "5"))
 _chat_rate_window_sec = int(os.getenv("CHAT_RATE_WINDOW_SEC", "60"))
@@ -2206,6 +2207,29 @@ def _supabase_rest_insert(table: str, payload: dict) -> bool:
     return True
 
 
+def _supports_catalog_lang_active_filters() -> bool:
+    global _catalog_lang_active_filter_supported
+    if _catalog_lang_active_filter_supported is not None:
+        return _catalog_lang_active_filter_supported
+    try:
+        headers = _supabase_headers()
+    except HTTPException:
+        _catalog_lang_active_filter_supported = False
+        return False
+    url = f"{SUPABASE_URL}/rest/v1/food_catalog"
+    try:
+        client = _get_supabase_http_client()
+        resp = client.get(
+            url,
+            headers=headers,
+            params=[("select", "id,lang,is_active"), ("limit", "1")],
+        )
+        _catalog_lang_active_filter_supported = resp.status_code < 400
+    except Exception:
+        _catalog_lang_active_filter_supported = False
+    return bool(_catalog_lang_active_filter_supported)
+
+
 def _food_match_score(query_norm: str, alias_row: dict, catalog_row: dict, lang: str) -> float:
     alias = str(alias_row.get("alias") or "").strip()
     alias_norm = _normalize_food_query(alias)
@@ -3791,6 +3815,7 @@ def foods_search(
     use_lang = lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
+    supports_lang_active = _supports_catalog_lang_active_filters()
 
     # Use "*" so optional columns (e.g. food_items/judgement_tags) do not break older schemas.
     catalog_select = "*"
@@ -3806,7 +3831,7 @@ def foods_search(
             [
                 ("select", "food_id,alias,lang"),
                 ("alias", f"ilike.*{query_norm}*"),
-                ("lang", f"eq.{use_lang}"),
+                *((("lang", f"eq.{use_lang}"),) if supports_lang_active else ()),
                 ("limit", str(query_limit)),
             ],
         )
@@ -3818,8 +3843,7 @@ def foods_search(
             [
                 ("select", catalog_select),
                 ("or", f"food_name.ilike.*{query_norm}*,canonical_name.ilike.*{query_norm}*"),
-                ("lang", f"eq.{use_lang}"),
-                ("is_active", "eq.true"),
+                *((("lang", f"eq.{use_lang}"), ("is_active", "eq.true")) if supports_lang_active else ()),
                 ("limit", str(query_limit)),
             ],
         )
@@ -3847,8 +3871,7 @@ def foods_search(
             [
                 ("select", catalog_select),
                 ("id", f"in.({','.join(alias_needed_ids)})"),
-                ("lang", f"eq.{use_lang}"),
-                ("is_active", "eq.true"),
+                *((("lang", f"eq.{use_lang}"), ("is_active", "eq.true")) if supports_lang_active else ()),
                 ("limit", str(len(alias_needed_ids))),
             ],
         )
