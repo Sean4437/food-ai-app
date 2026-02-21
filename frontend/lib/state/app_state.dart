@@ -1677,7 +1677,7 @@ class AppState extends ChangeNotifier {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return const [];
 
-    final maxCount = limit.clamp(1, 30);
+    final maxCount = limit.clamp(1, 40);
     final normalizedQuery = _normalizeFoodLookupText(trimmed);
     final compactQuery = normalizedQuery.replaceAll(' ', '');
     final suggestions = <String>[];
@@ -1911,7 +1911,7 @@ class AppState extends ChangeNotifier {
     if (normalizedQuery.isEmpty) return const [];
     final compactQuery = normalizedQuery.replaceAll(' ', '');
     final isZh = locale.toLowerCase().startsWith('zh');
-    final maxCount = limit.clamp(1, 20);
+    final maxCount = limit.clamp(1, 40);
 
     bool tokenMatches(String token) {
       final normalizedToken = _normalizeFoodLookupText(token);
@@ -2753,6 +2753,121 @@ class AppState extends ChangeNotifier {
             },
           ];
 
+    final popularMenuItems = isZh
+        ? const <String>[
+            '\u56db\u5b63\u6625\u9752\u8336',
+            '\u56db\u5b63\u6625\u5976\u9752',
+            '\u8309\u9999\u7da0\u8336',
+            '\u7389\u9732\u7da0\u8336',
+            '\u9ad8\u5c71\u9752\u8336',
+            '\u7fe0\u7389\u9752\u8336',
+            '\u963f\u85a9\u59c6\u7d05\u8336',
+            '\u4f2f\u7235\u7d05\u8336',
+            '\u932b\u862d\u7d05\u8336',
+            '\u871c\u9999\u7d05\u8336',
+            '\u80ed\u8102\u7d05\u8336',
+            '\u719f\u6210\u7d05\u8336',
+            '\u51ac\u74dc\u8336',
+            '\u51ac\u74dc\u9752\u8336',
+            '\u51ac\u74dc\u6ab8\u6aac',
+            '\u51ac\u74dc\u9bae\u5976',
+            '\u9ed1\u7cd6\u51ac\u74dc',
+            '\u6ab8\u6aac\u9752\u8336',
+            '\u6ab8\u6aac\u7d05\u8336',
+            '\u6ab8\u6aac\u7da0\u8336',
+            '\u8702\u871c\u6ab8\u6aac',
+            '\u8702\u871c\u7da0\u8336',
+            '\u8702\u871c\u9752\u8336',
+            '\u91d1\u6854\u6ab8\u6aac',
+            '\u91d1\u6854\u7da0\u8336',
+            '\u767e\u9999\u7da0\u8336',
+            '\u767e\u9999\u7d05\u8336',
+            '\u767e\u9999\u96d9\u97ff\u70ae',
+            '\u591a\u591a\u7da0\u8336',
+            '\u8461\u8404\u67da\u7da0\u8336',
+            '\u8461\u8404\u67da\u9752\u8336',
+            '\u860b\u679c\u7d05\u8336',
+            '\u860b\u679c\u7da0\u8336',
+            '\u9cf3\u68a8\u9752\u8336',
+            '\u8292\u679c\u7da0\u8336',
+            '\u82ad\u6a02\u6885\u7da0',
+            '\u67f3\u6a59\u7da0\u8336',
+            '\u897f\u74dc\u9752\u8336',
+            '\u694a\u679d\u7518\u9732',
+            '\u6c34\u679c\u8336',
+            '\u7d9c\u5408\u679c\u8336',
+            '\u6c34\u679c\u6c23\u6ce1\u98f2',
+            '\u8354\u679d\u70cf\u9f8d',
+            '\u767d\u6843\u70cf\u9f8d',
+            '\u8461\u8404\u70cf\u9f8d',
+            '\u9752\u6885\u7da0\u8336',
+            '\u6885\u5b50\u7da0\u8336',
+            '\u6885\u5b50\u7d05\u8336',
+            '\u70cf\u6885\u6c41',
+            '\u6d1b\u795e\u82b1\u8336',
+            '\u6851\u845a\u51b0\u8336',
+            '\u7518\u8517\u9752\u8336',
+            '\u7518\u8517\u6ab8\u6aac',
+            '\u5976\u8336',
+            '\u73cd\u73e0\u5976\u8336',
+            '\u6ce2\u9738\u5976\u8336',
+            '\u96d9\u0051\u5976\u8336',
+            '\u5e03\u4e01\u5976\u8336',
+            '\u6930\u679c\u5976\u8336',
+            '\u4ed9\u8349\u51cd\u5976\u8336',
+            '\u5976\u84cb\u7d05\u8336',
+            '\u5976\u84cb\u7da0\u8336',
+            '\u5976\u84cb\u9752\u8336',
+            '\u829d\u58eb\u5976\u84cb\u70cf\u9f8d',
+            '\u9bae\u5976\u8336',
+            '\u9bae\u5976\u7d05\u8336',
+            '\u9bae\u5976\u7da0\u8336',
+            '\u70cf\u9f8d\u9bae\u5976',
+            '\u9435\u89c0\u97f3\u9bae\u5976',
+            '\u9ed1\u7cd6\u9bae\u5976',
+            '\u9ed1\u7cd6\u73cd\u73e0\u9bae\u5976',
+            '\u53ef\u53ef\u9bae\u5976',
+            '\u62b9\u8336\u62ff\u9435',
+            '\u7119\u8336\u62ff\u9435',
+            '\u53ef\u53ef\u62ff\u9435',
+            '\u5496\u5561\u62ff\u9435',
+            '\u7f8e\u5f0f\u5496\u5561',
+            '\u51b7\u8403\u5496\u5561',
+            '\u6d77\u9e7d\u5976\u84cb\u9752',
+            '\u6d77\u9e7d\u5976\u84cb\u7d05',
+            '\u73cd\u73e0\u7d05\u8336\u62ff\u9435',
+            '\u8c46\u6f3f',
+            '\u7121\u7cd6\u8c46\u6f3f',
+            '\u8c46\u6f3f\u7d05\u8336',
+            '\u8c46\u6f3f\u5976\u8336',
+            '\u73cd\u73e0\u8c46\u6f3f\u7d05\u8336',
+            '\u71d5\u9ea5\u5976\u8336',
+            '\u71d5\u9ea5\u62ff\u9435',
+            '\u6842\u82b1\u70cf\u9f8d',
+            '\u6842\u82b1\u51cd\u70cf\u9f8d',
+            '\u871c\u6843\u70cf\u9f8d',
+            '\u7d05\u67da\u7fe1\u7fe0',
+            '\u4e09\u5341\u4e09\u8336\u738b',
+            '\u592a\u6975\u9bae\u5976\u8336',
+            '\u91d1\u8431\u96d9\u0051',
+            '\u6d77\u795e',
+            '\u78a7\u87ba\u6625',
+            '\u8001\u6d3e\u5341\u5206\u8336',
+            '\u6d3b\u83cc\u591a\u591a\u7da0',
+            '\u9178\u67d1\u9752\u8336',
+            '\u82f1\u5f0f\u7d05\u8336',
+            '\u9f8d\u773c\u871c\u8336',
+            '\u689d\u5b50\u8001\u4eba\u8336',
+            '\u65e5\u5b89\u7d05\u6f38\u5c64\u9bae\u5976',
+            '\u68c9\u88ab\u5348\u8317\u7da0',
+            '\u68c9\u88ab\u53ef\u53ef',
+            '\u829d\u829d\u91d1\u8431',
+            '\u7fe1\u7fe0\u6ab8\u6aac',
+            '\u6cb9\u5207\u70cf\u9f8d',
+            '\u592a\u6975\u9bae\u5976',
+          ]
+        : const <String>[];
+
     final toppingOptions = isZh
         ? const <String>[
             '\u73cd\u73e0',
@@ -2877,6 +2992,18 @@ class AppState extends ChangeNotifier {
       }
     }
 
+    final matchedPopularItems = <String>[];
+    if (isZh && popularMenuItems.isNotEmpty) {
+      for (final item in popularMenuItems) {
+        if (tokenMatches(item) && !matchedPopularItems.contains(item)) {
+          matchedPopularItems.add(item);
+        }
+      }
+      if (matchedPopularItems.isEmpty && compactQuery.length <= 2) {
+        matchedPopularItems.addAll(popularMenuItems.take(20));
+      }
+    }
+
     final suggestions = <String>[];
     final seen = <String>{};
     void addSuggestion(String value) {
@@ -2886,6 +3013,20 @@ class AppState extends ChangeNotifier {
       if (key.isEmpty || seen.contains(key)) return;
       seen.add(key);
       suggestions.add(text);
+    }
+
+    if (isZh && matchedPopularItems.isNotEmpty) {
+      for (final item in matchedPopularItems.take(28)) {
+        addSuggestion(item);
+        addSuggestion('$item \u534a\u7cd6\u5c11\u51b0');
+        addSuggestion('$item \u5fae\u7cd6\u53bb\u51b0');
+        addSuggestion('$item \u7121\u7cd6\u53bb\u51b0');
+        if (queryWantsTopping) {
+          for (final topping in activeToppings.take(3)) {
+            addSuggestion('$item \u534a\u7cd6\u5c11\u51b0\u52a0$topping');
+          }
+        }
+      }
     }
 
     if (isZh && matchedBrands.isNotEmpty) {

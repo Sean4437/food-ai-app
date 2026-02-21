@@ -1402,7 +1402,7 @@ def _extract_beverage_base_candidates(text: str) -> list[str]:
     if "茶" in normalized and not candidates:
         add("青茶")
 
-    return candidates[:4]
+    return candidates[:8]
 
 
 def _food_search_query_candidates(raw_query: str) -> list[str]:
