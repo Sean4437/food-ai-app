@@ -12,6 +12,53 @@ enum _RecordInputMode {
   name,
 }
 
+bool _looksLikeBeverageName(String text) {
+  final normalized = text.trim().toLowerCase();
+  if (normalized.isEmpty) return false;
+  const hintTokens = <String>[
+    '茶',
+    '紅茶',
+    '綠茶',
+    '青茶',
+    '烏龍',
+    '奶茶',
+    '豆漿',
+    '咖啡',
+    '拿鐵',
+    '飲料',
+    '果汁',
+    '甘蔗',
+    '蜂蜜',
+    '冬瓜',
+    '多多',
+    'tea',
+    'coffee',
+    'latte',
+    'drink',
+    'juice',
+    'boba',
+    'milk tea',
+  ];
+  for (final token in hintTokens) {
+    if (normalized.contains(token)) return true;
+  }
+  return false;
+}
+
+String _replaceCupSizeToken(String text, String nextSizeToken) {
+  var value = text.trim();
+  if (value.isEmpty) return nextSizeToken;
+  value = value.replaceAll(
+    RegExp(
+        r'(特大杯|超大杯|大杯|中杯|小杯|x-large|xlarge|large|medium|small|xl|lg|md|sm)\s*',
+        caseSensitive: false),
+    '',
+  );
+  value = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (value.isEmpty) return nextSizeToken;
+  return '$value $nextSizeToken';
+}
+
 class RecordResult {
   const RecordResult({
     required this.entry,
@@ -44,6 +91,7 @@ Future<String?> _promptFoodName(
   var requestToken = 0;
   var suggestions = <String>[];
   var isSearching = false;
+  String? selectedCupSize;
 
   Future<void> refreshSuggestions(
     String keyword,
@@ -98,6 +146,7 @@ Future<String?> _promptFoodName(
                       prefixIcon: const Icon(Icons.search),
                     ),
                     onChanged: (_) {
+                      selectedCupSize = null;
                       debounce?.cancel();
                       debounce = Timer(const Duration(milliseconds: 400), () {
                         refreshSuggestions(
@@ -110,6 +159,86 @@ Future<String?> _promptFoodName(
                     onSubmitted: (v) =>
                         Navigator.of(dialogContext).pop(v.trim()),
                   ),
+                  if (hasInput && _looksLikeBeverageName(controller.text)) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ChoiceChip(
+                          label:
+                              Text(isEn ? 'Small (~400 ml)' : '小杯（約 400 ml）'),
+                          selected: selectedCupSize == 'small',
+                          onSelected: (_) {
+                            final next = _replaceCupSizeToken(
+                              controller.text,
+                              '小杯',
+                            );
+                            setDialogState(() {
+                              selectedCupSize = 'small';
+                              controller.text = next;
+                              controller.selection = TextSelection.collapsed(
+                                  offset: controller.text.length);
+                            });
+                            debounce?.cancel();
+                            // Refresh suggestions immediately after applying size.
+                            refreshSuggestions(
+                                controller.text, dialogContext, setDialogState);
+                          },
+                        ),
+                        ChoiceChip(
+                          label:
+                              Text(isEn ? 'Medium (~500 ml)' : '中杯（約 500 ml）'),
+                          selected: selectedCupSize == 'medium',
+                          onSelected: (_) {
+                            final next = _replaceCupSizeToken(
+                              controller.text,
+                              '中杯',
+                            );
+                            setDialogState(() {
+                              selectedCupSize = 'medium';
+                              controller.text = next;
+                              controller.selection = TextSelection.collapsed(
+                                  offset: controller.text.length);
+                            });
+                            debounce?.cancel();
+                            refreshSuggestions(
+                                controller.text, dialogContext, setDialogState);
+                          },
+                        ),
+                        ChoiceChip(
+                          label:
+                              Text(isEn ? 'Large (~625 ml)' : '大杯（約 625 ml）'),
+                          selected: selectedCupSize == 'large',
+                          onSelected: (_) {
+                            final next = _replaceCupSizeToken(
+                              controller.text,
+                              '大杯',
+                            );
+                            setDialogState(() {
+                              selectedCupSize = 'large';
+                              controller.text = next;
+                              controller.selection = TextSelection.collapsed(
+                                  offset: controller.text.length);
+                            });
+                            debounce?.cancel();
+                            refreshSuggestions(
+                                controller.text, dialogContext, setDialogState);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isEn
+                          ? 'Cup volume is estimated and may vary by brand.'
+                          : '杯量為估算值，實際容量會依品牌杯型有差異。',
+                      style: Theme.of(dialogContext)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.black54),
+                    ),
+                  ],
                   if (isSearching) ...[
                     const SizedBox(height: 8),
                     const LinearProgressIndicator(minHeight: 2),

@@ -21,7 +21,8 @@ class SuggestionsScreen extends StatefulWidget {
   State<SuggestionsScreen> createState() => _SuggestionsScreenState();
 }
 
-class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTickerProviderStateMixin {
+class _SuggestionsScreenState extends State<SuggestionsScreen>
+    with SingleTickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   QuickCaptureAnalysis? _analysis;
   MealAdvice? _instantAdvice;
@@ -35,7 +36,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   String? _containerType;
   String? _containerSize;
   String _referenceObject = 'none';
-  final TextEditingController _referenceLengthController = TextEditingController();
+  final TextEditingController _referenceLengthController =
+      TextEditingController();
   String? _overrideCalorieRange;
   String? _displayCalorieRange;
   late final AnimationController _scanController;
@@ -46,7 +48,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
   Timer? _statusTimer;
 
   String _subscriptionRequiredMessage() {
-    final isZh = Localizations.localeOf(context).languageCode.toLowerCase().startsWith('zh');
+    final isZh = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
     return isZh ? '此功能需訂閱後才能使用' : 'This feature requires subscription.';
   }
 
@@ -58,7 +63,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       _loading = false;
       _previewBytes = null;
     });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
     return false;
   }
 
@@ -69,10 +75,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startCaptureFromCamera());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _startCaptureFromCamera());
   }
 
-  
   @override
   void dispose() {
     _progressTimer?.cancel();
@@ -119,8 +125,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         file,
         locale,
         historyContext: historyContext.isEmpty ? null : historyContext,
-        referenceObject: _referenceObject == 'none' || _referenceObject == 'manual' ? null : _referenceObject,
-        referenceLengthCm: _referenceObject == 'manual' ? _parsedReferenceLength() : null,
+        referenceObject:
+            _referenceObject == 'none' || _referenceObject == 'manual'
+                ? null
+                : _referenceObject,
+        referenceLengthCm:
+            _referenceObject == 'manual' ? _parsedReferenceLength() : null,
       );
       if (!mounted) return;
       if (analysis == null) {
@@ -239,8 +249,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           decoration: InputDecoration(hintText: t.foodNameLabel),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.cancel)),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: Text(t.save)),
+          TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(t.cancel)),
+          ElevatedButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(controller.text.trim()),
+              child: Text(t.save)),
         ],
       ),
     );
@@ -260,8 +275,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         foodName: result.trim(),
         containerType: _containerType,
         containerSize: _containerSize,
-        referenceObject: _referenceObject == 'none' || _referenceObject == 'manual' ? null : _referenceObject,
-        referenceLengthCm: _referenceObject == 'manual' ? _parsedReferenceLength() : null,
+        referenceObject:
+            _referenceObject == 'none' || _referenceObject == 'manual'
+                ? null
+                : _referenceObject,
+        referenceLengthCm:
+            _referenceObject == 'manual' ? _parsedReferenceLength() : null,
       );
       if (!mounted) return;
       _analysis = updated;
@@ -314,10 +333,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
               ListTile(
                 leading: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.memory(food.imageBytes, width: 48, height: 48, fit: BoxFit.cover),
+                  child: Image.memory(food.imageBytes,
+                      width: 48, height: 48, fit: BoxFit.cover),
                 ),
-                title: Text(food.name, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-                subtitle: Text(food.summary, style: AppTextStyles.caption(context).copyWith(color: Colors.black54)),
+                title: Text(food.name,
+                    style: AppTextStyles.body(context)
+                        .copyWith(fontWeight: FontWeight.w600)),
+                subtitle: Text(food.summary,
+                    style: AppTextStyles.caption(context)
+                        .copyWith(color: Colors.black54)),
                 onTap: () => Navigator.of(context).pop(food),
               ),
           ],
@@ -339,7 +363,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       builder: (context) => SafeArea(
         child: StatefulBuilder(
           builder: (context, setModalState) {
-            final dateLabel = '${pickedDate.year}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.day.toString().padLeft(2, '0')}';
+            final dateLabel =
+                '${pickedDate.year}/${pickedDate.month.toString().padLeft(2, '0')}/${pickedDate.day.toString().padLeft(2, '0')}';
             final timeLabel = pickedTime.format(context);
             return Padding(
               padding: const EdgeInsets.all(16),
@@ -347,11 +372,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(t.customConfirmTitle, style: AppTextStyles.title2(context)),
+                  Text(t.customConfirmTitle,
+                      style: AppTextStyles.title2(context)),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Text('${t.customConfirmDate}:', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                      Text('${t.customConfirmDate}:',
+                          style: AppTextStyles.body(context)
+                              .copyWith(fontWeight: FontWeight.w600)),
                       const Spacer(),
                       TextButton(
                         onPressed: () async {
@@ -370,7 +398,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                   ),
                   Row(
                     children: [
-                      Text('${t.customConfirmTime}:', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                      Text('${t.customConfirmTime}:',
+                          style: AppTextStyles.body(context)
+                              .copyWith(fontWeight: FontWeight.w600)),
                       const Spacer(),
                       TextButton(
                         onPressed: () async {
@@ -397,11 +427,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                   ),
                   Row(
                     children: [
-                      Text('${t.customConfirmMealType}:', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+                      Text('${t.customConfirmMealType}:',
+                          style: AppTextStyles.body(context)
+                              .copyWith(fontWeight: FontWeight.w600)),
                       const Spacer(),
                       TextButton(
                         onPressed: () async {
-                          final result = await _showMealTypePicker(app, t, pickedMealType);
+                          final result =
+                              await _showMealTypePicker(app, t, pickedMealType);
                           if (result == null) return;
                           setModalState(() => pickedMealType = result);
                         },
@@ -449,7 +482,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
-  Future<MealType?> _showMealTypePicker(AppState app, AppLocalizations t, MealType current) async {
+  Future<MealType?> _showMealTypePicker(
+      AppState app, AppLocalizations t, MealType current) async {
     final options = MealType.values;
     return showModalBottomSheet<MealType>(
       context: context,
@@ -464,7 +498,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
             for (final option in options)
               ListTile(
                 title: Text(app.mealTypeLabel(option, t)),
-                trailing: option == current ? const Text('✅', style: TextStyle(fontSize: 16)) : null,
+                trailing: option == current
+                    ? const Text('✅', style: TextStyle(fontSize: 16))
+                    : null,
                 onTap: () => Navigator.of(context).pop(option),
               ),
           ],
@@ -482,21 +518,38 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     for (final line in lines) {
       final normalized = _normalizeAdviceLine(line);
       final lower = normalized.toLowerCase();
-      if (_startsWithAny(normalized, ['搭配', '可以吃', '建議吃', '適合吃', '可吃', '可以怎麼吃', '可以喝', '建議喝', '適合喝', '可喝', '可以怎麼喝']) ||
+      if (_startsWithAny(normalized, [
+            '搭配',
+            '可以吃',
+            '建議吃',
+            '適合吃',
+            '可吃',
+            '可以怎麼吃',
+            '可以喝',
+            '建議喝',
+            '適合喝',
+            '可喝',
+            '可以怎麼喝'
+          ]) ||
           lower.startsWith('can eat') ||
           lower.startsWith('can drink')) {
-        sections['can'] = _cleanAdviceValue(_splitAdviceValue(normalized), 'can');
+        sections['can'] =
+            _cleanAdviceValue(_splitAdviceValue(normalized), 'can');
         continue;
       }
-      if (_startsWithAny(normalized, ['不建議', '不建議吃', '避免', '不推薦', '不建議喝', '少吃', '少喝', '避免吃', '避免喝']) ||
+      if (_startsWithAny(normalized,
+              ['不建議', '不建議吃', '避免', '不推薦', '不建議喝', '少吃', '少喝', '避免吃', '避免喝']) ||
           lower.startsWith('avoid')) {
-        sections['avoid'] = _cleanAdviceValue(_splitAdviceValue(normalized), 'avoid');
+        sections['avoid'] =
+            _cleanAdviceValue(_splitAdviceValue(normalized), 'avoid');
         continue;
       }
-      if (_startsWithAny(normalized, ['建議份量', '建議份量上限', '份量上限', '上限', '份量建議']) ||
+      if (_startsWithAny(
+              normalized, ['建議份量', '建議份量上限', '份量上限', '上限', '份量建議']) ||
           lower.startsWith('portion') ||
           lower.startsWith('limit')) {
-        sections['limit'] = _cleanAdviceValue(_splitAdviceValue(normalized), 'limit');
+        sections['limit'] =
+            _cleanAdviceValue(_splitAdviceValue(normalized), 'limit');
         continue;
       }
     }
@@ -614,7 +667,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       );
     }
     if (key == 'avoid') {
-      cleaned = cleaned.replaceFirst(RegExp(r'^(避免|不建議|不推薦|少|盡量少|盡量避免)\s*'), '');
+      cleaned =
+          cleaned.replaceFirst(RegExp(r'^(避免|不建議|不推薦|少|盡量少|盡量避免)\s*'), '');
     }
     if (key == 'limit') {
       cleaned = cleaned.replaceFirst(RegExp(r'^(份量|份量上限|建議份量|上限|控制在)\s*'), '');
@@ -686,7 +740,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     });
   }
 
-  void _animateProgress(double target, Duration duration, [VoidCallback? onComplete]) {
+  void _animateProgress(double target, Duration duration,
+      [VoidCallback? onComplete]) {
     _progressTimer?.cancel();
     final start = _progressValue;
     final startTime = DateTime.now();
@@ -715,11 +770,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   Widget _buildAdviceCard(AppLocalizations t) {
     if (_analysis == null) {
-      return Text(t.suggestInstantMissing, style: AppTextStyles.caption(context).copyWith(color: Colors.black54));
+      return Text(t.suggestInstantMissing,
+          style:
+              AppTextStyles.caption(context).copyWith(color: Colors.black54));
     }
     final suggestion = _analysis!.result.suggestion.trim();
     if (suggestion.isEmpty) {
-      return Text(t.suggestInstantMissing, style: AppTextStyles.caption(context).copyWith(color: Colors.black54));
+      return Text(t.suggestInstantMissing,
+          style:
+              AppTextStyles.caption(context).copyWith(color: Colors.black54));
     }
     var sections = _parseAdviceSections(suggestion);
     if (sections.length < 3) {
@@ -733,9 +792,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     final avoidText = (sections['avoid'] ?? '').trim();
     final limitText = (sections['limit'] ?? '').trim();
     final isDrink = _analysis?.result.isBeverage == true;
-    final canLabel = isDrink ? t.suggestInstantCanDrink : t.suggestInstantCanEat;
-    final avoidLabel = isDrink ? t.suggestInstantAvoidDrink : t.suggestInstantAvoid;
-    final limitLabel = isDrink ? t.suggestInstantDrinkLimit : t.suggestInstantLimit;
+    final canLabel =
+        isDrink ? t.suggestInstantCanDrink : t.suggestInstantCanEat;
+    final avoidLabel =
+        isDrink ? t.suggestInstantAvoidDrink : t.suggestInstantAvoid;
+    final limitLabel =
+        isDrink ? t.suggestInstantDrinkLimit : t.suggestInstantLimit;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -761,10 +823,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(displayTitle, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        Text(displayTitle,
+            style: AppTextStyles.body(context)
+                .copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(width: 8),
         Expanded(
-          child: Text(value ?? '-', style: AppTextStyles.caption(context).copyWith(color: Colors.black87, height: 1.4)),
+          child: Text(value ?? '-',
+              style: AppTextStyles.caption(context)
+                  .copyWith(color: Colors.black87, height: 1.4)),
         ),
       ],
     );
@@ -783,8 +849,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     return [nextType, nextSize];
   }
 
-  void _applyAnalysisDefaults(AnalysisResult result, {bool keepUserSelections = false}) {
-    final normalized = _normalizeContainerSelection(result.containerGuessType, result.containerGuessSize);
+  void _applyAnalysisDefaults(AnalysisResult result,
+      {bool keepUserSelections = false}) {
+    final normalized = _normalizeContainerSelection(
+        result.containerGuessType, result.containerGuessSize);
     if (!keepUserSelections) {
       _portionPercent = 100;
       _containerType = normalized[0];
@@ -886,7 +954,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   Future<void> _editCalorieRange() async {
     final t = AppLocalizations.of(context)!;
-    final controller = TextEditingController(text: _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '');
+    final controller = TextEditingController(
+        text: _overrideCalorieRange ?? _analysis?.result.calorieRange ?? '');
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -978,7 +1047,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                   ),
             selected: option.value == value,
             onSelected: (_) => onSelected(option.value),
-            labelStyle: AppTextStyles.caption(context).copyWith(fontWeight: FontWeight.w600),
+            labelStyle: AppTextStyles.caption(context)
+                .copyWith(fontWeight: FontWeight.w600),
             padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
           ),
       ],
@@ -997,20 +1067,49 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
 
   Widget _buildPortionContainerSection(AppLocalizations t) {
     final theme = Theme.of(context);
-    final normalized = _normalizeContainerSelection(_containerType, _containerSize);
+    final normalized =
+        _normalizeContainerSelection(_containerType, _containerSize);
     final currentType = normalized[0];
     final currentSize = normalized[1];
+    final isDrink = _analysis?.result.isBeverage == true;
+    final isZh =
+        Localizations.localeOf(context).languageCode.toLowerCase() == 'zh';
     final typeOptions = <_IconChipOption>[
-      _IconChipOption(emoji: '🍜', value: 'bowl', label: t.containerTypeBowl, showLabel: false),
-      _IconChipOption(emoji: '🍽️', value: 'plate', label: t.containerTypePlate, showLabel: false),
-      _IconChipOption(emoji: '🍱', value: 'box', label: t.containerTypeBox, showLabel: false),
-      _IconChipOption(emoji: '🥤', value: 'cup', label: t.containerTypeCup, showLabel: false),
-      _IconChipOption(emoji: '❓', value: 'unknown', label: t.containerTypeUnknown, showLabel: false),
+      _IconChipOption(
+          emoji: '🍜',
+          value: 'bowl',
+          label: t.containerTypeBowl,
+          showLabel: false),
+      _IconChipOption(
+          emoji: '🍽️',
+          value: 'plate',
+          label: t.containerTypePlate,
+          showLabel: false),
+      _IconChipOption(
+          emoji: '🍱',
+          value: 'box',
+          label: t.containerTypeBox,
+          showLabel: false),
+      _IconChipOption(
+          emoji: '🥤',
+          value: 'cup',
+          label: t.containerTypeCup,
+          showLabel: false),
+      _IconChipOption(
+          emoji: '❓',
+          value: 'unknown',
+          label: t.containerTypeUnknown,
+          showLabel: false),
     ];
+    String sizeWithMl(String baseLabel, int ml) {
+      if (!isDrink) return baseLabel;
+      return isZh ? '$baseLabel（約 $ml ml）' : '$baseLabel (~$ml ml)';
+    }
+
     final sizeOptions = <MapEntry<String, String>>[
-      MapEntry(t.containerSizeSmall, 'small'),
-      MapEntry(t.containerSizeMedium, 'medium'),
-      MapEntry(t.containerSizeLarge, 'large'),
+      MapEntry(sizeWithMl(t.containerSizeSmall, 400), 'small'),
+      MapEntry(sizeWithMl(t.containerSizeMedium, 500), 'medium'),
+      MapEntry(sizeWithMl(t.containerSizeLarge, 625), 'large'),
     ];
     final referenceOptions = <MapEntry<String, String>>[
       MapEntry(t.referenceObjectNone, 'none'),
@@ -1022,18 +1121,23 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(t.portionLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        Text(t.portionLabel,
+            style: AppTextStyles.body(context)
+                .copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         Row(
           children: [
-            Text('${_portionPercent}%', style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+            Text('${_portionPercent}%',
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(width: 10),
             Expanded(
               child: SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   trackHeight: 6,
                   activeTrackColor: theme.colorScheme.primary,
-                  inactiveTrackColor: theme.colorScheme.primary.withOpacity(0.2),
+                  inactiveTrackColor:
+                      theme.colorScheme.primary.withOpacity(0.2),
                   thumbColor: theme.colorScheme.primary,
                   overlayColor: theme.colorScheme.primary.withOpacity(0.12),
                 ),
@@ -1047,16 +1151,36 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                 ),
               ),
             ),
-        ],
-      ),
-      const SizedBox(height: 12),
-        Text(t.containerTypeLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        _buildIconChipGroup(options: typeOptions, value: currentType, onSelected: _updateContainerType),
+          ],
+        ),
         const SizedBox(height: 12),
-        Text(t.containerSizeLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        Text(t.containerTypeLabel,
+            style: AppTextStyles.body(context)
+                .copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        _buildChipGroup(options: sizeOptions, value: currentSize, onSelected: _updateContainerSize),
+        _buildIconChipGroup(
+            options: typeOptions,
+            value: currentType,
+            onSelected: _updateContainerType),
+        const SizedBox(height: 12),
+        Text(t.containerSizeLabel,
+            style: AppTextStyles.body(context)
+                .copyWith(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        _buildChipGroup(
+            options: sizeOptions,
+            value: currentSize,
+            onSelected: _updateContainerSize),
+        if (isDrink) ...[
+          const SizedBox(height: 6),
+          Text(
+            isZh
+                ? '容量為估算值，實際容量會依品牌杯型有差異。'
+                : 'Cup volume is estimated and may vary by brand.',
+            style:
+                AppTextStyles.caption(context).copyWith(color: Colors.black54),
+          ),
+        ],
         const SizedBox(height: 12),
         _buildReferenceAdjustSection(t, referenceOptions),
       ],
@@ -1072,7 +1196,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       childrenPadding: const EdgeInsets.only(top: 6),
       title: Text(
         t.referenceObjectLabel,
-        style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+        style:
+            AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
         t.referenceLengthHint,
@@ -1081,18 +1206,24 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       children: [
         Align(
           alignment: Alignment.centerLeft,
-          child: _buildChipGroup(options: referenceOptions, value: _referenceObject, onSelected: _updateReferenceObject),
+          child: _buildChipGroup(
+              options: referenceOptions,
+              value: _referenceObject,
+              onSelected: _updateReferenceObject),
         ),
         if (_referenceObject == 'manual') ...[
           const SizedBox(height: 10),
-          Text(t.referenceLengthLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+          Text(t.referenceLengthLabel,
+              style: AppTextStyles.body(context)
+                  .copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _referenceLengthController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(hintText: t.referenceLengthHint),
                 ),
               ),
@@ -1131,7 +1262,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       if (low != null && high != null) {
         final scaledLow = (low * factor).round();
         final scaledHigh = (high * factor).round();
-        return hasKcal ? '$scaledLow-$scaledHigh kcal' : '$scaledLow-$scaledHigh';
+        return hasKcal
+            ? '$scaledLow-$scaledHigh kcal'
+            : '$scaledLow-$scaledHigh';
       }
     }
     final single = RegExp(r'(\d+)').firstMatch(normalized);
@@ -1249,11 +1382,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     for (final group in groups.values) {
       double total = 0;
       for (final entry in group) {
-        final baseRange = entry.overrideCalorieRange ?? entry.labelResult?.calorieRange ?? entry.result?.calorieRange;
+        final baseRange = entry.overrideCalorieRange ??
+            entry.labelResult?.calorieRange ??
+            entry.result?.calorieRange;
         final mid = _rangeMidValue(baseRange);
         if (mid == null) continue;
         final portion = entry.portionPercent.clamp(10, 200) / 100.0;
-        final factor = portion * _containerSizeFactorFor(entry.containerSize) * _containerTypeFactorFor(entry.containerType);
+        final factor = portion *
+            _containerSizeFactorFor(entry.containerSize) *
+            _containerTypeFactorFor(entry.containerType);
         total += mid * factor;
       }
       if (total > 0) {
@@ -1265,11 +1402,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     return sum / mealTotals.length;
   }
 
-  Widget _buildEnergyBar(AppState app, AppLocalizations t, AnalysisResult analysis) {
-    final current = _calorieMidValue(_overrideCalorieRange ?? analysis.calorieRange);
+  Widget _buildEnergyBar(
+      AppState app, AppLocalizations t, AnalysisResult analysis) {
+    final current =
+        _calorieMidValue(_overrideCalorieRange ?? analysis.calorieRange);
     if (current == null || current <= 0) return const SizedBox.shrink();
     final mealType = app.resolveMealType(DateTime.now());
-    final avg = _recentMealAverage(app, mealType: mealType) ?? _recentMealAverage(app);
+    final avg =
+        _recentMealAverage(app, mealType: mealType) ?? _recentMealAverage(app);
     if (avg == null || avg <= 0) return const SizedBox.shrink();
     final max = math.max(avg * 1.6, avg + 200);
     final acceptRatio = (avg / max).clamp(0.05, 0.95);
@@ -1284,7 +1424,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
-            final indicatorLeft = (width * currentRatio).clamp(0.0, width - indicatorSize);
+            final indicatorLeft =
+                (width * currentRatio).clamp(0.0, width - indicatorSize);
             return SizedBox(
               height: barHeight,
               child: Stack(
@@ -1311,7 +1452,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                               shadows: const [
-                                Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 1)),
+                                Shadow(
+                                    color: Colors.black26,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 1)),
                               ],
                             ),
                           ),
@@ -1322,7 +1466,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                               shadows: const [
-                                Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 1)),
+                                Shadow(
+                                    color: Colors.black26,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 1)),
                               ],
                             ),
                           ),
@@ -1353,7 +1500,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     );
   }
 
-  Widget _buildProteinRangeBar(AppLocalizations t, double consumed, List<int> range) {
+  Widget _buildProteinRangeBar(
+      AppLocalizations t, double consumed, List<int> range) {
     final theme = Theme.of(context);
     final minTarget = range[0].toDouble();
     final maxTarget = range[1].toDouble();
@@ -1370,12 +1518,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           children: [
             Text(
               t.proteinIntakeTodayLabel,
-              style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+              style: AppTextStyles.body(context)
+                  .copyWith(fontWeight: FontWeight.w600),
             ),
             const Spacer(),
             Text(
               '${consumed.round()}g',
-              style: AppTextStyles.caption(context).copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
+              style: AppTextStyles.caption(context)
+                  .copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -1385,7 +1535,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
             final width = constraints.maxWidth;
             final rangeLeft = width * startRatio;
             final rangeWidth = width * (endRatio - startRatio);
-            final indicatorLeft = (width * currentRatio).clamp(0.0, width - indicatorSize);
+            final indicatorLeft =
+                (width * currentRatio).clamp(0.0, width - indicatorSize);
             return SizedBox(
               height: barHeight,
               child: Stack(
@@ -1420,7 +1571,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                         color: theme.colorScheme.primary,
                         shape: BoxShape.circle,
                         boxShadow: const [
-                          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                          BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(0, 2)),
                         ],
                       ),
                     ),
@@ -1433,9 +1587,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         const SizedBox(height: 4),
         Row(
           children: [
-            Text('${range[0]}g', style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+            Text('${range[0]}g',
+                style: AppTextStyles.caption(context)
+                    .copyWith(color: Colors.black45)),
             const Spacer(),
-            Text('${range[1]}g', style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+            Text('${range[1]}g',
+                style: AppTextStyles.caption(context)
+                    .copyWith(color: Colors.black45)),
           ],
         ),
       ],
@@ -1447,14 +1605,17 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(t.macroLabel, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+        Text(t.macroLabel,
+            style: AppTextStyles.body(context)
+                .copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         NutritionChart(
           macros: adjusted,
           style: NutritionChartStyle.donut,
           t: t,
           valueMode: NutritionValueMode.amount,
-          calories: _calorieMidValue(_overrideCalorieRange ?? analysis.calorieRange),
+          calories:
+              _calorieMidValue(_overrideCalorieRange ?? analysis.calorieRange),
         ),
       ],
     );
@@ -1484,7 +1645,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       final high = double.tryParse(match.group(2) ?? '');
       if (low != null && high != null) {
         final percent = _portionPercent.clamp(10, 200) / 100.0;
-        final factor = percent * _containerSizeFactor() * _containerTypeFactor();
+        final factor =
+            percent * _containerSizeFactor() * _containerTypeFactor();
         return ((low + high) / 2) * factor;
       }
     }
@@ -1493,7 +1655,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
       final value = double.tryParse(single.group(1) ?? '');
       if (value != null) {
         final percent = _portionPercent.clamp(10, 200) / 100.0;
-        final factor = percent * _containerSizeFactor() * _containerTypeFactor();
+        final factor =
+            percent * _containerSizeFactor() * _containerTypeFactor();
         return value * factor;
       }
     }
@@ -1521,8 +1684,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         containerType: _containerType,
         containerSize: _containerSize,
         portionPercent: _portionPercent,
-        referenceObject: _referenceObject == 'none' || _referenceObject == 'manual' ? null : _referenceObject,
-        referenceLengthCm: _referenceObject == 'manual' ? _parsedReferenceLength() : null,
+        referenceObject:
+            _referenceObject == 'none' || _referenceObject == 'manual'
+                ? null
+                : _referenceObject,
+        referenceLengthCm:
+            _referenceObject == 'manual' ? _parsedReferenceLength() : null,
       );
       if (!mounted) return;
       _analysis = updated;
@@ -1558,18 +1725,29 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _adviceRow('${labels[t.nextSelfCookLabel] ?? ''} ${t.nextSelfCookLabel}'.trim(), advice.selfCook),
+        _adviceRow(
+            '${labels[t.nextSelfCookLabel] ?? ''} ${t.nextSelfCookLabel}'
+                .trim(),
+            advice.selfCook),
         const SizedBox(height: 8),
-        _adviceRow('${labels[t.nextConvenienceLabel] ?? ''} ${t.nextConvenienceLabel}'.trim(), advice.convenience),
+        _adviceRow(
+            '${labels[t.nextConvenienceLabel] ?? ''} ${t.nextConvenienceLabel}'
+                .trim(),
+            advice.convenience),
         const SizedBox(height: 8),
-        _adviceRow('${labels[t.nextBentoLabel] ?? ''} ${t.nextBentoLabel}'.trim(), advice.bento),
+        _adviceRow(
+            '${labels[t.nextBentoLabel] ?? ''} ${t.nextBentoLabel}'.trim(),
+            advice.bento),
         const SizedBox(height: 8),
-        _adviceRow('${labels[t.nextOtherLabel] ?? ''} ${t.nextOtherLabel}'.trim(), advice.other),
+        _adviceRow(
+            '${labels[t.nextOtherLabel] ?? ''} ${t.nextOtherLabel}'.trim(),
+            advice.other),
       ],
     );
   }
 
-  Widget _buildAnalysisCardContent(AppLocalizations t, AppState app, AnalysisResult analysis) {
+  Widget _buildAnalysisCardContent(
+      AppLocalizations t, AppState app, AnalysisResult analysis) {
     if (analysis.isFood == false) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1582,7 +1760,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
               Expanded(
                 child: Text(
                   t.suggestInstantNonFood,
-                  style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.body(context)
+                      .copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -1591,7 +1770,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
             const SizedBox(height: 6),
             Text(
               analysis.nonFoodReason!.trim(),
-              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+              style: AppTextStyles.caption(context)
+                  .copyWith(color: Colors.black54),
             ),
           ],
         ],
@@ -1606,12 +1786,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           containerSize: _containerSize,
         );
     final proteinRange = app.proteinTargetRangeGrams();
-    final baseProteinConsumed = app.dailyProteinConsumedGrams((_analysis?.time ?? DateTime.now()));
+    final baseProteinConsumed =
+        app.dailyProteinConsumedGrams((_analysis?.time ?? DateTime.now()));
     final adjustedMacros = _scaledMacros(analysis.macros);
-    final currentProtein = _savedEntry == null ? (adjustedMacros['protein'] ?? 0) : 0;
+    final currentProtein =
+        _savedEntry == null ? (adjustedMacros['protein'] ?? 0) : 0;
     final proteinConsumed = (baseProteinConsumed + currentProtein).round();
     final referenceUsed = (analysis.referenceUsed ?? '').trim();
-    final referenceLabel = referenceUsed.isEmpty ? t.referenceObjectNone : referenceUsed;
+    final referenceLabel =
+        referenceUsed.isEmpty ? t.referenceObjectNone : referenceUsed;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1628,7 +1811,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
             Expanded(
               child: Text(
                 analysis.foodName,
-                style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -1639,7 +1823,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
             Expanded(
               child: Text(
                 '${adjustedRange} ${t.estimated}',
-                style: AppTextStyles.title2(context).copyWith(fontWeight: FontWeight.w700, color: Colors.black87),
+                style: AppTextStyles.title2(context).copyWith(
+                    fontWeight: FontWeight.w700, color: Colors.black87),
               ),
             ),
             const SizedBox.shrink(),
@@ -1650,7 +1835,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         const SizedBox(height: 6),
         Text(
           '${t.referenceObjectLabel}：$referenceLabel',
-          style: AppTextStyles.caption(context).copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
+          style: AppTextStyles.caption(context)
+              .copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
         ),
         if (proteinRange != null) ...[
           const SizedBox(height: 12),
@@ -1658,14 +1844,19 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
         ],
         const SizedBox(height: 12),
         Text(
-          analysis.isBeverage == true ? t.suggestInstantDrinkAdviceTitle : t.suggestInstantAdviceTitle,
-          style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+          analysis.isBeverage == true
+              ? t.suggestInstantDrinkAdviceTitle
+              : t.suggestInstantAdviceTitle,
+          style:
+              AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         _buildAdviceCard(t),
         if (_showSaveActions) ...[
           const SizedBox(height: 14),
-          Text(t.suggestInstantSavePrompt, style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600)),
+          Text(t.suggestInstantSavePrompt,
+              style: AppTextStyles.body(context)
+                  .copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -1700,7 +1891,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           ),
         ),
         const SizedBox(height: 12),
-        Text(t.suggestInstantRecentHint, style: AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+        Text(t.suggestInstantRecentHint,
+            style:
+                AppTextStyles.caption(context).copyWith(color: Colors.black45)),
       ],
     );
   }
@@ -1710,7 +1903,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final app = AppStateScope.of(context);
-    final plateAsset = app.profile.plateAsset.isEmpty ? kDefaultPlateAsset : app.profile.plateAsset;
+    final plateAsset = app.profile.plateAsset.isEmpty
+        ? kDefaultPlateAsset
+        : app.profile.plateAsset;
     final analysis = _analysis?.result;
     final showFloatingCard = analysis != null && !_hideFloatingCard;
     final showAdviceCard = _instantAdvice != null && !showFloatingCard;
@@ -1737,54 +1932,58 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
           child: Stack(
             children: [
               SingleChildScrollView(
-                          padding: EdgeInsets.fromLTRB(16, 16, 16, (showFloatingCard || showAdviceCard) ? 260 : 16),
-                          child: Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 420),
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                  Text(
-                                    t.suggestTitle,
-                                    style: AppTextStyles.title1(context),
-                                    textAlign: TextAlign.center,
+                padding: EdgeInsets.fromLTRB(16, 16, 16,
+                    (showFloatingCard || showAdviceCard) ? 260 : 16),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          t.suggestTitle,
+                          style: AppTextStyles.title1(context),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          t.suggestInstantHint,
+                          style: AppTextStyles.caption(context)
+                              .copyWith(color: Colors.black54),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        Center(
+                          child: SizedBox(
+                            width: cardWidth,
+                            height: cardHeight,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                IgnorePointer(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.22),
+                                      borderRadius: BorderRadius.circular(28),
+                                    ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    t.suggestInstantHint,
-                                    style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Center(
-                                    child: SizedBox(
-                                      width: cardWidth,
-                                      height: cardHeight,
-                                      child: Stack(
-                                        clipBehavior: Clip.none,
+                                ),
+                                Align(
+                                  alignment: Alignment.center,
+                                  child: Container(
+                                    width: innerWidth,
+                                    height: innerHeight,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.4),
+                                      borderRadius: BorderRadius.circular(26),
+                                    ),
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: contentVerticalPadding),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
-                                          IgnorePointer(
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(0.22),
-                                                borderRadius: BorderRadius.circular(28),
-                                              ),
-                                            ),
-                                          ),
-                                          Align(
-                                            alignment: Alignment.center,
-                                            child: Container(
-                                              width: innerWidth,
-                                              height: innerHeight,
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(0.4),
-                                                borderRadius: BorderRadius.circular(26),
-                                              ),
-                                              child: Padding(
-                                                padding: EdgeInsets.symmetric(vertical: contentVerticalPadding),
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                                  children: [
                                           if (_analysis != null || showPreview)
                                             Center(
                                               child: SizedBox(
@@ -1794,42 +1993,55 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                                   alignment: Alignment.center,
                                                   children: [
                                                     AnimatedOpacity(
-                                                      opacity: _loading ? _progressValue.clamp(0.0, 1.0) : 1.0,
-                                                      duration: const Duration(milliseconds: 200),
+                                                      opacity: _loading
+                                                          ? _progressValue
+                                                              .clamp(0.0, 1.0)
+                                                          : 1.0,
+                                                      duration: const Duration(
+                                                          milliseconds: 200),
                                                       child: PlatePhoto(
-                                                        imageBytes: _analysis?.imageBytes ?? _previewBytes!,
+                                                        imageBytes: _analysis
+                                                                ?.imageBytes ??
+                                                            _previewBytes!,
                                                         plateAsset: plateAsset,
                                                         plateSize: plateSize,
                                                         imageSize: imageSize,
                                                         tilt: 0,
                                                       ),
                                                     ),
-                                                    if (_loading) _buildScanOverlay(plateSize),
+                                                    if (_loading)
+                                                      _buildScanOverlay(
+                                                          plateSize),
                                                   ],
                                                 ),
                                               ),
                                             )
-                                            else
-                                              Center(
-                                                child: SizedBox(
-                                                  width: plateSize,
-                                                  height: plateSize,
-                                                  child: Stack(
-                                                    alignment: Alignment.center,
-                                                    children: [
+                                          else
+                                            Center(
+                                              child: SizedBox(
+                                                width: plateSize,
+                                                height: plateSize,
+                                                child: Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
                                                     Container(
                                                       decoration: BoxDecoration(
                                                         shape: BoxShape.circle,
                                                         boxShadow: [
                                                           BoxShadow(
-                                                            color: Colors.black.withOpacity(0.12),
+                                                            color: Colors.black
+                                                                .withOpacity(
+                                                                    0.12),
                                                             blurRadius: 26,
-                                                            offset: const Offset(0, 16),
+                                                            offset:
+                                                                const Offset(
+                                                                    0, 16),
                                                           ),
                                                         ],
                                                       ),
                                                     ),
-                                                    Image.asset(plateAsset, fit: BoxFit.contain),
+                                                    Image.asset(plateAsset,
+                                                        fit: BoxFit.contain),
                                                   ],
                                                 ),
                                               ),
@@ -1842,42 +2054,70 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                                 t.suggestInstantStepEstimate,
                                                 t.suggestInstantStepAdvice,
                                               ];
-                                              final statusText = steps[_statusIndex % steps.length];
-                                              final percent = (_progressValue * 100).clamp(0, 100).round();
+                                              final statusText = steps[
+                                                  _statusIndex % steps.length];
+                                              final percent =
+                                                  (_progressValue * 100)
+                                                      .clamp(0, 100)
+                                                      .round();
                                               return Column(
                                                 children: [
                                                   Text(
                                                     '$percent%',
-                                                    style: AppTextStyles.body(context).copyWith(
-                                                      fontWeight: FontWeight.w600,
+                                                    style: AppTextStyles.body(
+                                                            context)
+                                                        .copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w600,
                                                       color: Colors.black87,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 4),
                                                   Text(
                                                     statusText,
-                                                    style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                                                    style: AppTextStyles
+                                                            .caption(context)
+                                                        .copyWith(
+                                                            color:
+                                                                Colors.black54),
                                                   ),
                                                 ],
                                               );
                                             })
                                           else if (_error != null)
-                                            Text(_error!, style: AppTextStyles.caption(context).copyWith(color: Colors.redAccent))
+                                            Text(_error!,
+                                                style: AppTextStyles.caption(
+                                                        context)
+                                                    .copyWith(
+                                                        color:
+                                                            Colors.redAccent))
                                           else
                                             Center(
                                               child: SizedBox(
                                                 width: buttonWidth,
-                                              child: ElevatedButton.icon(
-                                                  onPressed: _startCaptureFromCamera,
-                                                  icon: const Text('📷', style: TextStyle(fontSize: 18)),
+                                                child: ElevatedButton.icon(
+                                                  onPressed:
+                                                      _startCaptureFromCamera,
+                                                  icon: const Text('📷',
+                                                      style: TextStyle(
+                                                          fontSize: 18)),
                                                   label: Text(
-                                                    _analysis == null ? t.suggestInstantStart : t.suggestInstantRetake,
-                                                    style: const TextStyle(fontWeight: FontWeight.w700),
+                                                    _analysis == null
+                                                        ? t.suggestInstantStart
+                                                        : t.suggestInstantRetake,
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w700),
                                                   ),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: theme.colorScheme.primary,
-                                                    foregroundColor: Colors.white,
-                                                    side: BorderSide(color: theme.colorScheme.primary),
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor: theme
+                                                        .colorScheme.primary,
+                                                    foregroundColor:
+                                                        Colors.white,
+                                                    side: BorderSide(
+                                                        color: theme.colorScheme
+                                                            .primary),
                                                   ),
                                                 ),
                                               ),
@@ -1887,12 +2127,22 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                             child: SizedBox(
                                               width: buttonWidth,
                                               child: OutlinedButton.icon(
-                                                onPressed: _startCaptureFromGallery,
-                                                icon: const Text('🖼️', style: TextStyle(fontSize: 18)),
-                                                label: Text(t.suggestInstantPickGallery, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                                onPressed:
+                                                    _startCaptureFromGallery,
+                                                icon: const Text('🖼️',
+                                                    style: TextStyle(
+                                                        fontSize: 18)),
+                                                label: Text(
+                                                    t.suggestInstantPickGallery,
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600)),
                                                 style: OutlinedButton.styleFrom(
-                                                  foregroundColor: theme.colorScheme.primary,
-                                                  side: BorderSide(color: theme.colorScheme.primary),
+                                                  foregroundColor:
+                                                      theme.colorScheme.primary,
+                                                  side: BorderSide(
+                                                      color: theme
+                                                          .colorScheme.primary),
                                                 ),
                                               ),
                                             ),
@@ -1903,12 +2153,20 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                               width: buttonWidth,
                                               child: OutlinedButton.icon(
                                                 onPressed: _requestNowAdvice,
-                                                icon: const Text('🍽️', style: TextStyle(fontSize: 18)),
-                                                label: Text(t.suggestInstantNowEat, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                                
+                                                icon: const Text('🍽️',
+                                                    style: TextStyle(
+                                                        fontSize: 18)),
+                                                label: Text(
+                                                    t.suggestInstantNowEat,
+                                                    style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600)),
                                                 style: OutlinedButton.styleFrom(
-                                                  foregroundColor: theme.colorScheme.primary,
-                                                  side: BorderSide(color: theme.colorScheme.primary),
+                                                  foregroundColor:
+                                                      theme.colorScheme.primary,
+                                                  side: BorderSide(
+                                                      color: theme
+                                                          .colorScheme.primary),
                                                 ),
                                               ),
                                             ),
@@ -1919,19 +2177,21 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                               width: buttonWidth,
                                               child: OutlinedButton.icon(
                                                 onPressed: _useCustomFood,
-                                                icon: const Text('🔖', style: TextStyle(fontSize: 18)),
+                                                icon: const Text('🔖',
+                                                    style: TextStyle(
+                                                        fontSize: 18)),
                                                 label: Text(
                                                   '${t.customUse} - ${app.customFoods.length}${t.customCountUnit}',
-                                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600),
                                                 ),
                                                 style: OutlinedButton.styleFrom(
-                                                  foregroundColor: theme.colorScheme.primary,
-                                                  side: BorderSide(color: theme.colorScheme.primary),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                                  ],
+                                                  foregroundColor:
+                                                      theme.colorScheme.primary,
+                                                  side: BorderSide(
+                                                      color: theme
+                                                          .colorScheme.primary),
                                                 ),
                                               ),
                                             ),
@@ -1940,32 +2200,43 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 12),
-                                  if (kDebugMode)
-                                    Builder(builder: (context) {
-                                      final app = AppStateScope.of(context);
-                                      final now = DateTime.now();
-                                      final mealDate = DateTime(now.year, now.month, now.day);
-                                      final consumed = app.dailyConsumedCalorieMid(mealDate).round();
-                                      final target = app.targetCalorieMid(mealDate);
-                                      final remaining = target == null ? null : (target - consumed).round();
-                                      final info = app.lastMealInfo(now);
-                                      final lastTime = info['last_meal_time']?.toString() ?? '-';
-                                      final fasting = info['fasting_hours']?.toString() ?? '-';
-                                      return Padding(
-                                        padding: const EdgeInsets.only(top: 8),
-                                        child: Text(
-                                          'Debug: remaining=${remaining ?? '-'} kcal | last=$lastTime | fasting=${fasting}h',
-                                          style: AppTextStyles.caption(context).copyWith(color: Colors.black45),
-                                        ),
-                                      );
-                                    }),
-
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        if (kDebugMode)
+                          Builder(builder: (context) {
+                            final app = AppStateScope.of(context);
+                            final now = DateTime.now();
+                            final mealDate =
+                                DateTime(now.year, now.month, now.day);
+                            final consumed =
+                                app.dailyConsumedCalorieMid(mealDate).round();
+                            final target = app.targetCalorieMid(mealDate);
+                            final remaining = target == null
+                                ? null
+                                : (target - consumed).round();
+                            final info = app.lastMealInfo(now);
+                            final lastTime =
+                                info['last_meal_time']?.toString() ?? '-';
+                            final fasting =
+                                info['fasting_hours']?.toString() ?? '-';
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                'Debug: remaining=${remaining ?? '-'} kcal | last=$lastTime | fasting=${fasting}h',
+                                style: AppTextStyles.caption(context)
+                                    .copyWith(color: Colors.black45),
+                              ),
+                            );
+                          }),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               if (showFloatingCard)
                 DraggableScrollableSheet(
                   initialChildSize: 0.45,
@@ -1975,7 +2246,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                     margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(22), bottom: Radius.circular(22)),
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(22),
+                          bottom: Radius.circular(22)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.12),
@@ -2000,11 +2273,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                           children: [
                             const Spacer(),
                             IconButton(
-                              onPressed: () => setState(() => _hideFloatingCard = true),
-                              icon: const Text('✖️', style: TextStyle(fontSize: 16)),
+                              onPressed: () =>
+                                  setState(() => _hideFloatingCard = true),
+                              icon: const Text('✖️',
+                                  style: TextStyle(fontSize: 16)),
                               tooltip: t.cancel,
                               padding: const EdgeInsets.all(6),
-                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                              constraints: const BoxConstraints(
+                                  minWidth: 32, minHeight: 32),
                             ),
                           ],
                         ),
@@ -2028,7 +2304,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                     margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(22), bottom: Radius.circular(22)),
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(22),
+                          bottom: Radius.circular(22)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.12),
@@ -2053,11 +2331,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                           children: [
                             const Spacer(),
                             IconButton(
-                              onPressed: () => setState(() => _instantAdvice = null),
-                              icon: const Text('??', style: TextStyle(fontSize: 16)),
+                              onPressed: () =>
+                                  setState(() => _instantAdvice = null),
+                              icon: const Text('??',
+                                  style: TextStyle(fontSize: 16)),
                               tooltip: t.cancel,
                               padding: const EdgeInsets.all(6),
-                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                              constraints: const BoxConstraints(
+                                  minWidth: 32, minHeight: 32),
                             ),
                           ],
                         ),
@@ -2070,10 +2351,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> with SingleTicker
                               children: [
                                 Text(
                                   '🍽️ ${t.suggestInstantNowEat}',
-                                  style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                                  style: AppTextStyles.body(context)
+                                      .copyWith(fontWeight: FontWeight.w600),
                                 ),
                                 const SizedBox(height: 8),
-                                _buildInstantAdviceFromModel(t, _instantAdvice!),
+                                _buildInstantAdviceFromModel(
+                                    t, _instantAdvice!),
                               ],
                             ),
                           ),
@@ -2106,7 +2389,6 @@ class _IconChipOption {
   final bool showLabel;
 }
 
-
 class _ProgressArcPainter extends CustomPainter {
   _ProgressArcPainter({
     required this.progress,
@@ -2124,8 +2406,8 @@ class _ProgressArcPainter extends CustomPainter {
     final h = size.height;
     if (w <= 0 || h <= 0) return;
 
-      final center = Offset(w * 0.5, h * 0.5);
-      final radius = math.min(w, h) * 0.36;
+    final center = Offset(w * 0.5, h * 0.5);
+    final radius = math.min(w, h) * 0.36;
     final trackPaint = Paint()
       ..color = color.withOpacity(0.12)
       ..style = PaintingStyle.stroke
@@ -2167,6 +2449,8 @@ class _ProgressArcPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ProgressArcPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.rotation != rotation || oldDelegate.color != color;
+    return oldDelegate.progress != progress ||
+        oldDelegate.rotation != rotation ||
+        oldDelegate.color != color;
   }
 }
