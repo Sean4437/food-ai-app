@@ -1693,6 +1693,7 @@ class AppState extends ChangeNotifier {
       }
     }
 
+    final localCountBeforeBeverage = suggestions.length;
     final beverageSuggestions = _beveragePresetSuggestionsV2(
       trimmed,
       locale,
@@ -1707,7 +1708,11 @@ class AppState extends ChangeNotifier {
 
     // Fast-path for short input: return local suggestions immediately
     // to avoid remote timeout latency while the user is still typing.
-    if (suggestions.isNotEmpty && compactQuery.length <= 2) {
+    final beverageSuggestionsAdded =
+        suggestions.length > localCountBeforeBeverage;
+    if (suggestions.isNotEmpty &&
+        compactQuery.length <= 2 &&
+        beverageSuggestionsAdded) {
       return suggestions.take(maxCount).toList();
     }
 
@@ -1977,8 +1982,7 @@ class AppState extends ChangeNotifier {
             'foam',
           ];
 
-    final likelyBeverage =
-        hintTokens.any(tokenMatches) || compactQuery.length <= 2;
+    final likelyBeverage = hintTokens.any(tokenMatches);
     if (!likelyBeverage) return const [];
 
     final baseProfiles = isZh
@@ -2488,8 +2492,7 @@ class AppState extends ChangeNotifier {
           ]
         : const <Map<String, dynamic>>[];
 
-    final likelyBeverage =
-        hintTokens.any(tokenMatches) || compactQuery.length <= 2;
+    final likelyBeverage = hintTokens.any(tokenMatches);
     if (!likelyBeverage) return const [];
 
     final baseProfiles = isZh
@@ -2562,15 +2565,27 @@ class AppState extends ChangeNotifier {
             },
             {
               'name': '\u51b7\u8403\u5496\u5561',
-              'tokens': ['\u51b7\u8403\u5496\u5561', '\u51b7\u8403', 'cold brew'],
+              'tokens': [
+                '\u51b7\u8403\u5496\u5561',
+                '\u51b7\u8403',
+                'cold brew'
+              ],
             },
             {
               'name': '\u6fc3\u7e2e\u5496\u5561',
-              'tokens': ['\u6fc3\u7e2e\u5496\u5561', '\u7fa9\u5f0f\u6fc3\u7e2e', 'espresso'],
+              'tokens': [
+                '\u6fc3\u7e2e\u5496\u5561',
+                '\u7fa9\u5f0f\u6fc3\u7e2e',
+                'espresso'
+              ],
             },
             {
               'name': '\u5361\u5e03\u5947\u8afe',
-              'tokens': ['\u5361\u5e03\u5947\u8afe', '\u5361\u5e03', 'cappuccino'],
+              'tokens': [
+                '\u5361\u5e03\u5947\u8afe',
+                '\u5361\u5e03',
+                'cappuccino'
+              ],
             },
             {
               'name': '\u99e5\u5217\u767d',
@@ -2578,7 +2593,11 @@ class AppState extends ChangeNotifier {
             },
             {
               'name': '\u7126\u7cd6\u746a\u5947\u6735',
-              'tokens': ['\u7126\u7cd6\u746a\u5947\u6735', '\u746a\u5947\u6735', 'macchiato'],
+              'tokens': [
+                '\u7126\u7cd6\u746a\u5947\u6735',
+                '\u746a\u5947\u6735',
+                'macchiato'
+              ],
             },
             {
               'name': '\u6469\u5361\u5496\u5561',
@@ -2586,11 +2605,18 @@ class AppState extends ChangeNotifier {
             },
             {
               'name': '\u897f\u897f\u91cc\u5496\u5561',
-              'tokens': ['\u897f\u897f\u91cc\u5496\u5561', '\u897f\u897f\u91cc'],
+              'tokens': [
+                '\u897f\u897f\u91cc\u5496\u5561',
+                '\u897f\u897f\u91cc'
+              ],
             },
             {
               'name': '\u71d5\u9ea5\u62ff\u9435',
-              'tokens': ['\u71d5\u9ea5\u62ff\u9435', '\u71d5\u9ea5', 'oat latte'],
+              'tokens': [
+                '\u71d5\u9ea5\u62ff\u9435',
+                '\u71d5\u9ea5',
+                'oat latte'
+              ],
             },
             {
               'name': '\u51ac\u74dc\u8336',
