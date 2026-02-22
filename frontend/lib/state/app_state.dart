@@ -561,6 +561,7 @@ class AppState extends ChangeNotifier {
       }
       final entitlements = <String>{};
       final rawEntitlements = response['entitlements'];
+      final hasEntitlementsField = rawEntitlements is List;
       if (rawEntitlements is List) {
         for (final item in rawEntitlements) {
           final value = item.toString().trim();
@@ -569,7 +570,7 @@ class AppState extends ChangeNotifier {
           }
         }
       }
-      if (entitlements.isEmpty && active) {
+      if (entitlements.isEmpty && active && !hasEntitlementsField) {
         entitlements.addAll(_kAiEntitlements);
       }
       _backendEntitlements
@@ -1551,13 +1552,11 @@ class AppState extends ChangeNotifier {
     DateTime? overrideTime,
     MealType? fixedType,
   }) async {
-    if (!canUseFeature(AppFeature.analyze)) {
-      throw Exception('subscription_required');
-    }
     final trimmed = foodName.trim();
     if (trimmed.isEmpty) {
       throw Exception('Food name is empty');
     }
+    final canUseAiAnalyze = canUseFeature(AppFeature.analyze);
     final now = overrideTime ?? DateTime.now();
     final mealType = fixedType ?? resolveMealType(now);
     final mealId = _assignMealId(now, mealType);
@@ -1638,6 +1637,38 @@ class AppState extends ChangeNotifier {
         reason: 'name_beverage_formula',
       );
     }
+    if (canUseAiAnalyze) {
+      try {
+        final aiResult = await _api.analyzeName(
+          trimmed,
+          accessToken: _accessToken(),
+          lang: locale,
+          context: historyContext,
+          mealType: _mealTypeKey(mealType),
+          adviceMode: 'current_meal',
+          containerType: profile.containerType,
+          containerSize: profile.containerSize,
+          containerDepth: profile.containerDepth,
+          containerDiameterCm: profile.containerDiameterCm,
+          containerCapacityMl: profile.containerCapacityMl,
+        );
+        return _saveNameOnlyEntry(
+          time: now,
+          mealType: mealType,
+          mealId: mealId,
+          inputFoodName: trimmed,
+          result: aiResult,
+          reason: 'name_ai',
+        );
+      } on ApiException catch (err) {
+        if (err.statusCode == 401 || err.statusCode == 402) {
+          throw NameLookupException('subscription_required');
+        }
+        throw NameLookupException('ai_unavailable');
+      } catch (_) {
+        throw NameLookupException('ai_unavailable');
+      }
+    }
     if (catalogLookupFailed && catalogItems.isEmpty) {
       await _reportCatalogSearchMiss(
         trimmed,
@@ -1649,9 +1680,9 @@ class AppState extends ChangeNotifier {
     await _reportCatalogSearchMiss(
       trimmed,
       locale,
-      source: 'catalog_not_found',
+      source: 'subscription_required',
     );
-    throw NameLookupException('catalog_not_found');
+    throw NameLookupException('subscription_required');
   }
 
   Future<List<String>> suggestFoodNames(

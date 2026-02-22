@@ -308,7 +308,17 @@ class ApiService {
       body: json.encode(payload),
     );
     if (response.statusCode != 200) {
-      throw Exception('Analyze name failed: ${response.statusCode}');
+      String code = 'unknown';
+      String message = _bodyText(response);
+      try {
+        final decoded = _decodeJson(response);
+        if (decoded is Map<String, dynamic>) {
+          code = (decoded['detail'] ?? decoded['code'] ?? code).toString();
+          message =
+              (decoded['message'] ?? decoded['detail'] ?? message).toString();
+        }
+      } catch (_) {}
+      throw ApiException(response.statusCode, code, message);
     }
     final jsonMap = _decodeJson(response) as Map<String, dynamic>;
     return AnalysisResult.fromJson(jsonMap);

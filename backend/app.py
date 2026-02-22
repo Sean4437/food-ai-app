@@ -27,11 +27,19 @@ load_dotenv(dotenv_path=_env_path, override=True)
 
 app = FastAPI(title="Food AI MVP")
 
-def _parse_origins(value: str | None) -> list[str]:
+def _parse_csv_values(value: str | None) -> list[str]:
     if not value:
         return []
     parts = [v.strip() for v in value.split(",")]
     return [p for p in parts if p]
+
+
+def _parse_origins(value: str | None) -> list[str]:
+    return _parse_csv_values(value)
+
+
+def _parse_email_set(value: str | None) -> set[str]:
+    return {item.lower() for item in _parse_csv_values(value)}
 
 
 _default_origins = {
@@ -254,11 +262,7 @@ PRICE_OUTPUT_PER_M = float(os.getenv("PRICE_OUTPUT_PER_M", "0.60"))
 RETURN_AI_ERROR = os.getenv("RETURN_AI_ERROR", "false").lower() == "true"
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-TEST_BYPASS_EMAILS = {
-    email.strip().lower()
-    for email in os.getenv("TEST_BYPASS_EMAILS", "").split(",")
-    if email.strip()
-}
+TEST_BYPASS_EMAILS = _parse_email_set(os.getenv("TEST_BYPASS_EMAILS", ""))
 TRIAL_DAYS = int(os.getenv("TRIAL_DAYS", "2"))
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "")
 _AI_ENTITLEMENTS = (
@@ -267,6 +271,41 @@ _AI_ENTITLEMENTS = (
     "ai_summary",
     "ai_suggest",
 )
+_AI_ENTITLEMENT_SET = set(_AI_ENTITLEMENTS)
+
+
+def _parse_plan_entitlements(env_key: str, default: tuple[str, ...]) -> tuple[str, ...]:
+    raw = os.getenv(env_key, "")
+    if not raw.strip():
+        return default
+    values: list[str] = []
+    for token in _parse_csv_values(raw):
+        entitlement = token.strip().lower()
+        if not entitlement or entitlement in values:
+            continue
+        if entitlement not in _AI_ENTITLEMENT_SET:
+            logging.warning("Ignore unknown entitlement in %s: %s", env_key, entitlement)
+            continue
+        values.append(entitlement)
+    return tuple(values)
+
+
+PLAN_PRO_EMAILS = _parse_email_set(os.getenv("PLAN_PRO_EMAILS", ""))
+PLAN_PLUS_EMAILS = _parse_email_set(os.getenv("PLAN_PLUS_EMAILS", ""))
+PLAN_FREE_ENTITLEMENTS = _parse_plan_entitlements("PLAN_FREE_ENTITLEMENTS", ())
+PLAN_TRIAL_ENTITLEMENTS = _parse_plan_entitlements("PLAN_TRIAL_ENTITLEMENTS", _AI_ENTITLEMENTS)
+PLAN_PRO_ENTITLEMENTS = _parse_plan_entitlements(
+    "PLAN_PRO_ENTITLEMENTS",
+    ("ai_analyze", "ai_summary", "ai_suggest"),
+)
+PLAN_PLUS_ENTITLEMENTS = _parse_plan_entitlements("PLAN_PLUS_ENTITLEMENTS", _AI_ENTITLEMENTS)
+_PLAN_ENTITLEMENTS = {
+    "free": PLAN_FREE_ENTITLEMENTS,
+    "trial": PLAN_TRIAL_ENTITLEMENTS,
+    "pro": PLAN_PRO_ENTITLEMENTS,
+    "plus": PLAN_PLUS_ENTITLEMENTS,
+    "whitelisted": _AI_ENTITLEMENTS,
+}
 
 _client = OpenAI(api_key=API_KEY) if API_KEY else None
 logging.basicConfig(level=logging.INFO)
@@ -2744,6 +2783,22 @@ def _is_whitelisted(email: str) -> bool:
     return email.strip().lower() in TEST_BYPASS_EMAILS
 
 
+def _plan_override_for_email(email: str) -> Optional[str]:
+    normalized = email.strip().lower()
+    if not normalized:
+        return None
+    if normalized in PLAN_PLUS_EMAILS:
+        return "plus"
+    if normalized in PLAN_PRO_EMAILS:
+        return "pro"
+    return None
+
+
+def _plan_entitlements(plan: str) -> list[str]:
+    values = _PLAN_ENTITLEMENTS.get(plan, PLAN_FREE_ENTITLEMENTS)
+    return list(values)
+
+
 def _require_auth(request: Request) -> dict:
     auth_header = request.headers.get("authorization") or request.headers.get("Authorization")
     if not auth_header or not auth_header.lower().startswith("bearer "):
@@ -2768,27 +2823,38 @@ def _require_auth(request: Request) -> dict:
 
 def _build_access_status(auth: dict) -> dict:
     now = datetime.now(timezone.utc)
-    if auth.get("whitelisted"):
-        return {
-            "plan": "whitelisted",
-            "trial_active": True,
-            "trial_start": None,
-            "trial_end": None,
-            "whitelisted": True,
-            "entitlements": list(_AI_ENTITLEMENTS),
-        }
     trial_start = auth.get("trial_start")
     if trial_start is None:
         trial_start = now
     trial_end = trial_start + timedelta(days=TRIAL_DAYS)
     trial_active = now <= trial_end
+
+    if auth.get("whitelisted"):
+        plan = "whitelisted"
+        return {
+            "plan": plan,
+            "trial_active": True,
+            "trial_start": None,
+            "trial_end": None,
+            "whitelisted": True,
+            "entitlements": _plan_entitlements(plan),
+        }
+
+    override_plan = _plan_override_for_email(str(auth.get("email") or ""))
+    if override_plan in {"pro", "plus"}:
+        plan = override_plan
+    elif trial_active:
+        plan = "trial"
+    else:
+        plan = "free"
+
     return {
-        "plan": "trial" if trial_active else "free",
+        "plan": plan,
         "trial_active": trial_active,
         "trial_start": trial_start.isoformat(),
         "trial_end": trial_end.isoformat(),
         "whitelisted": False,
-        "entitlements": list(_AI_ENTITLEMENTS) if trial_active else [],
+        "entitlements": _plan_entitlements(plan),
     }
 
 
@@ -4694,6 +4760,15 @@ def health(_admin: None = Depends(_require_admin)):
         "file_call_real_ai": file_env.get("CALL_REAL_AI"),
         "env_call_real_ai": os.getenv("CALL_REAL_AI"),
         "last_ai_error": _last_ai_error if RETURN_AI_ERROR else None,
+        "access_control": {
+            "trial_days": TRIAL_DAYS,
+            "plan_pro_emails_count": len(PLAN_PRO_EMAILS),
+            "plan_plus_emails_count": len(PLAN_PLUS_EMAILS),
+            "plan_free_entitlements": _plan_entitlements("free"),
+            "plan_trial_entitlements": _plan_entitlements("trial"),
+            "plan_pro_entitlements": _plan_entitlements("pro"),
+            "plan_plus_entitlements": _plan_entitlements("plus"),
+        },
         "supabase_catalog_probe": _probe_supabase_catalog(),
     }
 

@@ -17,20 +17,20 @@ bool _looksLikeBeverageName(String text) {
   if (normalized.isEmpty) return false;
   const hintTokens = <String>[
     '茶',
+    '奶茶',
     '紅茶',
     '綠茶',
     '青茶',
     '烏龍',
-    '奶茶',
     '豆漿',
     '咖啡',
     '拿鐵',
-    '飲料',
     '果汁',
-    '甘蔗',
-    '蜂蜜',
-    '冬瓜',
-    '多多',
+    '飲料',
+    '可可',
+    '抹茶',
+    '汽水',
+    '鮮奶',
     'tea',
     'coffee',
     'latte',
@@ -50,7 +50,7 @@ String _replaceCupSizeToken(String text, String nextSizeToken) {
   if (value.isEmpty) return nextSizeToken;
   value = value.replaceAll(
     RegExp(
-        r'(特大杯|超大杯|大杯|中杯|小杯|x-large|xlarge|large|medium|small|xl|lg|md|sm)\s*',
+        r'(特大杯|大杯|中杯|小杯|x-large|xlarge|large|medium|small|xl|lg|md|sm)\s*',
         caseSensitive: false),
     '',
   );
@@ -167,7 +167,7 @@ Future<String?> _promptFoodName(
                       children: [
                         ChoiceChip(
                           label:
-                              Text(isEn ? 'Small (~400 ml)' : '小杯（約 400 ml）'),
+                              Text(isEn ? 'Small (~400 ml)' : '小杯 (~400 ml)'),
                           selected: selectedCupSize == 'small',
                           onSelected: (_) {
                             final next = _replaceCupSizeToken(
@@ -188,7 +188,7 @@ Future<String?> _promptFoodName(
                         ),
                         ChoiceChip(
                           label:
-                              Text(isEn ? 'Medium (~500 ml)' : '中杯（約 500 ml）'),
+                              Text(isEn ? 'Medium (~500 ml)' : '中杯 (~500 ml)'),
                           selected: selectedCupSize == 'medium',
                           onSelected: (_) {
                             final next = _replaceCupSizeToken(
@@ -208,7 +208,7 @@ Future<String?> _promptFoodName(
                         ),
                         ChoiceChip(
                           label:
-                              Text(isEn ? 'Large (~625 ml)' : '大杯（約 625 ml）'),
+                              Text(isEn ? 'Large (~625 ml)' : '大杯 (~625 ml)'),
                           selected: selectedCupSize == 'large',
                           onSelected: (_) {
                             final next = _replaceCupSizeToken(
@@ -232,7 +232,7 @@ Future<String?> _promptFoodName(
                     Text(
                       isEn
                           ? 'Cup volume is estimated and may vary by brand.'
-                          : '杯量為估算值，實際容量會依品牌杯型有差異。',
+                          : '杯量為估算值，實際容量可能依品牌與門市而異。',
                       style: Theme.of(dialogContext)
                           .textTheme
                           .bodySmall
@@ -254,7 +254,7 @@ Future<String?> _promptFoodName(
                               child: Text(
                                 isEn
                                     ? 'No database suggestions yet. You can still submit this name.'
-                                    : '目前沒有資料庫建議，你仍可直接送出此名稱。',
+                                    : '目前沒有資料庫建議，你仍可提交這個名稱。',
                                 style: Theme.of(dialogContext)
                                     .textTheme
                                     .bodySmall
@@ -324,14 +324,22 @@ String _nameLookupErrorMessage(BuildContext context, String code) {
   final isEn =
       Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
   switch (code) {
+    case 'subscription_required':
+      return isEn
+          ? 'Not found in catalog. Upgrade to use AI estimate.'
+          : '資料庫找不到此餐點，升級後可使用 AI 估算。';
+    case 'ai_unavailable':
+      return isEn
+          ? 'AI estimate is temporarily unavailable. Please try again later.'
+          : 'AI 估算暫時不可用，請稍後再試。';
     case 'catalog_not_found':
       return isEn
           ? 'No match found in the food database. Try a shorter name or add a custom food.'
-          : '找不到符合的資料庫餐點，請改用更短名稱或先建立自訂食物。';
+          : '資料庫找不到相符餐點，請縮短名稱或改用自訂義。';
     case 'catalog_unavailable':
       return isEn
           ? 'Food database is temporarily unavailable. Please try again later.'
-          : '資料庫目前暫時無法使用，請稍後再試。';
+          : '資料庫暫時不可用，請稍後再試。';
     default:
       return isEn ? 'Name lookup failed.' : '名稱查詢失敗。';
   }
