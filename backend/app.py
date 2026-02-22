@@ -1876,6 +1876,7 @@ def _parse_beverage_intrinsic_components(
     query_norm: str,
     base_name_norm: str,
     lang: str,
+    base_carbs_hint: float = 0.0,
 ) -> list[dict[str, Any]]:
     matched: list[dict[str, Any]] = []
     seen_keys: set[str] = set()
@@ -1901,10 +1902,12 @@ def _parse_beverage_intrinsic_components(
             continue
         if not any(token in query_norm for token in tokens):
             continue
-        # If the matched catalog base already contains this ingredient keyword,
-        # assume those macros are already baked into the row and avoid double count.
+        # If base row name already includes this ingredient and carbs are already
+        # high enough, treat intrinsic sugar as included and avoid double count.
         if base_name_norm and any(token in base_name_norm for token in tokens):
-            continue
+            component_carbs = max(0.0, _safe_float(component.get("carbs")) or 0.0)
+            if component_carbs <= 0 or base_carbs_hint >= component_carbs * 0.7:
+                continue
         add_component(component)
 
     has_fruit_hint = any(token in query_norm for token in _FRUIT_HINT_TOKENS)
@@ -1913,7 +1916,14 @@ def _parse_beverage_intrinsic_components(
         or ("果汁" in base_name_norm)
         or ("juice" in base_name_norm)
     )
-    if has_fruit_hint and not base_has_fruit_hint:
+    fruit_component_carbs = max(
+        0.0,
+        _safe_float(_BEVERAGE_INTRINSIC_FRUIT_COMPONENT.get("carbs")) or 0.0,
+    )
+    fruit_included_in_base = (
+        base_has_fruit_hint and fruit_component_carbs > 0 and base_carbs_hint >= fruit_component_carbs * 0.7
+    )
+    if has_fruit_hint and not fruit_included_in_base:
         add_component(_BEVERAGE_INTRINSIC_FRUIT_COMPONENT)
 
     return matched
@@ -2019,15 +2029,20 @@ def _apply_beverage_formula(
     sugar_ratio, sugar_label, has_sugar = _parse_beverage_sugar(query_norm, default_sugar_ratio, use_lang)
     ice_label = ""
     toppings = _parse_beverage_toppings(query_norm, use_lang)
-    intrinsic_components = _parse_beverage_intrinsic_components(query_norm, name_norm, use_lang)
-    has_modifier = has_size or has_sugar or bool(toppings) or bool(intrinsic_components)
-    if not has_modifier:
-        return None
-
     protein = max(0.0, (_safe_float(macros.get("protein")) or 0.0) * size_factor)
     carbs = max(0.0, (_safe_float(macros.get("carbs")) or 0.0) * size_factor)
     fat = max(0.0, (_safe_float(macros.get("fat")) or 0.0) * size_factor)
     sodium = max(0.0, (_safe_float(macros.get("sodium")) or 0.0) * size_factor)
+    base_carbs_hint = max(0.0, _safe_float(macros.get("carbs")) or 0.0)
+    intrinsic_components = _parse_beverage_intrinsic_components(
+        query_norm,
+        name_norm,
+        use_lang,
+        base_carbs_hint=base_carbs_hint,
+    )
+    has_modifier = has_size or has_sugar or bool(toppings) or bool(intrinsic_components)
+    if not has_modifier:
+        return None
 
     if sugar_adjustable and has_sugar and full_sugar_carbs > 0:
         carbs += (sugar_ratio - default_sugar_ratio) * full_sugar_carbs * size_factor
