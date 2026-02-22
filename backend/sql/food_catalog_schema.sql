@@ -17,6 +17,7 @@ create table if not exists public.food_catalog (
   judgement_tags jsonb not null default '[]'::jsonb,
   dish_summary text not null default '',
   suggestion text not null default '',
+  reference_used text,
   kcal_100g numeric,
   protein_100g numeric,
   carbs_100g numeric,
@@ -42,6 +43,9 @@ alter table public.food_catalog
 
 alter table public.food_catalog
   add column if not exists judgement_tags jsonb not null default '[]'::jsonb;
+
+alter table public.food_catalog
+  add column if not exists reference_used text;
 
 alter table public.food_catalog
   add column if not exists lang text not null default 'zh-TW';

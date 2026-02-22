@@ -2445,6 +2445,75 @@ def _direct_food_match_score(query_norm: str, catalog_row: dict) -> float:
     return score
 
 
+def _compact_norm_text(value: str) -> str:
+    return _normalize_food_query(value).replace(" ", "")
+
+
+def _relation_score(query_norm: str, target_norm: str) -> float:
+    query = _compact_norm_text(query_norm)
+    target = _compact_norm_text(target_norm)
+    if not query or not target:
+        return 0.0
+    if query == target:
+        return 6.0
+
+    query_len = len(query)
+    target_len = len(target)
+
+    if target.startswith(query):
+        coverage = min(1.0, query_len / max(target_len, 1))
+        return 4.0 + coverage
+    if query.startswith(target):
+        coverage = min(1.0, target_len / max(query_len, 1))
+        return 3.0 + coverage
+    if query in target:
+        coverage = min(1.0, query_len / max(target_len, 1))
+        return 2.0 + (coverage * 0.8)
+    if target in query:
+        coverage = min(1.0, target_len / max(query_len, 1))
+        return 1.7 + (coverage * 0.7)
+    return 0.0
+
+
+def _candidate_rank_penalty(query_norm: str, primary_query_norm: str, rank: int) -> float:
+    if not primary_query_norm or query_norm == primary_query_norm:
+        return 0.0
+    penalty = 0.6 + (max(1, rank) * 0.45)
+    query = _compact_norm_text(query_norm)
+    primary = _compact_norm_text(primary_query_norm)
+    if query and primary:
+        if query in primary:
+            penalty *= 0.6
+        elif primary in query:
+            penalty *= 0.75
+    return penalty
+
+
+def _primary_query_bonus(
+    primary_query_norm: str,
+    catalog_row: dict,
+    alias_row: Optional[dict] = None,
+) -> float:
+    if not primary_query_norm:
+        return 0.0
+
+    alias_norm = _normalize_food_query(str(alias_row.get("alias") or "").strip()) if alias_row else ""
+    food_norm = _normalize_food_query(str(catalog_row.get("food_name") or "").strip())
+    canonical_norm = _normalize_food_query(str(catalog_row.get("canonical_name") or "").strip())
+
+    alias_score = _relation_score(primary_query_norm, alias_norm) * 1.15 if alias_norm else 0.0
+    food_score = _relation_score(primary_query_norm, food_norm)
+    canonical_score = _relation_score(primary_query_norm, canonical_norm) * 0.9 if canonical_norm else 0.0
+    bonus = max(alias_score, food_score, canonical_score)
+
+    primary_len = len(_compact_norm_text(primary_query_norm))
+    alias_len = len(_compact_norm_text(alias_norm))
+    if alias_len > 0 and alias_len <= 2 and primary_len >= 4 and alias_len < primary_len:
+        bonus -= 1.0
+
+    return bonus
+
+
 def _build_food_search_item(
     query_norm: str,
     catalog_row: dict,
@@ -3971,6 +4040,9 @@ def foods_search(
     query_candidates = _food_search_query_candidates(q)
     if not query_candidates:
         return FoodSearchResponse(items=[])
+    primary_query_norm = _normalize_food_query(q)
+    if not primary_query_norm:
+        primary_query_norm = query_candidates[0]
 
     use_lang = lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
@@ -3981,11 +4053,11 @@ def foods_search(
     catalog_select = "*"
     query_limit = min(60, max(20, limit * 3))
 
-    alias_candidates: list[tuple[str, dict]] = []
+    alias_candidates: list[tuple[str, int, dict]] = []
     direct_by_id: dict[str, dict] = {}
     direct_best_score: dict[str, float] = {}
     direct_best_query: dict[str, str] = {}
-    for query_norm in query_candidates:
+    for candidate_rank, query_norm in enumerate(query_candidates):
         alias_rows = _supabase_rest_list(
             "food_aliases",
             [
@@ -3996,7 +4068,7 @@ def foods_search(
             ],
         )
         for row in alias_rows:
-            alias_candidates.append((query_norm, row))
+            alias_candidates.append((query_norm, candidate_rank, row))
 
         direct_rows = _supabase_rest_list(
             "food_catalog",
@@ -4012,6 +4084,8 @@ def foods_search(
             if not food_id:
                 continue
             score = _direct_food_match_score(query_norm, row)
+            score += _primary_query_bonus(primary_query_norm, row, alias_row=None)
+            score -= _candidate_rank_penalty(query_norm, primary_query_norm, candidate_rank)
             previous = direct_best_score.get(food_id, -1.0)
             if score > previous:
                 direct_best_score[food_id] = score
@@ -4019,7 +4093,7 @@ def foods_search(
                 direct_by_id[food_id] = row
 
     alias_food_ids: list[str] = []
-    for _, row in alias_candidates:
+    for _, _, row in alias_candidates:
         food_id = str(row.get("food_id") or "").strip()
         if food_id and food_id not in alias_food_ids:
             alias_food_ids.append(food_id)
@@ -4061,18 +4135,22 @@ def foods_search(
         best_items[food_id] = candidate
 
     # Candidate set B: alias match (can outrank direct match).
-    for query_norm, alias_row in alias_candidates:
+    for query_norm, candidate_rank, alias_row in alias_candidates:
         food_id = str(alias_row.get("food_id") or "").strip()
         if not food_id:
             continue
         catalog_row = direct_by_id.get(food_id)
         if catalog_row is None:
             continue
+        alias_score = _food_match_score(query_norm, alias_row, catalog_row, use_lang)
+        alias_score += _primary_query_bonus(primary_query_norm, catalog_row, alias_row=alias_row)
+        alias_score -= _candidate_rank_penalty(query_norm, primary_query_norm, candidate_rank)
         candidate = _build_food_search_item(
             query_norm=query_norm,
             catalog_row=catalog_row,
             use_lang=use_lang,
             alias_row=alias_row,
+            score=alias_score,
             raw_query=q,
         )
         if candidate is None:

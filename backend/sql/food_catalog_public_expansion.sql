@@ -25,6 +25,9 @@ alter table public.food_catalog
   add column if not exists image_license text;
 
 alter table public.food_catalog
+  add column if not exists reference_used text;
+
+alter table public.food_catalog
   add column if not exists beverage_base_ml numeric;
 
 alter table public.food_catalog

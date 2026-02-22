@@ -12,6 +12,9 @@ alter table public.food_catalog
 alter table public.food_catalog
   add column if not exists deprecated_at timestamptz;
 
+alter table public.food_catalog
+  add column if not exists reference_used text;
+
 alter table public.food_aliases
   add column if not exists lang text;
 
@@ -25,6 +28,10 @@ where lang is null or btrim(lang) = '' or lang not in ('zh-TW', 'en');
 update public.food_catalog
 set is_active = true
 where is_active is null;
+
+update public.food_catalog
+set reference_used = 'catalog'
+where reference_used is null or btrim(reference_used) = '';
 
 update public.food_aliases fa
 set lang = case
