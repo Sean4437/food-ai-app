@@ -1621,17 +1621,48 @@ def _food_search_query_candidates(raw_query: str) -> list[str]:
 
     add(normalized)
     add(normalized.replace(" ", ""))
+    add(normalized.replace(" ", "-"))
+    add(normalized.replace("-", " "))
 
     if _is_probably_beverage_text(normalized):
         stripped = _strip_beverage_modifiers(normalized)
         add(stripped)
         add(stripped.replace(" ", ""))
+        add(stripped.replace(" ", "-"))
+        add(stripped.replace("-", " "))
         for inferred in _extract_beverage_base_candidates(normalized):
             add(inferred)
         for inferred in _extract_beverage_base_candidates(stripped):
             add(inferred)
 
     return candidates[:6]
+
+
+def _alias_search_lang_candidates(use_lang: str, query_norm: str) -> list[str]:
+    langs: list[str] = []
+
+    def add(lang_value: str) -> None:
+        token = (lang_value or "").strip()
+        if token in _supported_langs and token not in langs:
+            langs.append(token)
+
+    add(use_lang)
+    has_ascii_alpha = bool(re.search(r"[a-z]", query_norm))
+    has_cjk = _contains_cjk(query_norm)
+
+    # When UI language is zh-TW but query is romanized/English (e.g. "qing tea"),
+    # include English aliases to avoid false miss.
+    if has_ascii_alpha:
+        add("en")
+    # Symmetric fallback: English UI still accepts CJK inputs.
+    if has_cjk:
+        add("zh-TW")
+    # For symbols/numbers-only input, keep both as a safe fallback.
+    if not has_ascii_alpha and not has_cjk:
+        add("zh-TW")
+        add("en")
+
+    return langs
 
 
 def _parse_zh_numeric_token(token: str) -> Optional[int]:
@@ -4058,15 +4089,39 @@ def foods_search(
     direct_best_score: dict[str, float] = {}
     direct_best_query: dict[str, str] = {}
     for candidate_rank, query_norm in enumerate(query_candidates):
-        alias_rows = _supabase_rest_list(
-            "food_aliases",
-            [
-                ("select", "food_id,alias,lang"),
-                ("alias", f"ilike.*{query_norm}*"),
-                *((("lang", f"eq.{use_lang}"),) if supports_lang_active else ()),
-                ("limit", str(query_limit)),
-            ],
-        )
+        alias_rows: list[dict] = []
+        if supports_lang_active:
+            alias_langs = _alias_search_lang_candidates(use_lang, query_norm)
+            alias_seen: set[tuple[str, str, str]] = set()
+            for alias_lang in alias_langs:
+                rows = _supabase_rest_list(
+                    "food_aliases",
+                    [
+                        ("select", "food_id,alias,lang"),
+                        ("alias", f"ilike.*{query_norm}*"),
+                        ("lang", f"eq.{alias_lang}"),
+                        ("limit", str(query_limit)),
+                    ],
+                )
+                for row in rows:
+                    key = (
+                        str(row.get("food_id") or "").strip(),
+                        str(row.get("alias") or "").strip(),
+                        str(row.get("lang") or "").strip(),
+                    )
+                    if key in alias_seen:
+                        continue
+                    alias_seen.add(key)
+                    alias_rows.append(row)
+        else:
+            alias_rows = _supabase_rest_list(
+                "food_aliases",
+                [
+                    ("select", "food_id,alias,lang"),
+                    ("alias", f"ilike.*{query_norm}*"),
+                    ("limit", str(query_limit)),
+                ],
+            )
         for row in alias_rows:
             alias_candidates.append((query_norm, candidate_rank, row))
 
