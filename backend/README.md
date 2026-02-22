@@ -44,6 +44,21 @@ curl "http://127.0.0.1:8000/foods/search?q=青茶半糖去冰加珍珠&limit=5"
 curl -H "X-Admin-Key: <ADMIN_API_KEY>" "http://127.0.0.1:8000/foods/miss_top?days=30&limit=20"
 ```
 
+## Supabase SQL 建議執行順序
+
+在 Supabase SQL Editor 依序執行：
+
+1. `backend/sql/db_baseline.sql`
+2. `backend/sql/food_catalog_schema.sql`
+3. `backend/sql/food_catalog_public_expansion.sql`
+4. `backend/sql/food_catalog_hardening.sql`
+5. `backend/sql/food_catalog_canonical_hardening.sql`
+6. `backend/sql/beverage_catalog_minimum_seed.sql`
+
+說明：
+- 第 1 步建立 App 同步核心表（`meals/custom_foods/user_settings/sync_meta/profiles`）與 storage policy。
+- 第 5 步會統一 `canonical_name` 規則，並自動處理重複值避免唯一索引衝突。
+
 ## Auth / 試用設定
 
 - 需要 Supabase JWT（前端登入後帶 Authorization: Bearer <token>）
