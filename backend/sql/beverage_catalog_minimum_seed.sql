@@ -6,6 +6,9 @@
 
 begin;
 
+alter table if exists public.food_catalog
+  add column if not exists reference_used text;
+
 with seed(
   food_name,
   canonical_name,
