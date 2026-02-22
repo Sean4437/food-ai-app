@@ -239,26 +239,142 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final app = AppStateScope.of(context);
     if (!_ensureFeatureAccess(app, AppFeature.analyze)) return;
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final isZh = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
     final controller = TextEditingController(text: _analysis!.result.foodName);
+    Timer? debounce;
+    var requestToken = 0;
+    var suggestions = <String>[];
+    var isSearching = false;
+
+    Future<void> refreshSuggestions(
+      String keyword,
+      BuildContext dialogContext,
+      void Function(VoidCallback fn) setDialogState,
+    ) async {
+      final query = keyword.trim();
+      final token = ++requestToken;
+
+      if (query.isEmpty) {
+        if (!dialogContext.mounted) return;
+        setDialogState(() {
+          suggestions = const [];
+          isSearching = false;
+        });
+        return;
+      }
+
+      if (dialogContext.mounted) {
+        setDialogState(() => isSearching = true);
+      }
+
+      final result = await app.suggestFoodNames(query, locale, limit: 24);
+      if (!dialogContext.mounted || token != requestToken) return;
+
+      setDialogState(() {
+        suggestions = result;
+        isSearching = false;
+      });
+    }
+
     final result = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.editFoodName),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(hintText: t.foodNameLabel),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(t.cancel)),
-          ElevatedButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(controller.text.trim()),
-              child: Text(t.save)),
-        ],
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          final hasInput = controller.text.trim().isNotEmpty;
+          return AlertDialog(
+            title: Text(t.editFoodName),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      hintText: t.suggestInstantNameHint,
+                      prefixIcon: const Icon(Icons.search),
+                    ),
+                    onChanged: (_) {
+                      debounce?.cancel();
+                      debounce = Timer(const Duration(milliseconds: 350), () {
+                        refreshSuggestions(
+                          controller.text,
+                          dialogContext,
+                          setDialogState,
+                        );
+                      });
+                    },
+                    onSubmitted: (value) =>
+                        Navigator.of(dialogContext).pop(value.trim()),
+                  ),
+                  if (isSearching) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(minHeight: 2),
+                  ],
+                  if (hasInput) ...[
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 240),
+                      child: suggestions.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 8),
+                              child: Text(
+                                isZh
+                                    ? '目前沒有資料庫建議，仍可直接送出名稱。'
+                                    : 'No database suggestions yet. You can still submit this name.',
+                                style: Theme.of(dialogContext)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: Colors.black54),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: suggestions.length,
+                              separatorBuilder: (_, __) => const Divider(
+                                height: 1,
+                                thickness: 0.5,
+                              ),
+                              itemBuilder: (context, index) {
+                                final suggestion = suggestions[index];
+                                return ListTile(
+                                  dense: true,
+                                  leading: const Icon(Icons.search, size: 18),
+                                  title: Text(suggestion),
+                                  onTap: () => Navigator.of(dialogContext)
+                                      .pop(suggestion),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(t.cancel),
+              ),
+              ElevatedButton(
+                onPressed: () =>
+                    Navigator.of(dialogContext).pop(controller.text.trim()),
+                child: Text(t.save),
+              ),
+            ],
+          );
+        },
       ),
     );
+    debounce?.cancel();
+    controller.dispose();
     if (result == null || result.trim().isEmpty) return;
     setState(() {
       _loading = true;
