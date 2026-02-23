@@ -17,6 +17,8 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
   trial_start timestamptz,
+  plan_id text check (plan_id in ('free', 'pro', 'plus')),
+  subscription_expires_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -77,6 +79,12 @@ create table if not exists public.sync_meta (
 
 create index if not exists idx_profiles_trial_start
   on public.profiles (trial_start);
+
+create index if not exists idx_profiles_plan_id
+  on public.profiles (plan_id);
+
+create index if not exists idx_profiles_subscription_expires_at
+  on public.profiles (subscription_expires_at);
 
 create index if not exists idx_meals_user_time
   on public.meals (user_id, time desc);

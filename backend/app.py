@@ -292,6 +292,7 @@ def _parse_plan_entitlements(env_key: str, default: tuple[str, ...]) -> tuple[st
 
 PLAN_PRO_EMAILS = _parse_email_set(os.getenv("PLAN_PRO_EMAILS", ""))
 PLAN_PLUS_EMAILS = _parse_email_set(os.getenv("PLAN_PLUS_EMAILS", ""))
+ENABLE_EMAIL_PLAN_OVERRIDE = os.getenv("ENABLE_EMAIL_PLAN_OVERRIDE", "false").lower() == "true"
 PLAN_FREE_ENTITLEMENTS = _parse_plan_entitlements("PLAN_FREE_ENTITLEMENTS", ())
 PLAN_TRIAL_ENTITLEMENTS = _parse_plan_entitlements("PLAN_TRIAL_ENTITLEMENTS", _AI_ENTITLEMENTS)
 PLAN_PRO_ENTITLEMENTS = _parse_plan_entitlements(
@@ -313,6 +314,7 @@ _last_ai_error: Optional[str] = None
 _jwks_client: Optional[PyJWKClient] = None
 _supabase_http_client: Optional[httpx.Client] = None
 _catalog_lang_active_filter_supported: Optional[bool] = None
+_profile_plan_columns_supported: Optional[bool] = None
 _chat_rate_state: dict[str, list[float]] = {}
 _chat_rate_limit = int(os.getenv("CHAT_RATE_LIMIT_PER_MIN", "5"))
 _chat_rate_window_sec = int(os.getenv("CHAT_RATE_WINDOW_SEC", "60"))
@@ -2726,31 +2728,85 @@ def _decode_bearer_token(token: str) -> dict:
     )
 
 
-def _trial_start_from_profile(user_id: str) -> Optional[datetime]:
-    headers = _supabase_headers()
-    url = f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}&select=trial_start"
-    try:
-        with httpx.Client(timeout=10) as client:
-            resp = client.get(url, headers=headers)
-    except Exception as exc:
-        logging.warning("Supabase profiles fetch error (fallback to local): %s", exc)
-        return None
-    if resp.status_code >= 400:
-        logging.warning("Supabase profiles fetch failed (%s), fallback to local", resp.status_code)
-        return None
-    data = _parse_json_response_utf8(resp)
-    if data is None:
-        logging.warning("Supabase profiles parse failed, fallback to local")
-        return None
-    if not data:
-        return None
-    raw = data[0].get("trial_start")
+def _parse_iso_datetime(value: Any) -> Optional[datetime]:
+    raw = str(value or "").strip()
     if not raw:
         return None
     try:
-        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed
     except Exception:
         return None
+
+
+def _normalize_plan_id(value: Any) -> Optional[str]:
+    plan = str(value or "").strip().lower()
+    if plan in {"free", "pro", "plus"}:
+        return plan
+    return None
+
+
+def _profile_access_from_profile(user_id: str) -> dict[str, Any]:
+    global _profile_plan_columns_supported
+    headers = _supabase_headers()
+    base_url = f"{SUPABASE_URL}/rest/v1/profiles?id=eq.{user_id}"
+    rows: Optional[list] = None
+
+    select_with_plan = "trial_start,plan_id,subscription_expires_at"
+    if _profile_plan_columns_supported is not False:
+        try:
+            with httpx.Client(timeout=10) as client:
+                resp = client.get(f"{base_url}&select={select_with_plan}", headers=headers)
+            if resp.status_code < 400:
+                parsed = _parse_json_response_utf8(resp)
+                if isinstance(parsed, list):
+                    rows = parsed
+                    _profile_plan_columns_supported = True
+            else:
+                body = resp.text.lower()
+                missing_plan_columns = (
+                    resp.status_code == 400
+                    and ("plan_id" in body or "subscription_expires_at" in body)
+                )
+                if missing_plan_columns:
+                    _profile_plan_columns_supported = False
+                else:
+                    logging.warning(
+                        "Supabase profiles fetch failed (%s): %s",
+                        resp.status_code,
+                        resp.text[:180],
+                    )
+                    return {}
+        except Exception as exc:
+            logging.warning("Supabase profiles fetch error (fallback to local): %s", exc)
+            return {}
+
+    if rows is None:
+        try:
+            with httpx.Client(timeout=10) as client:
+                resp = client.get(f"{base_url}&select=trial_start", headers=headers)
+        except Exception as exc:
+            logging.warning("Supabase profiles fetch error (fallback to local): %s", exc)
+            return {}
+        if resp.status_code >= 400:
+            logging.warning("Supabase profiles fetch failed (%s), fallback to local", resp.status_code)
+            return {}
+        parsed = _parse_json_response_utf8(resp)
+        if not isinstance(parsed, list):
+            logging.warning("Supabase profiles parse failed, fallback to local")
+            return {}
+        rows = parsed
+
+    if not rows:
+        return {}
+    row = rows[0] if isinstance(rows[0], dict) else {}
+    return {
+        "trial_start": _parse_iso_datetime(row.get("trial_start")),
+        "plan_id": _normalize_plan_id(row.get("plan_id")),
+        "subscription_expires_at": _parse_iso_datetime(row.get("subscription_expires_at")),
+    }
 
 
 def _upsert_profile_trial(user_id: str, email: str, trial_start: datetime) -> None:
@@ -2771,12 +2827,14 @@ def _upsert_profile_trial(user_id: str, email: str, trial_start: datetime) -> No
         logging.warning("Supabase profiles upsert error (ignored): %s", exc)
 
 
-def _ensure_trial_start(user_id: str, email: str) -> datetime:
-    trial_start = _trial_start_from_profile(user_id)
+def _ensure_profile_access(user_id: str, email: str) -> dict[str, Any]:
+    access = _profile_access_from_profile(user_id)
+    trial_start = access.get("trial_start")
     if trial_start is None:
         trial_start = datetime.now(timezone.utc)
         _upsert_profile_trial(user_id, email, trial_start)
-    return trial_start
+    access["trial_start"] = trial_start
+    return access
 
 
 def _is_whitelisted(email: str) -> bool:
@@ -2816,9 +2874,23 @@ def _require_auth(request: Request) -> dict:
     if not user_id or not email:
         raise HTTPException(status_code=401, detail="invalid_token")
     if _is_whitelisted(email):
-        return {"user_id": user_id, "email": email, "whitelisted": True, "trial_start": None}
-    trial_start = _ensure_trial_start(user_id, email)
-    return {"user_id": user_id, "email": email, "whitelisted": False, "trial_start": trial_start}
+        return {
+            "user_id": user_id,
+            "email": email,
+            "whitelisted": True,
+            "trial_start": None,
+            "plan_id": None,
+            "subscription_expires_at": None,
+        }
+    profile_access = _ensure_profile_access(user_id, email)
+    return {
+        "user_id": user_id,
+        "email": email,
+        "whitelisted": False,
+        "trial_start": profile_access.get("trial_start"),
+        "plan_id": profile_access.get("plan_id"),
+        "subscription_expires_at": profile_access.get("subscription_expires_at"),
+    }
 
 
 def _build_access_status(auth: dict) -> dict:
@@ -2833,26 +2905,50 @@ def _build_access_status(auth: dict) -> dict:
         plan = "whitelisted"
         return {
             "plan": plan,
+            "plan_source": "whitelist",
             "trial_active": True,
             "trial_start": None,
             "trial_end": None,
+            "subscription_expires_at": None,
             "whitelisted": True,
             "entitlements": _plan_entitlements(plan),
         }
 
-    override_plan = _plan_override_for_email(str(auth.get("email") or ""))
-    if override_plan in {"pro", "plus"}:
+    plan_from_profile = _normalize_plan_id(auth.get("plan_id"))
+    subscription_expires_at = auth.get("subscription_expires_at")
+    subscription_active = (
+        isinstance(subscription_expires_at, datetime) and subscription_expires_at >= now
+    ) or plan_from_profile in {"pro", "plus"} and subscription_expires_at is None
+
+    override_plan = (
+        _plan_override_for_email(str(auth.get("email") or ""))
+        if ENABLE_EMAIL_PLAN_OVERRIDE
+        else None
+    )
+    if plan_from_profile in {"pro", "plus"} and subscription_active:
+        plan = plan_from_profile
+        plan_source = "profile"
+    elif override_plan in {"pro", "plus"}:
         plan = override_plan
+        plan_source = "email_override"
     elif trial_active:
         plan = "trial"
+        plan_source = "trial"
     else:
         plan = "free"
+        plan_source = "free"
 
     return {
         "plan": plan,
+        "plan_source": plan_source,
         "trial_active": trial_active,
         "trial_start": trial_start.isoformat(),
         "trial_end": trial_end.isoformat(),
+        "subscription_expires_at": (
+            subscription_expires_at.isoformat()
+            if isinstance(subscription_expires_at, datetime)
+            else None
+        ),
         "whitelisted": False,
         "entitlements": _plan_entitlements(plan),
     }
@@ -4762,12 +4858,14 @@ def health(_admin: None = Depends(_require_admin)):
         "last_ai_error": _last_ai_error if RETURN_AI_ERROR else None,
         "access_control": {
             "trial_days": TRIAL_DAYS,
+            "enable_email_plan_override": ENABLE_EMAIL_PLAN_OVERRIDE,
             "plan_pro_emails_count": len(PLAN_PRO_EMAILS),
             "plan_plus_emails_count": len(PLAN_PLUS_EMAILS),
             "plan_free_entitlements": _plan_entitlements("free"),
             "plan_trial_entitlements": _plan_entitlements("trial"),
             "plan_pro_entitlements": _plan_entitlements("pro"),
             "plan_plus_entitlements": _plan_entitlements("plus"),
+            "profile_plan_columns_supported": _profile_plan_columns_supported,
         },
         "supabase_catalog_probe": _probe_supabase_catalog(),
     }

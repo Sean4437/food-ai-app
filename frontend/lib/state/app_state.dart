@@ -21,6 +21,7 @@ import '../models/custom_food.dart';
 import '../services/api_service.dart';
 import '../services/supabase_service.dart';
 import '../config/supabase_config.dart';
+import '../config/feature_flags.dart';
 import '../storage/meal_store.dart';
 import '../storage/settings_store.dart';
 
@@ -612,7 +613,7 @@ class AppState extends ChangeNotifier {
   bool get trialExpired =>
       _trialChecked &&
       _trialExpired &&
-      !_mockSubscriptionActive &&
+      !mockSubscriptionActive &&
       !_iapSubscriptionActive &&
       !_hasAnyAiEntitlementFromBackend;
 
@@ -620,8 +621,10 @@ class AppState extends ChangeNotifier {
 
   bool get isWhitelisted => _whitelisted;
 
-  bool get mockSubscriptionActive => _mockSubscriptionActive;
-  String? get mockSubscriptionPlanId => _mockSubscriptionPlanId;
+  bool get mockSubscriptionActive =>
+      kEnableWebMockSubscription && _mockSubscriptionActive;
+  String? get mockSubscriptionPlanId =>
+      mockSubscriptionActive ? _mockSubscriptionPlanId : null;
   bool get accessStatusFailed => _accessStatusFailed;
   String get accessPlan => _accessPlan;
   Set<String> get accessEntitlements => Set.unmodifiable(_backendEntitlements);
@@ -668,7 +671,7 @@ class AppState extends ChangeNotifier {
   }
 
   bool canUseFeature(AppFeature feature) {
-    if (_iapSubscriptionActive || _mockSubscriptionActive || _whitelisted) {
+    if (_iapSubscriptionActive || mockSubscriptionActive || _whitelisted) {
       return true;
     }
     return _backendEntitlements.contains(_featureEntitlement(feature));
@@ -6935,6 +6938,7 @@ class AppState extends ChangeNotifier {
     }
     _mockSubscriptionActive = _meta[_kMockSubscriptionKey] == 'true';
     _mockSubscriptionPlanId = _meta[_kMockSubscriptionPlanKey];
+    _enforceMockSubscriptionFlag();
     _iapSubscriptionActive = _meta[_kIapSubscriptionKey] == 'true';
     final rawPlan = (_meta[_kAccessPlanKey] ?? '').trim();
     _accessPlan = rawPlan.isEmpty ? 'unknown' : rawPlan;
@@ -8631,9 +8635,20 @@ class AppState extends ChangeNotifier {
         }
       }
     }
+    _enforceMockSubscriptionFlag();
   }
 
   void setMockSubscriptionActive(bool value, {String? planId}) {
+    if (!kEnableWebMockSubscription) {
+      final changed = _enforceMockSubscriptionFlag();
+      if (changed) {
+        _touchSettingsUpdatedAt();
+        notifyListeners();
+        // ignore: discarded_futures
+        _saveOverrides();
+      }
+      return;
+    }
     _mockSubscriptionActive = value;
     _meta[_kMockSubscriptionKey] = value ? 'true' : 'false';
     if (value && planId != null) {
@@ -8647,6 +8662,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     // ignore: discarded_futures
     _saveOverrides();
+  }
+
+  bool _enforceMockSubscriptionFlag() {
+    if (kEnableWebMockSubscription) return false;
+    if (_mockSubscriptionActive || _mockSubscriptionPlanId != null) {
+      _mockSubscriptionActive = false;
+      _mockSubscriptionPlanId = null;
+      _meta[_kMockSubscriptionKey] = 'false';
+      _meta.remove(_kMockSubscriptionPlanKey);
+      return true;
+    }
+    return false;
   }
 
   void setAccessGraceHours(int hours) {
