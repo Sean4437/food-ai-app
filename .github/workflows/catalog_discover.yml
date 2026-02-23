@@ -1,0 +1,89 @@
+name: Catalog Discover Queue
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Lookback days for miss queries"
+        required: false
+        default: "30"
+      limit:
+        description: "Max rows from miss_top"
+        required: false
+        default: "300"
+      max_new:
+        description: "Max newly added queue rows"
+        required: false
+        default: "200"
+      lang:
+        description: "Language filter (zh-TW/en)"
+        required: false
+        default: "zh-TW"
+  schedule:
+    - cron: "30 2 * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build discovery queue CSV
+        env:
+          CATALOG_BACKEND_BASE_URL: ${{ secrets.CATALOG_BACKEND_BASE_URL }}
+          CATALOG_ADMIN_API_KEY: ${{ secrets.CATALOG_ADMIN_API_KEY }}
+        run: |
+          if [ -z "$CATALOG_BACKEND_BASE_URL" ]; then
+            echo "Missing secret: CATALOG_BACKEND_BASE_URL" >&2
+            exit 1
+          fi
+          if [ -z "$CATALOG_ADMIN_API_KEY" ]; then
+            echo "Missing secret: CATALOG_ADMIN_API_KEY" >&2
+            exit 1
+          fi
+
+          DAYS="${{ github.event.inputs.days }}"
+          LIMIT="${{ github.event.inputs.limit }}"
+          MAX_NEW="${{ github.event.inputs.max_new }}"
+          LANG="${{ github.event.inputs.lang }}"
+
+          [ -z "$DAYS" ] && DAYS="30"
+          [ -z "$LIMIT" ] && LIMIT="300"
+          [ -z "$MAX_NEW" ] && MAX_NEW="200"
+          [ -z "$LANG" ] && LANG="zh-TW"
+
+          python tools/catalog_discover_from_miss.py \
+            --base-url "$CATALOG_BACKEND_BASE_URL" \
+            --admin-key-env CATALOG_ADMIN_API_KEY \
+            --days "$DAYS" \
+            --limit "$LIMIT" \
+            --lang "$LANG" \
+            --max-new "$MAX_NEW" \
+            --out "backend/sql/food_discovery_queue.csv"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(catalog): refresh discovery queue"
+          title: "chore(catalog): refresh discovery queue"
+          body: |
+            Auto-generated from backend `/foods/miss_top`.
+            - File: `backend/sql/food_discovery_queue.csv`
+            - Keep `status` / `note` for manual triage.
+          branch: "bot/catalog-discovery-queue"
+          delete-branch: true
+          labels: |
+            automation
+            catalog
+          add-paths: |
+            backend/sql/food_discovery_queue.csv

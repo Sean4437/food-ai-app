@@ -41,6 +41,10 @@ cd /Users/hsiangyuhsieh/Documents/AI/app/food-ai-app
 bash ios_run.sh
 ```
 
+## Food Catalog 自動化
+
+- GitHub Actions + Supabase 自動化流程請看：`docs/CATALOG_AUTOMATION.md`
+
 ## 備註
 
 - 後端回傳假分析結果，尚未接真 AI。

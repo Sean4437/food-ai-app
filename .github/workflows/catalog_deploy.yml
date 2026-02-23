@@ -1,0 +1,72 @@
+name: Catalog Deploy to Supabase
+
+on:
+  workflow_dispatch:
+    inputs:
+      catalog_csv:
+        description: "Catalog CSV path"
+        required: true
+        default: "backend/sql/food_catalog_priority1_import_draft.csv"
+      alias_csv:
+        description: "Alias CSV path"
+        required: true
+        default: "backend/sql/food_aliases_priority1_import_draft.csv"
+      dry_run:
+        description: "Run without writing"
+        required: true
+        default: true
+        type: boolean
+      stop_on_error:
+        description: "Stop on first error"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate selected CSV files
+        run: |
+          python tools/catalog_validate_bundle.py \
+            --catalog-file "${{ inputs.catalog_csv }}" \
+            --alias-file "${{ inputs.alias_csv }}" \
+            --allow-ambiguous-alias
+
+      - name: Upsert to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "Missing secret: SUPABASE_URL" >&2
+            exit 1
+          fi
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "Missing secret: SUPABASE_SERVICE_ROLE_KEY" >&2
+            exit 1
+          fi
+
+          CMD=(python tools/catalog_upsert_supabase.py \
+            --catalog "${{ inputs.catalog_csv }}" \
+            --alias "${{ inputs.alias_csv }}")
+
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            CMD+=(--dry-run)
+          fi
+          if [ "${{ inputs.stop_on_error }}" = "true" ]; then
+            CMD+=(--stop-on-error)
+          fi
+
+          "${CMD[@]}"

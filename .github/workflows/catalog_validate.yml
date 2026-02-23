@@ -1,0 +1,31 @@
+name: Catalog Validate
+
+on:
+  pull_request:
+    paths:
+      - "backend/sql/*.csv"
+      - "tools/catalog_*.py"
+      - ".github/workflows/catalog_*.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate catalog bundle
+        run: |
+          python tools/catalog_validate_bundle.py \
+            --catalog-glob "backend/sql/food_catalog*_draft.csv" \
+            --alias-glob "backend/sql/food_aliases*_draft.csv" \
+            --allow-ambiguous-alias
