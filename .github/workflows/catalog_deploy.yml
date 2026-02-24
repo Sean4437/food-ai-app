@@ -13,6 +13,7 @@ on:
           - priority2
           - priority2_batch1
           - priority2_batch2
+          - priority2_batch3
       catalog_csv:
         description: "Catalog CSV path (optional override, filename is ok)"
         required: false
@@ -83,6 +84,10 @@ jobs:
             priority2_batch2)
               catalog="backend/sql/food_catalog_priority2_batch2_import_draft.csv"
               alias="backend/sql/food_aliases_priority2_batch2_import_draft.csv"
+              ;;
+            priority2_batch3)
+              catalog="backend/sql/food_catalog_priority2_batch3_import_draft.csv"
+              alias="backend/sql/food_aliases_priority2_batch3_import_draft.csv"
               ;;
             *)
               echo "Unknown bundle: $bundle" >&2
