@@ -26,6 +26,8 @@ jobs:
       - name: Validate catalog bundle
         run: |
           python tools/catalog_validate_bundle.py \
-            --catalog-glob "backend/sql/food_catalog*_draft.csv" \
-            --alias-glob "backend/sql/food_aliases*_draft.csv" \
+            --catalog-glob "backend/sql/food_catalog_priority1_import_draft.csv" \
+            --catalog-glob "backend/sql/food_catalog_priority2_import_draft.csv" \
+            --alias-glob "backend/sql/food_aliases_priority1_import_draft.csv" \
+            --alias-glob "backend/sql/food_aliases_priority2_import_draft.csv" \
             --allow-ambiguous-alias
