@@ -2586,6 +2586,35 @@ def _primary_query_bonus(
     return bonus
 
 
+def _beverage_modifier_present(query_norm: str) -> bool:
+    if not query_norm:
+        return False
+    # Size / sugar / ice / topping signals for beverage customization.
+    patterns = (
+        r"(特大杯|超大杯|大杯|中杯|小杯|x-large|xlarge|large|medium|small|xl|lg|md|sm)",
+        r"(\d{2,4}\s*(ml|cc))",
+        r"(無糖|微糖|少糖|半糖|全糖|正常糖|去糖|減糖|不加糖|sugar[\s\-]*free|no sugar|light sugar|less sugar|half sugar|full sugar|regular sugar|unsweetened)",
+        r"([一二兩三四五六七八九十\d]{1,3}\s*分糖)",
+        r"(\d{1,3}\s*%?\s*(糖|sugar))",
+        r"(去冰|少冰|微冰|正常冰|常溫|溫|熱飲|熱的|熱|no ice|less ice|light ice|regular ice|room temperature|warm|hot)",
+        r"(加珍珠|加小珍珠|加白玉|加波霸|加粉圓|加粉角|加粉條|加椰果|加布丁|加仙草|加奶蓋|加奶霜|加芝士奶蓋|加愛玉|加寒天|加蒟蒻|加紅豆|加綠豆|加芋圓|加地瓜圓|加粉粿|加蘆薈|加西米露|加茶凍|加咖啡凍|加綠茶凍|加蜜香凍|加荔枝凍|加黑糖凍|加桂花凍|加杏仁凍|加奶酪|加芋泥|加奇亞籽|加葡萄柚果粒|加爆爆珠|加啵啵珠|with\s+boba|with\s+mini boba|with\s+pearls?|with\s+coconut jelly|with\s+pudding|with\s+grass jelly|with\s+foam|with\s+milk foam|with\s+aiyu|with\s+agar|with\s+konjac|with\s+red bean|with\s+mung bean|with\s+taro balls?|with\s+aloe|with\s+sago|with\s+tea jelly|with\s+coffee jelly|with\s+green tea jelly|with\s+honey jelly|with\s+lychee jelly|with\s+brown sugar jelly|with\s+osmanthus jelly|with\s+almond jelly|with\s+panna cotta|with\s+taro paste|with\s+chia seeds|with\s+grapefruit pulp|with\s+popping boba)",
+    )
+    for pattern in patterns:
+        if re.search(pattern, query_norm):
+            return True
+    return False
+
+
+def _beverage_query_preference_delta(query_norm: str, catalog_row: dict) -> float:
+    # If query clearly asks for beverage customization, strongly prefer beverage rows.
+    if not _is_probably_beverage_text(query_norm):
+        return 0.0
+    if not _beverage_modifier_present(query_norm):
+        return 0.0
+    is_beverage = catalog_row.get("is_beverage") if isinstance(catalog_row.get("is_beverage"), bool) else False
+    return 1.0 if is_beverage else -10.0
+
+
 def _build_food_search_item(
     query_norm: str,
     catalog_row: dict,
@@ -4302,6 +4331,7 @@ def foods_search(
                 continue
             score = _direct_food_match_score(query_norm, row)
             score += _primary_query_bonus(primary_query_norm, row, alias_row=None)
+            score += _beverage_query_preference_delta(primary_query_norm, row)
             score -= _candidate_rank_penalty(query_norm, primary_query_norm, candidate_rank)
             previous = direct_best_score.get(food_id, -1.0)
             if score > previous:
@@ -4361,6 +4391,7 @@ def foods_search(
             continue
         alias_score = _food_match_score(query_norm, alias_row, catalog_row, use_lang)
         alias_score += _primary_query_bonus(primary_query_norm, catalog_row, alias_row=alias_row)
+        alias_score += _beverage_query_preference_delta(primary_query_norm, catalog_row)
         alias_score -= _candidate_rank_penalty(query_norm, primary_query_norm, candidate_rank)
         candidate = _build_food_search_item(
             query_norm=query_norm,
