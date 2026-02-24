@@ -31,6 +31,8 @@
 - `tools/catalog_upsert_supabase.py`
   - 讀取 catalog/alias CSV，透過 Supabase REST upsert。
   - 可 `--dry-run` / `--stop-on-error`。
+  - 內建防護：若資料庫既有 `is_beverage=true`，而匯入列是 `is_beverage=false`，預設會跳過避免覆蓋飲料基準。
+  - 如需強制覆蓋，手動加 `--allow-beverage-overwrite`。
 
 ## GitHub Secrets（Repository -> Settings -> Secrets and variables -> Actions）
 必填：
@@ -54,3 +56,4 @@
 ## 注意
 - 這套流程預設是「以真實 miss 查詢驅動擴充」，不是直接爬網全自動寫庫。
 - 若要加「自動網路蒐集來源」可再加一層 generator，但建議仍保留 PR 人工審核，避免髒資料進庫。
+- 若你做大批次 food 匯入，建議仍保留 `backend/sql/beverage_catalog_minimum_seed.sql` 作為飲料基準回補腳本。

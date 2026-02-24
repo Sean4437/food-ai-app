@@ -91,6 +91,7 @@ class SyncStats:
     catalog_inserted: int = 0
     catalog_updated: int = 0
     catalog_skipped: int = 0
+    catalog_protected: int = 0
     alias_inserted: int = 0
     alias_skipped: int = 0
     errors: int = 0
@@ -245,7 +246,7 @@ def catalog_payload(row: dict[str, str]) -> dict[str, Any]:
     return payload
 
 
-def find_catalog_id(client: SupabaseClient, payload: dict[str, Any]) -> tuple[str | None, str]:
+def find_catalog_row(client: SupabaseClient, payload: dict[str, Any]) -> tuple[dict[str, Any] | None, str]:
     lang = str(payload.get("lang") or "zh-TW")
     canonical_name = str(payload.get("canonical_name") or "").strip()
     food_name = str(payload.get("food_name") or "").strip()
@@ -254,7 +255,7 @@ def find_catalog_id(client: SupabaseClient, payload: dict[str, Any]) -> tuple[st
         rows = client.list(
             "food_catalog",
             [
-                ("select", "id"),
+                ("select", "id,food_name,is_beverage,verified_level"),
                 ("lang", encode_filter("eq", lang)),
                 ("canonical_name", encode_filter("ilike", canonical_name)),
                 ("is_active", encode_filter("eq", "true")),
@@ -262,12 +263,12 @@ def find_catalog_id(client: SupabaseClient, payload: dict[str, Any]) -> tuple[st
             ],
         )
         if rows:
-            return str(rows[0].get("id") or ""), "canonical_name"
+            return rows[0], "canonical_name"
 
     rows = client.list(
         "food_catalog",
         [
-            ("select", "id"),
+            ("select", "id,food_name,is_beverage,verified_level"),
             ("lang", encode_filter("eq", lang)),
             ("food_name", encode_filter("ilike", food_name)),
             ("is_active", encode_filter("eq", "true")),
@@ -275,7 +276,7 @@ def find_catalog_id(client: SupabaseClient, payload: dict[str, Any]) -> tuple[st
         ],
     )
     if rows:
-        return str(rows[0].get("id") or ""), "food_name"
+        return rows[0], "food_name"
     return None, ""
 
 
@@ -302,6 +303,12 @@ def parse_alias_row(row: dict[str, str]) -> tuple[str, str, str]:
     lang = (row.get("lang") or "").strip() or "zh-TW"
     alias = (row.get("alias") or "").strip()
     return food_name, lang, alias
+
+
+def should_protect_beverage_row(existing_row: dict[str, Any], incoming_payload: dict[str, Any]) -> bool:
+    existing_is_beverage = existing_row.get("is_beverage") is True
+    incoming_is_beverage = incoming_payload.get("is_beverage") is True
+    return existing_is_beverage and not incoming_is_beverage
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -336,6 +343,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--timeout-sec", type=int, default=30, help="HTTP timeout in seconds.")
     parser.add_argument("--verbose", action="store_true", help="Print per-row actions.")
+    parser.add_argument(
+        "--allow-beverage-overwrite",
+        action="store_true",
+        help="Allow overwriting existing beverage rows with non-beverage rows.",
+    )
     return parser
 
 
@@ -375,8 +387,26 @@ def main() -> int:
                 raise RuntimeError("empty food_name")
             cache_key = normalize_text(food_name)
 
-            found_id, matched_by = find_catalog_id(client, payload)
-            if found_id:
+            existing_row, matched_by = find_catalog_row(client, payload)
+            if existing_row:
+                found_id = str(existing_row.get("id") or "").strip()
+                if not found_id:
+                    raise RuntimeError("matched row missing id")
+
+                if (
+                    not args.allow_beverage_overwrite
+                    and should_protect_beverage_row(existing_row, payload)
+                ):
+                    stats.catalog_skipped += 1
+                    stats.catalog_protected += 1
+                    food_id_cache[cache_key] = found_id
+                    existing_name = str(existing_row.get("food_name") or "").strip() or food_name
+                    print(
+                        f"[catalog:{idx}] protected beverage baseline, skipped overwrite: {existing_name}",
+                        file=sys.stderr,
+                    )
+                    continue
+
                 if args.dry_run:
                     stats.catalog_skipped += 1
                     if args.verbose:
@@ -487,6 +517,7 @@ def main() -> int:
     print(f"- catalog inserted: {stats.catalog_inserted}")
     print(f"- catalog updated:  {stats.catalog_updated}")
     print(f"- catalog skipped:  {stats.catalog_skipped}")
+    print(f"- protected rows:   {stats.catalog_protected}")
     print(f"- alias inserted:   {stats.alias_inserted}")
     print(f"- alias skipped:    {stats.alias_skipped}")
     print(f"- errors:           {stats.errors}")
