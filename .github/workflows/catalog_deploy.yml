@@ -3,14 +3,23 @@ name: Catalog Deploy to Supabase
 on:
   workflow_dispatch:
     inputs:
+      bundle:
+        description: "Preset bundle"
+        required: true
+        type: choice
+        default: "priority2_batch1"
+        options:
+          - priority1
+          - priority2
+          - priority2_batch1
       catalog_csv:
-        description: "Catalog CSV path"
-        required: true
-        default: "backend/sql/food_catalog_priority1_import_draft.csv"
+        description: "Catalog CSV path (optional override, filename is ok)"
+        required: false
+        default: ""
       alias_csv:
-        description: "Alias CSV path"
-        required: true
-        default: "backend/sql/food_aliases_priority1_import_draft.csv"
+        description: "Alias CSV path (optional override, filename is ok)"
+        required: false
+        default: ""
       dry_run:
         description: "Run without writing"
         required: true
@@ -37,11 +46,75 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Resolve catalog/alias paths
+        id: paths
+        run: |
+          bundle="${{ inputs.bundle }}"
+          catalog_input="${{ inputs.catalog_csv }}"
+          alias_input="${{ inputs.alias_csv }}"
+
+          normalize_path() {
+            local raw="$1"
+            if [ -z "$raw" ]; then
+              echo ""
+              return
+            fi
+            if [[ "$raw" == */* ]]; then
+              echo "$raw"
+            else
+              echo "backend/sql/$raw"
+            fi
+          }
+
+          case "$bundle" in
+            priority1)
+              catalog="backend/sql/food_catalog_priority1_import_draft.csv"
+              alias="backend/sql/food_aliases_priority1_import_draft.csv"
+              ;;
+            priority2)
+              catalog="backend/sql/food_catalog_priority2_import_draft.csv"
+              alias="backend/sql/food_aliases_priority2_import_draft.csv"
+              ;;
+            priority2_batch1)
+              catalog="backend/sql/food_catalog_priority2_batch1_import_draft.csv"
+              alias="backend/sql/food_aliases_priority2_batch1_import_draft.csv"
+              ;;
+            *)
+              echo "Unknown bundle: $bundle" >&2
+              exit 1
+              ;;
+          esac
+
+          catalog_override="$(normalize_path "$catalog_input")"
+          alias_override="$(normalize_path "$alias_input")"
+          if [ -n "$catalog_override" ]; then
+            catalog="$catalog_override"
+          fi
+          if [ -n "$alias_override" ]; then
+            alias="$alias_override"
+          fi
+
+          if [ ! -f "$catalog" ]; then
+            echo "Catalog CSV not found: $catalog" >&2
+            ls -1 backend/sql/food_catalog*_draft.csv || true
+            exit 1
+          fi
+          if [ ! -f "$alias" ]; then
+            echo "Alias CSV not found: $alias" >&2
+            ls -1 backend/sql/food_aliases*_draft.csv || true
+            exit 1
+          fi
+
+          echo "catalog_csv=$catalog" >> "$GITHUB_OUTPUT"
+          echo "alias_csv=$alias" >> "$GITHUB_OUTPUT"
+          echo "Using catalog_csv: $catalog"
+          echo "Using alias_csv: $alias"
+
       - name: Validate selected CSV files
         run: |
           python tools/catalog_validate_bundle.py \
-            --catalog-file "${{ inputs.catalog_csv }}" \
-            --alias-file "${{ inputs.alias_csv }}" \
+            --catalog-file "${{ steps.paths.outputs.catalog_csv }}" \
+            --alias-file "${{ steps.paths.outputs.alias_csv }}" \
             --allow-ambiguous-alias
 
       - name: Upsert to Supabase
@@ -59,8 +132,8 @@ jobs:
           fi
 
           CMD=(python tools/catalog_upsert_supabase.py \
-            --catalog "${{ inputs.catalog_csv }}" \
-            --alias "${{ inputs.alias_csv }}")
+            --catalog "${{ steps.paths.outputs.catalog_csv }}" \
+            --alias "${{ steps.paths.outputs.alias_csv }}")
 
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             CMD+=(--dry-run)
