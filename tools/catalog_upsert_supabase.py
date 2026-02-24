@@ -378,6 +378,7 @@ def main() -> int:
     client = SupabaseClient(supabase_url, service_key, timeout_sec=max(5, args.timeout_sec))
     stats = SyncStats()
     food_id_cache: dict[str, str] = {}
+    dryrun_new_foods: set[str] = set()
 
     for idx, row in enumerate(catalog_rows, start=1):
         try:
@@ -424,6 +425,10 @@ def main() -> int:
                     stats.catalog_skipped += 1
                     if args.verbose:
                         print(f"[catalog:{idx}] dry-run insert: {food_name}")
+                    # Mark as "would insert" so alias phase can simulate
+                    # instead of forcing DB lookup on a row that doesn't
+                    # exist yet (dry-run path).
+                    dryrun_new_foods.add(cache_key)
                     continue
                 inserted = client.insert("food_catalog", payload)
                 if not inserted:
@@ -453,6 +458,13 @@ def main() -> int:
 
             food_norm = normalize_text(food_name)
             food_id = food_id_cache.get(food_norm)
+
+            if args.dry_run and food_norm in dryrun_new_foods:
+                stats.alias_skipped += 1
+                if args.verbose:
+                    print(f"[alias:{idx}] dry-run insert (new catalog row): {food_name} / {lang} / {alias}")
+                continue
+
             if not food_id:
                 try:
                     food_id = resolve_food_id_by_name(client, food_name)
