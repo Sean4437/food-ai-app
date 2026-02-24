@@ -2272,6 +2272,81 @@ def _to_string_list(value: Any) -> list[str]:
     return []
 
 
+def _normalize_catalog_en_key(text: str) -> str:
+    return re.sub(r"\s+", " ", text.strip().lower())
+
+
+_CATALOG_ZH_EXACT_TRANSLATIONS: dict[str, str] = {
+    "common local meal.": "常見在地餐點。",
+    "rice/noodle main meal.": "飯麵主食類餐點。",
+    "lemon tea drink.": "檸檬茶飲。",
+    "add vegetables and reduce sauce when possible.": "建議補充蔬菜並減少醬料。",
+    "higher carbs": "碳水偏多",
+    "higher sodium": "鈉含量偏高",
+    "higher fat": "脂肪偏高",
+    "heavier oil": "偏油",
+    "light": "清淡",
+    "low protein": "蛋白不足",
+    "protein source": "蛋白質來源",
+    "main ingredient": "主食材",
+    "carbs": "碳水來源",
+    "sauce": "醬料",
+    "rice/noodle": "飯/麵",
+    "lemon": "檸檬",
+    "green tea": "綠茶",
+    "winter melon tea": "冬瓜茶",
+    "sugarcane": "甘蔗",
+    "honey": "蜂蜜",
+    "tea": "茶",
+    "catalog": "資料庫",
+    "catalog + beverage formula": "資料庫 + 飲料參數公式",
+}
+
+_CATALOG_ZH_PATTERN_TRANSLATIONS: tuple[tuple[str, str], ...] = (
+    (r"\bhigher\s+carbs\b", "碳水偏多"),
+    (r"\bhigher\s+sodium\b", "鈉含量偏高"),
+    (r"\bhigher\s+fat\b", "脂肪偏高"),
+    (r"\bheavier\s+oil\b", "偏油"),
+    (r"\blow\s+protein\b", "蛋白不足"),
+    (r"\blight\b", "清淡"),
+    (r"\brice\s*/\s*noodle\b", "飯/麵"),
+    (r"\bprotein\s+source\b", "蛋白質來源"),
+    (r"\bmain\s+ingredient\b", "主食材"),
+    (r"\bcarbs\b", "碳水來源"),
+    (r"\bsauce\b", "醬料"),
+    (r"\blemon\b", "檸檬"),
+    (r"\bgreen\s+tea\b", "綠茶"),
+    (r"\bwinter\s+melon\s+tea\b", "冬瓜茶"),
+    (r"\bsugarcane\b", "甘蔗"),
+    (r"\bhoney\b", "蜂蜜"),
+    (r"\btea\b", "茶"),
+)
+
+
+def _catalog_localize_text(value: Any, lang: str) -> str:
+    text = str(value or "").strip()
+    if not text or lang != "zh-TW":
+        return text
+    mapped = _CATALOG_ZH_EXACT_TRANSLATIONS.get(_normalize_catalog_en_key(text))
+    if mapped:
+        return mapped
+    localized = text
+    for pattern, replacement in _CATALOG_ZH_PATTERN_TRANSLATIONS:
+        localized = re.sub(pattern, replacement, localized, flags=re.IGNORECASE)
+    return localized
+
+
+def _catalog_localize_list(values: list[str], lang: str) -> list[str]:
+    if lang != "zh-TW":
+        return values[:]
+    localized: list[str] = []
+    for item in values:
+        text = _catalog_localize_text(item, lang)
+        if text and text not in localized:
+            localized.append(text)
+    return localized
+
+
 def _catalog_food_items(row: dict, food_name: str) -> list[str]:
     items = _to_string_list(row.get("food_items"))
     if not items:
@@ -2293,7 +2368,7 @@ def _catalog_judgement_tags(
     if not raw_tags:
         raw_tags = _to_string_list(row.get("summary_tags"))
     if raw_tags:
-        return raw_tags[:3]
+        return _catalog_localize_list(raw_tags[:3], lang)
 
     protein = max(0.0, _safe_float(macros.get("protein")) or 0.0)
     carbs = max(0.0, _safe_float(macros.get("carbs")) or 0.0)
@@ -2675,6 +2750,11 @@ def _build_food_search_item(
                 reference_used = "資料庫 + 飲料參數公式"
             else:
                 reference_used = "catalog + beverage formula"
+
+    food_items = _catalog_localize_list(food_items, use_lang)
+    suggestion = _catalog_localize_text(suggestion, use_lang)
+    dish_summary = _catalog_localize_text(dish_summary, use_lang)
+    reference_used = _catalog_localize_text(reference_used, use_lang)
 
     judgement_tags = _catalog_judgement_tags(catalog_row, macros, calorie_range, use_lang)
 
