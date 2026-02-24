@@ -294,8 +294,11 @@ def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
-    catalog_globs = args.catalog_glob or ["backend/sql/food_catalog*_draft.csv"]
-    alias_globs = args.alias_glob or ["backend/sql/food_aliases*_draft.csv"]
+    # If explicit files are provided, do not auto-append default wildcard globs.
+    # This prevents accidental bundle-wide validation when caller intends
+    # to validate a single pair (e.g. deploy workflow with selected CSV files).
+    catalog_globs = args.catalog_glob or ([] if args.catalog_file else ["backend/sql/food_catalog*_draft.csv"])
+    alias_globs = args.alias_glob or ([] if args.alias_file else ["backend/sql/food_aliases*_draft.csv"])
 
     catalog_paths = resolve_paths(catalog_globs, args.catalog_file)
     alias_paths = resolve_paths(alias_globs, args.alias_file)
