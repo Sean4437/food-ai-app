@@ -1,5 +1,8 @@
 param(
-  [string[]]$Priorities = @("1", "2")
+  [string[]]$Priorities = @("1", "2"),
+  [int]$MaxRowsPerPriority = 0,
+  [string]$OutputSuffix = "",
+  [string]$ExcludeFoodNameRegex = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -75,8 +78,8 @@ function Build-Tags([hashtable]$p) {
   if ($p.carbs -ge 75) { $tags.Add("higher carbs") }
   if ($p.fat -ge 24) { $tags.Add("higher fat") }
   if ($p.sodium -ge 1200) { $tags.Add("higher sodium") }
-  if ($p.protein -ge 28) { $tags.Add("good protein") }
-  if ($tags.Count -eq 0) { $tags.Add("balanced") }
+  if ($p.protein -lt 16) { $tags.Add("low protein") }
+  if ($tags.Count -eq 0) { $tags.Add("light") }
   return @($tags | Select-Object -Unique | Select-Object -First 3)
 }
 
@@ -373,14 +376,21 @@ foreach ($priority in $Priorities) {
     Write-Host ("skip priority={0} (no rows)" -f $priority)
     continue
   }
+  if (-not [string]::IsNullOrWhiteSpace($ExcludeFoodNameRegex)) {
+    $rows = @($rows | Where-Object { ([string]$_.food_name) -notmatch $ExcludeFoodNameRegex })
+  }
+  if ($MaxRowsPerPriority -gt 0 -and $rows.Count -gt $MaxRowsPerPriority) {
+    $rows = @($rows | Select-Object -First $MaxRowsPerPriority)
+  }
 
   $catalogRows = Build-CatalogRows $rows
   $aliasRows = Build-AliasRows $rows
 
-  $catalogCsv = "backend/sql/food_catalog_priority{0}_import_draft.csv" -f $priority
-  $aliasCsv = "backend/sql/food_aliases_priority{0}_import_draft.csv" -f $priority
-  $catalogSql = "backend/sql/food_catalog_priority{0}_import.sql" -f $priority
-  $aliasSql = "backend/sql/food_aliases_priority{0}_import.sql" -f $priority
+  $suffix = $OutputSuffix
+  $catalogCsv = "backend/sql/food_catalog_priority{0}{1}_import_draft.csv" -f $priority, $suffix
+  $aliasCsv = "backend/sql/food_aliases_priority{0}{1}_import_draft.csv" -f $priority, $suffix
+  $catalogSql = "backend/sql/food_catalog_priority{0}{1}_import.sql" -f $priority, $suffix
+  $aliasSql = "backend/sql/food_aliases_priority{0}{1}_import.sql" -f $priority, $suffix
 
   $catalogRows | Export-Csv $catalogCsv -NoTypeInformation -Encoding UTF8
   $aliasRows | Export-Csv $aliasCsv -NoTypeInformation -Encoding UTF8
