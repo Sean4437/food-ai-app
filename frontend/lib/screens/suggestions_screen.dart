@@ -177,10 +177,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     if (!mounted) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    final inputName = await _promptNameInput(t);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final inputName = await _promptNameInput(t, app, locale);
     if (!mounted) return;
     if (inputName == null || inputName.trim().isEmpty) return;
-    final locale = Localizations.localeOf(context).toLanguageTag();
     final normalizedInput = _normalizeLookupName(inputName);
     setState(() {
       _loading = true;
@@ -247,36 +247,153 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 
-  Future<String?> _promptNameInput(AppLocalizations t) async {
+  Future<String?> _promptNameInput(
+    AppLocalizations t,
+    AppState app,
+    String locale,
+  ) async {
+    final isZh = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
     final controller = TextEditingController();
+    Timer? debounce;
+    var requestToken = 0;
+    var suggestions = <String>[];
+    var isSearching = false;
+
+    Future<void> refreshSuggestions(
+      String keyword,
+      BuildContext dialogContext,
+      void Function(VoidCallback fn) setDialogState,
+    ) async {
+      final query = keyword.trim();
+      final token = ++requestToken;
+
+      if (query.isEmpty) {
+        if (!dialogContext.mounted) return;
+        setDialogState(() {
+          suggestions = const [];
+          isSearching = false;
+        });
+        return;
+      }
+
+      if (dialogContext.mounted) {
+        setDialogState(() => isSearching = true);
+      }
+
+      try {
+        final result = await app.suggestFoodNames(query, locale, limit: 24);
+        if (!dialogContext.mounted || token != requestToken) return;
+        setDialogState(() {
+          suggestions = result;
+          isSearching = false;
+        });
+      } catch (_) {
+        if (!dialogContext.mounted || token != requestToken) return;
+        setDialogState(() {
+          suggestions = const [];
+          isSearching = false;
+        });
+      }
+    }
+
     final result = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(t.suggestInstantNameSubmit),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textInputAction: TextInputAction.done,
-          decoration: InputDecoration(
-            hintText: t.suggestInstantNameHint,
-            prefixIcon: const Icon(Icons.search),
-          ),
-          onSubmitted: (value) =>
-              Navigator.of(dialogContext).pop(value.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(t.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(controller.text.trim()),
-            child: Text(t.suggestInstantNameSubmit),
-          ),
-        ],
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          final hasInput = controller.text.trim().isNotEmpty;
+          return AlertDialog(
+            title: Text(t.suggestInstantNameSubmit),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      hintText: t.suggestInstantNameHint,
+                      prefixIcon: const Icon(Icons.search),
+                    ),
+                    onChanged: (_) {
+                      debounce?.cancel();
+                      debounce = Timer(const Duration(milliseconds: 350), () {
+                        refreshSuggestions(
+                          controller.text,
+                          dialogContext,
+                          setDialogState,
+                        );
+                      });
+                    },
+                    onSubmitted: (value) =>
+                        Navigator.of(dialogContext).pop(value.trim()),
+                  ),
+                  if (isSearching) ...[
+                    const SizedBox(height: 8),
+                    const LinearProgressIndicator(minHeight: 2),
+                  ],
+                  if (hasInput) ...[
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 240),
+                      child: suggestions.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 8),
+                              child: Text(
+                                isZh
+                                    ? '目前沒有資料庫建議，你仍可提交這個名稱。'
+                                    : 'No database suggestions yet. You can still submit this name.',
+                                style: Theme.of(dialogContext)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: Colors.black54),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: suggestions.length,
+                              separatorBuilder: (_, __) => const Divider(
+                                height: 1,
+                                thickness: 0.5,
+                              ),
+                              itemBuilder: (context, index) {
+                                final suggestion = suggestions[index];
+                                return ListTile(
+                                  dense: true,
+                                  leading: const Icon(Icons.search, size: 18),
+                                  title: Text(suggestion),
+                                  onTap: () => Navigator.of(dialogContext)
+                                      .pop(suggestion),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(t.cancel),
+              ),
+              ElevatedButton(
+                onPressed: () =>
+                    Navigator.of(dialogContext).pop(controller.text.trim()),
+                child: Text(t.suggestInstantNameSubmit),
+              ),
+            ],
+          );
+        },
       ),
     );
+    debounce?.cancel();
     controller.dispose();
     final trimmed = (result ?? '').trim();
     if (trimmed.isEmpty) return null;
