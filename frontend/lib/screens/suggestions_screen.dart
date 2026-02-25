@@ -177,11 +177,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     if (!mounted) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    if (!_ensureFeatureAccess(app, AppFeature.analyze)) return;
     final inputName = await _promptNameInput(t);
     if (!mounted) return;
     if (inputName == null || inputName.trim().isEmpty) return;
     final locale = Localizations.localeOf(context).toLanguageTag();
+    final normalizedInput = _normalizeLookupName(inputName);
     setState(() {
       _loading = true;
       _error = null;
@@ -193,6 +193,17 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     });
     _startSmartProgress();
     try {
+      final candidates = await app.suggestFoodNames(
+        inputName.trim(),
+        locale,
+        limit: 24,
+      );
+      final hasExactCandidate = candidates.any(
+        (name) => _normalizeLookupName(name) == normalizedInput,
+      );
+      if (!hasExactCandidate) {
+        throw NameLookupException('catalog_not_found');
+      }
       await app.analyzeNameAndSave(
         inputName.trim(),
         locale,
@@ -230,6 +241,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         _previewBytes = null;
       });
     }
+  }
+
+  String _normalizeLookupName(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 
   Future<String?> _promptNameInput(AppLocalizations t) async {
