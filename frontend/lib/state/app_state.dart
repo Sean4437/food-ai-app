@@ -628,6 +628,12 @@ class AppState extends ChangeNotifier {
   bool get accessStatusFailed => _accessStatusFailed;
   String get accessPlan => _accessPlan;
   Set<String> get accessEntitlements => Set.unmodifiable(_backendEntitlements);
+  bool get hasPaidAccess {
+    if (_iapSubscriptionActive || mockSubscriptionActive || _whitelisted) {
+      return true;
+    }
+    return _accessPlan == 'pro' || _accessPlan == 'plus';
+  }
   int get accessGraceHours {
     final raw = _meta[_kAccessGraceHoursKey];
     final parsed = int.tryParse(raw ?? '');

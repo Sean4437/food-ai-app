@@ -693,6 +693,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isSubscribed = app.iapSubscriptionActive;
     final isMockSubscription = app.mockSubscriptionActive;
     final isWhitelisted = app.isWhitelisted;
+    final isBackendPaidPlan =
+        app.accessPlan == 'pro' || app.accessPlan == 'plus';
     final isTrialExpired = app.trialExpired;
     final trialEndAt = app.trialEndAt;
     final isZh = Localizations.localeOf(context)
@@ -710,6 +712,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } else if (isWhitelisted) {
       subscriptionStatus = isZh ? '白名單' : 'Whitelisted';
       subscriptionColor = Colors.indigo;
+    } else if (isBackendPaidPlan) {
+      subscriptionStatus = 'Subscribed (server)';
+      subscriptionColor = Colors.green;
     } else if (!isTrialExpired) {
       final dateText = _formatDateShort(trialEndAt);
       subscriptionStatus = dateText == '--'
@@ -727,7 +732,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ? (app.mockSubscriptionPlanId == kIapYearlyId
                 ? t.webTestPlanYearly
                 : t.webTestPlanMonthly)
-            : t.webTestPlanNone;
+            : isWhitelisted
+                ? 'Whitelisted'
+                : isBackendPaidPlan
+                    ? 'Paid plan'
+                    : t.webTestPlanNone;
     final genderOptions = <String, String>{
       t.genderUnspecified: 'unspecified',
       t.genderMale: 'male',

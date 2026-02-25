@@ -297,7 +297,7 @@ PLAN_FREE_ENTITLEMENTS = _parse_plan_entitlements("PLAN_FREE_ENTITLEMENTS", ())
 PLAN_TRIAL_ENTITLEMENTS = _parse_plan_entitlements("PLAN_TRIAL_ENTITLEMENTS", _AI_ENTITLEMENTS)
 PLAN_PRO_ENTITLEMENTS = _parse_plan_entitlements(
     "PLAN_PRO_ENTITLEMENTS",
-    ("ai_analyze", "ai_summary", "ai_suggest"),
+    _AI_ENTITLEMENTS,
 )
 PLAN_PLUS_ENTITLEMENTS = _parse_plan_entitlements("PLAN_PLUS_ENTITLEMENTS", _AI_ENTITLEMENTS)
 _PLAN_ENTITLEMENTS = {
@@ -5109,4 +5109,3 @@ def usage_summary(_admin: None = Depends(_require_admin)):
         "total_input_tokens": total_input,
         "total_output_tokens": total_output,
     }
-
