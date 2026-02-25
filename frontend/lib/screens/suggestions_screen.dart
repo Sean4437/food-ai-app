@@ -177,7 +177,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     if (!mounted) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    if (!_ensureFeatureAccess(app, AppFeature.suggest)) return;
+    if (!_ensureFeatureAccess(app, AppFeature.analyze)) return;
+    final inputName = await _promptNameInput(t);
+    if (!mounted) return;
+    if (inputName == null || inputName.trim().isEmpty) return;
     final locale = Localizations.localeOf(context).toLanguageTag();
     setState(() {
       _loading = true;
@@ -190,9 +193,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     });
     _startSmartProgress();
     try {
-      final advice = await app.suggestNowMealAdvice(t, locale);
+      await app.analyzeNameAndSave(
+        inputName.trim(),
+        locale,
+      );
       if (!mounted) return;
-      _instantAdvice = advice;
+      _instantAdvice = null;
       _previewBytes = null;
       _completeSmartProgress(() {
         if (!mounted) return;
@@ -200,6 +206,21 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
           _loading = false;
         });
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.logSuccess)),
+      );
+    } on NameLookupException catch (err) {
+      if (!mounted) return;
+      _stopSmartProgress();
+      final message = _nameLookupMessage(err.code);
+      setState(() {
+        _error = message;
+        _loading = false;
+        _previewBytes = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     } catch (err) {
       if (!mounted) return;
       _stopSmartProgress();
@@ -208,6 +229,69 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         _loading = false;
         _previewBytes = null;
       });
+    }
+  }
+
+  Future<String?> _promptNameInput(AppLocalizations t) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t.suggestInstantNameSubmit),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
+            hintText: t.suggestInstantNameHint,
+            prefixIcon: const Icon(Icons.search),
+          ),
+          onSubmitted: (value) =>
+              Navigator.of(dialogContext).pop(value.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(t.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(controller.text.trim()),
+            child: Text(t.suggestInstantNameSubmit),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    final trimmed = (result ?? '').trim();
+    if (trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
+  String _nameLookupMessage(String code) {
+    final isZh = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
+    switch (code) {
+      case 'catalog_not_found':
+        return isZh
+            ? '目前資料庫尚未收錄這個食物，已幫你記錄，後續會更新。'
+            : 'Not in catalog yet. We recorded this query and will add it in a future update.';
+      case 'catalog_unavailable':
+        return isZh
+            ? '資料庫暫時不可用，請稍後再試。'
+            : 'Food database is temporarily unavailable. Please try again later.';
+      case 'subscription_required':
+        return isZh
+            ? '目前資料庫尚未收錄這個食物，後續會更新。若要立即估算可升級使用 AI。'
+            : 'Not in catalog yet. We will add it in a future update. Upgrade to use AI estimate now.';
+      case 'ai_unavailable':
+        return isZh
+            ? 'AI 估算暫時不可用，請稍後再試。'
+            : 'AI estimate is temporarily unavailable. Please try again later.';
+      default:
+        return isZh ? '名稱查詢失敗。' : 'Name lookup failed.';
     }
   }
 
@@ -2019,6 +2103,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final app = AppStateScope.of(context);
+    final isZh = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
     final plateAsset = app.profile.plateAsset.isEmpty
         ? kDefaultPlateAsset
         : app.profile.plateAsset;
@@ -2273,7 +2361,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                                     style: TextStyle(
                                                         fontSize: 18)),
                                                 label: Text(
-                                                    t.suggestInstantNowEat,
+                                                    isZh
+                                                        ? '輸入名稱'
+                                                        : 'Enter name',
                                                     style: const TextStyle(
                                                         fontWeight:
                                                             FontWeight.w600)),
