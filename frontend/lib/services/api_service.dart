@@ -448,6 +448,40 @@ class ApiService {
     return _decodeJson(response) as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> verifyIosSubscription({
+    required String productId,
+    required String receiptData,
+    String? accessToken,
+  }) async {
+    final uri = Uri.parse('$baseUrl/subscription/ios/verify');
+    final payload = <String, dynamic>{
+      'product_id': productId,
+      'receipt_data': receiptData,
+    };
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        ..._authHeaders(accessToken),
+      },
+      body: json.encode(payload),
+    );
+    if (response.statusCode != 200) {
+      String code = 'unknown';
+      String message = _bodyText(response);
+      try {
+        final decoded = _decodeJson(response);
+        if (decoded is Map<String, dynamic>) {
+          code = (decoded['detail'] ?? decoded['code'] ?? code).toString();
+          message =
+              (decoded['message'] ?? decoded['detail'] ?? message).toString();
+        }
+      } catch (_) {}
+      throw ApiException(response.statusCode, code, message);
+    }
+    return _decodeJson(response) as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> chat(
     Map<String, dynamic> payload,
     String? accessToken,
