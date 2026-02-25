@@ -577,6 +577,10 @@ class AppState extends ChangeNotifier {
       _backendEntitlements
         ..clear()
         ..addAll(entitlements);
+      if (_accessPlan != 'pro' && _accessPlan != 'plus') {
+        _iapSubscriptionActive = false;
+        _meta[_kIapSubscriptionKey] = 'false';
+      }
       _meta[_kAccessCheckAtKey] = DateTime.now().toUtc().toIso8601String();
       _meta[_kAccessPlanKey] = _accessPlan;
       final orderedEntitlements = _backendEntitlements.toList()..sort();
@@ -614,7 +618,6 @@ class AppState extends ChangeNotifier {
       _trialChecked &&
       _trialExpired &&
       !mockSubscriptionActive &&
-      !_iapSubscriptionActive &&
       !_hasAnyAiEntitlementFromBackend;
 
   bool get trialChecked => _trialChecked;
@@ -629,7 +632,7 @@ class AppState extends ChangeNotifier {
   String get accessPlan => _accessPlan;
   Set<String> get accessEntitlements => Set.unmodifiable(_backendEntitlements);
   bool get hasPaidAccess {
-    if (_iapSubscriptionActive || mockSubscriptionActive || _whitelisted) {
+    if (mockSubscriptionActive || _whitelisted) {
       return true;
     }
     return _accessPlan == 'pro' || _accessPlan == 'plus';
@@ -677,7 +680,7 @@ class AppState extends ChangeNotifier {
   }
 
   bool canUseFeature(AppFeature feature) {
-    if (_iapSubscriptionActive || mockSubscriptionActive || _whitelisted) {
+    if (mockSubscriptionActive || _whitelisted) {
       return true;
     }
     return _backendEntitlements.contains(_featureEntitlement(feature));
@@ -8786,6 +8789,47 @@ class AppState extends ChangeNotifier {
     return productId == kIapMonthlyId || productId == kIapYearlyId;
   }
 
+  String _receiptDataFromPurchase(PurchaseDetails purchase) {
+    final server =
+        purchase.verificationData.serverVerificationData.trim();
+    if (server.isNotEmpty) return server;
+    return purchase.verificationData.localVerificationData.trim();
+  }
+
+  Future<bool> _verifyIosPurchaseWithBackend(PurchaseDetails purchase) async {
+    final token = _accessToken();
+    if (token == null || token.isEmpty) {
+      _iapLastError = 'Sign in required';
+      return false;
+    }
+    final receiptData = _receiptDataFromPurchase(purchase);
+    if (receiptData.isEmpty) {
+      _iapLastError = 'Missing receipt data';
+      return false;
+    }
+    try {
+      final response = await _api.verifyIosSubscription(
+        productId: purchase.productID,
+        receiptData: receiptData,
+        accessToken: token,
+      );
+      final verified = response['verified'] == true;
+      final status = (response['status'] as String?)?.trim() ?? '';
+      if (!verified && status.isNotEmpty) {
+        _iapLastError = status;
+      } else if (verified) {
+        _iapLastError = null;
+      }
+      return verified;
+    } on ApiException catch (e) {
+      _iapLastError = e.code;
+      return false;
+    } catch (e) {
+      _iapLastError = e.toString();
+      return false;
+    }
+  }
+
   void _setIapActive(bool value) {
     _iapSubscriptionActive = value;
     _meta[_kIapSubscriptionKey] = value ? 'true' : 'false';
@@ -8796,12 +8840,15 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _onPurchaseUpdated(List<PurchaseDetails> purchases) async {
-    bool active = _iapSubscriptionActive;
+    bool verifiedAny = false;
+    bool attemptedVerification = false;
     for (final purchase in purchases) {
       if (_isIapProduct(purchase.productID)) {
         if (purchase.status == PurchaseStatus.purchased ||
             purchase.status == PurchaseStatus.restored) {
-          active = true;
+          attemptedVerification = true;
+          final verified = await _verifyIosPurchaseWithBackend(purchase);
+          verifiedAny = verifiedAny || verified;
         } else if (purchase.status == PurchaseStatus.error) {
           _iapLastError = purchase.error?.message ?? 'Purchase error';
         }
@@ -8810,12 +8857,14 @@ class AppState extends ChangeNotifier {
         await _iap.completePurchase(purchase);
       }
     }
-    _iapProcessing = false;
-    if (active != _iapSubscriptionActive) {
-      _setIapActive(active);
-    } else {
-      notifyListeners();
+    if (attemptedVerification) {
+      await refreshAccessStatus();
+      _iapProcessing = false;
+      _setIapActive(verifiedAny);
+      return;
     }
+    _iapProcessing = false;
+    notifyListeners();
   }
 
   Map<String, dynamic> _profileToMap() {

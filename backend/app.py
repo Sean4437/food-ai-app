@@ -252,6 +252,21 @@ class FoodSearchMissTopResponse(BaseModel):
     days: int
     items: List[FoodSearchMissTopItem]
 
+
+class IosSubscriptionVerifyRequest(BaseModel):
+    product_id: str
+    receipt_data: str
+
+
+class IosSubscriptionVerifyResponse(BaseModel):
+    verified: bool
+    status: str
+    plan: str
+    subscription_expires_at: Optional[str] = None
+    environment: Optional[str] = None
+    access: Dict[str, Any]
+
+
 FREE_DAILY_LIMIT = int(os.getenv("FREE_DAILY_LIMIT", "1"))
 CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
 DEFAULT_LANG = os.getenv("DEFAULT_LANG", "zh-TW")
@@ -272,6 +287,14 @@ _AI_ENTITLEMENTS = (
     "ai_suggest",
 )
 _AI_ENTITLEMENT_SET = set(_AI_ENTITLEMENTS)
+IOS_VERIFY_RECEIPT_PROD_URL = "https://buy.itunes.apple.com/verifyReceipt"
+IOS_VERIFY_RECEIPT_SANDBOX_URL = "https://sandbox.itunes.apple.com/verifyReceipt"
+APP_STORE_SHARED_SECRET = os.getenv("APP_STORE_SHARED_SECRET", "").strip()
+IOS_PLAN_PRO_PRODUCT_IDS = set(_parse_csv_values(os.getenv("IOS_PLAN_PRO_PRODUCT_IDS", "")))
+_DEFAULT_IOS_PLUS_PRODUCTS = "com.foodieeye.subscription.monthly,com.foodieeye.subscription.yearly"
+IOS_PLAN_PLUS_PRODUCT_IDS = set(
+    _parse_csv_values(os.getenv("IOS_PLAN_PLUS_PRODUCT_IDS", _DEFAULT_IOS_PLUS_PRODUCTS))
+)
 
 
 def _parse_plan_entitlements(env_key: str, default: tuple[str, ...]) -> tuple[str, ...]:
@@ -2857,6 +2880,127 @@ def _normalize_plan_id(value: Any) -> Optional[str]:
     return None
 
 
+def _parse_millis_datetime(value: Any) -> Optional[datetime]:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    try:
+        millis = int(raw)
+    except Exception:
+        return None
+    if millis <= 0:
+        return None
+    try:
+        return datetime.fromtimestamp(millis / 1000.0, tz=timezone.utc)
+    except Exception:
+        return None
+
+
+def _ios_product_plan(product_id: str) -> Optional[str]:
+    pid = (product_id or "").strip()
+    if not pid:
+        return None
+    if pid in IOS_PLAN_PRO_PRODUCT_IDS:
+        return "pro"
+    if pid in IOS_PLAN_PLUS_PRODUCT_IDS:
+        return "plus"
+    return None
+
+
+def _ios_verify_status_detail(status: int) -> str:
+    mapping = {
+        0: "ok",
+        21000: "ios_receipt_bad_json",
+        21002: "ios_receipt_invalid",
+        21003: "ios_receipt_auth_failed",
+        21004: "ios_shared_secret_mismatch",
+        21005: "ios_verify_temporarily_unavailable",
+        21006: "subscription_expired",
+        21007: "ios_sandbox_receipt_on_production",
+        21008: "ios_production_receipt_on_sandbox",
+        21010: "ios_receipt_not_found",
+    }
+    if status in mapping:
+        return mapping[status]
+    return f"ios_verify_failed_{status}"
+
+
+def _post_ios_verify(url: str, payload: dict) -> dict:
+    try:
+        with httpx.Client(timeout=15) as client:
+            resp = client.post(url, headers={"Content-Type": "application/json"}, json=payload)
+    except Exception as exc:
+        logging.warning("Apple verifyReceipt request failed: %s", exc)
+        raise HTTPException(status_code=502, detail="ios_verify_unavailable")
+    if resp.status_code >= 400:
+        logging.warning("Apple verifyReceipt HTTP %s: %s", resp.status_code, resp.text[:180])
+        raise HTTPException(status_code=502, detail="ios_verify_unavailable")
+    parsed = _parse_json_response_utf8(resp)
+    if not isinstance(parsed, dict):
+        raise HTTPException(status_code=502, detail="ios_verify_invalid_response")
+    return parsed
+
+
+def _verify_ios_receipt(receipt_data: str) -> tuple[dict, str]:
+    if not APP_STORE_SHARED_SECRET:
+        raise HTTPException(status_code=503, detail="ios_verify_not_configured")
+    payload = {
+        "receipt-data": receipt_data,
+        "password": APP_STORE_SHARED_SECRET,
+        "exclude-old-transactions": True,
+    }
+    parsed = _post_ios_verify(IOS_VERIFY_RECEIPT_PROD_URL, payload)
+    status = int(parsed.get("status") or -1)
+    if status == 21007:
+        parsed = _post_ios_verify(IOS_VERIFY_RECEIPT_SANDBOX_URL, payload)
+    environment = str(parsed.get("environment") or "")
+    return parsed, environment
+
+
+def _extract_ios_subscription(receipt_payload: dict, product_id: str) -> tuple[Optional[dict], Optional[datetime]]:
+    rows: list[dict] = []
+    latest_rows = receipt_payload.get("latest_receipt_info")
+    if isinstance(latest_rows, list):
+        rows.extend([row for row in latest_rows if isinstance(row, dict)])
+    receipt = receipt_payload.get("receipt")
+    if isinstance(receipt, dict):
+        in_app = receipt.get("in_app")
+        if isinstance(in_app, list):
+            rows.extend([row for row in in_app if isinstance(row, dict)])
+    if not rows:
+        return None, None
+
+    target = (product_id or "").strip()
+    best_row: Optional[dict] = None
+    best_expires: Optional[datetime] = None
+    best_purchase: Optional[datetime] = None
+    for row in rows:
+        pid = str(row.get("product_id") or "").strip()
+        if target and pid != target:
+            continue
+        expires_at = _parse_millis_datetime(row.get("expires_date_ms"))
+        purchase_at = _parse_millis_datetime(row.get("purchase_date_ms"))
+        if best_row is None:
+            best_row = row
+            best_expires = expires_at
+            best_purchase = purchase_at
+            continue
+        if (expires_at or datetime.min.replace(tzinfo=timezone.utc)) > (
+            best_expires or datetime.min.replace(tzinfo=timezone.utc)
+        ):
+            best_row = row
+            best_expires = expires_at
+            best_purchase = purchase_at
+            continue
+        if expires_at == best_expires and (purchase_at or datetime.min.replace(tzinfo=timezone.utc)) > (
+            best_purchase or datetime.min.replace(tzinfo=timezone.utc)
+        ):
+            best_row = row
+            best_expires = expires_at
+            best_purchase = purchase_at
+    return best_row, best_expires
+
+
 def _profile_access_from_profile(user_id: str) -> dict[str, Any]:
     global _profile_plan_columns_supported
     headers = _supabase_headers()
@@ -2934,6 +3078,52 @@ def _upsert_profile_trial(user_id: str, email: str, trial_start: datetime) -> No
             logging.warning("Supabase profiles upsert failed (%s): %s", resp.status_code, resp.text)
     except Exception as exc:
         logging.warning("Supabase profiles upsert error (ignored): %s", exc)
+
+
+def _upsert_profile_subscription(
+    user_id: str,
+    email: str,
+    plan_id: str,
+    subscription_expires_at: Optional[datetime],
+) -> None:
+    global _profile_plan_columns_supported
+    headers = _supabase_headers()
+    headers["Prefer"] = "resolution=merge-duplicates"
+    payload = [{
+        "id": user_id,
+        "email": email,
+        "plan_id": plan_id,
+        "subscription_expires_at": (
+            subscription_expires_at.isoformat()
+            if isinstance(subscription_expires_at, datetime)
+            else None
+        ),
+    }]
+    url = f"{SUPABASE_URL}/rest/v1/profiles"
+    try:
+        with httpx.Client(timeout=10) as client:
+            resp = client.post(url, headers=headers, json=payload)
+    except Exception as exc:
+        logging.warning("Supabase profiles subscription upsert error (ignored): %s", exc)
+        return
+
+    if resp.status_code >= 400:
+        body = resp.text.lower()
+        missing_plan_columns = (
+            resp.status_code == 400
+            and ("plan_id" in body or "subscription_expires_at" in body)
+        )
+        if missing_plan_columns:
+            _profile_plan_columns_supported = False
+            logging.warning("Supabase profiles missing plan columns, skip subscription upsert")
+            return
+        logging.warning(
+            "Supabase profiles subscription upsert failed (%s): %s",
+            resp.status_code,
+            resp.text[:180],
+        )
+        return
+    _profile_plan_columns_supported = True
 
 
 def _ensure_profile_access(user_id: str, email: str) -> dict[str, Any]:
@@ -4946,6 +5136,80 @@ async def chat(
         logging.exception("Chat failed: %s", exc)
         raise HTTPException(status_code=502, detail="ai_failed")
 
+
+@app.post("/subscription/ios/verify", response_model=IosSubscriptionVerifyResponse)
+def verify_ios_subscription(
+    payload: IosSubscriptionVerifyRequest,
+    _auth: dict = Depends(_require_auth),
+):
+    now = datetime.now(timezone.utc)
+    product_id = payload.product_id.strip()
+    receipt_data = payload.receipt_data.strip()
+    if not product_id:
+        raise HTTPException(status_code=400, detail="missing_product_id")
+    if not receipt_data:
+        raise HTTPException(status_code=400, detail="missing_receipt_data")
+
+    requested_plan = _ios_product_plan(product_id)
+    if requested_plan is None:
+        raise HTTPException(status_code=400, detail="unsupported_ios_product")
+
+    receipt_payload, environment = _verify_ios_receipt(receipt_data)
+    status = int(receipt_payload.get("status") or -1)
+    if status not in {0, 21006}:
+        raise HTTPException(status_code=400, detail=_ios_verify_status_detail(status))
+
+    row, expires_at = _extract_ios_subscription(receipt_payload, product_id)
+    effective_plan = requested_plan
+    if row is None:
+        fallback_row, fallback_expires = _extract_ios_subscription(receipt_payload, "")
+        fallback_product_id = str((fallback_row or {}).get("product_id") or "").strip()
+        fallback_plan = _ios_product_plan(fallback_product_id)
+        if fallback_row is not None and fallback_plan is not None:
+            row = fallback_row
+            expires_at = fallback_expires
+            effective_plan = fallback_plan
+
+    verified = row is not None and isinstance(expires_at, datetime) and expires_at >= now
+    if verified:
+        plan_to_store = effective_plan
+        status_detail = "ok"
+    else:
+        plan_to_store = "free"
+        if status == 21006:
+            status_detail = "subscription_expired"
+        elif row is None:
+            status_detail = "ios_subscription_not_found"
+        else:
+            status_detail = "subscription_expired"
+
+    _upsert_profile_subscription(
+        user_id=str(_auth.get("user_id") or ""),
+        email=str(_auth.get("email") or ""),
+        plan_id=plan_to_store,
+        subscription_expires_at=expires_at,
+    )
+
+    next_auth = {
+        **_auth,
+        "plan_id": plan_to_store,
+        "subscription_expires_at": expires_at,
+    }
+    access = _build_access_status(next_auth)
+    return IosSubscriptionVerifyResponse(
+        verified=verified,
+        status=status_detail,
+        plan=str(access.get("plan") or "free"),
+        subscription_expires_at=(
+            expires_at.isoformat()
+            if isinstance(expires_at, datetime)
+            else None
+        ),
+        environment=environment or None,
+        access=access,
+    )
+
+
 @app.get("/access_status")
 def access_status(_auth: dict = Depends(_require_auth)):
     return _build_access_status(_auth)
@@ -4977,6 +5241,11 @@ def health(_admin: None = Depends(_require_admin)):
             "plan_pro_entitlements": _plan_entitlements("pro"),
             "plan_plus_entitlements": _plan_entitlements("plus"),
             "profile_plan_columns_supported": _profile_plan_columns_supported,
+        },
+        "ios_verify": {
+            "shared_secret_configured": bool(APP_STORE_SHARED_SECRET),
+            "ios_plan_pro_product_ids_count": len(IOS_PLAN_PRO_PRODUCT_IDS),
+            "ios_plan_plus_product_ids_count": len(IOS_PLAN_PLUS_PRODUCT_IDS),
         },
         "supabase_catalog_probe": _probe_supabase_catalog(),
     }
