@@ -1692,9 +1692,9 @@ class AppState extends ChangeNotifier {
     await _reportCatalogSearchMiss(
       trimmed,
       locale,
-      source: 'subscription_required',
+      source: 'catalog_not_found',
     );
-    throw NameLookupException('subscription_required');
+    throw NameLookupException('catalog_not_found');
   }
 
   Future<List<String>> suggestFoodNames(
@@ -3839,10 +3839,25 @@ class AppState extends ChangeNotifier {
     if (items.isEmpty) return null;
     final normalizedQuery = _normalizeFoodLookupText(query);
     final compactQuery = normalizedQuery.replaceAll(' ', '');
+
+    double containsCoverage(String targetCompact) {
+      if (compactQuery.isEmpty || targetCompact.isEmpty) return 0;
+      if (compactQuery.length < 2) return 0;
+      if (targetCompact.length < 2) return 0;
+      if (compactQuery.contains(targetCompact)) {
+        return targetCompact.length / compactQuery.length;
+      }
+      if (targetCompact.contains(compactQuery)) {
+        return compactQuery.length / targetCompact.length;
+      }
+      return 0;
+    }
+
     Map<String, dynamic>? bestPrefix;
     double bestPrefixScore = -1;
-    Map<String, dynamic>? bestByScore;
-    double bestScore = -1;
+    Map<String, dynamic>? bestContains;
+    double bestContainsScore = -1;
+    double bestContainsCoverage = -1;
     for (final item in items) {
       final alias = _normalizeFoodLookupText((item['alias'] as String?) ?? '');
       final foodName =
@@ -3865,22 +3880,42 @@ class AppState extends ChangeNotifier {
                   foodCompact.startsWith(compactQuery) ||
                   normalizedQuery.startsWith(foodName) ||
                   compactQuery.startsWith(foodCompact)));
-      if (!startsWith) continue;
-      if (score > bestPrefixScore) {
+      if (startsWith && score > bestPrefixScore) {
         bestPrefix = item;
         bestPrefixScore = score;
       }
-      if (score > bestScore) {
-        bestByScore = item;
-        bestScore = score;
+
+      final containsLike = (alias.isNotEmpty &&
+              (normalizedQuery.contains(alias) ||
+                  alias.contains(normalizedQuery) ||
+                  compactQuery.contains(aliasCompact) ||
+                  aliasCompact.contains(compactQuery))) ||
+          (foodName.isNotEmpty &&
+              (normalizedQuery.contains(foodName) ||
+                  foodName.contains(normalizedQuery) ||
+                  compactQuery.contains(foodCompact) ||
+                  foodCompact.contains(compactQuery)));
+      if (!containsLike) continue;
+
+      final coverage = max(
+        containsCoverage(aliasCompact),
+        containsCoverage(foodCompact),
+      );
+      if (coverage <= 0) continue;
+      if (coverage > bestContainsCoverage ||
+          (coverage == bestContainsCoverage && score > bestContainsScore)) {
+        bestContains = item;
+        bestContainsScore = score;
+        bestContainsCoverage = coverage;
       }
     }
     if (bestPrefix != null && bestPrefixScore >= 3.5) {
       return bestPrefix;
     }
-    // No prefix hit: allow a strong score-only fallback match.
-    if (bestByScore != null && bestScore >= 4.0) {
-      return bestByScore;
+    if (bestContains != null &&
+        bestContainsScore >= 5.0 &&
+        bestContainsCoverage >= 0.45) {
+      return bestContains;
     }
     return null;
   }
