@@ -70,10 +70,29 @@ class _LoginScreenState extends State<LoginScreen> {
   List<String> _filteredRememberedEmails() {
     if (_rememberedEmails.isEmpty) return const [];
     final query = _emailController.text.trim().toLowerCase();
-    if (query.isEmpty) return _rememberedEmails;
-    return _rememberedEmails
-        .where((email) => email.toLowerCase().contains(query))
+    if (query.isEmpty) return List<String>.from(_rememberedEmails);
+    final ranked = _rememberedEmails
+        .asMap()
+        .entries
+        .where((entry) => entry.value.toLowerCase().contains(query))
         .toList();
+    int score(String email) {
+      final lower = email.toLowerCase();
+      if (lower.startsWith(query)) return 0;
+      return 1;
+    }
+
+    ranked.sort((a, b) {
+      final byScore = score(a.value).compareTo(score(b.value));
+      if (byScore != 0) return byScore;
+      return a.key.compareTo(b.key);
+    });
+    return ranked.map((entry) => entry.value).toList();
+  }
+
+  void _removeRememberedEmail(AppState app, String email) {
+    app.removeRememberedAuthEmail(email);
+    _refreshRememberedEmails(app);
   }
 
   bool _isValidEmail(String value) {
@@ -404,6 +423,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final app = AppStateScope.of(context);
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final media = MediaQuery.of(context);
@@ -492,6 +512,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onChanged: (_) {
                         if (_inlineEmailError != null) {
                           _setInlineEmailError(null);
+                        } else {
+                          setState(() {});
                         }
                       },
                       decoration: InputDecoration(
@@ -521,10 +543,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             final email = emailSuggestions[index];
                             return ListTile(
                               dense: true,
+                              leading: const Icon(
+                                Icons.history,
+                                size: 18,
+                                color: Colors.black45,
+                              ),
                               title: Text(
                                 email,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(
+                                  Icons.close,
+                                  size: 18,
+                                  color: Colors.black45,
+                                ),
+                                onPressed: () =>
+                                    _removeRememberedEmail(app, email),
                               ),
                               onTap: () {
                                 _fillEmail(email);

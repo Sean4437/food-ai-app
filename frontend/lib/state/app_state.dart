@@ -55,7 +55,7 @@ const String _kChatSummaryKey = 'chat_summary';
 const String _kRecentAuthEmailsKey = 'recent_auth_emails';
 const String _kMealReminderKeyPrefix = 'last_meal_reminder';
 const int _kAccessGraceHoursDefault = 24;
-const int _kRecentAuthEmailsMaxCount = 8;
+const int _kRecentAuthEmailsMaxCount = 5;
 const String _kEntitlementAnalyze = 'ai_analyze';
 const String _kEntitlementChat = 'ai_chat';
 const String _kEntitlementSummary = 'ai_summary';
@@ -528,24 +528,49 @@ class AppState extends ChangeNotifier {
 
   List<String> get rememberedAuthEmails {
     final remembered = _decodeRememberedAuthEmails();
-    final fallback = (supabaseUserEmail ?? profile.email).trim();
-    if (!_isRememberableAuthEmail(fallback)) {
+    final currentEmail = (supabaseUserEmail ?? '').trim();
+    if (!_isRememberableAuthEmail(currentEmail)) {
       return remembered;
     }
     if (remembered
-        .any((email) => email.toLowerCase() == fallback.toLowerCase())) {
+        .any((email) => email.toLowerCase() == currentEmail.toLowerCase())) {
       return remembered;
     }
-    return [fallback, ...remembered].take(_kRecentAuthEmailsMaxCount).toList();
+    return [currentEmail, ...remembered]
+        .take(_kRecentAuthEmailsMaxCount)
+        .toList();
   }
 
   void rememberAuthEmail(String email) {
     final trimmed = email.trim();
     if (!_isRememberableAuthEmail(trimmed)) return;
     final next = _mergeRememberedAuthEmails(trimmed);
-    final encoded = json.encode(next);
-    if (_meta[_kRecentAuthEmailsKey] == encoded) return;
-    _meta[_kRecentAuthEmailsKey] = encoded;
+    _persistRememberedAuthEmails(next);
+  }
+
+  void removeRememberedAuthEmail(String email) {
+    final target = email.trim().toLowerCase();
+    if (target.isEmpty) return;
+    final next = _decodeRememberedAuthEmails()
+        .where((item) => item.toLowerCase() != target)
+        .toList();
+    _persistRememberedAuthEmails(next);
+  }
+
+  void clearRememberedAuthEmails() {
+    _persistRememberedAuthEmails(const []);
+  }
+
+  void _persistRememberedAuthEmails(List<String> emails) {
+    final normalized = emails.take(_kRecentAuthEmailsMaxCount).toList();
+    final nextRaw = normalized.isEmpty ? '' : json.encode(normalized);
+    final currentRaw = _meta[_kRecentAuthEmailsKey] ?? '';
+    if (currentRaw == nextRaw) return;
+    if (nextRaw.isEmpty) {
+      _meta.remove(_kRecentAuthEmailsKey);
+    } else {
+      _meta[_kRecentAuthEmailsKey] = nextRaw;
+    }
     notifyListeners();
     // ignore: discarded_futures
     _saveOverrides();
@@ -8896,8 +8921,7 @@ class AppState extends ChangeNotifier {
   }
 
   String _receiptDataFromPurchase(PurchaseDetails purchase) {
-    final server =
-        purchase.verificationData.serverVerificationData.trim();
+    final server = purchase.verificationData.serverVerificationData.trim();
     if (server.isNotEmpty) return server;
     return purchase.verificationData.localVerificationData.trim();
   }
