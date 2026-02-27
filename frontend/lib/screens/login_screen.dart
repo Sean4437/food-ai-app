@@ -527,47 +527,49 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     if (showEmailSuggestions) ...[
                       const SizedBox(height: 6),
-                      Container(
-                        constraints: const BoxConstraints(maxHeight: 160),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.black12),
-                        ),
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          itemCount: emailSuggestions.length,
-                          separatorBuilder: (_, __) =>
-                              const Divider(height: 1, thickness: 1),
-                          itemBuilder: (context, index) {
-                            final email = emailSuggestions[index];
-                            return ListTile(
-                              dense: true,
-                              leading: const Icon(
-                                Icons.history,
-                                size: 18,
-                                color: Colors.black45,
-                              ),
-                              title: Text(
-                                email,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(
-                                  Icons.close,
+                      TextFieldTapRegion(
+                        child: Container(
+                          constraints: const BoxConstraints(maxHeight: 160),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.black12),
+                          ),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: emailSuggestions.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1, thickness: 1),
+                            itemBuilder: (context, index) {
+                              final email = emailSuggestions[index];
+                              return ListTile(
+                                dense: true,
+                                leading: const Icon(
+                                  Icons.history,
                                   size: 18,
                                   color: Colors.black45,
                                 ),
-                                onPressed: () =>
-                                    _removeRememberedEmail(app, email),
-                              ),
-                              onTap: () {
-                                _fillEmail(email);
-                                _emailFocusNode.unfocus();
-                              },
-                            );
-                          },
+                                title: Text(
+                                  email,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    size: 18,
+                                    color: Colors.black45,
+                                  ),
+                                  onPressed: () =>
+                                      _removeRememberedEmail(app, email),
+                                ),
+                                onTap: () {
+                                  _fillEmail(email);
+                                  _emailFocusNode.unfocus();
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ],
