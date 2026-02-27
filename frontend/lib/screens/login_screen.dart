@@ -14,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
+  final _emailFocusNode = FocusNode();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   final _nicknameController = TextEditingController();
@@ -35,6 +36,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    _emailFocusNode.addListener(() {
+      if (!mounted) return;
+      setState(() {});
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final app = AppStateScope.of(context);
@@ -60,6 +65,15 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_inlineEmailError != null) {
       _setInlineEmailError(null);
     }
+  }
+
+  List<String> _filteredRememberedEmails() {
+    if (_rememberedEmails.isEmpty) return const [];
+    final query = _emailController.text.trim().toLowerCase();
+    if (query.isEmpty) return _rememberedEmails;
+    return _rememberedEmails
+        .where((email) => email.toLowerCase().contains(query))
+        .toList();
   }
 
   bool _isValidEmail(String value) {
@@ -167,6 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _emailFocusNode.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
     _nicknameController.dispose();
@@ -393,6 +408,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final theme = Theme.of(context);
     final media = MediaQuery.of(context);
     final cardWidth = (media.size.width - 32).clamp(280.0, 420.0);
+    final emailSuggestions = _filteredRememberedEmails();
+    final showEmailSuggestions =
+        _emailFocusNode.hasFocus && !_loading && emailSuggestions.isNotEmpty;
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -468,6 +486,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: _emailController,
+                      focusNode: _emailFocusNode,
                       keyboardType: TextInputType.emailAddress,
                       enabled: !_loading,
                       onChanged: (_) {
@@ -484,21 +503,36 @@ class _LoginScreenState extends State<LoginScreen> {
                         errorText: _inlineEmailError,
                       ),
                     ),
-                    if (_rememberedEmails.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _rememberedEmails.map((email) {
-                          return ActionChip(
-                            label: Text(
-                              email,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            onPressed:
-                                _loading ? null : () => _fillEmail(email),
-                          );
-                        }).toList(),
+                    if (showEmailSuggestions) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        constraints: const BoxConstraints(maxHeight: 160),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.black12),
+                        ),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: emailSuggestions.length,
+                          separatorBuilder: (_, __) =>
+                              const Divider(height: 1, thickness: 1),
+                          itemBuilder: (context, index) {
+                            final email = emailSuggestions[index];
+                            return ListTile(
+                              dense: true,
+                              title: Text(
+                                email,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              onTap: () {
+                                _fillEmail(email);
+                                _emailFocusNode.unfocus();
+                              },
+                            );
+                          },
+                        ),
                       ),
                     ],
                     const SizedBox(height: 10),
