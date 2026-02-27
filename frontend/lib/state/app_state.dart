@@ -52,8 +52,10 @@ const String _kAccessPlanKey = 'access_plan';
 const String _kAccessEntitlementsKey = 'access_entitlements';
 const String _kChatHistoryKey = 'chat_history';
 const String _kChatSummaryKey = 'chat_summary';
+const String _kRecentAuthEmailsKey = 'recent_auth_emails';
 const String _kMealReminderKeyPrefix = 'last_meal_reminder';
 const int _kAccessGraceHoursDefault = 24;
+const int _kRecentAuthEmailsMaxCount = 8;
 const String _kEntitlementAnalyze = 'ai_analyze';
 const String _kEntitlementChat = 'ai_chat';
 const String _kEntitlementSummary = 'ai_summary';
@@ -524,6 +526,72 @@ class AppState extends ChangeNotifier {
 
   String? get supabaseUserEmail => _supabase.currentUser?.email;
 
+  List<String> get rememberedAuthEmails {
+    final remembered = _decodeRememberedAuthEmails();
+    final fallback = (supabaseUserEmail ?? profile.email).trim();
+    if (!_isRememberableAuthEmail(fallback)) {
+      return remembered;
+    }
+    if (remembered
+        .any((email) => email.toLowerCase() == fallback.toLowerCase())) {
+      return remembered;
+    }
+    return [fallback, ...remembered].take(_kRecentAuthEmailsMaxCount).toList();
+  }
+
+  void rememberAuthEmail(String email) {
+    final trimmed = email.trim();
+    if (!_isRememberableAuthEmail(trimmed)) return;
+    final next = _mergeRememberedAuthEmails(trimmed);
+    final encoded = json.encode(next);
+    if (_meta[_kRecentAuthEmailsKey] == encoded) return;
+    _meta[_kRecentAuthEmailsKey] = encoded;
+    notifyListeners();
+    // ignore: discarded_futures
+    _saveOverrides();
+  }
+
+  List<String> _mergeRememberedAuthEmails(String newest) {
+    final updated = <String>[newest];
+    final newestLower = newest.toLowerCase();
+    for (final email in _decodeRememberedAuthEmails()) {
+      if (email.toLowerCase() == newestLower) continue;
+      updated.add(email);
+      if (updated.length >= _kRecentAuthEmailsMaxCount) break;
+    }
+    return updated;
+  }
+
+  List<String> _decodeRememberedAuthEmails() {
+    final raw = _meta[_kRecentAuthEmailsKey];
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      final decoded = json.decode(raw);
+      if (decoded is List) {
+        final result = <String>[];
+        final seen = <String>{};
+        for (final item in decoded) {
+          final email = item.toString().trim();
+          if (!_isRememberableAuthEmail(email)) continue;
+          final key = email.toLowerCase();
+          if (!seen.add(key)) continue;
+          result.add(email);
+          if (result.length >= _kRecentAuthEmailsMaxCount) break;
+        }
+        return result;
+      }
+    } catch (_) {}
+    return const [];
+  }
+
+  bool _isRememberableAuthEmail(String value) {
+    if (value.isEmpty) return false;
+    if (value.length > 254) return false;
+    if (value.contains(RegExp(r'\s'))) return false;
+    if (!value.contains('@') || !value.contains('.')) return false;
+    return true;
+  }
+
   String? _accessToken() {
     return _supabase.client.auth.currentSession?.accessToken;
   }
@@ -637,6 +705,7 @@ class AppState extends ChangeNotifier {
     }
     return _accessPlan == 'pro' || _accessPlan == 'plus';
   }
+
   int get accessGraceHours {
     final raw = _meta[_kAccessGraceHoursKey];
     final parsed = int.tryParse(raw ?? '');
@@ -7456,6 +7525,7 @@ class AppState extends ChangeNotifier {
     if (trimmedNickname.isNotEmpty) {
       updateField((p) => p.name = trimmedNickname);
     }
+    rememberAuthEmail(trimmedEmail);
     updateField((p) => p.email = trimmedEmail);
     _applySupabaseNickname(_supabase.currentUser);
     await refreshAccessStatus();
@@ -7467,6 +7537,7 @@ class AppState extends ChangeNotifier {
     if (trimmedEmail.isEmpty || password.isEmpty) return;
     await _supabase.client.auth
         .signInWithPassword(email: trimmedEmail, password: password);
+    rememberAuthEmail(trimmedEmail);
     updateField((p) => p.email = trimmedEmail);
     _applySupabaseNickname(_supabase.currentUser);
     await refreshAccessStatus();

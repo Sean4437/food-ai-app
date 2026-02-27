@@ -30,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _inlineNicknameError;
   String? _bannerMessage;
   bool _bannerIsError = false;
+  List<String> _rememberedEmails = const [];
 
   @override
   void initState() {
@@ -37,14 +38,28 @@ class _LoginScreenState extends State<LoginScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final app = AppStateScope.of(context);
-      final cached = (app.supabaseUserEmail ?? app.profile.email).trim();
-      if (cached.isEmpty) return;
-      if (_emailController.text.trim().isEmpty) {
-        _emailController.text = cached;
-        _emailController.selection =
-            TextSelection.fromPosition(TextPosition(offset: cached.length));
-      }
+      _refreshRememberedEmails(app, fillWhenEmpty: true);
     });
+  }
+
+  void _refreshRememberedEmails(AppState app, {bool fillWhenEmpty = false}) {
+    final remembered = app.rememberedAuthEmails;
+    if (!mounted) return;
+    setState(() => _rememberedEmails = remembered);
+    if (fillWhenEmpty &&
+        remembered.isNotEmpty &&
+        _emailController.text.trim().isEmpty) {
+      _fillEmail(remembered.first);
+    }
+  }
+
+  void _fillEmail(String email) {
+    _emailController.text = email;
+    _emailController.selection =
+        TextSelection.fromPosition(TextPosition(offset: email.length));
+    if (_inlineEmailError != null) {
+      _setInlineEmailError(null);
+    }
   }
 
   bool _isValidEmail(String value) {
@@ -66,14 +81,18 @@ class _LoginScreenState extends State<LoginScreen> {
     // Domain labels must not be empty or start/end with '-'.
     final labels = domain.split('.');
     if (labels.any((label) => label.isEmpty)) return false;
-    if (labels.any((label) => label.startsWith('-') || label.endsWith('-'))) return false;
+    if (labels.any((label) => label.startsWith('-') || label.endsWith('-'))) {
+      return false;
+    }
     return true;
   }
 
   bool _isValidPassword(String value) {
     if (value.length < 8) return false;
     if (value.contains(RegExp(r'\s'))) return false;
-    if (value.contains(RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]'))) return false;
+    if (value.contains(RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]'))) {
+      return false;
+    }
     return true;
   }
 
@@ -100,18 +119,24 @@ class _LoginScreenState extends State<LoginScreen> {
     if (lower.contains('rate limit') || lower.contains('too many')) {
       return 'rate_limited';
     }
-    if (lower.contains('expired') || lower.contains('invalid') || lower.contains('otp')) {
+    if (lower.contains('expired') ||
+        lower.contains('invalid') ||
+        lower.contains('otp')) {
       return 'link_expired';
     }
-    if (lower.contains('not found') || lower.contains('user')) return 'email_not_found';
+    if (lower.contains('not found') || lower.contains('user')) {
+      return 'email_not_found';
+    }
     return 'unknown';
   }
 
-  String _formatAuthError(Object err, AppLocalizations t, {required bool isSignUp}) {
+  String _formatAuthError(Object err, AppLocalizations t,
+      {required bool isSignUp}) {
     final text = err.toString();
     final lower = text.toLowerCase();
     if (_isNetworkError(text)) return t.authNetworkError;
-    if (lower.contains('email not confirmed') || lower.contains('confirm your email')) {
+    if (lower.contains('email not confirmed') ||
+        lower.contains('confirm your email')) {
       return t.authEmailNotVerified;
     }
     if (isSignUp) {
@@ -124,12 +149,16 @@ class _LoginScreenState extends State<LoginScreen> {
       if (lower.contains('password') && lower.contains('least')) {
         return t.authPasswordInvalid;
       }
-      if (lower.contains('already registered') || lower.contains('already exists') || lower.contains('user exists')) {
+      if (lower.contains('already registered') ||
+          lower.contains('already exists') ||
+          lower.contains('user exists')) {
         return t.authEmailExists;
       }
       return t.authSignUpFailed;
     }
-    if (lower.contains('invalid login') || lower.contains('invalid credentials') || lower.contains('invalid email or password')) {
+    if (lower.contains('invalid login') ||
+        lower.contains('invalid credentials') ||
+        lower.contains('invalid email or password')) {
       return t.authLoginInvalid;
     }
     return t.authError;
@@ -192,8 +221,10 @@ class _LoginScreenState extends State<LoginScreen> {
     _clearBanner();
     _clearInlineErrors();
     if (_lastAuthAttempt != null &&
-        DateTime.now().difference(_lastAuthAttempt!) < const Duration(seconds: 2)) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authTooManyAttempts)));
+        DateTime.now().difference(_lastAuthAttempt!) <
+            const Duration(seconds: 2)) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(t.authTooManyAttempts)));
       return;
     }
     _lastAuthAttempt = DateTime.now();
@@ -209,6 +240,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _setInlineEmailError(t.authEmailInvalid);
       return;
     }
+    app.rememberAuthEmail(email);
+    _refreshRememberedEmails(app);
     if (password.isEmpty) {
       _setInlinePasswordError(t.authPasswordRequired);
       return;
@@ -237,8 +270,10 @@ class _LoginScreenState extends State<LoginScreen> {
         await app.signInSupabase(email, password);
       }
       if (mounted) {
+        _refreshRememberedEmails(app);
         final message = _isSignUp ? t.authSignUpVerify : t.authSignInSuccess;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
         if (_isSignUp) {
           setState(() {
             _showVerifyPanel = true;
@@ -255,7 +290,8 @@ class _LoginScreenState extends State<LoginScreen> {
         } else if (_isSignUp && message == t.authEmailInvalid) {
           _setInlineEmailError(message);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(message)));
         }
         if (!_isSignUp && message == t.authEmailNotVerified) {
           setState(() {
@@ -295,11 +331,14 @@ class _LoginScreenState extends State<LoginScreen> {
       _setInlineEmailError(t.authEmailInvalid);
       return;
     }
+    app.rememberAuthEmail(email);
+    _refreshRememberedEmails(app);
     setState(() => _loading = true);
     try {
       await app.resendVerificationEmail(email);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authResendSent)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(t.authResendSent)));
       setState(() {
         _showVerifyPanel = true;
         _resendCooldown = 30;
@@ -307,7 +346,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _startResendCooldown();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.authResendFailed)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(t.authResendFailed)));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -329,6 +369,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _setInlineEmailError(t.authEmailInvalid);
       return;
     }
+    app.rememberAuthEmail(email);
+    _refreshRememberedEmails(app);
     setState(() => _loading = true);
     try {
       await app.resetSupabasePassword(email);
@@ -383,13 +425,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 6),
                     Text(
                       t.authSubtitle,
-                      style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+                      style: AppTextStyles.caption(context)
+                          .copyWith(color: Colors.black54),
                       textAlign: TextAlign.center,
                     ),
                     if (_bannerMessage != null) ...[
                       const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
                           color: _bannerIsError
                               ? const Color(0xFFFFE7E5)
@@ -433,13 +477,32 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                       decoration: InputDecoration(
                         labelText: t.authEmailLabel,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
                         errorText: _inlineEmailError,
                       ),
                     ),
+                    if (_rememberedEmails.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _rememberedEmails.map((email) {
+                          return ActionChip(
+                            label: Text(
+                              email,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            onPressed:
+                                _loading ? null : () => _fillEmail(email),
+                          );
+                        }).toList(),
+                      ),
+                    ],
                     const SizedBox(height: 10),
-                TextField(
+                    TextField(
                       controller: _passwordController,
                       obscureText: !_showPassword,
                       enabled: !_loading,
@@ -451,12 +514,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         labelText: t.authPasswordLabel,
                         helperText: _isSignUp ? t.authPasswordRule : null,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
                         errorText: _inlinePasswordError,
                         suffixIcon: IconButton(
                           icon: Text(_showPassword ? '🙈' : '👁️'),
-                          onPressed: _loading ? null : () => setState(() => _showPassword = !_showPassword),
+                          onPressed: _loading
+                              ? null
+                              : () => setState(
+                                  () => _showPassword = !_showPassword),
                         ),
                       ),
                     ),
@@ -473,11 +541,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                         decoration: InputDecoration(
                           labelText: t.authConfirmPasswordLabel,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
                           suffixIcon: IconButton(
                             icon: Text(_showConfirm ? '🙈' : '👁️'),
-                            onPressed: _loading ? null : () => setState(() => _showConfirm = !_showConfirm),
+                            onPressed: _loading
+                                ? null
+                                : () => setState(
+                                    () => _showConfirm = !_showConfirm),
                           ),
                         ),
                       ),
@@ -492,8 +565,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                         decoration: InputDecoration(
                           labelText: t.nicknameLabel,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
                           errorText: _inlineNicknameError,
                         ),
                       ),
@@ -505,7 +580,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                       child: Text(
                         _isSignUp ? t.authSignUp : t.authSignIn,
@@ -519,7 +595,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           : () {
                               setState(() => _isSignUp = !_isSignUp);
                             },
-                      child: Text(_isSignUp ? t.authToggleToSignIn : t.authToggleToSignUp),
+                      child: Text(_isSignUp
+                          ? t.authToggleToSignIn
+                          : t.authToggleToSignUp),
                     ),
                     TextButton(
                       onPressed: _loading ? null : _resetPassword,
@@ -539,22 +617,27 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             Text(
                               t.authVerifyTitle,
-                              style: AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+                              style: AppTextStyles.body(context)
+                                  .copyWith(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 6),
                             Text(
                               t.authVerifyBody(_emailController.text.trim()),
-                              style: AppTextStyles.caption(context).copyWith(color: Colors.black54, height: 1.4),
+                              style: AppTextStyles.caption(context)
+                                  .copyWith(color: Colors.black54, height: 1.4),
                             ),
                             const SizedBox(height: 8),
                             Row(
                               children: [
                                 Expanded(
                                   child: OutlinedButton(
-                                    onPressed: _loading || _resendCooldown > 0 ? null : _resendVerification,
+                                    onPressed: _loading || _resendCooldown > 0
+                                        ? null
+                                        : _resendVerification,
                                     child: Text(
                                       _resendCooldown > 0
-                                          ? t.authResendCooldown(_resendCooldown)
+                                          ? t.authResendCooldown(
+                                              _resendCooldown)
                                           : t.authResend,
                                     ),
                                   ),
