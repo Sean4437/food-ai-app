@@ -549,7 +549,7 @@ class _LogScreenState extends State<LogScreen> {
                 ),
               ),
               _squarePhoto(
-                entry.imageBytes,
+                app.displayImageBytesForEntry(entry),
                 photoWidth: 88,
                 showPlaceholder: app.isNamePlaceholderImage(entry.imageBytes),
                 fallbackImageUrl: entry.result?.catalogThumbUrl ??
@@ -1290,7 +1290,7 @@ class _LogScreenState extends State<LogScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _squarePhoto(
-                  entry.imageBytes,
+                  app.displayImageBytesForEntry(entry),
                   photoWidth: 92,
                   showPlaceholder: app.isNamePlaceholderImage(entry.imageBytes),
                   fallbackImageUrl: entry.result?.catalogThumbUrl ??

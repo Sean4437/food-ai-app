@@ -325,7 +325,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final selectedIndex =
         (_dateSelectedMeal[key] ?? 0).clamp(0, displayGroups.length - 1);
     return PlatePolygonStack(
-      images: displayGroups.map((group) => group.first.imageBytes).toList(),
+      images: displayGroups
+          .map((group) => app.displayImageBytesForEntry(group.first))
+          .toList(),
       plateAsset: plateAsset,
       selectedIndex: selectedIndex,
       onSelect: (index) => setState(() => _dateSelectedMeal[key] = index),

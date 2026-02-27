@@ -492,6 +492,7 @@ class AppState extends ChangeNotifier {
   bool _chatSending = false;
   String? _chatError;
   Uint8List? _chatAvatarBytes;
+  final Map<String, Uint8List> _nameFingerprintCache = {};
   // Meal reminders are delivered via auto chat (no UI card).
   final Map<String, Map<String, dynamic>> _deletedEntries = {};
   final Map<String, Map<String, dynamic>> _deletedCustomFoods = {};
@@ -6071,6 +6072,117 @@ class AppState extends ChangeNotifier {
       }
     }
     return true;
+  }
+
+  String entryDisplayName(MealEntry entry) {
+    final explicit = (entry.overrideFoodName ?? '').trim();
+    if (explicit.isNotEmpty) return explicit;
+    final resultName = (entry.result?.foodName ?? '').trim();
+    if (resultName.isNotEmpty) return resultName;
+    final analyzed = (entry.lastAnalyzedFoodName ?? '').trim();
+    if (analyzed.isNotEmpty) return analyzed;
+    return 'meal';
+  }
+
+  Uint8List displayImageBytesForEntry(MealEntry entry) {
+    if (entry.imageBytes.isNotEmpty && !isNamePlaceholderImage(entry.imageBytes)) {
+      return entry.imageBytes;
+    }
+    final fromHistory = _historyImageBytesForNameEntry(entry);
+    if (fromHistory != null) {
+      return fromHistory;
+    }
+    return nameFingerprintImageBytes(entryDisplayName(entry));
+  }
+
+  Uint8List? _historyImageBytesForNameEntry(MealEntry target) {
+    final targetKey = _normalizeFoodLookupText(entryDisplayName(target));
+    if (targetKey.isEmpty) return null;
+    for (final existing in entries) {
+      if (existing.id == target.id) continue;
+      if (existing.imageBytes.isEmpty || isNamePlaceholderImage(existing.imageBytes)) {
+        continue;
+      }
+      final existingKey = _normalizeFoodLookupText(entryDisplayName(existing));
+      if (existingKey != targetKey) continue;
+      return existing.imageBytes;
+    }
+    return null;
+  }
+
+  Uint8List nameFingerprintImageBytes(String foodName) {
+    final normalized = _normalizeFoodLookupText(foodName);
+    final key = normalized.isEmpty ? 'meal' : normalized;
+    final cached = _nameFingerprintCache[key];
+    if (cached != null) return cached;
+
+    final digest = sha1.convert(utf8.encode(key)).bytes;
+    const size = 240;
+    final image = img.Image(width: size, height: size);
+    final topColor = _fingerprintRgb(digest, 0);
+    final bottomColor = _fingerprintRgb(digest, 3);
+    for (var y = 0; y < size; y++) {
+      final t = y / (size - 1);
+      final r = (topColor[0] + ((bottomColor[0] - topColor[0]) * t)).round();
+      final g = (topColor[1] + ((bottomColor[1] - topColor[1]) * t)).round();
+      final b = (topColor[2] + ((bottomColor[2] - topColor[2]) * t)).round();
+      img.fillRect(
+        image,
+        x1: 0,
+        y1: y,
+        x2: size - 1,
+        y2: y,
+        color: img.ColorRgb8(r, g, b),
+      );
+    }
+
+    for (var i = 0; i < 6; i++) {
+      final token = digest[(i + 6) % digest.length];
+      final blockW = 36 + (token % 72);
+      final blockH = 28 + (digest[(i + 10) % digest.length] % 68);
+      final maxX = size - blockW - 1;
+      final maxY = size - blockH - 1;
+      final xRange = maxX >= 0 ? maxX + 1 : 1;
+      final yRange = maxY >= 0 ? maxY + 1 : 1;
+      final x = (digest[(i + 12) % digest.length] * 3) % xRange;
+      final y = (digest[(i + 14) % digest.length] * 5) % yRange;
+      final color = _fingerprintRgb(digest, i * 2 + 4);
+      img.fillRect(
+        image,
+        x1: x,
+        y1: y,
+        x2: x + blockW > size - 1 ? size - 1 : x + blockW,
+        y2: y + blockH > size - 1 ? size - 1 : y + blockH,
+        color: img.ColorRgb8(color[0], color[1], color[2]),
+      );
+    }
+
+    final stripe = _fingerprintRgb(digest, 15);
+    for (var y = 0; y < size; y += 18) {
+      img.fillRect(
+        image,
+        x1: 0,
+        y1: y,
+        x2: size - 1,
+        y2: min(size - 1, y + 3),
+        color: img.ColorRgb8(stripe[0], stripe[1], stripe[2]),
+      );
+    }
+
+    final bytes = Uint8List.fromList(img.encodePng(image, level: 3));
+    _nameFingerprintCache[key] = bytes;
+    return bytes;
+  }
+
+  List<int> _fingerprintRgb(List<int> digest, int offset) {
+    final length = digest.length;
+    final a = digest[offset % length];
+    final b = digest[(offset + 1) % length];
+    final c = digest[(offset + 2) % length];
+    final r = 64 + ((a + b) % 156);
+    final g = 64 + ((b + c) % 156);
+    final blue = 64 + ((c + a) % 156);
+    return [r, g, blue];
   }
 
   double _macroBaselineForKey(String key) {
