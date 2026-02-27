@@ -123,6 +123,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
       BuildContext context, AppState app, MealEntry entry, String plateAsset) {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final displayImageBytes = app.displayImageBytesForEntry(entry);
     return GestureDetector(
       onTap: () => _showImagePreview(context, entry),
       child: LayoutBuilder(
@@ -244,7 +245,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                   ),
                 ),
                 PlatePhoto(
-                  imageBytes: entry.imageBytes,
+                  imageBytes: displayImageBytes,
                   plateAsset: plateAsset,
                   imageUrl:
                       _catalogImageForEntry(app, entry, preferThumb: false),
@@ -262,6 +263,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
 
   Future<void> _showImagePreview(BuildContext context, MealEntry entry) async {
     final app = AppStateScope.of(context);
+    final displayImageBytes = app.displayImageBytesForEntry(entry);
     final imageUrl = _catalogImageForEntry(app, entry, preferThumb: false);
     await showDialog<void>(
       context: context,
@@ -280,9 +282,9 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                       imageUrl,
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) =>
-                          Image.memory(entry.imageBytes, fit: BoxFit.contain),
+                          Image.memory(displayImageBytes, fit: BoxFit.contain),
                     )
-                  : Image.memory(entry.imageBytes, fit: BoxFit.contain),
+                  : Image.memory(displayImageBytes, fit: BoxFit.contain),
             ),
           ),
         ),

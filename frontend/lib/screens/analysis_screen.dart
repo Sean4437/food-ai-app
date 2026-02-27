@@ -116,6 +116,8 @@ class AnalysisScreen extends StatelessWidget {
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final entry = app.latestEntryAny;
+    final displayImageBytes =
+        entry == null ? null : app.displayImageBytesForEntry(entry);
     final prefix = entry?.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
 
 
@@ -159,7 +161,7 @@ class AnalysisScreen extends StatelessWidget {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(14),
-                            child: Image.memory(entry.imageBytes, height: 200, width: double.infinity, fit: BoxFit.cover),
+                            child: Image.memory(displayImageBytes!, height: 200, width: double.infinity, fit: BoxFit.cover),
                           ),
                           const SizedBox(height: 12),
                           if (entry.loading)

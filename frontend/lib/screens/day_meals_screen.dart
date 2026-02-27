@@ -98,7 +98,9 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
         .map((entry) => _catalogImageForEntry(app, entry, preferThumb: false))
         .toList();
     return PlatePolygonStack(
-      images: displayGroup.map((entry) => entry.imageBytes).toList(),
+      images: displayGroup
+          .map((entry) => app.displayImageBytesForEntry(entry))
+          .toList(),
       plateAsset: plateAsset,
       imageUrls: imageUrls,
       selectedIndex: selectedIndex,
@@ -169,6 +171,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
         itemBuilder: (context, index) {
           final entry = items[index];
           final app = AppStateScope.of(context);
+          final displayBytes = app.displayImageBytesForEntry(entry);
           final imageUrl = _catalogImageForEntry(app, entry, preferThumb: true);
           return ClipRRect(
             borderRadius: BorderRadius.circular(10),
@@ -177,9 +180,9 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                     imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) =>
-                        Image.memory(entry.imageBytes, fit: BoxFit.cover),
+                        Image.memory(displayBytes, fit: BoxFit.cover),
                   )
-                : Image.memory(entry.imageBytes, fit: BoxFit.cover),
+                : Image.memory(displayBytes, fit: BoxFit.cover),
           );
         },
       ),

@@ -220,6 +220,7 @@ class MealDetailScreen extends StatelessWidget {
     final referenceLabel =
         referenceUsed.isEmpty ? t.referenceObjectNone : referenceUsed;
     final prefix = entry.result?.source == 'mock' ? '${t.mockPrefix} ' : '';
+    final displayImageBytes = app.displayImageBytesForEntry(entry);
     final catalogImageUrl =
         _catalogImageForEntry(app, entry, preferThumb: false);
 
@@ -300,7 +301,7 @@ class MealDetailScreen extends StatelessWidget {
                           ),
                         ),
                         PlatePhoto(
-                          imageBytes: entry.imageBytes,
+                          imageBytes: displayImageBytes,
                           plateAsset: plateAsset,
                           imageUrl: catalogImageUrl,
                           plateSize: 320,
