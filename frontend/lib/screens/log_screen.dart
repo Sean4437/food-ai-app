@@ -550,10 +550,8 @@ class _LogScreenState extends State<LogScreen> {
               ),
               _squarePhoto(
                 app.displayImageBytesForEntry(entry),
+                imageUrl: _catalogImageForEntry(app, entry, preferThumb: true),
                 photoWidth: 88,
-                showPlaceholder: app.isNamePlaceholderImage(entry.imageBytes),
-                fallbackImageUrl: entry.result?.catalogThumbUrl ??
-                    entry.result?.catalogImageUrl,
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(18),
                   bottomRight: Radius.circular(18),
@@ -1046,53 +1044,68 @@ class _LogScreenState extends State<LogScreen> {
 
   Widget _squarePhoto(
     Uint8List bytes, {
+    String? imageUrl,
     BorderRadius? borderRadius,
     double radius = 0,
     required double photoWidth,
-    bool showPlaceholder = false,
-    String? fallbackImageUrl,
   }) {
     final resolvedRadius = borderRadius ?? BorderRadius.circular(radius);
-    final imageUrl = fallbackImageUrl?.trim() ?? '';
+    final normalizedUrl = imageUrl?.trim() ?? '';
+    Widget memoryImage() {
+      if (bytes.isEmpty) {
+        return Container(
+          color: const Color(0xFFEAF2EE),
+          alignment: Alignment.center,
+          child: const Icon(Icons.image_not_supported_outlined,
+              size: 20, color: Color(0xFF7A8A84)),
+        );
+      }
+      return Image.memory(
+        bytes,
+        width: photoWidth,
+        height: photoWidth,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          color: const Color(0xFFEAF2EE),
+          alignment: Alignment.center,
+          child: const Icon(Icons.broken_image_outlined,
+              size: 20, color: Color(0xFF7A8A84)),
+        ),
+      );
+    }
+
     return SizedBox(
       width: photoWidth,
       height: photoWidth,
       child: ClipRRect(
         borderRadius: resolvedRadius,
-        child: showPlaceholder
-            ? (imageUrl.isNotEmpty
-                ? Image.network(
-                    imageUrl,
-                    width: photoWidth,
-                    height: photoWidth,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFFF0F4F2),
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.restaurant_menu_rounded,
-                        color: Color(0xFF7A9A8B),
-                        size: 26,
-                      ),
-                    ),
-                  )
-                : Container(
-                    color: const Color(0xFFF0F4F2),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.restaurant_menu_rounded,
-                      color: Color(0xFF7A9A8B),
-                      size: 26,
-                    ),
-                  ))
-            : Image.memory(
-                bytes,
+        child: normalizedUrl.isNotEmpty
+            ? Image.network(
+                normalizedUrl,
                 width: photoWidth,
                 height: photoWidth,
                 fit: BoxFit.cover,
-              ),
+                errorBuilder: (_, __, ___) => memoryImage(),
+              )
+            : memoryImage(),
       ),
     );
+  }
+
+  String? _catalogImageForEntry(
+    AppState app,
+    MealEntry entry, {
+    required bool preferThumb,
+  }) {
+    if (!app.isNamePlaceholderImage(entry.imageBytes)) {
+      return null;
+    }
+    final thumb = entry.result?.catalogThumbUrl?.trim() ?? '';
+    final full = entry.result?.catalogImageUrl?.trim() ?? '';
+    if (preferThumb && thumb.isNotEmpty) return thumb;
+    if (full.isNotEmpty) return full;
+    if (thumb.isNotEmpty) return thumb;
+    return null;
   }
 
   Widget _buildMonthHeader(BuildContext context, AppState app) {
@@ -1291,10 +1304,9 @@ class _LogScreenState extends State<LogScreen> {
               children: [
                 _squarePhoto(
                   app.displayImageBytesForEntry(entry),
+                  imageUrl:
+                      _catalogImageForEntry(app, entry, preferThumb: true),
                   photoWidth: 92,
-                  showPlaceholder: app.isNamePlaceholderImage(entry.imageBytes),
-                  fallbackImageUrl: entry.result?.catalogThumbUrl ??
-                      entry.result?.catalogImageUrl,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
                     bottomLeft: Radius.circular(16),
