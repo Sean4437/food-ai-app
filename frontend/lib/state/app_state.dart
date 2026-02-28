@@ -6293,6 +6293,48 @@ class AppState extends ChangeNotifier {
           [234, 176, 66],
           [183, 124, 34],
         ];
+      case 'egg':
+        return const [
+          [255, 244, 198],
+          [246, 215, 112],
+          [214, 170, 66],
+        ];
+      case 'tofu':
+        return const [
+          [242, 238, 225],
+          [223, 214, 190],
+          [187, 172, 140],
+        ];
+      case 'bean':
+        return const [
+          [226, 238, 212],
+          [174, 198, 149],
+          [113, 144, 92],
+        ];
+      case 'dumpling':
+        return const [
+          [247, 233, 210],
+          [226, 191, 147],
+          [182, 142, 99],
+        ];
+      case 'pasta':
+        return const [
+          [255, 220, 170],
+          [238, 156, 95],
+          [195, 103, 59],
+        ];
+      case 'pizza':
+        return const [
+          [255, 214, 179],
+          [241, 146, 103],
+          [189, 88, 65],
+        ];
+      case 'snack':
+        return const [
+          [231, 222, 252],
+          [181, 158, 227],
+          [126, 104, 184],
+        ];
       default:
         final base = _fingerprintRgb(digest, 0);
         return [
@@ -6369,6 +6411,8 @@ class AppState extends ChangeNotifier {
         return;
       case 'noodle':
       case 'soup':
+      case 'pasta':
+      case 'dumpling':
         for (var stripe = 0; stripe < 9; stripe++) {
           final baseY = 20 + stripe * 24;
           final amp = 10 + (digest[(stripe + 2) % digest.length] % 8);
@@ -6404,10 +6448,41 @@ class AppState extends ChangeNotifier {
             }
           }
         }
+        if (kind == 'pasta') {
+          for (var i = 0; i < 36; i++) {
+            final x = (digest[(i + 2) % digest.length] * 29 + i * 17) % width;
+            final y = (digest[(i + 6) % digest.length] * 19 + i * 13) % height;
+            img.fillCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 2,
+              color: img.ColorRgba8(198, 82, 58, 34),
+              antialias: true,
+            );
+          }
+        }
+        if (kind == 'dumpling') {
+          for (var i = 0; i < 28; i++) {
+            final x = (digest[(i + 4) % digest.length] * 23 + i * 11) % width;
+            final y = (digest[(i + 8) % digest.length] * 17 + i * 19) % height;
+            img.drawCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 6,
+              color: img.ColorRgba8(255, 247, 232, 24),
+              antialias: true,
+            );
+          }
+        }
         return;
       case 'rice':
       case 'salad':
       case 'fruit':
+      case 'egg':
+      case 'tofu':
+      case 'bean':
         final grainCount = 130 + (digest[3] % 40);
         for (var i = 0; i < grainCount; i++) {
           final token = digest[i % digest.length];
@@ -6455,9 +6530,65 @@ class AppState extends ChangeNotifier {
             );
           }
         }
+        if (kind == 'egg') {
+          for (var i = 0; i < 16; i++) {
+            final x = (digest[(i + 1) % digest.length] * 27 + i * 9) % width;
+            final y = (digest[(i + 3) % digest.length] * 29 + i * 7) % height;
+            img.fillCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 4,
+              color: img.ColorRgba8(255, 249, 230, 36),
+              antialias: true,
+            );
+            img.fillCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 2,
+              color: img.ColorRgba8(247, 201, 99, 34),
+              antialias: true,
+            );
+          }
+        }
+        if (kind == 'tofu') {
+          for (var y = 12; y < height; y += 28) {
+            for (var x = 12; x < width; x += 28) {
+              final alpha = 18 + ((x + y) % 16);
+              img.fillRect(
+                image,
+                x1: x,
+                y1: y,
+                x2: (x + 14).clamp(0, width - 1),
+                y2: (y + 14).clamp(0, height - 1),
+                color: img.ColorRgba8(252, 248, 238, alpha),
+                radius: 3,
+              );
+            }
+          }
+        }
+        if (kind == 'bean') {
+          for (var i = 0; i < 48; i++) {
+            final x = (digest[(i + 2) % digest.length] * 13 + i * 21) % width;
+            final y = (digest[(i + 5) % digest.length] * 31 + i * 9) % height;
+            final beanColor =
+                i.isEven ? img.ColorRgba8(133, 170, 98, 30) : img.ColorRgba8(95, 139, 72, 28);
+            img.fillCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 3,
+              color: beanColor,
+              antialias: true,
+            );
+          }
+        }
         return;
       case 'dessert':
       case 'bread':
+      case 'pizza':
+      case 'snack':
         final cx = width ~/ 2;
         final cy = height ~/ 2;
         final spiralColor = img.ColorRgba8(255, 245, 250, 52);
@@ -6502,6 +6633,57 @@ class AppState extends ChangeNotifier {
               y2: y,
               color: img.ColorRgba8(255, 240, 214, 28),
               thickness: 1.3,
+            );
+          }
+        }
+        if (kind == 'pizza') {
+          final cx = width ~/ 2;
+          final cy = height ~/ 2;
+          for (var i = 0; i < 6; i++) {
+            final angle = i * (pi / 3);
+            final x = (cx + cos(angle) * (width * 0.55)).round();
+            final y = (cy + sin(angle) * (height * 0.55)).round();
+            img.drawLine(
+              image,
+              x1: cx,
+              y1: cy,
+              x2: x.clamp(0, width - 1),
+              y2: y.clamp(0, height - 1),
+              color: img.ColorRgba8(255, 236, 196, 28),
+              thickness: 1.2,
+            );
+          }
+          for (var i = 0; i < 32; i++) {
+            final x = (digest[(i + 3) % digest.length] * 17 + i * 7) % width;
+            final y = (digest[(i + 7) % digest.length] * 11 + i * 13) % height;
+            img.fillCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 2,
+              color: img.ColorRgba8(255, 242, 217, 30),
+              antialias: true,
+            );
+          }
+        }
+        if (kind == 'snack') {
+          for (var i = 0; i < 56; i++) {
+            final x = (digest[(i + 1) % digest.length] * 29 + i * 5) % width;
+            final y = (digest[(i + 4) % digest.length] * 23 + i * 11) % height;
+            final tone = i % 3;
+            final color = tone == 0
+                ? img.ColorRgba8(255, 242, 179, 30)
+                : tone == 1
+                    ? img.ColorRgba8(232, 250, 233, 28)
+                    : img.ColorRgba8(239, 233, 255, 30);
+            img.fillRect(
+              image,
+              x1: x.clamp(0, width - 1),
+              y1: y.clamp(0, height - 1),
+              x2: (x + 3).clamp(0, width - 1),
+              y2: (y + 3).clamp(0, height - 1),
+              color: color,
+              radius: 1,
             );
           }
         }
@@ -6643,6 +6825,101 @@ class AppState extends ChangeNotifier {
       '關東煮',
     ])) {
       return 'soup';
+    }
+    if (_containsAnyKeyword(source, const [
+      'egg',
+      'omelette',
+      'scrambled',
+      'fried egg',
+      'boiled egg',
+      'poached egg',
+      '蛋餅',
+      '荷包蛋',
+      '茶葉蛋',
+      '歐姆蛋',
+      '蒸蛋',
+      '炒蛋',
+      '水煮蛋',
+      '雞蛋',
+    ])) {
+      return 'egg';
+    }
+    if (_containsAnyKeyword(source, const [
+      'tofu',
+      '豆腐',
+      '豆干',
+      '豆皮',
+      '百頁',
+      '凍豆腐',
+      '嫩豆腐',
+      '板豆腐',
+    ])) {
+      return 'tofu';
+    }
+    if (_containsAnyKeyword(source, const [
+      'bean',
+      'lentil',
+      'chickpea',
+      'edamame',
+      'black bean',
+      'kidney bean',
+      '紅豆',
+      '綠豆',
+      '黑豆',
+      '毛豆',
+      '鷹嘴豆',
+      '芸豆',
+    ])) {
+      return 'bean';
+    }
+    if (_containsAnyKeyword(source, const [
+      'dumpling',
+      'gyoza',
+      'wonton',
+      'momo',
+      '餃',
+      '鍋貼',
+      '餛飩',
+      '燒賣',
+      '小籠包',
+      '湯包',
+      '包子',
+    ])) {
+      return 'dumpling';
+    }
+    if (_containsAnyKeyword(source, const [
+      'pasta',
+      'spaghetti',
+      'macaroni',
+      'penne',
+      'fusilli',
+      'lasagna',
+      '義大利麵',
+      '通心粉',
+      '千層麵',
+      '筆管麵',
+      '螺旋麵',
+    ])) {
+      return 'pasta';
+    }
+    if (_containsAnyKeyword(source, const [
+      'pizza',
+      '披薩',
+      '薄餅',
+    ])) {
+      return 'pizza';
+    }
+    if (_containsAnyKeyword(source, const [
+      'snack',
+      '小吃',
+      '點心',
+      '零食',
+      '夜市',
+      '餅乾',
+      '洋芋片',
+      '仙貝',
+    ])) {
+      return 'snack';
     }
     if (_containsAnyKeyword(source, const [
       'chicken',
@@ -6860,13 +7137,20 @@ class AppState extends ChangeNotifier {
         return 'drink';
       case 'noodle':
       case 'soup':
+      case 'pasta':
+      case 'dumpling':
         return 'noodle';
       case 'rice':
       case 'salad':
+      case 'egg':
+      case 'tofu':
+      case 'bean':
         return 'rice';
       case 'dessert':
       case 'bread':
       case 'fruit':
+      case 'pizza':
+      case 'snack':
         return 'dessert';
       default:
         return 'meal';
