@@ -6119,71 +6119,36 @@ class AppState extends ChangeNotifier {
     final digest = sha1.convert(utf8.encode(key)).bytes;
     const size = 240;
     final image = img.Image(width: size, height: size);
-    final ceramicLight = _fingerprintCeramicRgb(digest, 0);
-    final ceramicMid = _fingerprintCeramicRgb(digest, 4);
-    final ceramicDark = _fingerprintCeramicRgb(digest, 8);
-    final badgeColor = _fingerprintRgb(digest, 12);
     final iconKind = _fingerprintIconKind(foodName);
+    final palette = _fingerprintBackdropPalette(iconKind, digest);
+    final backdropLight = palette[0];
+    final backdropMid = palette[1];
+    final backdropDark = palette[2];
+    final badgeColor = _blendRgb(_fingerprintRgb(digest, 12), backdropMid, 0.35);
 
-    // Ceramic plate cross-section texture.
-    final center = size / 2;
-    final maxDist = sqrt(center * center + center * center);
-    final ringCount = 9 + (digest[4] % 4);
-    final ringPhase = (digest[5] / 255) * pi * 2;
+    // Shared gradient base.
     for (var y = 0; y < size; y++) {
-      for (var x = 0; x < size; x++) {
-        final dx = x - center;
-        final dy = y - center;
-        final d = sqrt(dx * dx + dy * dy);
-        final radial = (d / maxDist).clamp(0.0, 1.0);
-
-        final ringWave = sin((radial * ringCount * pi) + ringPhase);
-        final grain = (((x * 19 + y * 37 + digest[(x + y) % digest.length]) % 29) /
-                28.0) -
-            0.5;
-
-        final glaze = (0.82 - radial * 0.55 + ringWave * 0.055 + grain * 0.045)
-            .clamp(0.0, 1.0);
-
-        final base = _blendRgb(ceramicDark, ceramicMid, glaze);
-        final rgb = _blendRgb(base, ceramicLight, (1.0 - radial) * 0.42);
-        image.setPixelRgb(x, y, rgb[0], rgb[1], rgb[2]);
-      }
-    }
-
-    // Subtle plate grooves.
-    for (var i = 0; i < 5; i++) {
-      final ringRadius = 46 + i * 22 + (digest[(i + 9) % digest.length] % 7);
-      final ringAlpha = 22 + (digest[(i + 11) % digest.length] % 16);
-      for (var t = 0; t < 2; t++) {
-        img.drawCircle(
-          image,
-          x: size ~/ 2,
-          y: size ~/ 2,
-          radius: ringRadius + t,
-          color: img.ColorRgba8(245, 246, 247, ringAlpha),
-          antialias: true,
-        );
-      }
-    }
-
-    // Tiny glaze speckles.
-    final speckleCount = 70 + (digest[14] % 40);
-    for (var i = 0; i < speckleCount; i++) {
-      final seed = digest[i % digest.length];
-      final px = ((seed * 13 + i * 29) % (size - 20)) + 10;
-      final py = ((seed * 31 + i * 17) % (size - 20)) + 10;
-      final radius = 1 + (digest[(i + 6) % digest.length] % 2);
-      final alpha = 18 + (digest[(i + 8) % digest.length] % 24);
-      img.fillCircle(
+      final t = y / (size - 1);
+      final base = _blendRgb(backdropLight, backdropDark, t);
+      final row = _blendRgb(base, backdropMid, 0.18);
+      img.fillRect(
         image,
-        x: px,
-        y: py,
-        radius: radius,
-        color: img.ColorRgba8(255, 255, 255, alpha),
-        antialias: true,
+        x1: 0,
+        y1: y,
+        x2: size - 1,
+        y2: y,
+        color: img.ColorRgb8(row[0], row[1], row[2]),
       );
     }
+
+    _drawFingerprintCategoryBackdrop(
+      image,
+      iconKind,
+      digest,
+      light: backdropLight,
+      mid: backdropMid,
+      dark: backdropDark,
+    );
 
     // Center badge.
     img.fillCircle(
@@ -6234,23 +6199,195 @@ class AppState extends ChangeNotifier {
     return [r, g, blue];
   }
 
-  List<int> _fingerprintCeramicRgb(List<int> digest, int offset) {
-    final raw = _fingerprintRgb(digest, offset);
-    final mean = ((raw[0] + raw[1] + raw[2]) / 3).round();
-    final warm = 8 + (digest[(offset + 3) % digest.length] % 12);
-    final cool = 4 + (digest[(offset + 4) % digest.length] % 10);
-    final r = (mean + warm).clamp(112, 214);
-    final g = (mean + warm - cool).clamp(108, 208);
-    final b = (mean - cool).clamp(104, 198);
-    return [r, g, b];
-  }
-
   List<int> _blendRgb(List<int> a, List<int> b, double t) {
     final ratio = t.clamp(0.0, 1.0);
     final r = (a[0] + (b[0] - a[0]) * ratio).round();
     final g = (a[1] + (b[1] - a[1]) * ratio).round();
     final blue = (a[2] + (b[2] - a[2]) * ratio).round();
     return [r, g, blue];
+  }
+
+  List<List<int>> _fingerprintBackdropPalette(String kind, List<int> digest) {
+    switch (kind) {
+      case 'drink':
+        return const [
+          [180, 231, 241],
+          [123, 197, 220],
+          [74, 151, 178],
+        ];
+      case 'noodle':
+        return const [
+          [246, 228, 186],
+          [230, 191, 118],
+          [185, 137, 77],
+        ];
+      case 'rice':
+        return const [
+          [237, 244, 224],
+          [207, 223, 178],
+          [146, 168, 120],
+        ];
+      case 'dessert':
+        return const [
+          [251, 222, 234],
+          [240, 173, 203],
+          [198, 116, 154],
+        ];
+      default:
+        final base = _fingerprintRgb(digest, 0);
+        return [
+          _blendRgb(base, const [236, 240, 228], 0.6),
+          _blendRgb(base, const [174, 190, 156], 0.5),
+          _blendRgb(base, const [104, 122, 90], 0.45),
+        ];
+    }
+  }
+
+  void _drawFingerprintCategoryBackdrop(
+    img.Image image,
+    String kind,
+    List<int> digest, {
+    required List<int> light,
+    required List<int> mid,
+    required List<int> dark,
+  }) {
+    final width = image.width;
+    final height = image.height;
+
+    switch (kind) {
+      case 'drink':
+        final bubbleCount = 64 + (digest[1] % 26);
+        for (var i = 0; i < bubbleCount; i++) {
+          final token = digest[i % digest.length];
+          final x = (token * 17 + i * 19) % width;
+          final y = (token * 29 + i * 23) % height;
+          final radius = 2 + (digest[(i + 3) % digest.length] % 6);
+          final alpha = 24 + (digest[(i + 5) % digest.length] % 30);
+          img.fillCircle(
+            image,
+            x: x,
+            y: y,
+            radius: radius,
+            color: img.ColorRgba8(255, 255, 255, alpha),
+            antialias: true,
+          );
+        }
+        for (var stripe = 0; stripe < 6; stripe++) {
+          final baseY = 28 + stripe * 34;
+          final amp = 7 + (digest[(stripe + 7) % digest.length] % 6);
+          final freq = 0.05 + ((digest[(stripe + 9) % digest.length] % 6) * 0.01);
+          for (var x = 1; x < width; x++) {
+            final y1 = (baseY + sin((x - 1) * freq) * amp).round();
+            final y2 = (baseY + sin(x * freq) * amp).round();
+            img.drawLine(
+              image,
+              x1: x - 1,
+              y1: y1.clamp(0, height - 1),
+              x2: x,
+              y2: y2.clamp(0, height - 1),
+              color: img.ColorRgba8(255, 255, 255, 34),
+              thickness: 1.2,
+            );
+          }
+        }
+        return;
+      case 'noodle':
+        for (var stripe = 0; stripe < 9; stripe++) {
+          final baseY = 20 + stripe * 24;
+          final amp = 10 + (digest[(stripe + 2) % digest.length] % 8);
+          final freq = 0.07 + ((digest[(stripe + 6) % digest.length] % 4) * 0.01);
+          final alpha = 35 + (digest[(stripe + 10) % digest.length] % 24);
+          for (var x = 1; x < width; x++) {
+            final y1 = (baseY + sin((x - 1) * freq + stripe * 0.7) * amp).round();
+            final y2 = (baseY + sin(x * freq + stripe * 0.7) * amp).round();
+            img.drawLine(
+              image,
+              x1: x - 1,
+              y1: y1.clamp(0, height - 1),
+              x2: x,
+              y2: y2.clamp(0, height - 1),
+              color: img.ColorRgba8(255, 246, 220, alpha),
+              thickness: 1.6,
+            );
+          }
+        }
+        return;
+      case 'rice':
+        final grainCount = 130 + (digest[3] % 40);
+        for (var i = 0; i < grainCount; i++) {
+          final token = digest[i % digest.length];
+          final x = (token * 31 + i * 11) % width;
+          final y = (token * 17 + i * 27) % height;
+          final rx = 1 + (digest[(i + 4) % digest.length] % 2);
+          final ry = 2 + (digest[(i + 7) % digest.length] % 3);
+          final alpha = 18 + (digest[(i + 8) % digest.length] % 22);
+          img.fillRect(
+            image,
+            x1: (x - rx).clamp(0, width - 1),
+            y1: (y - ry).clamp(0, height - 1),
+            x2: (x + rx).clamp(0, width - 1),
+            y2: (y + ry).clamp(0, height - 1),
+            color: img.ColorRgba8(249, 252, 241, alpha),
+            radius: 2,
+          );
+        }
+        return;
+      case 'dessert':
+        final cx = width ~/ 2;
+        final cy = height ~/ 2;
+        final spiralColor = img.ColorRgba8(255, 245, 250, 52);
+        var prevX = cx;
+        var prevY = cy;
+        for (var step = 1; step <= 260; step++) {
+          final t = step / 16.0;
+          final r = t * (0.9 + (digest[4] % 3) * 0.15);
+          final x = (cx + cos(t) * r * 6.2).round();
+          final y = (cy + sin(t) * r * 4.8).round();
+          img.drawLine(
+            image,
+            x1: prevX.clamp(0, width - 1),
+            y1: prevY.clamp(0, height - 1),
+            x2: x.clamp(0, width - 1),
+            y2: y.clamp(0, height - 1),
+            color: spiralColor,
+            thickness: 1.4,
+          );
+          prevX = x;
+          prevY = y;
+        }
+        for (var i = 0; i < 42; i++) {
+          final x = (digest[(i + 1) % digest.length] * 13 + i * 7) % width;
+          final y = (digest[(i + 2) % digest.length] * 23 + i * 5) % height;
+          img.fillCircle(
+            image,
+            x: x,
+            y: y,
+            radius: 2,
+            color: img.ColorRgba8(255, 255, 255, 28),
+            antialias: true,
+          );
+        }
+        return;
+      default:
+        final stripeColor = _blendRgb(light, dark, 0.45);
+        for (var offset = -height; offset < width; offset += 20) {
+          img.drawLine(
+            image,
+            x1: offset,
+            y1: 0,
+            x2: offset + height,
+            y2: height - 1,
+            color: img.ColorRgba8(
+              stripeColor[0],
+              stripeColor[1],
+              stripeColor[2],
+              24,
+            ),
+            thickness: 1.1,
+          );
+        }
+        return;
+    }
   }
 
   String _fingerprintIconKind(String foodName) {
