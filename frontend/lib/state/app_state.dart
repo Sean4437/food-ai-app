@@ -6215,11 +6215,29 @@ class AppState extends ChangeNotifier {
           [123, 197, 220],
           [74, 151, 178],
         ];
+      case 'coffee':
+        return const [
+          [232, 210, 185],
+          [193, 146, 98],
+          [112, 74, 45],
+        ];
+      case 'dairy':
+        return const [
+          [242, 246, 250],
+          [197, 216, 232],
+          [129, 160, 189],
+        ];
       case 'noodle':
         return const [
           [246, 228, 186],
           [230, 191, 118],
           [185, 137, 77],
+        ];
+      case 'soup':
+        return const [
+          [255, 225, 189],
+          [238, 160, 96],
+          [191, 106, 60],
         ];
       case 'rice':
         return const [
@@ -6227,11 +6245,53 @@ class AppState extends ChangeNotifier {
           [207, 223, 178],
           [146, 168, 120],
         ];
+      case 'salad':
+        return const [
+          [218, 244, 213],
+          [154, 206, 136],
+          [94, 142, 78],
+        ];
+      case 'fruit':
+        return const [
+          [255, 233, 194],
+          [245, 169, 108],
+          [216, 107, 86],
+        ];
       case 'dessert':
         return const [
           [251, 222, 234],
           [240, 173, 203],
           [198, 116, 154],
+        ];
+      case 'bread':
+        return const [
+          [248, 224, 186],
+          [222, 172, 109],
+          [169, 121, 72],
+        ];
+      case 'chicken':
+        return const [
+          [255, 226, 161],
+          [234, 178, 86],
+          [188, 131, 55],
+        ];
+      case 'meat':
+        return const [
+          [241, 196, 195],
+          [201, 124, 126],
+          [141, 78, 84],
+        ];
+      case 'seafood':
+        return const [
+          [205, 235, 240],
+          [122, 187, 201],
+          [66, 133, 153],
+        ];
+      case 'fried':
+        return const [
+          [252, 226, 144],
+          [234, 176, 66],
+          [183, 124, 34],
         ];
       default:
         final base = _fingerprintRgb(digest, 0);
@@ -6256,6 +6316,8 @@ class AppState extends ChangeNotifier {
 
     switch (kind) {
       case 'drink':
+      case 'coffee':
+      case 'dairy':
         final bubbleCount = 64 + (digest[1] % 26);
         for (var i = 0; i < bubbleCount; i++) {
           final token = digest[i % digest.length];
@@ -6290,8 +6352,23 @@ class AppState extends ChangeNotifier {
             );
           }
         }
+        if (kind == 'coffee') {
+          for (var i = 0; i < 24; i++) {
+            final x = (digest[(i + 2) % digest.length] * 19 + i * 13) % width;
+            final y = (digest[(i + 5) % digest.length] * 11 + i * 17) % height;
+            img.fillCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 3,
+              color: img.ColorRgba8(95, 64, 43, 36),
+              antialias: true,
+            );
+          }
+        }
         return;
       case 'noodle':
+      case 'soup':
         for (var stripe = 0; stripe < 9; stripe++) {
           final baseY = 20 + stripe * 24;
           final amp = 10 + (digest[(stripe + 2) % digest.length] % 8);
@@ -6311,8 +6388,26 @@ class AppState extends ChangeNotifier {
             );
           }
         }
+        if (kind == 'soup') {
+          for (var i = 0; i < 4; i++) {
+            final baseX = 40 + i * 48 + (digest[(i + 1) % digest.length] % 16);
+            for (var y = 26; y < 120; y++) {
+              final x = (baseX + sin(y * 0.11 + i) * 6).round();
+              image.setPixelRgba(
+                x.clamp(0, width - 1),
+                y,
+                255,
+                246,
+                230,
+                48,
+              );
+            }
+          }
+        }
         return;
       case 'rice':
+      case 'salad':
+      case 'fruit':
         final grainCount = 130 + (digest[3] % 40);
         for (var i = 0; i < grainCount; i++) {
           final token = digest[i % digest.length];
@@ -6331,8 +6426,38 @@ class AppState extends ChangeNotifier {
             radius: 2,
           );
         }
+        if (kind == 'salad') {
+          for (var i = 0; i < 36; i++) {
+            final x = (digest[(i + 1) % digest.length] * 23 + i * 13) % width;
+            final y = (digest[(i + 3) % digest.length] * 17 + i * 29) % height;
+            final leaf = _blendRgb(light, dark, 0.55);
+            img.fillCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 4,
+              color: img.ColorRgba8(leaf[0], leaf[1], leaf[2], 28),
+              antialias: true,
+            );
+          }
+        }
+        if (kind == 'fruit') {
+          for (var i = 0; i < 26; i++) {
+            final x = (digest[(i + 2) % digest.length] * 27 + i * 9) % width;
+            final y = (digest[(i + 4) % digest.length] * 31 + i * 11) % height;
+            img.fillCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 3,
+              color: img.ColorRgba8(255, 246, 230, 32),
+              antialias: true,
+            );
+          }
+        }
         return;
       case 'dessert':
+      case 'bread':
         final cx = width ~/ 2;
         final cy = height ~/ 2;
         final spiralColor = img.ColorRgba8(255, 245, 250, 52);
@@ -6367,6 +6492,81 @@ class AppState extends ChangeNotifier {
             antialias: true,
           );
         }
+        if (kind == 'bread') {
+          for (var y = 10; y < height; y += 22) {
+            img.drawLine(
+              image,
+              x1: 0,
+              y1: y,
+              x2: width - 1,
+              y2: y,
+              color: img.ColorRgba8(255, 240, 214, 28),
+              thickness: 1.3,
+            );
+          }
+        }
+        return;
+      case 'seafood':
+        for (var stripe = 0; stripe < 7; stripe++) {
+          final baseY = 22 + stripe * 30;
+          final amp = 7 + (digest[(stripe + 5) % digest.length] % 5);
+          final freq = 0.06 + ((digest[(stripe + 8) % digest.length] % 5) * 0.01);
+          for (var x = 1; x < width; x++) {
+            final y1 = (baseY + sin((x - 1) * freq) * amp).round();
+            final y2 = (baseY + sin(x * freq) * amp).round();
+            img.drawLine(
+              image,
+              x1: x - 1,
+              y1: y1.clamp(0, height - 1),
+              x2: x,
+              y2: y2.clamp(0, height - 1),
+              color: img.ColorRgba8(232, 248, 255, 30),
+              thickness: 1.2,
+            );
+          }
+        }
+        for (var i = 0; i < 46; i++) {
+          final x = (digest[(i + 1) % digest.length] * 17 + i * 7) % width;
+          final y = (digest[(i + 2) % digest.length] * 21 + i * 9) % height;
+          img.fillCircle(
+            image,
+            x: x,
+            y: y,
+            radius: 2,
+            color: img.ColorRgba8(255, 255, 255, 30),
+            antialias: true,
+          );
+        }
+        return;
+      case 'chicken':
+      case 'meat':
+      case 'fried':
+        final grillColor = kind == 'meat'
+            ? img.ColorRgba8(120, 58, 64, 32)
+            : img.ColorRgba8(125, 98, 42, 30);
+        for (var offset = -height; offset < width; offset += 18) {
+          img.drawLine(
+            image,
+            x1: offset,
+            y1: 0,
+            x2: offset + height,
+            y2: height - 1,
+            color: grillColor,
+            thickness: 1.4,
+          );
+        }
+        for (var i = 0; i < 30; i++) {
+          final x = (digest[(i + 1) % digest.length] * 13 + i * 19) % width;
+          final y = (digest[(i + 3) % digest.length] * 11 + i * 23) % height;
+          img.fillCircle(
+            image,
+            x: x,
+            y: y,
+            radius: 2 + (digest[(i + 5) % digest.length] % 2),
+            color: img.ColorRgba8(255, 243, 213, 20),
+            antialias: true,
+          );
+        }
         return;
       default:
         final stripeColor = _blendRgb(light, dark, 0.45);
@@ -6393,6 +6593,180 @@ class AppState extends ChangeNotifier {
   String _fingerprintIconKind(String foodName) {
     final source =
         '${foodName.toLowerCase()} ${_normalizeFoodLookupText(foodName)}';
+    if (_containsAnyKeyword(source, const [
+      'coffee',
+      'americano',
+      'latte',
+      'cappuccino',
+      'mocha',
+      'espresso',
+      '瑪奇朵',
+      '拿鐵',
+      '咖啡',
+      '美式',
+      '卡布奇諾',
+      '摩卡',
+      '濃縮',
+    ])) {
+      return 'coffee';
+    }
+    if (_containsAnyKeyword(source, const [
+      'milk',
+      'soy',
+      'almond milk',
+      'oat milk',
+      'yogurt',
+      'yakult',
+      '優酪',
+      '優格',
+      '牛奶',
+      '鮮奶',
+      '豆漿',
+      '豆奶',
+      '燕麥奶',
+      '乳酸',
+    ])) {
+      return 'dairy';
+    }
+    if (_containsAnyKeyword(source, const [
+      'soup',
+      'broth',
+      'hotpot',
+      'hot pot',
+      '湯',
+      '鍋',
+      '火鍋',
+      '羹',
+      '味噌湯',
+      '玉米濃湯',
+      '排骨湯',
+      '關東煮',
+    ])) {
+      return 'soup';
+    }
+    if (_containsAnyKeyword(source, const [
+      'chicken',
+      '雞',
+      '雞胸',
+      '雞腿',
+      '鹽酥雞',
+      '唐揚',
+      '照燒雞',
+      '炸雞',
+    ])) {
+      return 'chicken';
+    }
+    if (_containsAnyKeyword(source, const [
+      'beef',
+      'pork',
+      'lamb',
+      'steak',
+      '牛',
+      '豬',
+      '羊',
+      '排骨',
+      '牛排',
+      '叉燒',
+      '滷肉',
+      '肉燥',
+    ])) {
+      return 'meat';
+    }
+    if (_containsAnyKeyword(source, const [
+      'fish',
+      'salmon',
+      'tuna',
+      'shrimp',
+      'prawn',
+      'crab',
+      'oyster',
+      'clam',
+      'squid',
+      'octopus',
+      'seafood',
+      '海鮮',
+      '魚',
+      '鮭魚',
+      '蝦',
+      '蟹',
+      '蚵',
+      '蛤',
+      '花枝',
+      '章魚',
+    ])) {
+      return 'seafood';
+    }
+    if (_containsAnyKeyword(source, const [
+      'salad',
+      'veggie',
+      'vegetable',
+      '蔬',
+      '青菜',
+      '沙拉',
+      '生菜',
+      '凱薩',
+      '田園',
+      '菠菜',
+      '花椰菜',
+      '胡蘿蔔',
+    ])) {
+      return 'salad';
+    }
+    if (_containsAnyKeyword(source, const [
+      'fried',
+      '炸',
+      '煎',
+      '薯條',
+      '鹽酥',
+      '天婦羅',
+      '雞排',
+      '可樂餅',
+      '炸物',
+    ])) {
+      return 'fried';
+    }
+    if (_containsAnyKeyword(source, const [
+      'bread',
+      'toast',
+      'sandwich',
+      'burger',
+      'bagel',
+      'croissant',
+      '麵包',
+      '吐司',
+      '漢堡',
+      '可頌',
+      '貝果',
+      '三明治',
+      '饅頭',
+    ])) {
+      return 'bread';
+    }
+    if (_containsAnyKeyword(source, const [
+      'fruit',
+      'banana',
+      'apple',
+      'orange',
+      'grape',
+      'berry',
+      'kiwi',
+      'mango',
+      'papaya',
+      'watermelon',
+      '水果',
+      '香蕉',
+      '蘋果',
+      '橘',
+      '葡萄',
+      '莓',
+      '奇異果',
+      '芒果',
+      '木瓜',
+      '西瓜',
+      '鳳梨',
+    ])) {
+      return 'fruit';
+    }
     if (_containsAnyKeyword(source, const [
       '奶茶',
       '紅茶',
@@ -6478,6 +6852,27 @@ class AppState extends ChangeNotifier {
     return false;
   }
 
+  String _fingerprintIconShapeKind(String kind) {
+    switch (kind) {
+      case 'drink':
+      case 'coffee':
+      case 'dairy':
+        return 'drink';
+      case 'noodle':
+      case 'soup':
+        return 'noodle';
+      case 'rice':
+      case 'salad':
+        return 'rice';
+      case 'dessert':
+      case 'bread':
+      case 'fruit':
+        return 'dessert';
+      default:
+        return 'meal';
+    }
+  }
+
   void _drawFingerprintIcon(
     img.Image image,
     String kind, {
@@ -6492,8 +6887,9 @@ class AppState extends ChangeNotifier {
     int y(num unit) => (cy + unit * scale).round();
     int r(num unit) => max(1, (unit * scale).round());
     num stroke(num unit) => max(1.0, unit * scale);
+    final shapeKind = _fingerprintIconShapeKind(kind);
 
-    switch (kind) {
+    switch (shapeKind) {
       case 'drink':
         img.fillRect(
           image,
