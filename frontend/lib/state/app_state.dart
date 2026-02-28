@@ -6123,7 +6123,7 @@ class AppState extends ChangeNotifier {
     final bottomColor = _fingerprintRgb(digest, 3);
     final accentColor = _fingerprintRgb(digest, 8);
     final badgeColor = _fingerprintRgb(digest, 12);
-    final monogram = _fingerprintMonogram(foodName, digest);
+    final iconKind = _fingerprintIconKind(foodName);
 
     // Base gradient background.
     for (var y = 0; y < size; y++) {
@@ -6177,14 +6177,18 @@ class AppState extends ChangeNotifier {
     );
 
     final luminance = _rgbLuminance(badgeColor);
-    final textColor = luminance >= 145
+    final iconColor = luminance >= 145
         ? img.ColorRgb8(34, 42, 48)
         : img.ColorRgb8(246, 250, 252);
-    img.drawString(
+    final carveColor = img.ColorRgb8(badgeColor[0], badgeColor[1], badgeColor[2]);
+    _drawFingerprintIcon(
       image,
-      monogram,
-      font: img.arial48,
-      color: textColor,
+      iconKind,
+      cx: size ~/ 2,
+      cy: size ~/ 2,
+      size: 118,
+      iconColor: iconColor,
+      carveColor: carveColor,
     );
 
     final bytes = Uint8List.fromList(img.encodePng(image, level: 3));
@@ -6203,27 +6207,403 @@ class AppState extends ChangeNotifier {
     return [r, g, blue];
   }
 
-  String _fingerprintMonogram(String foodName, List<int> digest) {
-    final trimmed = foodName.trim();
-    if (trimmed.isNotEmpty) {
-      final asciiWords = trimmed
-          .replaceAll(RegExp(r'[^A-Za-z0-9]+'), ' ')
-          .split(RegExp(r'\s+'))
-          .where((part) => part.isNotEmpty)
-          .toList();
-      if (asciiWords.length >= 2) {
-        return '${asciiWords[0][0]}${asciiWords[1][0]}'.toUpperCase();
-      }
-      if (asciiWords.length == 1) {
-        final token = asciiWords.first.toUpperCase();
-        return token.length >= 2 ? token.substring(0, 2) : token;
+  String _fingerprintIconKind(String foodName) {
+    final source =
+        '${foodName.toLowerCase()} ${_normalizeFoodLookupText(foodName)}';
+    if (_containsAnyKeyword(source, const [
+      '奶茶',
+      '紅茶',
+      '綠茶',
+      '烏龍',
+      '飲',
+      '茶',
+      '咖啡',
+      '果汁',
+      '豆漿',
+      '拿鐵',
+      'drink',
+      'tea',
+      'coffee',
+      'latte',
+      'juice',
+      'soda',
+      'smoothie',
+      'milk',
+    ])) {
+      return 'drink';
+    }
+    if (_containsAnyKeyword(source, const [
+      '麵',
+      '米粉',
+      '冬粉',
+      '烏龍麵',
+      '拉麵',
+      '麵線',
+      '意麵',
+      'pasta',
+      'noodle',
+      'ramen',
+      'udon',
+      'spaghetti',
+      'pho',
+    ])) {
+      return 'noodle';
+    }
+    if (_containsAnyKeyword(source, const [
+      '飯',
+      '便當',
+      '丼',
+      '燴飯',
+      '粥',
+      '炒飯',
+      '蓋飯',
+      'rice',
+      'bento',
+      'congee',
+      'porridge',
+    ])) {
+      return 'rice';
+    }
+    if (_containsAnyKeyword(source, const [
+      '甜',
+      '蛋糕',
+      '布丁',
+      '餅',
+      '冰淇淋',
+      '冰',
+      '奶酪',
+      '甜點',
+      'dessert',
+      'cake',
+      'cookie',
+      'donut',
+      'pudding',
+      'icecream',
+      'ice cream',
+    ])) {
+      return 'dessert';
+    }
+    return 'meal';
+  }
+
+  bool _containsAnyKeyword(String source, List<String> keywords) {
+    for (final keyword in keywords) {
+      if (source.contains(keyword)) {
+        return true;
       }
     }
+    return false;
+  }
 
-    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final first = alphabet[digest[0] % alphabet.length];
-    final second = alphabet[digest[1] % alphabet.length];
-    return '$first$second';
+  void _drawFingerprintIcon(
+    img.Image image,
+    String kind, {
+    required int cx,
+    required int cy,
+    required int size,
+    required img.Color iconColor,
+    required img.Color carveColor,
+  }) {
+    final scale = size / 24.0;
+    int x(num unit) => (cx + unit * scale).round();
+    int y(num unit) => (cy + unit * scale).round();
+    int r(num unit) => max(1, (unit * scale).round());
+    num stroke(num unit) => max(1.0, unit * scale);
+
+    switch (kind) {
+      case 'drink':
+        img.fillRect(
+          image,
+          x1: x(-7),
+          y1: y(-6),
+          x2: x(7),
+          y2: y(8),
+          color: iconColor,
+        );
+        img.fillRect(
+          image,
+          x1: x(-5),
+          y1: y(-4),
+          x2: x(5),
+          y2: y(6),
+          color: carveColor,
+        );
+        img.fillRect(
+          image,
+          x1: x(-6),
+          y1: y(2),
+          x2: x(6),
+          y2: y(8),
+          color: iconColor,
+        );
+        img.drawLine(
+          image,
+          x1: x(3),
+          y1: y(-12),
+          x2: x(0),
+          y2: y(-5),
+          color: iconColor,
+          thickness: stroke(2),
+        );
+        img.fillCircle(
+          image,
+          x: x(9),
+          y: y(-1),
+          radius: r(3),
+          color: iconColor,
+          antialias: true,
+        );
+        img.fillCircle(
+          image,
+          x: x(9),
+          y: y(-1),
+          radius: r(2),
+          color: carveColor,
+          antialias: true,
+        );
+        return;
+      case 'noodle':
+        img.fillCircle(
+          image,
+          x: cx,
+          y: y(4),
+          radius: r(9),
+          color: iconColor,
+          antialias: true,
+        );
+        img.fillCircle(
+          image,
+          x: cx,
+          y: y(0),
+          radius: r(9),
+          color: carveColor,
+          antialias: true,
+        );
+        img.fillRect(
+          image,
+          x1: x(-9),
+          y1: y(4),
+          x2: x(9),
+          y2: y(6),
+          color: iconColor,
+        );
+        img.drawLine(
+          image,
+          x1: x(-7),
+          y1: y(-2),
+          x2: x(-3),
+          y2: y(1),
+          color: iconColor,
+          thickness: stroke(1.6),
+        );
+        img.drawLine(
+          image,
+          x1: x(-1),
+          y1: y(-3),
+          x2: x(3),
+          y2: y(1),
+          color: iconColor,
+          thickness: stroke(1.6),
+        );
+        img.drawLine(
+          image,
+          x1: x(4),
+          y1: y(-2),
+          x2: x(7),
+          y2: y(1),
+          color: iconColor,
+          thickness: stroke(1.6),
+        );
+        img.drawLine(
+          image,
+          x1: x(-11),
+          y1: y(-9),
+          x2: x(5),
+          y2: y(-6),
+          color: iconColor,
+          thickness: stroke(1.4),
+        );
+        img.drawLine(
+          image,
+          x1: x(-11),
+          y1: y(-6),
+          x2: x(5),
+          y2: y(-3),
+          color: iconColor,
+          thickness: stroke(1.4),
+        );
+        return;
+      case 'rice':
+        img.fillCircle(
+          image,
+          x: cx,
+          y: y(5),
+          radius: r(9),
+          color: iconColor,
+          antialias: true,
+        );
+        img.fillCircle(
+          image,
+          x: cx,
+          y: y(1),
+          radius: r(9),
+          color: carveColor,
+          antialias: true,
+        );
+        img.fillRect(
+          image,
+          x1: x(-9),
+          y1: y(5),
+          x2: x(9),
+          y2: y(7),
+          color: iconColor,
+        );
+        img.fillCircle(image, x: x(-5), y: y(0), radius: r(2.2), color: iconColor);
+        img.fillCircle(image, x: x(-1), y: y(-1), radius: r(2), color: iconColor);
+        img.fillCircle(image, x: x(3), y: y(0), radius: r(2.3), color: iconColor);
+        img.fillCircle(image, x: x(7), y: y(1), radius: r(1.7), color: iconColor);
+        return;
+      case 'dessert':
+        img.fillCircle(
+          image,
+          x: x(-4),
+          y: y(-2),
+          radius: r(4),
+          color: iconColor,
+          antialias: true,
+        );
+        img.fillCircle(
+          image,
+          x: x(1),
+          y: y(-3),
+          radius: r(4.2),
+          color: iconColor,
+          antialias: true,
+        );
+        img.fillCircle(
+          image,
+          x: x(6),
+          y: y(-1),
+          radius: r(3.8),
+          color: iconColor,
+          antialias: true,
+        );
+        img.fillRect(
+          image,
+          x1: x(-7),
+          y1: y(1),
+          x2: x(7),
+          y2: y(9),
+          color: iconColor,
+        );
+        img.drawLine(
+          image,
+          x1: x(-3),
+          y1: y(2),
+          x2: x(-3),
+          y2: y(8),
+          color: carveColor,
+          thickness: stroke(1.2),
+        );
+        img.drawLine(
+          image,
+          x1: x(1),
+          y1: y(2),
+          x2: x(1),
+          y2: y(8),
+          color: carveColor,
+          thickness: stroke(1.2),
+        );
+        img.drawLine(
+          image,
+          x1: x(5),
+          y1: y(2),
+          x2: x(5),
+          y2: y(8),
+          color: carveColor,
+          thickness: stroke(1.2),
+        );
+        img.fillCircle(
+          image,
+          x: x(4),
+          y: y(-8),
+          radius: r(1.8),
+          color: iconColor,
+          antialias: true,
+        );
+        return;
+      default:
+        img.fillCircle(
+          image,
+          x: cx,
+          y: cy,
+          radius: r(9),
+          color: iconColor,
+          antialias: true,
+        );
+        img.fillCircle(
+          image,
+          x: cx,
+          y: cy,
+          radius: r(7),
+          color: carveColor,
+          antialias: true,
+        );
+        img.drawLine(
+          image,
+          x1: x(-4),
+          y1: y(-8),
+          x2: x(-4),
+          y2: y(8),
+          color: iconColor,
+          thickness: stroke(1.7),
+        );
+        img.drawLine(
+          image,
+          x1: x(-6),
+          y1: y(-10),
+          x2: x(-6),
+          y2: y(-7),
+          color: iconColor,
+          thickness: stroke(1.2),
+        );
+        img.drawLine(
+          image,
+          x1: x(-4),
+          y1: y(-10),
+          x2: x(-4),
+          y2: y(-7),
+          color: iconColor,
+          thickness: stroke(1.2),
+        );
+        img.drawLine(
+          image,
+          x1: x(-2),
+          y1: y(-10),
+          x2: x(-2),
+          y2: y(-7),
+          color: iconColor,
+          thickness: stroke(1.2),
+        );
+        img.drawLine(
+          image,
+          x1: x(5),
+          y1: y(-4),
+          x2: x(5),
+          y2: y(8),
+          color: iconColor,
+          thickness: stroke(1.6),
+        );
+        img.fillCircle(
+          image,
+          x: x(5),
+          y: y(-8),
+          radius: r(3),
+          color: iconColor,
+          antialias: true,
+        );
+        return;
+    }
   }
 
   double _rgbLuminance(List<int> rgb) {
