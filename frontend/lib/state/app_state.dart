@@ -6119,41 +6119,68 @@ class AppState extends ChangeNotifier {
     final digest = sha1.convert(utf8.encode(key)).bytes;
     const size = 240;
     final image = img.Image(width: size, height: size);
-    final topColor = _fingerprintRgb(digest, 0);
-    final bottomColor = _fingerprintRgb(digest, 3);
-    final accentColor = _fingerprintRgb(digest, 8);
+    final ceramicLight = _fingerprintCeramicRgb(digest, 0);
+    final ceramicMid = _fingerprintCeramicRgb(digest, 4);
+    final ceramicDark = _fingerprintCeramicRgb(digest, 8);
     final badgeColor = _fingerprintRgb(digest, 12);
     final iconKind = _fingerprintIconKind(foodName);
 
-    // Base gradient background.
+    // Ceramic plate cross-section texture.
+    final center = size / 2;
+    final maxDist = sqrt(center * center + center * center);
+    final ringCount = 9 + (digest[4] % 4);
+    final ringPhase = (digest[5] / 255) * pi * 2;
     for (var y = 0; y < size; y++) {
-      final t = y / (size - 1);
-      final r = (topColor[0] + ((bottomColor[0] - topColor[0]) * t)).round();
-      final g = (topColor[1] + ((bottomColor[1] - topColor[1]) * t)).round();
-      final b = (topColor[2] + ((bottomColor[2] - topColor[2]) * t)).round();
-      img.fillRect(
-        image,
-        x1: 0,
-        y1: y,
-        x2: size - 1,
-        y2: y,
-        color: img.ColorRgb8(r, g, b),
-      );
+      for (var x = 0; x < size; x++) {
+        final dx = x - center;
+        final dy = y - center;
+        final d = sqrt(dx * dx + dy * dy);
+        final radial = (d / maxDist).clamp(0.0, 1.0);
+
+        final ringWave = sin((radial * ringCount * pi) + ringPhase);
+        final grain = (((x * 19 + y * 37 + digest[(x + y) % digest.length]) % 29) /
+                28.0) -
+            0.5;
+
+        final glaze = (0.82 - radial * 0.55 + ringWave * 0.055 + grain * 0.045)
+            .clamp(0.0, 1.0);
+
+        final base = _blendRgb(ceramicDark, ceramicMid, glaze);
+        final rgb = _blendRgb(base, ceramicLight, (1.0 - radial) * 0.42);
+        image.setPixelRgb(x, y, rgb[0], rgb[1], rgb[2]);
+      }
     }
 
-    // Soft blobs for texture so cards don't look too flat.
-    for (var i = 0; i < 3; i++) {
-      final cx = ((size * 0.2) + (digest[i] / 255) * (size * 0.6)).round();
-      final cy =
-          ((size * 0.2) + (digest[(i + 3) % digest.length] / 255) * (size * 0.6))
-              .round();
-      final radius = 46 + (digest[(i + 6) % digest.length] % 38);
+    // Subtle plate grooves.
+    for (var i = 0; i < 5; i++) {
+      final ringRadius = 46 + i * 22 + (digest[(i + 9) % digest.length] % 7);
+      final ringAlpha = 22 + (digest[(i + 11) % digest.length] % 16);
+      for (var t = 0; t < 2; t++) {
+        img.drawCircle(
+          image,
+          x: size ~/ 2,
+          y: size ~/ 2,
+          radius: ringRadius + t,
+          color: img.ColorRgba8(245, 246, 247, ringAlpha),
+          antialias: true,
+        );
+      }
+    }
+
+    // Tiny glaze speckles.
+    final speckleCount = 70 + (digest[14] % 40);
+    for (var i = 0; i < speckleCount; i++) {
+      final seed = digest[i % digest.length];
+      final px = ((seed * 13 + i * 29) % (size - 20)) + 10;
+      final py = ((seed * 31 + i * 17) % (size - 20)) + 10;
+      final radius = 1 + (digest[(i + 6) % digest.length] % 2);
+      final alpha = 18 + (digest[(i + 8) % digest.length] % 24);
       img.fillCircle(
         image,
-        x: cx,
-        y: cy,
+        x: px,
+        y: py,
         radius: radius,
-        color: img.ColorRgba8(accentColor[0], accentColor[1], accentColor[2], 46),
+        color: img.ColorRgba8(255, 255, 255, alpha),
         antialias: true,
       );
     }
@@ -6204,6 +6231,25 @@ class AppState extends ChangeNotifier {
     final r = 64 + ((a + b) % 156);
     final g = 64 + ((b + c) % 156);
     final blue = 64 + ((c + a) % 156);
+    return [r, g, blue];
+  }
+
+  List<int> _fingerprintCeramicRgb(List<int> digest, int offset) {
+    final raw = _fingerprintRgb(digest, offset);
+    final mean = ((raw[0] + raw[1] + raw[2]) / 3).round();
+    final warm = 8 + (digest[(offset + 3) % digest.length] % 12);
+    final cool = 4 + (digest[(offset + 4) % digest.length] % 10);
+    final r = (mean + warm).clamp(112, 214);
+    final g = (mean + warm - cool).clamp(108, 208);
+    final b = (mean - cool).clamp(104, 198);
+    return [r, g, b];
+  }
+
+  List<int> _blendRgb(List<int> a, List<int> b, double t) {
+    final ratio = t.clamp(0.0, 1.0);
+    final r = (a[0] + (b[0] - a[0]) * ratio).round();
+    final g = (a[1] + (b[1] - a[1]) * ratio).round();
+    final blue = (a[2] + (b[2] - a[2]) * ratio).round();
     return [r, g, blue];
   }
 
