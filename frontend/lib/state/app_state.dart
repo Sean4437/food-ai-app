@@ -6121,6 +6121,11 @@ class AppState extends ChangeNotifier {
     final image = img.Image(width: size, height: size);
     final topColor = _fingerprintRgb(digest, 0);
     final bottomColor = _fingerprintRgb(digest, 3);
+    final accentColor = _fingerprintRgb(digest, 8);
+    final badgeColor = _fingerprintRgb(digest, 12);
+    final monogram = _fingerprintMonogram(foodName, digest);
+
+    // Base gradient background.
     for (var y = 0; y < size; y++) {
       final t = y / (size - 1);
       final r = (topColor[0] + ((bottomColor[0] - topColor[0]) * t)).round();
@@ -6136,38 +6141,51 @@ class AppState extends ChangeNotifier {
       );
     }
 
-    for (var i = 0; i < 6; i++) {
-      final token = digest[(i + 6) % digest.length];
-      final blockW = 36 + (token % 72);
-      final blockH = 28 + (digest[(i + 10) % digest.length] % 68);
-      final maxX = size - blockW - 1;
-      final maxY = size - blockH - 1;
-      final xRange = maxX >= 0 ? maxX + 1 : 1;
-      final yRange = maxY >= 0 ? maxY + 1 : 1;
-      final x = (digest[(i + 12) % digest.length] * 3) % xRange;
-      final y = (digest[(i + 14) % digest.length] * 5) % yRange;
-      final color = _fingerprintRgb(digest, i * 2 + 4);
-      img.fillRect(
+    // Soft blobs for texture so cards don't look too flat.
+    for (var i = 0; i < 3; i++) {
+      final cx = ((size * 0.2) + (digest[i] / 255) * (size * 0.6)).round();
+      final cy =
+          ((size * 0.2) + (digest[(i + 3) % digest.length] / 255) * (size * 0.6))
+              .round();
+      final radius = 46 + (digest[(i + 6) % digest.length] % 38);
+      img.fillCircle(
         image,
-        x1: x,
-        y1: y,
-        x2: x + blockW > size - 1 ? size - 1 : x + blockW,
-        y2: y + blockH > size - 1 ? size - 1 : y + blockH,
-        color: img.ColorRgb8(color[0], color[1], color[2]),
+        x: cx,
+        y: cy,
+        radius: radius,
+        color: img.ColorRgba8(accentColor[0], accentColor[1], accentColor[2], 46),
+        antialias: true,
       );
     }
 
-    final stripe = _fingerprintRgb(digest, 15);
-    for (var y = 0; y < size; y += 18) {
-      img.fillRect(
-        image,
-        x1: 0,
-        y1: y,
-        x2: size - 1,
-        y2: min(size - 1, y + 3),
-        color: img.ColorRgb8(stripe[0], stripe[1], stripe[2]),
-      );
-    }
+    // Center badge.
+    img.fillCircle(
+      image,
+      x: size ~/ 2,
+      y: size ~/ 2,
+      radius: 84,
+      color: img.ColorRgba8(255, 255, 255, 78),
+      antialias: true,
+    );
+    img.fillCircle(
+      image,
+      x: size ~/ 2,
+      y: size ~/ 2,
+      radius: 72,
+      color: img.ColorRgba8(badgeColor[0], badgeColor[1], badgeColor[2], 235),
+      antialias: true,
+    );
+
+    final luminance = _rgbLuminance(badgeColor);
+    final textColor = luminance >= 145
+        ? img.ColorRgb8(34, 42, 48)
+        : img.ColorRgb8(246, 250, 252);
+    img.drawString(
+      image,
+      monogram,
+      font: img.arial48,
+      color: textColor,
+    );
 
     final bytes = Uint8List.fromList(img.encodePng(image, level: 3));
     _nameFingerprintCache[key] = bytes;
@@ -6183,6 +6201,33 @@ class AppState extends ChangeNotifier {
     final g = 64 + ((b + c) % 156);
     final blue = 64 + ((c + a) % 156);
     return [r, g, blue];
+  }
+
+  String _fingerprintMonogram(String foodName, List<int> digest) {
+    final trimmed = foodName.trim();
+    if (trimmed.isNotEmpty) {
+      final asciiWords = trimmed
+          .replaceAll(RegExp(r'[^A-Za-z0-9]+'), ' ')
+          .split(RegExp(r'\s+'))
+          .where((part) => part.isNotEmpty)
+          .toList();
+      if (asciiWords.length >= 2) {
+        return '${asciiWords[0][0]}${asciiWords[1][0]}'.toUpperCase();
+      }
+      if (asciiWords.length == 1) {
+        final token = asciiWords.first.toUpperCase();
+        return token.length >= 2 ? token.substring(0, 2) : token;
+      }
+    }
+
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final first = alphabet[digest[0] % alphabet.length];
+    final second = alphabet[digest[1] % alphabet.length];
+    return '$first$second';
+  }
+
+  double _rgbLuminance(List<int> rgb) {
+    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
   }
 
   double _macroBaselineForKey(String key) {
