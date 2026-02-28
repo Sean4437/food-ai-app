@@ -6287,6 +6287,30 @@ class AppState extends ChangeNotifier {
           [122, 187, 201],
           [66, 133, 153],
         ];
+      case 'fish':
+        return const [
+          [198, 232, 240],
+          [115, 178, 196],
+          [62, 123, 146],
+        ];
+      case 'shrimp':
+        return const [
+          [255, 223, 202],
+          [238, 160, 130],
+          [196, 102, 84],
+        ];
+      case 'shellfish':
+        return const [
+          [238, 227, 214],
+          [206, 176, 148],
+          [154, 122, 95],
+        ];
+      case 'squid':
+        return const [
+          [224, 218, 245],
+          [167, 152, 214],
+          [109, 92, 166],
+        ];
       case 'fried':
         return const [
           [252, 226, 144],
@@ -6689,6 +6713,10 @@ class AppState extends ChangeNotifier {
         }
         return;
       case 'seafood':
+      case 'fish':
+      case 'shrimp':
+      case 'shellfish':
+      case 'squid':
         for (var stripe = 0; stripe < 7; stripe++) {
           final baseY = 22 + stripe * 30;
           final amp = 7 + (digest[(stripe + 5) % digest.length] % 5);
@@ -6718,6 +6746,64 @@ class AppState extends ChangeNotifier {
             color: img.ColorRgba8(255, 255, 255, 30),
             antialias: true,
           );
+        }
+        if (kind == 'fish') {
+          for (var i = 0; i < 28; i++) {
+            final x = (digest[(i + 3) % digest.length] * 19 + i * 11) % width;
+            final y = (digest[(i + 6) % digest.length] * 13 + i * 17) % height;
+            img.drawCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 4,
+              color: img.ColorRgba8(233, 248, 255, 24),
+              antialias: true,
+            );
+          }
+        }
+        if (kind == 'shrimp') {
+          for (var i = 0; i < 42; i++) {
+            final x = (digest[(i + 2) % digest.length] * 23 + i * 9) % width;
+            final y = (digest[(i + 4) % digest.length] * 27 + i * 13) % height;
+            img.fillCircle(
+              image,
+              x: x,
+              y: y,
+              radius: 2,
+              color: img.ColorRgba8(255, 213, 191, 34),
+              antialias: true,
+            );
+          }
+        }
+        if (kind == 'shellfish') {
+          final cx = width ~/ 2;
+          final cy = height ~/ 2;
+          for (var r = 24; r <= 96; r += 18) {
+            img.drawCircle(
+              image,
+              x: cx,
+              y: cy + 28,
+              radius: r,
+              color: img.ColorRgba8(255, 243, 226, 20),
+              antialias: true,
+            );
+          }
+        }
+        if (kind == 'squid') {
+          for (var i = 0; i < 6; i++) {
+            final baseX = 24 + i * 36 + (digest[(i + 1) % digest.length] % 10);
+            for (var y = 24; y < height - 16; y++) {
+              final x = (baseX + sin(y * 0.1 + i * 0.7) * 5).round();
+              image.setPixelRgba(
+                x.clamp(0, width - 1),
+                y,
+                236,
+                231,
+                255,
+                34,
+              );
+            }
+          }
         }
         return;
       case 'chicken':
@@ -6950,6 +7036,71 @@ class AppState extends ChangeNotifier {
       return 'meat';
     }
     if (_containsAnyKeyword(source, const [
+      'shrimp',
+      'prawn',
+      'ebi',
+      '蝦',
+      '白蝦',
+      '草蝦',
+      '明蝦',
+      '蝦仁',
+      '蝦球',
+    ])) {
+      return 'shrimp';
+    }
+    if (_containsAnyKeyword(source, const [
+      'shellfish',
+      'clam',
+      'mussel',
+      'scallop',
+      'oyster',
+      'crab',
+      'lobster',
+      '貝',
+      '蛤',
+      '牡蠣',
+      '蚵',
+      '扇貝',
+      '蟹',
+      '龍蝦',
+      '淡菜',
+    ])) {
+      return 'shellfish';
+    }
+    if (_containsAnyKeyword(source, const [
+      'squid',
+      'octopus',
+      'cuttlefish',
+      'calamari',
+      '花枝',
+      '章魚',
+      '魷魚',
+      '透抽',
+      '中卷',
+    ])) {
+      return 'squid';
+    }
+    if (_containsAnyKeyword(source, const [
+      'fish',
+      'salmon',
+      'tuna',
+      'cod',
+      'mackerel',
+      'sardine',
+      'snapper',
+      'tilapia',
+      '鱈魚',
+      '鮭魚',
+      '鮪魚',
+      '鯖魚',
+      '鯛魚',
+      '魚排',
+      '魚片',
+      '魚',
+    ])) {
+      return 'fish';
+    }
+    if (_containsAnyKeyword(source, const [
       'fish',
       'salmon',
       'tuna',
@@ -7152,6 +7303,12 @@ class AppState extends ChangeNotifier {
       case 'pizza':
       case 'snack':
         return 'dessert';
+      case 'seafood':
+      case 'fish':
+      case 'shrimp':
+      case 'shellfish':
+      case 'squid':
+        return 'seafood';
       default:
         return 'meal';
     }
@@ -7391,6 +7548,50 @@ class AppState extends ChangeNotifier {
           x: x(4),
           y: y(-8),
           radius: r(1.8),
+          color: iconColor,
+          antialias: true,
+        );
+        return;
+      case 'seafood':
+        img.fillCircle(
+          image,
+          x: x(-1),
+          y: y(0),
+          radius: r(6),
+          color: iconColor,
+          antialias: true,
+        );
+        img.fillCircle(
+          image,
+          x: x(-1),
+          y: y(0),
+          radius: r(4),
+          color: carveColor,
+          antialias: true,
+        );
+        img.drawLine(
+          image,
+          x1: x(4),
+          y1: y(0),
+          x2: x(10),
+          y2: y(-4),
+          color: iconColor,
+          thickness: stroke(1.8),
+        );
+        img.drawLine(
+          image,
+          x1: x(4),
+          y1: y(0),
+          x2: x(10),
+          y2: y(4),
+          color: iconColor,
+          thickness: stroke(1.8),
+        );
+        img.fillCircle(
+          image,
+          x: x(-4),
+          y: y(-1),
+          radius: r(1.2),
           color: iconColor,
           antialias: true,
         );
