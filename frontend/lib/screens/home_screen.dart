@@ -8,13 +8,10 @@ import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
 import '../design/text_styles.dart';
-import '../widgets/record_sheet.dart';
-import '../widgets/plate_photo.dart';
 import '../widgets/plate_polygon_stack.dart';
 import '../widgets/app_background.dart';
 import '../widgets/daily_overview_cards.dart';
 import 'day_meals_screen.dart';
-import 'meal_items_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,9 +22,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController(viewportFraction: 1);
+  final PageController _statusCardController = PageController();
   int _pageIndex = 0;
+  int _statusCardIndex = 0;
   final Map<DateTime, int> _dateSelectedMeal = {};
   String? _lastPlateAsset;
+  static const double _statusCardHeight = 210;
 
   Widget _emojiIcon(String emoji, {double size = 16}) {
     return Text(emoji, style: TextStyle(fontSize: size, height: 1));
@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             height: 360,
             decoration: BoxDecoration(
-              color: appTheme.card.withOpacity(0.5),
+              color: appTheme.card.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(appTheme.radiusCard),
             ),
           ),
@@ -94,40 +94,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _statusCardController.dispose();
     super.dispose();
-  }
-
-  Future<void> _openRecordSheet(AppState app) async {
-    final result = await showRecordSheet(context, app);
-    if (!mounted || result == null) return;
-    final mealId = result.mealId;
-    if (result.mealCount >= 2) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) =>
-              DayMealsScreen(date: result.date, initialMealId: mealId),
-        ),
-      );
-      return;
-    }
-    final group = app.entriesForMealId(mealId);
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => MealItemsScreen(
-          group: group,
-          autoReturnToDayMeals: true,
-          autoReturnDate: result.date,
-          autoReturnMealId: mealId,
-        ),
-      ),
-    );
   }
 
   Widget _statusPill(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(label,
@@ -359,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: appTheme.card,
           borderRadius: BorderRadius.circular(appTheme.radiusCard),
-          border: Border.all(color: Colors.black.withOpacity(0.08)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
         ),
         child: Text(t.latestMealEmpty,
             style:
@@ -376,16 +351,218 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: appTheme.card,
         borderRadius: BorderRadius.circular(appTheme.radiusCard),
-        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
         ],
       ),
       child: child,
+    );
+  }
+
+  Widget _statusCardDots(int count) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (index) {
+        final isActive = index == _statusCardIndex;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: isActive ? 18 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFF3C6F5B) : Colors.black12,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _dailySummaryCard(
+    AppState app,
+    AppLocalizations t,
+    AppTheme appTheme,
+    DateTime date,
+  ) {
+    return _homeInfoCard(
+      appTheme: appTheme,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _emojiIcon('💬', size: 16),
+              const SizedBox(width: 6),
+              Text(
+                t.dayCardSummaryLabel,
+                style: AppTextStyles.title2(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          if (!app.isDailySummaryReady(date))
+            Center(
+              child: _emojiIcon('⏳', size: 24),
+            ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: Text(
+              app.daySummaryText(date, t),
+              style: AppTextStyles.caption(context)
+                  .copyWith(color: Colors.black54),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tomorrowAdviceCard(
+    AppState app,
+    AppLocalizations t,
+    AppTheme appTheme,
+    DateTime date,
+  ) {
+    return _homeInfoCard(
+      appTheme: appTheme,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _emojiIcon('💡', size: 16),
+              const SizedBox(width: 6),
+              Text(
+                t.dayCardTomorrowLabel,
+                style: AppTextStyles.title2(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          if (!app.isDailySummaryReady(date))
+            Center(
+              child: _emojiIcon('⏳', size: 24),
+            ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: Text(
+              app.dayTomorrowAdvice(date, t),
+              style: AppTextStyles.caption(context)
+                  .copyWith(color: Colors.black54),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _weeklyInsightCard(
+    AppState app,
+    AppLocalizations t,
+    AppTheme appTheme,
+    DateTime date,
+  ) {
+    return _homeInfoCard(
+      appTheme: appTheme,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _emojiIcon('📅', size: 16),
+              const SizedBox(width: 6),
+              Text(
+                t.weekSummaryTitle,
+                style: AppTextStyles.title2(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          if (!app.isWeeklySummaryReady(date))
+            Center(
+              child: _emojiIcon('⏳', size: 24),
+            ),
+          const SizedBox(height: 4),
+          Text(
+            app.weekSummaryText(date, t),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _emojiIcon('🔮', size: 16),
+              const SizedBox(width: 6),
+              Text(
+                t.nextWeekAdviceTitle,
+                style: AppTextStyles.title2(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Expanded(
+            child: Text(
+              app.nextWeekAdviceText(date, t),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusCardCarousel(
+    BuildContext context,
+    AppState app,
+    AppLocalizations t,
+    AppTheme appTheme,
+    ThemeData theme,
+    DateTime activeDate,
+  ) {
+    final overview = DailyOverviewCards(
+      date: activeDate,
+      app: app,
+      t: t,
+      appTheme: appTheme,
+      theme: theme,
+      onSelectActivityLevel: () => _selectActivityLevel(context, app, activeDate, t),
+      onSelectExerciseType: () => _selectExerciseType(context, app, activeDate, t),
+      onSelectExerciseMinutes: () =>
+          _selectExerciseMinutes(context, app, activeDate, t),
+    );
+    final pages = [
+      overview.calorieCard(context),
+      overview.proteinCard(context),
+      _dailySummaryCard(app, t, appTheme, activeDate),
+      _tomorrowAdviceCard(app, t, appTheme, activeDate),
+      _weeklyInsightCard(app, t, appTheme, activeDate),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: _statusCardHeight,
+          child: PageView.builder(
+            controller: _statusCardController,
+            onPageChanged: (index) => setState(() => _statusCardIndex = index),
+            itemCount: pages.length,
+            itemBuilder: (context, index) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: pages[index],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        _statusCardDots(pages.length),
+      ],
     );
   }
 
@@ -563,163 +740,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 12),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: SizedBox(
-                        height: 200,
-                        child: DailyOverviewCards(
-                          date: activeDate,
-                          app: app,
-                          t: t,
-                          appTheme: appTheme,
-                          theme: theme,
-                          onSelectActivityLevel: () =>
-                              _selectActivityLevel(context, app, activeDate, t),
-                          onSelectExerciseType: () =>
-                              _selectExerciseType(context, app, activeDate, t),
-                          onSelectExerciseMinutes: () =>
-                              _selectExerciseMinutes(context, app, activeDate, t),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _homeInfoCard(
-                              appTheme: appTheme,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      _emojiIcon('💬', size: 16),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        t.dayCardSummaryLabel,
-                                        style: AppTextStyles.title2(context),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  if (!app.isDailySummaryReady(activeDate))
-                                    Center(
-                                      child: _emojiIcon('⏳', size: 24),
-                                    ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    app.daySummaryText(activeDate, t),
-                                    style: AppTextStyles.caption(context)
-                                        .copyWith(color: Colors.black54),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _homeInfoCard(
-                              appTheme: appTheme,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      _emojiIcon('💡', size: 16),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        t.dayCardTomorrowLabel,
-                                        style: AppTextStyles.title2(context),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  if (!app.isDailySummaryReady(activeDate))
-                                    Center(
-                                      child: _emojiIcon('⏳', size: 24),
-                                    ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    app.dayTomorrowAdvice(activeDate, t),
-                                    style: AppTextStyles.caption(context)
-                                        .copyWith(color: Colors.black54),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _homeInfoCard(
-                              appTheme: appTheme,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      _emojiIcon('📅', size: 16),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        t.weekSummaryTitle,
-                                        style: AppTextStyles.title2(context),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  if (!app.isWeeklySummaryReady(activeDate))
-                                    Center(
-                                      child: _emojiIcon('⏳', size: 24),
-                                    ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    app.weekSummaryText(activeDate, t),
-                                    style: AppTextStyles.caption(context)
-                                        .copyWith(color: Colors.black54),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _homeInfoCard(
-                              appTheme: appTheme,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      _emojiIcon('🔮', size: 16),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        t.nextWeekAdviceTitle,
-                                        style: AppTextStyles.title2(context),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  if (!app.isWeeklySummaryReady(activeDate))
-                                    Center(
-                                      child: _emojiIcon('⏳', size: 24),
-                                    ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    app.nextWeekAdviceText(activeDate, t),
-                                    style: AppTextStyles.caption(context)
-                                        .copyWith(color: Colors.black54),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: _statusCardCarousel(
+                        context,
+                        app,
+                        t,
+                        appTheme,
+                        theme,
+                        activeDate,
                       ),
                     ),
                   ],
