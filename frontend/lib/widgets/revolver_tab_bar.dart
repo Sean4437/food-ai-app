@@ -131,7 +131,7 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
       curve: Curves.easeOutCubic,
       tween: Tween(begin: 0, end: _expanded ? 1 : 0),
       builder: (context, expand, _) {
-        final barHeight = 104 + expand * 132;
+        const barHeight = 136.0;
         final activeIndex = _wrapIndex(_dial.round());
         return SizedBox(
           height: barHeight,
@@ -194,13 +194,14 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final centerX = constraints.maxWidth / 2;
-                    final itemWidth = 72 + expand * 16;
+                    final itemWidth = 74 + expand * 18;
                     final itemHeight = itemWidth + 26;
-                    final spacing = 74 + expand * 34;
-                    final visibleDelta = 1.0 + expand * 1.0;
+                    final spacing = 78 + expand * 40;
+                    final visibleDelta = 1.12 + expand * 1.08;
+                    final dialLift = 82 * expand;
 
                     return Stack(
-                      clipBehavior: Clip.hardEdge,
+                      clipBehavior: Clip.none,
                       children: [
                         for (var i = 0; i < widget.items.length; i++)
                           Builder(builder: (context) {
@@ -216,7 +217,7 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                             final x = delta * spacing;
                             final arcY =
                                 math.pow(delta.abs(), 1.45) * (10 + expand * 4);
-                            final top = 76 + arcY - expand * 94;
+                            final top = 78 + arcY - dialLift;
                             final scale = 0.9 + expand * (0.25 + focus * 0.22);
                             final iconSize = 22 + expand * (12 + focus * 10);
                             final active = _wrapIndex(i) == activeIndex;
