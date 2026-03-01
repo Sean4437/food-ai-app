@@ -172,146 +172,126 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                 _dragging = false;
                 _selectIndex(_dial.round());
               },
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(34),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFFBFCFB), Color(0xFFE8EEE9)],
-                  ),
-                  border: Border.all(
-                    color: Colors.black.withValues(alpha: 0.08),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.16),
-                      blurRadius: 22,
-                      offset: const Offset(0, 11),
-                    ),
-                  ],
-                ),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final centerX = constraints.maxWidth / 2;
-                    final itemWidth = 74 + expand * 18;
-                    final itemHeight = itemWidth + 26;
-                    final spacing = 78 + expand * 40;
-                    final visibleDelta = 1.12 + expand * 1.08;
-                    final dialLift = 82 * expand;
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final centerX = constraints.maxWidth / 2;
+                  final itemWidth = 74 + expand * 18;
+                  final itemHeight = itemWidth + 26;
+                  final spacing = 78 + expand * 40;
+                  final visibleDelta = 1.12 + expand * 1.08;
+                  final dialLift = 82 * expand;
 
-                    return Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        for (var i = 0; i < widget.items.length; i++)
-                          Builder(builder: (context) {
-                            final delta = _wrappedDelta(i, _dial);
-                            if (delta.abs() > visibleDelta + 0.34) {
-                              return const SizedBox.shrink();
-                            }
-                            final focus =
-                                (1 - (delta.abs() / 2.8)).clamp(0.0, 1.0);
-                            final edgeFade =
-                                ((visibleDelta + 0.3 - delta.abs()) / 0.48)
-                                    .clamp(0.0, 1.0);
-                            final x = delta * spacing;
-                            final arcY =
-                                math.pow(delta.abs(), 1.45) * (10 + expand * 4);
-                            final top = 78 + arcY - dialLift;
-                            final scale = 0.9 + expand * (0.25 + focus * 0.22);
-                            final iconSize = 22 + expand * (12 + focus * 10);
-                            final active = _wrapIndex(i) == activeIndex;
-                            final iconColor = active ? activeColor : inactiveColor;
-                            final tilt = delta * 0.095 * expand;
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      for (var i = 0; i < widget.items.length; i++)
+                        Builder(builder: (context) {
+                          final delta = _wrappedDelta(i, _dial);
+                          if (delta.abs() > visibleDelta + 0.34) {
+                            return const SizedBox.shrink();
+                          }
+                          final focus =
+                              (1 - (delta.abs() / 2.8)).clamp(0.0, 1.0);
+                          final edgeFade =
+                              ((visibleDelta + 0.3 - delta.abs()) / 0.48)
+                                  .clamp(0.0, 1.0);
+                          final x = delta * spacing;
+                          final arcY =
+                              math.pow(delta.abs(), 1.45) * (10 + expand * 4);
+                          final top = 78 + arcY - dialLift;
+                          final scale = 0.9 + expand * (0.25 + focus * 0.22);
+                          final iconSize = 22 + expand * (12 + focus * 10);
+                          final active = _wrapIndex(i) == activeIndex;
+                          final iconColor = active ? activeColor : inactiveColor;
+                          final tilt = delta * 0.095 * expand;
 
-                            return Positioned(
-                              top: top,
-                              left: centerX + x - itemWidth / 2,
-                              width: itemWidth,
-                              height: itemHeight,
-                              child: Transform.rotate(
-                                angle: tilt,
-                                child: Transform.scale(
-                                  scale: scale,
-                                  child: Opacity(
-                                    opacity: edgeFade,
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(16),
-                                        onTap: () {
-                                          if (!_expanded) {
-                                            _expand();
-                                          }
-                                          _selectIndex(i);
-                                        },
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Container(
-                                              width: itemWidth,
-                                              height: itemWidth,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
+                          return Positioned(
+                            top: top,
+                            left: centerX + x - itemWidth / 2,
+                            width: itemWidth,
+                            height: itemHeight,
+                            child: Transform.rotate(
+                              angle: tilt,
+                              child: Transform.scale(
+                                scale: scale,
+                                child: Opacity(
+                                  opacity: edgeFade,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(16),
+                                      onTap: () {
+                                        if (!_expanded) {
+                                          _expand();
+                                        }
+                                        _selectIndex(i);
+                                      },
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: itemWidth,
+                                            height: itemWidth,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: active
+                                                  ? activeColor.withValues(
+                                                      alpha: 0.18)
+                                                  : Colors.white.withValues(
+                                                      alpha:
+                                                          0.65 + focus * 0.2),
+                                              border: Border.all(
                                                 color: active
                                                     ? activeColor.withValues(
-                                                        alpha: 0.18)
-                                                    : Colors.white.withValues(
-                                                        alpha:
-                                                            0.65 + focus * 0.2),
-                                                border: Border.all(
-                                                  color: active
-                                                      ? activeColor.withValues(
-                                                          alpha: 0.45)
-                                                      : Colors.black.withValues(
-                                                          alpha: 0.08),
-                                                ),
-                                              ),
-                                              child: Center(
-                                                child: _buildIcon(
-                                                  widget.items[i],
-                                                  active,
-                                                  iconSize,
-                                                  iconColor,
-                                                ),
+                                                        alpha: 0.45)
+                                                    : Colors.black.withValues(
+                                                        alpha: 0.08),
                                               ),
                                             ),
-                                            const SizedBox(height: 4),
-                                            SizedBox(
-                                              width: itemWidth + 24,
-                                              child: Text(
-                                                widget.items[i].label,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                textAlign: TextAlign.center,
-                                                style: theme.textTheme.labelSmall
-                                                    ?.copyWith(
-                                                  fontSize: 11 + expand * 1.2,
-                                                  fontWeight: active
-                                                      ? FontWeight.w700
-                                                      : FontWeight.w500,
-                                                  color: active
-                                                      ? activeColor
-                                                      : theme
-                                                          .colorScheme.onSurface
-                                                          .withValues(
-                                                              alpha: 0.7),
-                                                ),
+                                            child: Center(
+                                              child: _buildIcon(
+                                                widget.items[i],
+                                                active,
+                                                iconSize,
+                                                iconColor,
                                               ),
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          SizedBox(
+                                            width: itemWidth + 24,
+                                            child: Text(
+                                              widget.items[i].label,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.center,
+                                              style: theme.textTheme.labelSmall
+                                                  ?.copyWith(
+                                                fontSize: 11 + expand * 1.2,
+                                                fontWeight: active
+                                                    ? FontWeight.w700
+                                                    : FontWeight.w500,
+                                                color: active
+                                                    ? activeColor
+                                                    : theme
+                                                        .colorScheme.onSurface
+                                                        .withValues(
+                                                            alpha: 0.7),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            );
-                          }),
-                      ],
-                    );
-                  },
-                ),
+                            ),
+                          );
+                        }),
+                    ],
+                  );
+                },
               ),
             ),
           ),
