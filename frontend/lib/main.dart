@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -18,6 +17,7 @@ import 'state/app_state.dart';
 import 'design/theme_controller.dart';
 import 'state/tab_state.dart';
 import 'services/supabase_service.dart';
+import 'widgets/revolver_tab_bar.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -203,9 +203,8 @@ class _AuthGateState extends State<AuthGate> {
         await Supabase.instance.client.auth.exchangeCodeForSession(code);
         if (mounted) setState(() => _showResetPassword = true);
       } else {
-        final response =
-            await Supabase.instance.client.auth.getSessionFromUrl(uri);
-        if (response.session != null && mounted) {
+        await Supabase.instance.client.auth.getSessionFromUrl(uri);
+        if (mounted) {
           setState(() => _showResetPassword = true);
         }
       }
@@ -307,9 +306,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final tabState = TabScope.of(context);
-    final theme = Theme.of(context);
-    final app = AppStateScope.of(context);
-    final screens = const [
+    const screens = [
       HomeScreen(),
       ChatScreen(),
       SuggestionsScreen(),
@@ -320,68 +317,38 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
     return Scaffold(
       body: screens[tabState.index],
-      bottomNavigationBar: CupertinoTabBar(
+      bottomNavigationBar: RevolverTabBar(
         currentIndex: tabState.index,
-        activeColor: theme.colorScheme.primary,
-        inactiveColor: theme.colorScheme.onSurface.withOpacity(0.6),
-        onTap: (value) => tabState.setIndex(value),
+        onSelect: (value) => tabState.setIndex(value),
         items: [
-          BottomNavigationBarItem(
-            icon: Builder(
-              builder: (context) {
-                final color = IconTheme.of(context).color;
-                return Text('🏠', style: TextStyle(fontSize: 20, color: color));
-              },
-            ),
+          RevolverTabItem(
             label: t.tabHome,
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
           ),
-          BottomNavigationBarItem(
-            icon: Builder(
-              builder: (context) {
-                return Opacity(
-                  opacity: 0.7,
-                  child: Image.asset('assets/cat01.png', width: 24, height: 24),
-                );
-              },
-            ),
-            activeIcon: Image.asset('assets/cat01.png', width: 24, height: 24),
+          RevolverTabItem(
             label: t.tabChat,
+            assetImage: 'assets/cat01.png',
           ),
-          BottomNavigationBarItem(
-            icon: Builder(
-              builder: (context) {
-                final color = IconTheme.of(context).color;
-                return Text('📸', style: TextStyle(fontSize: 20, color: color));
-              },
-            ),
+          RevolverTabItem(
             label: t.tabSuggest,
+            icon: Icons.auto_awesome_outlined,
+            activeIcon: Icons.auto_awesome_rounded,
           ),
-          BottomNavigationBarItem(
-            icon: Builder(
-              builder: (context) {
-                final color = IconTheme.of(context).color;
-                return Text('🧾', style: TextStyle(fontSize: 20, color: color));
-              },
-            ),
+          RevolverTabItem(
             label: t.tabLog,
+            icon: Icons.receipt_long_outlined,
+            activeIcon: Icons.receipt_long_rounded,
           ),
-          BottomNavigationBarItem(
-            icon: Builder(
-              builder: (context) {
-                final color = IconTheme.of(context).color;
-                return Text('🍳', style: TextStyle(fontSize: 20, color: color));
-              },
-            ),
+          RevolverTabItem(
             label: t.tabCustom,
+            icon: Icons.restaurant_menu_outlined,
+            activeIcon: Icons.restaurant_menu,
           ),
-          BottomNavigationBarItem(
-            icon: Builder(
-              builder: (context) {
-                final color = IconTheme.of(context).color;
-                return Text('⚙️', style: TextStyle(fontSize: 20, color: color));
-              },
-            ),
+          RevolverTabItem(
             label: t.tabSettings,
+            icon: Icons.settings_outlined,
+            activeIcon: Icons.settings,
           ),
         ],
       ),
