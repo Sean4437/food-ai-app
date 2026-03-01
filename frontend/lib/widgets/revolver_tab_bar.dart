@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -34,10 +33,10 @@ class RevolverTabBar extends StatefulWidget {
 }
 
 class _RevolverTabBarState extends State<RevolverTabBar> {
-  bool _expanded = false;
+  bool _expanded = true;
   bool _dragging = false;
   double _dial = 0;
-  Timer? _collapseTimer;
+  double _verticalDragDelta = 0;
 
   @override
   void initState() {
@@ -55,7 +54,6 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
 
   @override
   void dispose() {
-    _collapseTimer?.cancel();
     super.dispose();
   }
 
@@ -82,20 +80,16 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
   }
 
   void _expand() {
-    _collapseTimer?.cancel();
     if (_expanded) return;
     setState(() => _expanded = true);
   }
 
-  void _collapse({Duration delay = const Duration(milliseconds: 220)}) {
-    _collapseTimer?.cancel();
-    _collapseTimer = Timer(delay, () {
-      if (!mounted) return;
-      setState(() => _expanded = false);
-    });
+  void _collapse() {
+    if (!_expanded) return;
+    setState(() => _expanded = false);
   }
 
-  void _selectIndex(int index, {bool collapse = true}) {
+  void _selectIndex(int index, {bool collapse = false}) {
     final wrapped = _wrapIndex(index);
     setState(() => _dial = wrapped.toDouble());
     if (wrapped != widget.currentIndex) {
@@ -132,182 +126,206 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
     final activeColor = theme.colorScheme.primary;
     final inactiveColor = theme.colorScheme.onSurface.withValues(alpha: 0.62);
 
-    return SafeArea(
-      top: false,
-      child: TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
-        tween: Tween(begin: 0, end: _expanded ? 1 : 0),
-        builder: (context, expand, _) {
-          final barHeight = 82 + expand * 52;
-          final barLift = expand * 48;
-          final activeIndex = _wrapIndex(_dial.round());
-          return SizedBox(
-            height: barHeight + 10,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-              child: Transform.translate(
-                offset: Offset(0, -barLift),
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    if (_expanded) {
-                      setState(() => _expanded = false);
-                    } else {
-                      _expand();
-                    }
-                  },
-                  onHorizontalDragStart: (_) {
-                    _dragging = true;
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutCubic,
+      tween: Tween(begin: 0, end: _expanded ? 1 : 0),
+      builder: (context, expand, _) {
+        final barHeight = 90 + expand * 96;
+        final barLift = expand * 96;
+        final activeIndex = _wrapIndex(_dial.round());
+        return SizedBox(
+          height: barHeight,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(6, 0, 6, 0),
+            child: Transform.translate(
+              offset: Offset(0, -barLift),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (!_expanded) {
                     _expand();
-                  },
-                  onHorizontalDragUpdate: (details) {
-                    final next = _wrapDial(_dial - details.delta.dx / 68);
-                    setState(() => _dial = next);
-                  },
-                  onHorizontalDragEnd: (_) {
-                    _dragging = false;
-                    _selectIndex(_dial.round());
-                  },
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(34),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFFFBFCFB), Color(0xFFE8EEE9)],
-                      ),
-                      border: Border.all(
-                        color: Colors.black.withValues(alpha: 0.08),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.15),
-                          blurRadius: 18,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
+                  }
+                },
+                onVerticalDragStart: (_) {
+                  _verticalDragDelta = 0;
+                },
+                onVerticalDragUpdate: (details) {
+                  _verticalDragDelta += details.delta.dy;
+                },
+                onVerticalDragEnd: (_) {
+                  if (_verticalDragDelta > 18) {
+                    _collapse();
+                  } else if (_verticalDragDelta < -18) {
+                    _expand();
+                  }
+                  _verticalDragDelta = 0;
+                },
+                onHorizontalDragStart: (_) {
+                  _dragging = true;
+                  _expand();
+                },
+                onHorizontalDragUpdate: (details) {
+                  final next = _wrapDial(_dial - details.delta.dx / 74);
+                  setState(() => _dial = next);
+                },
+                onHorizontalDragEnd: (_) {
+                  _dragging = false;
+                  _selectIndex(_dial.round());
+                },
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(34),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFFBFCFB), Color(0xFFE8EEE9)],
                     ),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final centerX = constraints.maxWidth / 2;
-                        final itemWidth = 58 + expand * 4;
-                        final spacing = 58 + expand * 18;
-                        final visibleDelta = 1.45 + expand * 1.15;
+                    border: Border.all(
+                      color: Colors.black.withValues(alpha: 0.08),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.16),
+                        blurRadius: 22,
+                        offset: const Offset(0, 11),
+                      ),
+                    ],
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final centerX = constraints.maxWidth / 2;
+                      final itemWidth = 72 + expand * 16;
+                      final itemHeight = itemWidth + 26;
+                      final spacing = 74 + expand * 34;
+                      final visibleDelta = 1.0 + expand * 1.0;
 
-                        return Stack(
-                          clipBehavior: Clip.hardEdge,
-                          children: [
-                            Positioned(
-                              top: 8 - expand * 2,
-                              left: 0,
-                              right: 0,
-                              child: IgnorePointer(
-                                child: Center(
-                                  child: AnimatedOpacity(
-                                    duration: const Duration(milliseconds: 180),
-                                    opacity: expand,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.86),
-                                        borderRadius: BorderRadius.circular(999),
-                                        border: Border.all(
-                                          color: Colors.black.withValues(alpha: 0.08),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        widget.items[activeIndex].label,
-                                        style: theme.textTheme.labelMedium?.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            for (var i = 0; i < widget.items.length; i++)
-                              Builder(builder: (context) {
-                                final delta = _wrappedDelta(i, _dial);
-                                if (delta.abs() > visibleDelta + 0.3) {
-                                  return const SizedBox.shrink();
-                                }
-                                final focus = (1 - (delta.abs() / 2.8)).clamp(0.0, 1.0);
-                                final edgeFade = ((visibleDelta + 0.28 - delta.abs()) / 0.45)
-                                    .clamp(0.0, 1.0);
-                                final x = delta * spacing;
-                                final arcY = math.pow(delta.abs(), 1.5) * 6.2;
-                                final top = 34 + arcY - expand * 28;
-                                final scale = 0.86 + expand * (0.24 + focus * 0.2);
-                                final iconSize = 18 + expand * (8 + focus * 8);
-                                final active = _wrapIndex(i) == activeIndex;
-                                final iconColor = active ? activeColor : inactiveColor;
-                                final tilt = delta * 0.1 * expand;
+                      return Stack(
+                        clipBehavior: Clip.hardEdge,
+                        children: [
+                          for (var i = 0; i < widget.items.length; i++)
+                            Builder(builder: (context) {
+                              final delta = _wrappedDelta(i, _dial);
+                              if (delta.abs() > visibleDelta + 0.34) {
+                                return const SizedBox.shrink();
+                              }
+                              final focus =
+                                  (1 - (delta.abs() / 2.8)).clamp(0.0, 1.0);
+                              final edgeFade =
+                                  ((visibleDelta + 0.3 - delta.abs()) / 0.48)
+                                      .clamp(0.0, 1.0);
+                              final x = delta * spacing;
+                              final arcY = math.pow(delta.abs(), 1.45) *
+                                  (8 + expand * 3);
+                              final top = 52 + arcY - expand * 50;
+                              final scale = 0.9 + expand * (0.25 + focus * 0.22);
+                              final iconSize = 22 + expand * (12 + focus * 10);
+                              final active = _wrapIndex(i) == activeIndex;
+                              final iconColor =
+                                  active ? activeColor : inactiveColor;
+                              final tilt = delta * 0.095 * expand;
 
-                                return Positioned(
-                                  top: top,
-                                  left: centerX + x - itemWidth / 2,
-                                  width: itemWidth,
-                                  height: itemWidth,
-                                  child: Transform.rotate(
-                                    angle: tilt,
-                                    child: Transform.scale(
-                                      scale: scale,
-                                      child: Opacity(
-                                        opacity: edgeFade,
-                                        child: Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            customBorder: const CircleBorder(),
-                                            onTap: () {
-                                              if (!_expanded) {
-                                                _expand();
-                                              }
-                                              _selectIndex(i);
-                                            },
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: active
-                                                    ? activeColor.withValues(alpha: 0.18)
-                                                    : Colors.white.withValues(
-                                                        alpha: 0.65 + focus * 0.2),
-                                                border: Border.all(
+                              return Positioned(
+                                top: top,
+                                left: centerX + x - itemWidth / 2,
+                                width: itemWidth,
+                                height: itemHeight,
+                                child: Transform.rotate(
+                                  angle: tilt,
+                                  child: Transform.scale(
+                                    scale: scale,
+                                    child: Opacity(
+                                      opacity: edgeFade,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          onTap: () {
+                                            if (!_expanded) {
+                                              _expand();
+                                            }
+                                            _selectIndex(i);
+                                          },
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                width: itemWidth,
+                                                height: itemWidth,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
                                                   color: active
-                                                      ? activeColor.withValues(alpha: 0.45)
-                                                      : Colors.black
-                                                          .withValues(alpha: 0.08),
+                                                      ? activeColor.withValues(
+                                                          alpha: 0.18)
+                                                      : Colors.white.withValues(
+                                                          alpha:
+                                                              0.65 + focus * 0.2),
+                                                  border: Border.all(
+                                                    color: active
+                                                        ? activeColor.withValues(
+                                                            alpha: 0.45)
+                                                        : Colors.black
+                                                            .withValues(
+                                                                alpha: 0.08),
+                                                  ),
+                                                ),
+                                                child: Center(
+                                                  child: _buildIcon(
+                                                    widget.items[i],
+                                                    active,
+                                                    iconSize,
+                                                    iconColor,
+                                                  ),
                                                 ),
                                               ),
-                                              child: Center(
-                                                child: _buildIcon(
-                                                  widget.items[i],
-                                                  active,
-                                                  iconSize,
-                                                  iconColor,
+                                              const SizedBox(height: 4),
+                                              SizedBox(
+                                                width: itemWidth + 24,
+                                                child: Text(
+                                                  widget.items[i].label,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  textAlign: TextAlign.center,
+                                                  style: theme
+                                                      .textTheme.labelSmall
+                                                      ?.copyWith(
+                                                    fontSize: 11 +
+                                                        expand * 1.2,
+                                                    fontWeight: active
+                                                        ? FontWeight.w700
+                                                        : FontWeight.w500,
+                                                    color: active
+                                                        ? activeColor
+                                                        : theme
+                                                            .colorScheme
+                                                            .onSurface
+                                                            .withValues(
+                                                                alpha:
+                                                                    0.7),
+                                                  ),
                                                 ),
                                               ),
-                                            ),
+                                            ],
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                );
-                              }),
-                          ],
-                        );
-                      },
-                    ),
+                                ),
+                              );
+                            }),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
