@@ -139,8 +139,8 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
         curve: Curves.easeOutCubic,
         tween: Tween(begin: 0, end: _expanded ? 1 : 0),
         builder: (context, expand, _) {
-          final barHeight = 78 + expand * 34;
-          final barLift = expand * 24;
+          final barHeight = 82 + expand * 52;
+          final barLift = expand * 48;
           final activeIndex = _wrapIndex(_dial.round());
           return SizedBox(
             height: barHeight + 10,
@@ -162,7 +162,7 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                     _expand();
                   },
                   onHorizontalDragUpdate: (details) {
-                    final next = _wrapDial(_dial - details.delta.dx / 58);
+                    final next = _wrapDial(_dial - details.delta.dx / 68);
                     setState(() => _dial = next);
                   },
                   onHorizontalDragEnd: (_) {
@@ -191,11 +191,12 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         final centerX = constraints.maxWidth / 2;
-                        const itemWidth = 58.0;
-                        const spacing = 54.0;
+                        final itemWidth = 58 + expand * 4;
+                        final spacing = 58 + expand * 18;
+                        final visibleDelta = 1.45 + expand * 1.15;
 
                         return Stack(
-                          clipBehavior: Clip.none,
+                          clipBehavior: Clip.hardEdge,
                           children: [
                             Positioned(
                               top: 8 - expand * 2,
@@ -230,10 +231,15 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                             for (var i = 0; i < widget.items.length; i++)
                               Builder(builder: (context) {
                                 final delta = _wrappedDelta(i, _dial);
+                                if (delta.abs() > visibleDelta + 0.3) {
+                                  return const SizedBox.shrink();
+                                }
                                 final focus = (1 - (delta.abs() / 2.8)).clamp(0.0, 1.0);
+                                final edgeFade = ((visibleDelta + 0.28 - delta.abs()) / 0.45)
+                                    .clamp(0.0, 1.0);
                                 final x = delta * spacing;
-                                final arcY = math.pow(delta.abs(), 1.45) * 5.4;
-                                final top = 30 + arcY - expand * 20;
+                                final arcY = math.pow(delta.abs(), 1.5) * 6.2;
+                                final top = 34 + arcY - expand * 28;
                                 final scale = 0.86 + expand * (0.24 + focus * 0.2);
                                 final iconSize = 18 + expand * (8 + focus * 8);
                                 final active = _wrapIndex(i) == activeIndex;
@@ -249,36 +255,39 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                                     angle: tilt,
                                     child: Transform.scale(
                                       scale: scale,
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          customBorder: const CircleBorder(),
-                                          onTap: () {
-                                            if (!_expanded) {
-                                              _expand();
-                                            }
-                                            _selectIndex(i);
-                                          },
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: active
-                                                  ? activeColor.withValues(alpha: 0.18)
-                                                  : Colors.white.withValues(
-                                                      alpha: 0.65 + focus * 0.2),
-                                              border: Border.all(
+                                      child: Opacity(
+                                        opacity: edgeFade,
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            customBorder: const CircleBorder(),
+                                            onTap: () {
+                                              if (!_expanded) {
+                                                _expand();
+                                              }
+                                              _selectIndex(i);
+                                            },
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
                                                 color: active
-                                                    ? activeColor.withValues(alpha: 0.45)
-                                                    : Colors.black
-                                                        .withValues(alpha: 0.08),
+                                                    ? activeColor.withValues(alpha: 0.18)
+                                                    : Colors.white.withValues(
+                                                        alpha: 0.65 + focus * 0.2),
+                                                border: Border.all(
+                                                  color: active
+                                                      ? activeColor.withValues(alpha: 0.45)
+                                                      : Colors.black
+                                                          .withValues(alpha: 0.08),
+                                                ),
                                               ),
-                                            ),
-                                            child: Center(
-                                              child: _buildIcon(
-                                                widget.items[i],
-                                                active,
-                                                iconSize,
-                                                iconColor,
+                                              child: Center(
+                                                child: _buildIcon(
+                                                  widget.items[i],
+                                                  active,
+                                                  iconSize,
+                                                  iconColor,
+                                                ),
                                               ),
                                             ),
                                           ),
