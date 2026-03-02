@@ -316,6 +316,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     ];
 
     return Scaffold(
+      extendBody: true,
       body: screens[tabState.index],
       bottomNavigationBar: RevolverTabBar(
         currentIndex: tabState.index,
