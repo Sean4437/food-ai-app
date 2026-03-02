@@ -35,6 +35,7 @@ class RevolverTabBar extends StatefulWidget {
 class _RevolverTabBarState extends State<RevolverTabBar> {
   bool _expanded = true;
   bool _dragging = false;
+  bool _pendingCollapseOnNavigate = false;
   double _dial = 0;
   double _verticalDragDelta = 0;
 
@@ -47,8 +48,17 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
   @override
   void didUpdateWidget(covariant RevolverTabBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.currentIndex != widget.currentIndex && !_dragging) {
-      _dial = widget.currentIndex.toDouble();
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      if (!_dragging) {
+        _dial = widget.currentIndex.toDouble();
+      }
+      if (_pendingCollapseOnNavigate) {
+        _pendingCollapseOnNavigate = false;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _collapse();
+        });
+      }
     }
   }
 
@@ -94,10 +104,10 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
     final navigatingToOtherPage = wrapped != widget.currentIndex;
     setState(() => _dial = wrapped.toDouble());
     if (navigatingToOtherPage) {
-      widget.onSelect(wrapped);
       if (collapseOnNavigate) {
-        _collapse();
+        _pendingCollapseOnNavigate = true;
       }
+      widget.onSelect(wrapped);
     }
   }
 
