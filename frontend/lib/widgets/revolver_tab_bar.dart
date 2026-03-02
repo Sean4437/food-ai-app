@@ -147,7 +147,7 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
       tween: Tween(begin: 0, end: _expanded ? 1 : 0),
       builder: (context, expand, _) {
         const barHeight = 108.0;
-        const dockHeight = 78.0;
+        const dockHeight = 44.0;
         final activeIndex = _wrapIndex(_dial.round());
         return SizedBox(
           height: barHeight,
@@ -204,29 +204,16 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        child: ClipPath(
-                          clipper: _ArcDockClipper(),
-                          child: Container(
-                            height: dockHeight,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Color(0xFFF7F9F7),
-                                  Color(0xFFE7EDE8),
-                                ],
+                        child: SizedBox(
+                          height: dockHeight,
+                          child: IgnorePointer(
+                            child: CustomPaint(
+                              painter: _ArcDockStrokePainter(
+                                strokeColor:
+                                    Colors.black.withValues(alpha: 0.14),
+                                glowColor:
+                                    Colors.black.withValues(alpha: 0.06),
                               ),
-                              border: Border.all(
-                                color: Colors.black.withValues(alpha: 0.08),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.12),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
                             ),
                           ),
                         ),
@@ -353,24 +340,45 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
   }
 }
 
-class _ArcDockClipper extends CustomClipper<Path> {
+class _ArcDockStrokePainter extends CustomPainter {
+  _ArcDockStrokePainter({
+    required this.strokeColor,
+    required this.glowColor,
+  });
+
+  final Color strokeColor;
+  final Color glowColor;
+
   @override
-  Path getClip(Size size) {
-    final path = Path();
-    final shoulderY = size.height * 0.42;
-    path.moveTo(0, size.height);
-    path.lineTo(0, shoulderY);
-    path.quadraticBezierTo(
-      size.width * 0.5,
-      0,
-      size.width,
-      shoulderY,
-    );
-    path.lineTo(size.width, size.height);
-    path.close();
-    return path;
+  void paint(Canvas canvas, Size size) {
+    final shoulderY = size.height * 0.58;
+    final start = Offset(0, shoulderY);
+    final control = Offset(size.width * 0.5, 0);
+    final end = Offset(size.width, shoulderY);
+
+    final path = Path()
+      ..moveTo(start.dx, start.dy)
+      ..quadraticBezierTo(control.dx, control.dy, end.dx, end.dy);
+
+    final glowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10
+      ..color = glowColor
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawPath(path, glowPaint);
+
+    final strokePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..color = strokeColor
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(path, strokePaint);
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+  bool shouldRepaint(covariant _ArcDockStrokePainter oldDelegate) {
+    return oldDelegate.strokeColor != strokeColor ||
+        oldDelegate.glowColor != glowColor;
+  }
 }
