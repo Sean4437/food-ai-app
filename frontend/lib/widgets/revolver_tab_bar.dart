@@ -108,6 +108,10 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
         _pendingCollapseOnNavigate = true;
       }
       widget.onSelect(wrapped);
+      return;
+    }
+    if (collapseOnNavigate) {
+      _collapse();
     }
   }
 
