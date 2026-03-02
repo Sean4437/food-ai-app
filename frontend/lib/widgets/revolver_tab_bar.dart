@@ -131,7 +131,8 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
       curve: Curves.easeOutCubic,
       tween: Tween(begin: 0, end: _expanded ? 1 : 0),
       builder: (context, expand, _) {
-        const barHeight = 136.0;
+        const barHeight = 108.0;
+        const dockHeight = 78.0;
         final activeIndex = _wrapIndex(_dial.round());
         return SizedBox(
           height: barHeight,
@@ -175,15 +176,46 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final centerX = constraints.maxWidth / 2;
-                  final itemWidth = 74 + expand * 18;
+                  final itemWidth = 72 + expand * 16;
                   final itemHeight = itemWidth + 26;
-                  final spacing = 78 + expand * 40;
-                  final visibleDelta = 1.12 + expand * 1.08;
-                  final dialLift = 82 * expand;
+                  final spacing = 72 + expand * 36;
+                  final visibleDelta = _expanded ? 2.08 : 1.06;
+                  final dialLift = 76 * expand;
 
                   return Stack(
                     clipBehavior: Clip.none,
                     children: [
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: ClipPath(
+                          clipper: _ArcDockClipper(),
+                          child: Container(
+                            height: dockHeight,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color(0xFFF7F9F7),
+                                  Color(0xFFE7EDE8),
+                                ],
+                              ),
+                              border: Border.all(
+                                color: Colors.black.withValues(alpha: 0.08),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       for (var i = 0; i < widget.items.length; i++)
                         Builder(builder: (context) {
                           final delta = _wrappedDelta(i, _dial);
@@ -198,12 +230,13 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                           final x = delta * spacing;
                           final arcY =
                               math.pow(delta.abs(), 1.45) * (10 + expand * 4);
-                          final top = 78 + arcY - dialLift;
+                          final top = 22 + arcY - dialLift;
                           final scale = 0.9 + expand * (0.25 + focus * 0.22);
                           final iconSize = 22 + expand * (12 + focus * 10);
                           final active = _wrapIndex(i) == activeIndex;
                           final iconColor = active ? activeColor : inactiveColor;
                           final tilt = delta * 0.095 * expand;
+                          final showLabel = _expanded || active;
 
                           return Positioned(
                             top: top,
@@ -232,22 +265,21 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                                           Container(
                                             width: itemWidth,
                                             height: itemWidth,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: active
-                                                  ? activeColor.withValues(
-                                                      alpha: 0.18)
-                                                  : Colors.white.withValues(
-                                                      alpha:
-                                                          0.65 + focus * 0.2),
-                                              border: Border.all(
-                                                color: active
-                                                    ? activeColor.withValues(
-                                                        alpha: 0.45)
-                                                    : Colors.black.withValues(
-                                                        alpha: 0.08),
-                                              ),
-                                            ),
+                                            decoration: active
+                                                ? BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color:
+                                                        activeColor.withValues(
+                                                      alpha: 0.18,
+                                                    ),
+                                                    border: Border.all(
+                                                      color: activeColor
+                                                          .withValues(
+                                                        alpha: 0.45,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : null,
                                             child: Center(
                                               child: _buildIcon(
                                                 widget.items[i],
@@ -257,29 +289,31 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(height: 4),
-                                          SizedBox(
-                                            width: itemWidth + 24,
-                                            child: Text(
-                                              widget.items[i].label,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              textAlign: TextAlign.center,
-                                              style: theme.textTheme.labelSmall
-                                                  ?.copyWith(
-                                                fontSize: 11 + expand * 1.2,
-                                                fontWeight: active
-                                                    ? FontWeight.w700
-                                                    : FontWeight.w500,
-                                                color: active
-                                                    ? activeColor
-                                                    : theme
-                                                        .colorScheme.onSurface
-                                                        .withValues(
-                                                            alpha: 0.7),
+                                          if (showLabel) ...[
+                                            const SizedBox(height: 4),
+                                            SizedBox(
+                                              width: itemWidth + 24,
+                                              child: Text(
+                                                widget.items[i].label,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.center,
+                                                style: theme.textTheme.labelSmall
+                                                    ?.copyWith(
+                                                  fontSize: 11 + expand * 1.2,
+                                                  fontWeight: active
+                                                      ? FontWeight.w700
+                                                      : FontWeight.w500,
+                                                  color: active
+                                                      ? activeColor
+                                                      : theme
+                                                          .colorScheme.onSurface
+                                                          .withValues(
+                                                              alpha: 0.7),
+                                                ),
                                               ),
                                             ),
-                                          ),
+                                          ],
                                         ],
                                       ),
                                     ),
@@ -299,4 +333,26 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
       },
     );
   }
+}
+
+class _ArcDockClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final shoulderY = size.height * 0.42;
+    path.moveTo(0, size.height);
+    path.lineTo(0, shoulderY);
+    path.quadraticBezierTo(
+      size.width * 0.5,
+      0,
+      size.width,
+      shoulderY,
+    );
+    path.lineTo(size.width, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
