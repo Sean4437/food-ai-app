@@ -89,14 +89,15 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
     setState(() => _expanded = false);
   }
 
-  void _selectIndex(int index, {bool collapse = false}) {
+  void _selectIndex(int index, {bool collapseOnNavigate = false}) {
     final wrapped = _wrapIndex(index);
+    final navigatingToOtherPage = wrapped != widget.currentIndex;
     setState(() => _dial = wrapped.toDouble());
-    if (wrapped != widget.currentIndex) {
+    if (navigatingToOtherPage) {
       widget.onSelect(wrapped);
-    }
-    if (collapse) {
-      _collapse();
+      if (collapseOnNavigate) {
+        _collapse();
+      }
     }
   }
 
@@ -171,7 +172,7 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
               },
               onHorizontalDragEnd: (_) {
                 _dragging = false;
-                _selectIndex(_dial.round());
+                _selectIndex(_dial.round(), collapseOnNavigate: true);
               },
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -257,7 +258,10 @@ class _RevolverTabBarState extends State<RevolverTabBar> {
                                         if (!_expanded) {
                                           _expand();
                                         }
-                                        _selectIndex(i);
+                                        _selectIndex(
+                                          i,
+                                          collapseOnNavigate: true,
+                                        );
                                       },
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
