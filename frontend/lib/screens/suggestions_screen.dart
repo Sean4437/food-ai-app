@@ -12,6 +12,7 @@ import '../models/meal_entry.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/nutrition_chart.dart';
 import '../widgets/app_background.dart';
+import '../widgets/subscription_paywall.dart';
 import '../design/text_styles.dart';
 
 class SuggestionsScreen extends StatefulWidget {
@@ -47,6 +48,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
   Timer? _progressTimer;
   Timer? _statusTimer;
 
+  // ignore: unused_element
   String _subscriptionRequiredMessage() {
     final isZh = Localizations.localeOf(context)
         .languageCode
@@ -55,16 +57,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return isZh ? '此功能需訂閱後才能使用' : 'This feature requires subscription.';
   }
 
-  bool _ensureFeatureAccess(AppState app, AppFeature feature) {
+  Future<bool> _ensureFeatureAccess(AppState app, AppFeature feature) async {
     if (app.canUseFeature(feature)) return true;
-    final message = _subscriptionRequiredMessage();
-    setState(() {
-      _error = message;
-      _loading = false;
-      _previewBytes = null;
-    });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    final t = AppLocalizations.of(context)!;
+    await showSubscriptionPaywall(context, app, t);
     return false;
   }
 
@@ -75,8 +71,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _startCaptureFromCamera());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final app = AppStateScope.of(context);
+      if (!app.canUseFeature(AppFeature.analyze)) return;
+      unawaited(_startCaptureFromCamera());
+    });
   }
 
   @override
@@ -91,7 +91,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
   Future<void> _startCapture({required ImageSource source}) async {
     if (!mounted) return;
     final app = AppStateScope.of(context);
-    if (!_ensureFeatureAccess(app, AppFeature.analyze)) return;
+    if (!await _ensureFeatureAccess(app, AppFeature.analyze)) return;
     setState(() {
       _loading = false;
       _error = null;
@@ -453,7 +453,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     if (_analysis == null) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
-    if (!_ensureFeatureAccess(app, AppFeature.analyze)) return;
+    if (!await _ensureFeatureAccess(app, AppFeature.analyze)) return;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final isZh = Localizations.localeOf(context)
         .languageCode
@@ -2235,6 +2235,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final app = AppStateScope.of(context);
+    final canAnalyze = app.canUseFeature(AppFeature.analyze);
     final isZh = Localizations.localeOf(context)
         .languageCode
         .toLowerCase()
@@ -2420,44 +2421,85 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                                 ],
                                               );
                                             })
-                                          else if (_error != null)
-                                            Text(_error!,
-                                                style: AppTextStyles.caption(
-                                                        context)
-                                                    .copyWith(
-                                                        color:
-                                                            Colors.redAccent))
                                           else
                                             Center(
                                               child: SizedBox(
                                                 width: buttonWidth,
                                                 child: ElevatedButton.icon(
-                                                  onPressed:
-                                                      _startCaptureFromCamera,
+                                                  onPressed: canAnalyze
+                                                      ? _startCaptureFromCamera
+                                                      : () async {
+                                                          await _ensureFeatureAccess(
+                                                              app,
+                                                              AppFeature
+                                                                  .analyze);
+                                                        },
                                                   icon: const Text('📷',
                                                       style: TextStyle(
                                                           fontSize: 18)),
                                                   label: Text(
-                                                    _analysis == null
-                                                        ? t.suggestInstantStart
-                                                        : t.suggestInstantRetake,
+                                                    canAnalyze
+                                                        ? (_analysis == null
+                                                            ? t
+                                                                .suggestInstantStart
+                                                            : t
+                                                                .suggestInstantRetake)
+                                                        : (isZh
+                                                            ? '訂閱後可使用拍照分析'
+                                                            : 'Subscribe to unlock photo analysis'),
                                                     style: const TextStyle(
                                                         fontWeight:
                                                             FontWeight.w700),
                                                   ),
                                                   style:
                                                       ElevatedButton.styleFrom(
-                                                    backgroundColor: theme
-                                                        .colorScheme.primary,
-                                                    foregroundColor:
-                                                        Colors.white,
+                                                    backgroundColor: canAnalyze
+                                                        ? theme
+                                                            .colorScheme.primary
+                                                        : Colors.white
+                                                            .withValues(
+                                                                alpha: 0.94),
+                                                    foregroundColor: canAnalyze
+                                                        ? Colors.white
+                                                        : theme
+                                                            .colorScheme.primary,
                                                     side: BorderSide(
-                                                        color: theme.colorScheme
-                                                            .primary),
+                                                      color: canAnalyze
+                                                          ? theme.colorScheme
+                                                              .primary
+                                                          : theme
+                                                              .colorScheme.primary
+                                                              .withValues(
+                                                                  alpha: 0.45),
+                                                    ),
                                                   ),
                                                 ),
                                               ),
                                             ),
+                                          if (_error != null) ...[
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              _error!,
+                                              style: AppTextStyles.caption(
+                                                      context)
+                                                  .copyWith(
+                                                      color: Colors.redAccent),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
+                                          if (!canAnalyze) ...[
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              isZh
+                                                  ? '你仍可使用「輸入名稱」與「自訂義」功能'
+                                                  : 'You can still use name input and custom foods.',
+                                              style: AppTextStyles.caption(
+                                                      context)
+                                                  .copyWith(
+                                                      color: Colors.black54),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ],
                                           const SizedBox(height: 10),
                                           Center(
                                             child: SizedBox(

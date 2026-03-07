@@ -1,4 +1,4 @@
 const bool kEnableWebMockSubscription = bool.fromEnvironment(
   'ENABLE_WEB_MOCK_SUBSCRIPTION',
-  defaultValue: false,
+  defaultValue: true,
 );
