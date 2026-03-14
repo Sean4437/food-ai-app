@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:app_links/app_links.dart';
 import 'screens/home_screen.dart';
 import 'screens/log_screen.dart';
@@ -17,7 +18,6 @@ import 'state/app_state.dart';
 import 'design/theme_controller.dart';
 import 'state/tab_state.dart';
 import 'services/supabase_service.dart';
-import 'widgets/revolver_tab_bar.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -262,10 +262,15 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   AppState? _app;
   bool _didRunInitialAutoFlow = false;
   bool _didEnsureInitialTab = false;
+  late final PageController _dockController;
+  double _dockPage = 2;
+  int _lastDockTarget = 2;
 
   @override
   void initState() {
     super.initState();
+    _dockController = PageController(initialPage: 2, viewportFraction: 0.3);
+    _dockController.addListener(_onDockScroll);
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -281,8 +286,30 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _dockController.removeListener(_onDockScroll);
+    _dockController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _onDockScroll() {
+    if (!mounted || !_dockController.hasClients) return;
+    final page = _dockController.page;
+    if (page == null) return;
+    if ((page - _dockPage).abs() < 0.001) return;
+    setState(() => _dockPage = page);
+  }
+
+  void _animateDockTo(int index) {
+    if (!_dockController.hasClients) return;
+    final current =
+        _dockController.page ?? _dockController.initialPage.toDouble();
+    if ((current - index).abs() < 0.02) return;
+    _dockController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -319,6 +346,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         });
       }
     }
+
     const screens = [
       HomeScreen(),
       ChatScreen(),
@@ -328,43 +356,162 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       SettingsScreen(),
     ];
 
+    final theme = Theme.of(context);
+    final navItems = <_DockItem>[
+      _DockItem(label: t.tabHome, icon: Icons.home_rounded),
+      _DockItem(label: t.tabChat, icon: Icons.chat_bubble_rounded),
+      _DockItem(label: t.tabSuggest, icon: Icons.auto_awesome_rounded),
+      _DockItem(label: t.tabLog, icon: Icons.receipt_long_rounded),
+      _DockItem(label: t.tabCustom, icon: Icons.restaurant_menu_rounded),
+      _DockItem(label: t.tabSettings, icon: Icons.settings_rounded),
+    ];
+
+    final clampedIndex = tabState.index.clamp(0, screens.length - 1);
+    if (_lastDockTarget != clampedIndex) {
+      _lastDockTarget = clampedIndex;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _animateDockTo(clampedIndex);
+      });
+    }
+
     return Scaffold(
-      extendBody: true,
-      body: screens[tabState.index],
-      bottomNavigationBar: RevolverTabBar(
-        currentIndex: tabState.index,
-        onSelect: (value) => tabState.setIndex(value),
-        items: [
-          RevolverTabItem(
-            label: t.tabHome,
-            icon: Icons.home_outlined,
-            activeIcon: Icons.home_rounded,
-          ),
-          RevolverTabItem(
-            label: t.tabChat,
-            assetImage: 'assets/cat01.png',
-          ),
-          RevolverTabItem(
-            label: t.tabSuggest,
-            icon: Icons.auto_awesome_outlined,
-            activeIcon: Icons.auto_awesome_rounded,
-          ),
-          RevolverTabItem(
-            label: t.tabLog,
-            icon: Icons.receipt_long_outlined,
-            activeIcon: Icons.receipt_long_rounded,
-          ),
-          RevolverTabItem(
-            label: t.tabCustom,
-            icon: Icons.restaurant_menu_outlined,
-            activeIcon: Icons.restaurant_menu,
-          ),
-          RevolverTabItem(
-            label: t.tabSettings,
-            icon: Icons.settings_outlined,
-            activeIcon: Icons.settings,
+      body: screens[clampedIndex],
+      bottomNavigationBar: _LinearRevolverDock(
+        items: navItems,
+        controller: _dockController,
+        page: _dockPage,
+        activeColor: theme.colorScheme.primary,
+        inactiveColor: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+        onSelect: (index) {
+          _lastDockTarget = index;
+          tabState.setIndex(index);
+          _animateDockTo(index);
+        },
+      ),
+    );
+  }
+}
+
+class _DockItem {
+  const _DockItem({
+    required this.label,
+    required this.icon,
+  });
+
+  final String label;
+  final IconData icon;
+}
+
+class _LinearRevolverDock extends StatelessWidget {
+  const _LinearRevolverDock({
+    required this.items,
+    required this.controller,
+    required this.page,
+    required this.activeColor,
+    required this.inactiveColor,
+    required this.onSelect,
+  });
+
+  final List<_DockItem> items;
+  final PageController controller;
+  final double page;
+  final Color activeColor;
+  final Color inactiveColor;
+  final ValueChanged<int> onSelect;
+
+  double _lerp(double a, double b, double t) => a + (b - a) * t;
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final effectiveBottom = math.max(bottomInset, 8.0);
+
+    return Container(
+      height: 132 + effectiveBottom,
+      padding: EdgeInsets.fromLTRB(10, 10, 10, effectiveBottom),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.96),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(22),
+          topRight: Radius.circular(22),
+        ),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, -8),
           ),
         ],
+      ),
+      child: PageView.builder(
+        controller: controller,
+        itemCount: items.length,
+        padEnds: true,
+        physics: const BouncingScrollPhysics(),
+        onPageChanged: onSelect,
+        itemBuilder: (context, index) {
+          final distance = (page - index).abs().clamp(0.0, 1.8);
+          final focus = (1 - (distance / 1.8)).clamp(0.0, 1.0);
+          final scale = _lerp(0.76, 1.18, focus);
+          final opacity = _lerp(0.45, 1.0, focus);
+          final labelOpacity = _lerp(0.35, 1.0, focus);
+          final iconSize = _lerp(22, 34, focus);
+          final isFocused = distance < 0.35;
+
+          return Center(
+            child: Opacity(
+              opacity: opacity,
+              child: Transform.scale(
+                scale: scale,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: () => onSelect(index),
+                  child: SizedBox(
+                    width: 88,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          curve: Curves.easeOut,
+                          width: isFocused ? 64 : 52,
+                          height: isFocused ? 64 : 52,
+                          decoration: BoxDecoration(
+                            color: isFocused
+                                ? activeColor.withValues(alpha: 0.2)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(32),
+                          ),
+                          child: Icon(
+                            items[index].icon,
+                            size: iconSize,
+                            color: isFocused ? activeColor : inactiveColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          items[index].label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                isFocused ? FontWeight.w700 : FontWeight.w500,
+                            color: isFocused
+                                ? activeColor
+                                : inactiveColor.withValues(alpha: labelOpacity),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
