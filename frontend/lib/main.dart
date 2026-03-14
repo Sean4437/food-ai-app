@@ -5,6 +5,7 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:app_links/app_links.dart';
 import 'screens/home_screen.dart';
 import 'screens/log_screen.dart';
@@ -376,6 +377,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     }
 
     return Scaffold(
+      extendBody: true,
       body: screens[clampedIndex],
       bottomNavigationBar: _LinearRevolverDock(
         items: navItems,
@@ -424,94 +426,116 @@ class _LinearRevolverDock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    final effectiveBottom = math.max(bottomInset, 8.0);
+    final effectiveBottom = math.max(bottomInset, 4.0);
+    final glassTop = Color.lerp(scheme.surface, scheme.primary, 0.16)!
+        .withValues(alpha: 0.52);
+    final glassBottom = Color.lerp(scheme.surface, scheme.secondary, 0.1)!
+        .withValues(alpha: 0.34);
+    final borderColor = scheme.primary.withValues(alpha: 0.2);
 
-    return Container(
-      height: 132 + effectiveBottom,
-      padding: EdgeInsets.fromLTRB(10, 10, 10, effectiveBottom),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.96),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(22),
-          topRight: Radius.circular(22),
-        ),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 20,
-            offset: const Offset(0, -8),
-          ),
-        ],
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(18),
+        topRight: Radius.circular(18),
       ),
-      child: PageView.builder(
-        controller: controller,
-        itemCount: items.length,
-        padEnds: true,
-        physics: const BouncingScrollPhysics(),
-        onPageChanged: onSelect,
-        itemBuilder: (context, index) {
-          final distance = (page - index).abs().clamp(0.0, 1.8);
-          final focus = (1 - (distance / 1.8)).clamp(0.0, 1.0);
-          final scale = _lerp(0.76, 1.18, focus);
-          final opacity = _lerp(0.45, 1.0, focus);
-          final labelOpacity = _lerp(0.35, 1.0, focus);
-          final iconSize = _lerp(22, 34, focus);
-          final isFocused = distance < 0.35;
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          height: 76 + effectiveBottom,
+          padding: EdgeInsets.fromLTRB(8, 6, 8, effectiveBottom),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [glassTop, glassBottom],
+            ),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(18),
+              topRight: Radius.circular(18),
+            ),
+            border: Border.all(color: borderColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 14,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: PageView.builder(
+            controller: controller,
+            itemCount: items.length,
+            padEnds: true,
+            physics: const BouncingScrollPhysics(),
+            onPageChanged: onSelect,
+            itemBuilder: (context, index) {
+              final distance = (page - index).abs().clamp(0.0, 1.8);
+              final focus = (1 - (distance / 1.8)).clamp(0.0, 1.0);
+              final scale = _lerp(0.82, 1.06, focus);
+              final opacity = _lerp(0.5, 1.0, focus);
+              final labelOpacity = _lerp(0.5, 1.0, focus);
+              final iconSize = _lerp(18, 26, focus);
+              final isFocused = distance < 0.35;
 
-          return Center(
-            child: Opacity(
-              opacity: opacity,
-              child: Transform.scale(
-                scale: scale,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(24),
-                  onTap: () => onSelect(index),
-                  child: SizedBox(
-                    width: 88,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          curve: Curves.easeOut,
-                          width: isFocused ? 64 : 52,
-                          height: isFocused ? 64 : 52,
-                          decoration: BoxDecoration(
-                            color: isFocused
-                                ? activeColor.withValues(alpha: 0.2)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(32),
-                          ),
-                          child: Icon(
-                            items[index].icon,
-                            size: iconSize,
-                            color: isFocused ? activeColor : inactiveColor,
-                          ),
+              return Center(
+                child: Opacity(
+                  opacity: opacity,
+                  child: Transform.scale(
+                    scale: scale,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () => onSelect(index),
+                      child: SizedBox(
+                        width: 72,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              curve: Curves.easeOut,
+                              width: isFocused ? 46 : 38,
+                              height: isFocused ? 46 : 38,
+                              decoration: BoxDecoration(
+                                color: isFocused
+                                    ? activeColor.withValues(alpha: 0.16)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(23),
+                              ),
+                              child: Icon(
+                                items[index].icon,
+                                size: iconSize,
+                                color: isFocused ? activeColor : inactiveColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              items[index].label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: isFocused
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: isFocused
+                                    ? activeColor
+                                    : inactiveColor.withValues(
+                                        alpha: labelOpacity,
+                                      ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          items[index].label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight:
-                                isFocused ? FontWeight.w700 : FontWeight.w500,
-                            color: isFocused
-                                ? activeColor
-                                : inactiveColor.withValues(alpha: labelOpacity),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ),
       ),
     );
   }
