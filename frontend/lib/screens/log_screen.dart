@@ -1530,7 +1530,6 @@ class _LogScreenState extends State<LogScreen> {
       context,
       app,
       overrideTime: overrideTime,
-      preferNameInput: preferNameInput,
     );
     if (!mounted || result == null) return;
     setState(() {
