@@ -36,7 +36,15 @@ class _LogScreenState extends State<LogScreen> {
   static const double _dateItemWidth = 78;
   static const double _dateItemGap = 6;
   static const double _topCardHeight = 210;
+  static const double _bottomDockBaseHeight = 76;
   static const List<int> _historyDayOptions = [7, 14, 30];
+
+  double _fabBottomPadding(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final dockCompensation =
+        math.max(46.0, _bottomDockBaseHeight - bottomInset + 6);
+    return dockCompensation;
+  }
 
   Future<T?> _showPickerSheet<T>({
     required BuildContext context,
@@ -1493,7 +1501,11 @@ class _LogScreenState extends State<LogScreen> {
     }
   }
 
-  Future<void> _quickRecord(BuildContext context, AppState app) async {
+  Future<void> _quickRecord(
+    BuildContext context,
+    AppState app, {
+    bool preferNameInput = false,
+  }) async {
     final t = AppLocalizations.of(context)!;
     final pickedDate = await showDatePicker(
       context: context,
@@ -1518,6 +1530,7 @@ class _LogScreenState extends State<LogScreen> {
       context,
       app,
       overrideTime: overrideTime,
+      preferNameInput: preferNameInput,
     );
     if (!mounted || result == null) return;
     setState(() {
@@ -1582,10 +1595,30 @@ class _LogScreenState extends State<LogScreen> {
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        floatingActionButton: FloatingActionButton(
-          heroTag: 'log_quick_record_fab',
-          onPressed: () => _quickRecord(context, app),
-          child: const Icon(Icons.add),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: Padding(
+          padding: EdgeInsets.only(bottom: _fabBottomPadding(context)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              FloatingActionButton.small(
+                heroTag: 'log_quick_name_fab',
+                onPressed: () => _quickRecord(
+                  context,
+                  app,
+                  preferNameInput: true,
+                ),
+                child: const Icon(Icons.edit_note),
+              ),
+              const SizedBox(height: 10),
+              FloatingActionButton(
+                heroTag: 'log_quick_record_fab',
+                onPressed: () => _quickRecord(context, app),
+                child: const Icon(Icons.add),
+              ),
+            ],
+          ),
         ),
         body: SafeArea(
           child: SingleChildScrollView(
