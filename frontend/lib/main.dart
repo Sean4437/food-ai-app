@@ -26,11 +26,7 @@ Future<void> main() async {
   final themeController = ThemeController();
   final tabState = TabState();
   final appState = AppState();
-  await appState.init();
-  final themeAsset = appState.profile.themeAsset.isEmpty
-      ? 'assets/themes/theme_clean.json'
-      : appState.profile.themeAsset;
-  themeController.loadFromAsset(themeAsset);
+  unawaited(themeController.loadFromAsset(kDefaultThemeAsset));
   runApp(ThemeScope(
     notifier: themeController,
     child: TabScope(
@@ -41,6 +37,13 @@ Future<void> main() async {
       ),
     ),
   ));
+  unawaited(() async {
+    await appState.init();
+    final themeAsset = appState.profile.themeAsset.isEmpty
+        ? kDefaultThemeAsset
+        : appState.profile.themeAsset;
+    await themeController.loadFromAsset(themeAsset);
+  }());
 }
 
 class FoodAiApp extends StatelessWidget {

@@ -61,7 +61,11 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
                     TextButton.icon(
                       onPressed: () async {
                         final picked = await _picker.pickImage(
-                            source: ImageSource.gallery);
+                          source: ImageSource.gallery,
+                          maxWidth: 1024,
+                          maxHeight: 1024,
+                          imageQuality: 80,
+                        );
                         if (picked == null) return;
                         final bytes = await picked.readAsBytes();
                         setDialogState(() => workingImage = bytes);
@@ -177,7 +181,7 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
     AppLocalizations t,
     MealType current,
   ) async {
-    final options = MealType.values;
+    const options = MealType.values;
     return showModalBottomSheet<MealType>(
       context: context,
       backgroundColor: Colors.white,
