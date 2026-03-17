@@ -1059,6 +1059,7 @@ class _LogScreenState extends State<LogScreen> {
   }) {
     final resolvedRadius = borderRadius ?? BorderRadius.circular(radius);
     final normalizedUrl = imageUrl?.trim() ?? '';
+    final cacheSize = (photoWidth * 2).round();
     Widget memoryImage() {
       if (bytes.isEmpty) {
         return Container(
@@ -1072,6 +1073,8 @@ class _LogScreenState extends State<LogScreen> {
         bytes,
         width: photoWidth,
         height: photoWidth,
+        cacheWidth: cacheSize,
+        cacheHeight: cacheSize,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => Container(
           color: const Color(0xFFEAF2EE),
@@ -1092,6 +1095,8 @@ class _LogScreenState extends State<LogScreen> {
                 normalizedUrl,
                 width: photoWidth,
                 height: photoWidth,
+                cacheWidth: cacheSize,
+                cacheHeight: cacheSize,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => memoryImage(),
               )

@@ -208,6 +208,8 @@ class AppState extends ChangeNotifier {
   final MealStore _store;
   final SettingsStore _settings;
   final List<MealEntry> entries = [];
+  final Map<int, List<MealEntry>> _entriesByDateIndex = {};
+  bool _entriesByDateIndexDirty = true;
   static final Uint8List _namePlaceholderBytes =
       Uint8List.fromList(base64Decode(_kNamePlaceholderBase64));
   static const List<_BeverageProfile> _kBeverageProfiles = [
@@ -1260,6 +1262,7 @@ class AppState extends ChangeNotifier {
       entry.lastAnalyzeReason = 'quick_capture';
       entries.insert(0, entry);
     }
+    _markEntriesDateIndexDirty();
     markMealInteraction(entry.mealId ?? entry.id);
     _selectedDate = _dateOnly(entry.time);
     notifyListeners();
@@ -1311,6 +1314,7 @@ class AppState extends ChangeNotifier {
     entries
       ..clear()
       ..addAll(loaded);
+    _markEntriesDateIndexDirty();
     _syncSelectedDateToLatestEntryIfNeeded();
     bool changed = false;
     for (final entry in entries) {
@@ -1645,6 +1649,7 @@ class AppState extends ChangeNotifier {
     entry.lastAnalyzedAt = DateTime.now().toIso8601String();
     entry.lastAnalyzeReason = 'custom_use';
     entries.insert(0, entry);
+    _markEntriesDateIndexDirty();
     markMealInteraction(entry.mealId ?? entry.id);
     _selectedDate = _dateOnly(entry.time);
     notifyListeners();
@@ -4226,6 +4231,7 @@ class AppState extends ChangeNotifier {
     entry.lastAnalyzeReason = reason;
     entry.lastAnalyzedNote = lastAnalyzedNote;
     entries.insert(0, entry);
+    _markEntriesDateIndexDirty();
     markMealInteraction(mealId);
     _selectedDate = _dateOnly(time);
     notifyListeners();
@@ -4237,9 +4243,35 @@ class AppState extends ChangeNotifier {
 
   DateTime get selectedDate => _selectedDate;
 
-  List<MealEntry> entriesForDate(DateTime date) {
+  int _dateIndexKey(DateTime date) {
     final target = _dateOnly(date);
-    return entries.where((entry) => _isSameDate(entry.time, target)).toList();
+    return target.year * 10000 + target.month * 100 + target.day;
+  }
+
+  void _markEntriesDateIndexDirty() {
+    _entriesByDateIndexDirty = true;
+  }
+
+  void _rebuildEntriesDateIndex() {
+    _entriesByDateIndex..clear();
+    for (final entry in entries) {
+      final key = _dateIndexKey(entry.time);
+      final bucket = _entriesByDateIndex.putIfAbsent(key, () => <MealEntry>[]);
+      bucket.add(entry);
+    }
+    _entriesByDateIndexDirty = false;
+  }
+
+  List<MealEntry> entriesForDate(DateTime date) {
+    if (_entriesByDateIndexDirty) {
+      _rebuildEntriesDateIndex();
+    }
+    final key = _dateIndexKey(date);
+    final bucket = _entriesByDateIndex[key];
+    if (bucket == null || bucket.isEmpty) {
+      return const [];
+    }
+    return List<MealEntry>.from(bucket);
   }
 
   List<MealEntry> get entriesForSelectedDate => entriesForDate(_selectedDate);
@@ -5376,6 +5408,9 @@ class AppState extends ChangeNotifier {
     if (anchorTime != null) {
       _selectedDate = _dateOnly(anchorTime);
     }
+    if (created.isNotEmpty) {
+      _markEntriesDateIndexDirty();
+    }
     notifyListeners();
     for (final entry in created) {
       await _store.upsert(entry);
@@ -5413,6 +5448,7 @@ class AppState extends ChangeNotifier {
       imageHash: imageHash,
     );
     entries.insert(0, entry);
+    _markEntriesDateIndexDirty();
     markMealInteraction(entry.mealId ?? entry.id);
     _selectedDate = _dateOnly(entry.time);
     notifyListeners();
@@ -5448,6 +5484,7 @@ class AppState extends ChangeNotifier {
     final oldDate = _dateOnly(entry.time);
     final locale = profile.language;
     entry.time = time;
+    _markEntriesDateIndexDirty();
     entry.type = resolveMealType(time);
     entry.mealId = _assignMealId(time, entry.type);
     entry.updatedAt = DateTime.now().toUtc();
@@ -5575,6 +5612,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> clearAll() async {
     entries.clear();
+    _markEntriesDateIndexDirty();
     _chatMessages.clear();
     _chatSummary = '';
     _chatError = null;
@@ -5596,6 +5634,7 @@ class AppState extends ChangeNotifier {
     final glowEnabled = profile.glowEnabled;
 
     entries.clear();
+    _markEntriesDateIndexDirty();
     customFoods.clear();
     _deletedEntries.clear();
     _deletedCustomFoods.clear();
@@ -5709,6 +5748,7 @@ class AppState extends ChangeNotifier {
       'updated_at': now.toIso8601String(),
     };
     entries.remove(entry);
+    _markEntriesDateIndexDirty();
     notifyListeners();
     // ignore: discarded_futures
     _store.delete(entry.id);
@@ -9592,6 +9632,7 @@ class AppState extends ChangeNotifier {
         await _fetchPagedRows((from, to) => mealsQuery().range(from, to));
     if (rows is List) {
       final remoteIds = <String>{};
+      var dateIndexChanged = false;
       for (final row in rows) {
         if (row is! Map<String, dynamic>) continue;
         final entryId = row['id'] as String?;
@@ -9614,6 +9655,7 @@ class AppState extends ChangeNotifier {
             final index = entries.indexWhere((item) => item.id == entryId);
             if (index != -1) {
               entries.removeAt(index);
+              dateIndexChanged = true;
               // ignore: discarded_futures
               _store.delete(entryId);
               if (report != null) report.pulledMealDeletes += 1;
@@ -9659,8 +9701,10 @@ class AppState extends ChangeNotifier {
         final index = entries.indexWhere((item) => item.id == entry.id);
         if (index == -1) {
           entries.insert(0, entry);
+          dateIndexChanged = true;
           if (report != null) report.pulledMeals += 1;
         } else {
+          dateIndexChanged = true;
           entries[index] = entry;
           if (report != null) report.pulledMeals += 1;
         }
@@ -9674,10 +9718,14 @@ class AppState extends ChangeNotifier {
         if (toRemove.isNotEmpty) {
           for (final entry in toRemove) {
             entries.remove(entry);
+            dateIndexChanged = true;
             // ignore: discarded_futures
             _store.delete(entry.id);
           }
         }
+      }
+      if (dateIndexChanged) {
+        _markEntriesDateIndexDirty();
       }
     }
     final existingFoods = {

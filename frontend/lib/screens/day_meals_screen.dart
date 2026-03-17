@@ -154,6 +154,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     final items = sorted.take(maxItems).toList();
     final spacing = 6.0;
     final cellSize = columns == 4 ? 32.0 : (columns == 3 ? 40.0 : 48.0);
+    final thumbCachePx = (cellSize * 2).round();
     final gridWidth = columns * cellSize + (columns - 1) * spacing;
     final gridHeight = rows * cellSize + (rows - 1) * spacing;
     return SizedBox(
@@ -178,11 +179,22 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
             child: imageUrl != null
                 ? Image.network(
                     imageUrl,
+                    cacheWidth: thumbCachePx,
+                    cacheHeight: thumbCachePx,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Image.memory(displayBytes, fit: BoxFit.cover),
+                    errorBuilder: (_, __, ___) => Image.memory(
+                      displayBytes,
+                      cacheWidth: thumbCachePx,
+                      cacheHeight: thumbCachePx,
+                      fit: BoxFit.cover,
+                    ),
                   )
-                : Image.memory(displayBytes, fit: BoxFit.cover),
+                : Image.memory(
+                    displayBytes,
+                    cacheWidth: thumbCachePx,
+                    cacheHeight: thumbCachePx,
+                    fit: BoxFit.cover,
+                  ),
           );
         },
       ),

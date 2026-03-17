@@ -265,6 +265,10 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final app = AppStateScope.of(context);
     final displayImageBytes = app.displayImageBytesForEntry(entry);
     final imageUrl = _catalogImageForEntry(app, entry, preferThumb: false);
+    final media = MediaQuery.of(context);
+    final dpr = media.devicePixelRatio;
+    final previewCacheWidth = math.max(1, (media.size.width * dpr).round());
+    final previewCacheHeight = math.max(1, (media.size.height * dpr).round());
     await showDialog<void>(
       context: context,
       builder: (context) => Dialog(
@@ -280,11 +284,22 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
               child: imageUrl != null
                   ? Image.network(
                       imageUrl,
+                      cacheWidth: previewCacheWidth,
+                      cacheHeight: previewCacheHeight,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) =>
-                          Image.memory(displayImageBytes, fit: BoxFit.contain),
+                      errorBuilder: (_, __, ___) => Image.memory(
+                        displayImageBytes,
+                        cacheWidth: previewCacheWidth,
+                        cacheHeight: previewCacheHeight,
+                        fit: BoxFit.contain,
+                      ),
                     )
-                  : Image.memory(displayImageBytes, fit: BoxFit.contain),
+                  : Image.memory(
+                      displayImageBytes,
+                      cacheWidth: previewCacheWidth,
+                      cacheHeight: previewCacheHeight,
+                      fit: BoxFit.contain,
+                    ),
             ),
           ),
         ),
@@ -809,6 +824,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                 currentEntry!.labelImageBytes!,
                                 width: 64,
                                 height: 64,
+                                cacheWidth: 128,
+                                cacheHeight: 128,
                                 fit: BoxFit.cover,
                               ),
                             ),
