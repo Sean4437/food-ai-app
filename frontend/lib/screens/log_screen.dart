@@ -1073,9 +1073,9 @@ class _LogScreenState extends State<LogScreen> {
         bytes,
         width: photoWidth,
         height: photoWidth,
+        fit: BoxFit.cover,
         cacheWidth: cacheSize,
         cacheHeight: cacheSize,
-        fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => Container(
           color: const Color(0xFFEAF2EE),
           alignment: Alignment.center,
@@ -1095,9 +1095,9 @@ class _LogScreenState extends State<LogScreen> {
                 normalizedUrl,
                 width: photoWidth,
                 height: photoWidth,
+                fit: BoxFit.cover,
                 cacheWidth: cacheSize,
                 cacheHeight: cacheSize,
-                fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => memoryImage(),
               )
             : memoryImage(),
@@ -1518,12 +1518,12 @@ class _LogScreenState extends State<LogScreen> {
       firstDate: DateTime(_currentMonth.year - 1),
       lastDate: DateTime(_currentMonth.year + 1),
     );
-    if (!mounted || pickedDate == null) return;
+    if (!context.mounted || pickedDate == null) return;
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(DateTime.now()),
     );
-    if (!mounted || pickedTime == null) return;
+    if (!context.mounted || pickedTime == null) return;
     final overrideTime = DateTime(
       pickedDate.year,
       pickedDate.month,
@@ -1536,7 +1536,7 @@ class _LogScreenState extends State<LogScreen> {
       app,
       overrideTime: overrideTime,
     );
-    if (!mounted || result == null) return;
+    if (!context.mounted || result == null) return;
     setState(() {
       _selectedDate =
           DateTime(overrideTime.year, overrideTime.month, overrideTime.day);
@@ -1958,11 +1958,11 @@ class _CalorieHistoryPainter extends CustomPainter {
     for (var i = 0; i < points.length; i++) {
       final value = points[i].value;
       if (value == null) continue;
-      if (minValue == null || value < minValue!) {
+      if (minValue == null || value < minValue) {
         minValue = value;
         minIndex = i;
       }
-      if (maxValue == null || value > maxValue!) {
+      if (maxValue == null || value > maxValue) {
         maxValue = value;
         maxIndex = i;
       }
@@ -1970,8 +1970,8 @@ class _CalorieHistoryPainter extends CustomPainter {
     if (minValue == null || maxValue == null) return;
     final xStep =
         points.length > 1 ? chartRect.width / (points.length - 1) : 0.0;
-    final minT = ((minValue! - minY) / (maxY - minY)).clamp(0.0, 1.0);
-    final maxT = ((maxValue! - minY) / (maxY - minY)).clamp(0.0, 1.0);
+    final minT = ((minValue - minY) / (maxY - minY)).clamp(0.0, 1.0);
+    final maxT = ((maxValue - minY) / (maxY - minY)).clamp(0.0, 1.0);
     final minPoint = Offset(
       chartRect.left + xStep * (minIndex ?? 0),
       chartRect.bottom - minT * chartRect.height,
@@ -1997,10 +1997,10 @@ class _CalorieHistoryPainter extends CustomPainter {
     drawPoint(maxPoint);
     if (minIndex != maxIndex) drawPoint(minPoint);
 
-    _drawValueLabel(canvas, chartRect, maxPoint, maxValue!.round().toString(),
+    _drawValueLabel(canvas, chartRect, maxPoint, maxValue.round().toString(),
         isAbove: true);
     if (minIndex != maxIndex) {
-      _drawValueLabel(canvas, chartRect, minPoint, minValue!.round().toString(),
+      _drawValueLabel(canvas, chartRect, minPoint, minValue.round().toString(),
           isAbove: false);
     }
   }

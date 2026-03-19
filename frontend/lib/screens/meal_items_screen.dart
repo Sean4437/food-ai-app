@@ -266,9 +266,10 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     final displayImageBytes = app.displayImageBytesForEntry(entry);
     final imageUrl = _catalogImageForEntry(app, entry, preferThumb: false);
     final media = MediaQuery.of(context);
-    final dpr = media.devicePixelRatio;
-    final previewCacheWidth = math.max(1, (media.size.width * dpr).round());
-    final previewCacheHeight = math.max(1, (media.size.height * dpr).round());
+    final previewCacheWidth =
+        (media.size.width * media.devicePixelRatio).round();
+    final previewCacheHeight =
+        (media.size.height * media.devicePixelRatio).round();
     await showDialog<void>(
       context: context,
       builder: (context) => Dialog(
@@ -284,21 +285,21 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
               child: imageUrl != null
                   ? Image.network(
                       imageUrl,
+                      fit: BoxFit.contain,
                       cacheWidth: previewCacheWidth,
                       cacheHeight: previewCacheHeight,
-                      fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) => Image.memory(
                         displayImageBytes,
+                        fit: BoxFit.contain,
                         cacheWidth: previewCacheWidth,
                         cacheHeight: previewCacheHeight,
-                        fit: BoxFit.contain,
                       ),
                     )
                   : Image.memory(
                       displayImageBytes,
+                      fit: BoxFit.contain,
                       cacheWidth: previewCacheWidth,
                       cacheHeight: previewCacheHeight,
-                      fit: BoxFit.contain,
                     ),
             ),
           ),
@@ -361,12 +362,12 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
-    if (pickedDate == null) return;
+    if (!context.mounted || pickedDate == null) return;
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(entry.time),
     );
-    if (pickedTime == null) return;
+    if (!context.mounted || pickedTime == null) return;
     final nextTime = DateTime(
       pickedDate.year,
       pickedDate.month,
@@ -402,7 +403,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
     );
     if (source == null) return;
     final file = await _picker.pickImage(source: source);
-    if (file == null) return;
+    if (!context.mounted || file == null) return;
     final locale = Localizations.localeOf(context).toLanguageTag();
     await app.addLabelToEntry(entry, file, locale);
   }
@@ -560,6 +561,8 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
       _pageIndex = 0;
     }
     final currentEntry = sorted.isEmpty ? null : sorted[_pageIndex];
+    final currentResult = currentEntry?.result;
+    final currentLabelResult = currentEntry?.labelResult;
     final screenWidth = MediaQuery.of(context).size.width;
     final contentWidth = math.max(0.0, screenWidth - 32);
     final isEnglish = _isEnglish(context);
@@ -742,7 +745,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              if (currentEntry?.result != null)
+              if (currentEntry != null && currentResult != null)
                 Align(
                   alignment: Alignment.topCenter,
                   child: SizedBox(
@@ -771,24 +774,23 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                   style: AppTextStyles.title2(context),
                                 ),
                               ),
-                              if (currentEntry != null)
-                                TextButton.icon(
-                                  onPressed: () => _pickLabelImage(
-                                      context, app, currentEntry),
-                                  icon: const Text('🧾',
-                                      style: TextStyle(fontSize: 16)),
-                                  label: Text(t.addLabel),
-                                ),
+                              TextButton.icon(
+                                onPressed: () =>
+                                    _pickLabelImage(context, app, currentEntry),
+                                icon: const Text('🧾',
+                                    style: TextStyle(fontSize: 16)),
+                                label: Text(t.addLabel),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           NutritionChart(
-                            macros: app.scaledMacrosForEntry(currentEntry!),
+                            macros: app.scaledMacrosForEntry(currentEntry),
                             style: _chartStyle(app.profile.nutritionChartStyle),
                             valueMode:
                                 _valueMode(app.profile.nutritionValueMode),
-                            calories: app.calorieRangeMid(
-                                currentEntry!.result?.calorieRange),
+                            calories:
+                                app.calorieRangeMid(currentResult.calorieRange),
                             t: t,
                           ),
                         ],
@@ -796,7 +798,7 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                     ),
                   ),
                 ),
-              if (currentEntry?.labelResult != null)
+              if (currentEntry != null && currentLabelResult != null)
                 Align(
                   alignment: Alignment.topCenter,
                   child: SizedBox(
@@ -817,19 +819,19 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (currentEntry!.labelImageBytes != null)
+                          if (currentEntry.labelImageBytes != null)
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
                               child: Image.memory(
-                                currentEntry!.labelImageBytes!,
+                                currentEntry.labelImageBytes!,
                                 width: 64,
                                 height: 64,
+                                fit: BoxFit.cover,
                                 cacheWidth: 128,
                                 cacheHeight: 128,
-                                fit: BoxFit.cover,
                               ),
                             ),
-                          if (currentEntry!.labelImageBytes != null)
+                          if (currentEntry.labelImageBytes != null)
                             const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -857,20 +859,19 @@ class _MealItemsScreenState extends State<MealItemsScreen> {
                                     ),
                                   ],
                                 ),
-                                if ((currentEntry!.labelResult!.labelName ?? '')
+                                if ((currentLabelResult.labelName ?? '')
                                     .trim()
                                     .isNotEmpty) ...[
                                   const SizedBox(height: 6),
                                   Text(
-                                    currentEntry!.labelResult!.labelName!
-                                        .trim(),
+                                    (currentLabelResult.labelName ?? '').trim(),
                                     style: AppTextStyles.caption(context)
                                         .copyWith(fontWeight: FontWeight.w600),
                                   ),
                                 ],
                                 const SizedBox(height: 6),
                                 Text(
-                                  '${t.calorieLabel}：${currentEntry!.labelResult!.calorieRange}',
+                                  '${t.calorieLabel}：${currentLabelResult.calorieRange}',
                                   style: AppTextStyles.caption(context)
                                       .copyWith(color: Colors.black87),
                                 ),
