@@ -6,12 +6,9 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
-import 'package:storage_client/storage_client.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../models/analysis_result.dart';
 import '../models/chat_message.dart';
@@ -1477,12 +1474,15 @@ class AppState extends ChangeNotifier {
 
   MealType? _currentReminderMealType(DateTime time) {
     final current = TimeOfDay.fromDateTime(time);
-    if (_inRange(profile.breakfastStart, profile.breakfastEnd, current))
+    if (_inRange(profile.breakfastStart, profile.breakfastEnd, current)) {
       return MealType.breakfast;
-    if (_inRange(profile.lunchStart, profile.lunchEnd, current))
+    }
+    if (_inRange(profile.lunchStart, profile.lunchEnd, current)) {
       return MealType.lunch;
-    if (_inRange(profile.dinnerStart, profile.dinnerEnd, current))
+    }
+    if (_inRange(profile.dinnerStart, profile.dinnerEnd, current)) {
       return MealType.dinner;
+    }
     return null;
   }
 
@@ -5001,18 +5001,24 @@ class AppState extends ChangeNotifier {
 
   MealType resolveMealType(DateTime time) {
     final current = TimeOfDay.fromDateTime(time);
-    if (_inRange(profile.breakfastStart, profile.breakfastEnd, current))
+    if (_inRange(profile.breakfastStart, profile.breakfastEnd, current)) {
       return MealType.breakfast;
-    if (_inRange(profile.brunchStart, profile.brunchEnd, current))
+    }
+    if (_inRange(profile.brunchStart, profile.brunchEnd, current)) {
       return MealType.brunch;
-    if (_inRange(profile.lunchStart, profile.lunchEnd, current))
+    }
+    if (_inRange(profile.lunchStart, profile.lunchEnd, current)) {
       return MealType.lunch;
-    if (_inRange(profile.afternoonTeaStart, profile.afternoonTeaEnd, current))
+    }
+    if (_inRange(profile.afternoonTeaStart, profile.afternoonTeaEnd, current)) {
       return MealType.afternoonTea;
-    if (_inRange(profile.dinnerStart, profile.dinnerEnd, current))
+    }
+    if (_inRange(profile.dinnerStart, profile.dinnerEnd, current)) {
       return MealType.dinner;
-    if (_inRange(profile.lateSnackStart, profile.lateSnackEnd, current))
+    }
+    if (_inRange(profile.lateSnackStart, profile.lateSnackEnd, current)) {
       return MealType.lateSnack;
+    }
     return MealType.other;
   }
 
@@ -5521,7 +5527,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _clearLocalDataForAccountSwitch() async {
-    final apiBaseUrl = kDefaultApiBaseUrl;
+    const apiBaseUrl = kDefaultApiBaseUrl;
     final language = profile.language;
     final plateAsset = profile.plateAsset;
     final themeAsset = profile.themeAsset;
@@ -6022,7 +6028,8 @@ class AppState extends ChangeNotifier {
   }
 
   Uint8List displayImageBytesForEntry(MealEntry entry) {
-    if (entry.imageBytes.isNotEmpty && !isNamePlaceholderImage(entry.imageBytes)) {
+    if (entry.imageBytes.isNotEmpty &&
+        !isNamePlaceholderImage(entry.imageBytes)) {
       return entry.imageBytes;
     }
     final fromHistory = _historyImageBytesForNameEntry(entry);
@@ -6037,7 +6044,8 @@ class AppState extends ChangeNotifier {
     if (targetKey.isEmpty) return null;
     for (final existing in entries) {
       if (existing.id == target.id) continue;
-      if (existing.imageBytes.isEmpty || isNamePlaceholderImage(existing.imageBytes)) {
+      if (existing.imageBytes.isEmpty ||
+          isNamePlaceholderImage(existing.imageBytes)) {
         continue;
       }
       final existingKey = _normalizeFoodLookupText(entryDisplayName(existing));
@@ -6061,7 +6069,8 @@ class AppState extends ChangeNotifier {
     final backdropLight = palette[0];
     final backdropMid = palette[1];
     final backdropDark = palette[2];
-    final badgeColor = _blendRgb(_fingerprintRgb(digest, 12), backdropMid, 0.35);
+    final badgeColor =
+        _blendRgb(_fingerprintRgb(digest, 12), backdropMid, 0.35);
 
     // Shared gradient base.
     for (var y = 0; y < size; y++) {
@@ -6109,7 +6118,8 @@ class AppState extends ChangeNotifier {
     final iconColor = luminance >= 145
         ? img.ColorRgb8(34, 42, 48)
         : img.ColorRgb8(246, 250, 252);
-    final carveColor = img.ColorRgb8(badgeColor[0], badgeColor[1], badgeColor[2]);
+    final carveColor =
+        img.ColorRgb8(badgeColor[0], badgeColor[1], badgeColor[2]);
     _drawFingerprintIcon(
       image,
       iconKind,
@@ -6340,7 +6350,8 @@ class AppState extends ChangeNotifier {
         for (var stripe = 0; stripe < 6; stripe++) {
           final baseY = 28 + stripe * 34;
           final amp = 7 + (digest[(stripe + 7) % digest.length] % 6);
-          final freq = 0.05 + ((digest[(stripe + 9) % digest.length] % 6) * 0.01);
+          final freq =
+              0.05 + ((digest[(stripe + 9) % digest.length] % 6) * 0.01);
           for (var x = 1; x < width; x++) {
             final y1 = (baseY + sin((x - 1) * freq) * amp).round();
             final y2 = (baseY + sin(x * freq) * amp).round();
@@ -6377,10 +6388,12 @@ class AppState extends ChangeNotifier {
         for (var stripe = 0; stripe < 9; stripe++) {
           final baseY = 20 + stripe * 24;
           final amp = 10 + (digest[(stripe + 2) % digest.length] % 8);
-          final freq = 0.07 + ((digest[(stripe + 6) % digest.length] % 4) * 0.01);
+          final freq =
+              0.07 + ((digest[(stripe + 6) % digest.length] % 4) * 0.01);
           final alpha = 35 + (digest[(stripe + 10) % digest.length] % 24);
           for (var x = 1; x < width; x++) {
-            final y1 = (baseY + sin((x - 1) * freq + stripe * 0.7) * amp).round();
+            final y1 =
+                (baseY + sin((x - 1) * freq + stripe * 0.7) * amp).round();
             final y2 = (baseY + sin(x * freq + stripe * 0.7) * amp).round();
             img.drawLine(
               image,
@@ -6533,8 +6546,9 @@ class AppState extends ChangeNotifier {
           for (var i = 0; i < 48; i++) {
             final x = (digest[(i + 2) % digest.length] * 13 + i * 21) % width;
             final y = (digest[(i + 5) % digest.length] * 31 + i * 9) % height;
-            final beanColor =
-                i.isEven ? img.ColorRgba8(133, 170, 98, 30) : img.ColorRgba8(95, 139, 72, 28);
+            final beanColor = i.isEven
+                ? img.ColorRgba8(133, 170, 98, 30)
+                : img.ColorRgba8(95, 139, 72, 28);
             img.fillCircle(
               image,
               x: x,
@@ -6657,7 +6671,8 @@ class AppState extends ChangeNotifier {
         for (var stripe = 0; stripe < 7; stripe++) {
           final baseY = 22 + stripe * 30;
           final amp = 7 + (digest[(stripe + 5) % digest.length] % 5);
-          final freq = 0.06 + ((digest[(stripe + 8) % digest.length] % 5) * 0.01);
+          final freq =
+              0.06 + ((digest[(stripe + 8) % digest.length] % 5) * 0.01);
           for (var x = 1; x < width; x++) {
             final y1 = (baseY + sin((x - 1) * freq) * amp).round();
             final y2 = (baseY + sin(x * freq) * amp).round();
@@ -7415,10 +7430,14 @@ class AppState extends ChangeNotifier {
           y2: y(7),
           color: iconColor,
         );
-        img.fillCircle(image, x: x(-5), y: y(0), radius: r(2.2), color: iconColor);
-        img.fillCircle(image, x: x(-1), y: y(-1), radius: r(2), color: iconColor);
-        img.fillCircle(image, x: x(3), y: y(0), radius: r(2.3), color: iconColor);
-        img.fillCircle(image, x: x(7), y: y(1), radius: r(1.7), color: iconColor);
+        img.fillCircle(image,
+            x: x(-5), y: y(0), radius: r(2.2), color: iconColor);
+        img.fillCircle(image,
+            x: x(-1), y: y(-1), radius: r(2), color: iconColor);
+        img.fillCircle(image,
+            x: x(3), y: y(0), radius: r(2.3), color: iconColor);
+        img.fillCircle(image,
+            x: x(7), y: y(1), radius: r(1.7), color: iconColor);
         return;
       case 'dessert':
         img.fillCircle(
@@ -8174,8 +8193,9 @@ class AppState extends ChangeNotifier {
     if ((entry.overrideFoodName ?? '').trim().isNotEmpty) return null;
     for (final existing in entries) {
       if (existing.id == entry.id) continue;
-      if (existing.imageHash == null || existing.imageHash != entry.imageHash)
+      if (existing.imageHash == null || existing.imageHash != entry.imageHash) {
         continue;
+      }
       if (existing.result == null) continue;
       if ((existing.overrideFoodName ?? '').trim().isNotEmpty) continue;
       if ((existing.note ?? '').trim().isNotEmpty) continue;
@@ -8194,8 +8214,9 @@ class AppState extends ChangeNotifier {
     final hour = int.tryParse(match.group(4)!);
     final minute = int.tryParse(match.group(5)!);
     final second = int.tryParse(match.group(6)!);
-    if ([year, month, day, hour, minute, second].any((v) => v == null))
+    if ([year, month, day, hour, minute, second].any((v) => v == null)) {
       return null;
+    }
     return DateTime(year!, month!, day!, hour!, minute!, second!);
   }
 

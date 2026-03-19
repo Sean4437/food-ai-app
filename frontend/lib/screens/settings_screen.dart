@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -135,7 +135,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final color = Theme.of(context).colorScheme.primary;
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
-        backgroundColor: selected ? color.withValues(alpha: 0.12) : Colors.white,
+        backgroundColor:
+            selected ? color.withValues(alpha: 0.12) : Colors.white,
         side: BorderSide(color: selected ? color : Colors.black12),
       ),
       onPressed: () {
@@ -533,44 +534,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isZh = locale.languageCode.startsWith('zh');
     if (isZh) {
       final parts = <String>[];
-      if (report.pushedMeals > 0) parts.add('上傳餐點 ${report.pushedMeals}');
-      if (report.pushedMealDeletes > 0)
+      if (report.pushedMeals > 0) {
+        parts.add('上傳餐點 ${report.pushedMeals}');
+      }
+      if (report.pushedMealDeletes > 0) {
         parts.add('刪除餐點 ${report.pushedMealDeletes}');
-      if (report.pushedCustomFoods > 0)
+      }
+      if (report.pushedCustomFoods > 0) {
         parts.add('上傳自訂食物 ${report.pushedCustomFoods}');
-      if (report.pushedCustomDeletes > 0)
+      }
+      if (report.pushedCustomDeletes > 0) {
         parts.add('刪除自訂食物 ${report.pushedCustomDeletes}');
-      if (report.pushedSettings > 0) parts.add('上傳設定 ${report.pushedSettings}');
-      if (report.pulledMeals > 0) parts.add('下載餐點 ${report.pulledMeals}');
-      if (report.pulledMealDeletes > 0)
+      }
+      if (report.pushedSettings > 0) {
+        parts.add('上傳設定 ${report.pushedSettings}');
+      }
+      if (report.pulledMeals > 0) {
+        parts.add('下載餐點 ${report.pulledMeals}');
+      }
+      if (report.pulledMealDeletes > 0) {
         parts.add('下載餐點刪除 ${report.pulledMealDeletes}');
-      if (report.pulledCustomFoods > 0)
+      }
+      if (report.pulledCustomFoods > 0) {
         parts.add('下載自訂食物 ${report.pulledCustomFoods}');
-      if (report.pulledCustomDeletes > 0)
+      }
+      if (report.pulledCustomDeletes > 0) {
         parts.add('下載自訂刪除 ${report.pulledCustomDeletes}');
-      if (report.pulledSettings > 0) parts.add('下載設定 ${report.pulledSettings}');
+      }
+      if (report.pulledSettings > 0) {
+        parts.add('下載設定 ${report.pulledSettings}');
+      }
       return parts.join('、');
     }
     final parts = <String>[];
-    if (report.pushedMeals > 0) parts.add('upload meals ${report.pushedMeals}');
-    if (report.pushedMealDeletes > 0)
+    if (report.pushedMeals > 0) {
+      parts.add('upload meals ${report.pushedMeals}');
+    }
+    if (report.pushedMealDeletes > 0) {
       parts.add('delete meals ${report.pushedMealDeletes}');
-    if (report.pushedCustomFoods > 0)
+    }
+    if (report.pushedCustomFoods > 0) {
       parts.add('upload custom ${report.pushedCustomFoods}');
-    if (report.pushedCustomDeletes > 0)
+    }
+    if (report.pushedCustomDeletes > 0) {
       parts.add('delete custom ${report.pushedCustomDeletes}');
-    if (report.pushedSettings > 0)
+    }
+    if (report.pushedSettings > 0) {
       parts.add('upload settings ${report.pushedSettings}');
-    if (report.pulledMeals > 0)
+    }
+    if (report.pulledMeals > 0) {
       parts.add('download meals ${report.pulledMeals}');
-    if (report.pulledMealDeletes > 0)
+    }
+    if (report.pulledMealDeletes > 0) {
       parts.add('download deleted ${report.pulledMealDeletes}');
-    if (report.pulledCustomFoods > 0)
+    }
+    if (report.pulledCustomFoods > 0) {
       parts.add('download custom ${report.pulledCustomFoods}');
-    if (report.pulledCustomDeletes > 0)
+    }
+    if (report.pulledCustomDeletes > 0) {
       parts.add('download custom deleted ${report.pulledCustomDeletes}');
-    if (report.pulledSettings > 0)
+    }
+    if (report.pulledSettings > 0) {
       parts.add('download settings ${report.pulledSettings}');
+    }
     return parts.join(', ');
   }
 
@@ -1887,4 +1913,3 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
-

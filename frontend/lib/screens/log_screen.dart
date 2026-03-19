@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -442,9 +442,6 @@ class _LogScreenState extends State<LogScreen> {
         lastDay, (i) => DateTime(month.year, month.month, i + 1));
   }
 
-  bool _isSameDate(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
-
   bool _isSameMonth(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month;
 
@@ -841,7 +838,8 @@ class _LogScreenState extends State<LogScreen> {
       decoration: BoxDecoration(
         color: appTheme.card,
         borderRadius: BorderRadius.circular(appTheme.radiusCard),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
+        border:
+            Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -899,7 +897,8 @@ class _LogScreenState extends State<LogScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Divider(height: 1, color: Colors.black12.withValues(alpha: 0.6)),
+                Divider(
+                    height: 1, color: Colors.black12.withValues(alpha: 0.6)),
                 const SizedBox(height: 4),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -947,7 +946,8 @@ class _LogScreenState extends State<LogScreen> {
       decoration: BoxDecoration(
         color: appTheme.card,
         borderRadius: BorderRadius.circular(appTheme.radiusCard),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
+        border:
+            Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -1005,7 +1005,8 @@ class _LogScreenState extends State<LogScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Divider(height: 1, color: Colors.black12.withValues(alpha: 0.6)),
+                Divider(
+                    height: 1, color: Colors.black12.withValues(alpha: 0.6)),
                 const SizedBox(height: 4),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2078,4 +2079,3 @@ class _CalorieHistoryPainter extends CustomPainter {
     return false;
   }
 }
-

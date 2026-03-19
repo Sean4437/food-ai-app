@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -150,7 +150,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     }
     final maxItems = rows * columns;
     final items = sorted.take(maxItems).toList();
-    final spacing = 6.0;
+    const spacing = 6.0;
     final cellSize = columns == 4 ? 32.0 : (columns == 3 ? 40.0 : 48.0);
     final thumbCachePx = (cellSize * 2).round();
     final gridWidth = columns * cellSize + (columns - 1) * spacing;
@@ -500,4 +500,3 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     );
   }
 }
-
