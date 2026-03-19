@@ -65,7 +65,6 @@ const Set<String> _kAiEntitlements = {
   _kEntitlementSuggest,
 };
 const String _kMacroUnitGrams = 'grams';
-const String _kMacroUnitPercent = 'percent';
 const double _kMacroBaselineProteinG = 30;
 const double _kMacroBaselineCarbsG = 80;
 const double _kMacroBaselineFatG = 25;
@@ -1514,7 +1513,7 @@ class AppState extends ChangeNotifier {
   Future<void> precachePlateAsset() async {
     final binding = WidgetsBinding.instance;
     await binding.endOfFrame;
-    final context = binding.renderViewElement;
+    final context = binding.rootElement;
     if (context == null) return;
     final asset =
         profile.plateAsset.isEmpty ? kDefaultPlateAsset : profile.plateAsset;
@@ -1976,16 +1975,9 @@ class AppState extends ChangeNotifier {
           .eq('is_active', true)
           .or('food_name.ilike.*$pattern*,canonical_name.ilike.*$pattern*')
           .limit(limit.clamp(1, 20));
-      if (rows is! List) return const [];
-      final mapped = <Map<String, dynamic>>[];
-      for (final row in rows) {
-        if (row is Map<String, dynamic>) {
-          mapped.add(row);
-        } else if (row is Map) {
-          mapped.add(row.map((k, v) => MapEntry(k.toString(), v)));
-        }
-      }
-      return mapped;
+      return rows
+          .map<Map<String, dynamic>>((row) => Map<String, dynamic>.from(row))
+          .toList();
     } catch (_) {
       // Backward compatible fallback for older schemas without lang/is_active.
       try {
@@ -1995,16 +1987,9 @@ class AppState extends ChangeNotifier {
                 'id,food_name,canonical_name,source,image_url,thumb_url,image_source,image_license')
             .or('food_name.ilike.*$pattern*,canonical_name.ilike.*$pattern*')
             .limit(limit.clamp(1, 20));
-        if (rows is! List) return const [];
-        final mapped = <Map<String, dynamic>>[];
-        for (final row in rows) {
-          if (row is Map<String, dynamic>) {
-            mapped.add(row);
-          } else if (row is Map) {
-            mapped.add(row.map((k, v) => MapEntry(k.toString(), v)));
-          }
-        }
-        return mapped;
+        return rows
+            .map<Map<String, dynamic>>((row) => Map<String, dynamic>.from(row))
+            .toList();
       } catch (_) {
         return const [];
       }
@@ -2049,6 +2034,7 @@ class AppState extends ChangeNotifier {
     return NameLookupService.catalogLangFromLocale(locale);
   }
 
+  // ignore: unused_element
   List<String> _beveragePresetSuggestions(
     String query,
     String locale, {
@@ -3600,6 +3586,7 @@ class AppState extends ChangeNotifier {
     );
   }
 
+  // ignore: unused_element
   List<String> _localBeverageSuggestions(
     String query,
     String locale, {
@@ -3746,7 +3733,7 @@ class AppState extends ChangeNotifier {
 
     ratio = ratio.clamp(0.0, 1.0);
     final percent = (ratio * 100).round();
-    final sugarLabel = isZh ? '${percent}%糖' : '$percent% sugar';
+    final sugarLabel = isZh ? '$percent%糖' : '$percent% sugar';
     return (ratio, sugarLabel, explicit);
   }
 
@@ -4150,7 +4137,7 @@ class AppState extends ChangeNotifier {
   }
 
   void _rebuildEntriesDateIndex() {
-    _entriesByDateIndex..clear();
+    _entriesByDateIndex.clear();
     for (final entry in entries) {
       final key = _dateIndexKey(entry.time);
       final bucket = _entriesByDateIndex.putIfAbsent(key, () => <MealEntry>[]);
@@ -8363,6 +8350,7 @@ class AppState extends ChangeNotifier {
   bool _isLow(double value) => value <= 35;
   bool _isProteinOk(double value) => value >= 45;
 
+  // ignore: unused_element
   String _scoreToLevel(double score, AppLocalizations t) {
     if (score <= 1.6) return t.levelLow;
     if (score >= 2.4) return t.levelHigh;
@@ -8385,7 +8373,7 @@ class AppState extends ChangeNotifier {
         advice.isEmpty ? t.dietitianBalanced : advice.take(2).join('、');
     final loseFat = normalizeGoalValue(profile.goal) == kGoalValueLoseFat;
     final goalHint = loseFat ? t.goalAdviceLoseFat : t.goalAdviceMaintain;
-    return '${t.dietitianPrefix}$line ${goalHint}';
+    return '${t.dietitianPrefix}$line $goalHint';
   }
 
   bool _isSmallPortion(MealEntry entry) {
@@ -9181,11 +9169,9 @@ class AppState extends ChangeNotifier {
   void _applySupabaseNickname(User? user) {
     if (user == null) return;
     final data = user.userMetadata ?? const <String, dynamic>{};
-    if (data is Map<String, dynamic>) {
-      final nickname = data['nickname'];
-      if (nickname is String && nickname.trim().isNotEmpty) {
-        updateField((p) => p.name = nickname.trim());
-      }
+    final nickname = data['nickname'];
+    if (nickname is String && nickname.trim().isNotEmpty) {
+      updateField((p) => p.name = nickname.trim());
     }
   }
 
@@ -9431,7 +9417,7 @@ class AppState extends ChangeNotifier {
         }
       }
     }
-    if (settingsToSync && settingsUpdatedAt != null) {
+    if (settingsToSync) {
       final settingsPayload = {
         'user_id': user.id,
         'profile_json': _profileToSyncMap(),
@@ -9548,11 +9534,9 @@ class AppState extends ChangeNotifier {
 
     final rows =
         await _fetchPagedRows((from, to) => mealsQuery().range(from, to));
-    if (rows is List) {
-      final remoteIds = <String>{};
-      var dateIndexChanged = false;
-      for (final row in rows) {
-        if (row is! Map<String, dynamic>) continue;
+    final remoteIds = <String>{};
+    var dateIndexChanged = false;
+    for (final row in rows) {
         final entryId = row['id'] as String?;
         if (entryId != null) {
           remoteIds.add(entryId);
@@ -9645,7 +9629,6 @@ class AppState extends ChangeNotifier {
       if (dateIndexChanged) {
         _markEntriesDateIndexDirty();
       }
-    }
     final existingFoods = {
       for (final food in customFoods) food.id: food,
     };
@@ -9663,10 +9646,8 @@ class AppState extends ChangeNotifier {
 
     final foodRows =
         await _fetchPagedRows((from, to) => foodsQuery().range(from, to));
-    if (foodRows is List) {
-      final remoteFoodIds = <String>{};
-      for (final row in foodRows) {
-        if (row is! Map<String, dynamic>) continue;
+    final remoteFoodIds = <String>{};
+    for (final row in foodRows) {
         final foodId = row['id'] as String?;
         if (foodId != null) {
           remoteFoodIds.add(foodId);
@@ -9746,7 +9727,6 @@ class AppState extends ChangeNotifier {
       }
       notifyListeners();
       await _saveOverrides();
-    }
     _syncSelectedDateToLatestEntryIfNeeded();
     notifyListeners();
   }
@@ -9773,7 +9753,6 @@ class AppState extends ChangeNotifier {
       throw Exception('Supabase not signed in');
     }
     final report = SyncReport();
-    final beforeFingerprint = _syncFingerprint();
     final localSyncAt = _localSyncAt();
     final remoteSyncAt = await _fetchRemoteSyncAt(user.id);
     final localSettingsUpdatedAt = _settingsUpdatedAt();
@@ -9827,8 +9806,8 @@ class AppState extends ChangeNotifier {
     }
 
     // 1) Pull remote changes first using the previous local sync time.
-    final shouldPullData = remoteSyncAt != null &&
-        (localSyncAt == null || remoteSyncAt.isAfter(localSyncAt));
+    final shouldPullData =
+        localSyncAt == null || remoteSyncAt.isAfter(localSyncAt);
     final shouldPullSettings = remoteSettingsUpdatedAt != null &&
         (localSettingsUpdatedAt == null ||
             remoteSettingsUpdatedAt.isAfter(localSettingsUpdatedAt));
@@ -9844,10 +9823,9 @@ class AppState extends ChangeNotifier {
         // Skip prune during full pull to avoid deleting local-only rows prematurely.
         allowPrune: !isFullPull,
       );
-      if (remoteSyncAt != null &&
-          (localSyncAt == null ||
-              remoteSyncAt.isAfter(localSyncAt) ||
-              isFullPull)) {
+      if (localSyncAt == null ||
+          remoteSyncAt.isAfter(localSyncAt) ||
+          isFullPull) {
         await _storeLocalSyncAt(remoteSyncAt);
       }
       changed = true;
@@ -10021,7 +9999,7 @@ class AppState extends ChangeNotifier {
         .uploadBinary(
           path,
           bytes,
-          fileOptions: FileOptions(upsert: true),
+          fileOptions: const FileOptions(upsert: true),
         )
         .timeout(const Duration(seconds: 12));
     if (result.isEmpty) {
