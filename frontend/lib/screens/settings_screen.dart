@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -39,7 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Container(
           height: 110,
           decoration: BoxDecoration(
-            color: Colors.black12.withOpacity(0.5),
+            color: Colors.black12.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(16),
           ),
         ),
@@ -135,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final color = Theme.of(context).colorScheme.primary;
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
-        backgroundColor: selected ? color.withOpacity(0.12) : Colors.white,
+        backgroundColor: selected ? color.withValues(alpha: 0.12) : Colors.white,
         side: BorderSide(color: selected ? color : Colors.black12),
       ),
       onPressed: () {
@@ -726,7 +726,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       subscriptionStatus = isZh ? '已過期' : 'Expired';
       subscriptionColor = Colors.red;
     }
-    final subscriptionLabelColor = subscriptionColor.withOpacity(0.9);
+    final subscriptionLabelColor = subscriptionColor.withValues(alpha: 0.9);
     final subscriptionPlanLabel = isSubscribed
         ? (isZh ? 'App Store（正式）' : 'App Store')
         : isMockSubscription
@@ -1619,7 +1619,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               labelStyle:
                                   TextStyle(color: subscriptionLabelColor),
                               backgroundColor:
-                                  subscriptionColor.withOpacity(0.12),
+                                  subscriptionColor.withValues(alpha: 0.12),
                             ),
                           ],
                         ),
@@ -1887,3 +1887,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+

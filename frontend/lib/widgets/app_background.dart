@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../design/app_theme.dart';
 import '../state/app_state.dart';
 
@@ -37,7 +37,7 @@ class AppBackground extends StatelessWidget {
                     center: Alignment.topCenter,
                     radius: 1.1,
                     colors: [
-                      appTheme.glow.withOpacity(0.45),
+                      appTheme.glow.withValues(alpha: 0.45),
                       Colors.transparent,
                     ],
                   ),
@@ -50,3 +50,4 @@ class AppBackground extends StatelessWidget {
     );
   }
 }
+

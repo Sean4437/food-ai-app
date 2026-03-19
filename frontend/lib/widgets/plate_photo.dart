@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import '../design/text_styles.dart';
@@ -43,7 +43,7 @@ class PlatePhoto extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.14),
+                          color: Colors.black.withValues(alpha: 0.14),
                           blurRadius: 28,
                           offset: const Offset(0, 16),
                         ),
@@ -63,8 +63,8 @@ class PlatePhoto extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          Colors.white.withOpacity(0.0),
-                          Colors.white.withOpacity(0.25),
+                          Colors.white.withValues(alpha: 0.0),
+                          Colors.white.withValues(alpha: 0.25),
                         ],
                         stops: const [0.6, 1],
                       ),
@@ -107,7 +107,7 @@ class PlatePhoto extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text('+$badgeCount',
@@ -119,3 +119,4 @@ class PlatePhoto extends StatelessWidget {
     );
   }
 }
+

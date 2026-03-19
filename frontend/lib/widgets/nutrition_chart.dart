@@ -1,4 +1,4 @@
-import "dart:math" as math;
+﻿import "dart:math" as math;
 import "package:flutter/material.dart";
 import "package:food_ai_app/gen/app_localizations.dart";
 import "../design/text_styles.dart";
@@ -296,8 +296,8 @@ class _RadarPainter extends CustomPainter {
       final fillPaint = Paint()
         ..shader = RadialGradient(
           colors: [
-            color.withOpacity(0.05),
-            color.withOpacity(0.25 + 0.45 * value),
+            color.withValues(alpha: 0.05),
+            color.withValues(alpha: 0.25 + 0.45 * value),
           ],
         ).createShader(Rect.fromCircle(center: center, radius: radius))
         ..style = PaintingStyle.fill;
@@ -375,7 +375,7 @@ class _MacroBar extends StatelessWidget {
               Container(
                 height: barHeight,
                 decoration: BoxDecoration(
-                  color: point.color.withOpacity(0.18),
+                  color: point.color.withValues(alpha: 0.18),
                   borderRadius: radius,
                 ),
               ),
@@ -449,7 +449,7 @@ class _DonutChart extends StatelessWidget {
                       CircularProgressIndicator(
                         value: point.ratio,
                         strokeWidth: 8,
-                        backgroundColor: point.color.withOpacity(0.15),
+                        backgroundColor: point.color.withValues(alpha: 0.15),
                         valueColor: AlwaysStoppedAnimation<Color>(point.color),
                       ),
                       Text(
@@ -475,3 +475,4 @@ class _DonutChart extends StatelessWidget {
     );
   }
 }
+

@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             height: 360,
             decoration: BoxDecoration(
-              color: appTheme.card.withOpacity(0.5),
+              color: appTheme.card.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(appTheme.radiusCard),
             ),
           ),
@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(label,
@@ -366,7 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: appTheme.card,
           borderRadius: BorderRadius.circular(appTheme.radiusCard),
-          border: Border.all(color: Colors.black.withOpacity(0.08)),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
         ),
         child: Text(t.latestMealEmpty,
             style:
@@ -383,10 +383,10 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: appTheme.card,
         borderRadius: BorderRadius.circular(appTheme.radiusCard),
-        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -813,3 +813,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+

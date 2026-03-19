@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+﻿import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -258,7 +258,7 @@ class _LogScreenState extends State<LogScreen> {
         Container(
           height: 90,
           decoration: BoxDecoration(
-            color: Colors.black12.withOpacity(0.5),
+            color: Colors.black12.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(16),
           ),
         ),
@@ -268,7 +268,7 @@ class _LogScreenState extends State<LogScreen> {
         Container(
           height: 92,
           decoration: BoxDecoration(
-            color: Colors.black12.withOpacity(0.4),
+            color: Colors.black12.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(16),
           ),
         ),
@@ -488,7 +488,7 @@ class _LogScreenState extends State<LogScreen> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -513,7 +513,7 @@ class _LogScreenState extends State<LogScreen> {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -739,7 +739,7 @@ class _LogScreenState extends State<LogScreen> {
 
   Widget _buildHistoryRangeSelector(
       AppState app, ThemeData theme, AppTheme appTheme) {
-    final borderColor = Colors.black.withOpacity(0.08);
+    final borderColor = Colors.black.withValues(alpha: 0.08);
     return Container(
       padding: const EdgeInsets.all(1),
       decoration: BoxDecoration(
@@ -748,7 +748,7 @@ class _LogScreenState extends State<LogScreen> {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -803,7 +803,7 @@ class _LogScreenState extends State<LogScreen> {
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
+                    color: Colors.black.withValues(alpha: 0.12),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -841,10 +841,10 @@ class _LogScreenState extends State<LogScreen> {
       decoration: BoxDecoration(
         color: appTheme.card,
         borderRadius: BorderRadius.circular(appTheme.radiusCard),
-        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -899,7 +899,7 @@ class _LogScreenState extends State<LogScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Divider(height: 1, color: Colors.black12.withOpacity(0.6)),
+                Divider(height: 1, color: Colors.black12.withValues(alpha: 0.6)),
                 const SizedBox(height: 4),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -947,10 +947,10 @@ class _LogScreenState extends State<LogScreen> {
       decoration: BoxDecoration(
         color: appTheme.card,
         borderRadius: BorderRadius.circular(appTheme.radiusCard),
-        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -1005,7 +1005,7 @@ class _LogScreenState extends State<LogScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Divider(height: 1, color: Colors.black12.withOpacity(0.6)),
+                Divider(height: 1, color: Colors.black12.withValues(alpha: 0.6)),
                 const SizedBox(height: 4),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1303,7 +1303,7 @@ class _LogScreenState extends State<LogScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 6),
             ),
@@ -1387,7 +1387,7 @@ class _LogScreenState extends State<LogScreen> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 6),
             ),
@@ -1421,7 +1421,7 @@ class _LogScreenState extends State<LogScreen> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 6),
             ),
@@ -1492,7 +1492,7 @@ class _LogScreenState extends State<LogScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 6),
             ),
@@ -1730,7 +1730,7 @@ class _LogScreenState extends State<LogScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withValues(alpha: 0.04),
                               blurRadius: 10,
                               offset: const Offset(0, 6),
                             ),
@@ -1877,8 +1877,8 @@ class _CalorieHistoryPainter extends CustomPainter {
     final areaPaint = Paint()
       ..shader = LinearGradient(
         colors: [
-          lineColor.withOpacity(0.28),
-          lineColor.withOpacity(0.0),
+          lineColor.withValues(alpha: 0.28),
+          lineColor.withValues(alpha: 0.0),
         ],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
@@ -2078,3 +2078,4 @@ class _CalorieHistoryPainter extends CustomPainter {
     return false;
   }
 }
+

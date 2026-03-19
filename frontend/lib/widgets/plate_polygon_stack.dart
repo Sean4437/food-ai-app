@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -103,7 +103,7 @@ class PlatePolygonStack extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(
+                              color: Colors.black.withValues(alpha: 
                                   index == safeSelected ? 0.18 : 0.08),
                               blurRadius: index == safeSelected ? 26 : 16,
                               offset:
@@ -132,3 +132,4 @@ class PlatePolygonStack extends StatelessWidget {
     );
   }
 }
+

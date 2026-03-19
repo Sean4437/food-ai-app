@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -268,7 +268,7 @@ class _ChatScreenState extends State<ChatScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 6),
           ),
@@ -307,7 +307,7 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
@@ -328,7 +328,7 @@ class _ChatScreenState extends State<ChatScreen> {
     Locale locale,
   ) {
     final bubbleColor =
-        isUser ? theme.colorScheme.primary.withOpacity(0.9) : Colors.white;
+        isUser ? theme.colorScheme.primary.withValues(alpha: 0.9) : Colors.white;
     final textColor = isUser ? Colors.white : Colors.black87;
     final timeLabel = _formatMessageTime(msg.createdAt, locale);
     final radius = Radius.circular(16);
@@ -344,7 +344,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 6),
           ),
@@ -511,11 +511,11 @@ class _ChatScreenState extends State<ChatScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 24),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.92),
+            color: Colors.white.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 18,
                 offset: const Offset(0, 12),
               ),
@@ -625,3 +625,4 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 }
+

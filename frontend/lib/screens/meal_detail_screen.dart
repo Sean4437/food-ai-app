@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../models/meal_entry.dart';
@@ -184,9 +184,9 @@ class MealDetailScreen extends StatelessWidget {
           data: SliderTheme.of(context).copyWith(
             trackHeight: 8,
             activeTrackColor: theme.colorScheme.primary,
-            inactiveTrackColor: theme.colorScheme.primary.withOpacity(0.2),
+            inactiveTrackColor: theme.colorScheme.primary.withValues(alpha: 0.2),
             thumbColor: theme.colorScheme.primary,
-            overlayColor: theme.colorScheme.primary.withOpacity(0.12),
+            overlayColor: theme.colorScheme.primary.withValues(alpha: 0.12),
           ),
           child: Slider(
             value: entry.portionPercent.toDouble(),
@@ -264,7 +264,7 @@ class MealDetailScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.06),
+                                  color: Colors.black.withValues(alpha: 0.06),
                                   blurRadius: 18,
                                   offset: const Offset(0, 8),
                                 ),
@@ -357,7 +357,7 @@ class MealDetailScreen extends StatelessWidget {
                                   horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color:
-                                    theme.colorScheme.primary.withOpacity(0.14),
+                                    theme.colorScheme.primary.withValues(alpha: 0.14),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
@@ -382,7 +382,7 @@ class MealDetailScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
@@ -438,7 +438,7 @@ class _RadarPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     final shapePaint = Paint()
-      ..color = const Color(0xFFB5D8C6).withOpacity(0.6)
+      ..color = const Color(0xFFB5D8C6).withValues(alpha: 0.6)
       ..style = PaintingStyle.fill;
     final linePaint = Paint()
       ..color = const Color(0xFFB5D8C6)
@@ -489,3 +489,4 @@ class _RadarPainter extends CustomPainter {
     return false;
   }
 }
+

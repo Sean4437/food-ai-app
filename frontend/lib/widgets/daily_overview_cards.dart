@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../design/app_theme.dart';
@@ -120,12 +120,12 @@ class DailyOverviewCards extends StatelessWidget {
         border: borderOpacity <= 0
             ? null
             : Border.all(
-                color: Colors.black.withOpacity(borderOpacity),
+                color: Colors.black.withValues(alpha: borderOpacity),
                 width: 1,
               ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -351,7 +351,7 @@ class DailyOverviewCards extends StatelessWidget {
                                           shape: BoxShape.circle,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.black.withOpacity(0.12),
+                                              color: Colors.black.withValues(alpha: 0.12),
                                               blurRadius: 12,
                                               offset: const Offset(0, 6),
                                             ),
@@ -373,7 +373,7 @@ class DailyOverviewCards extends StatelessWidget {
                                         color: gaugeColor,
                                         shadows: [
                                           Shadow(
-                                            color: Colors.black.withOpacity(0.25),
+                                            color: Colors.black.withValues(alpha: 0.25),
                                             blurRadius: 4,
                                             offset: const Offset(0, 1),
                                           ),
@@ -482,7 +482,7 @@ class DailyOverviewCards extends StatelessWidget {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.12),
+                                color: Colors.black.withValues(alpha: 0.12),
                                 blurRadius: 12,
                                 offset: const Offset(0, 6),
                               ),
@@ -503,7 +503,7 @@ class DailyOverviewCards extends StatelessWidget {
                               color: gaugeColor,
                               shadows: [
                                 Shadow(
-                                  color: Colors.black.withOpacity(0.25),
+                                  color: Colors.black.withValues(alpha: 0.25),
                                   blurRadius: 4,
                                   offset: const Offset(0, 1),
                                 ),
@@ -671,7 +671,7 @@ class _CalorieGaugePainter extends CustomPainter {
     for (var i = 0; i < segments; i++) {
       final t = (i + 0.5) / segments;
       paint.color =
-          _colorAt(t, green, minValue, maxValue, cap).withOpacity(0.15);
+          _colorAt(t, green, minValue, maxValue, cap).withValues(alpha: 0.15);
       canvas.drawArc(glowRect, start + segSweep * i, segSweep, false, paint);
     }
   }
@@ -781,3 +781,4 @@ class _CalorieGaugePainter extends CustomPainter {
         oldDelegate.primary != primary;
   }
 }
+

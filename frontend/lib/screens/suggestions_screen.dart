@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -1019,7 +1019,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
             final value = _scanController.value;
             return Stack(
               children: [
-                Container(color: Colors.white.withOpacity(0.02)),
+                Container(color: Colors.white.withValues(alpha: 0.02)),
                 CustomPaint(
                   painter: _ProgressArcPainter(
                     progress: _progressValue,
@@ -1469,9 +1469,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                   trackHeight: 6,
                   activeTrackColor: theme.colorScheme.primary,
                   inactiveTrackColor:
-                      theme.colorScheme.primary.withOpacity(0.2),
+                      theme.colorScheme.primary.withValues(alpha: 0.2),
                   thumbColor: theme.colorScheme.primary,
-                  overlayColor: theme.colorScheme.primary.withOpacity(0.12),
+                  overlayColor: theme.colorScheme.primary.withValues(alpha: 0.12),
                 ),
                 child: Slider(
                   value: _portionPercent.toDouble(),
@@ -1888,7 +1888,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                         height: barHeight,
                         width: rangeWidth,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.35),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.35),
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
@@ -2300,7 +2300,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                 IgnorePointer(
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.22),
+                                      color: Colors.white.withValues(alpha: 0.22),
                                       borderRadius: BorderRadius.circular(28),
                                     ),
                                   ),
@@ -2311,7 +2311,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                     width: innerWidth,
                                     height: innerHeight,
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.4),
+                                      color: Colors.white.withValues(alpha: 0.4),
                                       borderRadius: BorderRadius.circular(26),
                                     ),
                                     child: Padding(
@@ -2367,7 +2367,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                                         boxShadow: [
                                                           BoxShadow(
                                                             color: Colors.black
-                                                                .withOpacity(
+                                                                .withValues(alpha: 
                                                                     0.12),
                                                             blurRadius: 26,
                                                             offset:
@@ -2631,7 +2631,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                           bottom: Radius.circular(22)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
+                          color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 22,
                           offset: const Offset(0, -4),
                         ),
@@ -2689,7 +2689,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                           bottom: Radius.circular(22)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
+                          color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 22,
                           offset: const Offset(0, -4),
                         ),
@@ -2789,18 +2789,18 @@ class _ProgressArcPainter extends CustomPainter {
     final center = Offset(w * 0.5, h * 0.5);
     final radius = math.min(w, h) * 0.36;
     final trackPaint = Paint()
-      ..color = color.withOpacity(0.12)
+      ..color = color.withValues(alpha: 0.12)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4;
 
     final progressPaint = Paint()
-      ..color = color.withOpacity(0.65)
+      ..color = color.withValues(alpha: 0.65)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
 
     final spinnerPaint = Paint()
-      ..color = color.withOpacity(0.35)
+      ..color = color.withValues(alpha: 0.35)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
@@ -2834,3 +2834,4 @@ class _ProgressArcPainter extends CustomPainter {
         oldDelegate.color != color;
   }
 }
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 
 import '../design/text_styles.dart';
@@ -25,11 +25,11 @@ class TrialExpiredScreen extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 18),
                 padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.92),
+                  color: Colors.white.withValues(alpha: 0.92),
                   borderRadius: BorderRadius.circular(22),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
+                      color: Colors.black.withValues(alpha: 0.12),
                       blurRadius: 24,
                       offset: const Offset(0, 14),
                     ),
@@ -45,7 +45,7 @@ class TrialExpiredScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            theme.colorScheme.primary.withOpacity(0.92),
+                            theme.colorScheme.primary.withValues(alpha: 0.92),
                             const Color(0xFF4E7EFF),
                           ],
                         ),
@@ -138,3 +138,4 @@ class _Bullet extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -350,7 +350,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 12,
                             offset: const Offset(0, 6),
                           ),
@@ -379,7 +379,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                                       horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
                                     color: theme.colorScheme.primary
-                                        .withOpacity(0.14),
+                                        .withValues(alpha: 0.14),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Text(
@@ -413,7 +413,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                               borderRadius: BorderRadius.circular(18),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black.withValues(alpha: 0.05),
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -439,7 +439,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                               borderRadius: BorderRadius.circular(18),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black.withValues(alpha: 0.05),
                                   blurRadius: 12,
                                   offset: const Offset(0, 6),
                                 ),
@@ -464,7 +464,7 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 12,
                             offset: const Offset(0, 6),
                           ),
@@ -500,3 +500,4 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
     );
   }
 }
+
