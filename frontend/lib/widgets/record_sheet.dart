@@ -323,6 +323,16 @@ String _catalogFallbackMessage(BuildContext context) {
 String _nameLookupErrorMessage(BuildContext context, String code) {
   final isEn =
       Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
+  if (code == 'catalog_not_found') {
+    return isEn
+        ? 'Not in catalog yet. We recorded this query and will add it in a future update.'
+        : '\u76ee\u524d\u8cc7\u6599\u5eab\u5c1a\u672a\u6536\u9304\u9019\u500b\u98df\u7269\uff0c\u5df2\u5e6b\u4f60\u8a18\u9304\uff0c\u5f8c\u7e8c\u6703\u66f4\u65b0\u3002';
+  }
+  if (code == 'subscription_required') {
+    return isEn
+        ? 'Not in catalog yet. We will add it in a future update. Upgrade to use AI estimate now.'
+        : '\u76ee\u524d\u8cc7\u6599\u5eab\u5c1a\u672a\u6536\u9304\u9019\u500b\u98df\u7269\uff0c\u5f8c\u7e8c\u6703\u66f4\u65b0\u3002\u82e5\u8981\u7acb\u5373\u4f30\u7b97\u53ef\u5347\u7d1a\u4f7f\u7528 AI\u3002';
+  }
   switch (code) {
     case 'subscription_required':
       return isEn
@@ -350,55 +360,58 @@ Future<RecordResult?> showRecordSheet(
   AppState app, {
   MealType? fixedType,
   DateTime? overrideTime,
+  bool preferNameInput = false,
 }) async {
   final t = AppLocalizations.of(context)!;
-  final mode = await showModalBottomSheet<_RecordInputMode>(
-    context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-    ),
-    builder: (context) {
-      return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.black12,
-                borderRadius: BorderRadius.circular(8),
+  final mode = preferNameInput
+      ? _RecordInputMode.name
+      : await showModalBottomSheet<_RecordInputMode>(
+          context: context,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+          ),
+          builder: (context) {
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    leading: const Icon(Icons.photo_camera_outlined),
+                    title: Text(t.pickFromCamera),
+                    onTap: () => Navigator.of(context).pop(_RecordInputMode.camera),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.photo_library_outlined),
+                    title: Text(t.pickFromGallery),
+                    onTap: () => Navigator.of(context).pop(_RecordInputMode.gallery),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.edit_note),
+                    title: Text(t.suggestInstantNameSubmit),
+                    subtitle: Text(t.suggestInstantNameHint),
+                    onTap: () => Navigator.of(context).pop(_RecordInputMode.name),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.close),
+                    title: Text(t.cancel),
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
+                  const SizedBox(height: 6),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: Text(t.pickFromCamera),
-              onTap: () => Navigator.of(context).pop(_RecordInputMode.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: Text(t.pickFromGallery),
-              onTap: () => Navigator.of(context).pop(_RecordInputMode.gallery),
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit_note),
-              title: Text(t.suggestInstantNameSubmit),
-              subtitle: Text(t.suggestInstantNameHint),
-              onTap: () => Navigator.of(context).pop(_RecordInputMode.name),
-            ),
-            ListTile(
-              leading: const Icon(Icons.close),
-              title: Text(t.cancel),
-              onTap: () => Navigator.of(context).pop(),
-            ),
-            const SizedBox(height: 6),
-          ],
-        ),
-      );
-    },
-  );
+            );
+          },
+        );
 
   if (mode == null) return null;
   if (!context.mounted) return null;

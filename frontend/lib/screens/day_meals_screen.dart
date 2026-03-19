@@ -4,9 +4,7 @@ import 'dart:math' as math;
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
-import '../design/app_theme.dart';
 import '../design/text_styles.dart';
-import '../widgets/plate_photo.dart';
 import '../widgets/plate_polygon_stack.dart';
 import 'meal_items_screen.dart';
 import '../widgets/app_background.dart';
@@ -179,21 +177,21 @@ class _DayMealsScreenState extends State<DayMealsScreen> {
             child: imageUrl != null
                 ? Image.network(
                     imageUrl,
+                    fit: BoxFit.cover,
                     cacheWidth: thumbCachePx,
                     cacheHeight: thumbCachePx,
-                    fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Image.memory(
                       displayBytes,
+                      fit: BoxFit.cover,
                       cacheWidth: thumbCachePx,
                       cacheHeight: thumbCachePx,
-                      fit: BoxFit.cover,
                     ),
                   )
                 : Image.memory(
                     displayBytes,
+                    fit: BoxFit.cover,
                     cacheWidth: thumbCachePx,
                     cacheHeight: thumbCachePx,
-                    fit: BoxFit.cover,
                   ),
           );
         },

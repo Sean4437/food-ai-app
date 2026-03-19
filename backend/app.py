@@ -2821,6 +2821,165 @@ def _build_food_search_item(
     )
 
 
+def _catalog_item_match_score(item: FoodSearchItem) -> float:
+    raw = item.match_score
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    try:
+        return float(str(raw or "").strip())
+    except Exception:
+        return 0.0
+
+
+def _match_contains_coverage(query_compact: str, target_compact: str) -> float:
+    if not query_compact or not target_compact:
+        return 0.0
+    if len(query_compact) < 2:
+        return 0.0
+    if len(target_compact) < 2:
+        return 0.0
+    if target_compact in query_compact:
+        return len(target_compact) / max(len(query_compact), 1)
+    if query_compact in target_compact:
+        return len(query_compact) / max(len(target_compact), 1)
+    return 0.0
+
+
+def _best_catalog_food_match(query: str, items: list[FoodSearchItem]) -> Optional[FoodSearchItem]:
+    if not items:
+        return None
+
+    normalized_query = _normalize_food_query(query)
+    compact_query = normalized_query.replace(" ", "")
+    if not normalized_query:
+        return None
+
+    best_prefix: Optional[FoodSearchItem] = None
+    best_prefix_score = -1.0
+    best_contains: Optional[FoodSearchItem] = None
+    best_contains_score = -1.0
+    best_contains_coverage = -1.0
+
+    for item in items:
+        alias = _normalize_food_query(item.alias or "")
+        food_name = _normalize_food_query(item.food_name or "")
+        alias_compact = alias.replace(" ", "")
+        food_name_compact = food_name.replace(" ", "")
+        score = _catalog_item_match_score(item)
+
+        if alias == normalized_query or food_name == normalized_query:
+            return item
+
+        starts_with = (
+            alias
+            and (
+                alias.startswith(normalized_query)
+                or alias_compact.startswith(compact_query)
+                or normalized_query.startswith(alias)
+                or compact_query.startswith(alias_compact)
+            )
+        ) or (
+            food_name
+            and (
+                food_name.startswith(normalized_query)
+                or food_name_compact.startswith(compact_query)
+                or normalized_query.startswith(food_name)
+                or compact_query.startswith(food_name_compact)
+            )
+        )
+        if starts_with and score > best_prefix_score:
+            best_prefix = item
+            best_prefix_score = score
+
+        contains_like = (
+            alias
+            and (
+                alias in normalized_query
+                or normalized_query in alias
+                or alias_compact in compact_query
+                or compact_query in alias_compact
+            )
+        ) or (
+            food_name
+            and (
+                food_name in normalized_query
+                or normalized_query in food_name
+                or food_name_compact in compact_query
+                or compact_query in food_name_compact
+            )
+        )
+        if not contains_like:
+            continue
+
+        coverage = max(
+            _match_contains_coverage(compact_query, alias_compact),
+            _match_contains_coverage(compact_query, food_name_compact),
+        )
+        if coverage <= 0.0:
+            continue
+        if coverage > best_contains_coverage or (
+            coverage == best_contains_coverage and score > best_contains_score
+        ):
+            best_contains = item
+            best_contains_score = score
+            best_contains_coverage = coverage
+
+    if best_prefix is not None and best_prefix_score >= 3.5:
+        return best_prefix
+    if (
+        best_contains is not None
+        and best_contains_score >= 5.0
+        and best_contains_coverage >= 0.45
+    ):
+        return best_contains
+    return None
+
+
+def _catalog_item_to_analysis_result(
+    item: FoodSearchItem,
+    *,
+    fallback_name: str,
+    lang: str,
+) -> AnalysisResult:
+    food_name = str(item.food_name or "").strip() or fallback_name
+    calorie_range = str(item.calorie_range or "").strip() or "0-0 kcal"
+    raw_macros = item.macros or {}
+    macros = {
+        "protein": max(0.0, _safe_float(raw_macros.get("protein")) or 0.0),
+        "carbs": max(0.0, _safe_float(raw_macros.get("carbs")) or 0.0),
+        "fat": max(0.0, _safe_float(raw_macros.get("fat")) or 0.0),
+        "sodium": max(0.0, _safe_float(raw_macros.get("sodium")) or 0.0),
+    }
+    food_items = item.food_items or []
+    if not food_items:
+        food_items = [food_name]
+
+    suggestion = str(item.suggestion or "").strip() or _catalog_default_suggestion(lang)
+    dish_summary = str(item.dish_summary or "").strip() or _catalog_default_summary(food_name, lang)
+    reference_used = str(item.reference_used or "").strip() or _catalog_reference_used(lang)
+
+    return AnalysisResult(
+        food_name=food_name,
+        calorie_range=calorie_range,
+        macros=macros,
+        food_items=food_items,
+        judgement_tags=item.judgement_tags or [],
+        dish_summary=dish_summary,
+        suggestion=suggestion,
+        tier="catalog",
+        source=str(item.source or "catalog").strip() or "catalog",
+        cost_estimate_usd=None,
+        confidence=_catalog_item_match_score(item),
+        is_beverage=item.is_beverage if isinstance(item.is_beverage, bool) else None,
+        is_food=item.is_food if isinstance(item.is_food, bool) else True,
+        non_food_reason=None,
+        reference_used=reference_used,
+        container_guess_type=None,
+        container_guess_size=None,
+        debug_reason=None,
+    )
+
+
 def _require_admin(request: Request) -> None:
     if ADMIN_API_KEY:
         provided = request.headers.get("x-admin-key") or request.headers.get("X-Admin-Key")
@@ -4419,10 +4578,6 @@ async def analyze_name(
     payload: NameAnalyzeRequest,
     _auth: dict = Depends(_require_auth),
 ):
-    _require_entitlement(_auth, "ai_analyze")
-    user_id = _auth.get("user_id", "")
-    if user_id and not _analysis_rate_allowed(user_id):
-        raise HTTPException(status_code=429, detail="analyze_rate_limited")
     raw_name = (payload.food_name or "").strip()
     if not raw_name:
         raise HTTPException(status_code=400, detail="missing_food_name")
@@ -4431,6 +4586,29 @@ async def analyze_name(
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
 
+    catalog_match: Optional[FoodSearchItem] = None
+    try:
+        catalog_response = foods_search(q=raw_name, lang=use_lang, limit=8)
+        catalog_match = _best_catalog_food_match(raw_name, catalog_response.items)
+    except HTTPException as exc:
+        logging.warning(
+            "Catalog search failed in /analyze_name (detail=%s); fallback to AI",
+            exc.detail,
+        )
+    except Exception as exc:
+        logging.exception("Unexpected catalog search failure in /analyze_name: %s", exc)
+
+    if catalog_match is not None:
+        return _catalog_item_to_analysis_result(
+            catalog_match,
+            fallback_name=raw_name,
+            lang=use_lang,
+        )
+
+    _require_entitlement(_auth, "ai_analyze")
+    user_id = _auth.get("user_id", "")
+    if user_id and not _analysis_rate_allowed(user_id):
+        raise HTTPException(status_code=429, detail="analyze_rate_limited")
     _ensure_ai_available(_auth.get("user_id"))
     profile = payload.profile or {}
     try:

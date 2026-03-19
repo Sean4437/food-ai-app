@@ -690,7 +690,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final chatAvatarStatus =
         hasChatAvatar ? t.chatAvatarSet : t.chatAvatarUnset;
     final currentThemeAsset = profile.themeAsset;
-    final isSubscribed = app.iapSubscriptionActive;
+    final isSubscribed = app.iapSubscriptionActive &&
+        (app.accessPlan == 'pro' || app.accessPlan == 'plus');
     final isMockSubscription = app.mockSubscriptionActive;
     final isWhitelisted = app.isWhitelisted;
     final isBackendPaidPlan =

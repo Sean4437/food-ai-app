@@ -8,10 +8,12 @@ import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import '../design/app_theme.dart';
 import '../design/text_styles.dart';
+import '../widgets/record_sheet.dart';
 import '../widgets/plate_polygon_stack.dart';
 import '../widgets/app_background.dart';
 import '../widgets/daily_overview_cards.dart';
 import 'day_meals_screen.dart';
+import 'meal_items_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,10 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final Map<DateTime, int> _dateSelectedMeal = {};
   String? _lastPlateAsset;
   static const double _statusCardHeight = 210;
-
-  Widget _emojiIcon(String emoji, {double size = 16}) {
-    return Text(emoji, style: TextStyle(fontSize: size, height: 1));
-  }
 
   Widget _skeletonBar(double width, {double height = 12}) {
     return Container(
@@ -63,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             height: 360,
             decoration: BoxDecoration(
-              color: appTheme.card.withValues(alpha: 0.5),
+              color: appTheme.card.withOpacity(0.5),
               borderRadius: BorderRadius.circular(appTheme.radiusCard),
             ),
           ),
@@ -98,11 +96,42 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  Future<void> _openRecordSheet(AppState app,
+      {bool preferNameInput = false}) async {
+    final result = await showRecordSheet(
+      context,
+      app,
+      preferNameInput: preferNameInput,
+    );
+    if (!mounted || result == null) return;
+    final mealId = result.mealId;
+    if (result.mealCount >= 2) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              DayMealsScreen(date: result.date, initialMealId: mealId),
+        ),
+      );
+      return;
+    }
+    final group = app.entriesForMealId(mealId);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MealItemsScreen(
+          group: group,
+          autoReturnToDayMeals: true,
+          autoReturnDate: result.date,
+          autoReturnMealId: mealId,
+        ),
+      ),
+    );
+  }
+
   Widget _statusPill(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
+        color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(label,
@@ -113,7 +142,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openOverflow(String action, AppState app, AppLocalizations t) {
     final tabState = TabScope.of(context);
-    final isZh = Localizations.localeOf(context).languageCode.toLowerCase().startsWith('zh');
+    final isZh = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
     if (action == 'settings') {
       tabState.setIndex(5); // Settings tab
     } else if (action == 'custom') {
@@ -334,7 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: appTheme.card,
           borderRadius: BorderRadius.circular(appTheme.radiusCard),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          border: Border.all(color: Colors.black.withOpacity(0.08)),
         ),
         child: Text(t.latestMealEmpty,
             style:
@@ -351,10 +383,10 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: appTheme.card,
         borderRadius: BorderRadius.circular(appTheme.radiusCard),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
+        border: Border.all(color: Colors.black.withOpacity(0.08), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -396,7 +428,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              _emojiIcon('💬', size: 16),
+              const Icon(Icons.summarize_outlined,
+                  size: 16, color: Colors.black54),
               const SizedBox(width: 6),
               Text(
                 t.dayCardSummaryLabel,
@@ -404,10 +437,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           if (!app.isDailySummaryReady(date))
-            Center(
-              child: _emojiIcon('⏳', size: 24),
+            const Center(
+              child: Icon(Icons.hourglass_empty,
+                  size: 24, color: Colors.black45),
             ),
           const SizedBox(height: 6),
           Expanded(
@@ -435,7 +469,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              _emojiIcon('💡', size: 16),
+              const Icon(Icons.lightbulb_outline,
+                  size: 16, color: Colors.black54),
               const SizedBox(width: 6),
               Text(
                 t.dayCardTomorrowLabel,
@@ -443,10 +478,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           if (!app.isDailySummaryReady(date))
-            Center(
-              child: _emojiIcon('⏳', size: 24),
+            const Center(
+              child: Icon(Icons.hourglass_empty,
+                  size: 24, color: Colors.black45),
             ),
           const SizedBox(height: 6),
           Expanded(
@@ -474,7 +510,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              _emojiIcon('📅', size: 16),
+              const Icon(Icons.calendar_view_week_outlined,
+                  size: 16, color: Colors.black54),
               const SizedBox(width: 6),
               Text(
                 t.weekSummaryTitle,
@@ -482,10 +519,11 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           if (!app.isWeeklySummaryReady(date))
-            Center(
-              child: _emojiIcon('⏳', size: 24),
+            const Center(
+              child: Icon(Icons.hourglass_empty,
+                  size: 24, color: Colors.black45),
             ),
           const SizedBox(height: 4),
           Text(
@@ -494,10 +532,11 @@ class _HomeScreenState extends State<HomeScreen> {
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
-              _emojiIcon('🔮', size: 16),
+              const Icon(Icons.next_week_outlined,
+                  size: 16, color: Colors.black54),
               const SizedBox(width: 6),
               Text(
                 t.nextWeekAdviceTitle,
@@ -626,8 +665,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: const Icon(Icons.more_horiz),
                     onSelected: (value) => _openOverflow(value, app, t),
                     itemBuilder: (context) => [
-                      PopupMenuItem(value: 'settings', child: Text(t.settingsTitle)),
-                      PopupMenuItem(value: 'custom', child: Text(t.customTabTitle)),
+                      PopupMenuItem(
+                          value: 'settings', child: Text(t.settingsTitle)),
+                      PopupMenuItem(
+                          value: 'custom', child: Text(t.customTabTitle)),
                       if (kIsWeb && app.mockSubscriptionActive)
                         PopupMenuItem(
                           value: 'reset_mock',
@@ -643,6 +684,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.icon(
+                    onPressed: () =>
+                        _openRecordSheet(app, preferNameInput: true),
+                    icon: const Icon(Icons.edit_note),
+                    label: Text(t.suggestInstantNameSubmit),
+                  ),
+                ),
               ),
               const SizedBox(height: 14),
               if (displayDates.isEmpty)
@@ -709,7 +763,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         appTheme: appTheme,
                         child: Row(
                           children: [
-                            _emojiIcon('📅', size: 18),
+                            const Icon(Icons.calendar_today_outlined,
+                                size: 18, color: Colors.black54),
                             const SizedBox(width: 8),
                             Builder(builder: (context) {
                               final localeTag = Localizations.localeOf(context)
@@ -720,7 +775,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               final weekdayLabel =
                                   DateFormat('E', localeTag).format(activeDate);
                               return Text(
-                                '$dateLabel（$weekdayLabel）',
+                                '$dateLabel $weekdayLabel',
                                 style: AppTextStyles.title2(context),
                               );
                             }),
