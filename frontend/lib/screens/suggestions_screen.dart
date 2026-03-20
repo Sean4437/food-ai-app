@@ -423,6 +423,23 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         return isZh
             ? 'AI 估算暫時不可用，請稍後再試。'
             : 'AI estimate is temporarily unavailable. Please try again later.';
+      case 'ai_model_unavailable':
+        return isZh
+            ? 'AI 模型目前暫時不可用，系統會自動切換，請稍後再試。'
+            : 'AI model is temporarily unavailable. The system will auto-fallback. Please try again.';
+      case 'ai_connection_error':
+        return isZh
+            ? 'AI 連線暫時異常，請稍後再試。'
+            : 'Temporary AI connection issue. Please try again.';
+      case 'ai_auth_error':
+        return isZh
+            ? 'AI 金鑰設定異常，請聯絡管理員。'
+            : 'AI key configuration issue. Please contact support.';
+      case 'ai_invalid_response':
+      case 'ai_failed':
+        return isZh
+            ? 'AI 分析暫時失敗，請稍後再試。'
+            : 'AI analysis failed temporarily. Please try again.';
       default:
         return isZh ? '名稱查詢失敗。' : 'Name lookup failed.';
     }
@@ -2866,4 +2883,3 @@ class _ProgressArcPainter extends CustomPainter {
         oldDelegate.color != color;
   }
 }
-

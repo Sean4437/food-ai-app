@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
+import 'subscription_paywall.dart';
 
 enum _RecordInputMode {
   camera,
@@ -317,35 +318,42 @@ String _catalogFallbackMessage(BuildContext context) {
       Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
   return isEn
       ? 'Catalog lookup failed. Switched to AI estimate.'
-      : '資料庫查詢失敗，已改用 AI 估算。';
+      : '資料庫查詢暫時失敗，已改用 AI 估算。';
 }
 
 String _nameLookupErrorMessage(BuildContext context, String code) {
   final isEn =
       Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
-  if (code == 'catalog_not_found') {
-    return isEn
-        ? 'Not in catalog yet. We recorded this query and will add it in a future update.'
-        : '\u76ee\u524d\u8cc7\u6599\u5eab\u5c1a\u672a\u6536\u9304\u9019\u500b\u98df\u7269\uff0c\u5df2\u5e6b\u4f60\u8a18\u9304\uff0c\u5f8c\u7e8c\u6703\u66f4\u65b0\u3002';
-  }
-  if (code == 'subscription_required') {
-    return isEn
-        ? 'Not in catalog yet. We will add it in a future update. Upgrade to use AI estimate now.'
-        : '\u76ee\u524d\u8cc7\u6599\u5eab\u5c1a\u672a\u6536\u9304\u9019\u500b\u98df\u7269\uff0c\u5f8c\u7e8c\u6703\u66f4\u65b0\u3002\u82e5\u8981\u7acb\u5373\u4f30\u7b97\u53ef\u5347\u7d1a\u4f7f\u7528 AI\u3002';
-  }
   switch (code) {
+    case 'catalog_not_found':
+      return isEn
+          ? 'Not in catalog yet. We recorded this query and will add it in a future update.'
+          : '目前資料庫尚未收錄這個食物，已幫你記錄，後續會更新。';
     case 'subscription_required':
       return isEn
-          ? 'Not found in catalog. Upgrade to use AI estimate.'
-          : '資料庫找不到此餐點，升級後可使用 AI 估算。';
+          ? 'Not in catalog yet. Upgrade to use AI estimate now.'
+          : '目前資料庫尚未收錄這個食物，若要立即估算可升級使用 AI。';
     case 'ai_unavailable':
       return isEn
           ? 'AI estimate is temporarily unavailable. Please try again later.'
           : 'AI 估算暫時不可用，請稍後再試。';
-    case 'catalog_not_found':
+    case 'ai_model_unavailable':
       return isEn
-          ? 'No match found in the food database. Try a shorter name or add a custom food.'
-          : '資料庫找不到相符餐點，請縮短名稱或改用自訂義。';
+          ? 'AI model is temporarily unavailable. The system will auto-fallback. Please try again.'
+          : 'AI 模型目前暫時不可用，系統會自動切換，請稍後再試。';
+    case 'ai_connection_error':
+      return isEn
+          ? 'Temporary AI connection issue. Please try again.'
+          : 'AI 連線暫時異常，請稍後再試。';
+    case 'ai_auth_error':
+      return isEn
+          ? 'AI key configuration issue. Please contact support.'
+          : 'AI 金鑰設定異常，請聯絡管理員。';
+    case 'ai_invalid_response':
+    case 'ai_failed':
+      return isEn
+          ? 'AI analysis failed temporarily. Please try again.'
+          : 'AI 分析暫時失敗，請稍後再試。';
     case 'catalog_unavailable':
       return isEn
           ? 'Food database is temporarily unavailable. Please try again later.'
@@ -438,6 +446,10 @@ Future<RecordResult?> showRecordSheet(
       );
     } on NameLookupException catch (err) {
       if (!context.mounted) return null;
+      if (err.code == 'subscription_required') {
+        await showSubscriptionPaywall(context, app, t);
+        if (!context.mounted) return null;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_nameLookupErrorMessage(context, err.code))),
       );

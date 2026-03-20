@@ -1773,8 +1773,18 @@ class AppState extends ChangeNotifier {
           reason: 'name_ai',
         );
       } on ApiException catch (err) {
-        if (err.statusCode == 401 || err.statusCode == 402) {
+        if (err.statusCode == 401 ||
+            err.statusCode == 402 ||
+            err.code == 'subscription_required') {
           throw NameLookupException('subscription_required');
+        }
+        switch (err.code) {
+          case 'ai_model_unavailable':
+          case 'ai_connection_error':
+          case 'ai_auth_error':
+          case 'ai_invalid_response':
+          case 'ai_failed':
+            throw NameLookupException(err.code);
         }
         throw NameLookupException('ai_unavailable');
       } catch (_) {
