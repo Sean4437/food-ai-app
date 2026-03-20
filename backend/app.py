@@ -272,6 +272,9 @@ CALL_REAL_AI = os.getenv("CALL_REAL_AI", "false").lower() == "true"
 DEFAULT_LANG = os.getenv("DEFAULT_LANG", "zh-TW")
 API_KEY = os.getenv("API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_FALLBACK_MODELS = _parse_csv_values(
+    os.getenv("OPENAI_FALLBACK_MODELS", "gpt-4.1-mini,gpt-4o-mini")
+)
 PRICE_INPUT_PER_M = float(os.getenv("PRICE_INPUT_PER_M", "0.15"))
 PRICE_OUTPUT_PER_M = float(os.getenv("PRICE_OUTPUT_PER_M", "0.60"))
 RETURN_AI_ERROR = os.getenv("RETURN_AI_ERROR", "false").lower() == "true"
@@ -3968,6 +3971,97 @@ def _chat_rate_reply(lang: str) -> str:
     return "Meow~ a little too fast. Please wait a moment and try again!"
 
 
+def _is_model_unavailable_error(exc: Exception) -> bool:
+    text = str(exc).lower()
+    markers = (
+        "model_not_found",
+        "must be verified",
+        "verify your organization",
+        "organization must be verified",
+        "does not exist",
+    )
+    return any(marker in text for marker in markers)
+
+
+def _model_candidates(primary_model: str) -> list[str]:
+    seen: set[str] = set()
+    candidates: list[str] = []
+
+    def add(model_name: str | None) -> None:
+        value = (model_name or "").strip()
+        if not value or value in seen:
+            return
+        seen.add(value)
+        candidates.append(value)
+
+    add(primary_model)
+    for item in OPENAI_FALLBACK_MODELS:
+        add(item)
+    if primary_model.startswith("gpt-5"):
+        add("gpt-4.1-mini")
+        add("gpt-4o-mini")
+    elif primary_model.startswith("gpt-4.1"):
+        add("gpt-4o-mini")
+    return candidates
+
+
+def _create_chat_completion(
+    *,
+    messages: List[Dict[str, Any]],
+    temperature: float = 0.2,
+    model: str | None = None,
+) -> tuple[Any, str]:
+    if _client is None:
+        raise RuntimeError("openai_client_unavailable")
+    primary_model = (model or OPENAI_MODEL).strip() or OPENAI_MODEL
+    candidates = _model_candidates(primary_model)
+    last_exc: Exception | None = None
+    for index, candidate in enumerate(candidates):
+        try:
+            response = _client.chat.completions.create(
+                model=candidate,
+                messages=messages,
+                temperature=temperature,
+            )
+            if candidate != primary_model:
+                logging.warning(
+                    "OpenAI model fallback success: primary=%s used=%s",
+                    primary_model,
+                    candidate,
+                )
+            return response, candidate
+        except Exception as exc:
+            last_exc = exc
+            should_fallback = _is_model_unavailable_error(exc) and index < len(candidates) - 1
+            if should_fallback:
+                logging.warning(
+                    "OpenAI model unavailable: model=%s err=%s; trying fallback",
+                    candidate,
+                    exc,
+                )
+                continue
+            raise
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError("openai_request_failed")
+
+
+def _ai_error_detail(exc: Exception) -> str:
+    if _is_model_unavailable_error(exc):
+        return "ai_model_unavailable"
+    text = str(exc).lower()
+    if (
+        "connection error" in text
+        or "localprotocolerror" in text
+        or "timed out" in text
+        or "timeout" in text
+    ):
+        return "ai_connection_error"
+    if "invalid api key" in text or "authentication" in text:
+        return "ai_auth_error"
+    return "ai_failed"
+
+
 def _build_chat_prompt(
     lang: str,
     profile: dict | None,
@@ -4147,8 +4241,7 @@ def _analyze_with_openai(
         prompt += f"\nUser provided food name: {food_name}. Use this as the primary dish name."
 
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
-    response = _client.chat.completions.create(
-        model=OPENAI_MODEL,
+    response, used_model = _create_chat_completion(
         messages=[
             {
                 "role": "user",
@@ -4199,7 +4292,7 @@ def _analyze_with_openai(
             "output_tokens": usage.completion_tokens,
             "total_tokens": usage.total_tokens,
         }
-    return {"result": data, "usage": usage_data}
+    return {"result": data, "usage": usage_data, "model": used_model}
 
 
 def _parse_calorie_range(value: str) -> Optional[tuple[int, int]]:
@@ -4311,8 +4404,7 @@ def _analyze_label_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
         return None
     prompt = _build_label_prompt(lang)
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
-    response = _client.chat.completions.create(
-        model=OPENAI_MODEL,
+    response, used_model = _create_chat_completion(
         messages=[
             {
                 "role": "user",
@@ -4348,7 +4440,7 @@ def _analyze_label_with_openai(image_bytes: bytes, lang: str) -> Optional[dict]:
             "output_tokens": usage.completion_tokens,
             "total_tokens": usage.total_tokens,
         }
-    return {"result": data, "usage": usage_data}
+    return {"result": data, "usage": usage_data, "model": used_model}
 
 
 @app.post("/analyze", response_model=AnalysisResult)
@@ -4509,7 +4601,7 @@ async def analyze_image(
             {
                 "id": str(uuid.uuid4()),
                 "created_at": datetime.now(timezone.utc).isoformat(),
-                "model": OPENAI_MODEL,
+                "model": payload.get("model") or OPENAI_MODEL,
                 "lang": use_lang,
                 "source": "ai",
                 "input_tokens": input_tokens,
@@ -4570,7 +4662,7 @@ async def analyze_image(
         global _last_ai_error
         _last_ai_error = str(exc)
         logging.exception("AI analyze failed: %s", exc)
-        raise HTTPException(status_code=502, detail="ai_failed")
+        raise HTTPException(status_code=502, detail=_ai_error_detail(exc))
 
 
 @app.post("/analyze_name", response_model=AnalysisResult)
@@ -4627,8 +4719,7 @@ async def analyze_name(
             payload.container_diameter_cm,
             payload.container_capacity_ml,
         )
-        response = _client.chat.completions.create(
-            model=OPENAI_MODEL,
+        response, used_model = _create_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
         )
@@ -4654,7 +4745,7 @@ async def analyze_name(
             {
                 "id": str(uuid.uuid4()),
                 "created_at": datetime.now(timezone.utc).isoformat(),
-                "model": OPENAI_MODEL,
+                "model": used_model,
                 "lang": use_lang,
                 "source": "name",
                 "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
@@ -4698,7 +4789,7 @@ async def analyze_name(
         global _last_ai_error
         _last_ai_error = str(exc)
         logging.exception("Name analyze failed: %s", exc)
-        raise HTTPException(status_code=502, detail="ai_failed")
+        raise HTTPException(status_code=502, detail=_ai_error_detail(exc))
 
 
 @app.get("/foods/search", response_model=FoodSearchResponse)
@@ -5009,7 +5100,7 @@ async def analyze_label(
             {
                 "id": str(uuid.uuid4()),
                 "created_at": datetime.now(timezone.utc).isoformat(),
-                "model": OPENAI_MODEL,
+                "model": payload.get("model") or OPENAI_MODEL,
                 "lang": use_lang,
                 "source": "label",
                 "input_tokens": input_tokens,
@@ -5033,7 +5124,7 @@ async def analyze_label(
         global _last_ai_error
         _last_ai_error = str(exc)
         logging.exception("Label analyze failed: %s", exc)
-        raise HTTPException(status_code=502, detail="ai_failed")
+        raise HTTPException(status_code=502, detail=_ai_error_detail(exc))
 
 
 @app.post("/summarize_day", response_model=DaySummaryResponse)
@@ -5058,8 +5149,7 @@ async def summarize_day(
             payload.today_consumed_kcal,
             payload.today_remaining_kcal,
         )
-        response = _client.chat.completions.create(
-            model=OPENAI_MODEL,
+        response, _ = _create_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
         )
@@ -5079,7 +5169,7 @@ async def summarize_day(
         global _last_ai_error
         _last_ai_error = str(exc)
         logging.exception("Day summary failed: %s", exc)
-        raise HTTPException(status_code=502, detail="ai_failed")
+        raise HTTPException(status_code=502, detail=_ai_error_detail(exc))
 
 
 @app.post("/summarize_week", response_model=WeekSummaryResponse)
@@ -5102,8 +5192,7 @@ async def summarize_week(
             payload.previous_week_summary,
             payload.previous_next_week_advice,
         )
-        response = _client.chat.completions.create(
-            model=OPENAI_MODEL,
+        response, _ = _create_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
         )
@@ -5123,7 +5212,7 @@ async def summarize_week(
         global _last_ai_error
         _last_ai_error = str(exc)
         logging.exception("Week summary failed: %s", exc)
-        raise HTTPException(status_code=502, detail="ai_failed")
+        raise HTTPException(status_code=502, detail=_ai_error_detail(exc))
 
 
 @app.post("/suggest_meal", response_model=MealAdviceResponse)
@@ -5139,8 +5228,7 @@ async def suggest_meal(
     _ensure_ai_available()
     try:
         prompt = _build_meal_advice_prompt(use_lang, profile, payload)
-        response = _client.chat.completions.create(
-            model=OPENAI_MODEL,
+        response, used_model = _create_chat_completion(
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
         )
@@ -5167,7 +5255,7 @@ async def suggest_meal(
             {
                 "id": str(uuid.uuid4()),
                 "created_at": datetime.now(timezone.utc).isoformat(),
-                "model": OPENAI_MODEL,
+                "model": used_model,
                 "lang": use_lang,
                 "source": "ai",
                 "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
@@ -5191,7 +5279,7 @@ async def suggest_meal(
         global _last_ai_error
         _last_ai_error = str(exc)
         logging.exception("Meal advice failed: %s", exc)
-        raise HTTPException(status_code=502, detail="ai_failed")
+        raise HTTPException(status_code=502, detail=_ai_error_detail(exc))
 
 
 
@@ -5249,8 +5337,7 @@ async def chat(
         for msg in payload.messages:
             role = msg.role if msg.role in {"user", "assistant"} else "user"
             messages.append({"role": role, "content": msg.content})
-        response = _client.chat.completions.create(
-            model=OPENAI_MODEL,
+        response, used_model = _create_chat_completion(
             messages=messages,
             temperature=0.4,
         )
@@ -5282,7 +5369,7 @@ async def chat(
             {
                 "id": str(uuid.uuid4()),
                 "created_at": datetime.now(timezone.utc).isoformat(),
-                "model": OPENAI_MODEL,
+                "model": used_model,
                 "lang": use_lang,
                 "source": "chat",
                 "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
@@ -5299,7 +5386,13 @@ async def chat(
             confidence=data.get("confidence"),
         )
     except HTTPException as exc:
-        if exc.detail in {"ai_failed", "ai_invalid_response"}:
+        if exc.detail in {
+            "ai_failed",
+            "ai_invalid_response",
+            "ai_model_unavailable",
+            "ai_connection_error",
+            "ai_auth_error",
+        }:
             logging.warning("Chat AI error: user=%s reason=%s", user_id or "-", exc.detail)
             return ChatResponse(
                 reply=_chat_ai_fallback_reply(use_lang),
@@ -5312,7 +5405,7 @@ async def chat(
         global _last_ai_error
         _last_ai_error = str(exc)
         logging.exception("Chat failed: %s", exc)
-        raise HTTPException(status_code=502, detail="ai_failed")
+        raise HTTPException(status_code=502, detail=_ai_error_detail(exc))
 
 
 @app.post("/subscription/ios/verify", response_model=IosSubscriptionVerifyResponse)

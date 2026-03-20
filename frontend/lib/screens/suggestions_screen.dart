@@ -14,6 +14,7 @@ import '../widgets/nutrition_chart.dart';
 import '../widgets/app_background.dart';
 import '../widgets/subscription_paywall.dart';
 import '../design/text_styles.dart';
+import '../services/api_service.dart';
 
 class SuggestionsScreen extends StatefulWidget {
   const SuggestionsScreen({super.key});
@@ -61,7 +62,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     if (app.canUseFeature(feature)) return true;
     final t = AppLocalizations.of(context)!;
     await showSubscriptionPaywall(context, app, t);
-    return false;
+    return app.canUseFeature(feature);
   }
 
   @override
@@ -158,7 +159,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       if (!mounted) return;
       _stopSmartProgress();
       setState(() {
-        _error = err.toString();
+        _error = _analysisErrorMessage(err);
         _loading = false;
         _previewBytes = null;
       });
@@ -236,7 +237,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       if (!mounted) return;
       _stopSmartProgress();
       setState(() {
-        _error = err.toString();
+        _error = _analysisErrorMessage(err);
         _loading = false;
         _previewBytes = null;
       });
@@ -425,6 +426,37 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       default:
         return isZh ? '名稱查詢失敗。' : 'Name lookup failed.';
     }
+  }
+
+  String _analysisErrorMessage(Object err) {
+    final isZh = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
+    if (err is ApiException) {
+      switch (err.code) {
+        case 'subscription_required':
+          return isZh ? '此功能需訂閱後才能使用。' : 'This feature requires subscription.';
+        case 'analyze_rate_limited':
+          return isZh ? '分析太頻繁了，請稍後再試。' : 'Too many analysis requests. Please try again later.';
+        case 'ai_model_unavailable':
+          return isZh
+              ? 'AI 模型目前暫時不可用，系統會自動切換，請稍後再試。'
+              : 'AI model is temporarily unavailable. The system will auto-fallback. Please try again.';
+        case 'ai_connection_error':
+          return isZh ? 'AI 連線暫時異常，請稍後再試。' : 'Temporary AI connection issue. Please try again.';
+        case 'ai_auth_error':
+          return isZh ? 'AI 金鑰設定異常，請聯絡管理員。' : 'AI key configuration issue. Please contact support.';
+        case 'ai_invalid_response':
+        case 'ai_failed':
+          return isZh ? 'AI 分析暫時失敗，請稍後再試。' : 'AI analysis failed temporarily. Please try again.';
+      }
+    }
+    final raw = err.toString();
+    if (raw.contains('subscription_required')) {
+      return isZh ? '此功能需訂閱後才能使用。' : 'This feature requires subscription.';
+    }
+    return isZh ? '分析失敗，請稍後再試。' : 'Analysis failed. Please try again.';
   }
 
   Future<void> _saveIfNeeded() async {
@@ -632,7 +664,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       if (!mounted) return;
       _stopSmartProgress();
       setState(() {
-        _error = err.toString();
+        _error = _analysisErrorMessage(err);
         _loading = false;
         _previewBytes = null;
       });
@@ -2445,8 +2477,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                                             : t
                                                                 .suggestInstantRetake)
                                                         : (isZh
-                                                            ? '訂閱後可使用拍照分析'
-                                                            : 'Subscribe to unlock photo analysis'),
+                                                            ? '立即解鎖拍照分析'
+                                                            : 'Unlock photo analysis'),
                                                     style: const TextStyle(
                                                         fontWeight:
                                                             FontWeight.w700),

@@ -29,6 +29,38 @@ Future<void> showSubscriptionPaywall(
   }
 }
 
+String? _paywallStatusLine(BuildContext context, AppState app) {
+  final isZh = Localizations.localeOf(context)
+      .languageCode
+      .toLowerCase()
+      .startsWith('zh');
+  if (app.hasPaidAccess) {
+    final plan = app.accessPlan.toLowerCase();
+    if (plan == 'plus') {
+      return isZh ? '目前方案：Plus' : 'Current plan: Plus';
+    }
+    if (plan == 'pro') {
+      return isZh ? '目前方案：Pro' : 'Current plan: Pro';
+    }
+    return isZh ? '目前方案：已訂閱' : 'Current plan: Subscribed';
+  }
+
+  final trialEnd = app.trialEndAt?.toLocal();
+  if (app.trialChecked && !app.trialExpired && trialEnd != null) {
+    final remainingHours = trialEnd.difference(DateTime.now()).inHours;
+    final remainingDays = (remainingHours / 24).ceil().clamp(0, 99);
+    if (remainingDays <= 0) {
+      return isZh ? '免費試用最後一天' : 'Trial: last day';
+    }
+    return isZh ? '免費試用剩餘 $remainingDays 天' : '$remainingDays-day trial remaining';
+  }
+
+  if (app.trialChecked && app.trialExpired) {
+    return isZh ? '免費試用已結束' : 'Trial ended';
+  }
+  return null;
+}
+
 Future<void> _showMockPaywall(
   BuildContext context,
   AppState app,
@@ -40,6 +72,10 @@ Future<void> _showMockPaywall(
       : currentPlan == kIapYearlyId
           ? t.webPaywallCurrentPlanYearly
           : t.webPaywallCurrentPlanNone;
+  final trialStatusLine = _paywallStatusLine(context, app);
+  final statusLine = currentPlan != null
+      ? currentPlanLabel
+      : (trialStatusLine ?? currentPlanLabel);
 
   final chosen = await showModalBottomSheet<String>(
     context: context,
@@ -48,7 +84,7 @@ Future<void> _showMockPaywall(
     builder: (context) => _SubscriptionSheet(
       title: t.webPaywallTitle,
       subtitle: t.paywallSubtitle,
-      statusLine: currentPlanLabel,
+      statusLine: statusLine,
       plans: [
         _SubscriptionPlan(
           id: kIapMonthlyId,
@@ -122,9 +158,11 @@ Future<void> _showIapPaywall(
         final yearlyProduct = app.productById(kIapYearlyId);
         final monthlyPrice = monthlyProduct?.price ?? r'$5.99';
         final yearlyPrice = yearlyProduct?.price ?? r'$49.99';
+        final statusLine = _paywallStatusLine(context, app);
         return _SubscriptionSheet(
           title: t.paywallTitle,
           subtitle: t.paywallSubtitle,
+          statusLine: statusLine,
           plans: [
             _SubscriptionPlan(
               id: kIapMonthlyId,
@@ -267,6 +305,10 @@ class _SubscriptionSheetState extends State<_SubscriptionSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isZh = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
     const processingLabel = 'Processing...';
     final titleStyle = GoogleFonts.notoSansTc(
       color: Colors.white,
@@ -397,6 +439,36 @@ class _SubscriptionSheetState extends State<_SubscriptionSheet> {
                             ),
                           ),
                         ],
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.16)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _PlanDiffRow(
+                                icon: Icons.check_circle_outline_rounded,
+                                title: isZh ? '免費版' : 'Free',
+                                text: isZh
+                                    ? '輸入名稱、自訂食物'
+                                    : 'Name input, custom foods',
+                              ),
+                              const SizedBox(height: 6),
+                              _PlanDiffRow(
+                                icon: Icons.workspace_premium_rounded,
+                                title: isZh ? '訂閱版' : 'Subscription',
+                                text: isZh
+                                    ? '拍照 AI、聊天、週/月總結'
+                                    : 'Photo AI, chat, week/month summary',
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 8,
@@ -670,6 +742,48 @@ class _BenefitChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PlanDiffRow extends StatelessWidget {
+  const _PlanDiffRow({
+    required this.icon,
+    required this.title,
+    required this.text,
+  });
+
+  final IconData icon;
+  final String title;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF9BFFD0)),
+        const SizedBox(width: 7),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: GoogleFonts.notoSansTc(
+                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: 12,
+                height: 1.25,
+                fontWeight: FontWeight.w500,
+              ),
+              children: [
+                TextSpan(
+                  text: '$title：',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                TextSpan(text: text),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
