@@ -175,6 +175,13 @@ class WeekPlanMixRatio(BaseModel):
     convenience_store: int
 
 
+class WeekPlanMealScenarios(BaseModel):
+    breakfast: List[str] = Field(default_factory=list)
+    lunch: List[str] = Field(default_factory=list)
+    dinner: List[str] = Field(default_factory=list)
+    snack: List[str] = Field(default_factory=list)
+
+
 class WeekPlanConstraints(BaseModel):
     daily_budget_twd: Optional[int] = None
     max_prep_minutes: Optional[int] = None
@@ -192,7 +199,8 @@ class WeekPlanGenerateRequest(BaseModel):
     goal_override: Optional[str] = None
     profile_goal: Optional[str] = None
     sync_goal_to_profile: bool = False
-    mix_ratio: WeekPlanMixRatio
+    meal_scenarios: Optional[WeekPlanMealScenarios] = None
+    mix_ratio: Optional[WeekPlanMixRatio] = None
     constraints: Optional[WeekPlanConstraints] = None
 
 
@@ -233,7 +241,8 @@ class WeekPlanGenerateResponse(BaseModel):
     start_date: str
     end_date: str
     goal_effective: str
-    mix_ratio_effective: WeekPlanMixRatio
+    meal_scenarios_effective: WeekPlanMealScenarios
+    mix_ratio_effective: Optional[WeekPlanMixRatio] = None
     daily_target: WeekPlanMacroTarget
     day_plans: List[WeekPlanDayPlan]
     validation: WeekPlanValidation
@@ -501,6 +510,8 @@ USAGE_LOG_TTL_DAYS = int(os.getenv("USAGE_LOG_TTL_DAYS", "90"))
 USAGE_LOG_MAX = int(os.getenv("USAGE_LOG_MAX", "10000"))
 
 _supported_langs = {"zh-TW", "en"}
+_week_plan_scenarios = ("home_cook", "eat_out", "convenience_store")
+_week_plan_meal_types = ("breakfast", "lunch", "dinner", "snack")
 _week_plan_store: Dict[str, Dict[str, Any]] = {}
 _week_plan_goal_targets: Dict[str, Dict[str, float]] = {
     "lose_fat": {"kcal": 1650, "protein_g": 120.0, "carb_g": 150.0, "fat_g": 55.0},
@@ -602,13 +613,56 @@ def _normalize_mix_ratio(raw: WeekPlanMixRatio) -> Dict[str, int]:
     return ratio
 
 
-def _pick_scenario(day_index: int, meal_index: int, ratio: Dict[str, int]) -> str:
+def _pick_scenario_with_ratio(day_index: int, meal_index: int, ratio: Dict[str, int]) -> str:
     roll = (day_index * 37 + meal_index * 17 + 13) % 100
     if roll < ratio["home_cook"]:
         return "home_cook"
     if roll < ratio["home_cook"] + ratio["eat_out"]:
         return "eat_out"
     return "convenience_store"
+
+
+def _scenarios_from_mix_ratio(ratio: Dict[str, int]) -> Dict[str, List[str]]:
+    allowed = [scenario for scenario in _week_plan_scenarios if ratio.get(scenario, 0) > 0]
+    if not allowed:
+        raise HTTPException(status_code=400, detail="invalid_mix_ratio")
+    return {meal_type: list(allowed) for meal_type in _week_plan_meal_types}
+
+
+def _normalize_meal_scenarios(
+    raw: Optional[WeekPlanMealScenarios],
+) -> Dict[str, List[str]]:
+    if raw is None:
+        return {meal_type: list(_week_plan_scenarios) for meal_type in _week_plan_meal_types}
+    normalized: Dict[str, List[str]] = {}
+    invalid_found = False
+    for meal_type in _week_plan_meal_types:
+        values = getattr(raw, meal_type, None)
+        seen: set[str] = set()
+        meal_values: List[str] = []
+        if isinstance(values, list):
+            for item in values:
+                scenario = str(item or "").strip().lower()
+                if not scenario:
+                    continue
+                if scenario not in _week_plan_scenarios:
+                    invalid_found = True
+                    continue
+                if scenario in seen:
+                    continue
+                seen.add(scenario)
+                meal_values.append(scenario)
+        if not meal_values:
+            raise HTTPException(status_code=400, detail="invalid_meal_scenarios")
+        normalized[meal_type] = meal_values
+    if invalid_found:
+        raise HTTPException(status_code=400, detail="invalid_meal_scenarios")
+    return normalized
+
+
+def _pick_scenario_from_allowed(day_index: int, meal_index: int, allowed: List[str]) -> str:
+    index = (day_index * 5 + meal_index * 3 + 11) % len(allowed)
+    return allowed[index]
 
 
 def _build_stub_week_plan(
@@ -622,10 +676,15 @@ def _build_stub_week_plan(
         start_date = datetime.strptime(payload.start_date, "%Y-%m-%d").date()
     except Exception:
         raise HTTPException(status_code=400, detail="invalid_start_date")
-    ratio = _normalize_mix_ratio(payload.mix_ratio)
+    legacy_ratio = _normalize_mix_ratio(payload.mix_ratio) if payload.mix_ratio else None
+    if payload.meal_scenarios is not None:
+        meal_scenarios = _normalize_meal_scenarios(payload.meal_scenarios)
+    elif legacy_ratio is not None:
+        meal_scenarios = _scenarios_from_mix_ratio(legacy_ratio)
+    else:
+        meal_scenarios = _normalize_meal_scenarios(None)
     goal = _effective_week_goal(payload)
     target = _week_plan_goal_targets.get(goal, _week_plan_goal_targets["lose_fat"])
-    meal_types = ("breakfast", "lunch", "dinner", "snack")
     day_plans: List[WeekPlanDayPlan] = []
     day_dates: List[str] = []
 
@@ -635,8 +694,12 @@ def _build_stub_week_plan(
         totals = {"kcal": 0, "protein_g": 0.0, "carb_g": 0.0, "fat_g": 0.0}
         meals: List[WeekPlanMealItem] = []
 
-        for meal_index, meal_type in enumerate(meal_types):
-            scenario = _pick_scenario(day_index, meal_index, ratio)
+        for meal_index, meal_type in enumerate(_week_plan_meal_types):
+            if payload.meal_scenarios is None and legacy_ratio is not None:
+                scenario = _pick_scenario_with_ratio(day_index, meal_index, legacy_ratio)
+            else:
+                allowed = meal_scenarios.get(meal_type) or list(_week_plan_scenarios)
+                scenario = _pick_scenario_from_allowed(day_index, meal_index, allowed)
             options = _week_plan_meal_library.get(scenario, {}).get(meal_type) or []
             if not options:
                 raise HTTPException(status_code=500, detail="plan_template_missing")
@@ -688,7 +751,8 @@ def _build_stub_week_plan(
         start_date=start_date.isoformat(),
         end_date=(start_date + timedelta(days=payload.days - 1)).isoformat(),
         goal_effective=goal,
-        mix_ratio_effective=WeekPlanMixRatio(**ratio),
+        meal_scenarios_effective=WeekPlanMealScenarios(**meal_scenarios),
+        mix_ratio_effective=WeekPlanMixRatio(**legacy_ratio) if legacy_ratio else None,
         daily_target=WeekPlanMacroTarget(
             kcal=int(target["kcal"]),
             protein_g=float(target["protein_g"]),

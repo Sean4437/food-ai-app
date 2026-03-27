@@ -30,6 +30,86 @@ class WeekPlanMixRatio {
   }
 }
 
+class WeekPlanMealScenarios {
+  const WeekPlanMealScenarios({
+    required this.breakfast,
+    required this.lunch,
+    required this.dinner,
+    required this.snack,
+  });
+
+  final List<String> breakfast;
+  final List<String> lunch;
+  final List<String> dinner;
+  final List<String> snack;
+
+  static const List<String> _defaultScenarios = <String>[
+    'home_cook',
+    'eat_out',
+    'convenience_store',
+  ];
+
+  static List<String> _normalizeScenarioList(dynamic value) {
+    final values = <String>[];
+    final seen = <String>{};
+    if (value is List) {
+      for (final item in value) {
+        final scenario = item.toString().trim();
+        if (scenario.isEmpty || seen.contains(scenario)) continue;
+        seen.add(scenario);
+        values.add(scenario);
+      }
+    }
+    return values.isNotEmpty ? values : List<String>.from(_defaultScenarios);
+  }
+
+  List<String> forMealType(String mealType) {
+    switch (mealType) {
+      case 'breakfast':
+        return breakfast;
+      case 'lunch':
+        return lunch;
+      case 'dinner':
+        return dinner;
+      case 'snack':
+        return snack;
+      default:
+        return List<String>.from(_defaultScenarios);
+    }
+  }
+
+  Map<String, dynamic> toJson() => {
+        'breakfast': breakfast,
+        'lunch': lunch,
+        'dinner': dinner,
+        'snack': snack,
+      };
+
+  factory WeekPlanMealScenarios.fromJson(Map<String, dynamic> json) {
+    return WeekPlanMealScenarios(
+      breakfast: _normalizeScenarioList(json['breakfast']),
+      lunch: _normalizeScenarioList(json['lunch']),
+      dinner: _normalizeScenarioList(json['dinner']),
+      snack: _normalizeScenarioList(json['snack']),
+    );
+  }
+
+  factory WeekPlanMealScenarios.fromMixRatio(WeekPlanMixRatio ratio) {
+    final allowed = <String>[];
+    if (ratio.homeCook > 0) allowed.add('home_cook');
+    if (ratio.eatOut > 0) allowed.add('eat_out');
+    if (ratio.convenienceStore > 0) allowed.add('convenience_store');
+    final normalized =
+        allowed.isNotEmpty ? allowed : List<String>.from(_defaultScenarios);
+    return WeekPlanMealScenarios(
+      breakfast: List<String>.from(normalized),
+      lunch: List<String>.from(normalized),
+      dinner: List<String>.from(normalized),
+      snack: List<String>.from(normalized),
+    );
+  }
+}
+
 class WeekPlanMacroTarget {
   const WeekPlanMacroTarget({
     required this.kcal,
@@ -190,10 +270,11 @@ class WeekPlanData {
     required this.startDate,
     required this.endDate,
     required this.goalEffective,
-    required this.mixRatioEffective,
+    required this.mealScenariosEffective,
     required this.dailyTarget,
     required this.dayPlans,
     required this.validation,
+    this.mixRatioEffective,
   });
 
   final String planId;
@@ -201,7 +282,8 @@ class WeekPlanData {
   final String startDate;
   final String endDate;
   final String goalEffective;
-  final WeekPlanMixRatio mixRatioEffective;
+  final WeekPlanMealScenarios mealScenariosEffective;
+  final WeekPlanMixRatio? mixRatioEffective;
   final WeekPlanMacroTarget dailyTarget;
   final List<WeekPlanDayPlan> dayPlans;
   final WeekPlanValidation validation;
@@ -232,6 +314,19 @@ class WeekPlanData {
         : rawMix is Map
             ? rawMix.map((k, v) => MapEntry(k.toString(), v))
             : const <String, dynamic>{};
+    final mixRatio = mixMap.isEmpty ? null : WeekPlanMixRatio.fromJson(mixMap);
+
+    final rawMealScenarios = json['meal_scenarios_effective'];
+    final mealScenarioMap = rawMealScenarios is Map<String, dynamic>
+        ? rawMealScenarios
+        : rawMealScenarios is Map
+            ? rawMealScenarios.map((k, v) => MapEntry(k.toString(), v))
+            : const <String, dynamic>{};
+    final mealScenarios = mealScenarioMap.isNotEmpty
+        ? WeekPlanMealScenarios.fromJson(mealScenarioMap)
+        : mixRatio != null
+            ? WeekPlanMealScenarios.fromMixRatio(mixRatio)
+            : WeekPlanMealScenarios.fromJson(const <String, dynamic>{});
 
     final rawDailyTarget = json['daily_target'];
     final dailyTargetMap = rawDailyTarget is Map<String, dynamic>
@@ -253,7 +348,8 @@ class WeekPlanData {
       startDate: (json['start_date'] ?? '').toString(),
       endDate: (json['end_date'] ?? '').toString(),
       goalEffective: (json['goal_effective'] ?? '').toString(),
-      mixRatioEffective: WeekPlanMixRatio.fromJson(mixMap),
+      mealScenariosEffective: mealScenarios,
+      mixRatioEffective: mixRatio,
       dailyTarget: WeekPlanMacroTarget.fromJson(dailyTargetMap),
       dayPlans: days,
       validation: WeekPlanValidation.fromJson(validationMap),

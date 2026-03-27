@@ -15,70 +15,26 @@ class WeekPlanScreen extends StatefulWidget {
   State<WeekPlanScreen> createState() => _WeekPlanScreenState();
 }
 
-class _RatioPreset {
-  const _RatioPreset({
-    required this.key,
-    required this.labelZh,
-    required this.labelEn,
-    required this.ratio,
-  });
-
-  final String key;
-  final String labelZh;
-  final String labelEn;
-  final WeekPlanMixRatio ratio;
-}
-
 class _WeekPlanScreenState extends State<WeekPlanScreen> {
-  static final List<_RatioPreset> _ratioPresets = [
-    const _RatioPreset(
-      key: 'balanced',
-      labelZh: '平衡（自煮40 外食40 便利20）',
-      labelEn: 'Balanced (40/40/20)',
-      ratio: WeekPlanMixRatio(homeCook: 40, eatOut: 40, convenienceStore: 20),
-    ),
-    const _RatioPreset(
-      key: 'home',
-      labelZh: '自煮優先（70/20/10）',
-      labelEn: 'Home-cook first (70/20/10)',
-      ratio: WeekPlanMixRatio(homeCook: 70, eatOut: 20, convenienceStore: 10),
-    ),
-    const _RatioPreset(
-      key: 'eat_out',
-      labelZh: '外食優先（20/70/10）',
-      labelEn: 'Eat-out first (20/70/10)',
-      ratio: WeekPlanMixRatio(homeCook: 20, eatOut: 70, convenienceStore: 10),
-    ),
-    const _RatioPreset(
-      key: 'convenience',
-      labelZh: '便利店優先（20/20/60）',
-      labelEn: 'Convenience first (20/20/60)',
-      ratio: WeekPlanMixRatio(homeCook: 20, eatOut: 20, convenienceStore: 60),
-    ),
-    const _RatioPreset(
-      key: 'all_home',
-      labelZh: '全部自煮（100/0/0）',
-      labelEn: 'All home-cook (100/0/0)',
-      ratio: WeekPlanMixRatio(homeCook: 100, eatOut: 0, convenienceStore: 0),
-    ),
-    const _RatioPreset(
-      key: 'all_eat_out',
-      labelZh: '全部外食（0/100/0）',
-      labelEn: 'All eat-out (0/100/0)',
-      ratio: WeekPlanMixRatio(homeCook: 0, eatOut: 100, convenienceStore: 0),
-    ),
-    const _RatioPreset(
-      key: 'all_convenience',
-      labelZh: '全部便利店（0/0/100）',
-      labelEn: 'All convenience (0/0/100)',
-      ratio: WeekPlanMixRatio(homeCook: 0, eatOut: 0, convenienceStore: 100),
-    ),
+  static const List<String> _mealTypes = <String>[
+    'breakfast',
+    'lunch',
+    'dinner',
+    'snack',
+  ];
+  static const List<String> _scenarioTypes = <String>[
+    'home_cook',
+    'eat_out',
+    'convenience_store',
   ];
 
   DateTime _startDate = DateTime.now();
   String _goalMode = 'profile_default';
   String _goalOverride = 'lose_fat';
-  _RatioPreset _selectedPreset = _ratioPresets.first;
+  Map<String, List<String>> _mealScenarioSelections = {
+    for (final mealType in _mealTypes)
+      mealType: List<String>.from(_scenarioTypes),
+  };
   bool _loading = false;
   bool _replanning = false;
   WeekPlanData? _plan;
@@ -91,10 +47,61 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       .toLowerCase()
       .startsWith('zh');
 
-  bool _sameRatio(WeekPlanMixRatio a, WeekPlanMixRatio b) {
-    return a.homeCook == b.homeCook &&
-        a.eatOut == b.eatOut &&
-        a.convenienceStore == b.convenienceStore;
+  void _setMealScenarioSelectionFromData(WeekPlanMealScenarios data) {
+    _mealScenarioSelections = {
+      for (final mealType in _mealTypes)
+        mealType: List<String>.from(data.forMealType(mealType)),
+    };
+  }
+
+  WeekPlanMealScenarios _mealScenarioPayload() {
+    List<String> normalize(String mealType) {
+      final current = _mealScenarioSelections[mealType] ?? _scenarioTypes;
+      final values = <String>[];
+      for (final scenario in _scenarioTypes) {
+        if (current.contains(scenario)) values.add(scenario);
+      }
+      return values.isNotEmpty ? values : List<String>.from(_scenarioTypes);
+    }
+
+    return WeekPlanMealScenarios(
+      breakfast: normalize('breakfast'),
+      lunch: normalize('lunch'),
+      dinner: normalize('dinner'),
+      snack: normalize('snack'),
+    );
+  }
+
+  void _toggleMealScenario(String mealType, String scenario, bool selected) {
+    final current = List<String>.from(
+      _mealScenarioSelections[mealType] ?? _scenarioTypes,
+    );
+    if (selected) {
+      if (!current.contains(scenario)) {
+        current.add(scenario);
+      }
+    } else {
+      current.remove(scenario);
+      if (current.isEmpty) {
+        final text = _isZh
+            ? '每一餐至少要保留一種來源。'
+            : 'Each meal must keep at least one source.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(text)),
+        );
+        return;
+      }
+    }
+
+    current.sort(
+      (a, b) => _scenarioTypes.indexOf(a).compareTo(_scenarioTypes.indexOf(b)),
+    );
+    setState(() {
+      _mealScenarioSelections = {
+        ..._mealScenarioSelections,
+        mealType: current,
+      };
+    });
   }
 
   @override
@@ -109,16 +116,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       _lastReplan = cachedReplan;
       final parsedStart = DateTime.tryParse(cachedPlan.startDate);
       if (parsedStart != null) {
-        _startDate = DateTime(parsedStart.year, parsedStart.month, parsedStart.day);
+        _startDate =
+            DateTime(parsedStart.year, parsedStart.month, parsedStart.day);
       }
       _goalMode = 'week_override';
       _goalOverride = cachedPlan.goalEffective;
-      for (final preset in _ratioPresets) {
-        if (_sameRatio(preset.ratio, cachedPlan.mixRatioEffective)) {
-          _selectedPreset = preset;
-          break;
-        }
-      }
+      _setMealScenarioSelectionFromData(cachedPlan.mealScenariosEffective);
     }
     _hydratedFromCache = true;
   }
@@ -171,6 +174,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           return '此功能需要訂閱後才能使用。';
         case 'plan_limit_reached':
           return '本週生成次數已達上限。';
+        case 'invalid_meal_scenarios':
+          return '每餐來源設定無效，請至少勾選一種。';
         case 'invalid_mix_ratio':
           return '情境比例設定無效，請重新調整。';
         case 'invalid_goal_mode':
@@ -185,6 +190,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         return 'This feature requires subscription.';
       case 'plan_limit_reached':
         return 'Weekly plan generation limit reached.';
+      case 'invalid_meal_scenarios':
+        return 'Invalid meal scenarios. Select at least one per meal.';
       case 'invalid_mix_ratio':
         return 'Invalid mix ratio. Please adjust and retry.';
       case 'invalid_goal_mode':
@@ -238,7 +245,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         'goal_override': _goalMode == 'week_override' ? _goalOverride : null,
         'profile_goal': app.profile.goal,
         'sync_goal_to_profile': false,
-        'mix_ratio': _selectedPreset.ratio.toJson(),
+        'meal_scenarios': _mealScenarioPayload().toJson(),
         'constraints': <String, dynamic>{
           'daily_budget_twd': null,
           'max_prep_minutes': null,
@@ -372,7 +379,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                           ),
                           const SizedBox(height: 10),
                           DropdownButtonFormField<String>(
-                            value: _goalMode,
+                            initialValue: _goalMode,
                             decoration: InputDecoration(
                               labelText: _isZh ? '目標來源' : 'Goal Source',
                               border: const OutlineInputBorder(),
@@ -399,7 +406,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                           if (_goalMode == 'week_override') ...[
                             const SizedBox(height: 10),
                             DropdownButtonFormField<String>(
-                              value: _goalOverride,
+                              initialValue: _goalOverride,
                               decoration: InputDecoration(
                                 labelText: _isZh ? '本週目標' : 'Weekly Goal',
                                 border: const OutlineInputBorder(),
@@ -426,30 +433,52 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             ),
                           ],
                           const SizedBox(height: 10),
-                          DropdownButtonFormField<String>(
-                            value: _selectedPreset.key,
-                            decoration: InputDecoration(
-                              labelText: _isZh ? '情境比例' : 'Scenario Mix',
-                              border: const OutlineInputBorder(),
-                              isDense: true,
+                          Text(
+                            _isZh ? '每餐可選來源' : 'Meal Source by Meal',
+                            style: AppTextStyles.caption(context).copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
                             ),
-                            items: _ratioPresets
-                                .map((preset) => DropdownMenuItem(
-                                      value: preset.key,
-                                      child: Text(_isZh
-                                          ? preset.labelZh
-                                          : preset.labelEn),
-                                    ))
-                                .toList(),
-                            onChanged: (value) {
-                              if (value == null) return;
-                              final next = _ratioPresets.firstWhere(
-                                (item) => item.key == value,
-                                orElse: () => _ratioPresets.first,
-                              );
-                              setState(() => _selectedPreset = next);
-                            },
                           ),
+                          const SizedBox(height: 8),
+                          ..._mealTypes.map((mealType) {
+                            final selected =
+                                _mealScenarioSelections[mealType] ??
+                                    _scenarioTypes;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _mealTypeLabel(mealType),
+                                    style:
+                                        AppTextStyles.caption(context).copyWith(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: _scenarioTypes.map((scenario) {
+                                      return FilterChip(
+                                        label: Text(_scenarioLabel(scenario)),
+                                        selected: selected.contains(scenario),
+                                        onSelected: (value) =>
+                                            _toggleMealScenario(
+                                          mealType,
+                                          scenario,
+                                          value,
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
                           const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
@@ -498,8 +527,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              (_isZh ? '每日目標 ' : 'Daily target ') +
-                                  '${plan.dailyTarget.kcal} kcal / P${plan.dailyTarget.proteinG.toStringAsFixed(0)} C${plan.dailyTarget.carbG.toStringAsFixed(0)} F${plan.dailyTarget.fatG.toStringAsFixed(0)}',
+                              '${_isZh ? '每日目標 ' : 'Daily target '}${plan.dailyTarget.kcal} kcal / P${plan.dailyTarget.proteinG.toStringAsFixed(0)} C${plan.dailyTarget.carbG.toStringAsFixed(0)} F${plan.dailyTarget.fatG.toStringAsFixed(0)}',
                               style: AppTextStyles.caption(context)
                                   .copyWith(color: Colors.black54),
                             ),
@@ -531,8 +559,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             if (_lastReplan != null) ...[
                               const SizedBox(height: 6),
                               Text(
-                                (_isZh ? '最近重排：' : 'Last replan: ') +
-                                    'v${_lastReplan!.oldVersion} → v${_lastReplan!.newVersion}',
+                                '${_isZh ? '最近重排：' : 'Last replan: '}v${_lastReplan!.oldVersion} → v${_lastReplan!.newVersion}',
                                 style: AppTextStyles.caption(context)
                                     .copyWith(color: Colors.black54),
                               ),
