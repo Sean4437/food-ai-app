@@ -652,10 +652,11 @@ def _normalize_meal_scenarios(
                     continue
                 seen.add(scenario)
                 meal_values.append(scenario)
-        if not meal_values:
-            raise HTTPException(status_code=400, detail="invalid_meal_scenarios")
         normalized[meal_type] = meal_values
     if invalid_found:
+        raise HTTPException(status_code=400, detail="invalid_meal_scenarios")
+    has_any = any(bool(items) for items in normalized.values())
+    if not has_any:
         raise HTTPException(status_code=400, detail="invalid_meal_scenarios")
     return normalized
 
@@ -698,7 +699,11 @@ def _build_stub_week_plan(
             if payload.meal_scenarios is None and legacy_ratio is not None:
                 scenario = _pick_scenario_with_ratio(day_index, meal_index, legacy_ratio)
             else:
-                allowed = meal_scenarios.get(meal_type) or list(_week_plan_scenarios)
+                allowed = meal_scenarios.get(meal_type)
+                if allowed is None:
+                    allowed = list(_week_plan_scenarios)
+                if not allowed:
+                    continue
                 scenario = _pick_scenario_from_allowed(day_index, meal_index, allowed)
             options = _week_plan_meal_library.get(scenario, {}).get(meal_type) or []
             if not options:

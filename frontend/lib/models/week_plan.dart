@@ -49,18 +49,24 @@ class WeekPlanMealScenarios {
     'convenience_store',
   ];
 
-  static List<String> _normalizeScenarioList(dynamic value) {
+  static List<String> _normalizeScenarioList(
+    dynamic value, {
+    required bool keyExists,
+  }) {
     final values = <String>[];
     final seen = <String>{};
     if (value is List) {
       for (final item in value) {
-        final scenario = item.toString().trim();
+        final scenario = item.toString().trim().toLowerCase();
+        if (!_defaultScenarios.contains(scenario)) continue;
         if (scenario.isEmpty || seen.contains(scenario)) continue;
         seen.add(scenario);
         values.add(scenario);
       }
     }
-    return values.isNotEmpty ? values : List<String>.from(_defaultScenarios);
+    if (values.isNotEmpty) return values;
+    if (keyExists) return <String>[];
+    return List<String>.from(_defaultScenarios);
   }
 
   List<String> forMealType(String mealType) {
@@ -87,10 +93,22 @@ class WeekPlanMealScenarios {
 
   factory WeekPlanMealScenarios.fromJson(Map<String, dynamic> json) {
     return WeekPlanMealScenarios(
-      breakfast: _normalizeScenarioList(json['breakfast']),
-      lunch: _normalizeScenarioList(json['lunch']),
-      dinner: _normalizeScenarioList(json['dinner']),
-      snack: _normalizeScenarioList(json['snack']),
+      breakfast: _normalizeScenarioList(
+        json['breakfast'],
+        keyExists: json.containsKey('breakfast'),
+      ),
+      lunch: _normalizeScenarioList(
+        json['lunch'],
+        keyExists: json.containsKey('lunch'),
+      ),
+      dinner: _normalizeScenarioList(
+        json['dinner'],
+        keyExists: json.containsKey('dinner'),
+      ),
+      snack: _normalizeScenarioList(
+        json['snack'],
+        keyExists: json.containsKey('snack'),
+      ),
     );
   }
 

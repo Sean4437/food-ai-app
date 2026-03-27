@@ -27,6 +27,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     'eat_out',
     'convenience_store',
   ];
+  static const String _noneScenario = '__none__';
 
   DateTime _startDate = DateTime.now();
   String _goalMode = 'profile_default';
@@ -61,7 +62,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       for (final scenario in _scenarioTypes) {
         if (current.contains(scenario)) values.add(scenario);
       }
-      return values.isNotEmpty ? values : List<String>.from(_scenarioTypes);
+      return values;
     }
 
     return WeekPlanMealScenarios(
@@ -73,6 +74,15 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   }
 
   void _toggleMealScenario(String mealType, String scenario, bool selected) {
+    if (scenario == _noneScenario) {
+      setState(() {
+        _mealScenarioSelections = {
+          ..._mealScenarioSelections,
+          mealType: selected ? <String>[] : List<String>.from(_scenarioTypes),
+        };
+      });
+      return;
+    }
     final current = List<String>.from(
       _mealScenarioSelections[mealType] ?? _scenarioTypes,
     );
@@ -82,15 +92,6 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       }
     } else {
       current.remove(scenario);
-      if (current.isEmpty) {
-        final text = _isZh
-            ? '每一餐至少要保留一種來源。'
-            : 'Each meal must keep at least one source.';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(text)),
-        );
-        return;
-      }
     }
 
     current.sort(
@@ -156,6 +157,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
   String _scenarioLabel(String scenario) {
     switch (scenario) {
+      case _noneScenario:
+        return _isZh ? '無' : 'None';
       case 'home_cook':
         return _isZh ? '自煮' : 'Home';
       case 'eat_out':
@@ -175,7 +178,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         case 'plan_limit_reached':
           return '本週生成次數已達上限。';
         case 'invalid_meal_scenarios':
-          return '每餐來源設定無效，請至少勾選一種。';
+          return '來源設定無效，請至少保留一餐有來源。';
         case 'invalid_mix_ratio':
           return '情境比例設定無效，請重新調整。';
         case 'invalid_goal_mode':
@@ -191,7 +194,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       case 'plan_limit_reached':
         return 'Weekly plan generation limit reached.';
       case 'invalid_meal_scenarios':
-        return 'Invalid meal scenarios. Select at least one per meal.';
+        return 'Invalid meal scenarios. Keep at least one meal with sources.';
       case 'invalid_mix_ratio':
         return 'Invalid mix ratio. Please adjust and retry.';
       case 'invalid_goal_mode':
@@ -226,6 +229,18 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       await showSubscriptionPaywall(context, app, t);
       return;
     }
+    final scenarioPayload = _mealScenarioPayload();
+    if (scenarioPayload.breakfast.isEmpty &&
+        scenarioPayload.lunch.isEmpty &&
+        scenarioPayload.dinner.isEmpty &&
+        scenarioPayload.snack.isEmpty) {
+      setState(() {
+        _errorMessage = _isZh
+            ? '至少要設定一餐的來源（可讓其他餐為「無」）。'
+            : 'Set at least one meal source (others can be None).';
+      });
+      return;
+    }
 
     setState(() {
       _loading = true;
@@ -245,7 +260,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         'goal_override': _goalMode == 'week_override' ? _goalOverride : null,
         'profile_goal': app.profile.goal,
         'sync_goal_to_profile': false,
-        'meal_scenarios': _mealScenarioPayload().toJson(),
+        'meal_scenarios': scenarioPayload.toJson(),
         'constraints': <String, dynamic>{
           'daily_budget_twd': null,
           'max_prep_minutes': null,
@@ -412,20 +427,18 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                 border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
-                              items: const [
-                                DropdownMenuItem(
-                                    value: 'lose_fat', child: Text('lose_fat')),
-                                DropdownMenuItem(
-                                    value: 'maintain', child: Text('maintain')),
-                                DropdownMenuItem(
-                                    value: 'gain_muscle',
-                                    child: Text('gain_muscle')),
-                              ],
-                              selectedItemBuilder: (context) => [
-                                Text(_goalLabel('lose_fat')),
-                                Text(_goalLabel('maintain')),
-                                Text(_goalLabel('gain_muscle')),
-                              ],
+                              items: const <String>[
+                                'lose_fat',
+                                'maintain',
+                                'gain_muscle',
+                              ]
+                                  .map(
+                                    (goal) => DropdownMenuItem<String>(
+                                      value: goal,
+                                      child: Text(_goalLabel(goal)),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: (value) {
                                 if (value == null) return;
                                 setState(() => _goalOverride = value);
@@ -462,18 +475,31 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                   Wrap(
                                     spacing: 8,
                                     runSpacing: 8,
-                                    children: _scenarioTypes.map((scenario) {
-                                      return FilterChip(
-                                        label: Text(_scenarioLabel(scenario)),
-                                        selected: selected.contains(scenario),
+                                    children: [
+                                      FilterChip(
+                                        label:
+                                            Text(_scenarioLabel(_noneScenario)),
+                                        selected: selected.isEmpty,
                                         onSelected: (value) =>
                                             _toggleMealScenario(
                                           mealType,
-                                          scenario,
+                                          _noneScenario,
                                           value,
                                         ),
-                                      );
-                                    }).toList(),
+                                      ),
+                                      ..._scenarioTypes.map((scenario) {
+                                        return FilterChip(
+                                          label: Text(_scenarioLabel(scenario)),
+                                          selected: selected.contains(scenario),
+                                          onSelected: (value) =>
+                                              _toggleMealScenario(
+                                            mealType,
+                                            scenario,
+                                            value,
+                                          ),
+                                        );
+                                      }),
+                                    ],
                                   ),
                                 ],
                               ),
