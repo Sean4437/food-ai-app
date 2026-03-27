@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import '../models/analysis_result.dart';
 import '../models/label_result.dart';
+import '../models/week_plan.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -37,7 +38,8 @@ class ApiService {
   String _bodyText(http.Response response) =>
       utf8.decode(response.bodyBytes, allowMalformed: true);
 
-  dynamic _decodeJson(http.Response response) => json.decode(_bodyText(response));
+  dynamic _decodeJson(http.Response response) =>
+      json.decode(_bodyText(response));
 
   Map<String, String> _authHeaders(String? accessToken) {
     if (accessToken == null || accessToken.isEmpty) return {};
@@ -430,6 +432,66 @@ class ApiService {
       throw Exception('Suggest meal failed: ${response.statusCode}');
     }
     return _decodeJson(response) as Map<String, dynamic>;
+  }
+
+  Future<WeekPlanData> generateWeekPlan(
+    Map<String, dynamic> payload,
+    String? accessToken,
+  ) async {
+    final uri = Uri.parse('$baseUrl/plan/week');
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        ..._authHeaders(accessToken),
+      },
+      body: json.encode(payload),
+    );
+    if (response.statusCode != 200) {
+      String code = 'unknown';
+      String message = _bodyText(response);
+      try {
+        final decoded = _decodeJson(response);
+        if (decoded is Map<String, dynamic>) {
+          code = (decoded['detail'] ?? decoded['code'] ?? code).toString();
+          message =
+              (decoded['message'] ?? decoded['detail'] ?? message).toString();
+        }
+      } catch (_) {}
+      throw ApiException(response.statusCode, code, message);
+    }
+    final jsonMap = _decodeJson(response) as Map<String, dynamic>;
+    return WeekPlanData.fromJson(jsonMap);
+  }
+
+  Future<WeekPlanReplanResult> replanWeek(
+    Map<String, dynamic> payload,
+    String? accessToken,
+  ) async {
+    final uri = Uri.parse('$baseUrl/plan/replan');
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        ..._authHeaders(accessToken),
+      },
+      body: json.encode(payload),
+    );
+    if (response.statusCode != 200) {
+      String code = 'unknown';
+      String message = _bodyText(response);
+      try {
+        final decoded = _decodeJson(response);
+        if (decoded is Map<String, dynamic>) {
+          code = (decoded['detail'] ?? decoded['code'] ?? code).toString();
+          message =
+              (decoded['message'] ?? decoded['detail'] ?? message).toString();
+        }
+      } catch (_) {}
+      throw ApiException(response.statusCode, code, message);
+    }
+    final jsonMap = _decodeJson(response) as Map<String, dynamic>;
+    return WeekPlanReplanResult.fromJson(jsonMap);
   }
 
   Future<Map<String, dynamic>> accessStatus({

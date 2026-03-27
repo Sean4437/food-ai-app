@@ -1,6 +1,6 @@
-﻿from fastapi import FastAPI, UploadFile, File, Query, Form, Request, Depends, HTTPException
+from fastapi import FastAPI, UploadFile, File, Query, Form, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Any, Dict, Optional, List
 from dotenv import load_dotenv, dotenv_values
 from pathlib import Path
@@ -167,6 +167,107 @@ class MealAdviceResponse(BaseModel):
     other: str
     source: str
     confidence: Optional[float] = None
+
+
+class WeekPlanMixRatio(BaseModel):
+    home_cook: int
+    eat_out: int
+    convenience_store: int
+
+
+class WeekPlanConstraints(BaseModel):
+    daily_budget_twd: Optional[int] = None
+    max_prep_minutes: Optional[int] = None
+    allergies: List[str] = Field(default_factory=list)
+    avoid_foods: List[str] = Field(default_factory=list)
+    preferred_foods: List[str] = Field(default_factory=list)
+
+
+class WeekPlanGenerateRequest(BaseModel):
+    start_date: str
+    days: int = 7
+    lang: Optional[str] = None
+    timezone: Optional[str] = None
+    goal_mode: str = "profile_default"
+    goal_override: Optional[str] = None
+    profile_goal: Optional[str] = None
+    sync_goal_to_profile: bool = False
+    mix_ratio: WeekPlanMixRatio
+    constraints: Optional[WeekPlanConstraints] = None
+
+
+class WeekPlanMacroTarget(BaseModel):
+    kcal: int
+    protein_g: float
+    carb_g: float
+    fat_g: float
+
+
+class WeekPlanMealItem(BaseModel):
+    meal_type: str
+    dish_name: str
+    scenario: str
+    source: str = "rule_stub"
+    kcal: int
+    protein_g: float
+    carb_g: float
+    fat_g: float
+    locked: bool = False
+    eaten: bool = False
+
+
+class WeekPlanDayPlan(BaseModel):
+    date: str
+    totals: WeekPlanMacroTarget
+    meals: List[WeekPlanMealItem]
+
+
+class WeekPlanValidation(BaseModel):
+    passed: bool
+    warnings: List[str] = Field(default_factory=list)
+
+
+class WeekPlanGenerateResponse(BaseModel):
+    plan_id: str
+    version: int
+    start_date: str
+    end_date: str
+    goal_effective: str
+    mix_ratio_effective: WeekPlanMixRatio
+    daily_target: WeekPlanMacroTarget
+    day_plans: List[WeekPlanDayPlan]
+    validation: WeekPlanValidation
+
+
+class WeekPlanActualIntake(BaseModel):
+    kcal: Optional[int] = None
+    protein_g: Optional[float] = None
+    carb_g: Optional[float] = None
+    fat_g: Optional[float] = None
+
+
+class WeekPlanReplanRequest(BaseModel):
+    plan_id: str
+    scope: str = "rest_week"
+    trigger_source: str = "manual"
+    reason: Optional[str] = None
+    actual_intake_today: Optional[WeekPlanActualIntake] = None
+    keep_locked: bool = True
+    keep_eaten: bool = True
+
+
+class WeekPlanReplanSummary(BaseModel):
+    kcal_shift_per_day: int
+    protein_boost_per_day_g: float
+
+
+class WeekPlanReplanResponse(BaseModel):
+    plan_id: str
+    old_version: int
+    new_version: int
+    changed_days: List[str]
+    summary: WeekPlanReplanSummary
+    validation: WeekPlanValidation
 
 
 class ChatMessageInput(BaseModel):
@@ -400,6 +501,203 @@ USAGE_LOG_TTL_DAYS = int(os.getenv("USAGE_LOG_TTL_DAYS", "90"))
 USAGE_LOG_MAX = int(os.getenv("USAGE_LOG_MAX", "10000"))
 
 _supported_langs = {"zh-TW", "en"}
+_week_plan_store: Dict[str, Dict[str, Any]] = {}
+_week_plan_goal_targets: Dict[str, Dict[str, float]] = {
+    "lose_fat": {"kcal": 1650, "protein_g": 120.0, "carb_g": 150.0, "fat_g": 55.0},
+    "maintain": {"kcal": 1900, "protein_g": 120.0, "carb_g": 200.0, "fat_g": 65.0},
+    "gain_muscle": {"kcal": 2200, "protein_g": 145.0, "carb_g": 250.0, "fat_g": 70.0},
+}
+_week_plan_meal_library: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
+    "home_cook": {
+        "breakfast": [
+            {"zh": "燕麥優格水果碗", "en": "Oats yogurt fruit bowl", "kcal": 430, "protein_g": 24.0, "carb_g": 52.0, "fat_g": 12.0},
+            {"zh": "全麥蛋吐司＋無糖豆漿", "en": "Whole-wheat egg toast with soy milk", "kcal": 460, "protein_g": 28.0, "carb_g": 45.0, "fat_g": 16.0},
+        ],
+        "lunch": [
+            {"zh": "舒肥雞胸藜麥沙拉", "en": "Sous-vide chicken quinoa salad", "kcal": 560, "protein_g": 44.0, "carb_g": 48.0, "fat_g": 18.0},
+            {"zh": "番茄牛肉糙米飯", "en": "Tomato beef with brown rice", "kcal": 610, "protein_g": 38.0, "carb_g": 66.0, "fat_g": 20.0},
+        ],
+        "dinner": [
+            {"zh": "鮭魚時蔬＋地瓜", "en": "Salmon, vegetables and sweet potato", "kcal": 600, "protein_g": 40.0, "carb_g": 50.0, "fat_g": 24.0},
+            {"zh": "豆腐雞肉鍋＋冬粉", "en": "Tofu chicken pot with glass noodles", "kcal": 580, "protein_g": 42.0, "carb_g": 54.0, "fat_g": 20.0},
+        ],
+        "snack": [
+            {"zh": "希臘優格＋堅果", "en": "Greek yogurt with nuts", "kcal": 190, "protein_g": 14.0, "carb_g": 12.0, "fat_g": 9.0},
+            {"zh": "香蕉＋乳清", "en": "Banana and whey shake", "kcal": 210, "protein_g": 20.0, "carb_g": 22.0, "fat_g": 3.0},
+        ],
+    },
+    "eat_out": {
+        "breakfast": [
+            {"zh": "鮪魚蛋三明治＋黑咖啡", "en": "Tuna egg sandwich with black coffee", "kcal": 450, "protein_g": 25.0, "carb_g": 48.0, "fat_g": 15.0},
+            {"zh": "燒餅夾蛋＋無糖豆漿", "en": "Baked flatbread with egg and soy milk", "kcal": 500, "protein_g": 23.0, "carb_g": 54.0, "fat_g": 20.0},
+        ],
+        "lunch": [
+            {"zh": "便當去皮雞腿＋半飯", "en": "Lunchbox chicken leg (skin off) with half rice", "kcal": 640, "protein_g": 36.0, "carb_g": 62.0, "fat_g": 24.0},
+            {"zh": "牛肉河粉＋燙青菜", "en": "Beef pho with blanched vegetables", "kcal": 620, "protein_g": 34.0, "carb_g": 70.0, "fat_g": 18.0},
+        ],
+        "dinner": [
+            {"zh": "日式定食（烤魚）", "en": "Japanese set meal (grilled fish)", "kcal": 680, "protein_g": 38.0, "carb_g": 72.0, "fat_g": 24.0},
+            {"zh": "韓式拌飯（飯量 8 分）", "en": "Korean bibimbap (80% rice)", "kcal": 700, "protein_g": 30.0, "carb_g": 84.0, "fat_g": 24.0},
+        ],
+        "snack": [
+            {"zh": "茶葉蛋＋無糖茶", "en": "Tea egg with unsweetened tea", "kcal": 140, "protein_g": 10.0, "carb_g": 2.0, "fat_g": 9.0},
+            {"zh": "毛豆小份", "en": "Small edamame", "kcal": 160, "protein_g": 13.0, "carb_g": 10.0, "fat_g": 7.0},
+        ],
+    },
+    "convenience_store": {
+        "breakfast": [
+            {"zh": "飯糰＋無糖豆漿", "en": "Rice ball with unsweetened soy milk", "kcal": 430, "protein_g": 18.0, "carb_g": 56.0, "fat_g": 14.0},
+            {"zh": "雞肉沙拉＋地瓜", "en": "Chicken salad with sweet potato", "kcal": 410, "protein_g": 24.0, "carb_g": 40.0, "fat_g": 14.0},
+        ],
+        "lunch": [
+            {"zh": "舒肥雞便當＋茶葉蛋", "en": "Chicken bento with tea egg", "kcal": 610, "protein_g": 40.0, "carb_g": 62.0, "fat_g": 20.0},
+            {"zh": "鮪魚全麥三明治＋沙拉", "en": "Tuna whole-wheat sandwich with salad", "kcal": 560, "protein_g": 30.0, "carb_g": 58.0, "fat_g": 19.0},
+        ],
+        "dinner": [
+            {"zh": "烤雞腿便當（半飯）", "en": "Grilled chicken bento (half rice)", "kcal": 640, "protein_g": 36.0, "carb_g": 62.0, "fat_g": 24.0},
+            {"zh": "關東煮＋雞胸包", "en": "Oden with chicken breast pack", "kcal": 580, "protein_g": 42.0, "carb_g": 42.0, "fat_g": 20.0},
+        ],
+        "snack": [
+            {"zh": "高蛋白牛奶", "en": "High-protein milk", "kcal": 180, "protein_g": 20.0, "carb_g": 12.0, "fat_g": 4.0},
+            {"zh": "無糖優格", "en": "Plain yogurt cup", "kcal": 150, "protein_g": 12.0, "carb_g": 10.0, "fat_g": 6.0},
+        ],
+    },
+}
+
+
+def _normalize_week_goal(raw: Optional[str]) -> str:
+    value = str(raw or "").strip().lower()
+    if value in _week_plan_goal_targets:
+        return value
+    if "maintain" in value or "維持" in value:
+        return "maintain"
+    if "gain" in value or "muscle" in value or "增肌" in value:
+        return "gain_muscle"
+    if "lose" in value or "fat" in value or "減脂" in value:
+        return "lose_fat"
+    return "lose_fat"
+
+
+def _effective_week_goal(payload: WeekPlanGenerateRequest) -> str:
+    mode = str(payload.goal_mode or "").strip().lower()
+    if mode == "week_override":
+        normalized_override = _normalize_week_goal(payload.goal_override)
+        if normalized_override not in _week_plan_goal_targets:
+            raise HTTPException(status_code=400, detail="invalid_goal_override")
+        return normalized_override
+    if mode not in {"", "profile_default"}:
+        raise HTTPException(status_code=400, detail="invalid_goal_mode")
+    return _normalize_week_goal(payload.profile_goal)
+
+
+def _normalize_mix_ratio(raw: WeekPlanMixRatio) -> Dict[str, int]:
+    ratio = {
+        "home_cook": int(raw.home_cook),
+        "eat_out": int(raw.eat_out),
+        "convenience_store": int(raw.convenience_store),
+    }
+    total = sum(ratio.values())
+    if total != 100 or any(value < 0 for value in ratio.values()):
+        raise HTTPException(status_code=400, detail="invalid_mix_ratio")
+    return ratio
+
+
+def _pick_scenario(day_index: int, meal_index: int, ratio: Dict[str, int]) -> str:
+    roll = (day_index * 37 + meal_index * 17 + 13) % 100
+    if roll < ratio["home_cook"]:
+        return "home_cook"
+    if roll < ratio["home_cook"] + ratio["eat_out"]:
+        return "eat_out"
+    return "convenience_store"
+
+
+def _build_stub_week_plan(
+    payload: WeekPlanGenerateRequest,
+    lang: str,
+    user_id: str,
+) -> WeekPlanGenerateResponse:
+    if payload.days != 7:
+        raise HTTPException(status_code=400, detail="invalid_days")
+    try:
+        start_date = datetime.strptime(payload.start_date, "%Y-%m-%d").date()
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid_start_date")
+    ratio = _normalize_mix_ratio(payload.mix_ratio)
+    goal = _effective_week_goal(payload)
+    target = _week_plan_goal_targets.get(goal, _week_plan_goal_targets["lose_fat"])
+    meal_types = ("breakfast", "lunch", "dinner", "snack")
+    day_plans: List[WeekPlanDayPlan] = []
+    day_dates: List[str] = []
+
+    for day_index in range(payload.days):
+        current_date = start_date + timedelta(days=day_index)
+        day_dates.append(current_date.isoformat())
+        totals = {"kcal": 0, "protein_g": 0.0, "carb_g": 0.0, "fat_g": 0.0}
+        meals: List[WeekPlanMealItem] = []
+
+        for meal_index, meal_type in enumerate(meal_types):
+            scenario = _pick_scenario(day_index, meal_index, ratio)
+            options = _week_plan_meal_library.get(scenario, {}).get(meal_type) or []
+            if not options:
+                raise HTTPException(status_code=500, detail="plan_template_missing")
+            selected = options[(day_index + meal_index) % len(options)]
+            dish_name = selected["zh"] if lang == "zh-TW" else selected["en"]
+            meal = WeekPlanMealItem(
+                meal_type=meal_type,
+                dish_name=dish_name,
+                scenario=scenario,
+                source="rule_stub",
+                kcal=int(selected["kcal"]),
+                protein_g=float(selected["protein_g"]),
+                carb_g=float(selected["carb_g"]),
+                fat_g=float(selected["fat_g"]),
+                locked=False,
+                eaten=False,
+            )
+            meals.append(meal)
+            totals["kcal"] += meal.kcal
+            totals["protein_g"] += meal.protein_g
+            totals["carb_g"] += meal.carb_g
+            totals["fat_g"] += meal.fat_g
+
+        day_plans.append(
+            WeekPlanDayPlan(
+                date=current_date.isoformat(),
+                totals=WeekPlanMacroTarget(
+                    kcal=int(totals["kcal"]),
+                    protein_g=round(totals["protein_g"], 1),
+                    carb_g=round(totals["carb_g"], 1),
+                    fat_g=round(totals["fat_g"], 1),
+                ),
+                meals=meals,
+            )
+        )
+
+    plan_id = f"wp_{start_date.strftime('%Y%m%d')}_{uuid.uuid4().hex[:8]}"
+    _week_plan_store[plan_id] = {
+        "user_id": user_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "version": 1,
+        "goal": goal,
+        "daily_target_kcal": int(target["kcal"]),
+        "day_dates": day_dates,
+    }
+    return WeekPlanGenerateResponse(
+        plan_id=plan_id,
+        version=1,
+        start_date=start_date.isoformat(),
+        end_date=(start_date + timedelta(days=payload.days - 1)).isoformat(),
+        goal_effective=goal,
+        mix_ratio_effective=WeekPlanMixRatio(**ratio),
+        daily_target=WeekPlanMacroTarget(
+            kcal=int(target["kcal"]),
+            protein_g=float(target["protein_g"]),
+            carb_g=float(target["carb_g"]),
+            fat_g=float(target["fat_g"]),
+        ),
+        day_plans=day_plans,
+        validation=WeekPlanValidation(passed=True, warnings=[]),
+    )
 
 
 
@@ -5283,6 +5581,88 @@ async def suggest_meal(
 
 
 
+
+
+
+@app.post("/plan/week", response_model=WeekPlanGenerateResponse)
+async def generate_week_plan(
+    payload: WeekPlanGenerateRequest,
+    _auth: dict = Depends(_require_auth),
+):
+    _require_entitlement(_auth, "ai_suggest")
+    use_lang = payload.lang or DEFAULT_LANG
+    if use_lang not in _supported_langs:
+        use_lang = "zh-TW"
+    try:
+        return _build_stub_week_plan(
+            payload=payload,
+            lang=use_lang,
+            user_id=str(_auth.get("user_id") or ""),
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logging.exception("Week plan generation failed: %s", exc)
+        raise HTTPException(status_code=502, detail="plan_generation_failed")
+
+
+@app.post("/plan/replan", response_model=WeekPlanReplanResponse)
+async def replan_week(
+    payload: WeekPlanReplanRequest,
+    _auth: dict = Depends(_require_auth),
+):
+    _require_entitlement(_auth, "ai_suggest")
+    state = _week_plan_store.get(payload.plan_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail="plan_not_found")
+    if str(state.get("user_id") or "") != str(_auth.get("user_id") or ""):
+        raise HTTPException(status_code=403, detail="plan_forbidden")
+
+    scope = str(payload.scope or "").strip().lower()
+    if scope not in {"today_remaining", "next_3_days", "rest_week", "full_week"}:
+        raise HTTPException(status_code=400, detail="invalid_replan_scope")
+
+    day_dates = [str(item) for item in (state.get("day_dates") or [])]
+    if not day_dates:
+        raise HTTPException(status_code=409, detail="plan_state_invalid")
+
+    if scope == "today_remaining":
+        changed_days = day_dates[:1]
+    elif scope == "next_3_days":
+        changed_days = day_dates[:3]
+    elif scope == "rest_week":
+        changed_days = day_dates[1:] if len(day_dates) > 1 else day_dates[:1]
+    else:
+        changed_days = day_dates
+
+    old_version = int(state.get("version") or 1)
+    new_version = old_version + 1
+    state["version"] = new_version
+
+    target_kcal = int(state.get("daily_target_kcal") or 1800)
+    intake_kcal = (
+        int(payload.actual_intake_today.kcal)
+        if payload.actual_intake_today and payload.actual_intake_today.kcal is not None
+        else None
+    )
+    if intake_kcal is not None and changed_days:
+        shift = int((target_kcal - intake_kcal) / max(1, len(changed_days)))
+        kcal_shift_per_day = max(-400, min(400, shift))
+    else:
+        kcal_shift_per_day = -120 if scope != "full_week" else -80
+    protein_boost_per_day_g = 18.0 if kcal_shift_per_day < 0 else 10.0
+
+    return WeekPlanReplanResponse(
+        plan_id=payload.plan_id,
+        old_version=old_version,
+        new_version=new_version,
+        changed_days=changed_days,
+        summary=WeekPlanReplanSummary(
+            kcal_shift_per_day=kcal_shift_per_day,
+            protein_boost_per_day_g=protein_boost_per_day_g,
+        ),
+        validation=WeekPlanValidation(passed=True, warnings=[]),
+    )
 
 
 @app.post("/chat", response_model=ChatResponse)

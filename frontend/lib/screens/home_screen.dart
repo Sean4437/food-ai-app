@@ -14,6 +14,7 @@ import '../widgets/app_background.dart';
 import '../widgets/daily_overview_cards.dart';
 import 'day_meals_screen.dart';
 import 'meal_items_screen.dart';
+import 'week_plan_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -688,14 +689,38 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilledButton.icon(
-                    onPressed: () =>
-                        _openRecordSheet(app, preferNameInput: true),
-                    icon: const Icon(Icons.edit_note),
-                    label: Text(t.suggestInstantNameSubmit),
-                  ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () =>
+                            _openRecordSheet(app, preferNameInput: true),
+                        icon: const Icon(Icons.edit_note),
+                        label: Text(t.suggestInstantNameSubmit),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const WeekPlanScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.calendar_view_week_rounded),
+                        label: Text(
+                          Localizations.localeOf(context)
+                                  .languageCode
+                                  .toLowerCase()
+                                  .startsWith('zh')
+                              ? '7天規劃'
+                              : '7-day plan',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 14),
@@ -813,4 +838,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
