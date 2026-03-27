@@ -13,6 +13,7 @@ import 'screens/suggestions_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/custom_foods_screen.dart';
+import 'screens/week_plan_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'state/app_state.dart';
@@ -358,9 +359,14 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       LogScreen(),
       CustomFoodsScreen(),
       SettingsScreen(),
+      WeekPlanScreen(),
     ];
 
     final theme = Theme.of(context);
+    final isZh = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
     final navItems = <_DockItem>[
       _DockItem(label: t.tabHome, icon: Icons.home_rounded),
       _DockItem(label: t.tabChat, icon: Icons.chat_bubble_rounded),
@@ -368,6 +374,10 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       _DockItem(label: t.tabLog, icon: Icons.receipt_long_rounded),
       _DockItem(label: t.tabCustom, icon: Icons.restaurant_menu_rounded),
       _DockItem(label: t.tabSettings, icon: Icons.settings_rounded),
+      _DockItem(
+        label: isZh ? '7天規劃' : '7-day plan',
+        icon: Icons.calendar_view_week_rounded,
+      ),
     ];
 
     final clampedIndex = tabState.index.clamp(0, screens.length - 1);

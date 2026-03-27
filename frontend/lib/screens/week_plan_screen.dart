@@ -55,6 +55,24 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       labelEn: 'Convenience first (20/20/60)',
       ratio: WeekPlanMixRatio(homeCook: 20, eatOut: 20, convenienceStore: 60),
     ),
+    const _RatioPreset(
+      key: 'all_home',
+      labelZh: '全部自煮（100/0/0）',
+      labelEn: 'All home-cook (100/0/0)',
+      ratio: WeekPlanMixRatio(homeCook: 100, eatOut: 0, convenienceStore: 0),
+    ),
+    const _RatioPreset(
+      key: 'all_eat_out',
+      labelZh: '全部外食（0/100/0）',
+      labelEn: 'All eat-out (0/100/0)',
+      ratio: WeekPlanMixRatio(homeCook: 0, eatOut: 100, convenienceStore: 0),
+    ),
+    const _RatioPreset(
+      key: 'all_convenience',
+      labelZh: '全部便利店（0/0/100）',
+      labelEn: 'All convenience (0/0/100)',
+      ratio: WeekPlanMixRatio(homeCook: 0, eatOut: 0, convenienceStore: 100),
+    ),
   ];
 
   DateTime _startDate = DateTime.now();
