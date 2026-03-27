@@ -15,6 +15,7 @@ import '../models/chat_message.dart';
 import '../models/meal_entry.dart';
 import '../models/label_result.dart';
 import '../models/custom_food.dart';
+import '../models/week_plan.dart';
 import '../services/api_service.dart';
 import '../services/name_lookup_service.dart';
 import '../services/supabase_service.dart';
@@ -491,6 +492,8 @@ class AppState extends ChangeNotifier {
   bool _chatSending = false;
   String? _chatError;
   Uint8List? _chatAvatarBytes;
+  WeekPlanData? _cachedWeekPlan;
+  WeekPlanReplanResult? _cachedWeekPlanReplan;
   final Map<String, Uint8List> _nameFingerprintCache = {};
   // Meal reminders are delivered via auto chat (no UI card).
   final Map<String, Map<String, dynamic>> _deletedEntries = {};
@@ -750,6 +753,8 @@ class AppState extends ChangeNotifier {
   String? get chatError => _chatError;
   List<ChatMessage> get chatMessages => List.unmodifiable(_chatMessages);
   Uint8List? get chatAvatarBytes => _chatAvatarBytes;
+  WeekPlanData? get cachedWeekPlan => _cachedWeekPlan;
+  WeekPlanReplanResult? get cachedWeekPlanReplan => _cachedWeekPlanReplan;
 
   bool get _hasAnyAiEntitlementFromBackend {
     for (final entitlement in _kAiEntitlements) {
@@ -778,6 +783,32 @@ class AppState extends ChangeNotifier {
       return true;
     }
     return _backendEntitlements.contains(_featureEntitlement(feature));
+  }
+
+  void cacheWeekPlan(
+    WeekPlanData? plan, {
+    WeekPlanReplanResult? lastReplan,
+  }) {
+    final changed =
+        _cachedWeekPlan != plan || _cachedWeekPlanReplan != lastReplan;
+    _cachedWeekPlan = plan;
+    _cachedWeekPlanReplan = lastReplan;
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  void updateCachedWeekPlanReplan(WeekPlanReplanResult? result) {
+    if (_cachedWeekPlanReplan == result) return;
+    _cachedWeekPlanReplan = result;
+    notifyListeners();
+  }
+
+  void clearCachedWeekPlan() {
+    if (_cachedWeekPlan == null && _cachedWeekPlanReplan == null) return;
+    _cachedWeekPlan = null;
+    _cachedWeekPlanReplan = null;
+    notifyListeners();
   }
 
   String buildAiContext() {
@@ -5513,6 +5544,8 @@ class AppState extends ChangeNotifier {
   Future<void> clearAll() async {
     entries.clear();
     _markEntriesDateIndexDirty();
+    _cachedWeekPlan = null;
+    _cachedWeekPlanReplan = null;
     _chatMessages.clear();
     _chatSummary = '';
     _chatError = null;
@@ -5552,6 +5585,8 @@ class AppState extends ChangeNotifier {
     _chatMessages.clear();
     _chatSummary = '';
     _chatError = null;
+    _cachedWeekPlan = null;
+    _cachedWeekPlanReplan = null;
 
     _mockSubscriptionActive = false;
     _mockSubscriptionPlanId = null;

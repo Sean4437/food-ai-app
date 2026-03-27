@@ -84,11 +84,44 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   WeekPlanData? _plan;
   WeekPlanReplanResult? _lastReplan;
   String? _errorMessage;
+  bool _hydratedFromCache = false;
 
   bool get _isZh => Localizations.localeOf(context)
       .languageCode
       .toLowerCase()
       .startsWith('zh');
+
+  bool _sameRatio(WeekPlanMixRatio a, WeekPlanMixRatio b) {
+    return a.homeCook == b.homeCook &&
+        a.eatOut == b.eatOut &&
+        a.convenienceStore == b.convenienceStore;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_hydratedFromCache) return;
+    final app = AppStateScope.of(context);
+    final cachedPlan = app.cachedWeekPlan;
+    final cachedReplan = app.cachedWeekPlanReplan;
+    if (cachedPlan != null) {
+      _plan = cachedPlan;
+      _lastReplan = cachedReplan;
+      final parsedStart = DateTime.tryParse(cachedPlan.startDate);
+      if (parsedStart != null) {
+        _startDate = DateTime(parsedStart.year, parsedStart.month, parsedStart.day);
+      }
+      _goalMode = 'week_override';
+      _goalOverride = cachedPlan.goalEffective;
+      for (final preset in _ratioPresets) {
+        if (_sameRatio(preset.ratio, cachedPlan.mixRatioEffective)) {
+          _selectedPreset = preset;
+          break;
+        }
+      }
+    }
+    _hydratedFromCache = true;
+  }
 
   String _goalLabel(String goal) {
     switch (goal) {
@@ -216,7 +249,11 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       };
       final plan = await api.generateWeekPlan(payload, app.debugAccessToken);
       if (!mounted) return;
-      setState(() => _plan = plan);
+      setState(() {
+        _plan = plan;
+        _lastReplan = null;
+      });
+      app.cacheWeekPlan(plan, lastReplan: null);
     } on ApiException catch (err) {
       if (!mounted) return;
       setState(() => _errorMessage = _friendlyApiError(err));
@@ -257,6 +294,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       final result = await api.replanWeek(payload, app.debugAccessToken);
       if (!mounted) return;
       setState(() => _lastReplan = result);
+      app.cacheWeekPlan(_plan, lastReplan: result);
       final text = _isZh
           ? '已重排 ${result.changedDays.length} 天（v${result.newVersion}）'
           : 'Replanned ${result.changedDays.length} day(s) (v${result.newVersion})';

@@ -14,7 +14,6 @@ import '../widgets/app_background.dart';
 import '../widgets/daily_overview_cards.dart';
 import 'day_meals_screen.dart';
 import 'meal_items_screen.dart';
-import 'week_plan_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -703,11 +702,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const WeekPlanScreen(),
-                            ),
-                          );
+                          TabScope.of(context).setIndex(6);
                         },
                         icon: const Icon(Icons.calendar_view_week_rounded),
                         label: Text(
