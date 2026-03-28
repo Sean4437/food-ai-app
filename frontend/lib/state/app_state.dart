@@ -887,12 +887,38 @@ class AppState extends ChangeNotifier {
     return parsed.clamp(800, 6000);
   }
 
-  int dailyWaterIntakeMl(DateTime date) {
+  int manualDailyWaterIntakeMl(DateTime date) {
     final key = _waterIntakeKey(date);
     final raw = _meta[key];
     final parsed = int.tryParse(raw ?? '');
     if (parsed == null || parsed < 0) return 0;
     return parsed.clamp(0, 10000);
+  }
+
+  int beverageHydrationIntakeMl(DateTime date) {
+    var total = 0;
+    for (final item in beverageHydrationEntries(date)) {
+      total += item.effectiveMl;
+    }
+    return total.clamp(0, 10000);
+  }
+
+  int dailyWaterIntakeMl(DateTime date) {
+    final manual = manualDailyWaterIntakeMl(date);
+    final beverage = beverageHydrationIntakeMl(date);
+    return (manual + beverage).clamp(0, 10000);
+  }
+
+  List<WaterHydrationEntry> beverageHydrationEntries(DateTime date) {
+    final list = <WaterHydrationEntry>[];
+    for (final entry in entriesForDate(date)) {
+      final mapped = _beverageHydrationFromEntry(entry);
+      if (mapped != null) {
+        list.add(mapped);
+      }
+    }
+    list.sort((a, b) => b.time.compareTo(a.time));
+    return list;
   }
 
   Future<void> updateDailyWaterIntake(DateTime date, int ml) async {
@@ -909,8 +935,144 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> addDailyWaterIntake(DateTime date, int deltaMl) async {
-    final next = (dailyWaterIntakeMl(date) + deltaMl).clamp(0, 10000);
+    final next = (manualDailyWaterIntakeMl(date) + deltaMl).clamp(0, 10000);
     await updateDailyWaterIntake(date, next);
+  }
+
+  WaterHydrationEntry? _beverageHydrationFromEntry(MealEntry entry) {
+    final result = entry.result;
+    if (result == null || result.isBeverage != true) return null;
+    final displayName = (entry.overrideFoodName?.trim().isNotEmpty ?? false)
+        ? entry.overrideFoodName!.trim()
+        : result.foodName.trim();
+    final portionFactor = _portionWeight(entry.portionPercent).clamp(0.1, 2.5);
+    final baseVolumeMl = _estimateBeverageVolumeMl(displayName);
+    final estimatedVolumeMl = (baseVolumeMl * portionFactor).round().clamp(
+          50,
+          2000,
+        );
+    final hydrationRatio = _hydrationRatioForBeverage(result, displayName);
+    final effectiveMl = (estimatedVolumeMl * hydrationRatio).round().clamp(
+          0,
+          2000,
+        );
+    if (effectiveMl <= 0) return null;
+    return WaterHydrationEntry(
+      entryId: entry.id,
+      time: entry.time,
+      name: displayName.isEmpty ? result.foodName : displayName,
+      estimatedVolumeMl: estimatedVolumeMl,
+      effectiveMl: effectiveMl,
+      hydrationRatio: hydrationRatio,
+      sourceTag: _hydrationSourceTagForResult(result),
+    );
+  }
+
+  String _hydrationSourceTagForResult(AnalysisResult result) {
+    final merged =
+        '${result.nutritionSource ?? ''} ${result.source}'.toLowerCase();
+    if (merged.contains('beverage_formula')) return 'formula';
+    if (merged.contains('catalog')) return 'catalog';
+    if (merged.contains('ai')) return 'ai';
+    return 'other';
+  }
+
+  int _estimateBeverageVolumeMl(String name) {
+    final text = name.trim().toLowerCase();
+    final mlMatch = RegExp(r'(\d{2,4})\s*ml').firstMatch(text);
+    if (mlMatch != null) {
+      final parsed = int.tryParse(mlMatch.group(1) ?? '');
+      if (parsed != null && parsed >= 80 && parsed <= 2000) {
+        return parsed;
+      }
+    }
+    if (text.contains('特大') || text.contains('xlarge') || text.contains('xl')) {
+      return 800;
+    }
+    if (text.contains('大杯') || text.contains('large')) {
+      return 700;
+    }
+    if (text.contains('中杯') || text.contains('medium')) {
+      return 500;
+    }
+    if (text.contains('小杯') || text.contains('small')) {
+      return 360;
+    }
+    if (text.contains('寶特瓶') || text.contains('瓶裝') || text.contains('bottle')) {
+      return 600;
+    }
+    if (text.contains('罐') || text.contains('can')) {
+      return 330;
+    }
+    return 500;
+  }
+
+  double _hydrationRatioForBeverage(AnalysisResult result, String name) {
+    final text = name.trim().toLowerCase();
+    final carbs = result.macros['carbs'] ?? 0;
+    final hasSugarToken = [
+      '全糖',
+      '半糖',
+      '微糖',
+      '少糖',
+      '三分糖',
+      '七分糖',
+      'sugar',
+      'sweet',
+      'syrup',
+      'honey',
+    ].any(text.contains);
+    final hasToppingToken = [
+      '珍珠',
+      '椰果',
+      '布丁',
+      '奶蓋',
+      '芋圓',
+      'boba',
+      'pearl',
+      'pudding',
+      'foam',
+      'jelly',
+    ].any(text.contains);
+    final isWater = [
+      '水',
+      'water',
+      'sparkling',
+      'mineral',
+    ].any(text.contains);
+    final isTea = [
+      '茶',
+      'green tea',
+      'black tea',
+      'oolong',
+      '紅茶',
+      '綠茶',
+      '青茶',
+      '烏龍',
+    ].any(text.contains);
+    final isCoffee = [
+      '咖啡',
+      'coffee',
+      'americano',
+      'latte',
+      'espresso',
+    ].any(text.contains);
+    final isUnsweetened = [
+      '無糖',
+      'unsweetened',
+      'no sugar',
+      'black',
+    ].any(text.contains);
+
+    if (isWater) return 1.0;
+    if (hasToppingToken) return 0.45;
+    if (hasSugarToken || carbs >= 18) return 0.55;
+    if (carbs >= 10) return 0.65;
+    if (isTea && (isUnsweetened || carbs <= 2)) return 0.9;
+    if (isCoffee && (isUnsweetened || carbs <= 2)) return 0.8;
+    if (isTea) return 0.75;
+    if (isCoffee) return 0.72;
+    return 0.7;
   }
 
   double? dailyWeightRecordKg(DateTime date) {
@@ -3940,8 +4102,14 @@ class AppState extends ChangeNotifier {
     sodium = max(0, sodium);
 
     final kcal = (protein * 4.0) + (carbs * 4.0) + (fat * 9.0);
-    final low = max(30, (kcal * 0.9).round());
-    final high = max(low + 20, (kcal * 1.1).round());
+    final isUnsweetenedPlainTea = profile.key == 'tea' &&
+        parsed.sugarRatio <= 0 &&
+        parsed.toppings.isEmpty;
+    final low =
+        isUnsweetenedPlainTea ? 0 : max(30, (kcal * 0.9).round());
+    final high = isUnsweetenedPlainTea
+        ? 5
+        : max(low + 20, (kcal * 1.1).round());
     final calorieRange = '$low-$high kcal';
 
     final toppingNames = parsed.toppings
@@ -10997,6 +11165,26 @@ class MealReminder {
 
   final MealType type;
   final DateTime date;
+}
+
+class WaterHydrationEntry {
+  const WaterHydrationEntry({
+    required this.entryId,
+    required this.time,
+    required this.name,
+    required this.estimatedVolumeMl,
+    required this.effectiveMl,
+    required this.hydrationRatio,
+    required this.sourceTag,
+  });
+
+  final String entryId;
+  final DateTime time;
+  final String name;
+  final int estimatedVolumeMl;
+  final int effectiveMl;
+  final double hydrationRatio;
+  final String sourceTag;
 }
 
 class QuickCaptureAnalysis {

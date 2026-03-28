@@ -1537,6 +1537,31 @@ class _LogScreenState extends State<LogScreen> {
     }
   }
 
+  String _hydrationSourceLabel(String tag) {
+    if (_isZh) {
+      switch (tag) {
+        case 'formula':
+          return '飲料公式';
+        case 'catalog':
+          return '資料庫';
+        case 'ai':
+          return 'AI';
+        default:
+          return '其他';
+      }
+    }
+    switch (tag) {
+      case 'formula':
+        return 'Formula';
+      case 'catalog':
+        return 'Catalog';
+      case 'ai':
+        return 'AI';
+      default:
+        return 'Other';
+    }
+  }
+
   Widget _buildSectionSwitcher(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(4),
@@ -1571,8 +1596,11 @@ class _LogScreenState extends State<LogScreen> {
   }
 
   Widget _buildWaterSection(BuildContext context, AppState app) {
+    final manualIntake = app.manualDailyWaterIntakeMl(_selectedDate);
+    final beverageIntake = app.beverageHydrationIntakeMl(_selectedDate);
     final intake = app.dailyWaterIntakeMl(_selectedDate);
     final target = app.dailyWaterTargetMl(_selectedDate);
+    final beverageEntries = app.beverageHydrationEntries(_selectedDate);
     final progress = (target <= 0 ? 0.0 : (intake / target)).clamp(0.0, 1.0);
     final remaining = math.max(0, target - intake);
     const quickOptions = <int>[150, 250, 500];
@@ -1623,6 +1651,50 @@ class _LogScreenState extends State<LogScreen> {
                 style: AppTextStyles.caption(context)
                     .copyWith(color: Colors.black54),
               ),
+              const SizedBox(height: 10),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          _isZh ? '手動喝水' : 'Manual water',
+                          style: AppTextStyles.caption(context)
+                              .copyWith(color: Colors.black54),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '$manualIntake ml',
+                          style: AppTextStyles.caption(context)
+                              .copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Text(
+                          _isZh ? '飲料折算補水' : 'Beverage hydration',
+                          style: AppTextStyles.caption(context)
+                              .copyWith(color: Colors.black54),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '$beverageIntake ml',
+                          style: AppTextStyles.caption(context)
+                              .copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -1641,6 +1713,123 @@ class _LogScreenState extends State<LogScreen> {
                   ),
                 ],
               ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isZh ? '今日飲料補水明細' : 'Beverage hydration timeline',
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              if (beverageEntries.isEmpty)
+                Text(
+                  _isZh ? '今天還沒有飲料紀錄。' : 'No beverage entries today.',
+                  style: AppTextStyles.caption(context)
+                      .copyWith(color: Colors.black54),
+                )
+              else
+                Column(
+                  children: [
+                    for (final item in beverageEntries.take(8))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 2),
+                                child: Icon(
+                                  Icons.local_drink_outlined,
+                                  size: 18,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTextStyles.body(context)
+                                          .copyWith(
+                                              fontWeight: FontWeight.w600),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${_timeLabel(item.time)} · ${item.estimatedVolumeMl} ml · ${_isZh ? '係數' : 'ratio'} ${(item.hydrationRatio * 100).round()}%',
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(color: Colors.black54),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    '+${item.effectiveMl} ml',
+                                    style: AppTextStyles.body(context).copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      _hydrationSourceLabel(item.sourceTag),
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
             ],
           ),
         ),
