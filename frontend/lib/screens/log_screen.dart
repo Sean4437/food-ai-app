@@ -1595,6 +1595,124 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
+  Widget _buildWaterMetricChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.035),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: Colors.black54),
+          const SizedBox(width: 6),
+          Text(
+            '$label $value',
+            style: AppTextStyles.caption(context).copyWith(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWaterBottle(
+    BuildContext context, {
+    required double progress,
+  }) {
+    final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    final percentText = '${(progress * 100).round()}%';
+    return SizedBox(
+      width: 92,
+      height: 230,
+      child: Column(
+        children: [
+          Container(
+            width: 42,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: accent.withValues(alpha: 0.5)),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: accent.withValues(alpha: 0.55)),
+                boxShadow: [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(color: accent.withValues(alpha: 0.08)),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: FractionallySizedBox(
+                        heightFactor: progress.clamp(0.0, 1.0),
+                        widthFactor: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                accent.withValues(alpha: 0.58),
+                                accent.withValues(alpha: 0.85),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.72),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          percentText,
+                          style: AppTextStyles.caption(context).copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWaterSection(BuildContext context, AppState app) {
     final manualIntake = app.manualDailyWaterIntakeMl(_selectedDate);
     final beverageIntake = app.beverageHydrationIntakeMl(_selectedDate);
@@ -1604,11 +1722,12 @@ class _LogScreenState extends State<LogScreen> {
     final progress = (target <= 0 ? 0.0 : (intake / target)).clamp(0.0, 1.0);
     final remaining = math.max(0, target - intake);
     const quickOptions = <int>[150, 250, 500];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -1620,98 +1739,70 @@ class _LogScreenState extends State<LogScreen> {
               ),
             ],
           ),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _isZh ? '今日喝水' : 'Today Water',
-                style: AppTextStyles.body(context)
-                    .copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '$intake / $target ml',
-                style: AppTextStyles.title2(context),
-              ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 10,
-                  backgroundColor: Colors.black12,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _isZh ? '還差 $remaining ml' : 'Remaining $remaining ml',
-                style: AppTextStyles.caption(context)
-                    .copyWith(color: Colors.black54),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              _buildWaterBottle(context, progress: progress),
+              const SizedBox(width: 14),
+              Expanded(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Text(
+                      _isZh ? '今日喝水' : 'Today Water',
+                      style: AppTextStyles.body(context)
+                          .copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$intake / $target ml',
+                      style: AppTextStyles.title2(context),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _isZh ? '還差 $remaining ml' : 'Remaining $remaining ml',
+                      style: AppTextStyles.caption(context)
+                          .copyWith(color: Colors.black54),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        Text(
-                          _isZh ? '手動喝水' : 'Manual water',
-                          style: AppTextStyles.caption(context)
-                              .copyWith(color: Colors.black54),
+                        _buildWaterMetricChip(
+                          context,
+                          icon: Icons.water_drop_outlined,
+                          label: _isZh ? '手動' : 'Manual',
+                          value: '$manualIntake ml',
                         ),
-                        const Spacer(),
-                        Text(
-                          '$manualIntake ml',
-                          style: AppTextStyles.caption(context)
-                              .copyWith(fontWeight: FontWeight.w700),
+                        _buildWaterMetricChip(
+                          context,
+                          icon: Icons.local_drink_outlined,
+                          label: _isZh ? '飲料' : 'Beverage',
+                          value: '$beverageIntake ml',
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Row(
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        Text(
-                          _isZh ? '飲料折算補水' : 'Beverage hydration',
-                          style: AppTextStyles.caption(context)
-                              .copyWith(color: Colors.black54),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '$beverageIntake ml',
-                          style: AppTextStyles.caption(context)
-                              .copyWith(fontWeight: FontWeight.w700),
+                        for (final ml in quickOptions)
+                          FilledButton.tonal(
+                            onPressed: () =>
+                                app.addDailyWaterIntake(_selectedDate, ml),
+                            child: Text('+$ml ml'),
+                          ),
+                        OutlinedButton(
+                          onPressed: () =>
+                              app.updateDailyWaterIntake(_selectedDate, 0),
+                          child: Text(_isZh ? '歸零' : 'Reset'),
                         ),
                       ],
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final ml in quickOptions)
-                    FilledButton.tonal(
-                      onPressed: () =>
-                          app.addDailyWaterIntake(_selectedDate, ml),
-                      child: Text('+$ml ml'),
-                    ),
-                  OutlinedButton(
-                    onPressed: () =>
-                        app.updateDailyWaterIntake(_selectedDate, 0),
-                    child: Text(_isZh ? '歸零' : 'Reset'),
-                  ),
-                ],
               ),
             ],
           ),
@@ -1783,7 +1874,7 @@ class _LogScreenState extends State<LogScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '${_timeLabel(item.time)} · ${item.estimatedVolumeMl} ml · ${_isZh ? '係數' : 'ratio'} ${(item.hydrationRatio * 100).round()}%',
+                                      '${_timeLabel(item.time)} | ${item.estimatedVolumeMl} ml | ${_isZh ? '係數' : 'ratio'} ${(item.hydrationRatio * 100).round()}%',
                                       style: AppTextStyles.caption(context)
                                           .copyWith(color: Colors.black54),
                                     ),
