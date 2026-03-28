@@ -20,6 +20,12 @@ class LogScreen extends StatefulWidget {
   State<LogScreen> createState() => _LogScreenState();
 }
 
+enum _LogSection {
+  meals,
+  water,
+  weight,
+}
+
 class _LogScreenState extends State<LogScreen> {
   late DateTime _selectedDate;
   late DateTime _currentMonth;
@@ -32,6 +38,7 @@ class _LogScreenState extends State<LogScreen> {
   int _historyDays = 7;
   bool _historyDaysLoaded = false;
   bool _initialDateSynced = false;
+  _LogSection _activeSection = _LogSection.meals;
 
   static const double _dateItemWidth = 78;
   static const double _dateItemGap = 6;
@@ -1507,6 +1514,323 @@ class _LogScreenState extends State<LogScreen> {
     }
   }
 
+  bool get _isZh => Localizations.localeOf(context).languageCode == 'zh';
+
+  String _sectionLabel(_LogSection section) {
+    if (_isZh) {
+      switch (section) {
+        case _LogSection.meals:
+          return '飲食';
+        case _LogSection.water:
+          return '喝水';
+        case _LogSection.weight:
+          return '體重';
+      }
+    }
+    switch (section) {
+      case _LogSection.meals:
+        return 'Meals';
+      case _LogSection.water:
+        return 'Water';
+      case _LogSection.weight:
+        return 'Weight';
+    }
+  }
+
+  Widget _buildSectionSwitcher(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: CupertinoSlidingSegmentedControl<_LogSection>(
+        groupValue: _activeSection,
+        thumbColor:
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
+        children: {
+          for (final section in _LogSection.values)
+            section: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Text(
+                _sectionLabel(section),
+                style: AppTextStyles.caption(context).copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+        },
+        onValueChanged: (next) {
+          if (next == null) return;
+          setState(() => _activeSection = next);
+        },
+      ),
+    );
+  }
+
+  Widget _buildWaterSection(BuildContext context, AppState app) {
+    final intake = app.dailyWaterIntakeMl(_selectedDate);
+    final target = app.dailyWaterTargetMl(_selectedDate);
+    final progress = (target <= 0 ? 0.0 : (intake / target)).clamp(0.0, 1.0);
+    final remaining = math.max(0, target - intake);
+    const quickOptions = <int>[150, 250, 500];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isZh ? '今日喝水' : 'Today Water',
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '$intake / $target ml',
+                style: AppTextStyles.title2(context),
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 10,
+                  backgroundColor: Colors.black12,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _isZh ? '還差 $remaining ml' : 'Remaining $remaining ml',
+                style: AppTextStyles.caption(context)
+                    .copyWith(color: Colors.black54),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final ml in quickOptions)
+                    FilledButton.tonal(
+                      onPressed: () =>
+                          app.addDailyWaterIntake(_selectedDate, ml),
+                      child: Text('+$ml ml'),
+                    ),
+                  OutlinedButton(
+                    onPressed: () =>
+                        app.updateDailyWaterIntake(_selectedDate, 0),
+                    child: Text(_isZh ? '歸零' : 'Reset'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showWeightInputDialog(
+      BuildContext context, AppState app) async {
+    final initial = app.dailyWeightRecordKg(_selectedDate) ??
+        app.latestWeightBaselineKg(_selectedDate);
+    final controller = TextEditingController(text: initial.toStringAsFixed(1));
+    final input = await showDialog<double>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(_isZh ? '輸入體重（kg）' : 'Enter Weight (kg)'),
+          content: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              hintText: _isZh ? '例如 68.5' : 'e.g. 68.5',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_isZh ? '取消' : 'Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final parsed = double.tryParse(controller.text.trim());
+                if (parsed == null || parsed <= 0) return;
+                Navigator.of(dialogContext).pop(parsed);
+              },
+              child: Text(_isZh ? '儲存' : 'Save'),
+            ),
+          ],
+        );
+      },
+    );
+    if (input == null) return;
+    await app.updateDailyWeightRecordKg(_selectedDate, input);
+  }
+
+  Future<void> _adjustWeightForDate(AppState app, double delta) async {
+    final base = app.dailyWeightRecordKg(_selectedDate) ??
+        app.latestWeightBaselineKg(_selectedDate);
+    final next = (base + delta).clamp(20.0, 300.0);
+    await app.updateDailyWeightRecordKg(_selectedDate, next);
+  }
+
+  Widget _buildWeightSection(BuildContext context, AppState app) {
+    final recorded = app.dailyWeightRecordKg(_selectedDate);
+    final baseline = app.latestWeightBaselineKg(_selectedDate);
+    final displayWeight = recorded ?? baseline;
+    final trend = app.recentWeightRecords(_selectedDate, days: 7);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isZh ? '今日體重' : 'Today Weight',
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${displayWeight.toStringAsFixed(1)} kg',
+                style: AppTextStyles.title2(context),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                recorded == null
+                    ? (_isZh
+                        ? '尚未輸入，先使用最近值做預設。'
+                        : 'Not entered yet, using latest as baseline.')
+                    : (_isZh ? '已記錄今日體重。' : 'Today weight recorded.'),
+                style: AppTextStyles.caption(context)
+                    .copyWith(color: Colors.black54),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => _adjustWeightForDate(app, -0.3),
+                    child: const Text('-0.3'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => _adjustWeightForDate(app, -0.1),
+                    child: const Text('-0.1'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => _adjustWeightForDate(app, 0.1),
+                    child: const Text('+0.1'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => _adjustWeightForDate(app, 0.3),
+                    child: const Text('+0.3'),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: () => _showWeightInputDialog(context, app),
+                    child: Text(_isZh ? '手動輸入' : 'Input'),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        app.updateDailyWeightRecordKg(_selectedDate, null),
+                    child: Text(_isZh ? '清除今日' : 'Clear Today'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isZh ? '近 7 天記錄' : 'Last 7 days',
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              if (trend.isEmpty)
+                Text(
+                  _isZh ? '還沒有體重資料。' : 'No weight data yet.',
+                  style: AppTextStyles.caption(context)
+                      .copyWith(color: Colors.black54),
+                )
+              else
+                ...trend.map((point) {
+                  final d = point.key;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${d.month}/${d.day}',
+                          style: AppTextStyles.caption(context)
+                              .copyWith(color: Colors.black54),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${point.value.toStringAsFixed(1)} kg',
+                          style: AppTextStyles.caption(context)
+                              .copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _quickRecord(
     BuildContext context,
     AppState app, {
@@ -1561,7 +1885,9 @@ class _LogScreenState extends State<LogScreen> {
     var effectiveDays = _currentMonthDays;
     var groupsByType = app.mealGroupsByTypeForDate(effectiveDate);
     var hasAnyGroup = groupsByType.values.any((groups) => groups.isNotEmpty);
-    if (!hasAnyGroup && app.entries.isNotEmpty) {
+    if (_activeSection == _LogSection.meals &&
+        !hasAnyGroup &&
+        app.entries.isNotEmpty) {
       final latest =
           app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
       effectiveDate =
@@ -1601,30 +1927,32 @@ class _LogScreenState extends State<LogScreen> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-        floatingActionButton: Padding(
-          padding: EdgeInsets.only(bottom: _fabBottomPadding(context)),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              FloatingActionButton.small(
-                heroTag: 'log_quick_name_fab',
-                onPressed: () => _quickRecord(
-                  context,
-                  app,
-                  preferNameInput: true,
+        floatingActionButton: _activeSection == _LogSection.meals
+            ? Padding(
+                padding: EdgeInsets.only(bottom: _fabBottomPadding(context)),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    FloatingActionButton.small(
+                      heroTag: 'log_quick_name_fab',
+                      onPressed: () => _quickRecord(
+                        context,
+                        app,
+                        preferNameInput: true,
+                      ),
+                      child: const Icon(Icons.edit_note),
+                    ),
+                    const SizedBox(height: 10),
+                    FloatingActionButton(
+                      heroTag: 'log_quick_record_fab',
+                      onPressed: () => _quickRecord(context, app),
+                      child: const Icon(Icons.add),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.edit_note),
-              ),
-              const SizedBox(height: 10),
-              FloatingActionButton(
-                heroTag: 'log_quick_record_fab',
-                onPressed: () => _quickRecord(context, app),
-                child: const Icon(Icons.add),
-              ),
-            ],
-          ),
-        ),
+              )
+            : null,
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -1636,9 +1964,13 @@ class _LogScreenState extends State<LogScreen> {
                   children: [
                     Text(_withEmoji('📔', t.logTitle),
                         style: AppTextStyles.title1(context)),
+                    const SizedBox(height: 10),
+                    _buildSectionSwitcher(context),
                     const SizedBox(height: 12),
-                    _buildTopCards(context, app, t, appTheme, theme),
-                    const SizedBox(height: 16),
+                    if (_activeSection == _LogSection.meals) ...[
+                      _buildTopCards(context, app, t, appTheme, theme),
+                      const SizedBox(height: 16),
+                    ],
                     _buildMonthHeader(context, app),
                     const SizedBox(height: 6),
                     LayoutBuilder(
@@ -1708,53 +2040,58 @@ class _LogScreenState extends State<LogScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    _mealSection(context, app, MealType.breakfast,
-                        groupsByType[MealType.breakfast] ?? const []),
-                    _mealSection(context, app, MealType.brunch,
-                        groupsByType[MealType.brunch] ?? const []),
-                    _mealSection(context, app, MealType.lunch,
-                        groupsByType[MealType.lunch] ?? const []),
-                    _mealSection(context, app, MealType.afternoonTea,
-                        groupsByType[MealType.afternoonTea] ?? const []),
-                    _mealSection(context, app, MealType.dinner,
-                        groupsByType[MealType.dinner] ?? const []),
-                    _mealSection(context, app, MealType.lateSnack,
-                        groupsByType[MealType.lateSnack] ?? const []),
-                    _mealSection(context, app, MealType.other,
-                        groupsByType[MealType.other] ?? const []),
-                    if (!hasAnyGroup)
-                      Container(
-                        margin: const EdgeInsets.only(top: 6),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.info_outline,
-                              color: Colors.black45,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                t.noEntries,
-                                style: AppTextStyles.caption(context)
-                                    .copyWith(color: Colors.black54),
+                    if (_activeSection == _LogSection.meals) ...[
+                      _mealSection(context, app, MealType.breakfast,
+                          groupsByType[MealType.breakfast] ?? const []),
+                      _mealSection(context, app, MealType.brunch,
+                          groupsByType[MealType.brunch] ?? const []),
+                      _mealSection(context, app, MealType.lunch,
+                          groupsByType[MealType.lunch] ?? const []),
+                      _mealSection(context, app, MealType.afternoonTea,
+                          groupsByType[MealType.afternoonTea] ?? const []),
+                      _mealSection(context, app, MealType.dinner,
+                          groupsByType[MealType.dinner] ?? const []),
+                      _mealSection(context, app, MealType.lateSnack,
+                          groupsByType[MealType.lateSnack] ?? const []),
+                      _mealSection(context, app, MealType.other,
+                          groupsByType[MealType.other] ?? const []),
+                      if (!hasAnyGroup)
+                        Container(
+                          margin: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 10,
+                                offset: const Offset(0, 6),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: Colors.black45,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  t.noEntries,
+                                  style: AppTextStyles.caption(context)
+                                      .copyWith(color: Colors.black54),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                    ] else if (_activeSection == _LogSection.water)
+                      _buildWaterSection(context, app)
+                    else
+                      _buildWeightSection(context, app),
                   ],
                 ),
               ),

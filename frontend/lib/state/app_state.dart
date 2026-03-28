@@ -871,6 +871,98 @@ class AppState extends ChangeNotifier {
     return _exerciseMet(type) * weight * hours;
   }
 
+  int suggestedDailyWaterTargetMl() {
+    final weight = profile.weightKg;
+    if (weight > 0) {
+      return (weight * 30).round().clamp(1500, 3600);
+    }
+    return 2000;
+  }
+
+  int dailyWaterTargetMl(DateTime date) {
+    final key = _waterTargetKey(date);
+    final raw = _meta[key];
+    final parsed = int.tryParse(raw ?? '');
+    if (parsed == null || parsed <= 0) return suggestedDailyWaterTargetMl();
+    return parsed.clamp(800, 6000);
+  }
+
+  int dailyWaterIntakeMl(DateTime date) {
+    final key = _waterIntakeKey(date);
+    final raw = _meta[key];
+    final parsed = int.tryParse(raw ?? '');
+    if (parsed == null || parsed < 0) return 0;
+    return parsed.clamp(0, 10000);
+  }
+
+  Future<void> updateDailyWaterIntake(DateTime date, int ml) async {
+    final key = _waterIntakeKey(date);
+    final value = ml.clamp(0, 10000);
+    if (value <= 0) {
+      _meta.remove(key);
+    } else {
+      _meta[key] = value.toString();
+    }
+    _touchSettingsUpdatedAt();
+    notifyListeners();
+    await _saveOverrides();
+  }
+
+  Future<void> addDailyWaterIntake(DateTime date, int deltaMl) async {
+    final next = (dailyWaterIntakeMl(date) + deltaMl).clamp(0, 10000);
+    await updateDailyWaterIntake(date, next);
+  }
+
+  double? dailyWeightRecordKg(DateTime date) {
+    final key = _weightRecordKey(date);
+    final raw = _meta[key];
+    final parsed = double.tryParse(raw ?? '');
+    if (parsed == null || parsed <= 0) return null;
+    return parsed;
+  }
+
+  double latestWeightBaselineKg(DateTime date) {
+    final d = _dateOnly(date);
+    for (var i = 0; i < 90; i++) {
+      final probe = d.subtract(Duration(days: i));
+      final value = dailyWeightRecordKg(probe);
+      if (value != null && value > 0) return value;
+    }
+    if (profile.weightKg > 0) return profile.weightKg.toDouble();
+    return 70.0;
+  }
+
+  List<MapEntry<DateTime, double>> recentWeightRecords(
+    DateTime anchor, {
+    int days = 7,
+  }) {
+    final normalizedAnchor = _dateOnly(anchor);
+    final normalizedDays = days.clamp(2, 30);
+    final start = normalizedAnchor.subtract(Duration(days: normalizedDays - 1));
+    final result = <MapEntry<DateTime, double>>[];
+    for (var i = 0; i < normalizedDays; i++) {
+      final d = start.add(Duration(days: i));
+      final value = dailyWeightRecordKg(d);
+      if (value != null) {
+        result.add(MapEntry(d, value));
+      }
+    }
+    return result;
+  }
+
+  Future<void> updateDailyWeightRecordKg(DateTime date, double? weightKg) async {
+    final key = _weightRecordKey(date);
+    final value = weightKg?.clamp(20.0, 300.0);
+    if (value == null) {
+      _meta.remove(key);
+    } else {
+      _meta[key] = value.toStringAsFixed(1);
+    }
+    _touchSettingsUpdatedAt();
+    notifyListeners();
+    await _saveOverrides();
+  }
+
   Future<void> updateDailyActivity(DateTime date, String level) async {
     final key = _activityKey(date);
     if (level == profile.activityLevel) {
@@ -8587,6 +8679,21 @@ class AppState extends ChangeNotifier {
     return 'activity:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
+  String _waterIntakeKey(DateTime date) {
+    final d = _dateOnly(date);
+    return 'water_intake:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  String _waterTargetKey(DateTime date) {
+    final d = _dateOnly(date);
+    return 'water_target:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  String _weightRecordKey(DateTime date) {
+    final d = _dateOnly(date);
+    return 'weight_record:${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
   String _mealKey(String mealId) => 'meal:$mealId';
 
   void _loadOverrides(Map<String, dynamic> overrides) {
@@ -10280,6 +10387,9 @@ class AppState extends ChangeNotifier {
     return key.startsWith('activity:') ||
         key.startsWith('exercise_type:') ||
         key.startsWith('exercise_minutes:') ||
+        key.startsWith('water_intake:') ||
+        key.startsWith('water_target:') ||
+        key.startsWith('weight_record:') ||
         key.startsWith('day_finalized:') ||
         key == _kMockSubscriptionKey ||
         key == _kMockSubscriptionPlanKey ||
