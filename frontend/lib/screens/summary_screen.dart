@@ -79,7 +79,6 @@ class SummaryScreen extends StatelessWidget {
       summaryLine.write('（${t.includesBeverages}）');
     }
     final proteinRange = app.proteinTargetRangeGrams();
-    final proteinConsumed = app.dailyProteinConsumedGrams(app.selectedDate).round();
     final breakfast = groupsByType[MealType.breakfast]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
     final brunch = groupsByType[MealType.brunch]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
     final lunch = groupsByType[MealType.lunch]?.where((g) => !app.isBeverageGroup(g)).length ?? 0;
@@ -107,7 +106,7 @@ class SummaryScreen extends StatelessWidget {
                           if (Navigator.of(context).canPop()) {
                             Navigator.of(context).pop();
                           } else {
-                            TabScope.of(context).setIndex(2);
+                            TabScope.of(context).setIndex(1);
                           }
                         },
                       ),
@@ -202,4 +201,3 @@ class SummaryScreen extends StatelessWidget {
     );
   }
 }
-

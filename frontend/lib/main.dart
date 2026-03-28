@@ -268,13 +268,13 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   bool _didRunInitialAutoFlow = false;
   bool _didEnsureInitialTab = false;
   late final PageController _dockController;
-  double _dockPage = 2;
-  int _lastDockTarget = 2;
+  double _dockPage = 1;
+  int _lastDockTarget = 1;
 
   @override
   void initState() {
     super.initState();
-    _dockController = PageController(initialPage: 2, viewportFraction: 0.3);
+    _dockController = PageController(initialPage: 1, viewportFraction: 0.3);
     _dockController.addListener(_onDockScroll);
     WidgetsBinding.instance.addObserver(this);
   }
@@ -341,12 +341,12 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     final tabState = TabScope.of(context);
     if (!_didEnsureInitialTab) {
       _didEnsureInitialTab = true;
-      if (tabState.index != 2) {
+      if (tabState.index != 1) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           final currentTabState = TabScope.of(context);
-          if (currentTabState.index != 2) {
-            currentTabState.setIndex(2);
+          if (currentTabState.index != 1) {
+            currentTabState.setIndex(1);
           }
         });
       }
@@ -354,12 +354,12 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
     const screens = [
       HomeScreen(),
-      ChatScreen(),
       SuggestionsScreen(),
       LogScreen(),
+      ChatScreen(),
+      WeekPlanScreen(),
       CustomFoodsScreen(),
       SettingsScreen(),
-      WeekPlanScreen(),
     ];
 
     final theme = Theme.of(context);
@@ -369,15 +369,15 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         .startsWith('zh');
     final navItems = <_DockItem>[
       _DockItem(label: t.tabHome, icon: Icons.home_rounded),
-      _DockItem(label: t.tabChat, icon: Icons.chat_bubble_rounded),
       _DockItem(label: t.tabSuggest, icon: Icons.auto_awesome_rounded),
       _DockItem(label: t.tabLog, icon: Icons.receipt_long_rounded),
-      _DockItem(label: t.tabCustom, icon: Icons.restaurant_menu_rounded),
-      _DockItem(label: t.tabSettings, icon: Icons.settings_rounded),
+      _DockItem(label: t.tabChat, icon: Icons.chat_bubble_rounded),
       _DockItem(
         label: isZh ? '7天規劃' : '7-day plan',
         icon: Icons.calendar_view_week_rounded,
       ),
+      _DockItem(label: t.tabCustom, icon: Icons.restaurant_menu_rounded),
+      _DockItem(label: t.tabSettings, icon: Icons.settings_rounded),
     ];
 
     final clampedIndex = tabState.index.clamp(0, screens.length - 1);

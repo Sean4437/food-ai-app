@@ -147,9 +147,9 @@ class _HomeScreenState extends State<HomeScreen> {
         .toLowerCase()
         .startsWith('zh');
     if (action == 'settings') {
-      tabState.setIndex(5); // Settings tab
+      tabState.setIndex(6); // Settings tab
     } else if (action == 'custom') {
-      tabState.setIndex(4); // Custom tab
+      tabState.setIndex(5); // Custom tab
     } else if (action == 'reset_mock') {
       app.setMockSubscriptionActive(false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -702,7 +702,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          TabScope.of(context).setIndex(6);
+                          TabScope.of(context).setIndex(4);
                         },
                         icon: const Icon(Icons.calendar_view_week_rounded),
                         label: Text(

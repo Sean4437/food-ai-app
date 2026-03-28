@@ -346,7 +346,7 @@ class _CustomFoodsScreenState extends State<CustomFoodsScreen> {
     await app.saveCustomFoodUsage(food, dateTime, pickedMealType);
 
     if (!mounted) return;
-    TabScope.of(context).setIndex(3);
+    TabScope.of(context).setIndex(2);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(t.customUseSaved)),
     );
