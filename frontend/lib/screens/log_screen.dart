@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -25,10 +24,6 @@ enum _LogSection {
   meals,
   water,
   weight,
-}
-
-enum _WaterManualAction {
-  clear,
 }
 
 class _WaterQuickOption {
@@ -72,13 +67,9 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
   bool _historyDaysLoaded = false;
   bool _initialDateSynced = false;
   _LogSection _activeSection = _LogSection.meals;
-  final bool _useSimpleWaterControls = true;
   late final AnimationController _waterWaveController;
   late final AnimationController _waterDropController;
   int _selectedWaterQuickIndex = 1;
-  Timer? _waterRepeatTimer;
-  bool _isWaterRepeatBusy = false;
-  double _waterDragDelta = 0;
 
   static const List<_WaterQuickOption> _waterQuickOptions = [
     _WaterQuickOption(
@@ -405,7 +396,6 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _stopWaterRepeat();
     _waterWaveController.dispose();
     _waterDropController.dispose();
     _dateController.dispose();
@@ -1673,35 +1663,6 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildWaterMetricChip(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.black54),
-          const SizedBox(width: 6),
-          Text(
-            '$label $value',
-            style: AppTextStyles.caption(context).copyWith(
-              color: Colors.black87,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   _WaterQuickOption get _selectedWaterQuickOption {
     final safeIndex = _selectedWaterQuickIndex.clamp(
       0,
@@ -1710,50 +1671,13 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     return _waterQuickOptions[safeIndex];
   }
 
-  void _shiftWaterQuickIndex(int delta) {
-    if (_waterQuickOptions.isEmpty) return;
-    final next = (_selectedWaterQuickIndex + delta)
-        .clamp(0, _waterQuickOptions.length - 1);
-    if (next == _selectedWaterQuickIndex) return;
-    setState(() => _selectedWaterQuickIndex = next);
-  }
-
   void _setWaterQuickIndex(int index) {
     final safe = index.clamp(0, _waterQuickOptions.length - 1);
     if (safe == _selectedWaterQuickIndex) return;
     setState(() => _selectedWaterQuickIndex = safe);
   }
 
-  void _onWaterShutterDragUpdate(DragUpdateDetails details) {
-    _waterDragDelta += details.delta.dx;
-    const threshold = 22.0;
-    if (_waterDragDelta <= -threshold) {
-      _waterDragDelta = 0;
-      _shiftWaterQuickIndex(1);
-    } else if (_waterDragDelta >= threshold) {
-      _waterDragDelta = 0;
-      _shiftWaterQuickIndex(-1);
-    }
-  }
-
-  void _stopWaterRepeat() {
-    _waterRepeatTimer?.cancel();
-    _waterRepeatTimer = null;
-    _isWaterRepeatBusy = false;
-  }
-
-  void _startWaterRepeat(AppState app) {
-    _stopWaterRepeat();
-    _waterRepeatTimer = Timer.periodic(const Duration(milliseconds: 420), (_) {
-      if (_isWaterRepeatBusy) return;
-      _isWaterRepeatBusy = true;
-      _addWaterByAmount(app, _selectedWaterQuickOption.ml).whenComplete(() {
-        _isWaterRepeatBusy = false;
-      });
-    });
-  }
-
-  Widget _buildWaterQuickPill(
+  Widget _buildWaterQuickCard(
     BuildContext context, {
     required int index,
     required _WaterQuickOption option,
@@ -1761,37 +1685,54 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     final isSelected = index == _selectedWaterQuickIndex;
     final accent = Theme.of(context).colorScheme.primary;
     final label = _isZh ? option.labelZh : option.labelEn;
-    return GestureDetector(
-      onTap: () => _setWaterQuickIndex(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 170),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          color: isSelected
-              ? accent.withValues(alpha: 0.18)
-              : Colors.black.withValues(alpha: 0.04),
-          border: Border.all(
-            color: isSelected
-                ? accent.withValues(alpha: 0.55)
-                : Colors.black.withValues(alpha: 0.08),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(option.icon,
-                size: 16, color: isSelected ? accent : Colors.black54),
-            const SizedBox(width: 6),
-            Text(
-              '$label +${option.ml}',
-              style: AppTextStyles.caption(context).copyWith(
-                color: Colors.black87,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+    return SizedBox(
+      width: 110,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _setWaterQuickIndex(index),
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 170),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: isSelected
+                  ? accent.withValues(alpha: 0.16)
+                  : Colors.black.withValues(alpha: 0.035),
+              border: Border.all(
+                color: isSelected
+                    ? accent.withValues(alpha: 0.55)
+                    : Colors.black.withValues(alpha: 0.09),
               ),
             ),
-          ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(option.icon,
+                    size: 17, color: isSelected ? accent : Colors.black54),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.caption(context).copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '+${option.ml} ml',
+                  style: AppTextStyles.caption(context).copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -1800,11 +1741,20 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
   Widget _buildWaterBottle(
     BuildContext context, {
     required double progress,
+    required int intakeMl,
+    required int targetMl,
+    required int remainingMl,
+    required int overMl,
+    required int manualMl,
+    required int beverageMl,
   }) {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
     final safeProgress = progress.clamp(0.0, 1.0);
-    final percentText = '${(safeProgress * 100).round()}%';
+    final amountText = '$intakeMl / $targetMl ml';
+    final statusText = overMl > 0
+        ? (_isZh ? '超過 +$overMl ml' : 'Over +$overMl ml')
+        : (_isZh ? '還差 $remainingMl ml' : 'Remaining $remainingMl ml');
 
     return AnimatedBuilder(
       animation: Listenable.merge([
@@ -1819,111 +1769,158 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         final dropOpacity = (1.0 - _waterDropController.value).clamp(0.0, 1.0);
 
         return SizedBox(
-          width: 92,
+          width: 172,
           height: 230,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Column(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: accent.withValues(alpha: 0.5)),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: 92,
+                child: Column(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 24,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(26),
+                        borderRadius: BorderRadius.circular(10),
                         border:
-                            Border.all(color: accent.withValues(alpha: 0.55)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: accent.withValues(alpha: 0.12),
-                            blurRadius: 10,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
+                            Border.all(color: accent.withValues(alpha: 0.5)),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Container(color: accent.withValues(alpha: 0.08)),
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: AnimatedFractionallySizedBox(
-                                duration: const Duration(milliseconds: 650),
-                                curve: Curves.easeOutCubic,
-                                heightFactor: safeProgress,
-                                widthFactor: 1,
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [
-                                            accent.withValues(alpha: 0.58),
-                                            accent.withValues(alpha: 0.88),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    CustomPaint(
-                                      painter: _WaterWavePainter(
-                                        phase: wavePhase,
-                                        color: Colors.white
-                                            .withValues(alpha: 0.35),
-                                      ),
-                                    ),
-                                    CustomPaint(
-                                      painter: _WaterBubblePainter(
-                                        phase: wavePhase,
-                                        color: Colors.white,
-                                        fillProgress: safeProgress,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.72),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  percentText,
-                                  style:
-                                      AppTextStyles.caption(context).copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
+                    ),
+                    const SizedBox(height: 2),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(26),
+                          border:
+                              Border.all(color: accent.withValues(alpha: 0.55)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: accent.withValues(alpha: 0.12),
+                              blurRadius: 10,
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Container(color: accent.withValues(alpha: 0.08)),
+                              Align(
+                                alignment: Alignment.bottomCenter,
+                                child: AnimatedFractionallySizedBox(
+                                  duration: const Duration(milliseconds: 650),
+                                  curve: Curves.easeOutCubic,
+                                  heightFactor: safeProgress,
+                                  widthFactor: 1,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              accent.withValues(alpha: 0.58),
+                                              accent.withValues(alpha: 0.88),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      CustomPaint(
+                                        painter: _WaterWavePainter(
+                                          phase: wavePhase,
+                                          color: Colors.white
+                                              .withValues(alpha: 0.35),
+                                        ),
+                                      ),
+                                      CustomPaint(
+                                        painter: _WaterBubblePainter(
+                                          phase: wavePhase,
+                                          color: Colors.white,
+                                          fillProgress: safeProgress,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.78),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        amountText,
+                                        style: AppTextStyles.caption(context)
+                                            .copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.black87,
+                                          fontSize: 11.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        statusText,
+                                        style: AppTextStyles.caption(context)
+                                            .copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: overMl > 0
+                                              ? Colors.deepOrange
+                                              : Colors.black54,
+                                          fontSize: 10.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              Positioned(
+                left: 94,
+                top: 104,
+                child: _buildBottleSideMarker(
+                  context,
+                  accent: accent,
+                  label: _isZh ? '手動' : 'Manual',
+                  value: '$manualMl ml',
+                  muted: manualMl <= 0,
+                ),
+              ),
+              Positioned(
+                left: 94,
+                top: 138,
+                child: _buildBottleSideMarker(
+                  context,
+                  accent: accent,
+                  label: _isZh ? '飲料' : 'Beverage',
+                  value: '$beverageMl ml',
+                  muted: beverageMl <= 0,
+                ),
               ),
               if (showDrop)
                 Positioned(
@@ -1945,6 +1942,47 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildBottleSideMarker(
+    BuildContext context, {
+    required Color accent,
+    required String label,
+    required String value,
+    bool muted = false,
+  }) {
+    final effectiveAccent =
+        muted ? accent.withValues(alpha: 0.35) : accent.withValues(alpha: 0.65);
+    final textColor = muted ? Colors.black45 : Colors.black87;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 26,
+          height: 2,
+          child: CustomPaint(
+            painter: _DashedLinePainter(color: effectiveAccent),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: accent.withValues(alpha: 0.2)),
+          ),
+          child: Text(
+            '$label $value',
+            style: AppTextStyles.caption(context).copyWith(
+              fontSize: 10.8,
+              color: textColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildWaterSection(BuildContext context, AppState app) {
     final manualIntake = app.manualDailyWaterIntakeMl(_selectedDate);
     final beverageIntake = app.beverageHydrationIntakeMl(_selectedDate);
@@ -1953,8 +1991,8 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     final beverageEntries = app.beverageHydrationEntries(_selectedDate);
     final progress = (target <= 0 ? 0.0 : (intake / target)).clamp(0.0, 1.0);
     final remaining = math.max(0, target - intake);
+    final overMl = math.max(0, intake - target);
     final smartFillMl = remaining;
-    final showBeverageChip = beverageIntake > 0;
     final selectedOption = _selectedWaterQuickOption;
 
     return Column(
@@ -1976,424 +2014,126 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildWaterBottle(context, progress: progress),
+              _buildWaterBottle(
+                context,
+                progress: progress,
+                intakeMl: intake,
+                targetMl: target,
+                remainingMl: remaining,
+                overMl: overMl,
+                manualMl: manualIntake,
+                beverageMl: beverageIntake,
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _isZh ? '今日喝水' : 'Today Water',
-                      style: AppTextStyles.body(context).copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
+                      _isZh ? '快速加水' : 'Quick add',
+                      style: AppTextStyles.caption(context).copyWith(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 320),
-                      switchInCurve: Curves.easeOutBack,
-                      switchOutCurve: Curves.easeIn,
-                      transitionBuilder: (child, animation) {
-                        final offsetTween = Tween<Offset>(
-                          begin: const Offset(0, 0.14),
-                          end: Offset.zero,
-                        );
-                        return FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(
-                            position: offsetTween.animate(animation),
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: Text(
-                        '$intake / $target ml',
-                        key: ValueKey('water-$intake-$target'),
-                        style: AppTextStyles.title2(context).copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _isZh ? '還差 $remaining ml' : 'Remaining $remaining ml',
-                      style: AppTextStyles.caption(context)
-                          .copyWith(color: Colors.black54),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildWaterMetricChip(
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 94,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: _waterQuickOptions.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) => _buildWaterQuickCard(
                           context,
-                          icon: Icons.water_drop_outlined,
-                          label: _isZh ? '手動' : 'Manual',
-                          value: '$manualIntake ml',
+                          index: index,
+                          option: _waterQuickOptions[index],
                         ),
-                        if (showBeverageChip)
-                          _buildWaterMetricChip(
-                            context,
-                            icon: Icons.local_drink_outlined,
-                            label: _isZh ? '飲料' : 'Beverage',
-                            value: '$beverageIntake ml',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        color: Colors.black.withValues(alpha: 0.03),
+                      ),
+                      child: Text(
+                        _isZh
+                            ? '已選擇：${selectedOption.labelZh} +${selectedOption.ml} ml'
+                            : 'Selected: ${selectedOption.labelEn} +${selectedOption.ml} ml',
+                        style: AppTextStyles.caption(context).copyWith(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
+                          textStyle: AppTextStyles.body(context).copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        onPressed: () =>
+                            _addWaterByAmount(app, selectedOption.ml),
+                        icon: const Icon(Icons.add_circle_outline, size: 20),
+                        label: Text(
+                          _isZh
+                              ? '加入 +${selectedOption.ml} ml'
+                              : 'Add +${selectedOption.ml} ml',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(46),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            onPressed: () =>
+                                _showCustomWaterInputDialog(context, app),
+                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            label: Text(_isZh ? '自訂容量' : 'Custom'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 46,
+                          height: 46,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(23),
+                              ),
+                            ),
+                            onPressed: () => _showWaterMoreActionsSheet(
+                                context, app, smartFillMl),
+                            child: const Icon(
+                              Icons.more_horiz,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    if (_useSimpleWaterControls) ...[
-                      Text(
-                        _isZh ? '快速加水' : 'Quick add',
-                        style: AppTextStyles.caption(context).copyWith(
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 40,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: _waterQuickOptions.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 8),
-                          itemBuilder: (context, index) => _buildWaterQuickPill(
-                            context,
-                            index: index,
-                            option: _waterQuickOptions[index],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          color: Colors.black.withValues(alpha: 0.03),
-                        ),
-                        child: Text(
-                          _isZh
-                              ? '目前選擇：${selectedOption.labelZh} +${selectedOption.ml} ml'
-                              : 'Selected: ${selectedOption.labelEn} +${selectedOption.ml} ml',
-                          style: AppTextStyles.caption(context).copyWith(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(50),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            textStyle: AppTextStyles.body(context).copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          onPressed: () =>
-                              _addWaterByAmount(app, selectedOption.ml),
-                          icon: const Icon(Icons.add_circle_outline, size: 20),
-                          label: Text(
-                            _isZh
-                                ? '加入 +${selectedOption.ml} ml'
-                                : 'Add +${selectedOption.ml} ml',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(46),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          onPressed: () => _showWaterMoreActionsSheet(
-                            context,
-                            app,
-                            smartFillMl,
-                          ),
-                          icon: const Icon(Icons.tune_rounded, size: 18),
-                          label: Text(_isZh ? '更多操作' : 'More actions'),
-                        ),
-                      ),
-                    ] else
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _isZh ? '常用容器' : 'Quick containers',
-                            style: AppTextStyles.caption(context).copyWith(
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withValues(alpha: 0.08),
-                              border: Border.all(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primary
-                                    .withValues(alpha: 0.18),
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  '${_isZh ? selectedOption.labelZh : selectedOption.labelEn} +${selectedOption.ml} ml',
-                                  style: AppTextStyles.body(context).copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onHorizontalDragUpdate:
-                                      _onWaterShutterDragUpdate,
-                                  onHorizontalDragEnd: (_) =>
-                                      _waterDragDelta = 0,
-                                  onHorizontalDragCancel: () =>
-                                      _waterDragDelta = 0,
-                                  onTap: () =>
-                                      _addWaterByAmount(app, selectedOption.ml),
-                                  onLongPressStart: (_) {
-                                    _addWaterByAmount(app, selectedOption.ml);
-                                    _startWaterRepeat(app);
-                                  },
-                                  onLongPressEnd: (_) => _stopWaterRepeat(),
-                                  onLongPressCancel: _stopWaterRepeat,
-                                  child: Center(
-                                    child: AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 180),
-                                      curve: Curves.easeOutCubic,
-                                      width: 118,
-                                      height: 118,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.66),
-                                          width: 2,
-                                        ),
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [
-                                            Theme.of(context)
-                                                .colorScheme
-                                                .primary
-                                                .withValues(alpha: 0.74),
-                                            Theme.of(context)
-                                                .colorScheme
-                                                .primary,
-                                          ],
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary
-                                                .withValues(alpha: 0.28),
-                                            blurRadius: 18,
-                                            offset: const Offset(0, 9),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(
-                                            Icons.water_drop_rounded,
-                                            color: Colors.white,
-                                            size: 28,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '+${selectedOption.ml} ml',
-                                            style: AppTextStyles.title2(context)
-                                                .copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            _isZh ? '點一下加入' : 'Tap to add',
-                                            style:
-                                                AppTextStyles.caption(context)
-                                                    .copyWith(
-                                              color: Colors.white
-                                                  .withValues(alpha: 0.84),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _isZh
-                                      ? '左右滑動切換容量，長按可連續加水'
-                                      : 'Swipe to switch. Long press to repeat.',
-                                  textAlign: TextAlign.center,
-                                  style: AppTextStyles.caption(context)
-                                      .copyWith(color: Colors.black54),
-                                ),
-                                const SizedBox(height: 8),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 40,
-                                  child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    physics: const BouncingScrollPhysics(),
-                                    itemCount: _waterQuickOptions.length,
-                                    separatorBuilder: (_, __) =>
-                                        const SizedBox(width: 8),
-                                    itemBuilder: (context, index) =>
-                                        _buildWaterQuickPill(
-                                      context,
-                                      index: index,
-                                      option: _waterQuickOptions[index],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          if (smartFillMl > 0)
-                            SizedBox(
-                              width: double.infinity,
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withValues(alpha: 0.28),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                child: FilledButton.icon(
-                                  style: FilledButton.styleFrom(
-                                    minimumSize: const Size.fromHeight(52),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                    textStyle:
-                                        AppTextStyles.body(context).copyWith(
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  onPressed: () =>
-                                      _addWaterByAmount(app, smartFillMl),
-                                  icon: const Icon(
-                                    Icons.auto_awesome_rounded,
-                                    size: 19,
-                                  ),
-                                  label: Text(
-                                    _isZh
-                                        ? '補滿 +$smartFillMl ml'
-                                        : 'Top up +$smartFillMl ml',
-                                  ),
-                                ),
-                              ),
-                            ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  style: OutlinedButton.styleFrom(
-                                    minimumSize: const Size.fromHeight(46),
-                                    shape: const StadiumBorder(),
-                                  ),
-                                  onPressed: () =>
-                                      _showCustomWaterInputDialog(context, app),
-                                  icon:
-                                      const Icon(Icons.edit_outlined, size: 18),
-                                  label: Text(_isZh ? '自訂容量' : 'Custom'),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              PopupMenuButton<_WaterManualAction>(
-                                tooltip: _isZh ? '更多操作' : 'More actions',
-                                onSelected: (action) async {
-                                  if (action != _WaterManualAction.clear) {
-                                    return;
-                                  }
-                                  final confirm =
-                                      await _confirmClearManualWater(context);
-                                  if (!confirm || !mounted) return;
-                                  await app.updateDailyWaterIntake(
-                                    _selectedDate,
-                                    0,
-                                  );
-                                },
-                                itemBuilder: (menuContext) => [
-                                  PopupMenuItem<_WaterManualAction>(
-                                    value: _WaterManualAction.clear,
-                                    child: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.delete_outline,
-                                          size: 18,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          _isZh
-                                              ? '清空手動補水'
-                                              : 'Clear manual water',
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                                child: Container(
-                                  width: 46,
-                                  height: 46,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.04),
-                                    borderRadius: BorderRadius.circular(23),
-                                  ),
-                                  child: const Icon(
-                                    Icons.more_horiz,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
                   ],
                 ),
               ),
@@ -2467,7 +2207,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '${_timeLabel(item.time)} | ${item.estimatedVolumeMl} ml | ${_isZh ? '係數' : 'ratio'} ${(item.hydrationRatio * 100).round()}%',
+                                      '${_timeLabel(item.time)} | ${item.estimatedVolumeMl} ml | ${_isZh ? '比例' : 'ratio'} ${(item.hydrationRatio * 100).round()}%',
                                       style: AppTextStyles.caption(context)
                                           .copyWith(color: Colors.black54),
                                     ),
@@ -3348,6 +3088,34 @@ class _HistoryPoint {
   final double? value;
 
   const _HistoryPoint({required this.date, required this.value});
+}
+
+class _DashedLinePainter extends CustomPainter {
+  const _DashedLinePainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+    const dash = 4.0;
+    const gap = 2.0;
+    final y = size.height / 2;
+    var x = 0.0;
+    while (x < size.width) {
+      final end = math.min(x + dash, size.width);
+      canvas.drawLine(Offset(x, y), Offset(end, y), paint);
+      x += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
 }
 
 class _WaterWavePainter extends CustomPainter {
