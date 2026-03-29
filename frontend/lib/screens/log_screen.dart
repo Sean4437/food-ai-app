@@ -70,6 +70,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
   late final AnimationController _waterWaveController;
   late final AnimationController _waterDropController;
   int _selectedWaterQuickIndex = 1;
+  int _lastCustomWaterMl = 420;
 
   static const List<_WaterQuickOption> _waterQuickOptions = [
     _WaterQuickOption(
@@ -1663,14 +1664,6 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     );
   }
 
-  _WaterQuickOption get _selectedWaterQuickOption {
-    final safeIndex = _selectedWaterQuickIndex.clamp(
-      0,
-      _waterQuickOptions.length - 1,
-    );
-    return _waterQuickOptions[safeIndex];
-  }
-
   void _setWaterQuickIndex(int index) {
     final safe = index.clamp(0, _waterQuickOptions.length - 1);
     if (safe == _selectedWaterQuickIndex) return;
@@ -1681,6 +1674,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     BuildContext context, {
     required int index,
     required _WaterQuickOption option,
+    required VoidCallback onTap,
   }) {
     final isSelected = index == _selectedWaterQuickIndex;
     final accent = Theme.of(context).colorScheme.primary;
@@ -1690,7 +1684,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _setWaterQuickIndex(index),
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 170),
@@ -1725,6 +1719,58 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                 const SizedBox(height: 2),
                 Text(
                   '+${option.ml} ml',
+                  style: AppTextStyles.caption(context).copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaterCustomCard(
+    BuildContext context, {
+    required VoidCallback onTap,
+  }) {
+    final accent = Theme.of(context).colorScheme.primary;
+    final label = _isZh ? '自訂' : 'Custom';
+    return SizedBox(
+      width: 110,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 170),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: accent.withValues(alpha: 0.08),
+              border: Border.all(color: accent.withValues(alpha: 0.32)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.edit_outlined, size: 17, color: accent),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.caption(context).copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '+$_lastCustomWaterMl ml',
                   style: AppTextStyles.caption(context).copyWith(
                     color: Colors.black87,
                     fontWeight: FontWeight.w800,
@@ -1919,7 +1965,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                           .copyWith(
                                         fontWeight: FontWeight.w800,
                                         color: amountColor,
-                                        fontSize: 11.5,
+                                        fontSize: 10.6,
                                         shadows: [
                                           Shadow(
                                             color: shadowColor,
@@ -1928,6 +1974,9 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                           ),
                                         ],
                                       ),
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      overflow: TextOverflow.fade,
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
@@ -1936,7 +1985,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                           .copyWith(
                                         fontWeight: FontWeight.w700,
                                         color: statusColor,
-                                        fontSize: 10.5,
+                                        fontSize: 9.6,
                                         shadows: [
                                           Shadow(
                                             color: shadowColor,
@@ -1945,6 +1994,9 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                           ),
                                         ],
                                       ),
+                                      maxLines: 1,
+                                      softWrap: false,
+                                      overflow: TextOverflow.fade,
                                     ),
                                   ],
                                 ),
@@ -2053,14 +2105,17 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
   }) {
     final textColor = muted ? Colors.black45 : Colors.black87;
     return Text(
-      '$label\n$value',
+      '$label $value',
       textAlign: TextAlign.left,
       style: AppTextStyles.caption(context).copyWith(
-        fontSize: 10.4,
-        height: 1.1,
+        fontSize: 10.2,
+        height: 1.0,
         color: textColor,
         fontWeight: FontWeight.w700,
       ),
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.fade,
     );
   }
 
@@ -2074,7 +2129,6 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     final remaining = math.max(0, target - intake);
     final overMl = math.max(0, intake - target);
     final smartFillMl = remaining;
-    final selectedOption = _selectedWaterQuickOption;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2124,96 +2178,53 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
-                        itemCount: _waterQuickOptions.length,
+                        itemCount: _waterQuickOptions.length + 1,
                         separatorBuilder: (_, __) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) => _buildWaterQuickCard(
-                          context,
-                          index: index,
-                          option: _waterQuickOptions[index],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        color: Colors.black.withValues(alpha: 0.03),
-                      ),
-                      child: Text(
-                        _isZh
-                            ? '已選擇：${selectedOption.labelZh} +${selectedOption.ml} ml'
-                            : 'Selected: ${selectedOption.labelEn} +${selectedOption.ml} ml',
-                        style: AppTextStyles.caption(context).copyWith(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          textStyle: AppTextStyles.body(context).copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        onPressed: () =>
-                            _addWaterByAmount(app, selectedOption.ml),
-                        icon: const Icon(Icons.add_circle_outline, size: 20),
-                        label: Text(
-                          _isZh
-                              ? '加入 +${selectedOption.ml} ml'
-                              : 'Add +${selectedOption.ml} ml',
-                        ),
+                        itemBuilder: (context, index) {
+                          if (index == _waterQuickOptions.length) {
+                            return _buildWaterCustomCard(
+                              context,
+                              onTap: () =>
+                                  _showCustomWaterInputDialog(context, app),
+                            );
+                          }
+                          final option = _waterQuickOptions[index];
+                          return _buildWaterQuickCard(
+                            context,
+                            index: index,
+                            option: option,
+                            onTap: () {
+                              _setWaterQuickIndex(index);
+                              _addWaterByAmount(app, option.ml);
+                            },
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(46),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            onPressed: () =>
-                                _showCustomWaterInputDialog(context, app),
-                            icon: const Icon(Icons.edit_outlined, size: 18),
-                            label: Text(_isZh ? '自訂容量' : 'Custom'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 46,
-                          height: 46,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(23),
-                              ),
-                            ),
-                            onPressed: () => _showWaterMoreActionsSheet(
-                                context, app, smartFillMl),
-                            child: const Icon(
-                              Icons.more_horiz,
-                              color: Colors.black87,
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: SizedBox(
+                        width: 46,
+                        height: 46,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(23),
                             ),
                           ),
+                          onPressed: () => _showWaterMoreActionsSheet(
+                            context,
+                            app,
+                            smartFillMl,
+                          ),
+                          child: const Icon(
+                            Icons.more_horiz,
+                            color: Colors.black87,
+                          ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -2446,7 +2457,8 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
 
   Future<void> _showCustomWaterInputDialog(
       BuildContext context, AppState app) async {
-    final controller = TextEditingController();
+    final controller =
+        TextEditingController(text: _lastCustomWaterMl.toString());
     final input = await showDialog<int>(
       context: context,
       builder: (dialogContext) {
@@ -2477,6 +2489,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
       },
     );
     if (!mounted || input == null) return;
+    setState(() => _lastCustomWaterMl = input);
     await _addWaterByAmount(app, input);
   }
 
