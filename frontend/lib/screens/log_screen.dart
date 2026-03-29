@@ -1767,6 +1767,61 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         final showDrop =
             _waterDropController.value > 0 && _waterDropController.value < 1;
         final dropOpacity = (1.0 - _waterDropController.value).clamp(0.0, 1.0);
+        const bottleHeight = 230.0;
+        const neckHeight = 24.0;
+        const neckGap = 2.0;
+        const bodyPadding = 5.0;
+        const markerInset = 8.0;
+        const markerGap = 14.0;
+        const bodyHeight = bottleHeight - neckHeight - neckGap;
+        const liquidTop = neckHeight + neckGap + bodyPadding;
+        const liquidHeight = bodyHeight - bodyPadding * 2;
+        final fillTop = liquidTop + liquidHeight * (1 - safeProgress);
+        const fillBottom = liquidTop + liquidHeight;
+        const markerMin = liquidTop + markerInset;
+        const markerMax = liquidTop + liquidHeight - markerInset;
+
+        var manualMarkerTop = _componentMarkerTop(
+          componentMl: manualMl,
+          intakeMl: intakeMl,
+          fillTop: fillTop,
+          fillBottom: fillBottom,
+          markerMin: markerMin,
+          markerMax: markerMax,
+        );
+        var beverageMarkerTop = _componentMarkerTop(
+          componentMl: beverageMl,
+          intakeMl: intakeMl,
+          fillTop: fillTop,
+          fillBottom: fillBottom,
+          markerMin: markerMin,
+          markerMax: markerMax,
+        );
+
+        if ((manualMarkerTop - beverageMarkerTop).abs() < markerGap) {
+          if (manualMarkerTop <= beverageMarkerTop) {
+            beverageMarkerTop = (manualMarkerTop + markerGap)
+                .clamp(markerMin, markerMax)
+                .toDouble();
+          } else {
+            manualMarkerTop = (beverageMarkerTop + markerGap)
+                .clamp(markerMin, markerMax)
+                .toDouble();
+          }
+        }
+
+        final amountColor = safeProgress < 0.35 ? Colors.black87 : Colors.white;
+        final defaultStatusColor = safeProgress < 0.35
+            ? Colors.black54
+            : Colors.white.withValues(alpha: 0.9);
+        final statusColor = overMl > 0
+            ? (safeProgress < 0.35
+                ? Colors.deepOrange.shade700
+                : const Color(0xFFFFE1D4))
+            : defaultStatusColor;
+        final shadowColor = safeProgress < 0.35
+            ? Colors.white.withValues(alpha: 0.42)
+            : Colors.black.withValues(alpha: 0.35);
 
         return SizedBox(
           width: 172,
@@ -1855,40 +1910,74 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                               Center(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.78),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        amountText,
-                                        style: AppTextStyles.caption(context)
-                                            .copyWith(
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.black87,
-                                          fontSize: 11.5,
-                                        ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      amountText,
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        color: amountColor,
+                                        fontSize: 11.5,
+                                        shadows: [
+                                          Shadow(
+                                            color: shadowColor,
+                                            blurRadius: 3,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        statusText,
-                                        style: AppTextStyles.caption(context)
-                                            .copyWith(
-                                          fontWeight: FontWeight.w700,
-                                          color: overMl > 0
-                                              ? Colors.deepOrange
-                                              : Colors.black54,
-                                          fontSize: 10.5,
-                                        ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      statusText,
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: statusColor,
+                                        fontSize: 10.5,
+                                        shadows: [
+                                          Shadow(
+                                            color: shadowColor,
+                                            blurRadius: 3,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ],
                                       ),
-                                    ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Positioned(
+                                left: 56,
+                                top: manualMarkerTop - liquidTop,
+                                child: Opacity(
+                                  opacity: manualMl > 0 ? 0.95 : 0.45,
+                                  child: SizedBox(
+                                    width: 22,
+                                    height: 2,
+                                    child: CustomPaint(
+                                      painter: _DashedLinePainter(
+                                        color: accent.withValues(alpha: 0.9),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                left: 56,
+                                top: beverageMarkerTop - liquidTop,
+                                child: Opacity(
+                                  opacity: beverageMl > 0 ? 0.95 : 0.45,
+                                  child: SizedBox(
+                                    width: 22,
+                                    height: 2,
+                                    child: CustomPaint(
+                                      painter: _DashedLinePainter(
+                                        color: accent.withValues(alpha: 0.6),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1902,10 +1991,9 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
               ),
               Positioned(
                 left: 94,
-                top: 104,
-                child: _buildBottleSideMarker(
+                top: manualMarkerTop - 9,
+                child: _buildBottleSideText(
                   context,
-                  accent: accent,
                   label: _isZh ? '手動' : 'Manual',
                   value: '$manualMl ml',
                   muted: manualMl <= 0,
@@ -1913,10 +2001,9 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
               ),
               Positioned(
                 left: 94,
-                top: 138,
-                child: _buildBottleSideMarker(
+                top: beverageMarkerTop - 9,
+                child: _buildBottleSideText(
                   context,
-                  accent: accent,
                   label: _isZh ? '飲料' : 'Beverage',
                   value: '$beverageMl ml',
                   muted: beverageMl <= 0,
@@ -1942,44 +2029,38 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildBottleSideMarker(
+  double _componentMarkerTop({
+    required int componentMl,
+    required int intakeMl,
+    required double fillTop,
+    required double fillBottom,
+    required double markerMin,
+    required double markerMax,
+  }) {
+    if (componentMl <= 0 || intakeMl <= 0) {
+      return (fillBottom - 8).clamp(markerMin, markerMax).toDouble();
+    }
+    final ratio = (componentMl / intakeMl).clamp(0.0, 1.0);
+    final top = fillBottom - (fillBottom - fillTop) * ratio;
+    return top.clamp(markerMin, markerMax).toDouble();
+  }
+
+  Widget _buildBottleSideText(
     BuildContext context, {
-    required Color accent,
     required String label,
     required String value,
     bool muted = false,
   }) {
-    final effectiveAccent =
-        muted ? accent.withValues(alpha: 0.35) : accent.withValues(alpha: 0.65);
     final textColor = muted ? Colors.black45 : Colors.black87;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 26,
-          height: 2,
-          child: CustomPaint(
-            painter: _DashedLinePainter(color: effectiveAccent),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.95),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: accent.withValues(alpha: 0.2)),
-          ),
-          child: Text(
-            '$label $value',
-            style: AppTextStyles.caption(context).copyWith(
-              fontSize: 10.8,
-              color: textColor,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
+    return Text(
+      '$label\n$value',
+      textAlign: TextAlign.left,
+      style: AppTextStyles.caption(context).copyWith(
+        fontSize: 10.4,
+        height: 1.1,
+        color: textColor,
+        fontWeight: FontWeight.w700,
+      ),
     );
   }
 
