@@ -72,6 +72,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
   bool _historyDaysLoaded = false;
   bool _initialDateSynced = false;
   _LogSection _activeSection = _LogSection.meals;
+  final bool _useSimpleWaterControls = true;
   late final AnimationController _waterWaveController;
   late final AnimationController _waterDropController;
   int _selectedWaterQuickIndex = 1;
@@ -2042,259 +2043,357 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isZh ? '常用容器' : 'Quick containers',
-                          style: AppTextStyles.caption(context).copyWith(
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w700,
+                    if (_useSimpleWaterControls) ...[
+                      Text(
+                        _isZh ? '快速加水' : 'Quick add',
+                        style: AppTextStyles.caption(context).copyWith(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 40,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: _waterQuickOptions.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) => _buildWaterQuickPill(
+                            context,
+                            index: index,
+                            option: _waterQuickOptions[index],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withValues(alpha: 0.08),
-                            border: Border.all(
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          color: Colors.black.withValues(alpha: 0.03),
+                        ),
+                        child: Text(
+                          _isZh
+                              ? '目前選擇：${selectedOption.labelZh} +${selectedOption.ml} ml'
+                              : 'Selected: ${selectedOption.labelEn} +${selectedOption.ml} ml',
+                          style: AppTextStyles.caption(context).copyWith(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            textStyle: AppTextStyles.body(context).copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          onPressed: () =>
+                              _addWaterByAmount(app, selectedOption.ml),
+                          icon: const Icon(Icons.add_circle_outline, size: 20),
+                          label: Text(
+                            _isZh
+                                ? '加入 +${selectedOption.ml} ml'
+                                : 'Add +${selectedOption.ml} ml',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(46),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          onPressed: () => _showWaterMoreActionsSheet(
+                            context,
+                            app,
+                            smartFillMl,
+                          ),
+                          icon: const Icon(Icons.tune_rounded, size: 18),
+                          label: Text(_isZh ? '更多操作' : 'More actions'),
+                        ),
+                      ),
+                    ] else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _isZh ? '常用容器' : 'Quick containers',
+                            style: AppTextStyles.caption(context).copyWith(
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
                               color: Theme.of(context)
                                   .colorScheme
                                   .primary
-                                  .withValues(alpha: 0.18),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                '${_isZh ? selectedOption.labelZh : selectedOption.labelEn} +${selectedOption.ml} ml',
-                                style: AppTextStyles.body(context).copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                  .withValues(alpha: 0.08),
+                              border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withValues(alpha: 0.18),
                               ),
-                              const SizedBox(height: 8),
-                              GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onHorizontalDragUpdate:
-                                    _onWaterShutterDragUpdate,
-                                onHorizontalDragEnd: (_) => _waterDragDelta = 0,
-                                onHorizontalDragCancel: () =>
-                                    _waterDragDelta = 0,
-                                onTap: () =>
-                                    _addWaterByAmount(app, selectedOption.ml),
-                                onLongPressStart: (_) {
-                                  _addWaterByAmount(app, selectedOption.ml);
-                                  _startWaterRepeat(app);
-                                },
-                                onLongPressEnd: (_) => _stopWaterRepeat(),
-                                onLongPressCancel: _stopWaterRepeat,
-                                child: Center(
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 180),
-                                    curve: Curves.easeOutCubic,
-                                    width: 118,
-                                    height: 118,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white
-                                            .withValues(alpha: 0.66),
-                                        width: 2,
-                                      ),
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .primary
-                                              .withValues(alpha: 0.74),
-                                          Theme.of(context).colorScheme.primary,
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '${_isZh ? selectedOption.labelZh : selectedOption.labelEn} +${selectedOption.ml} ml',
+                                  style: AppTextStyles.body(context).copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onHorizontalDragUpdate:
+                                      _onWaterShutterDragUpdate,
+                                  onHorizontalDragEnd: (_) =>
+                                      _waterDragDelta = 0,
+                                  onHorizontalDragCancel: () =>
+                                      _waterDragDelta = 0,
+                                  onTap: () =>
+                                      _addWaterByAmount(app, selectedOption.ml),
+                                  onLongPressStart: (_) {
+                                    _addWaterByAmount(app, selectedOption.ml);
+                                    _startWaterRepeat(app);
+                                  },
+                                  onLongPressEnd: (_) => _stopWaterRepeat(),
+                                  onLongPressCancel: _stopWaterRepeat,
+                                  child: Center(
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 180),
+                                      curve: Curves.easeOutCubic,
+                                      width: 118,
+                                      height: 118,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.66),
+                                          width: 2,
+                                        ),
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withValues(alpha: 0.74),
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                          ],
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withValues(alpha: 0.28),
+                                            blurRadius: 18,
+                                            offset: const Offset(0, 9),
+                                          ),
                                         ],
                                       ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary
-                                              .withValues(alpha: 0.28),
-                                          blurRadius: 18,
-                                          offset: const Offset(0, 9),
-                                        ),
-                                      ],
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.water_drop_rounded,
+                                            color: Colors.white,
+                                            size: 28,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '+${selectedOption.ml} ml',
+                                            style: AppTextStyles.title2(context)
+                                                .copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            _isZh ? '點一下加入' : 'Tap to add',
+                                            style:
+                                                AppTextStyles.caption(context)
+                                                    .copyWith(
+                                              color: Colors.white
+                                                  .withValues(alpha: 0.84),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _isZh
+                                      ? '左右滑動切換容量，長按可連續加水'
+                                      : 'Swipe to switch. Long press to repeat.',
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.caption(context)
+                                      .copyWith(color: Colors.black54),
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 40,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    physics: const BouncingScrollPhysics(),
+                                    itemCount: _waterQuickOptions.length,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(width: 8),
+                                    itemBuilder: (context, index) =>
+                                        _buildWaterQuickPill(
+                                      context,
+                                      index: index,
+                                      option: _waterQuickOptions[index],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          if (smartFillMl > 0)
+                            SizedBox(
+                              width: double.infinity,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: 0.28),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: FilledButton.icon(
+                                  style: FilledButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(52),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                    ),
+                                    textStyle:
+                                        AppTextStyles.body(context).copyWith(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  onPressed: () =>
+                                      _addWaterByAmount(app, smartFillMl),
+                                  icon: const Icon(
+                                    Icons.auto_awesome_rounded,
+                                    size: 19,
+                                  ),
+                                  label: Text(
+                                    _isZh
+                                        ? '補滿 +$smartFillMl ml'
+                                        : 'Top up +$smartFillMl ml',
+                                  ),
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(46),
+                                    shape: const StadiumBorder(),
+                                  ),
+                                  onPressed: () =>
+                                      _showCustomWaterInputDialog(context, app),
+                                  icon:
+                                      const Icon(Icons.edit_outlined, size: 18),
+                                  label: Text(_isZh ? '自訂容量' : 'Custom'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              PopupMenuButton<_WaterManualAction>(
+                                tooltip: _isZh ? '更多操作' : 'More actions',
+                                onSelected: (action) async {
+                                  if (action != _WaterManualAction.clear) {
+                                    return;
+                                  }
+                                  final confirm =
+                                      await _confirmClearManualWater(context);
+                                  if (!confirm || !mounted) return;
+                                  await app.updateDailyWaterIntake(
+                                    _selectedDate,
+                                    0,
+                                  );
+                                },
+                                itemBuilder: (menuContext) => [
+                                  PopupMenuItem<_WaterManualAction>(
+                                    value: _WaterManualAction.clear,
+                                    child: Row(
                                       children: [
                                         const Icon(
-                                          Icons.water_drop_rounded,
-                                          color: Colors.white,
-                                          size: 28,
+                                          Icons.delete_outline,
+                                          size: 18,
                                         ),
-                                        const SizedBox(height: 4),
+                                        const SizedBox(width: 8),
                                         Text(
-                                          '+${selectedOption.ml} ml',
-                                          style: AppTextStyles.title2(context)
-                                              .copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          _isZh ? '點一下加入' : 'Tap to add',
-                                          style: AppTextStyles.caption(context)
-                                              .copyWith(
-                                            color: Colors.white
-                                                .withValues(alpha: 0.84),
-                                          ),
+                                          _isZh
+                                              ? '清空手動補水'
+                                              : 'Clear manual water',
                                         ),
                                       ],
                                     ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _isZh
-                                    ? '左右滑動切換容量，長按可連續加水'
-                                    : 'Swipe to switch. Long press to repeat.',
-                                textAlign: TextAlign.center,
-                                style: AppTextStyles.caption(context)
-                                    .copyWith(color: Colors.black54),
-                              ),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 40,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  physics: const BouncingScrollPhysics(),
-                                  itemCount: _waterQuickOptions.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(width: 8),
-                                  itemBuilder: (context, index) =>
-                                      _buildWaterQuickPill(
-                                    context,
-                                    index: index,
-                                    option: _waterQuickOptions[index],
+                                ],
+                                child: Container(
+                                  width: 46,
+                                  height: 46,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    borderRadius: BorderRadius.circular(23),
+                                  ),
+                                  child: const Icon(
+                                    Icons.more_horiz,
+                                    color: Colors.black87,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        if (smartFillMl > 0)
-                          SizedBox(
-                            width: double.infinity,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(18),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .primary
-                                        .withValues(alpha: 0.28),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              child: FilledButton.icon(
-                                style: FilledButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(52),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                  textStyle:
-                                      AppTextStyles.body(context).copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                onPressed: () =>
-                                    _addWaterByAmount(app, smartFillMl),
-                                icon: const Icon(
-                                  Icons.auto_awesome_rounded,
-                                  size: 19,
-                                ),
-                                label: Text(
-                                  _isZh
-                                      ? '補滿 +$smartFillMl ml'
-                                      : 'Top up +$smartFillMl ml',
-                                ),
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(46),
-                                  shape: const StadiumBorder(),
-                                ),
-                                onPressed: () =>
-                                    _showCustomWaterInputDialog(context, app),
-                                icon: const Icon(Icons.edit_outlined, size: 18),
-                                label: Text(_isZh ? '自訂容量' : 'Custom'),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            PopupMenuButton<_WaterManualAction>(
-                              tooltip: _isZh ? '更多操作' : 'More actions',
-                              onSelected: (action) async {
-                                if (action != _WaterManualAction.clear) return;
-                                final confirm =
-                                    await _confirmClearManualWater(context);
-                                if (!confirm || !mounted) return;
-                                await app.updateDailyWaterIntake(
-                                  _selectedDate,
-                                  0,
-                                );
-                              },
-                              itemBuilder: (menuContext) => [
-                                PopupMenuItem<_WaterManualAction>(
-                                  value: _WaterManualAction.clear,
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.delete_outline,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _isZh ? '清空手動補水' : 'Clear manual water',
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              child: Container(
-                                width: 46,
-                                height: 46,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.04),
-                                  borderRadius: BorderRadius.circular(23),
-                                ),
-                                child: const Icon(
-                                  Icons.more_horiz,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                   ],
                 ),
               ),
@@ -2430,6 +2529,73 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
       ..stop()
       ..reset()
       ..forward();
+  }
+
+  Future<void> _showWaterMoreActionsSheet(
+    BuildContext context,
+    AppState app,
+    int smartFillMl,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (smartFillMl > 0)
+                  ListTile(
+                    leading: const Icon(Icons.bolt_outlined),
+                    title: Text(
+                      _isZh ? '補滿 +$smartFillMl ml' : 'Top up +$smartFillMl ml',
+                    ),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      _addWaterByAmount(app, smartFillMl);
+                    },
+                  ),
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined),
+                  title: Text(_isZh ? '自訂容量' : 'Custom amount'),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    _showCustomWaterInputDialog(context, app);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Colors.red),
+                  title: Text(
+                    _isZh ? '清空手動補水' : 'Clear manual water',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  onTap: () async {
+                    Navigator.of(sheetContext).pop();
+                    final confirm = await _confirmClearManualWater(context);
+                    if (!confirm || !mounted) return;
+                    await app.updateDailyWaterIntake(_selectedDate, 0);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<bool> _confirmClearManualWater(BuildContext context) async {
