@@ -1,6 +1,7 @@
+import 'dart:math' as math;
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -73,6 +74,10 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
   _LogSection _activeSection = _LogSection.meals;
   late final AnimationController _waterWaveController;
   late final AnimationController _waterDropController;
+  int _selectedWaterQuickIndex = 1;
+  Timer? _waterRepeatTimer;
+  bool _isWaterRepeatBusy = false;
+  double _waterDragDelta = 0;
 
   static const List<_WaterQuickOption> _waterQuickOptions = [
     _WaterQuickOption(
@@ -399,6 +404,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _stopWaterRepeat();
     _waterWaveController.dispose();
     _waterDropController.dispose();
     _dateController.dispose();
@@ -1695,73 +1701,96 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildWaterQuickOptionCard(
+  _WaterQuickOption get _selectedWaterQuickOption {
+    final safeIndex = _selectedWaterQuickIndex.clamp(
+      0,
+      _waterQuickOptions.length - 1,
+    );
+    return _waterQuickOptions[safeIndex];
+  }
+
+  void _shiftWaterQuickIndex(int delta) {
+    if (_waterQuickOptions.isEmpty) return;
+    final next = (_selectedWaterQuickIndex + delta)
+        .clamp(0, _waterQuickOptions.length - 1);
+    if (next == _selectedWaterQuickIndex) return;
+    setState(() => _selectedWaterQuickIndex = next);
+  }
+
+  void _setWaterQuickIndex(int index) {
+    final safe = index.clamp(0, _waterQuickOptions.length - 1);
+    if (safe == _selectedWaterQuickIndex) return;
+    setState(() => _selectedWaterQuickIndex = safe);
+  }
+
+  void _onWaterShutterDragUpdate(DragUpdateDetails details) {
+    _waterDragDelta += details.delta.dx;
+    const threshold = 22.0;
+    if (_waterDragDelta <= -threshold) {
+      _waterDragDelta = 0;
+      _shiftWaterQuickIndex(1);
+    } else if (_waterDragDelta >= threshold) {
+      _waterDragDelta = 0;
+      _shiftWaterQuickIndex(-1);
+    }
+  }
+
+  void _stopWaterRepeat() {
+    _waterRepeatTimer?.cancel();
+    _waterRepeatTimer = null;
+    _isWaterRepeatBusy = false;
+  }
+
+  void _startWaterRepeat(AppState app) {
+    _stopWaterRepeat();
+    _waterRepeatTimer = Timer.periodic(const Duration(milliseconds: 420), (_) {
+      if (_isWaterRepeatBusy) return;
+      _isWaterRepeatBusy = true;
+      _addWaterByAmount(app, _selectedWaterQuickOption.ml).whenComplete(() {
+        _isWaterRepeatBusy = false;
+      });
+    });
+  }
+
+  Widget _buildWaterQuickPill(
     BuildContext context, {
+    required int index,
     required _WaterQuickOption option,
-    required VoidCallback onTap,
   }) {
-    final theme = Theme.of(context);
-    final accent = theme.colorScheme.primary;
+    final isSelected = index == _selectedWaterQuickIndex;
+    final accent = Theme.of(context).colorScheme.primary;
     final label = _isZh ? option.labelZh : option.labelEn;
-    return SizedBox(
-      width: 116,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: accent.withValues(alpha: 0.23)),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  accent.withValues(alpha: 0.16),
-                  accent.withValues(alpha: 0.07),
-                ],
+    return GestureDetector(
+      onTap: () => _setWaterQuickIndex(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 170),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: isSelected
+              ? accent.withValues(alpha: 0.18)
+              : Colors.black.withValues(alpha: 0.04),
+          border: Border.all(
+            color: isSelected
+                ? accent.withValues(alpha: 0.55)
+                : Colors.black.withValues(alpha: 0.08),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(option.icon,
+                size: 16, color: isSelected ? accent : Colors.black54),
+            const SizedBox(width: 6),
+            Text(
+              '$label +${option.ml}',
+              style: AppTextStyles.caption(context).copyWith(
+                color: Colors.black87,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
               ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.88),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: accent.withValues(alpha: 0.18)),
-                  ),
-                  child: Icon(
-                    option.icon,
-                    size: 16,
-                    color: accent.withValues(alpha: 0.95),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.caption(context).copyWith(
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '+${option.ml} ml',
-                  style: AppTextStyles.body(context).copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
@@ -1925,6 +1954,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     final remaining = math.max(0, target - intake);
     final smartFillMl = remaining;
     final showBeverageChip = beverageIntake > 0;
+    final selectedOption = _selectedWaterQuickOption;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2023,23 +2053,141 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        SizedBox(
+                        Container(
                           width: double.infinity,
-                          height: 96,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: _waterQuickOptions.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 8),
-                            itemBuilder: (context, index) {
-                              final option = _waterQuickOptions[index];
-                              return _buildWaterQuickOptionCard(
-                                context,
-                                option: option,
-                                onTap: () => _addWaterByAmount(app, option.ml),
-                              );
-                            },
+                          padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.08),
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withValues(alpha: 0.18),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                '${_isZh ? selectedOption.labelZh : selectedOption.labelEn} +${selectedOption.ml} ml',
+                                style: AppTextStyles.body(context).copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onHorizontalDragUpdate:
+                                    _onWaterShutterDragUpdate,
+                                onHorizontalDragEnd: (_) => _waterDragDelta = 0,
+                                onHorizontalDragCancel: () =>
+                                    _waterDragDelta = 0,
+                                onTap: () =>
+                                    _addWaterByAmount(app, selectedOption.ml),
+                                onLongPressStart: (_) {
+                                  _addWaterByAmount(app, selectedOption.ml);
+                                  _startWaterRepeat(app);
+                                },
+                                onLongPressEnd: (_) => _stopWaterRepeat(),
+                                onLongPressCancel: _stopWaterRepeat,
+                                child: Center(
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    curve: Curves.easeOutCubic,
+                                    width: 118,
+                                    height: 118,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.66),
+                                        width: 2,
+                                      ),
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withValues(alpha: 0.74),
+                                          Theme.of(context).colorScheme.primary,
+                                        ],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withValues(alpha: 0.28),
+                                          blurRadius: 18,
+                                          offset: const Offset(0, 9),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.water_drop_rounded,
+                                          color: Colors.white,
+                                          size: 28,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '+${selectedOption.ml} ml',
+                                          style: AppTextStyles.title2(context)
+                                              .copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _isZh ? '點一下加入' : 'Tap to add',
+                                          style: AppTextStyles.caption(context)
+                                              .copyWith(
+                                            color: Colors.white
+                                                .withValues(alpha: 0.84),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _isZh
+                                    ? '左右滑動切換容量，長按可連續加水'
+                                    : 'Swipe to switch. Long press to repeat.',
+                                textAlign: TextAlign.center,
+                                style: AppTextStyles.caption(context)
+                                    .copyWith(color: Colors.black54),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 40,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  itemCount: _waterQuickOptions.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: 8),
+                                  itemBuilder: (context, index) =>
+                                      _buildWaterQuickPill(
+                                    context,
+                                    index: index,
+                                    option: _waterQuickOptions[index],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 10),
