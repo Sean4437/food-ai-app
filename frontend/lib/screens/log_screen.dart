@@ -26,6 +26,10 @@ enum _LogSection {
   weight,
 }
 
+enum _WaterManualAction {
+  clear,
+}
+
 class _WaterQuickOption {
   const _WaterQuickOption({
     required this.icon,
@@ -40,8 +44,21 @@ class _WaterQuickOption {
   final int ml;
 }
 
-class _LogScreenState extends State<LogScreen>
-    with TickerProviderStateMixin {
+class _WaterBubbleSpec {
+  const _WaterBubbleSpec({
+    required this.x,
+    required this.offset,
+    required this.radius,
+    required this.speed,
+  });
+
+  final double x;
+  final double offset;
+  final double radius;
+  final double speed;
+}
+
+class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
   late DateTime _selectedDate;
   late DateTime _currentMonth;
   late List<DateTime> _currentMonthDays;
@@ -1656,15 +1673,15 @@ class _LogScreenState extends State<LogScreen>
     required String value,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.035),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.black.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: Colors.black54),
+          Icon(icon, size: 16, color: Colors.black54),
           const SizedBox(width: 6),
           Text(
             '$label $value',
@@ -1723,7 +1740,8 @@ class _LogScreenState extends State<LogScreen>
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(26),
-                        border: Border.all(color: accent.withValues(alpha: 0.55)),
+                        border:
+                            Border.all(color: accent.withValues(alpha: 0.55)),
                         boxShadow: [
                           BoxShadow(
                             color: accent.withValues(alpha: 0.12),
@@ -1763,7 +1781,15 @@ class _LogScreenState extends State<LogScreen>
                                     CustomPaint(
                                       painter: _WaterWavePainter(
                                         phase: wavePhase,
-                                        color: Colors.white.withValues(alpha: 0.35),
+                                        color: Colors.white
+                                            .withValues(alpha: 0.35),
+                                      ),
+                                    ),
+                                    CustomPaint(
+                                      painter: _WaterBubblePainter(
+                                        phase: wavePhase,
+                                        color: Colors.white,
+                                        fillProgress: safeProgress,
                                       ),
                                     ),
                                   ],
@@ -1782,7 +1808,8 @@ class _LogScreenState extends State<LogScreen>
                                 ),
                                 child: Text(
                                   percentText,
-                                  style: AppTextStyles.caption(context).copyWith(
+                                  style:
+                                      AppTextStyles.caption(context).copyWith(
                                     fontWeight: FontWeight.w800,
                                     color: Colors.black87,
                                   ),
@@ -1825,6 +1852,7 @@ class _LogScreenState extends State<LogScreen>
     final progress = (target <= 0 ? 0.0 : (intake / target)).clamp(0.0, 1.0);
     final remaining = math.max(0, target - intake);
     final smartFillMl = remaining;
+    final showBeverageChip = beverageIntake > 0;
 
     String optionLabel(_WaterQuickOption option) {
       final name = _isZh ? option.labelZh : option.labelEn;
@@ -1858,8 +1886,10 @@ class _LogScreenState extends State<LogScreen>
                   children: [
                     Text(
                       _isZh ? '今日喝水' : 'Today Water',
-                      style: AppTextStyles.body(context)
-                          .copyWith(fontWeight: FontWeight.w700),
+                      style: AppTextStyles.body(context).copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     AnimatedSwitcher(
@@ -1882,7 +1912,10 @@ class _LogScreenState extends State<LogScreen>
                       child: Text(
                         '$intake / $target ml',
                         key: ValueKey('water-$intake-$target'),
-                        style: AppTextStyles.title2(context),
+                        style: AppTextStyles.title2(context).copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1902,59 +1935,134 @@ class _LogScreenState extends State<LogScreen>
                           label: _isZh ? '手動' : 'Manual',
                           value: '$manualIntake ml',
                         ),
-                        _buildWaterMetricChip(
-                          context,
-                          icon: Icons.local_drink_outlined,
-                          label: _isZh ? '飲料' : 'Beverage',
-                          value: '$beverageIntake ml',
-                        ),
+                        if (showBeverageChip)
+                          _buildWaterMetricChip(
+                            context,
+                            icon: Icons.local_drink_outlined,
+                            label: _isZh ? '飲料' : 'Beverage',
+                            value: '$beverageIntake ml',
+                          ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
                           width: double.infinity,
-                          height: 44,
+                          height: 48,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
                             itemCount: _waterQuickOptions.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(width: 8),
                             itemBuilder: (context, index) {
                               final option = _waterQuickOptions[index];
                               return FilledButton.tonalIcon(
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(0, 48),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  shape: const StadiumBorder(),
+                                ),
                                 onPressed: () =>
                                     _addWaterByAmount(app, option.ml),
-                                icon: Icon(option.icon, size: 16),
-                                label: Text(optionLabel(option)),
+                                icon: Icon(option.icon, size: 18),
+                                label: Text(
+                                  optionLabel(option),
+                                  style:
+                                      AppTextStyles.caption(context).copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               );
                             },
                           ),
                         ),
-                        const SizedBox(width: double.infinity, height: 4),
+                        const SizedBox(height: 10),
                         if (smartFillMl > 0)
-                          FilledButton.icon(
-                            onPressed: () => _addWaterByAmount(app, smartFillMl),
-                            icon: const Icon(Icons.bolt_outlined, size: 16),
-                            label: Text(
-                              _isZh
-                                  ? '補滿 +$smartFillMl ml'
-                                  : 'Top up +$smartFillMl ml',
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size.fromHeight(50),
+                                shape: const StadiumBorder(),
+                                textStyle: AppTextStyles.body(context).copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              onPressed: () =>
+                                  _addWaterByAmount(app, smartFillMl),
+                              icon: const Icon(Icons.bolt_outlined, size: 18),
+                              label: Text(
+                                _isZh
+                                    ? '補滿 +$smartFillMl ml'
+                                    : 'Top up +$smartFillMl ml',
+                              ),
                             ),
                           ),
-                        OutlinedButton.icon(
-                          onPressed: () =>
-                              _showCustomWaterInputDialog(context, app),
-                          icon: const Icon(Icons.edit_outlined, size: 16),
-                          label: Text(_isZh ? '自訂容量' : 'Custom'),
-                        ),
-                        TextButton(
-                          onPressed: () =>
-                              app.updateDailyWaterIntake(_selectedDate, 0),
-                          child: Text(_isZh ? '清空手動' : 'Clear manual'),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(46),
+                                  shape: const StadiumBorder(),
+                                ),
+                                onPressed: () =>
+                                    _showCustomWaterInputDialog(context, app),
+                                icon: const Icon(Icons.edit_outlined, size: 18),
+                                label: Text(_isZh ? '自訂容量' : 'Custom'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            PopupMenuButton<_WaterManualAction>(
+                              tooltip: _isZh ? '更多操作' : 'More actions',
+                              onSelected: (action) async {
+                                if (action != _WaterManualAction.clear) return;
+                                final confirm =
+                                    await _confirmClearManualWater(context);
+                                if (!confirm || !mounted) return;
+                                await app.updateDailyWaterIntake(
+                                  _selectedDate,
+                                  0,
+                                );
+                              },
+                              itemBuilder: (menuContext) => [
+                                PopupMenuItem<_WaterManualAction>(
+                                  value: _WaterManualAction.clear,
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.delete_outline,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _isZh ? '清空手動補水' : 'Clear manual water',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              child: Container(
+                                width: 46,
+                                height: 46,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  borderRadius: BorderRadius.circular(23),
+                                ),
+                                child: const Icon(
+                                  Icons.more_horiz,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -2045,9 +2153,8 @@ class _LogScreenState extends State<LogScreen>
                                   Text(
                                     '+${item.effectiveMl} ml',
                                     style: AppTextStyles.body(context).copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -2067,7 +2174,8 @@ class _LogScreenState extends State<LogScreen>
                                     child: Text(
                                       _hydrationSourceLabel(item.sourceTag),
                                       style: AppTextStyles.caption(context)
-                                          .copyWith(fontWeight: FontWeight.w600),
+                                          .copyWith(
+                                              fontWeight: FontWeight.w600),
                                     ),
                                   ),
                                 ],
@@ -2093,6 +2201,31 @@ class _LogScreenState extends State<LogScreen>
       ..stop()
       ..reset()
       ..forward();
+  }
+
+  Future<bool> _confirmClearManualWater(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(_isZh ? '清空手動補水？' : 'Clear manual water?'),
+        content: Text(
+          _isZh
+              ? '只會清空手動補水，不會刪除飲料補水紀錄。'
+              : 'Only manual water is cleared. Beverage hydration stays.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(_isZh ? '取消' : 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(_isZh ? '清空' : 'Clear'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
   }
 
   Future<void> _showCustomWaterInputDialog(
@@ -2218,7 +2351,8 @@ class _LogScreenState extends State<LogScreen>
 
     double? previousWeight;
     for (var i = 1; i <= 30; i++) {
-      final probe = app.dailyWeightRecordKg(_selectedDate.subtract(Duration(days: i)));
+      final probe =
+          app.dailyWeightRecordKg(_selectedDate.subtract(Duration(days: i)));
       if (probe != null) {
         previousWeight = probe;
         break;
@@ -2246,7 +2380,8 @@ class _LogScreenState extends State<LogScreen>
     final minWeight = trendValues.isEmpty ? null : trendValues.reduce(math.min);
     final maxWeight = trendValues.isEmpty ? null : trendValues.reduce(math.max);
 
-    final deltaPrev = previousWeight == null ? null : (displayWeight - previousWeight);
+    final deltaPrev =
+        previousWeight == null ? null : (displayWeight - previousWeight);
     final deltaAvg = avgWeight == null ? null : (displayWeight - avgWeight);
     final deltaRef = deltaPrev ?? deltaAvg ?? 0.0;
     final isStable = deltaRef.abs() < 0.05;
@@ -2318,7 +2453,8 @@ class _LogScreenState extends State<LogScreen>
                                       begin: Alignment.topCenter,
                                       end: Alignment.bottomCenter,
                                       colors: [
-                                        theme.colorScheme.primary.withValues(alpha: 0.5),
+                                        theme.colorScheme.primary
+                                            .withValues(alpha: 0.5),
                                         theme.colorScheme.primary,
                                       ],
                                     ),
@@ -2466,17 +2602,20 @@ class _LogScreenState extends State<LogScreen>
                     _buildWeightStatChip(
                       context,
                       label: _isZh ? '最低' : 'Min',
-                      value: '${(minWeight ?? displayWeight).toStringAsFixed(1)} kg',
+                      value:
+                          '${(minWeight ?? displayWeight).toStringAsFixed(1)} kg',
                     ),
                     _buildWeightStatChip(
                       context,
                       label: _isZh ? '平均' : 'Avg',
-                      value: '${(avgWeight ?? displayWeight).toStringAsFixed(1)} kg',
+                      value:
+                          '${(avgWeight ?? displayWeight).toStringAsFixed(1)} kg',
                     ),
                     _buildWeightStatChip(
                       context,
                       label: _isZh ? '最高' : 'Max',
-                      value: '${(maxWeight ?? displayWeight).toStringAsFixed(1)} kg',
+                      value:
+                          '${(maxWeight ?? displayWeight).toStringAsFixed(1)} kg',
                     ),
                   ],
                 ),
@@ -2833,7 +2972,8 @@ class _WaterWavePainter extends CustomPainter {
     final path = Path()..moveTo(0, midY);
 
     for (double x = 0; x <= size.width; x += 1.0) {
-      final y = midY + math.sin((x / size.width) * math.pi * 2 + phase) * amplitude;
+      final y =
+          midY + math.sin((x / size.width) * math.pi * 2 + phase) * amplitude;
       path.lineTo(x, y);
     }
 
@@ -2851,6 +2991,66 @@ class _WaterWavePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _WaterWavePainter oldDelegate) {
     return oldDelegate.phase != phase || oldDelegate.color != color;
+  }
+}
+
+class _WaterBubblePainter extends CustomPainter {
+  const _WaterBubblePainter({
+    required this.phase,
+    required this.color,
+    required this.fillProgress,
+  });
+
+  final double phase;
+  final Color color;
+  final double fillProgress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0 || fillProgress <= 0.01) return;
+
+    final normalizedPhase = (phase / (math.pi * 2)).remainder(1.0);
+    const specs = <_WaterBubbleSpec>[
+      _WaterBubbleSpec(x: 0.20, offset: 0.00, radius: 2.8, speed: 0.70),
+      _WaterBubbleSpec(x: 0.34, offset: 0.16, radius: 2.1, speed: 0.88),
+      _WaterBubbleSpec(x: 0.50, offset: 0.36, radius: 3.2, speed: 0.62),
+      _WaterBubbleSpec(x: 0.66, offset: 0.58, radius: 2.4, speed: 0.95),
+      _WaterBubbleSpec(x: 0.80, offset: 0.79, radius: 1.9, speed: 1.10),
+    ];
+
+    for (final spec in specs) {
+      final rawT =
+          ((normalizedPhase * spec.speed) + spec.offset).remainder(1.0);
+      final rise = Curves.easeOut.transform(rawT);
+      final y = size.height - (size.height * rise);
+      final sway = math.sin((rawT * math.pi * 2) + spec.offset * 7) * 3.4;
+      final x = (size.width * spec.x + sway)
+          .clamp(spec.radius + 1, size.width - spec.radius - 1)
+          .toDouble();
+      final alpha = (0.08 + (1 - rawT) * 0.20) * (0.45 + fillProgress * 0.55);
+      final bubblePaint = Paint()
+        ..color = color.withValues(alpha: alpha.clamp(0.06, 0.30))
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(x, y), spec.radius, bubblePaint);
+
+      final highlightPaint = Paint()
+        ..color = Colors.white.withValues(
+          alpha: (alpha * 0.8).clamp(0.04, 0.22),
+        )
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(
+        Offset(x - spec.radius * 0.28, y - spec.radius * 0.28),
+        spec.radius * 0.34,
+        highlightPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WaterBubblePainter oldDelegate) {
+    return oldDelegate.phase != phase ||
+        oldDelegate.color != color ||
+        oldDelegate.fillProgress != fillProgress;
   }
 }
 
