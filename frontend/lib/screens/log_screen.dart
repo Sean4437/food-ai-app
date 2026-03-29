@@ -1695,6 +1695,78 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildWaterQuickOptionCard(
+    BuildContext context, {
+    required _WaterQuickOption option,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    final label = _isZh ? option.labelZh : option.labelEn;
+    return SizedBox(
+      width: 116,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: accent.withValues(alpha: 0.23)),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  accent.withValues(alpha: 0.16),
+                  accent.withValues(alpha: 0.07),
+                ],
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.88),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: accent.withValues(alpha: 0.18)),
+                  ),
+                  child: Icon(
+                    option.icon,
+                    size: 16,
+                    color: accent.withValues(alpha: 0.95),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.caption(context).copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '+${option.ml} ml',
+                  style: AppTextStyles.body(context).copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildWaterBottle(
     BuildContext context, {
     required double progress,
@@ -1854,11 +1926,6 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     final smartFillMl = remaining;
     final showBeverageChip = beverageIntake > 0;
 
-    String optionLabel(_WaterQuickOption option) {
-      final name = _isZh ? option.labelZh : option.labelEn;
-      return '$name +${option.ml} ml';
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1948,9 +2015,17 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          _isZh ? '常用容器' : 'Quick containers',
+                          style: AppTextStyles.caption(context).copyWith(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         SizedBox(
                           width: double.infinity,
-                          height: 48,
+                          height: 96,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
@@ -1959,25 +2034,10 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                 const SizedBox(width: 8),
                             itemBuilder: (context, index) {
                               final option = _waterQuickOptions[index];
-                              return FilledButton.tonalIcon(
-                                style: FilledButton.styleFrom(
-                                  minimumSize: const Size(0, 48),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 10,
-                                  ),
-                                  shape: const StadiumBorder(),
-                                ),
-                                onPressed: () =>
-                                    _addWaterByAmount(app, option.ml),
-                                icon: Icon(option.icon, size: 18),
-                                label: Text(
-                                  optionLabel(option),
-                                  style:
-                                      AppTextStyles.caption(context).copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
+                              return _buildWaterQuickOptionCard(
+                                context,
+                                option: option,
+                                onTap: () => _addWaterByAmount(app, option.ml),
                               );
                             },
                           ),
@@ -1986,21 +2046,42 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                         if (smartFillMl > 0)
                           SizedBox(
                             width: double.infinity,
-                            child: FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size.fromHeight(50),
-                                shape: const StadiumBorder(),
-                                textStyle: AppTextStyles.body(context).copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withValues(alpha: 0.28),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
                               ),
-                              onPressed: () =>
-                                  _addWaterByAmount(app, smartFillMl),
-                              icon: const Icon(Icons.bolt_outlined, size: 18),
-                              label: Text(
-                                _isZh
-                                    ? '補滿 +$smartFillMl ml'
-                                    : 'Top up +$smartFillMl ml',
+                              child: FilledButton.icon(
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(52),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  textStyle:
+                                      AppTextStyles.body(context).copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                onPressed: () =>
+                                    _addWaterByAmount(app, smartFillMl),
+                                icon: const Icon(
+                                  Icons.auto_awesome_rounded,
+                                  size: 19,
+                                ),
+                                label: Text(
+                                  _isZh
+                                      ? '補滿 +$smartFillMl ml'
+                                      : 'Top up +$smartFillMl ml',
+                                ),
                               ),
                             ),
                           ),
