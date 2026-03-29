@@ -1824,15 +1824,11 @@ class _LogScreenState extends State<LogScreen>
     final beverageEntries = app.beverageHydrationEntries(_selectedDate);
     final progress = (target <= 0 ? 0.0 : (intake / target)).clamp(0.0, 1.0);
     final remaining = math.max(0, target - intake);
-    final smartFillMl = remaining <= 0
-        ? 0
-        : (remaining <= 120
-            ? remaining
-            : ((remaining / 50).round() * 50).clamp(120, 700));
+    final smartFillMl = remaining;
 
     String optionLabel(_WaterQuickOption option) {
       final name = _isZh ? option.labelZh : option.labelEn;
-      return '$name +${option.ml}ml';
+      return '$name +${option.ml} ml';
     }
 
     return Column(
@@ -1919,13 +1915,26 @@ class _LogScreenState extends State<LogScreen>
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        for (final option in _waterQuickOptions)
-                          FilledButton.tonalIcon(
-                            onPressed: () =>
-                                _addWaterByAmount(app, option.ml),
-                            icon: Icon(option.icon, size: 16),
-                            label: Text(optionLabel(option)),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _waterQuickOptions.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, index) {
+                              final option = _waterQuickOptions[index];
+                              return FilledButton.tonalIcon(
+                                onPressed: () =>
+                                    _addWaterByAmount(app, option.ml),
+                                icon: Icon(option.icon, size: 16),
+                                label: Text(optionLabel(option)),
+                              );
+                            },
                           ),
+                        ),
+                        const SizedBox(width: double.infinity, height: 4),
                         if (smartFillMl > 0)
                           FilledButton.icon(
                             onPressed: () => _addWaterByAmount(app, smartFillMl),
