@@ -52,6 +52,8 @@ const String _kAccessEntitlementsKey = 'access_entitlements';
 const String _kChatHistoryKey = 'chat_history';
 const String _kChatSummaryKey = 'chat_summary';
 const String _kRecentAuthEmailsKey = 'recent_auth_emails';
+const String _kWeekPlanCacheKey = 'week_plan_cache';
+const String _kWeekPlanReplanCacheKey = 'week_plan_replan_cache';
 const String _kMealReminderKeyPrefix = 'last_meal_reminder';
 const int _kAccessGraceHoursDefault = 24;
 const int _kRecentAuthEmailsMaxCount = 5;
@@ -794,21 +796,30 @@ class AppState extends ChangeNotifier {
     _cachedWeekPlan = plan;
     _cachedWeekPlanReplan = lastReplan;
     if (changed) {
+      _touchSettingsUpdatedAt();
       notifyListeners();
+      // ignore: discarded_futures
+      _saveOverrides();
     }
   }
 
   void updateCachedWeekPlanReplan(WeekPlanReplanResult? result) {
     if (_cachedWeekPlanReplan == result) return;
     _cachedWeekPlanReplan = result;
+    _touchSettingsUpdatedAt();
     notifyListeners();
+    // ignore: discarded_futures
+    _saveOverrides();
   }
 
   void clearCachedWeekPlan() {
     if (_cachedWeekPlan == null && _cachedWeekPlanReplan == null) return;
     _cachedWeekPlan = null;
     _cachedWeekPlanReplan = null;
+    _touchSettingsUpdatedAt();
     notifyListeners();
+    // ignore: discarded_futures
+    _saveOverrides();
   }
 
   String buildAiContext() {
@@ -8876,6 +8887,9 @@ class AppState extends ChangeNotifier {
     final failedMealDeletes = overrides['failed_meal_delete_sync_ids'];
     final failedCustomFoods = overrides['failed_custom_food_sync_ids'];
     final failedCustomDeletes = overrides['failed_custom_food_delete_sync_ids'];
+    final cachedWeekPlan = _parseWeekPlanCache(overrides[_kWeekPlanCacheKey]);
+    final cachedWeekPlanReplan =
+        _parseWeekPlanReplanCache(overrides[_kWeekPlanReplanCacheKey]);
     if (day != null) {
       day.forEach((key, value) {
         if (value is Map<String, dynamic>) {
@@ -8941,6 +8955,8 @@ class AppState extends ChangeNotifier {
         }
       }
     }
+    _cachedWeekPlan = cachedWeekPlan;
+    _cachedWeekPlanReplan = cachedWeekPlanReplan;
     _mockSubscriptionActive = _meta[_kMockSubscriptionKey] == 'true';
     _mockSubscriptionPlanId = _meta[_kMockSubscriptionPlanKey];
     _enforceMockSubscriptionFlag();
@@ -10472,6 +10488,9 @@ class AppState extends ChangeNotifier {
       'failed_custom_food_delete_sync_ids':
           _failedCustomFoodDeleteSyncIds.toList(),
       'custom_foods': customFoods.map((item) => item.toJson()).toList(),
+      if (_cachedWeekPlan != null) _kWeekPlanCacheKey: _cachedWeekPlan!.toJson(),
+      if (_cachedWeekPlanReplan != null)
+        _kWeekPlanReplanCacheKey: _cachedWeekPlanReplan!.toJson(),
     });
   }
 
@@ -10594,12 +10613,43 @@ class AppState extends ChangeNotifier {
     return parsed;
   }
 
+  Map<String, dynamic>? _asStringDynamicMap(dynamic raw) {
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) {
+      return raw.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return null;
+  }
+
+  WeekPlanData? _parseWeekPlanCache(dynamic raw) {
+    final map = _asStringDynamicMap(raw);
+    if (map == null) return null;
+    try {
+      return WeekPlanData.fromJson(map);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  WeekPlanReplanResult? _parseWeekPlanReplanCache(dynamic raw) {
+    final map = _asStringDynamicMap(raw);
+    if (map == null) return null;
+    try {
+      return WeekPlanReplanResult.fromJson(map);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Map<String, dynamic> _settingsOverridesToSyncMap() {
     return {
       'day': _dayOverrides,
       'meal': _mealOverrides,
       'week': _weekOverrides,
       'meta': _settingsMetaToSync(),
+      if (_cachedWeekPlan != null) _kWeekPlanCacheKey: _cachedWeekPlan!.toJson(),
+      if (_cachedWeekPlanReplan != null)
+        _kWeekPlanReplanCacheKey: _cachedWeekPlanReplan!.toJson(),
     };
   }
 
@@ -10607,6 +10657,9 @@ class AppState extends ChangeNotifier {
     final day = _parseOverridesSection(overrides['day']);
     final meal = _parseOverridesSection(overrides['meal']);
     final week = _parseOverridesSection(overrides['week']);
+    final cachedWeekPlan = _parseWeekPlanCache(overrides[_kWeekPlanCacheKey]);
+    final cachedWeekPlanReplan =
+        _parseWeekPlanReplanCache(overrides[_kWeekPlanReplanCacheKey]);
     final metaRaw = overrides['meta'];
     final meta = <String, String>{};
     if (metaRaw is Map) {
@@ -10626,6 +10679,8 @@ class AppState extends ChangeNotifier {
     _weekOverrides
       ..clear()
       ..addAll(week);
+    _cachedWeekPlan = cachedWeekPlan;
+    _cachedWeekPlanReplan = cachedWeekPlanReplan;
     _meta.removeWhere((key, _) => _isSettingsMetaKey(key));
     _meta.addAll(meta);
     _mockSubscriptionActive = _meta[_kMockSubscriptionKey] == 'true';

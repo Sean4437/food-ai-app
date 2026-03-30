@@ -141,6 +141,13 @@ class WeekPlanMacroTarget {
   final double carbG;
   final double fatG;
 
+  Map<String, dynamic> toJson() => {
+        'kcal': kcal,
+        'protein_g': proteinG,
+        'carb_g': carbG,
+        'fat_g': fatG,
+      };
+
   factory WeekPlanMacroTarget.fromJson(Map<String, dynamic> json) {
     int parseInt(dynamic value) {
       if (value is int) return value;
@@ -188,6 +195,19 @@ class WeekPlanMealItem {
   final bool locked;
   final bool eaten;
 
+  Map<String, dynamic> toJson() => {
+        'meal_type': mealType,
+        'dish_name': dishName,
+        'scenario': scenario,
+        'source': source,
+        'kcal': kcal,
+        'protein_g': proteinG,
+        'carb_g': carbG,
+        'fat_g': fatG,
+        'locked': locked,
+        'eaten': eaten,
+      };
+
   factory WeekPlanMealItem.fromJson(Map<String, dynamic> json) {
     int parseInt(dynamic value) {
       if (value is int) return value;
@@ -227,6 +247,12 @@ class WeekPlanDayPlan {
   final WeekPlanMacroTarget totals;
   final List<WeekPlanMealItem> meals;
 
+  Map<String, dynamic> toJson() => {
+        'date': date,
+        'totals': totals.toJson(),
+        'meals': meals.map((item) => item.toJson()).toList(),
+      };
+
   factory WeekPlanDayPlan.fromJson(Map<String, dynamic> json) {
     final rawMeals = json['meals'];
     final parsedMeals = <WeekPlanMealItem>[];
@@ -264,6 +290,11 @@ class WeekPlanValidation {
 
   final bool passed;
   final List<String> warnings;
+
+  Map<String, dynamic> toJson() => {
+        'passed': passed,
+        'warnings': warnings,
+      };
 
   factory WeekPlanValidation.fromJson(Map<String, dynamic> json) {
     final rawWarnings = json['warnings'];
@@ -305,6 +336,19 @@ class WeekPlanData {
   final WeekPlanMacroTarget dailyTarget;
   final List<WeekPlanDayPlan> dayPlans;
   final WeekPlanValidation validation;
+
+  Map<String, dynamic> toJson() => {
+        'plan_id': planId,
+        'version': version,
+        'start_date': startDate,
+        'end_date': endDate,
+        'goal_effective': goalEffective,
+        'meal_scenarios_effective': mealScenariosEffective.toJson(),
+        'mix_ratio_effective': mixRatioEffective?.toJson(),
+        'daily_target': dailyTarget.toJson(),
+        'day_plans': dayPlans.map((item) => item.toJson()).toList(),
+        'validation': validation.toJson(),
+      };
 
   factory WeekPlanData.fromJson(Map<String, dynamic> json) {
     int parseInt(dynamic value) {
@@ -387,6 +431,13 @@ class WeekPlanReplanResult {
   final int oldVersion;
   final int newVersion;
   final List<String> changedDays;
+
+  Map<String, dynamic> toJson() => {
+        'plan_id': planId,
+        'old_version': oldVersion,
+        'new_version': newVersion,
+        'changed_days': changedDays,
+      };
 
   factory WeekPlanReplanResult.fromJson(Map<String, dynamic> json) {
     int parseInt(dynamic value) {
