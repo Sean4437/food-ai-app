@@ -526,6 +526,19 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     _lastJumpKey = '';
   }
 
+  void _jumpToLatestMealDate(AppState app) {
+    if (app.entries.isEmpty) return;
+    final latest = app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
+    final target =
+        DateTime(latest.time.year, latest.time.month, latest.time.day);
+    setState(() {
+      _selectedDate = target;
+      _currentMonth = DateTime(target.year, target.month, 1);
+      _currentMonthDays = _daysInMonth(_currentMonth);
+      _lastJumpKey = '';
+    });
+  }
+
   bool _isSameMonth(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month;
 
@@ -3007,31 +3020,9 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     final app = AppStateScope.of(context);
     final theme = Theme.of(context);
     final appTheme = theme.extension<AppTheme>()!;
-    var effectiveDate = _selectedDate;
-    var effectiveMonth = _currentMonth;
-    var effectiveDays = _currentMonthDays;
-    var groupsByType = app.mealGroupsByTypeForDate(effectiveDate);
+    final groupsByType = app.mealGroupsByTypeForDate(_selectedDate);
     var hasAnyGroup = groupsByType.values.any((groups) => groups.isNotEmpty);
-    if (_activeSection == _LogSection.meals &&
-        !hasAnyGroup &&
-        app.entries.isNotEmpty) {
-      final latest =
-          app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
-      effectiveDate =
-          DateTime(latest.time.year, latest.time.month, latest.time.day);
-      effectiveMonth = DateTime(effectiveDate.year, effectiveDate.month, 1);
-      effectiveDays = _daysInMonth(effectiveMonth);
-      groupsByType = app.mealGroupsByTypeForDate(effectiveDate);
-      hasAnyGroup = groupsByType.values.any((groups) => groups.isNotEmpty);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _selectedDate = effectiveDate;
-        _currentMonth = effectiveMonth;
-        _currentMonthDays = effectiveDays;
-        _lastJumpKey = '';
-      });
-    }
-    final days = effectiveDays;
+    final days = _currentMonthDays;
     if (!app.trialChecked && app.isSupabaseSignedIn) {
       return AppBackground(
         child: Scaffold(
@@ -3212,6 +3203,15 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                       .copyWith(color: Colors.black54),
                                 ),
                               ),
+                              if (app.entries.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                TextButton(
+                                  onPressed: () => _jumpToLatestMealDate(app),
+                                  child: Text(
+                                    _isZh ? '跳到最近紀錄' : 'Jump to latest',
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
