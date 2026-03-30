@@ -2650,7 +2650,11 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildWeightSection(BuildContext context, AppState app) {
-    final theme = Theme.of(context);
+    const cardBg = Color(0xFFFFFFFF);
+    const primary = Color(0xFF6FCF97);
+    const primaryText = Color(0xFF1F2937);
+    const secondaryText = Color(0xFF6B7280);
+
     final recorded = app.dailyWeightRecordKg(_selectedDate);
     final baseline = app.latestWeightBaselineKg(_selectedDate);
     final displayWeight = recorded ?? baseline;
@@ -2691,26 +2695,39 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     final deltaAvg = avgWeight == null ? null : (displayWeight - avgWeight);
     final deltaRef = deltaPrev ?? deltaAvg ?? 0.0;
     final isStable = deltaRef.abs() < 0.05;
-    final trendColor = isStable
-        ? Colors.black54
-        : (deltaRef > 0 ? Colors.deepOrange : const Color(0xFF2B8F6A));
+    final trendColor =
+        isStable ? secondaryText : (deltaRef > 0 ? Colors.deepOrange : primary);
     final trendLabel = isStable
-        ? (_isZh ? '持平中' : 'Stable')
+        ? (_isZh ? '趨勢穩定' : 'Stable')
         : (deltaRef > 0
-            ? (_isZh ? '上升中' : 'Trending up')
-            : (_isZh ? '下降中' : 'Trending down'));
+            ? (_isZh ? '小幅上升' : 'Trending up')
+            : (_isZh ? '穩定下降' : 'Trending down'));
+    final deltaPrevText = deltaPrev == null
+        ? (_isZh ? '-- kg vs 昨日' : '-- kg vs yesterday')
+        : '${deltaPrev > 0 ? '+' : ''}${deltaPrev.toStringAsFixed(1)} kg ${_isZh ? 'vs 昨日' : 'vs yesterday'}';
 
-    String deltaText(double? value) {
-      if (value == null) return _isZh ? '暫無資料' : 'N/A';
-      final sign = value > 0 ? '+' : '';
-      return '$sign${value.toStringAsFixed(1)} kg';
+    int? highlightedIndex;
+    if (trendPoints.isNotEmpty && trendPoints.last.value != null) {
+      highlightedIndex = trendPoints.length - 1;
+    } else {
+      for (var i = trendPoints.length - 1; i >= 0; i--) {
+        if (trendPoints[i].value != null) {
+          highlightedIndex = i;
+          break;
+        }
+      }
     }
 
-    final gaugeMin = (minWeight ?? displayWeight) - 0.6;
-    final gaugeMax = (maxWeight ?? displayWeight) + 0.6;
-    final gaugeProgress = gaugeMax <= gaugeMin
-        ? 0.5
-        : ((displayWeight - gaugeMin) / (gaugeMax - gaugeMin)).clamp(0.0, 1.0);
+    ButtonStyle secondaryButtonStyle() {
+      return OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(48),
+        side: BorderSide(color: primary.withValues(alpha: 0.55)),
+        foregroundColor: primaryText,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2718,161 +2735,81 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardBg,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
+                blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
             children: [
-              SizedBox(
-                width: 84,
-                height: 190,
-                child: Column(
-                  children: [
-                    Icon(Icons.monitor_weight_outlined,
-                        color: theme.colorScheme.primary, size: 22),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Stack(
-                          children: [
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: FractionallySizedBox(
-                                heightFactor: gaugeProgress,
-                                widthFactor: 1,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        theme.colorScheme.primary
-                                            .withValues(alpha: 0.5),
-                                        theme.colorScheme.primary,
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Center(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.78),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  '${(gaugeProgress * 100).round()}%',
-                                  style: AppTextStyles.caption(context)
-                                      .copyWith(fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+              Text(
+                _isZh ? '今日體重' : 'Today Weight',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: primaryText,
                 ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _isZh ? '今日體重' : 'Today Weight',
-                      style: AppTextStyles.body(context)
-                          .copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${displayWeight.toStringAsFixed(1)} kg',
-                      style: AppTextStyles.title2(context),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: trendColor.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            trendLabel,
-                            style: AppTextStyles.caption(context).copyWith(
-                              color: trendColor,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildWeightStatChip(
-                          context,
-                          label: _isZh ? '較昨天' : 'vs yesterday',
-                          value: deltaText(deltaPrev),
-                          valueColor: deltaPrev == null
-                              ? Colors.black87
-                              : (deltaPrev > 0
-                                  ? Colors.deepOrange
-                                  : const Color(0xFF2B8F6A)),
-                        ),
-                        _buildWeightStatChip(
-                          context,
-                          label: _isZh ? '較7日均值' : 'vs 7-day avg',
-                          value: deltaText(deltaAvg),
-                          valueColor: deltaAvg == null
-                              ? Colors.black87
-                              : (deltaAvg > 0
-                                  ? Colors.deepOrange
-                                  : const Color(0xFF2B8F6A)),
-                        ),
-                      ],
-                    ),
-                  ],
+              const SizedBox(height: 8),
+              Text(
+                '${displayWeight.toStringAsFixed(1)} kg',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                  color: primaryText,
                 ),
               ),
+              const SizedBox(height: 6),
+              Text(
+                deltaPrevText,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: deltaPrev == null
+                      ? secondaryText
+                      : (deltaPrev > 0 ? Colors.deepOrange : primary),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                trendLabel,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: trendColor,
+                ),
+              ),
+              if (recorded == null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _isZh
+                      ? '今日未記錄，顯示最近基準值'
+                      : 'Showing latest baseline (no record today)',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: secondaryText,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardBg,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
+                blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
             ],
@@ -2880,27 +2817,38 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _isZh ? '近7天趨勢' : 'Last 7 days trend',
-                style: AppTextStyles.body(context)
-                    .copyWith(fontWeight: FontWeight.w700),
+              const Text(
+                '近 7 天趨勢',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: primaryText,
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               if (trendValues.isEmpty)
                 Text(
                   _isZh ? '還沒有體重資料。' : 'No weight data yet.',
-                  style: AppTextStyles.caption(context)
-                      .copyWith(color: Colors.black54),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: secondaryText,
+                  ),
                 )
               else ...[
                 SizedBox(
-                  height: 140,
+                  height: 150,
                   child: _CalorieHistoryChart(
                     points: trendPoints,
-                    lineColor: theme.colorScheme.primary,
+                    lineColor: primary,
+                    showArea: false,
+                    showTargetLines: false,
+                    showExtremaLabels: false,
+                    lineWidth: 2,
+                    highlightIndex: highlightedIndex,
+                    highlightColor: const Color(0xFF36B977),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -2929,16 +2877,16 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardBg,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
+                blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
             ],
@@ -2947,31 +2895,54 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _isZh ? '快速記錄' : 'Quick actions',
-                style: AppTextStyles.body(context)
-                    .copyWith(fontWeight: FontWeight.w700),
+                _isZh ? '快速操作' : 'Quick actions',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: primaryText,
+                ),
               ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+              const SizedBox(height: 12),
+              Row(
                 children: [
-                  OutlinedButton(
-                    onPressed: () => _adjustWeightForDate(app, -0.1),
-                    child: const Text('-0.1'),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: secondaryButtonStyle(),
+                      onPressed: () => _adjustWeightForDate(app, -0.1),
+                      child: const Text('-0.1'),
+                    ),
                   ),
-                  OutlinedButton(
-                    onPressed: () => _adjustWeightForDate(app, 0.1),
-                    child: const Text('+0.1'),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: secondaryButtonStyle(),
+                      onPressed: () => _adjustWeightForDate(app, 0.1),
+                      child: const Text('+0.1'),
+                    ),
                   ),
-                  FilledButton.tonal(
-                    onPressed: () => _showWeightInputDialog(context, app),
-                    child: Text(_isZh ? '手動輸入' : 'Input'),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        backgroundColor: primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () => _showWeightInputDialog(context, app),
+                      child: Text(_isZh ? '輸入' : 'Input'),
+                    ),
                   ),
-                  TextButton(
-                    onPressed: () =>
-                        app.updateDailyWeightRecordKg(_selectedDate, null),
-                    child: Text(_isZh ? '清除今日' : 'Clear today'),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: secondaryButtonStyle(),
+                      onPressed: () =>
+                          app.updateDailyWeightRecordKg(_selectedDate, null),
+                      child: Text(_isZh ? '清除' : 'Clear'),
+                    ),
                   ),
                 ],
               ),
@@ -3382,6 +3353,12 @@ class _CalorieHistoryChart extends StatelessWidget {
     this.targetMin,
     this.targetMax,
     this.targetLabel,
+    this.showArea = true,
+    this.showTargetLines = true,
+    this.showExtremaLabels = true,
+    this.lineWidth = 3,
+    this.highlightIndex,
+    this.highlightColor,
   });
 
   final List<_HistoryPoint> points;
@@ -3389,6 +3366,12 @@ class _CalorieHistoryChart extends StatelessWidget {
   final double? targetMin;
   final double? targetMax;
   final String? targetLabel;
+  final bool showArea;
+  final bool showTargetLines;
+  final bool showExtremaLabels;
+  final double lineWidth;
+  final int? highlightIndex;
+  final Color? highlightColor;
 
   @override
   Widget build(BuildContext context) {
@@ -3408,6 +3391,12 @@ class _CalorieHistoryChart extends StatelessWidget {
             targetMin: targetMin,
             targetMax: targetMax,
             targetLabel: targetLabel,
+            showArea: showArea,
+            showTargetLines: showTargetLines,
+            showExtremaLabels: showExtremaLabels,
+            lineWidth: lineWidth,
+            highlightIndex: highlightIndex,
+            highlightColor: highlightColor,
           ),
         );
       },
@@ -3422,6 +3411,12 @@ class _CalorieHistoryPainter extends CustomPainter {
     this.targetMin,
     this.targetMax,
     this.targetLabel,
+    required this.showArea,
+    required this.showTargetLines,
+    required this.showExtremaLabels,
+    required this.lineWidth,
+    this.highlightIndex,
+    this.highlightColor,
   });
 
   final List<_HistoryPoint> points;
@@ -3429,6 +3424,12 @@ class _CalorieHistoryPainter extends CustomPainter {
   final double? targetMin;
   final double? targetMax;
   final String? targetLabel;
+  final bool showArea;
+  final bool showTargetLines;
+  final bool showExtremaLabels;
+  final double lineWidth;
+  final int? highlightIndex;
+  final Color? highlightColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -3490,30 +3491,38 @@ class _CalorieHistoryPainter extends CustomPainter {
 
     final linePaint = Paint()
       ..color = lineColor
-      ..strokeWidth = 3
+      ..strokeWidth = lineWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
 
     for (final segment in segments) {
       if (segment.length == 1) {
-        canvas.drawCircle(
-            segment.first, 3, linePaint..style = PaintingStyle.fill);
+        canvas.drawCircle(segment.first, math.max(2.5, lineWidth * 0.9),
+            linePaint..style = PaintingStyle.fill);
         linePaint.style = PaintingStyle.stroke;
         continue;
       }
       final path = _smoothPath(segment);
-      final areaPath = Path.from(path)
-        ..lineTo(segment.last.dx, chartRect.bottom)
-        ..lineTo(segment.first.dx, chartRect.bottom)
-        ..close();
-      canvas.drawPath(areaPath, areaPaint);
+      if (showArea) {
+        final areaPath = Path.from(path)
+          ..lineTo(segment.last.dx, chartRect.bottom)
+          ..lineTo(segment.first.dx, chartRect.bottom)
+          ..close();
+        canvas.drawPath(areaPath, areaPaint);
+      }
       canvas.drawPath(path, linePaint);
     }
 
-    _drawTargetLines(canvas, chartRect, minY, maxY);
+    if (showTargetLines) {
+      _drawTargetLines(canvas, chartRect, minY, maxY);
+    }
 
-    _drawHighLowLabels(canvas, chartRect, minY, maxY);
+    if (showExtremaLabels) {
+      _drawHighLowLabels(canvas, chartRect, minY, maxY);
+    }
+
+    _drawHighlightPoint(canvas, chartRect, minY, maxY, xStep);
   }
 
   void _drawTargetLines(
@@ -3661,12 +3670,48 @@ class _CalorieHistoryPainter extends CustomPainter {
     }
   }
 
+  void _drawHighlightPoint(
+    Canvas canvas,
+    Rect chartRect,
+    double minY,
+    double maxY,
+    double xStep,
+  ) {
+    if (highlightIndex == null || points.isEmpty) return;
+    final idx = highlightIndex!.clamp(0, points.length - 1);
+    final value = points[idx].value;
+    if (value == null) return;
+    final t = ((value - minY) / (maxY - minY)).clamp(0.0, 1.0);
+    final point = Offset(
+      chartRect.left + xStep * idx,
+      chartRect.bottom - t * chartRect.height,
+    );
+    final fillPaint = Paint()
+      ..color = highlightColor ?? lineColor
+      ..style = PaintingStyle.fill;
+    final strokePaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    final radius = math.max(4.5, lineWidth + 2);
+    canvas.drawCircle(point, radius, fillPaint);
+    canvas.drawCircle(point, radius, strokePaint);
+  }
+
   @override
   bool shouldRepaint(covariant _CalorieHistoryPainter oldDelegate) {
     if (oldDelegate.lineColor != lineColor) return true;
     if (oldDelegate.targetMin != targetMin ||
         oldDelegate.targetMax != targetMax ||
         oldDelegate.targetLabel != targetLabel) {
+      return true;
+    }
+    if (oldDelegate.showArea != showArea ||
+        oldDelegate.showTargetLines != showTargetLines ||
+        oldDelegate.showExtremaLabels != showExtremaLabels ||
+        oldDelegate.lineWidth != lineWidth ||
+        oldDelegate.highlightIndex != highlightIndex ||
+        oldDelegate.highlightColor != highlightColor) {
       return true;
     }
     if (oldDelegate.points.length != points.length) return true;
