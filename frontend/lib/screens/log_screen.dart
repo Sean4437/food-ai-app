@@ -1893,19 +1893,29 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         }
 
         // Place beverage/manual labels as centered stacked lines in lower layer.
-        final tagsMinTop = amountTop + amountTextH + minGap;
+        final tagsLowerBoundCandidate = amountTop + amountTextH + minGap;
         const tagsMaxTop = liquidHeight - tagTextH - 4;
+        final tagsMinTop =
+            math.min(tagsLowerBoundCandidate, tagsMaxTop).toDouble();
+
+        // For empty day, keep two tags in stable bottom positions.
+        if (intakeMl <= 0) {
+          beverageTagTop = math.max(tagsMinTop, tagsMaxTop - (tagTextH + 14));
+          manualTagTop = math.max(tagsMinTop, tagsMaxTop - 2);
+        }
+
         beverageTagTop =
             beverageTagTop.clamp(tagsMinTop, tagsMaxTop).toDouble();
         manualTagTop = manualTagTop.clamp(tagsMinTop, tagsMaxTop).toDouble();
-        if ((manualTagTop - beverageTagTop).abs() < minGap) {
-          if (beverageTagTop <= manualTagTop) {
-            manualTagTop =
-                (beverageTagTop + minGap).clamp(tagsMinTop, tagsMaxTop);
-          } else {
-            beverageTagTop =
-                (manualTagTop + minGap).clamp(tagsMinTop, tagsMaxTop);
-          }
+
+        // Enforce stacked spacing: beverage on top, manual below.
+        if (manualTagTop - beverageTagTop < minGap) {
+          manualTagTop = beverageTagTop + minGap;
+        }
+        if (manualTagTop > tagsMaxTop) {
+          manualTagTop = tagsMaxTop;
+          beverageTagTop =
+              (manualTagTop - minGap).clamp(tagsMinTop, tagsMaxTop);
         }
 
         final amountColor =
