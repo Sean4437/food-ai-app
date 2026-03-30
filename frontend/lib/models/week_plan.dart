@@ -128,6 +128,78 @@ class WeekPlanMealScenarios {
   }
 }
 
+class WeekPlanFixedMeal {
+  const WeekPlanFixedMeal({
+    required this.mealType,
+    required this.customFoodId,
+    required this.customFoodName,
+    required this.weekdays,
+    required this.kcal,
+    required this.proteinG,
+    required this.carbG,
+    required this.fatG,
+  });
+
+  final String mealType;
+  final String customFoodId;
+  final String customFoodName;
+  final List<int> weekdays;
+  final int kcal;
+  final double proteinG;
+  final double carbG;
+  final double fatG;
+
+  Map<String, dynamic> toJson() => {
+        'meal_type': mealType,
+        'custom_food_id': customFoodId,
+        'custom_food_name': customFoodName,
+        'weekdays': weekdays,
+        'kcal': kcal,
+        'protein_g': proteinG,
+        'carb_g': carbG,
+        'fat_g': fatG,
+      };
+
+  factory WeekPlanFixedMeal.fromJson(Map<String, dynamic> json) {
+    int parseInt(dynamic value) {
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    double parseDouble(dynamic value) {
+      if (value is double) return value;
+      if (value is num) return value.toDouble();
+      return double.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    final rawWeekdays = json['weekdays'];
+    final weekdays = <int>[];
+    if (rawWeekdays is List) {
+      for (final item in rawWeekdays) {
+        final day = parseInt(item);
+        if (day >= 1 && day <= 7 && !weekdays.contains(day)) {
+          weekdays.add(day);
+        }
+      }
+    }
+    if (weekdays.isEmpty) {
+      weekdays.addAll(const <int>[1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    return WeekPlanFixedMeal(
+      mealType: (json['meal_type'] ?? '').toString(),
+      customFoodId: (json['custom_food_id'] ?? '').toString(),
+      customFoodName: (json['custom_food_name'] ?? '').toString(),
+      weekdays: weekdays,
+      kcal: parseInt(json['kcal']),
+      proteinG: parseDouble(json['protein_g']),
+      carbG: parseDouble(json['carb_g']),
+      fatG: parseDouble(json['fat_g']),
+    );
+  }
+}
+
 class WeekPlanMacroTarget {
   const WeekPlanMacroTarget({
     required this.kcal,
@@ -320,6 +392,7 @@ class WeekPlanData {
     required this.endDate,
     required this.goalEffective,
     required this.mealScenariosEffective,
+    required this.fixedMealsEffective,
     required this.dailyTarget,
     required this.dayPlans,
     required this.validation,
@@ -332,6 +405,7 @@ class WeekPlanData {
   final String endDate;
   final String goalEffective;
   final WeekPlanMealScenarios mealScenariosEffective;
+  final List<WeekPlanFixedMeal> fixedMealsEffective;
   final WeekPlanMixRatio? mixRatioEffective;
   final WeekPlanMacroTarget dailyTarget;
   final List<WeekPlanDayPlan> dayPlans;
@@ -344,6 +418,8 @@ class WeekPlanData {
         'end_date': endDate,
         'goal_effective': goalEffective,
         'meal_scenarios_effective': mealScenariosEffective.toJson(),
+        'fixed_meals_effective':
+            fixedMealsEffective.map((item) => item.toJson()).toList(),
         'mix_ratio_effective': mixRatioEffective?.toJson(),
         'daily_target': dailyTarget.toJson(),
         'day_plans': dayPlans.map((item) => item.toJson()).toList(),
@@ -390,6 +466,20 @@ class WeekPlanData {
             ? WeekPlanMealScenarios.fromMixRatio(mixRatio)
             : WeekPlanMealScenarios.fromJson(const <String, dynamic>{});
 
+    final rawFixedMeals = json['fixed_meals_effective'];
+    final fixedMeals = <WeekPlanFixedMeal>[];
+    if (rawFixedMeals is List) {
+      for (final item in rawFixedMeals) {
+        if (item is Map<String, dynamic>) {
+          fixedMeals.add(WeekPlanFixedMeal.fromJson(item));
+        } else if (item is Map) {
+          fixedMeals.add(WeekPlanFixedMeal.fromJson(
+            item.map((k, v) => MapEntry(k.toString(), v)),
+          ));
+        }
+      }
+    }
+
     final rawDailyTarget = json['daily_target'];
     final dailyTargetMap = rawDailyTarget is Map<String, dynamic>
         ? rawDailyTarget
@@ -411,6 +501,7 @@ class WeekPlanData {
       endDate: (json['end_date'] ?? '').toString(),
       goalEffective: (json['goal_effective'] ?? '').toString(),
       mealScenariosEffective: mealScenarios,
+      fixedMealsEffective: fixedMeals,
       mixRatioEffective: mixRatio,
       dailyTarget: WeekPlanMacroTarget.fromJson(dailyTargetMap),
       dayPlans: days,

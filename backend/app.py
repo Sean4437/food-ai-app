@@ -182,6 +182,17 @@ class WeekPlanMealScenarios(BaseModel):
     snack: List[str] = Field(default_factory=list)
 
 
+class WeekPlanFixedMeal(BaseModel):
+    meal_type: str
+    custom_food_id: str
+    custom_food_name: str
+    weekdays: List[int] = Field(default_factory=list)
+    kcal: int
+    protein_g: float = 0.0
+    carb_g: float = 0.0
+    fat_g: float = 0.0
+
+
 class WeekPlanConstraints(BaseModel):
     daily_budget_twd: Optional[int] = None
     max_prep_minutes: Optional[int] = None
@@ -200,6 +211,7 @@ class WeekPlanGenerateRequest(BaseModel):
     profile_goal: Optional[str] = None
     sync_goal_to_profile: bool = False
     meal_scenarios: Optional[WeekPlanMealScenarios] = None
+    fixed_meals: List[WeekPlanFixedMeal] = Field(default_factory=list)
     mix_ratio: Optional[WeekPlanMixRatio] = None
     constraints: Optional[WeekPlanConstraints] = None
 
@@ -242,6 +254,7 @@ class WeekPlanGenerateResponse(BaseModel):
     end_date: str
     goal_effective: str
     meal_scenarios_effective: WeekPlanMealScenarios
+    fixed_meals_effective: List[WeekPlanFixedMeal] = Field(default_factory=list)
     mix_ratio_effective: Optional[WeekPlanMixRatio] = None
     daily_target: WeekPlanMacroTarget
     day_plans: List[WeekPlanDayPlan]
@@ -661,6 +674,66 @@ def _normalize_meal_scenarios(
     return normalized
 
 
+def _normalize_fixed_meals(raw_rules: List[WeekPlanFixedMeal]) -> List[Dict[str, Any]]:
+    normalized: List[Dict[str, Any]] = []
+    seen_keys: set[str] = set()
+    for raw in raw_rules:
+        meal_type = str(raw.meal_type or "").strip().lower()
+        if meal_type not in _week_plan_meal_types:
+            raise HTTPException(status_code=400, detail="invalid_fixed_meals")
+
+        custom_food_id = str(raw.custom_food_id or "").strip()
+        custom_food_name = str(raw.custom_food_name or "").strip()
+        if not custom_food_id or not custom_food_name:
+            raise HTTPException(status_code=400, detail="invalid_fixed_meals")
+
+        weekdays_raw = raw.weekdays if isinstance(raw.weekdays, list) else []
+        weekday_values: List[int] = []
+        weekday_seen: set[int] = set()
+        for item in weekdays_raw:
+            try:
+                day = int(item)
+            except Exception:
+                raise HTTPException(status_code=400, detail="invalid_fixed_meals")
+            if day < 1 or day > 7:
+                raise HTTPException(status_code=400, detail="invalid_fixed_meals")
+            if day in weekday_seen:
+                continue
+            weekday_seen.add(day)
+            weekday_values.append(day)
+        if not weekday_values:
+            weekday_values = [1, 2, 3, 4, 5, 6, 7]
+
+        kcal = max(0, int(raw.kcal or 0))
+        protein_g = max(0.0, float(raw.protein_g or 0.0))
+        carb_g = max(0.0, float(raw.carb_g or 0.0))
+        fat_g = max(0.0, float(raw.fat_g or 0.0))
+
+        dedupe_key = "|".join(
+            [
+                meal_type,
+                custom_food_id,
+                ",".join(str(day) for day in sorted(weekday_values)),
+            ]
+        )
+        if dedupe_key in seen_keys:
+            continue
+        seen_keys.add(dedupe_key)
+        normalized.append(
+            {
+                "meal_type": meal_type,
+                "custom_food_id": custom_food_id,
+                "custom_food_name": custom_food_name,
+                "weekdays": sorted(weekday_values),
+                "kcal": kcal,
+                "protein_g": protein_g,
+                "carb_g": carb_g,
+                "fat_g": fat_g,
+            }
+        )
+    return normalized
+
+
 def _pick_scenario_from_allowed(day_index: int, meal_index: int, allowed: List[str]) -> str:
     index = (day_index * 5 + meal_index * 3 + 11) % len(allowed)
     return allowed[index]
@@ -684,18 +757,50 @@ def _build_stub_week_plan(
         meal_scenarios = _scenarios_from_mix_ratio(legacy_ratio)
     else:
         meal_scenarios = _normalize_meal_scenarios(None)
+    fixed_meals = _normalize_fixed_meals(payload.fixed_meals or [])
     goal = _effective_week_goal(payload)
     target = _week_plan_goal_targets.get(goal, _week_plan_goal_targets["lose_fat"])
+    target_kcal = int(target["kcal"])
     day_plans: List[WeekPlanDayPlan] = []
     day_dates: List[str] = []
+    warnings: List[str] = []
 
     for day_index in range(payload.days):
         current_date = start_date + timedelta(days=day_index)
         day_dates.append(current_date.isoformat())
+        weekday = int(current_date.isoweekday())
         totals = {"kcal": 0, "protein_g": 0.0, "carb_g": 0.0, "fat_g": 0.0}
         meals: List[WeekPlanMealItem] = []
+        fixed_day_kcal = 0
 
         for meal_index, meal_type in enumerate(_week_plan_meal_types):
+            fixed_items = [
+                rule
+                for rule in fixed_meals
+                if rule["meal_type"] == meal_type and weekday in rule["weekdays"]
+            ]
+            if fixed_items:
+                for fixed in fixed_items:
+                    meal = WeekPlanMealItem(
+                        meal_type=meal_type,
+                        dish_name=str(fixed["custom_food_name"]),
+                        scenario="fixed_custom",
+                        source="custom_fixed",
+                        kcal=int(fixed["kcal"]),
+                        protein_g=float(fixed["protein_g"]),
+                        carb_g=float(fixed["carb_g"]),
+                        fat_g=float(fixed["fat_g"]),
+                        locked=True,
+                        eaten=False,
+                    )
+                    meals.append(meal)
+                    totals["kcal"] += meal.kcal
+                    totals["protein_g"] += meal.protein_g
+                    totals["carb_g"] += meal.carb_g
+                    totals["fat_g"] += meal.fat_g
+                    fixed_day_kcal += meal.kcal
+                continue
+
             if payload.meal_scenarios is None and legacy_ratio is not None:
                 scenario = _pick_scenario_with_ratio(day_index, meal_index, legacy_ratio)
             else:
@@ -728,6 +833,25 @@ def _build_stub_week_plan(
             totals["carb_g"] += meal.carb_g
             totals["fat_g"] += meal.fat_g
 
+        if fixed_day_kcal > target_kcal:
+            if lang == "zh-TW":
+                warnings.append(
+                    f"{current_date.isoformat()} 固定餐已超過每日目標熱量 ({fixed_day_kcal}>{target_kcal} kcal)"
+                )
+            else:
+                warnings.append(
+                    f"{current_date.isoformat()} fixed meals exceed daily target ({fixed_day_kcal}>{target_kcal} kcal)"
+                )
+        elif totals["kcal"] > target_kcal + 120:
+            if lang == "zh-TW":
+                warnings.append(
+                    f"{current_date.isoformat()} 當日總熱量偏高 ({int(totals['kcal'])}>{target_kcal} kcal)"
+                )
+            else:
+                warnings.append(
+                    f"{current_date.isoformat()} daily total is above target ({int(totals['kcal'])}>{target_kcal} kcal)"
+                )
+
         day_plans.append(
             WeekPlanDayPlan(
                 date=current_date.isoformat(),
@@ -749,6 +873,7 @@ def _build_stub_week_plan(
         "goal": goal,
         "daily_target_kcal": int(target["kcal"]),
         "day_dates": day_dates,
+        "fixed_meals_effective": fixed_meals,
     }
     return WeekPlanGenerateResponse(
         plan_id=plan_id,
@@ -757,6 +882,7 @@ def _build_stub_week_plan(
         end_date=(start_date + timedelta(days=payload.days - 1)).isoformat(),
         goal_effective=goal,
         meal_scenarios_effective=WeekPlanMealScenarios(**meal_scenarios),
+        fixed_meals_effective=[WeekPlanFixedMeal(**item) for item in fixed_meals],
         mix_ratio_effective=WeekPlanMixRatio(**legacy_ratio) if legacy_ratio else None,
         daily_target=WeekPlanMacroTarget(
             kcal=int(target["kcal"]),
@@ -765,7 +891,7 @@ def _build_stub_week_plan(
             fat_g=float(target["fat_g"]),
         ),
         day_plans=day_plans,
-        validation=WeekPlanValidation(passed=True, warnings=[]),
+        validation=WeekPlanValidation(passed=True, warnings=warnings),
     )
 
 
