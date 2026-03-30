@@ -57,11 +57,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   WeekPlanReplanResult? _lastReplan;
   String? _errorMessage;
   bool _hydratedFromCache = false;
-  bool _goalSectionExpanded = true;
-  bool _sourceSectionExpanded = true;
   bool _fixedSectionExpanded = true;
-  final Set<String> _expandedSourceMeals = <String>{'breakfast'};
-  final Set<String> _expandedFixedMeals = <String>{'breakfast'};
   final Set<String> _expandedPlanDays = <String>{};
 
   bool get _isZh => Localizations.localeOf(context)
@@ -89,6 +85,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       _setMealScenarioSelectionFromData(cachedPlan.mealScenariosEffective);
       _fixedMeals =
           List<WeekPlanFixedMeal>.from(cachedPlan.fixedMealsEffective);
+      _seedExpandedDaysFromPlan(cachedPlan);
     }
     _hydratedFromCache = true;
   }
@@ -287,6 +284,56 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     return _isZh
         ? '$sourceSummary · 固定 $fixedCount 筆'
         : '$sourceSummary · fixed $fixedCount';
+  }
+
+  void _seedExpandedDaysFromPlan(WeekPlanData? plan) {
+    _expandedPlanDays.clear();
+    if (plan == null || plan.dayPlans.isEmpty) return;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final todayKey = _formatDate(today);
+    final tomorrowKey = _formatDate(tomorrow);
+    final dayKeys = plan.dayPlans.map((day) => day.date).toList();
+    final dayKeySet = dayKeys.toSet();
+
+    if (dayKeySet.contains(todayKey)) {
+      _expandedPlanDays.add(todayKey);
+    }
+    if (dayKeySet.contains(tomorrowKey)) {
+      _expandedPlanDays.add(tomorrowKey);
+    }
+
+    if (_expandedPlanDays.isEmpty) {
+      _expandedPlanDays.add(dayKeys.first);
+      if (dayKeys.length > 1) {
+        _expandedPlanDays.add(dayKeys[1]);
+      }
+      return;
+    }
+
+    if (_expandedPlanDays.length == 1 && dayKeys.length > 1) {
+      for (final key in dayKeys) {
+        if (_expandedPlanDays.contains(key)) continue;
+        _expandedPlanDays.add(key);
+        break;
+      }
+    }
+  }
+
+  void _expandAllPlanDays() {
+    final plan = _plan;
+    if (plan == null) return;
+    setState(() {
+      _expandedPlanDays
+        ..clear()
+        ..addAll(plan.dayPlans.map((day) => day.date));
+    });
+  }
+
+  void _collapseAllPlanDays() {
+    setState(() => _expandedPlanDays.clear());
   }
 
   Widget _buildSectionHeader({
@@ -749,7 +796,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         _plan = plan;
         _lastReplan = null;
         _fixedMeals = List<WeekPlanFixedMeal>.from(plan.fixedMealsEffective);
-        _expandedPlanDays.clear();
+        _seedExpandedDaysFromPlan(plan);
       });
       app.cacheWeekPlan(plan, lastReplan: null);
     } on ApiException catch (err) {
@@ -819,29 +866,47 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         .entries
         .where((entry) => entry.value.mealType == mealType)
         .toList();
-    final expanded = _expandedFixedMeals.contains(mealType);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black12),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              setState(() {
-                if (expanded) {
-                  _expandedFixedMeals.remove(mealType);
-                } else {
-                  _expandedFixedMeals.add(mealType);
-                }
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _mealTypeLabel(mealType),
+                  style: AppTextStyles.caption(context).copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => _showAddFixedMealSheet(mealType),
+                icon: const Icon(Icons.add, size: 16),
+                label: Text(_isZh ? '新增固定餐' : 'Add fixed'),
+              ),
+            ],
+          ),
+          if (indexedRules.isEmpty)
+            Text(
+              _isZh ? '尚未設定固定餐' : 'No fixed meal yet',
+              style: AppTextStyles.caption(context).copyWith(
+                color: Colors.black45,
+              ),
+            ),
+          ...indexedRules.map((entry) {
+            final index = entry.key;
+            final rule = entry.value;
+            return Container(
+              margin: const EdgeInsets.only(top: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black12),
+                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFFFAFAFA),
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -849,17 +914,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _mealTypeLabel(mealType),
-                          style: AppTextStyles.caption(context).copyWith(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          rule.customFoodName,
+                          style: AppTextStyles.body(context),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _isZh
-                              ? '固定 ${indexedRules.length} 筆'
-                              : '${indexedRules.length} fixed',
+                          '${_weekdaySummary(rule.weekdays)}  ·  ${rule.kcal} kcal',
                           style: AppTextStyles.caption(context).copyWith(
                             color: Colors.black54,
                           ),
@@ -867,97 +927,25 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                       ],
                     ),
                   ),
-                  TextButton.icon(
-                    onPressed: () => _showAddFixedMealSheet(mealType),
-                    icon: const Icon(Icons.add, size: 16),
-                    label: Text(_isZh ? '新增' : 'Add'),
+                  IconButton(
+                    tooltip: _isZh ? '調整星期' : 'Edit weekdays',
+                    onPressed: () => _showEditWeekdaysSheet(index),
+                    icon: const Icon(Icons.edit_calendar_outlined, size: 18),
                   ),
-                  Icon(
-                    expanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    color: Colors.black54,
+                  IconButton(
+                    tooltip: _isZh ? '移除' : 'Remove',
+                    onPressed: () {
+                      setState(() {
+                        _fixedMeals = List<WeekPlanFixedMeal>.from(_fixedMeals)
+                          ..removeAt(index);
+                      });
+                    },
+                    icon: const Icon(Icons.close_rounded, size: 18),
                   ),
                 ],
               ),
-            ),
-          ),
-          if (expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-              child: Column(
-                children: [
-                  if (indexedRules.isEmpty)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        _isZh ? '尚未設定固定餐' : 'No fixed meal yet',
-                        style: AppTextStyles.caption(context).copyWith(
-                          color: Colors.black45,
-                        ),
-                      ),
-                    ),
-                  ...indexedRules.map((entry) {
-                    final index = entry.key;
-                    final rule = entry.value;
-                    return Container(
-                      margin: const EdgeInsets.only(top: 6),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.black12),
-                        borderRadius: BorderRadius.circular(10),
-                        color: const Color(0xFFFAFAFA),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  rule.customFoodName,
-                                  style: AppTextStyles.body(context),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${_weekdaySummary(rule.weekdays)}  ·  ${rule.kcal} kcal',
-                                  style:
-                                      AppTextStyles.caption(context).copyWith(
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: _isZh ? '調整星期' : 'Edit weekdays',
-                            onPressed: () => _showEditWeekdaysSheet(index),
-                            icon: const Icon(
-                              Icons.edit_calendar_outlined,
-                              size: 18,
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: _isZh ? '移除' : 'Remove',
-                            onPressed: () {
-                              setState(() {
-                                _fixedMeals =
-                                    List<WeekPlanFixedMeal>.from(_fixedMeals)
-                                      ..removeAt(index);
-                              });
-                            },
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
+            );
+          }),
         ],
       ),
     );
@@ -1170,217 +1158,150 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             ],
                           ),
                           const SizedBox(height: 10),
-                          _buildSectionHeader(
-                            title: _isZh ? '本週目標' : 'Weekly Goal',
-                            subtitle: _goalMode == 'profile_default'
-                                ? (_isZh ? '沿用設定頁目標' : 'Use profile goal')
-                                : (_isZh
-                                    ? '覆寫：${_goalLabel(_goalOverride)}'
-                                    : 'Override: ${_goalLabel(_goalOverride)}'),
-                            expanded: _goalSectionExpanded,
-                            onTap: () {
-                              setState(() {
-                                _goalSectionExpanded = !_goalSectionExpanded;
-                              });
+                          Text(
+                            _isZh ? '本週目標' : 'Weekly Goal',
+                            style: AppTextStyles.caption(context).copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            initialValue: _goalMode,
+                            decoration: InputDecoration(
+                              labelText: _isZh ? '目標來源' : 'Goal Source',
+                              border: const OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            items: [
+                              DropdownMenuItem(
+                                value: 'profile_default',
+                                child: Text(
+                                  _isZh ? '沿用設定頁目標' : 'Use profile goal',
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'week_override',
+                                child: Text(
+                                  _isZh ? '只覆寫本週目標' : 'Override for this week',
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              if (value == null) return;
+                              setState(() => _goalMode = value);
                             },
                           ),
-                          if (_goalSectionExpanded) ...[
+                          if (_goalMode == 'week_override') ...[
                             const SizedBox(height: 10),
                             DropdownButtonFormField<String>(
-                              initialValue: _goalMode,
+                              initialValue: _goalOverride,
                               decoration: InputDecoration(
-                                labelText: _isZh ? '目標來源' : 'Goal Source',
+                                labelText: _isZh ? '本週目標' : 'Weekly Goal',
                                 border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: 'profile_default',
-                                  child: Text(
-                                    _isZh ? '沿用設定頁目標' : 'Use profile goal',
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'week_override',
-                                  child: Text(
-                                    _isZh
-                                        ? '只覆寫本週目標'
-                                        : 'Override for this week',
-                                  ),
-                                ),
-                              ],
+                              items: const <String>[
+                                'lose_fat',
+                                'maintain',
+                                'gain_muscle',
+                              ]
+                                  .map(
+                                    (goal) => DropdownMenuItem<String>(
+                                      value: goal,
+                                      child: Text(_goalLabel(goal)),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: (value) {
                                 if (value == null) return;
-                                setState(() => _goalMode = value);
+                                setState(() => _goalOverride = value);
                               },
                             ),
-                            if (_goalMode == 'week_override') ...[
-                              const SizedBox(height: 10),
-                              DropdownButtonFormField<String>(
-                                initialValue: _goalOverride,
-                                decoration: InputDecoration(
-                                  labelText: _isZh ? '本週目標' : 'Weekly Goal',
-                                  border: const OutlineInputBorder(),
-                                  isDense: true,
-                                ),
-                                items: const <String>[
-                                  'lose_fat',
-                                  'maintain',
-                                  'gain_muscle',
-                                ]
-                                    .map(
-                                      (goal) => DropdownMenuItem<String>(
-                                        value: goal,
-                                        child: Text(_goalLabel(goal)),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  setState(() => _goalOverride = value);
-                                },
-                              ),
-                            ],
                           ],
                           const SizedBox(height: 10),
-                          _buildSectionHeader(
-                            title: _isZh ? '每餐可選來源' : 'Meal Source by Meal',
-                            subtitle: _isZh
+                          Text(
+                            _isZh ? '每餐可選來源' : 'Meal Source by Meal',
+                            style: AppTextStyles.caption(context).copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _isZh
                                 ? '已啟用 $activeScenarioMeals / ${_mealTypes.length} 餐'
                                 : '$activeScenarioMeals / ${_mealTypes.length} meals enabled',
-                            expanded: _sourceSectionExpanded,
-                            onTap: () {
-                              setState(() {
-                                _sourceSectionExpanded =
-                                    !_sourceSectionExpanded;
-                              });
-                            },
+                            style: AppTextStyles.caption(context).copyWith(
+                              color: Colors.black54,
+                            ),
                           ),
-                          if (_sourceSectionExpanded) ...[
-                            const SizedBox(height: 8),
-                            ..._mealTypes.map((mealType) {
-                              final selected =
-                                  _mealScenarioSelections[mealType] ??
-                                      _scenarioTypes;
-                              final expanded =
-                                  _expandedSourceMeals.contains(mealType);
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.black12),
-                                ),
-                                child: Column(
-                                  children: [
-                                    InkWell(
-                                      borderRadius: BorderRadius.circular(12),
-                                      onTap: () {
-                                        setState(() {
-                                          if (expanded) {
-                                            _expandedSourceMeals
-                                                .remove(mealType);
-                                          } else {
-                                            _expandedSourceMeals.add(mealType);
-                                          }
-                                        });
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 8,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    _mealTypeLabel(mealType),
-                                                    style:
-                                                        AppTextStyles.caption(
-                                                      context,
-                                                    ).copyWith(
-                                                      color: Colors.black87,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    _mealSourceSummary(
-                                                        mealType),
-                                                    style:
-                                                        AppTextStyles.caption(
-                                                      context,
-                                                    ).copyWith(
-                                                      color: Colors.black54,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Icon(
-                                              expanded
-                                                  ? Icons
-                                                      .keyboard_arrow_up_rounded
-                                                  : Icons
-                                                      .keyboard_arrow_down_rounded,
-                                              color: Colors.black54,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                          const SizedBox(height: 8),
+                          ..._mealTypes.map((mealType) {
+                            final selected =
+                                _mealScenarioSelections[mealType] ??
+                                    _scenarioTypes;
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.black12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _mealTypeLabel(mealType),
+                                    style:
+                                        AppTextStyles.caption(context).copyWith(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w700,
                                     ),
-                                    if (expanded)
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                          10,
-                                          0,
-                                          10,
-                                          10,
-                                        ),
-                                        child: Wrap(
-                                          spacing: 8,
-                                          runSpacing: 8,
-                                          children: [
-                                            FilterChip(
-                                              label: Text(
-                                                _scenarioLabel(_noneScenario),
-                                              ),
-                                              selected: selected.isEmpty,
-                                              onSelected: (value) =>
-                                                  _toggleMealScenario(
-                                                mealType,
-                                                _noneScenario,
-                                                value,
-                                              ),
-                                            ),
-                                            ..._scenarioTypes.map((scenario) {
-                                              return FilterChip(
-                                                label: Text(
-                                                  _scenarioLabel(scenario),
-                                                ),
-                                                selected:
-                                                    selected.contains(scenario),
-                                                onSelected: (value) =>
-                                                    _toggleMealScenario(
-                                                  mealType,
-                                                  scenario,
-                                                  value,
-                                                ),
-                                              );
-                                            }),
-                                          ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _mealSourceSummary(mealType),
+                                    style:
+                                        AppTextStyles.caption(context).copyWith(
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      FilterChip(
+                                        label:
+                                            Text(_scenarioLabel(_noneScenario)),
+                                        selected: selected.isEmpty,
+                                        onSelected: (value) =>
+                                            _toggleMealScenario(
+                                          mealType,
+                                          _noneScenario,
+                                          value,
                                         ),
                                       ),
-                                  ],
-                                ),
-                              );
-                            }),
-                          ],
+                                      ..._scenarioTypes.map((scenario) {
+                                        return FilterChip(
+                                          label: Text(_scenarioLabel(scenario)),
+                                          selected: selected.contains(scenario),
+                                          onSelected: (value) =>
+                                              _toggleMealScenario(
+                                            mealType,
+                                            scenario,
+                                            value,
+                                          ),
+                                        );
+                                      }),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
                           const Divider(height: 22),
                           _buildSectionHeader(
                             title: _isZh
@@ -1554,6 +1475,28 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _isZh ? '每日規劃' : 'Daily Plans',
+                            style: AppTextStyles.caption(context).copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _expandAllPlanDays,
+                          child: Text(_isZh ? '全部展開' : 'Expand all'),
+                        ),
+                        TextButton(
+                          onPressed: _collapseAllPlanDays,
+                          child: Text(_isZh ? '全部收合' : 'Collapse all'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     ...plan.dayPlans.map(_buildDayCard),
                   ],
                 ],
