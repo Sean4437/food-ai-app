@@ -517,6 +517,15 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         lastDay, (i) => DateTime(month.year, month.month, i + 1));
   }
 
+  void _setDateToToday() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    _selectedDate = today;
+    _currentMonth = DateTime(today.year, today.month, 1);
+    _currentMonthDays = _daysInMonth(_currentMonth);
+    _lastJumpKey = '';
+  }
+
   bool _isSameMonth(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month;
 
@@ -1657,7 +1666,12 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         },
         onValueChanged: (next) {
           if (next == null) return;
-          setState(() => _activeSection = next);
+          setState(() {
+            _activeSection = next;
+            if (next == _LogSection.water) {
+              _setDateToToday();
+            }
+          });
         },
       ),
     );
