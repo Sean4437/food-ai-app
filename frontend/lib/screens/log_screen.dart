@@ -69,7 +69,6 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
   _LogSection _activeSection = _LogSection.meals;
   late final AnimationController _waterWaveController;
   late final AnimationController _waterDropController;
-  int _selectedWaterQuickIndex = 1;
   int _lastCustomWaterMl = 420;
 
   static const List<_WaterQuickOption> _waterQuickOptions = [
@@ -1664,20 +1663,11 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _setWaterQuickIndex(int index) {
-    final safe = index.clamp(0, _waterQuickOptions.length - 1);
-    if (safe == _selectedWaterQuickIndex) return;
-    setState(() => _selectedWaterQuickIndex = safe);
-  }
-
   Widget _buildWaterQuickCard(
     BuildContext context, {
-    required int index,
     required _WaterQuickOption option,
     required VoidCallback onTap,
   }) {
-    final isSelected = index == _selectedWaterQuickIndex;
-    final accent = Theme.of(context).colorScheme.primary;
     final label = _isZh ? option.labelZh : option.labelEn;
     return SizedBox(
       width: 110,
@@ -1692,20 +1682,15 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              color: isSelected
-                  ? accent.withValues(alpha: 0.16)
-                  : Colors.black.withValues(alpha: 0.035),
+              color: Colors.black.withValues(alpha: 0.035),
               border: Border.all(
-                color: isSelected
-                    ? accent.withValues(alpha: 0.55)
-                    : Colors.black.withValues(alpha: 0.09),
+                color: Colors.black.withValues(alpha: 0.09),
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(option.icon,
-                    size: 17, color: isSelected ? accent : Colors.black54),
+                Icon(option.icon, size: 17, color: Colors.black54),
                 const SizedBox(height: 6),
                 Text(
                   label,
@@ -1800,7 +1785,9 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     final amountText = '$intakeMl / $targetMl ml';
     final statusText = overMl > 0
         ? (_isZh ? '超過 +$overMl ml' : 'Over +$overMl ml')
-        : (_isZh ? '還差 $remainingMl ml' : 'Remaining $remainingMl ml');
+        : (remainingMl == 0
+            ? (_isZh ? '已達標' : 'Completed')
+            : (_isZh ? '還差 $remainingMl ml' : 'Remaining $remainingMl ml'));
 
     return AnimatedBuilder(
       animation: Listenable.merge([
@@ -1826,6 +1813,17 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         const fillBottom = liquidTop + liquidHeight;
         const markerMin = liquidTop + markerInset;
         const markerMax = liquidTop + liquidHeight - markerInset;
+        const topGoalY = liquidTop + 8;
+        final topGoalCovered = fillTop <= topGoalY + 5;
+        final statusCenterTop = fillTop <= liquidTop + 10
+            ? liquidTop + 14
+            : ((liquidTop + fillTop) / 2);
+        final statusTop =
+            (statusCenterTop - 8).clamp(liquidTop + 4, fillBottom - 22);
+        const amountTop = fillBottom - 43;
+        final amountOnWater = fillTop <= amountTop + 9;
+        final beverageLayerFactor =
+            intakeMl <= 0 ? 0.0 : (beverageMl / intakeMl).clamp(0.0, 1.0);
 
         var manualMarkerTop = _componentMarkerTop(
           componentMl: manualMl,
@@ -1856,21 +1854,14 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
           }
         }
 
-        final amountColor = safeProgress < 0.35 ? Colors.black87 : Colors.white;
-        final defaultStatusColor = safeProgress < 0.35
-            ? Colors.black54
-            : Colors.white.withValues(alpha: 0.9);
-        final statusColor = overMl > 0
-            ? (safeProgress < 0.35
-                ? Colors.deepOrange.shade700
-                : const Color(0xFFFFE1D4))
-            : defaultStatusColor;
-        final shadowColor = safeProgress < 0.35
-            ? Colors.white.withValues(alpha: 0.42)
-            : Colors.black.withValues(alpha: 0.35);
+        final amountColor =
+            amountOnWater ? Colors.white : Colors.black.withValues(alpha: 0.82);
+        final amountShadow = amountOnWater
+            ? Colors.black.withValues(alpha: 0.35)
+            : Colors.white.withValues(alpha: 0.46);
 
         return SizedBox(
-          width: 172,
+          width: 128,
           height: 230,
           child: Stack(
             clipBehavior: Clip.none,
@@ -1879,11 +1870,11 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                 left: 0,
                 top: 0,
                 bottom: 0,
-                width: 92,
+                width: 118,
                 child: Column(
                   children: [
                     Container(
-                      width: 42,
+                      width: 52,
                       height: 24,
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -1927,13 +1918,17 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                     children: [
                                       Container(
                                         decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              accent.withValues(alpha: 0.58),
-                                              accent.withValues(alpha: 0.88),
-                                            ],
+                                          color: accent.withValues(alpha: 0.88),
+                                        ),
+                                      ),
+                                      Align(
+                                        alignment: Alignment.topCenter,
+                                        child: FractionallySizedBox(
+                                          heightFactor: beverageLayerFactor,
+                                          widthFactor: 1,
+                                          child: Container(
+                                            color: Colors.white
+                                                .withValues(alpha: 0.16),
                                           ),
                                         ),
                                       ),
@@ -1955,59 +1950,80 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
-                              Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      amountText,
-                                      style: AppTextStyles.caption(context)
-                                          .copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        color: amountColor,
-                                        fontSize: 10.6,
-                                        shadows: [
-                                          Shadow(
-                                            color: shadowColor,
-                                            blurRadius: 3,
-                                            offset: const Offset(0, 1),
-                                          ),
-                                        ],
-                                      ),
-                                      maxLines: 1,
-                                      softWrap: false,
-                                      overflow: TextOverflow.fade,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      statusText,
-                                      style: AppTextStyles.caption(context)
-                                          .copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: statusColor,
-                                        fontSize: 9.6,
-                                        shadows: [
-                                          Shadow(
-                                            color: shadowColor,
-                                            blurRadius: 3,
-                                            offset: const Offset(0, 1),
-                                          ),
-                                        ],
-                                      ),
-                                      maxLines: 1,
-                                      softWrap: false,
-                                      overflow: TextOverflow.fade,
-                                    ),
-                                  ],
+                              Positioned(
+                                top: topGoalY - liquidTop,
+                                left: 0,
+                                right: 0,
+                                child: Text(
+                                  '$targetMl ml',
+                                  textAlign: TextAlign.center,
+                                  style:
+                                      AppTextStyles.caption(context).copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 10.5,
+                                    color: topGoalCovered
+                                        ? Colors.white
+                                        : Colors.black87,
+                                    shadows: topGoalCovered
+                                        ? [
+                                            Shadow(
+                                              color: Colors.black
+                                                  .withValues(alpha: 0.32),
+                                              blurRadius: 3,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ]
+                                        : null,
+                                  ),
                                 ),
                               ),
                               Positioned(
-                                left: 56,
+                                top: statusTop - liquidTop,
+                                left: 0,
+                                right: 0,
+                                child: Text(
+                                  statusText,
+                                  textAlign: TextAlign.center,
+                                  style:
+                                      AppTextStyles.caption(context).copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                    fontSize: 10.0,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: amountTop - liquidTop,
+                                left: 0,
+                                right: 0,
+                                child: Text(
+                                  amountText,
+                                  textAlign: TextAlign.center,
+                                  style:
+                                      AppTextStyles.caption(context).copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: amountColor,
+                                    fontSize: 10.8,
+                                    shadows: [
+                                      Shadow(
+                                        color: amountShadow,
+                                        blurRadius: 3,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  overflow: TextOverflow.fade,
+                                ),
+                              ),
+                              Positioned(
+                                left: 66,
                                 top: manualMarkerTop - liquidTop,
                                 child: Opacity(
                                   opacity: manualMl > 0 ? 0.95 : 0.45,
                                   child: SizedBox(
-                                    width: 22,
+                                    width: 28,
                                     height: 2,
                                     child: CustomPaint(
                                       painter: _DashedLinePainter(
@@ -2018,12 +2034,12 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                               Positioned(
-                                left: 56,
+                                left: 66,
                                 top: beverageMarkerTop - liquidTop,
                                 child: Opacity(
                                   opacity: beverageMl > 0 ? 0.95 : 0.45,
                                   child: SizedBox(
-                                    width: 22,
+                                    width: 28,
                                     height: 2,
                                     child: CustomPaint(
                                       painter: _DashedLinePainter(
@@ -2033,6 +2049,30 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
+                              if (beverageMl > 0)
+                                Positioned(
+                                  right: 5,
+                                  top: (beverageMarkerTop - liquidTop - 10)
+                                      .clamp(2, liquidHeight - 26),
+                                  child: _buildBottleInnerTag(
+                                    context,
+                                    label:
+                                        '${_isZh ? '飲料' : 'Beverage'} $beverageMl',
+                                    accent: accent,
+                                  ),
+                                ),
+                              if (manualMl > 0)
+                                Positioned(
+                                  right: 5,
+                                  top: (manualMarkerTop - liquidTop - 10)
+                                      .clamp(16, liquidHeight - 18),
+                                  child: _buildBottleInnerTag(
+                                    context,
+                                    label:
+                                        '${_isZh ? '手動' : 'Manual'} $manualMl',
+                                    accent: accent.withValues(alpha: 0.88),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -2041,30 +2081,10 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                   ],
                 ),
               ),
-              Positioned(
-                left: 94,
-                top: manualMarkerTop - 9,
-                child: _buildBottleSideText(
-                  context,
-                  label: _isZh ? '手動' : 'Manual',
-                  value: '$manualMl ml',
-                  muted: manualMl <= 0,
-                ),
-              ),
-              Positioned(
-                left: 94,
-                top: beverageMarkerTop - 9,
-                child: _buildBottleSideText(
-                  context,
-                  label: _isZh ? '飲料' : 'Beverage',
-                  value: '$beverageMl ml',
-                  muted: beverageMl <= 0,
-                ),
-              ),
               if (showDrop)
                 Positioned(
                   top: 10 + (dropT * 56),
-                  left: 38,
+                  left: 54,
                   child: Opacity(
                     opacity: dropOpacity,
                     child: Icon(
@@ -2097,25 +2117,35 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     return top.clamp(markerMin, markerMax).toDouble();
   }
 
-  Widget _buildBottleSideText(
+  Widget _buildBottleInnerTag(
     BuildContext context, {
     required String label,
-    required String value,
-    bool muted = false,
+    required Color accent,
   }) {
-    final textColor = muted ? Colors.black45 : Colors.black87;
-    return Text(
-      '$label $value',
-      textAlign: TextAlign.left,
-      style: AppTextStyles.caption(context).copyWith(
-        fontSize: 10.2,
-        height: 1.0,
-        color: textColor,
-        fontWeight: FontWeight.w700,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
       ),
-      maxLines: 1,
-      softWrap: false,
-      overflow: TextOverflow.fade,
+      child: Text(
+        '$label ml',
+        textAlign: TextAlign.left,
+        style: AppTextStyles.caption(context).copyWith(
+          fontSize: 8.6,
+          height: 1.0,
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          shadows: [
+            Shadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -2191,10 +2221,8 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                           final option = _waterQuickOptions[index];
                           return _buildWaterQuickCard(
                             context,
-                            index: index,
                             option: option,
                             onTap: () {
-                              _setWaterQuickIndex(index);
                               _addWaterByAmount(app, option.ml);
                             },
                           );
@@ -2202,29 +2230,36 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: SizedBox(
-                        width: 46,
-                        height: 46,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(23),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (smartFillMl > 0)
+                          FilledButton.tonalIcon(
+                            onPressed: () =>
+                                _addWaterByAmount(app, smartFillMl),
+                            icon: const Icon(Icons.bolt_outlined, size: 16),
+                            label: Text(
+                              _isZh
+                                  ? '補滿 +$smartFillMl ml'
+                                  : 'Top up +$smartFillMl ml',
                             ),
                           ),
-                          onPressed: () => _showWaterMoreActionsSheet(
-                            context,
-                            app,
-                            smartFillMl,
-                          ),
-                          child: const Icon(
-                            Icons.more_horiz,
-                            color: Colors.black87,
+                        TextButton.icon(
+                          onPressed: () async {
+                            final confirm =
+                                await _confirmClearManualWater(context);
+                            if (!confirm || !mounted) return;
+                            await app.updateDailyWaterIntake(_selectedDate, 0);
+                          },
+                          icon: const Icon(Icons.delete_outline, size: 16),
+                          label: Text(_isZh ? '清空手動補水' : 'Clear manual'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red.shade700,
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -2361,73 +2396,6 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
       ..stop()
       ..reset()
       ..forward();
-  }
-
-  Future<void> _showWaterMoreActionsSheet(
-    BuildContext context,
-    AppState app,
-    int smartFillMl,
-  ) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.black12,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (smartFillMl > 0)
-                  ListTile(
-                    leading: const Icon(Icons.bolt_outlined),
-                    title: Text(
-                      _isZh ? '補滿 +$smartFillMl ml' : 'Top up +$smartFillMl ml',
-                    ),
-                    onTap: () {
-                      Navigator.of(sheetContext).pop();
-                      _addWaterByAmount(app, smartFillMl);
-                    },
-                  ),
-                ListTile(
-                  leading: const Icon(Icons.edit_outlined),
-                  title: Text(_isZh ? '自訂容量' : 'Custom amount'),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    _showCustomWaterInputDialog(context, app);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.delete_outline, color: Colors.red),
-                  title: Text(
-                    _isZh ? '清空手動補水' : 'Clear manual water',
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  onTap: () async {
-                    Navigator.of(sheetContext).pop();
-                    final confirm = await _confirmClearManualWater(context);
-                    if (!confirm || !mounted) return;
-                    await app.updateDailyWaterIntake(_selectedDate, 0);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Future<bool> _confirmClearManualWater(BuildContext context) async {
