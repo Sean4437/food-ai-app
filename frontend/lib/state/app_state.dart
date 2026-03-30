@@ -920,6 +920,66 @@ class AppState extends ChangeNotifier {
     return (manual + beverage).clamp(0, 10000);
   }
 
+  DateTime? latestMealEntryDate() {
+    if (entries.isEmpty) return null;
+    final latest = entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
+    return _dateOnly(latest.time);
+  }
+
+  DateTime? latestHydrationDate() {
+    DateTime? latest;
+    for (final item in _meta.entries) {
+      if (!item.key.startsWith('water_intake:')) continue;
+      final ml = int.tryParse(item.value);
+      if (ml == null || ml <= 0) continue;
+      final day = _parseDateFromMetaKey(item.key, 'water_intake:');
+      if (day == null) continue;
+      if (latest == null || day.isAfter(latest)) {
+        latest = day;
+      }
+    }
+    for (final entry in entries) {
+      final hydration = _beverageHydrationFromEntry(entry);
+      if (hydration == null || hydration.effectiveMl <= 0) continue;
+      final day = _dateOnly(hydration.time);
+      if (latest == null || day.isAfter(latest)) {
+        latest = day;
+      }
+    }
+    return latest;
+  }
+
+  DateTime? latestWeightRecordDate() {
+    DateTime? latest;
+    for (final item in _meta.entries) {
+      if (!item.key.startsWith('weight_record:')) continue;
+      final weight = double.tryParse(item.value);
+      if (weight == null || weight <= 0) continue;
+      final day = _parseDateFromMetaKey(item.key, 'weight_record:');
+      if (day == null) continue;
+      if (latest == null || day.isAfter(latest)) {
+        latest = day;
+      }
+    }
+    return latest;
+  }
+
+  DateTime? _parseDateFromMetaKey(String key, String prefix) {
+    if (!key.startsWith(prefix)) return null;
+    final raw = key.substring(prefix.length);
+    final parts = raw.split('-');
+    if (parts.length != 3) return null;
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final day = int.tryParse(parts[2]);
+    if (year == null || month == null || day == null) return null;
+    final parsed = DateTime(year, month, day);
+    if (parsed.year != year || parsed.month != month || parsed.day != day) {
+      return null;
+    }
+    return parsed;
+  }
+
   List<WaterHydrationEntry> beverageHydrationEntries(DateTime date) {
     final list = <WaterHydrationEntry>[];
     for (final entry in entriesForDate(date)) {
@@ -1009,7 +1069,9 @@ class AppState extends ChangeNotifier {
     if (text.contains('小杯') || text.contains('small')) {
       return 360;
     }
-    if (text.contains('寶特瓶') || text.contains('瓶裝') || text.contains('bottle')) {
+    if (text.contains('寶特瓶') ||
+        text.contains('瓶裝') ||
+        text.contains('bottle')) {
       return 600;
     }
     if (text.contains('罐') || text.contains('can')) {
@@ -1123,7 +1185,8 @@ class AppState extends ChangeNotifier {
     return result;
   }
 
-  Future<void> updateDailyWeightRecordKg(DateTime date, double? weightKg) async {
+  Future<void> updateDailyWeightRecordKg(
+      DateTime date, double? weightKg) async {
     final key = _weightRecordKey(date);
     final value = weightKg?.clamp(20.0, 300.0);
     if (value == null) {
@@ -4116,11 +4179,9 @@ class AppState extends ChangeNotifier {
     final isUnsweetenedPlainTea = profile.key == 'tea' &&
         parsed.sugarRatio <= 0 &&
         parsed.toppings.isEmpty;
-    final low =
-        isUnsweetenedPlainTea ? 0 : max(30, (kcal * 0.9).round());
-    final high = isUnsweetenedPlainTea
-        ? 5
-        : max(low + 20, (kcal * 1.1).round());
+    final low = isUnsweetenedPlainTea ? 0 : max(30, (kcal * 0.9).round());
+    final high =
+        isUnsweetenedPlainTea ? 5 : max(low + 20, (kcal * 1.1).round());
     final calorieRange = '$low-$high kcal';
 
     final toppingNames = parsed.toppings
@@ -9873,98 +9934,97 @@ class AppState extends ChangeNotifier {
     final remoteIds = <String>{};
     var dateIndexChanged = false;
     for (final row in rows) {
-        final entryId = row['id'] as String?;
-        if (entryId != null) {
-          remoteIds.add(entryId);
-        }
-        final deletedAt = row['deleted_at'] as String?;
-        final remoteUpdatedAt =
-            DateTime.tryParse(row['updated_at'] as String? ?? '');
-        if (deletedAt != null && deletedAt.isNotEmpty) {
-          if (entryId != null) {
-            final existing = existingEntries[entryId];
-            if (existing != null &&
-                existing.updatedAt != null &&
-                remoteUpdatedAt != null &&
-                existing.updatedAt!.isAfter(remoteUpdatedAt)) {
-              _failedMealSyncIds.add(entryId);
-              continue;
-            }
-            final index = entries.indexWhere((item) => item.id == entryId);
-            if (index != -1) {
-              entries.removeAt(index);
-              dateIndexChanged = true;
-              // ignore: discarded_futures
-              _store.delete(entryId);
-              if (report != null) report.pulledMealDeletes += 1;
-            }
-          }
-          continue;
-        }
-        final existing = entryId == null ? null : existingEntries[entryId];
-        if (existing != null &&
-            existing.updatedAt != null &&
-            remoteUpdatedAt != null &&
-            existing.updatedAt!.isAfter(remoteUpdatedAt)) {
-          _failedMealSyncIds.add(existing.id);
-          continue;
-        }
-        final imagePath = row['image_path'] as String?;
-        final labelPath = row['label_image_path'] as String?;
-        Uint8List? imageBytes;
-        if (existing != null &&
-            existing.imageBytes.isNotEmpty &&
-            existing.imageHash == row['image_hash']) {
-          imageBytes = existing.imageBytes;
-        } else {
-          imageBytes = await _downloadImageIfAvailable(
-            bucket: kSupabaseMealImagesBucket,
-            path: imagePath,
-          );
-        }
-        final resolvedImageBytes = imageBytes ?? _namePlaceholderBytes;
-        Uint8List? labelBytes;
-        if (existing != null &&
-            existing.labelImageBytes != null &&
-            labelPath != null &&
-            labelPath.isNotEmpty) {
-          labelBytes = existing.labelImageBytes;
-        } else {
-          labelBytes = await _downloadImageIfAvailable(
-            bucket: kSupabaseLabelImagesBucket,
-            path: labelPath,
-          );
-        }
-        final entry = _mealEntryFromRow(row, resolvedImageBytes, labelBytes);
-        final index = entries.indexWhere((item) => item.id == entry.id);
-        if (index == -1) {
-          entries.insert(0, entry);
-          dateIndexChanged = true;
-          if (report != null) report.pulledMeals += 1;
-        } else {
-          dateIndexChanged = true;
-          entries[index] = entry;
-          if (report != null) report.pulledMeals += 1;
-        }
-        await _store.upsert(entry);
+      final entryId = row['id'] as String?;
+      if (entryId != null) {
+        remoteIds.add(entryId);
       }
-      // Remove local entries missing from remote on full sync only.
-      if (since == null && allowPrune && remoteIds.isNotEmpty) {
-        // Remove local entries that no longer exist remotely (full sync only)
-        final toRemove =
-            entries.where((e) => !remoteIds.contains(e.id)).toList();
-        if (toRemove.isNotEmpty) {
-          for (final entry in toRemove) {
-            entries.remove(entry);
+      final deletedAt = row['deleted_at'] as String?;
+      final remoteUpdatedAt =
+          DateTime.tryParse(row['updated_at'] as String? ?? '');
+      if (deletedAt != null && deletedAt.isNotEmpty) {
+        if (entryId != null) {
+          final existing = existingEntries[entryId];
+          if (existing != null &&
+              existing.updatedAt != null &&
+              remoteUpdatedAt != null &&
+              existing.updatedAt!.isAfter(remoteUpdatedAt)) {
+            _failedMealSyncIds.add(entryId);
+            continue;
+          }
+          final index = entries.indexWhere((item) => item.id == entryId);
+          if (index != -1) {
+            entries.removeAt(index);
             dateIndexChanged = true;
             // ignore: discarded_futures
-            _store.delete(entry.id);
+            _store.delete(entryId);
+            if (report != null) report.pulledMealDeletes += 1;
           }
         }
+        continue;
       }
-      if (dateIndexChanged) {
-        _markEntriesDateIndexDirty();
+      final existing = entryId == null ? null : existingEntries[entryId];
+      if (existing != null &&
+          existing.updatedAt != null &&
+          remoteUpdatedAt != null &&
+          existing.updatedAt!.isAfter(remoteUpdatedAt)) {
+        _failedMealSyncIds.add(existing.id);
+        continue;
       }
+      final imagePath = row['image_path'] as String?;
+      final labelPath = row['label_image_path'] as String?;
+      Uint8List? imageBytes;
+      if (existing != null &&
+          existing.imageBytes.isNotEmpty &&
+          existing.imageHash == row['image_hash']) {
+        imageBytes = existing.imageBytes;
+      } else {
+        imageBytes = await _downloadImageIfAvailable(
+          bucket: kSupabaseMealImagesBucket,
+          path: imagePath,
+        );
+      }
+      final resolvedImageBytes = imageBytes ?? _namePlaceholderBytes;
+      Uint8List? labelBytes;
+      if (existing != null &&
+          existing.labelImageBytes != null &&
+          labelPath != null &&
+          labelPath.isNotEmpty) {
+        labelBytes = existing.labelImageBytes;
+      } else {
+        labelBytes = await _downloadImageIfAvailable(
+          bucket: kSupabaseLabelImagesBucket,
+          path: labelPath,
+        );
+      }
+      final entry = _mealEntryFromRow(row, resolvedImageBytes, labelBytes);
+      final index = entries.indexWhere((item) => item.id == entry.id);
+      if (index == -1) {
+        entries.insert(0, entry);
+        dateIndexChanged = true;
+        if (report != null) report.pulledMeals += 1;
+      } else {
+        dateIndexChanged = true;
+        entries[index] = entry;
+        if (report != null) report.pulledMeals += 1;
+      }
+      await _store.upsert(entry);
+    }
+    // Remove local entries missing from remote on full sync only.
+    if (since == null && allowPrune && remoteIds.isNotEmpty) {
+      // Remove local entries that no longer exist remotely (full sync only)
+      final toRemove = entries.where((e) => !remoteIds.contains(e.id)).toList();
+      if (toRemove.isNotEmpty) {
+        for (final entry in toRemove) {
+          entries.remove(entry);
+          dateIndexChanged = true;
+          // ignore: discarded_futures
+          _store.delete(entry.id);
+        }
+      }
+    }
+    if (dateIndexChanged) {
+      _markEntriesDateIndexDirty();
+    }
     final existingFoods = {
       for (final food in customFoods) food.id: food,
     };
@@ -9984,85 +10044,85 @@ class AppState extends ChangeNotifier {
         await _fetchPagedRows((from, to) => foodsQuery().range(from, to));
     final remoteFoodIds = <String>{};
     for (final row in foodRows) {
-        final foodId = row['id'] as String?;
+      final foodId = row['id'] as String?;
+      if (foodId != null) {
+        remoteFoodIds.add(foodId);
+      }
+      final deletedAt = row['deleted_at'] as String?;
+      final remoteUpdatedAt =
+          DateTime.tryParse(row['updated_at'] as String? ?? '');
+      if (deletedAt != null && deletedAt.isNotEmpty) {
         if (foodId != null) {
-          remoteFoodIds.add(foodId);
-        }
-        final deletedAt = row['deleted_at'] as String?;
-        final remoteUpdatedAt =
-            DateTime.tryParse(row['updated_at'] as String? ?? '');
-        if (deletedAt != null && deletedAt.isNotEmpty) {
-          if (foodId != null) {
-            final existing = existingFoods[foodId];
-            if (existing != null &&
-                remoteUpdatedAt != null &&
-                existing.updatedAt.isAfter(remoteUpdatedAt)) {
-              _failedCustomFoodSyncIds.add(foodId);
-              continue;
-            }
-            customFoods.removeWhere((food) => food.id == foodId);
-            _deletedCustomFoods.remove(foodId);
-            if (report != null) report.pulledCustomDeletes += 1;
+          final existing = existingFoods[foodId];
+          if (existing != null &&
+              remoteUpdatedAt != null &&
+              existing.updatedAt.isAfter(remoteUpdatedAt)) {
+            _failedCustomFoodSyncIds.add(foodId);
+            continue;
           }
-          continue;
+          customFoods.removeWhere((food) => food.id == foodId);
+          _deletedCustomFoods.remove(foodId);
+          if (report != null) report.pulledCustomDeletes += 1;
         }
-        final existing = foodId == null ? null : existingFoods[foodId];
-        if (existing != null &&
-            remoteUpdatedAt != null &&
-            existing.updatedAt.isAfter(remoteUpdatedAt)) {
-          _failedCustomFoodSyncIds.add(existing.id);
-          continue;
-        }
-        final imagePath = row['image_path'] as String?;
-        final updatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
-        Uint8List? bytes;
-        if (existing != null &&
-            updatedAt != null &&
-            existing.updatedAt.isAtSameMomentAs(updatedAt)) {
-          bytes = existing.imageBytes;
-        } else {
-          bytes = await _downloadImageIfAvailable(
-            bucket: kSupabaseMealImagesBucket,
-            path: imagePath,
-          );
-        }
-        final resolvedBytes =
-            bytes ?? existing?.imageBytes ?? _namePlaceholderBytes;
-        final food = CustomFood(
-          id: row['id'] as String,
-          name: (row['name'] as String?) ?? '',
-          summary: (row['summary'] as String?) ?? '',
-          calorieRange: (row['calorie_range'] as String?) ?? '',
-          suggestion: (row['suggestion'] as String?) ?? '',
-          macros: _parseMacros(row['macros']),
-          imageBytes: resolvedBytes,
-          createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ??
-              DateTime.now(),
-          updatedAt: DateTime.tryParse(row['updated_at'] as String? ?? '') ??
-              DateTime.now(),
+        continue;
+      }
+      final existing = foodId == null ? null : existingFoods[foodId];
+      if (existing != null &&
+          remoteUpdatedAt != null &&
+          existing.updatedAt.isAfter(remoteUpdatedAt)) {
+        _failedCustomFoodSyncIds.add(existing.id);
+        continue;
+      }
+      final imagePath = row['image_path'] as String?;
+      final updatedAt = DateTime.tryParse(row['updated_at'] as String? ?? '');
+      Uint8List? bytes;
+      if (existing != null &&
+          updatedAt != null &&
+          existing.updatedAt.isAtSameMomentAs(updatedAt)) {
+        bytes = existing.imageBytes;
+      } else {
+        bytes = await _downloadImageIfAvailable(
+          bucket: kSupabaseMealImagesBucket,
+          path: imagePath,
         );
-        final index = customFoods.indexWhere((item) => item.id == food.id);
-        if (index == -1) {
-          customFoods.add(food);
-          if (report != null) report.pulledCustomFoods += 1;
-        } else {
-          customFoods[index] = food;
-          if (report != null) report.pulledCustomFoods += 1;
+      }
+      final resolvedBytes =
+          bytes ?? existing?.imageBytes ?? _namePlaceholderBytes;
+      final food = CustomFood(
+        id: row['id'] as String,
+        name: (row['name'] as String?) ?? '',
+        summary: (row['summary'] as String?) ?? '',
+        calorieRange: (row['calorie_range'] as String?) ?? '',
+        suggestion: (row['suggestion'] as String?) ?? '',
+        macros: _parseMacros(row['macros']),
+        imageBytes: resolvedBytes,
+        createdAt: DateTime.tryParse(row['created_at'] as String? ?? '') ??
+            DateTime.now(),
+        updatedAt: DateTime.tryParse(row['updated_at'] as String? ?? '') ??
+            DateTime.now(),
+      );
+      final index = customFoods.indexWhere((item) => item.id == food.id);
+      if (index == -1) {
+        customFoods.add(food);
+        if (report != null) report.pulledCustomFoods += 1;
+      } else {
+        customFoods[index] = food;
+        if (report != null) report.pulledCustomFoods += 1;
+      }
+    }
+    if (since == null && allowPrune && remoteFoodIds.isNotEmpty) {
+      final toRemove = existingFoods.keys
+          .where((id) => !remoteFoodIds.contains(id))
+          .toList();
+      if (toRemove.isNotEmpty) {
+        for (final id in toRemove) {
+          // keep storage in sync; overrides will be saved below
+          customFoods.removeWhere((food) => food.id == id);
         }
       }
-      if (since == null && allowPrune && remoteFoodIds.isNotEmpty) {
-        final toRemove = existingFoods.keys
-            .where((id) => !remoteFoodIds.contains(id))
-            .toList();
-        if (toRemove.isNotEmpty) {
-          for (final id in toRemove) {
-            // keep storage in sync; overrides will be saved below
-            customFoods.removeWhere((food) => food.id == id);
-          }
-        }
-      }
-      notifyListeners();
-      await _saveOverrides();
+    }
+    notifyListeners();
+    await _saveOverrides();
     _syncSelectedDateToLatestEntryIfNeeded();
     notifyListeners();
   }
@@ -10488,7 +10548,8 @@ class AppState extends ChangeNotifier {
       'failed_custom_food_delete_sync_ids':
           _failedCustomFoodDeleteSyncIds.toList(),
       'custom_foods': customFoods.map((item) => item.toJson()).toList(),
-      if (_cachedWeekPlan != null) _kWeekPlanCacheKey: _cachedWeekPlan!.toJson(),
+      if (_cachedWeekPlan != null)
+        _kWeekPlanCacheKey: _cachedWeekPlan!.toJson(),
       if (_cachedWeekPlanReplan != null)
         _kWeekPlanReplanCacheKey: _cachedWeekPlanReplan!.toJson(),
     });
@@ -10647,7 +10708,8 @@ class AppState extends ChangeNotifier {
       'meal': _mealOverrides,
       'week': _weekOverrides,
       'meta': _settingsMetaToSync(),
-      if (_cachedWeekPlan != null) _kWeekPlanCacheKey: _cachedWeekPlan!.toJson(),
+      if (_cachedWeekPlan != null)
+        _kWeekPlanCacheKey: _cachedWeekPlan!.toJson(),
       if (_cachedWeekPlanReplan != null)
         _kWeekPlanReplanCacheKey: _cachedWeekPlanReplan!.toJson(),
     };

@@ -517,25 +517,36 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         lastDay, (i) => DateTime(month.year, month.month, i + 1));
   }
 
-  void _setDateToToday() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    _selectedDate = today;
-    _currentMonth = DateTime(today.year, today.month, 1);
+  void _applySelectedDate(DateTime target) {
+    _selectedDate = DateTime(target.year, target.month, target.day);
+    _currentMonth = DateTime(_selectedDate.year, _selectedDate.month, 1);
     _currentMonthDays = _daysInMonth(_currentMonth);
     _lastJumpKey = '';
   }
 
+  void _syncDateForSection(AppState app, _LogSection section) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    DateTime? latest;
+    switch (section) {
+      case _LogSection.meals:
+        latest = app.latestMealEntryDate();
+        break;
+      case _LogSection.water:
+        latest = app.latestHydrationDate();
+        break;
+      case _LogSection.weight:
+        latest = app.latestWeightRecordDate();
+        break;
+    }
+    _applySelectedDate(latest ?? today);
+  }
+
   void _jumpToLatestMealDate(AppState app) {
-    if (app.entries.isEmpty) return;
-    final latest = app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
-    final target =
-        DateTime(latest.time.year, latest.time.month, latest.time.day);
+    final latest = app.latestMealEntryDate();
+    if (latest == null) return;
     setState(() {
-      _selectedDate = target;
-      _currentMonth = DateTime(target.year, target.month, 1);
-      _currentMonthDays = _daysInMonth(_currentMonth);
-      _lastJumpKey = '';
+      _applySelectedDate(latest);
     });
   }
 
@@ -1679,11 +1690,11 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         },
         onValueChanged: (next) {
           if (next == null) return;
+          if (next == _activeSection) return;
+          final app = AppStateScope.of(context);
           setState(() {
             _activeSection = next;
-            if (next == _LogSection.water) {
-              _setDateToToday();
-            }
+            _syncDateForSection(app, next);
           });
         },
       ),
