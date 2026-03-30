@@ -1782,7 +1782,7 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
     final safeProgress = progress.clamp(0.0, 1.0);
-    final amountText = '$intakeMl / $targetMl ml';
+    final intakeText = '$intakeMl ml';
     final statusText = overMl > 0
         ? (_isZh ? '超過 +$overMl ml' : 'Over +$overMl ml')
         : (remainingMl == 0
@@ -1815,13 +1815,12 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         const markerMax = liquidTop + liquidHeight - markerInset;
         const topGoalY = liquidTop + 8;
         final topGoalCovered = fillTop <= topGoalY + 5;
-        final statusCenterTop = fillTop <= liquidTop + 10
+        final statusCenterY = fillTop <= liquidTop + 10
             ? liquidTop + 14
             : ((liquidTop + fillTop) / 2);
-        final statusTop =
-            (statusCenterTop - 8).clamp(liquidTop + 4, fillBottom - 22);
-        const amountTop = fillBottom - 43;
-        final amountOnWater = fillTop <= amountTop + 9;
+        final amountY =
+            (fillTop + 10).clamp(liquidTop + 26, fillBottom - 16).toDouble();
+        final amountOnWater = fillTop <= amountY + 6;
         final beverageLayerFactor =
             intakeMl <= 0 ? 0.0 : (beverageMl / intakeMl).clamp(0.0, 1.0);
 
@@ -1851,6 +1850,61 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
             manualMarkerTop = (beverageMarkerTop + markerGap)
                 .clamp(markerMin, markerMax)
                 .toDouble();
+          }
+        }
+
+        const goalTextH = 12.0;
+        const statusTextH = 11.0;
+        const amountTextH = 12.0;
+        const tagTextH = 10.0;
+        const minGap = 10.0;
+
+        const goalTop = topGoalY - liquidTop;
+        final amountTopInitial = amountY - liquidTop - (amountTextH / 2);
+        var amountTop = amountTopInitial;
+        var statusTop = statusCenterY - liquidTop - (statusTextH / 2);
+        var beverageTagTop = beverageMarkerTop - liquidTop - (tagTextH / 2);
+        var manualTagTop = manualMarkerTop - liquidTop - (tagTextH / 2);
+
+        // Keep "已喝 ml" below status text and not too close to bottle bottom.
+        const amountMinTop = goalTop + goalTextH + (minGap * 2) + statusTextH;
+        const amountMaxTop = liquidHeight - amountTextH - 6;
+        amountTop = amountTop.clamp(amountMinTop, amountMaxTop).toDouble();
+
+        // Status text must stay between goal and amount.
+        const statusMinTop = goalTop + goalTextH + minGap;
+        final statusMaxTop = amountTop - statusTextH - minGap;
+        bool showStatus = true;
+        var statusDisplayText = statusText;
+        var statusFontSize = 10.0;
+        if (statusMaxTop < statusMinTop) {
+          showStatus = false;
+        } else {
+          statusTop = statusTop.clamp(statusMinTop, statusMaxTop).toDouble();
+          final availableStatusSpace = statusMaxTop - statusMinTop;
+          if (availableStatusSpace < 12 && overMl == 0 && remainingMl > 0) {
+            statusDisplayText =
+                _isZh ? '差 ${remainingMl}ml' : '-${remainingMl}ml';
+            statusFontSize = 9.0;
+          }
+          if (availableStatusSpace < 8 && overMl == 0 && remainingMl > 0) {
+            showStatus = false;
+          }
+        }
+
+        // Place beverage/manual labels as centered stacked lines in lower layer.
+        final tagsMinTop = amountTop + amountTextH + minGap;
+        const tagsMaxTop = liquidHeight - tagTextH - 4;
+        beverageTagTop =
+            beverageTagTop.clamp(tagsMinTop, tagsMaxTop).toDouble();
+        manualTagTop = manualTagTop.clamp(tagsMinTop, tagsMaxTop).toDouble();
+        if ((manualTagTop - beverageTagTop).abs() < minGap) {
+          if (beverageTagTop <= manualTagTop) {
+            manualTagTop =
+                (beverageTagTop + minGap).clamp(tagsMinTop, tagsMaxTop);
+          } else {
+            beverageTagTop =
+                (manualTagTop + minGap).clamp(tagsMinTop, tagsMaxTop);
           }
         }
 
@@ -1978,26 +2032,28 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                               Positioned(
-                                top: statusTop - liquidTop,
+                                top: statusTop,
                                 left: 0,
                                 right: 0,
-                                child: Text(
-                                  statusText,
-                                  textAlign: TextAlign.center,
-                                  style:
-                                      AppTextStyles.caption(context).copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black87,
-                                    fontSize: 10.0,
-                                  ),
-                                ),
+                                child: showStatus
+                                    ? Text(
+                                        statusDisplayText,
+                                        textAlign: TextAlign.center,
+                                        style: AppTextStyles.caption(context)
+                                            .copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.black87,
+                                          fontSize: statusFontSize,
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
                               ),
                               Positioned(
-                                top: amountTop - liquidTop,
+                                top: amountTop,
                                 left: 0,
                                 right: 0,
                                 child: Text(
-                                  amountText,
+                                  intakeText,
                                   textAlign: TextAlign.center,
                                   style:
                                       AppTextStyles.caption(context).copyWith(
@@ -2049,30 +2105,30 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
                                   ),
                                 ),
                               ),
-                              if (beverageMl > 0)
-                                Positioned(
-                                  right: 5,
-                                  top: (beverageMarkerTop - liquidTop - 10)
-                                      .clamp(2, liquidHeight - 26),
-                                  child: _buildBottleInnerTag(
-                                    context,
-                                    label:
-                                        '${_isZh ? '飲料' : 'Beverage'} $beverageMl',
-                                    accent: accent,
-                                  ),
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                top: beverageTagTop,
+                                child: _buildBottleInnerTag(
+                                  context,
+                                  label:
+                                      '${_isZh ? '飲料' : 'Beverage'} $beverageMl ml',
+                                  accent: accent,
+                                  muted: beverageMl <= 0,
                                 ),
-                              if (manualMl > 0)
-                                Positioned(
-                                  right: 5,
-                                  top: (manualMarkerTop - liquidTop - 10)
-                                      .clamp(16, liquidHeight - 18),
-                                  child: _buildBottleInnerTag(
-                                    context,
-                                    label:
-                                        '${_isZh ? '手動' : 'Manual'} $manualMl',
-                                    accent: accent.withValues(alpha: 0.88),
-                                  ),
+                              ),
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                top: manualTagTop,
+                                child: _buildBottleInnerTag(
+                                  context,
+                                  label:
+                                      '${_isZh ? '手動' : 'Manual'} $manualMl ml',
+                                  accent: accent.withValues(alpha: 0.88),
+                                  muted: manualMl <= 0,
                                 ),
+                              ),
                             ],
                           ),
                         ),
@@ -2121,29 +2177,34 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     BuildContext context, {
     required String label,
     required Color accent,
+    bool muted = false,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
-      ),
-      child: Text(
-        '$label ml',
-        textAlign: TextAlign.left,
-        style: AppTextStyles.caption(context).copyWith(
-          fontSize: 8.6,
-          height: 1.0,
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-          shadows: [
-            Shadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 2,
-              offset: const Offset(0, 1),
-            ),
-          ],
+    return Align(
+      alignment: Alignment.center,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: muted ? 0.12 : 0.2),
+          borderRadius: BorderRadius.circular(999),
+          border:
+              Border.all(color: accent.withValues(alpha: muted ? 0.25 : 0.35)),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: AppTextStyles.caption(context).copyWith(
+            fontSize: 8.6,
+            height: 1.0,
+            color: muted ? Colors.white.withValues(alpha: 0.8) : Colors.white,
+            fontWeight: FontWeight.w800,
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
         ),
       ),
     );
