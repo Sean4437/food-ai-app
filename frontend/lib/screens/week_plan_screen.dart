@@ -1483,6 +1483,70 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                               ),
                             ],
                           ),
+                          if (selectedDay != null) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(12),
+                                border:
+                                    Border.all(color: const Color(0xFFE5E7EB)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    selectedDay.date,
+                                    style:
+                                        AppTextStyles.caption(context).copyWith(
+                                      color: const Color(0xFF6B7280),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    _todaySummaryLine(selectedDay),
+                                    style:
+                                        AppTextStyles.caption(context).copyWith(
+                                      color: const Color(0xFF374151),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: _todayTags(selectedDay)
+                                        .map(
+                                          (tag) => Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF3F4F6),
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                            child: Text(
+                                              tag,
+                                              style:
+                                                  AppTextStyles.caption(context)
+                                                      .copyWith(
+                                                color: const Color(0xFF374151),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
@@ -1510,6 +1574,31 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                               ),
                             ),
                           ),
+                          if (plan != null) ...[
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed:
+                                    _replanning ? null : _handleReplanPressed,
+                                icon: _replanning
+                                    ? const SizedBox(
+                                        width: 12,
+                                        height: 12,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.swap_horiz_rounded,
+                                        size: 16,
+                                      ),
+                                label: Text(
+                                  _isZh ? '重排剩餘天數' : 'Replan remaining days',
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -1622,94 +1711,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                   ),
                   if (selectedDay != null) ...[
                     const SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _isZh ? '餐次安排' : 'Meals',
-                                      style:
-                                          AppTextStyles.body(context).copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF111827),
-                                      ),
-                                    ),
-                                  ),
-                                  Text(
-                                    selectedDay.date,
-                                    style:
-                                        AppTextStyles.caption(context).copyWith(
-                                      color: const Color(0xFF6B7280),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _todaySummaryLine(selectedDay),
-                                style: AppTextStyles.caption(context).copyWith(
-                                  color: const Color(0xFF374151),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (plan != null) ...[
-                          const SizedBox(width: 8),
-                          OutlinedButton.icon(
-                            onPressed:
-                                _replanning ? null : _handleReplanPressed,
-                            icon: _replanning
-                                ? const SizedBox(
-                                    width: 12,
-                                    height: 12,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.swap_horiz_rounded,
-                                    size: 16,
-                                  ),
-                            label: Text(
-                              _isZh ? '重排剩餘天數' : 'Replan',
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _todayTags(selectedDay)
-                          .map(
-                            (tag) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF3F4F6),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                tag,
-                                style: AppTextStyles.caption(context).copyWith(
-                                  color: const Color(0xFF374151),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          )
-                          .toList(),
+                    Text(
+                      _isZh ? '餐次安排' : 'Meals',
+                      style: AppTextStyles.body(context).copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF111827),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ...selectedDay.meals.map(buildMealCard),
