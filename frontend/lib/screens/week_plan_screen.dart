@@ -1485,67 +1485,51 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                           ),
                           if (selectedDay != null) ...[
                             const SizedBox(height: 12),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
-                                borderRadius: BorderRadius.circular(12),
-                                border:
-                                    Border.all(color: const Color(0xFFE5E7EB)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    selectedDay.date,
-                                    style:
-                                        AppTextStyles.caption(context).copyWith(
-                                      color: const Color(0xFF6B7280),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    _todaySummaryLine(selectedDay),
-                                    style:
-                                        AppTextStyles.caption(context).copyWith(
-                                      color: const Color(0xFF374151),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: _todayTags(selectedDay)
-                                        .map(
-                                          (tag) => Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 6,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFF3F4F6),
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                            ),
-                                            child: Text(
-                                              tag,
-                                              style:
-                                                  AppTextStyles.caption(context)
-                                                      .copyWith(
-                                                color: const Color(0xFF374151),
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                        .toList(),
-                                  ),
-                                ],
+                            Text(
+                              selectedDay.date,
+                              style: AppTextStyles.caption(context).copyWith(
+                                color: const Color(0xFF6B7280),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _todaySummaryLine(selectedDay),
+                              style: AppTextStyles.caption(context).copyWith(
+                                color: const Color(0xFF374151),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _todayTags(selectedDay)
+                                  .map(
+                                    (tag) => Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF3F4F6),
+                                        borderRadius:
+                                            BorderRadius.circular(999),
+                                      ),
+                                      child: Text(
+                                        tag,
+                                        style: AppTextStyles.caption(context)
+                                            .copyWith(
+                                          color: const Color(0xFF374151),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                            const SizedBox(height: 10),
+                            const Divider(height: 1),
                           ],
                           const SizedBox(height: 12),
                           SizedBox(
