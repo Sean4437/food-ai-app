@@ -59,6 +59,9 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   bool _hydratedFromCache = false;
   bool _fixedSectionExpanded = true;
   final Set<String> _expandedPlanDays = <String>{};
+  bool _planningSettingsExpanded = false;
+  bool _showAllDayDetails = false;
+  String? _selectedPlanDate;
 
   bool get _isZh => Localizations.localeOf(context)
       .languageCode
@@ -85,6 +88,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       _setMealScenarioSelectionFromData(cachedPlan.mealScenariosEffective);
       _fixedMeals =
           List<WeekPlanFixedMeal>.from(cachedPlan.fixedMealsEffective);
+      _selectedPlanDate = null;
       _seedExpandedDaysFromPlan(cachedPlan);
     }
     _hydratedFromCache = true;
@@ -288,7 +292,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
   void _seedExpandedDaysFromPlan(WeekPlanData? plan) {
     _expandedPlanDays.clear();
-    if (plan == null || plan.dayPlans.isEmpty) return;
+    if (plan == null || plan.dayPlans.isEmpty) {
+      _selectedPlanDate = null;
+      return;
+    }
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -300,6 +307,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
     if (dayKeySet.contains(todayKey)) {
       _expandedPlanDays.add(todayKey);
+      _selectedPlanDate ??= todayKey;
     }
     if (dayKeySet.contains(tomorrowKey)) {
       _expandedPlanDays.add(tomorrowKey);
@@ -307,6 +315,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
     if (_expandedPlanDays.isEmpty) {
       _expandedPlanDays.add(dayKeys.first);
+      _selectedPlanDate ??= dayKeys.first;
       if (dayKeys.length > 1) {
         _expandedPlanDays.add(dayKeys[1]);
       }
@@ -320,6 +329,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         break;
       }
     }
+    _selectedPlanDate ??= _expandedPlanDays.first;
   }
 
   void _expandAllPlanDays() {
@@ -796,6 +806,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         _plan = plan;
         _lastReplan = null;
         _fixedMeals = List<WeekPlanFixedMeal>.from(plan.fixedMealsEffective);
+        _selectedPlanDate = null;
         _seedExpandedDaysFromPlan(plan);
       });
       app.cacheWeekPlan(plan, lastReplan: null);
@@ -1095,256 +1106,896 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     );
   }
 
+  WeekPlanDayPlan? _resolveSelectedDayPlan(WeekPlanData? plan) {
+    if (plan == null || plan.dayPlans.isEmpty) return null;
+    final todayKey = _formatDate(DateTime.now());
+    final available = plan.dayPlans.map((d) => d.date).toSet();
+    final preferred = _selectedPlanDate;
+    String key;
+    if (preferred != null && available.contains(preferred)) {
+      key = preferred;
+    } else if (available.contains(todayKey)) {
+      key = todayKey;
+    } else {
+      key = plan.dayPlans.first.date;
+    }
+    _selectedPlanDate = key;
+    return plan.dayPlans.firstWhere((d) => d.date == key);
+  }
+
+  DateTime? _tryParseDateKey(String raw) {
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) return null;
+    return DateTime(parsed.year, parsed.month, parsed.day);
+  }
+
+  String _mealDirectionSummary() {
+    final present = <String>{};
+    for (final mealType in _mealTypes) {
+      final selected = _mealScenarioSelections[mealType] ?? const <String>[];
+      present.addAll(selected);
+    }
+    final ordered = _scenarioTypes.where(present.contains).toList();
+    if (ordered.isEmpty) return _isZh ? '未設定' : 'Not set';
+    return ordered.map(_scenarioLabel).join(_isZh ? '＋' : ' + ');
+  }
+
+  Map<String, int> _scenarioCounts(WeekPlanDayPlan day) {
+    final counts = <String, int>{};
+    for (final meal in day.meals) {
+      counts[meal.scenario] = (counts[meal.scenario] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  String _todaySummaryLine(WeekPlanDayPlan day) {
+    final counts = _scenarioCounts(day);
+    if (counts.isEmpty) return _isZh ? '今天尚未規劃餐次' : 'No meals planned today.';
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top = sorted.first;
+    final topLabel = _scenarioLabel(top.key);
+    return _isZh
+        ? '$topLabel 為主，今天共 ${day.meals.length} 餐'
+        : '$topLabel focused, ${day.meals.length} meals today';
+  }
+
+  List<String> _todayTags(WeekPlanDayPlan day) {
+    final tags = <String>[];
+    tags.add(_isZh ? '${day.meals.length} 餐' : '${day.meals.length} meals');
+    final snackCount = day.meals.where((m) => m.mealType == 'snack').length;
+    if (snackCount > 0) {
+      tags.add(_isZh ? '點心 $snackCount 次' : 'Snack x$snackCount');
+    }
+    final counts = _scenarioCounts(day);
+    if (counts.isNotEmpty) {
+      final sorted = counts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      final top = sorted.first;
+      tags.add(_isZh
+          ? '${_scenarioLabel(top.key)} ${top.value} 次'
+          : '${_scenarioLabel(top.key)} x${top.value}');
+    }
+    return tags.take(3).toList();
+  }
+
+  Color _scenarioChipColor(String scenario) {
+    switch (scenario) {
+      case 'home_cook':
+        return const Color(0xFF6FCF97);
+      case 'eat_out':
+        return const Color(0xFFF2994A);
+      case 'convenience_store':
+        return const Color(0xFF56CCF2);
+      default:
+        return const Color(0xFF9CA3AF);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final plan = _plan;
+    final dayPlans = plan?.dayPlans ?? const <WeekPlanDayPlan>[];
+    final dayByDate = <String, WeekPlanDayPlan>{
+      for (final day in dayPlans) day.date: day,
+    };
+    final selectedDay = _resolveSelectedDayPlan(plan);
+    final selectedDateKey = _selectedPlanDate;
     final activeScenarioMeals = _mealTypes
         .where(
           (mealType) => (_mealScenarioSelections[mealType] ?? const <String>[])
               .isNotEmpty,
         )
         .length;
-    return AppBackground(
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 680),
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final todayKey = _formatDate(today);
+
+    final weekDates = <DateTime>[];
+    for (final day in dayPlans) {
+      final parsed = _tryParseDateKey(day.date);
+      if (parsed != null) {
+        weekDates.add(parsed);
+      }
+    }
+    if (weekDates.isEmpty) {
+      final start = DateTime(_startDate.year, _startDate.month, _startDate.day);
+      for (var i = 0; i < 7; i++) {
+        weekDates.add(start.add(Duration(days: i)));
+      }
+    }
+
+    final weekGoalLabel = _goalMode == 'week_override'
+        ? _goalLabel(_goalOverride)
+        : (_isZh ? '沿用個人設定' : 'Use profile goal');
+    final settingsSummary = _isZh
+        ? '已套用 $activeScenarioMeals/${_mealTypes.length} 餐來源・固定餐 ${_fixedMeals.length} 項'
+        : '$activeScenarioMeals/${_mealTypes.length} meal sources ・ ${_fixedMeals.length} fixed rules';
+
+    Widget buildMealCard(WeekPlanMealItem meal) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).maybePop(),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      ),
                       Expanded(
                         child: Text(
-                          _isZh ? '未來 7 天飲食規劃' : '7-Day Meal Plan',
-                          style: AppTextStyles.title2(context),
+                          _mealTypeLabel(meal.mealType),
+                          style: AppTextStyles.caption(context).copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF111827),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _scenarioChipColor(meal.scenario).withValues(
+                            alpha: 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          _scenarioLabel(meal.scenario),
+                          style: AppTextStyles.caption(context).copyWith(
+                            color: _scenarioChipColor(meal.scenario),
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Card(
-                    elevation: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 6),
+                  Text(
+                    meal.dishName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.body(context).copyWith(
+                      color: const Color(0xFF1F2937),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              '${meal.kcal} kcal',
+              style: AppTextStyles.caption(context).copyWith(
+                color: const Color(0xFF374151),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AppBackground(
+      child: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 148),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 680),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
                         children: [
-                          Text(
-                            _isZh ? '設定條件' : 'Planning Conditions',
-                            style: AppTextStyles.body(context).copyWith(
-                              fontWeight: FontWeight.w700,
+                          IconButton(
+                            onPressed: () => Navigator.of(context).maybePop(),
+                            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                          ),
+                          Expanded(
+                            child: Text(
+                              _isZh ? '7 天飲食規劃' : '7-Day Meal Plan',
+                              style: AppTextStyles.title2(context),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _pickStartDate,
-                                  icon: const Icon(Icons.event),
-                                  label: Text(
-                                    (_isZh ? '起始日：' : 'Start: ') +
-                                        _formatDate(_startDate),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            _isZh ? '本週目標' : 'Weekly Goal',
-                            style: AppTextStyles.caption(context).copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            initialValue: _goalMode,
-                            decoration: InputDecoration(
-                              labelText: _isZh ? '目標來源' : 'Goal Source',
-                              border: const OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                            items: [
-                              DropdownMenuItem(
-                                value: 'profile_default',
-                                child: Text(
-                                  _isZh ? '沿用設定頁目標' : 'Use profile goal',
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'week_override',
-                                child: Text(
-                                  _isZh ? '只覆寫本週目標' : 'Override for this week',
-                                ),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              if (value == null) return;
-                              setState(() => _goalMode = value);
+                          IconButton(
+                            tooltip: _isZh ? '規劃設定' : 'Plan settings',
+                            onPressed: () {
+                              setState(() {
+                                _planningSettingsExpanded =
+                                    !_planningSettingsExpanded;
+                              });
                             },
+                            icon: Icon(
+                              _planningSettingsExpanded
+                                  ? Icons.tune_rounded
+                                  : Icons.tune_outlined,
+                            ),
                           ),
-                          if (_goalMode == 'week_override') ...[
-                            const SizedBox(height: 10),
-                            DropdownButtonFormField<String>(
-                              initialValue: _goalOverride,
-                              decoration: InputDecoration(
-                                labelText: _isZh ? '本週目標' : 'Weekly Goal',
-                                border: const OutlineInputBorder(),
-                                isDense: true,
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        elevation: 0,
+                        margin: EdgeInsets.zero,
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _isZh ? '本週目標' : 'Weekly Focus',
+                                style: AppTextStyles.body(context).copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF111827),
+                                ),
                               ),
-                              items: const <String>[
-                                'lose_fat',
-                                'maintain',
-                                'gain_muscle',
-                              ]
-                                  .map(
-                                    (goal) => DropdownMenuItem<String>(
-                                      value: goal,
-                                      child: Text(_goalLabel(goal)),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (value) {
-                                if (value == null) return;
-                                setState(() => _goalOverride = value);
-                              },
-                            ),
-                          ],
-                          const SizedBox(height: 10),
-                          Text(
-                            _isZh ? '每餐可選來源' : 'Meal Source by Meal',
-                            style: AppTextStyles.caption(context).copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _isZh
-                                ? '已啟用 $activeScenarioMeals / ${_mealTypes.length} 餐'
-                                : '$activeScenarioMeals / ${_mealTypes.length} meals enabled',
-                            style: AppTextStyles.caption(context).copyWith(
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          ..._mealTypes.map((mealType) {
-                            final selected =
-                                _mealScenarioSelections[mealType] ??
-                                    _scenarioTypes;
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.black12),
+                              const SizedBox(height: 6),
+                              Text(
+                                plan != null
+                                    ? _goalLabel(plan.goalEffective)
+                                    : weekGoalLabel,
+                                style: AppTextStyles.body(context).copyWith(
+                                  color: const Color(0xFF111827),
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              const SizedBox(height: 4),
+                              Text(
+                                plan != null
+                                    ? '${_isZh ? '每日目標' : 'Daily target'} ${plan.dailyTarget.kcal} kcal'
+                                    : (_isZh
+                                        ? '產生計畫後會顯示每日熱量目標'
+                                        : 'Daily kcal target will appear after generation'),
+                                style: AppTextStyles.caption(context).copyWith(
+                                  color: const Color(0xFF6B7280),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
                                 children: [
-                                  Text(
-                                    _mealTypeLabel(mealType),
-                                    style:
-                                        AppTextStyles.caption(context).copyWith(
-                                      color: Colors.black87,
-                                      fontWeight: FontWeight.w700,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
                                     ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _mealSourceSummary(mealType),
-                                    style:
-                                        AppTextStyles.caption(context).copyWith(
-                                      color: Colors.black54,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF3F4F6),
+                                      borderRadius: BorderRadius.circular(999),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      FilterChip(
-                                        label:
-                                            Text(_scenarioLabel(_noneScenario)),
-                                        selected: selected.isEmpty,
-                                        onSelected: (value) =>
-                                            _toggleMealScenario(
-                                          mealType,
-                                          _noneScenario,
-                                          value,
-                                        ),
+                                    child: Text(
+                                      _mealDirectionSummary(),
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(
+                                        color: const Color(0xFF374151),
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                      ..._scenarioTypes.map((scenario) {
-                                        return FilterChip(
-                                          label: Text(_scenarioLabel(scenario)),
-                                          selected: selected.contains(scenario),
-                                          onSelected: (value) =>
-                                              _toggleMealScenario(
-                                            mealType,
-                                            scenario,
-                                            value,
-                                          ),
-                                        );
-                                      }),
-                                    ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF3F4F6),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      _isZh
+                                          ? '固定餐 ${_fixedMeals.length} 項'
+                                          : '${_fixedMeals.length} fixed rules',
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(
+                                        color: const Color(0xFF374151),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
-                            );
-                          }),
-                          const Divider(height: 22),
-                          _buildSectionHeader(
-                            title: _isZh
-                                ? '固定餐規則（可多筆）'
-                                : 'Fixed meal rules (multi)',
-                            subtitle: _isZh
-                                ? '共 ${_fixedMeals.length} 筆'
-                                : '${_fixedMeals.length} fixed rules',
-                            expanded: _fixedSectionExpanded,
-                            onTap: () {
-                              setState(() {
-                                _fixedSectionExpanded = !_fixedSectionExpanded;
-                              });
-                            },
+                            ],
                           ),
-                          if (_fixedSectionExpanded) ...[
-                            const SizedBox(height: 8),
-                            ..._mealTypes.map(_buildFixedMealsSection),
-                          ],
-                          const SizedBox(height: 12),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Card(
+                        elevation: 0,
+                        margin: EdgeInsets.zero,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _isZh ? '本週行程' : 'This Week',
+                                style: AppTextStyles.caption(context).copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF374151),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: weekDates.map((date) {
+                                    final key = _formatDate(date);
+                                    final dayPlan = dayByDate[key];
+                                    final isSelected = selectedDateKey == key;
+                                    final isToday = key == todayKey;
+                                    final dotColor = isSelected
+                                        ? const Color(0xFF22C55E)
+                                        : dayPlan != null
+                                            ? const Color(0xFF94A3B8)
+                                            : const Color(0xFFD1D5DB);
+                                    return GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedPlanDate = key;
+                                          if (dayPlan != null) {
+                                            _expandedPlanDays
+                                              ..clear()
+                                              ..add(key);
+                                          }
+                                        });
+                                      },
+                                      child: Container(
+                                        width: 78,
+                                        margin: const EdgeInsets.only(right: 8),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? const Color(0xFFEFFCF4)
+                                              : Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? const Color(0xFF6FCF97)
+                                                : const Color(0xFFE5E7EB),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              _weekdayShortLabel(date.weekday),
+                                              style: AppTextStyles.caption(
+                                                context,
+                                              ).copyWith(
+                                                color: isToday
+                                                    ? const Color(0xFF111827)
+                                                    : const Color(0xFF6B7280),
+                                                fontWeight: isToday
+                                                    ? FontWeight.w700
+                                                    : FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              DateFormat('M/d').format(date),
+                                              style: AppTextStyles.caption(
+                                                context,
+                                              ).copyWith(
+                                                color: const Color(0xFF1F2937),
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Container(
+                                              width: 8,
+                                              height: 8,
+                                              decoration: BoxDecoration(
+                                                color: dotColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Card(
+                        elevation: 0,
+                        margin: EdgeInsets.zero,
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: selectedDay == null
+                              ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _isZh ? '今天吃什麼' : "Today's Plan",
+                                      style:
+                                          AppTextStyles.body(context).copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _isZh
+                                          ? '先產生 7 天計畫，這裡會顯示今日摘要。'
+                                          : 'Generate a 7-day plan to see today summary.',
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(
+                                        color: const Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            _isZh ? '今天吃什麼' : "Today's Plan",
+                                            style: AppTextStyles.body(context)
+                                                .copyWith(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                          selectedDay.date,
+                                          style: AppTextStyles.caption(context)
+                                              .copyWith(
+                                            color: const Color(0xFF6B7280),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _todaySummaryLine(selectedDay),
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(
+                                        color: const Color(0xFF374151),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: _todayTags(selectedDay)
+                                          .map(
+                                            (tag) => Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 6,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF3F4F6),
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                              child: Text(
+                                                tag,
+                                                style: AppTextStyles.caption(
+                                                  context,
+                                                ).copyWith(
+                                                  color:
+                                                      const Color(0xFF374151),
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      if (selectedDay != null) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          _isZh ? '餐次安排' : 'Meals',
+                          style: AppTextStyles.body(context).copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF111827),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...selectedDay.meals.map(buildMealCard),
+                      ],
+                      const SizedBox(height: 12),
+                      _buildSectionHeader(
+                        title: _isZh ? '規劃設定' : 'Planning settings',
+                        subtitle: settingsSummary,
+                        expanded: _planningSettingsExpanded,
+                        onTap: () {
+                          setState(() {
+                            _planningSettingsExpanded =
+                                !_planningSettingsExpanded;
+                          });
+                        },
+                      ),
+                      if (_planningSettingsExpanded) ...[
+                        const SizedBox(height: 8),
+                        Card(
+                          elevation: 0,
+                          margin: EdgeInsets.zero,
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: _pickStartDate,
+                                    icon: const Icon(Icons.event),
+                                    label: Text(
+                                      '${_isZh ? '開始日' : 'Start'}: ${_formatDate(_startDate)}',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                DropdownButtonFormField<String>(
+                                  initialValue: _goalMode,
+                                  decoration: InputDecoration(
+                                    labelText: _isZh ? '目標來源' : 'Goal source',
+                                    border: const OutlineInputBorder(),
+                                    isDense: true,
+                                  ),
+                                  items: [
+                                    DropdownMenuItem(
+                                      value: 'profile_default',
+                                      child: Text(
+                                        _isZh ? '使用個人目標' : 'Use profile goal',
+                                      ),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'week_override',
+                                      child: Text(
+                                        _isZh ? '本週覆寫目標' : 'Override this week',
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: (value) {
+                                    if (value == null) return;
+                                    setState(() => _goalMode = value);
+                                  },
+                                ),
+                                if (_goalMode == 'week_override') ...[
+                                  const SizedBox(height: 10),
+                                  DropdownButtonFormField<String>(
+                                    initialValue: _goalOverride,
+                                    decoration: InputDecoration(
+                                      labelText: _isZh ? '本週目標' : 'Weekly goal',
+                                      border: const OutlineInputBorder(),
+                                      isDense: true,
+                                    ),
+                                    items: const <String>[
+                                      'lose_fat',
+                                      'maintain',
+                                      'gain_muscle',
+                                    ]
+                                        .map(
+                                          (goal) => DropdownMenuItem<String>(
+                                            value: goal,
+                                            child: Text(_goalLabel(goal)),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      setState(() => _goalOverride = value);
+                                    },
+                                  ),
+                                ],
+                                const SizedBox(height: 12),
+                                Text(
+                                  _isZh ? '餐別來源' : 'Meal sources',
+                                  style:
+                                      AppTextStyles.caption(context).copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF111827),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ..._mealTypes.map((mealType) {
+                                  final selected =
+                                      _mealScenarioSelections[mealType] ??
+                                          _scenarioTypes;
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.fromLTRB(
+                                      10,
+                                      8,
+                                      10,
+                                      10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: const Color(0xFFE5E7EB),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _mealTypeLabel(mealType),
+                                          style: AppTextStyles.caption(context)
+                                              .copyWith(
+                                            color: const Color(0xFF111827),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          _mealSourceSummary(mealType),
+                                          style: AppTextStyles.caption(context)
+                                              .copyWith(
+                                            color: const Color(0xFF6B7280),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Wrap(
+                                          spacing: 8,
+                                          runSpacing: 8,
+                                          children: [
+                                            FilterChip(
+                                              label: Text(
+                                                _scenarioLabel(_noneScenario),
+                                              ),
+                                              selected: selected.isEmpty,
+                                              onSelected: (value) =>
+                                                  _toggleMealScenario(
+                                                mealType,
+                                                _noneScenario,
+                                                value,
+                                              ),
+                                            ),
+                                            ..._scenarioTypes.map((scenario) {
+                                              return FilterChip(
+                                                label: Text(
+                                                  _scenarioLabel(scenario),
+                                                ),
+                                                selected:
+                                                    selected.contains(scenario),
+                                                onSelected: (value) =>
+                                                    _toggleMealScenario(
+                                                  mealType,
+                                                  scenario,
+                                                  value,
+                                                ),
+                                              );
+                                            }),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                                const Divider(height: 22),
+                                _buildSectionHeader(
+                                  title: _isZh
+                                      ? '固定自訂餐（可多筆）'
+                                      : 'Fixed custom meals (multi)',
+                                  subtitle: _isZh
+                                      ? '目前 ${_fixedMeals.length} 項'
+                                      : '${_fixedMeals.length} rules',
+                                  expanded: _fixedSectionExpanded,
+                                  onTap: () {
+                                    setState(() {
+                                      _fixedSectionExpanded =
+                                          !_fixedSectionExpanded;
+                                    });
+                                  },
+                                ),
+                                if (_fixedSectionExpanded) ...[
+                                  const SizedBox(height: 8),
+                                  ..._mealTypes.map(_buildFixedMealsSection),
+                                ],
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF0FDF4),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: const Color(0xFFBBF7D0),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _isZh
+                                        ? '固定餐會優先於 AI 產生的餐次內容。'
+                                        : 'Fixed meals override generated meals.',
+                                    style:
+                                        AppTextStyles.caption(context).copyWith(
+                                      color: const Color(0xFF166534),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF0FDF4),
-                              borderRadius: BorderRadius.circular(10),
-                              border:
-                                  Border.all(color: const Color(0xFFBBF7D0)),
-                            ),
+                          ),
+                        ),
+                      ],
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          _errorMessage!,
+                          style: AppTextStyles.caption(context).copyWith(
+                            color: Colors.red.shade700,
+                          ),
+                        ),
+                      ],
+                      if (_lastReplan != null) ...[
+                        const SizedBox(height: 10),
+                        Card(
+                          elevation: 0,
+                          margin: EdgeInsets.zero,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
                             child: Text(
                               _isZh
-                                  ? '規則提示：固定餐會優先於來源生成。'
-                                  : 'Rule: fixed meals override generated sources.',
+                                  ? '最近重排：v${_lastReplan!.oldVersion} -> v${_lastReplan!.newVersion}，變更 ${_lastReplan!.changedDays.length} 天'
+                                  : 'Last replan: v${_lastReplan!.oldVersion} -> v${_lastReplan!.newVersion}, ${_lastReplan!.changedDays.length} day(s) changed',
                               style: AppTextStyles.caption(context).copyWith(
-                                color: const Color(0xFF166534),
+                                color: const Color(0xFF6B7280),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                        ),
+                      ],
+                      if (plan != null &&
+                          plan.validation.warnings.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Card(
+                          elevation: 0,
+                          margin: EdgeInsets.zero,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _isZh ? '提醒' : 'Warnings',
+                                  style:
+                                      AppTextStyles.caption(context).copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF111827),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                ...plan.validation.warnings.map(
+                                  (warning) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: Text(
+                                      '- $warning',
+                                      style: AppTextStyles.caption(context)
+                                          .copyWith(
+                                        color: const Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      if (plan != null) ...[
+                        const SizedBox(height: 10),
+                        _buildSectionHeader(
+                          title: _isZh ? '整週明細' : 'Full week details',
+                          subtitle: _isZh
+                              ? '${plan.dayPlans.length} 天，點開看全部餐次'
+                              : '${plan.dayPlans.length} days',
+                          expanded: _showAllDayDetails,
+                          onTap: () {
+                            setState(() {
+                              _showAllDayDetails = !_showAllDayDetails;
+                            });
+                          },
+                        ),
+                        if (_showAllDayDetails) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              TextButton(
+                                onPressed: _expandAllPlanDays,
+                                child: Text(_isZh ? '全部展開' : 'Expand all'),
+                              ),
+                              TextButton(
+                                onPressed: _collapseAllPlanDays,
+                                child: Text(_isZh ? '全部收合' : 'Collapse all'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          ...plan.dayPlans.map(_buildDayCard),
+                        ],
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: SafeArea(
+                top: false,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 680),
+                    child: Container(
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.96),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           SizedBox(
                             width: double.infinity,
                             child: FilledButton.icon(
@@ -1360,149 +2011,63 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                     )
                                   : const Icon(Icons.auto_awesome),
                               label: Text(
-                                _isZh ? '生成 7 天計畫' : 'Generate 7-day plan',
+                                plan == null
+                                    ? (_isZh
+                                        ? '產生 7 天計畫'
+                                        : 'Generate 7-day plan')
+                                    : (_isZh
+                                        ? '重新生成 7 天計畫'
+                                        : 'Regenerate 7-day plan'),
                               ),
                             ),
                           ),
+                          if (plan != null) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: _replanning
+                                        ? null
+                                        : _replanRemainingWeek,
+                                    icon: _replanning
+                                        ? const SizedBox(
+                                            width: 14,
+                                            height: 14,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(Icons.swap_horiz_rounded),
+                                    label: Text(
+                                      _isZh ? '重排剩餘天數' : 'Replan remaining',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                OutlinedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _showAllDayDetails = !_showAllDayDetails;
+                                    });
+                                  },
+                                  child: Text(
+                                    _showAllDayDetails
+                                        ? (_isZh ? '收合明細' : 'Hide details')
+                                        : (_isZh ? '整週明細' : 'Full details'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
                   ),
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      _errorMessage!,
-                      style: AppTextStyles.caption(context).copyWith(
-                        color: Colors.red.shade700,
-                      ),
-                    ),
-                  ],
-                  if (plan != null) ...[
-                    const SizedBox(height: 12),
-                    Card(
-                      elevation: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              (_isZh ? '本週目標：' : 'Goal: ') +
-                                  _goalLabel(plan.goalEffective),
-                              style: AppTextStyles.body(context).copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              '${_isZh ? '每日目標 ' : 'Daily target '}${plan.dailyTarget.kcal} kcal / P${plan.dailyTarget.proteinG.toStringAsFixed(0)} C${plan.dailyTarget.carbG.toStringAsFixed(0)} F${plan.dailyTarget.fatG.toStringAsFixed(0)}',
-                              style: AppTextStyles.caption(context).copyWith(
-                                color: Colors.black54,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${_isZh ? '計畫編號' : 'Plan ID'}: ${plan.planId}  ·  v${plan.version}',
-                              style: AppTextStyles.caption(context).copyWith(
-                                color: Colors.black54,
-                              ),
-                            ),
-                            if (plan.fixedMealsEffective.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                _isZh
-                                    ? '固定餐規則：${plan.fixedMealsEffective.length} 筆'
-                                    : 'Fixed rules: ${plan.fixedMealsEffective.length}',
-                                style: AppTextStyles.caption(context).copyWith(
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed:
-                                    _replanning ? null : _replanRemainingWeek,
-                                icon: _replanning
-                                    ? const SizedBox(
-                                        width: 14,
-                                        height: 14,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Icon(Icons.swap_horiz),
-                                label: Text(
-                                  _isZh ? '重排剩餘天數' : 'Replan remaining days',
-                                ),
-                              ),
-                            ),
-                            if (_lastReplan != null) ...[
-                              const SizedBox(height: 6),
-                              Text(
-                                '${_isZh ? '最近重排：' : 'Last replan: '}v${_lastReplan!.oldVersion} → v${_lastReplan!.newVersion}',
-                                style: AppTextStyles.caption(context).copyWith(
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
-                            if (plan.validation.warnings.isNotEmpty) ...[
-                              const SizedBox(height: 10),
-                              Text(
-                                _isZh ? '提醒' : 'Warnings',
-                                style: AppTextStyles.caption(context).copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              ...plan.validation.warnings.map(
-                                (warning) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    '• $warning',
-                                    style:
-                                        AppTextStyles.caption(context).copyWith(
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _isZh ? '每日規劃' : 'Daily Plans',
-                            style: AppTextStyles.caption(context).copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: _expandAllPlanDays,
-                          child: Text(_isZh ? '全部展開' : 'Expand all'),
-                        ),
-                        TextButton(
-                          onPressed: _collapseAllPlanDays,
-                          child: Text(_isZh ? '全部收合' : 'Collapse all'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    ...plan.dayPlans.map(_buildDayCard),
-                  ],
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
