@@ -2649,6 +2649,108 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildWeightScaleVisual({
+    required double weightKg,
+    required Color primary,
+    required Color textColor,
+  }) {
+    return SizedBox(
+      width: 140,
+      height: 136,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 8,
+            right: 8,
+            top: 26,
+            bottom: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFF2F6F4), Color(0xFFE7F3EC)],
+                ),
+                border: Border.all(color: const Color(0xFFD8E3DE)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Align(
+                    alignment: const Alignment(-0.5, 0.55),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: const Alignment(0.5, 0.55),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            left: 28,
+            right: 28,
+            top: 0,
+            child: Container(
+              height: 46,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFD8E3DE)),
+              ),
+              child: Center(
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: weightKg.toStringAsFixed(1),
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' kg',
+                        style: TextStyle(
+                          color: primary.withValues(alpha: 0.9),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildWeightSection(BuildContext context, AppState app) {
     const cardBg = Color(0xFFFFFFFF);
     const primary = Color(0xFF6FCF97);
@@ -2745,58 +2847,62 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
               ),
             ],
           ),
-          child: Column(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _isZh ? '今日體重' : 'Today Weight',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: primaryText,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _isZh ? '今日體重' : 'Today Weight',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: primaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      deltaPrevText,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: deltaPrev == null
+                            ? secondaryText
+                            : (deltaPrev > 0 ? Colors.deepOrange : primary),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      trendLabel,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: trendColor,
+                      ),
+                    ),
+                    if (recorded == null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _isZh
+                            ? '今日未記錄，顯示最近基準值'
+                            : 'Showing latest baseline (no record today)',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: secondaryText,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                '${displayWeight.toStringAsFixed(1)} kg',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w700,
-                  color: primaryText,
-                ),
+              const SizedBox(width: 12),
+              _buildWeightScaleVisual(
+                weightKg: displayWeight,
+                primary: primary,
+                textColor: primaryText,
               ),
-              const SizedBox(height: 6),
-              Text(
-                deltaPrevText,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: deltaPrev == null
-                      ? secondaryText
-                      : (deltaPrev > 0 ? Colors.deepOrange : primary),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                trendLabel,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: trendColor,
-                ),
-              ),
-              if (recorded == null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  _isZh
-                      ? '今日未記錄，顯示最近基準值'
-                      : 'Showing latest baseline (no record today)',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: secondaryText,
-                  ),
-                ),
-              ],
             ],
           ),
         ),
