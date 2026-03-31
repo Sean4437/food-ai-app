@@ -1187,56 +1187,6 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     return DateTime(parsed.year, parsed.month, parsed.day);
   }
 
-  String _mealDirectionSummary() {
-    final present = <String>{};
-    for (final mealType in _mealTypes) {
-      final selected = _mealScenarioSelections[mealType] ?? const <String>[];
-      present.addAll(selected);
-    }
-    final ordered = _scenarioTypes.where(present.contains).toList();
-    if (ordered.isEmpty) return _isZh ? '未設定' : 'Not set';
-    return ordered.map(_scenarioLabel).join(_isZh ? '＋' : ' + ');
-  }
-
-  Map<String, int> _scenarioCounts(WeekPlanDayPlan day) {
-    final counts = <String, int>{};
-    for (final meal in day.meals) {
-      counts[meal.scenario] = (counts[meal.scenario] ?? 0) + 1;
-    }
-    return counts;
-  }
-
-  String _todaySummaryLine(WeekPlanDayPlan day) {
-    final counts = _scenarioCounts(day);
-    if (counts.isEmpty) return _isZh ? '今天尚未規劃餐次' : 'No meals planned today.';
-    final sorted = counts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final top = sorted.first;
-    final topLabel = _scenarioLabel(top.key);
-    return _isZh
-        ? '$topLabel 為主，今天共 ${day.meals.length} 餐'
-        : '$topLabel focused, ${day.meals.length} meals today';
-  }
-
-  List<String> _todayTags(WeekPlanDayPlan day) {
-    final tags = <String>[];
-    tags.add(_isZh ? '${day.meals.length} 餐' : '${day.meals.length} meals');
-    final snackCount = day.meals.where((m) => m.mealType == 'snack').length;
-    if (snackCount > 0) {
-      tags.add(_isZh ? '點心 $snackCount 次' : 'Snack x$snackCount');
-    }
-    final counts = _scenarioCounts(day);
-    if (counts.isNotEmpty) {
-      final sorted = counts.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      final top = sorted.first;
-      tags.add(_isZh
-          ? '${_scenarioLabel(top.key)} ${top.value} 次'
-          : '${_scenarioLabel(top.key)} x${top.value}');
-    }
-    return tags.take(3).toList();
-  }
-
   Color _scenarioChipColor(String scenario) {
     switch (scenario) {
       case 'home_cook':
@@ -1439,98 +1389,22 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F4F6),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  _mealDirectionSummary(),
-                                  style:
-                                      AppTextStyles.caption(context).copyWith(
-                                    color: const Color(0xFF374151),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F4F6),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  _isZh
-                                      ? '固定餐 ${_fixedMeals.length} 項'
-                                      : '${_fixedMeals.length} fixed rules',
-                                  style:
-                                      AppTextStyles.caption(context).copyWith(
-                                    color: const Color(0xFF374151),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            plan == null
+                                ? (_isZh
+                                    ? '產生計畫後即可直接查看下方餐單。'
+                                    : 'Generate a plan to view today meals below.')
+                                : (selectedDay == null
+                                    ? (_isZh
+                                        ? '先在本週行程選一天，再查看餐單。'
+                                        : 'Pick a day from week strip to view meals.')
+                                    : (_isZh
+                                        ? '今天餐單已準備好，往下直接執行。'
+                                        : 'Today meals are ready. Scroll down to execute.')),
+                            style: AppTextStyles.caption(context).copyWith(
+                              color: const Color(0xFF6B7280),
+                            ),
                           ),
-                          if (selectedDay != null) ...[
-                            const SizedBox(height: 12),
-                            Text(
-                              selectedDay.date,
-                              style: AppTextStyles.caption(context).copyWith(
-                                color: const Color(0xFF6B7280),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              _todaySummaryLine(selectedDay),
-                              style: AppTextStyles.caption(context).copyWith(
-                                color: const Color(0xFF374151),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: _todayTags(selectedDay)
-                                  .map(
-                                    (tag) => Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF3F4F6),
-                                        borderRadius:
-                                            BorderRadius.circular(999),
-                                      ),
-                                      child: Text(
-                                        tag,
-                                        style: AppTextStyles.caption(context)
-                                            .copyWith(
-                                          color: const Color(0xFF374151),
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                            const SizedBox(height: 10),
-                            const Divider(height: 1),
-                          ],
                           const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
