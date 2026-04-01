@@ -41,6 +41,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   ];
   static const List<int> _weekdays = <int>[1, 2, 3, 4, 5, 6, 7];
   static const String _noneScenario = '__none__';
+  static const String _warningTagAi = '[AI]';
+  static const String _warningTagFallback = '[FALLBACK]';
 
   DateTime _startDate = DateTime.now();
   String _goalMode = 'profile_default';
@@ -233,6 +235,25 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       default:
         return 'Failed to generate plan (${err.code}).';
     }
+  }
+
+  bool _isVisiblePlanWarning(String warning) {
+    final text = warning.trim().toUpperCase();
+    return text.startsWith(_warningTagAi) ||
+        text.startsWith(_warningTagFallback);
+  }
+
+  String _displayPlanWarning(String warning) {
+    var text = warning.trim();
+    if (text.toUpperCase().startsWith(_warningTagAi)) {
+      text = text.substring(_warningTagAi.length).trim();
+    } else if (text.toUpperCase().startsWith(_warningTagFallback)) {
+      text = text.substring(_warningTagFallback.length).trim();
+    }
+    if (text.startsWith(':') || text.startsWith('-')) {
+      text = text.substring(1).trim();
+    }
+    return text;
   }
 
   String _formatDate(DateTime value) {
@@ -1240,6 +1261,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         ? '已套用 $activeScenarioMeals/${_mealTypes.length} 餐來源・固定餐 ${_fixedMeals.length} 項'
         : '$activeScenarioMeals/${_mealTypes.length} meal sources ・ ${_fixedMeals.length} fixed rules';
 
+    final visibleWarnings = (plan?.validation.warnings ?? const <String>[])
+        .where(_isVisiblePlanWarning)
+        .map(_displayPlanWarning)
+        .where((text) => text.trim().isNotEmpty)
+        .toList();
+
     Widget buildMealCard(WeekPlanMealItem meal) {
       return Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -1836,7 +1863,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                       ),
                     ),
                   ],
-                  if (plan != null && plan.validation.warnings.isNotEmpty) ...[
+                  if (plan != null && visibleWarnings.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     Card(
                       elevation: 0,
@@ -1854,7 +1881,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                               ),
                             ),
                             const SizedBox(height: 6),
-                            ...plan.validation.warnings.map(
+                            ...visibleWarnings.map(
                               (warning) => Padding(
                                 padding: const EdgeInsets.only(bottom: 4),
                                 child: Text(

@@ -525,6 +525,8 @@ USAGE_LOG_MAX = int(os.getenv("USAGE_LOG_MAX", "10000"))
 _supported_langs = {"zh-TW", "en"}
 _week_plan_scenarios = ("home_cook", "eat_out", "convenience_store")
 _week_plan_meal_types = ("breakfast", "lunch", "dinner", "snack")
+_week_plan_warning_tag_ai = "[AI]"
+_week_plan_warning_tag_fallback = "[FALLBACK]"
 _week_plan_store: Dict[str, Dict[str, Any]] = {}
 _week_plan_goal_targets: Dict[str, Dict[str, float]] = {
     "lose_fat": {"kcal": 1650, "protein_g": 120.0, "carb_g": 150.0, "fat_g": 55.0},
@@ -1113,6 +1115,7 @@ def _build_week_plan_ai_prompt(
     day_dates: List[str],
     meal_scenarios: Dict[str, List[str]],
     fixed_meals: List[WeekPlanFixedMeal],
+    convenience_candidates: List[str],
 ) -> str:
     output_language = "Traditional Chinese" if lang == "zh-TW" else "English"
     constraints: Dict[str, Any] = {}
@@ -1152,6 +1155,7 @@ def _build_week_plan_ai_prompt(
         },
         "meal_scenarios": meal_scenarios,
         "fixed_meals": fixed_payload,
+        "convenience_store_candidates": convenience_candidates,
         "constraints": constraints,
     }
     return (
@@ -1185,6 +1189,7 @@ def _build_week_plan_ai_prompt(
         "- If a meal_type has empty meal_scenarios, do not generate that meal.\n"
         "- scenario must be one of the allowed scenarios for that meal_type.\n"
         "- Respect fixed_meals: keep the same dish_name and macros for listed weekdays.\n"
+        "- For scenario=convenience_store, prefer dish names from convenience_store_candidates when possible.\n"
         "- Keep daily kcal near daily_target.kcal (about +/-15%).\n"
         "- Minimize repeated dish names across the week for the same meal_type.\n"
         "- Macros must be non-negative and realistic.\n"
@@ -1192,12 +1197,138 @@ def _build_week_plan_ai_prompt(
     )
 
 
+def _week_plan_warning(tag: str, message: str) -> str:
+    text = str(message or "").strip()
+    if not text:
+        return ""
+    return f"{tag} {text}"
+
+
+def _week_plan_ai_warning(message: str) -> str:
+    text = str(message or "").strip()
+    if text.upper().startswith(_week_plan_warning_tag_ai):
+        return text
+    return _week_plan_warning(_week_plan_warning_tag_ai, text)
+
+
+def _week_plan_fallback_warning_text(reason: str) -> str:
+    return _week_plan_warning(
+        _week_plan_warning_tag_fallback,
+        f"AI weekly planner unavailable ({reason}); used template fallback",
+    )
+
+
+def _week_plan_catalog_convenience_candidates(
+    *,
+    lang: str,
+    limit: int = 24,
+) -> List[str]:
+    max_items = max(6, min(60, int(limit)))
+    rows: List[dict] = []
+    select_cols = "food_name,canonical_name,source,lang,is_active,updated_at"
+    supports_lang_active = _supports_catalog_lang_active_filters()
+    keywords = [
+        "7-11",
+        "全家",
+        "family",
+        "ok",
+        "萊爾富",
+        "便利商店",
+        "超商",
+        "convenience",
+    ]
+    seen_row_keys: set[str] = set()
+    for keyword in keywords:
+        params: list[tuple[str, str]] = [("select", select_cols)]
+        if supports_lang_active:
+            params.append(("lang", f"eq.{lang}"))
+            params.append(("is_active", "eq.true"))
+        params.extend(
+            [
+                ("source", f"ilike.*{keyword}*"),
+                ("order", "updated_at.desc"),
+                ("limit", str(max_items)),
+            ]
+        )
+        try:
+            fetched = _supabase_rest_list("food_catalog", params)
+        except Exception:
+            fetched = []
+        for row in fetched:
+            if not isinstance(row, dict):
+                continue
+            row_key = str(row.get("id") or "")
+            if not row_key:
+                row_key = "|".join(
+                    [
+                        str(row.get("food_name") or "").strip(),
+                        str(row.get("canonical_name") or "").strip(),
+                        str(row.get("source") or "").strip(),
+                    ]
+                )
+            if not row_key or row_key in seen_row_keys:
+                continue
+            seen_row_keys.add(row_key)
+            rows.append(row)
+        if len(rows) >= max_items:
+            break
+
+    if not rows:
+        # fallback query: latest active rows
+        params = [("select", select_cols), ("order", "updated_at.desc"), ("limit", str(max_items * 2))]
+        if supports_lang_active:
+            params.insert(1, ("lang", f"eq.{lang}"))
+            params.insert(2, ("is_active", "eq.true"))
+        try:
+            rows = _supabase_rest_list("food_catalog", params)
+        except Exception:
+            rows = []
+
+    candidates: List[str] = []
+    seen_names: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if row.get("is_active") is False:
+            continue
+        food_name = str(row.get("food_name") or row.get("canonical_name") or "").strip()
+        source = str(row.get("source") or "").strip()
+        if not food_name:
+            continue
+        key = _normalize_food_query(food_name)
+        if not key or key in seen_names:
+            continue
+        seen_names.add(key)
+        if source:
+            candidates.append(f"{food_name} ({source})")
+        else:
+            candidates.append(food_name)
+        if len(candidates) >= max_items:
+            break
+
+    if not candidates:
+        # last safety net: built-in template names
+        for meal_type in _week_plan_meal_types:
+            for item in _week_plan_meal_library.get("convenience_store", {}).get(meal_type, []):
+                name = str(item.get("zh") if lang == "zh-TW" else item.get("en") or "").strip()
+                if not name:
+                    continue
+                key = _normalize_food_query(name)
+                if key in seen_names:
+                    continue
+                seen_names.add(key)
+                candidates.append(name)
+                if len(candidates) >= max_items:
+                    return candidates
+    return candidates
+
+
 def _clone_week_plan_with_warning(
     base_plan: WeekPlanGenerateResponse,
     warning: str,
 ) -> WeekPlanGenerateResponse:
     merged: List[str] = []
-    for item in [warning, *list(base_plan.validation.warnings or [])]:
+    for item in [warning]:
         text = str(item or "").strip()
         if text and text not in merged:
             merged.append(text)
@@ -1247,10 +1378,8 @@ def _apply_ai_week_plan_on_stub(
         warning_set.add(msg)
         warnings.append(msg)
 
-    for base_warning in base_plan.validation.warnings or []:
-        add_warning(str(base_warning))
     for ai_warning in _to_string_list(ai_data.get("warnings")):
-        add_warning(ai_warning)
+        add_warning(_week_plan_ai_warning(ai_warning))
 
     used_dishes_by_meal: Dict[str, set[str]] = {
         meal_type: set() for meal_type in _week_plan_meal_types
@@ -1285,7 +1414,11 @@ def _apply_ai_week_plan_on_stub(
             candidates = by_type.get(meal.meal_type, [])
             candidate = candidates.pop(0) if candidates else None
             if not isinstance(candidate, dict):
-                add_warning(f"{day.date} {meal.meal_type} missing AI slot; kept template meal")
+                add_warning(
+                    _week_plan_ai_warning(
+                        f"{day.date} {meal.meal_type} missing AI slot; kept template meal"
+                    )
+                )
                 updated_meals.append(meal)
                 dish = meal.dish_name.strip()
                 if dish:
@@ -1299,7 +1432,11 @@ def _apply_ai_week_plan_on_stub(
                 or ""
             ).strip()
             if not dish_name:
-                add_warning(f"{day.date} {meal.meal_type} empty AI dish name; kept template meal")
+                add_warning(
+                    _week_plan_ai_warning(
+                        f"{day.date} {meal.meal_type} empty AI dish name; kept template meal"
+                    )
+                )
                 updated_meals.append(meal)
                 dish = meal.dish_name.strip()
                 if dish:
@@ -1320,7 +1457,9 @@ def _apply_ai_week_plan_on_stub(
             seen = used_dishes_by_meal.setdefault(meal.meal_type, set())
             if dish_name in seen and meal.dish_name.strip() and meal.dish_name.strip() not in seen:
                 add_warning(
-                    f"{day.date} {meal.meal_type} AI dish repeated; kept template dish for variety"
+                    _week_plan_ai_warning(
+                        f"{day.date} {meal.meal_type} AI dish repeated; kept template dish for variety"
+                    )
                 )
                 chosen = meal
             else:
@@ -1370,12 +1509,9 @@ def _apply_ai_week_plan_on_stub(
         )
 
     if len(raw_by_date) != len(base_plan.day_plans):
-        add_warning("AI output date coverage was partial; template structure was preserved")
-
-    source_warning = "AI week planner applied with template safety checks"
-    if lang == "zh-TW":
-        source_warning = "AI week planner applied with template safety checks"
-    add_warning(source_warning)
+        add_warning(
+            _week_plan_ai_warning("AI output date coverage was partial; template structure was preserved")
+        )
 
     return WeekPlanGenerateResponse(
         plan_id=base_plan.plan_id,
@@ -1393,9 +1529,7 @@ def _apply_ai_week_plan_on_stub(
 
 
 def _plan_week_fallback_warning(lang: str, reason: str) -> str:
-    if lang == "zh-TW":
-        return f"AI weekly planner unavailable ({reason}); used template fallback"
-    return f"AI weekly planner unavailable ({reason}); used template fallback"
+    return _week_plan_fallback_warning_text(reason)
 
 
 def _macro_level_to_percent(value: str) -> int:
@@ -6326,6 +6460,10 @@ async def generate_week_plan(
         }
         day_dates = [day.date for day in base_plan.day_plans]
         fixed_meals = list(base_plan.fixed_meals_effective or [])
+        convenience_candidates = _week_plan_catalog_convenience_candidates(
+            lang=use_lang,
+            limit=24,
+        )
         prompt = _build_week_plan_ai_prompt(
             lang=use_lang,
             payload=payload,
@@ -6334,6 +6472,7 @@ async def generate_week_plan(
             day_dates=day_dates,
             meal_scenarios=meal_scenarios,
             fixed_meals=fixed_meals,
+            convenience_candidates=convenience_candidates,
         )
         response, used_model = _create_chat_completion(
             messages=[{"role": "user", "content": prompt}],
