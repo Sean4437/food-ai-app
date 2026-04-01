@@ -1039,6 +1039,365 @@ def _build_stub_week_plan(
 
 
 
+def _normalize_week_plan_meal_type(value: Any) -> Optional[str]:
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return None
+    aliases = {
+        "breakfast": "breakfast",
+        "morning": "breakfast",
+        "brunch": "breakfast",
+        "lunch": "lunch",
+        "dinner": "dinner",
+        "supper": "dinner",
+        "snack": "snack",
+        "snacks": "snack",
+        "afternoon_snack": "snack",
+        "late_snack": "snack",
+    }
+    return aliases.get(raw)
+
+
+def _normalize_week_plan_scenario(value: Any) -> Optional[str]:
+    raw = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if not raw:
+        return None
+    aliases = {
+        "home_cook": "home_cook",
+        "homecook": "home_cook",
+        "self_cook": "home_cook",
+        "selfcook": "home_cook",
+        "eat_out": "eat_out",
+        "eatout": "eat_out",
+        "outside": "eat_out",
+        "convenience_store": "convenience_store",
+        "convenience": "convenience_store",
+        "cvs": "convenience_store",
+        "store": "convenience_store",
+        "fixed_custom": "fixed_custom",
+    }
+    return aliases.get(raw)
+
+
+def _safe_positive_int(value: Any, default: int) -> int:
+    parsed = _safe_float(value)
+    if parsed is None or parsed <= 0:
+        return int(max(0, default))
+    return int(max(0, round(parsed)))
+
+
+def _safe_positive_macro(value: Any, default: float) -> float:
+    parsed = _safe_float(value)
+    if parsed is None or parsed < 0:
+        return round(max(0.0, default), 1)
+    return round(max(0.0, parsed), 1)
+
+
+def _week_plan_default_kcal(meal_type: str, target_kcal: int) -> int:
+    ratios = {
+        "breakfast": 0.25,
+        "lunch": 0.33,
+        "dinner": 0.33,
+        "snack": 0.12,
+    }
+    ratio = float(ratios.get(meal_type, 0.25))
+    return max(120, int(round(target_kcal * ratio)))
+
+
+def _build_week_plan_ai_prompt(
+    *,
+    lang: str,
+    payload: WeekPlanGenerateRequest,
+    goal: str,
+    daily_target: WeekPlanMacroTarget,
+    day_dates: List[str],
+    meal_scenarios: Dict[str, List[str]],
+    fixed_meals: List[WeekPlanFixedMeal],
+) -> str:
+    output_language = "Traditional Chinese" if lang == "zh-TW" else "English"
+    constraints: Dict[str, Any] = {}
+    if payload.constraints is not None:
+        if payload.constraints.daily_budget_twd is not None:
+            constraints["daily_budget_twd"] = int(payload.constraints.daily_budget_twd)
+        if payload.constraints.max_prep_minutes is not None:
+            constraints["max_prep_minutes"] = int(payload.constraints.max_prep_minutes)
+        if payload.constraints.allergies:
+            constraints["allergies"] = [str(item) for item in payload.constraints.allergies]
+        if payload.constraints.avoid_foods:
+            constraints["avoid_foods"] = [str(item) for item in payload.constraints.avoid_foods]
+        if payload.constraints.preferred_foods:
+            constraints["preferred_foods"] = [str(item) for item in payload.constraints.preferred_foods]
+    fixed_payload = [
+        {
+            "meal_type": item.meal_type,
+            "custom_food_name": item.custom_food_name,
+            "weekdays": list(item.weekdays or []),
+            "kcal": int(item.kcal),
+            "protein_g": float(item.protein_g),
+            "carb_g": float(item.carb_g),
+            "fat_g": float(item.fat_g),
+        }
+        for item in fixed_meals
+    ]
+    context = {
+        "start_date": payload.start_date,
+        "days": payload.days,
+        "day_dates": day_dates,
+        "goal_effective": goal,
+        "daily_target": {
+            "kcal": int(daily_target.kcal),
+            "protein_g": float(daily_target.protein_g),
+            "carb_g": float(daily_target.carb_g),
+            "fat_g": float(daily_target.fat_g),
+        },
+        "meal_scenarios": meal_scenarios,
+        "fixed_meals": fixed_payload,
+        "constraints": constraints,
+    }
+    return (
+        "You are a meal planner.\n"
+        "Generate a 7-day meal plan JSON only.\n"
+        f"Output dish names in {output_language}.\n"
+        "Do not include markdown, explanations, or code fences.\n"
+        "Use this schema exactly:\n"
+        "{\n"
+        '  "day_plans": [\n'
+        "    {\n"
+        '      "date": "YYYY-MM-DD",\n'
+        '      "meals": [\n'
+        "        {\n"
+        '          "meal_type": "breakfast|lunch|dinner|snack",\n'
+        '          "dish_name": "string",\n'
+        '          "scenario": "home_cook|eat_out|convenience_store",\n'
+        '          "kcal": 500,\n'
+        '          "protein_g": 30,\n'
+        '          "carb_g": 60,\n'
+        '          "fat_g": 15\n'
+        "        }\n"
+        "      ]\n"
+        "    }\n"
+        "  ],\n"
+        '  "warnings": ["optional warning text"]\n'
+        "}\n"
+        "Rules:\n"
+        "- Return exactly 7 day_plans with dates matching day_dates in order.\n"
+        "- For each meal_type with non-empty meal_scenarios, provide exactly one meal per day.\n"
+        "- If a meal_type has empty meal_scenarios, do not generate that meal.\n"
+        "- scenario must be one of the allowed scenarios for that meal_type.\n"
+        "- Respect fixed_meals: keep the same dish_name and macros for listed weekdays.\n"
+        "- Keep daily kcal near daily_target.kcal (about +/-15%).\n"
+        "- Minimize repeated dish names across the week for the same meal_type.\n"
+        "- Macros must be non-negative and realistic.\n"
+        f"Planning context JSON:\n{json.dumps(context, ensure_ascii=True)}"
+    )
+
+
+def _clone_week_plan_with_warning(
+    base_plan: WeekPlanGenerateResponse,
+    warning: str,
+) -> WeekPlanGenerateResponse:
+    merged: List[str] = []
+    for item in [warning, *list(base_plan.validation.warnings or [])]:
+        text = str(item or "").strip()
+        if text and text not in merged:
+            merged.append(text)
+    return WeekPlanGenerateResponse(
+        plan_id=base_plan.plan_id,
+        version=base_plan.version,
+        start_date=base_plan.start_date,
+        end_date=base_plan.end_date,
+        goal_effective=base_plan.goal_effective,
+        meal_scenarios_effective=base_plan.meal_scenarios_effective,
+        fixed_meals_effective=base_plan.fixed_meals_effective,
+        mix_ratio_effective=base_plan.mix_ratio_effective,
+        daily_target=base_plan.daily_target,
+        day_plans=base_plan.day_plans,
+        validation=WeekPlanValidation(passed=True, warnings=merged),
+    )
+
+
+def _apply_ai_week_plan_on_stub(
+    *,
+    base_plan: WeekPlanGenerateResponse,
+    ai_data: Dict[str, Any],
+    meal_scenarios: Dict[str, List[str]],
+    lang: str,
+) -> WeekPlanGenerateResponse:
+    raw_days = ai_data.get("day_plans")
+    if not isinstance(raw_days, list):
+        raise HTTPException(status_code=502, detail="ai_invalid_response")
+
+    raw_by_date: Dict[str, Dict[str, Any]] = {}
+    for item in raw_days:
+        if not isinstance(item, dict):
+            continue
+        date = str(item.get("date") or "").strip()
+        meals = item.get("meals")
+        if not date or not isinstance(meals, list):
+            continue
+        raw_by_date[date] = item
+
+    warning_set: set[str] = set()
+    warnings: List[str] = []
+
+    def add_warning(text: str) -> None:
+        msg = str(text or "").strip()
+        if not msg or msg in warning_set:
+            return
+        warning_set.add(msg)
+        warnings.append(msg)
+
+    for base_warning in base_plan.validation.warnings or []:
+        add_warning(str(base_warning))
+    for ai_warning in _to_string_list(ai_data.get("warnings")):
+        add_warning(ai_warning)
+
+    used_dishes_by_meal: Dict[str, set[str]] = {
+        meal_type: set() for meal_type in _week_plan_meal_types
+    }
+    updated_days: List[WeekPlanDayPlan] = []
+    target_kcal = int(base_plan.daily_target.kcal)
+
+    for day in base_plan.day_plans:
+        raw_day = raw_by_date.get(day.date) or {}
+        raw_meals = raw_day.get("meals")
+        by_type: Dict[str, List[Dict[str, Any]]] = {
+            meal_type: [] for meal_type in _week_plan_meal_types
+        }
+        if isinstance(raw_meals, list):
+            for raw_meal in raw_meals:
+                if not isinstance(raw_meal, dict):
+                    continue
+                meal_type = _normalize_week_plan_meal_type(raw_meal.get("meal_type"))
+                if meal_type is None:
+                    continue
+                by_type[meal_type].append(raw_meal)
+
+        updated_meals: List[WeekPlanMealItem] = []
+        for meal in day.meals:
+            if meal.locked:
+                updated_meals.append(meal)
+                dish = meal.dish_name.strip()
+                if dish:
+                    used_dishes_by_meal.setdefault(meal.meal_type, set()).add(dish)
+                continue
+
+            candidates = by_type.get(meal.meal_type, [])
+            candidate = candidates.pop(0) if candidates else None
+            if not isinstance(candidate, dict):
+                add_warning(f"{day.date} {meal.meal_type} missing AI slot; kept template meal")
+                updated_meals.append(meal)
+                dish = meal.dish_name.strip()
+                if dish:
+                    used_dishes_by_meal.setdefault(meal.meal_type, set()).add(dish)
+                continue
+
+            dish_name = str(
+                candidate.get("dish_name")
+                or candidate.get("name")
+                or candidate.get("food_name")
+                or ""
+            ).strip()
+            if not dish_name:
+                add_warning(f"{day.date} {meal.meal_type} empty AI dish name; kept template meal")
+                updated_meals.append(meal)
+                dish = meal.dish_name.strip()
+                if dish:
+                    used_dishes_by_meal.setdefault(meal.meal_type, set()).add(dish)
+                continue
+
+            allowed = list(meal_scenarios.get(meal.meal_type) or list(_week_plan_scenarios))
+            scenario_raw = _normalize_week_plan_scenario(candidate.get("scenario"))
+            if scenario_raw in allowed:
+                scenario = str(scenario_raw)
+            elif meal.scenario in allowed:
+                scenario = meal.scenario
+            elif allowed:
+                scenario = allowed[0]
+            else:
+                scenario = meal.scenario
+
+            seen = used_dishes_by_meal.setdefault(meal.meal_type, set())
+            if dish_name in seen and meal.dish_name.strip() and meal.dish_name.strip() not in seen:
+                add_warning(
+                    f"{day.date} {meal.meal_type} AI dish repeated; kept template dish for variety"
+                )
+                chosen = meal
+            else:
+                default_kcal = meal.kcal if meal.kcal > 0 else _week_plan_default_kcal(
+                    meal.meal_type, target_kcal
+                )
+                chosen = WeekPlanMealItem(
+                    meal_type=meal.meal_type,
+                    dish_name=dish_name,
+                    scenario=scenario,
+                    source="ai_plan",
+                    kcal=_safe_positive_int(candidate.get("kcal"), default_kcal),
+                    protein_g=_safe_positive_macro(candidate.get("protein_g"), meal.protein_g),
+                    carb_g=_safe_positive_macro(candidate.get("carb_g"), meal.carb_g),
+                    fat_g=_safe_positive_macro(candidate.get("fat_g"), meal.fat_g),
+                    locked=False,
+                    eaten=False,
+                )
+            updated_meals.append(chosen)
+            chosen_name = chosen.dish_name.strip()
+            if chosen_name:
+                seen.add(chosen_name)
+
+        totals = {
+            "kcal": 0,
+            "protein_g": 0.0,
+            "carb_g": 0.0,
+            "fat_g": 0.0,
+        }
+        for meal in updated_meals:
+            totals["kcal"] += int(meal.kcal)
+            totals["protein_g"] += float(meal.protein_g)
+            totals["carb_g"] += float(meal.carb_g)
+            totals["fat_g"] += float(meal.fat_g)
+
+        updated_days.append(
+            WeekPlanDayPlan(
+                date=day.date,
+                totals=WeekPlanMacroTarget(
+                    kcal=int(totals["kcal"]),
+                    protein_g=round(float(totals["protein_g"]), 1),
+                    carb_g=round(float(totals["carb_g"]), 1),
+                    fat_g=round(float(totals["fat_g"]), 1),
+                ),
+                meals=updated_meals,
+            )
+        )
+
+    if len(raw_by_date) != len(base_plan.day_plans):
+        add_warning("AI output date coverage was partial; template structure was preserved")
+
+    source_warning = "AI week planner applied with template safety checks"
+    if lang == "zh-TW":
+        source_warning = "AI week planner applied with template safety checks"
+    add_warning(source_warning)
+
+    return WeekPlanGenerateResponse(
+        plan_id=base_plan.plan_id,
+        version=base_plan.version,
+        start_date=base_plan.start_date,
+        end_date=base_plan.end_date,
+        goal_effective=base_plan.goal_effective,
+        meal_scenarios_effective=base_plan.meal_scenarios_effective,
+        fixed_meals_effective=base_plan.fixed_meals_effective,
+        mix_ratio_effective=base_plan.mix_ratio_effective,
+        daily_target=base_plan.daily_target,
+        day_plans=updated_days,
+        validation=WeekPlanValidation(passed=True, warnings=warnings),
+    )
+
+
+def _plan_week_fallback_warning(lang: str, reason: str) -> str:
+    if lang == "zh-TW":
+        return f"AI weekly planner unavailable ({reason}); used template fallback"
+    return f"AI weekly planner unavailable ({reason}); used template fallback"
+
+
 def _macro_level_to_percent(value: str) -> int:
     lower = value.lower()
     if value in ("低", "偏低") or "low" in lower:
@@ -5931,17 +6290,116 @@ async def generate_week_plan(
     use_lang = payload.lang or DEFAULT_LANG
     if use_lang not in _supported_langs:
         use_lang = "zh-TW"
+    user_id = str(_auth.get("user_id") or "")
     try:
-        return _build_stub_week_plan(
+        base_plan = _build_stub_week_plan(
             payload=payload,
             lang=use_lang,
-            user_id=str(_auth.get("user_id") or ""),
+            user_id=user_id,
         )
     except HTTPException:
         raise
     except Exception as exc:
-        logging.exception("Week plan generation failed: %s", exc)
+        logging.exception("Week plan stub generation failed: %s", exc)
         raise HTTPException(status_code=502, detail="plan_generation_failed")
+
+    try:
+        _ensure_ai_available(user_id)
+    except HTTPException as exc:
+        if exc.detail in {"ai_disabled", "ai_not_configured", "ai_quota_exceeded"}:
+            logging.warning(
+                "Week plan AI unavailable: user=%s reason=%s; returning template",
+                user_id or "-",
+                exc.detail,
+            )
+            return _clone_week_plan_with_warning(
+                base_plan, _plan_week_fallback_warning(use_lang, str(exc.detail))
+            )
+        raise
+
+    try:
+        meal_scenarios = {
+            "breakfast": list(base_plan.meal_scenarios_effective.breakfast or []),
+            "lunch": list(base_plan.meal_scenarios_effective.lunch or []),
+            "dinner": list(base_plan.meal_scenarios_effective.dinner or []),
+            "snack": list(base_plan.meal_scenarios_effective.snack or []),
+        }
+        day_dates = [day.date for day in base_plan.day_plans]
+        fixed_meals = list(base_plan.fixed_meals_effective or [])
+        prompt = _build_week_plan_ai_prompt(
+            lang=use_lang,
+            payload=payload,
+            goal=base_plan.goal_effective,
+            daily_target=base_plan.daily_target,
+            day_dates=day_dates,
+            meal_scenarios=meal_scenarios,
+            fixed_meals=fixed_meals,
+        )
+        response, used_model = _create_chat_completion(
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.35,
+        )
+
+        usage = response.usage
+        usage_data = None
+        if usage is not None:
+            usage_data = {
+                "input_tokens": usage.prompt_tokens,
+                "output_tokens": usage.completion_tokens,
+                "total_tokens": usage.total_tokens,
+            }
+        cost_estimate = None
+        if usage_data is not None:
+            cost_estimate = _estimate_cost_usd(
+                int(usage_data.get("input_tokens") or 0),
+                int(usage_data.get("output_tokens") or 0),
+            )
+        _append_usage(
+            {
+                "id": str(uuid.uuid4()),
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "model": used_model,
+                "lang": use_lang,
+                "source": "plan_week",
+                "input_tokens": int(usage_data.get("input_tokens") or 0) if usage_data else 0,
+                "output_tokens": int(usage_data.get("output_tokens") or 0) if usage_data else 0,
+                "total_tokens": int(usage_data.get("total_tokens") or 0) if usage_data else 0,
+                "cost_estimate_usd": cost_estimate,
+            }
+        )
+        _increment_daily_count(user_id)
+
+        text = response.choices[0].message.content or ""
+        ai_data = _parse_json(text)
+        if not isinstance(ai_data, dict):
+            raise HTTPException(status_code=502, detail="ai_invalid_response")
+        return _apply_ai_week_plan_on_stub(
+            base_plan=base_plan,
+            ai_data=ai_data,
+            meal_scenarios=meal_scenarios,
+            lang=use_lang,
+        )
+    except HTTPException:
+        logging.warning(
+            "Week plan AI invalid output: user=%s; returning template fallback",
+            user_id or "-",
+        )
+        return _clone_week_plan_with_warning(
+            base_plan, _plan_week_fallback_warning(use_lang, "ai_invalid_response")
+        )
+    except Exception as exc:
+        global _last_ai_error
+        _last_ai_error = str(exc)
+        detail = _ai_error_detail(exc)
+        logging.warning(
+            "Week plan AI failed: user=%s reason=%s; returning template fallback",
+            user_id or "-",
+            detail,
+        )
+        logging.exception("Week plan generation failed: %s", exc)
+        return _clone_week_plan_with_warning(
+            base_plan, _plan_week_fallback_warning(use_lang, detail)
+        )
 
 
 @app.post("/plan/replan", response_model=WeekPlanReplanResponse)
