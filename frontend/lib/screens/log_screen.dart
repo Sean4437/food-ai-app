@@ -380,18 +380,11 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
   }
 
   void _syncInitialDateFromEntries(AppState app) {
-    DateTime next = app.selectedDate;
-    final selectedEntries = app.entriesForDate(next);
-    if (selectedEntries.isEmpty && app.entries.isNotEmpty) {
-      final latest =
-          app.entries.reduce((a, b) => a.time.isAfter(b.time) ? a : b);
-      next = DateTime(latest.time.year, latest.time.month, latest.time.day);
-    } else {
-      next = DateTime(next.year, next.month, next.day);
-    }
-    _selectedDate = next;
-    _currentMonth = DateTime(next.year, next.month, 1);
-    _currentMonthDays = _daysInMonth(_currentMonth);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = app.selectedDate;
+    final normalized = DateTime(selected.year, selected.month, selected.day);
+    _applySelectedDate(normalized.isAfter(today) ? today : normalized);
   }
 
   @override
@@ -522,24 +515,6 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
     _currentMonth = DateTime(_selectedDate.year, _selectedDate.month, 1);
     _currentMonthDays = _daysInMonth(_currentMonth);
     _lastJumpKey = '';
-  }
-
-  void _syncDateForSection(AppState app, _LogSection section) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    DateTime? latest;
-    switch (section) {
-      case _LogSection.meals:
-        latest = app.latestMealEntryDate();
-        break;
-      case _LogSection.water:
-        latest = app.latestHydrationDate();
-        break;
-      case _LogSection.weight:
-        latest = app.latestWeightRecordDate();
-        break;
-    }
-    _applySelectedDate(latest ?? today);
   }
 
   void _jumpToLatestMealDate(AppState app) {
@@ -1691,10 +1666,8 @@ class _LogScreenState extends State<LogScreen> with TickerProviderStateMixin {
         onValueChanged: (next) {
           if (next == null) return;
           if (next == _activeSection) return;
-          final app = AppStateScope.of(context);
           setState(() {
             _activeSection = next;
-            _syncDateForSection(app, next);
           });
         },
       ),
