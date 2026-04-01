@@ -1106,6 +1106,94 @@ def _week_plan_default_kcal(meal_type: str, target_kcal: int) -> int:
     return max(120, int(round(target_kcal * ratio)))
 
 
+def _week_plan_meal_kcal_bounds(meal_type: str, target_kcal: int) -> tuple[int, int]:
+    baseline = _week_plan_default_kcal(meal_type, target_kcal)
+    if meal_type == "snack":
+        min_kcal = max(60, int(round(baseline * 0.45)))
+        max_kcal = min(380, max(220, int(round(baseline * 1.35))))
+        return (min_kcal, max_kcal)
+    if meal_type == "breakfast":
+        min_kcal = max(180, int(round(baseline * 0.6)))
+        max_kcal = min(820, max(420, int(round(baseline * 1.5))))
+        return (min_kcal, max_kcal)
+    min_kcal = max(260, int(round(baseline * 0.6)))
+    max_kcal = min(980, max(520, int(round(baseline * 1.55))))
+    return (min_kcal, max_kcal)
+
+
+def _week_plan_is_beverage_only_name(name: str) -> bool:
+    norm = _normalize_food_query(str(name or "")).lower()
+    if not norm:
+        return False
+    beverage_keywords = (
+        "飲料",
+        "奶茶",
+        "紅茶",
+        "綠茶",
+        "烏龍",
+        "青茶",
+        "可樂",
+        "氣泡",
+        "果汁",
+        "拿鐵",
+        "咖啡",
+        "豆漿",
+        "牛奶",
+        "鮮奶",
+        "奶昔",
+        "冰沙",
+        "tea",
+        "coffee",
+        "latte",
+        "milkshake",
+        "smoothie",
+        "juice",
+        "soda",
+        "cola",
+        "drink",
+    )
+    solid_keywords = (
+        "飯",
+        "麵",
+        "粥",
+        "吐司",
+        "三明治",
+        "便當",
+        "沙拉",
+        "雞",
+        "牛",
+        "豬",
+        "魚",
+        "蛋",
+        "豆腐",
+        "地瓜",
+        "飯糰",
+        "鍋",
+        "燕麥",
+        "優格",
+        "rice",
+        "noodle",
+        "toast",
+        "sandwich",
+        "bento",
+        "salad",
+        "chicken",
+        "beef",
+        "pork",
+        "fish",
+        "egg",
+        "tofu",
+        "oat",
+        "yogurt",
+        "wrap",
+    )
+    has_beverage = any(token in norm for token in beverage_keywords)
+    if not has_beverage:
+        return False
+    has_solid = any(token in norm for token in solid_keywords)
+    return not has_solid
+
+
 def _build_week_plan_ai_prompt(
     *,
     lang: str,
@@ -1190,6 +1278,9 @@ def _build_week_plan_ai_prompt(
         "- scenario must be one of the allowed scenarios for that meal_type.\n"
         "- Respect fixed_meals: keep the same dish_name and macros for listed weekdays.\n"
         "- For scenario=convenience_store, prefer dish names from convenience_store_candidates when possible.\n"
+        "- Breakfast/lunch/dinner must be solid meals, not drink-only items.\n"
+        "- Never use tea/coffee/milkshake/smoothie/juice/protein shake as the only dish for breakfast/lunch/dinner.\n"
+        "- kcal bounds per meal: breakfast 250-700, lunch 350-900, dinner 350-900, snack 80-350.\n"
         "- Keep daily kcal near daily_target.kcal (about +/-15%).\n"
         "- Minimize repeated dish names across the week for the same meal_type.\n"
         "- Macros must be non-negative and realistic.\n"
@@ -1225,7 +1316,7 @@ def _week_plan_catalog_convenience_candidates(
 ) -> List[str]:
     max_items = max(6, min(60, int(limit)))
     rows: List[dict] = []
-    select_cols = "food_name,canonical_name,source,lang,is_active,updated_at"
+    select_cols = "food_name,canonical_name,source,lang,is_active,is_beverage,updated_at"
     supports_lang_active = _supports_catalog_lang_active_filters()
     keywords = [
         "7-11",
@@ -1291,9 +1382,13 @@ def _week_plan_catalog_convenience_candidates(
             continue
         if row.get("is_active") is False:
             continue
+        if row.get("is_beverage") is True:
+            continue
         food_name = str(row.get("food_name") or row.get("canonical_name") or "").strip()
         source = str(row.get("source") or "").strip()
         if not food_name:
+            continue
+        if _week_plan_is_beverage_only_name(food_name):
             continue
         key = _normalize_food_query(food_name)
         if not key or key in seen_names:
@@ -1312,6 +1407,8 @@ def _week_plan_catalog_convenience_candidates(
             for item in _week_plan_meal_library.get("convenience_store", {}).get(meal_type, []):
                 name = str(item.get("zh") if lang == "zh-TW" else item.get("en") or "").strip()
                 if not name:
+                    continue
+                if _week_plan_is_beverage_only_name(name):
                     continue
                 key = _normalize_food_query(name)
                 if key in seen_names:
@@ -1454,6 +1551,37 @@ def _apply_ai_week_plan_on_stub(
             else:
                 scenario = meal.scenario
 
+            if meal.meal_type in {"breakfast", "lunch", "dinner"} and _week_plan_is_beverage_only_name(
+                dish_name
+            ):
+                add_warning(
+                    _week_plan_ai_warning(
+                        f"{day.date} {meal.meal_type} beverage-like dish rejected; kept template meal"
+                    )
+                )
+                updated_meals.append(meal)
+                dish = meal.dish_name.strip()
+                if dish:
+                    used_dishes_by_meal.setdefault(meal.meal_type, set()).add(dish)
+                continue
+
+            default_kcal = meal.kcal if meal.kcal > 0 else _week_plan_default_kcal(
+                meal.meal_type, target_kcal
+            )
+            candidate_kcal = _safe_positive_int(candidate.get("kcal"), default_kcal)
+            min_kcal, max_kcal = _week_plan_meal_kcal_bounds(meal.meal_type, target_kcal)
+            if candidate_kcal < min_kcal or candidate_kcal > max_kcal:
+                add_warning(
+                    _week_plan_ai_warning(
+                        f"{day.date} {meal.meal_type} kcal {candidate_kcal} out of range {min_kcal}-{max_kcal}; kept template meal"
+                    )
+                )
+                updated_meals.append(meal)
+                dish = meal.dish_name.strip()
+                if dish:
+                    used_dishes_by_meal.setdefault(meal.meal_type, set()).add(dish)
+                continue
+
             seen = used_dishes_by_meal.setdefault(meal.meal_type, set())
             if dish_name in seen and meal.dish_name.strip() and meal.dish_name.strip() not in seen:
                 add_warning(
@@ -1463,15 +1591,12 @@ def _apply_ai_week_plan_on_stub(
                 )
                 chosen = meal
             else:
-                default_kcal = meal.kcal if meal.kcal > 0 else _week_plan_default_kcal(
-                    meal.meal_type, target_kcal
-                )
                 chosen = WeekPlanMealItem(
                     meal_type=meal.meal_type,
                     dish_name=dish_name,
                     scenario=scenario,
                     source="ai_plan",
-                    kcal=_safe_positive_int(candidate.get("kcal"), default_kcal),
+                    kcal=candidate_kcal,
                     protein_g=_safe_positive_macro(candidate.get("protein_g"), meal.protein_g),
                     carb_g=_safe_positive_macro(candidate.get("carb_g"), meal.carb_g),
                     fat_g=_safe_positive_macro(candidate.get("fat_g"), meal.fat_g),
