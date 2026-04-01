@@ -734,9 +734,67 @@ def _normalize_fixed_meals(raw_rules: List[WeekPlanFixedMeal]) -> List[Dict[str,
     return normalized
 
 
-def _pick_scenario_from_allowed(day_index: int, meal_index: int, allowed: List[str]) -> str:
-    index = (day_index * 5 + meal_index * 3 + 11) % len(allowed)
-    return allowed[index]
+def _stable_hash_int(*parts: Any) -> int:
+    raw = "|".join(str(part) for part in parts)
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    return int(digest[:12], 16)
+
+
+def _meal_option_key(option: Dict[str, Any]) -> str:
+    zh = str(option.get("zh") or "").strip()
+    en = str(option.get("en") or "").strip()
+    return f"{zh}|{en}"
+
+
+def _dish_name_from_option(option: Dict[str, Any], lang: str) -> str:
+    if lang == "zh-TW":
+        return str(option.get("zh") or option.get("en") or "").strip()
+    return str(option.get("en") or option.get("zh") or "").strip()
+
+
+def _pick_scenario_with_variety(
+    *,
+    day_index: int,
+    meal_index: int,
+    meal_type: str,
+    allowed: List[str],
+    recent_scenario: Optional[str],
+    usage_counter: Dict[str, int],
+    seed: str,
+) -> str:
+    if not allowed:
+        raise ValueError("allowed scenarios must not be empty")
+    candidates = [value for value in allowed if value != recent_scenario] or list(allowed)
+    min_used = min(int(usage_counter.get(item, 0)) for item in candidates)
+    least_used = [item for item in candidates if int(usage_counter.get(item, 0)) == min_used]
+    jitter = _stable_hash_int(seed, day_index, meal_index, meal_type, "scenario")
+    return least_used[jitter % len(least_used)]
+
+
+def _pick_meal_with_variety(
+    *,
+    options: List[Dict[str, Any]],
+    day_index: int,
+    meal_index: int,
+    meal_type: str,
+    scenario: str,
+    recent_dishes: List[str],
+    usage_counter: Dict[str, int],
+    lang: str,
+    seed: str,
+) -> Dict[str, Any]:
+    if not options:
+        raise ValueError("options must not be empty")
+    recent = {item.strip() for item in recent_dishes if item and item.strip()}
+    candidates = [item for item in options if _dish_name_from_option(item, lang) not in recent]
+    if not candidates:
+        candidates = list(options)
+    min_used = min(int(usage_counter.get(_meal_option_key(item), 0)) for item in candidates)
+    least_used = [
+        item for item in candidates if int(usage_counter.get(_meal_option_key(item), 0)) == min_used
+    ]
+    jitter = _stable_hash_int(seed, day_index, meal_index, meal_type, scenario, "dish")
+    return least_used[jitter % len(least_used)]
 
 
 def _build_stub_week_plan(
@@ -764,6 +822,49 @@ def _build_stub_week_plan(
     day_plans: List[WeekPlanDayPlan] = []
     day_dates: List[str] = []
     warnings: List[str] = []
+    seed_base = f"{user_id}|{start_date.isoformat()}"
+    scenario_usage_by_meal: Dict[str, Dict[str, int]] = {
+        meal_type: {scenario: 0 for scenario in _week_plan_scenarios}
+        for meal_type in _week_plan_meal_types
+    }
+    meal_usage_by_meal: Dict[str, Dict[str, int]] = {
+        meal_type: {} for meal_type in _week_plan_meal_types
+    }
+    recent_scenario_by_meal: Dict[str, Optional[str]] = {
+        meal_type: None for meal_type in _week_plan_meal_types
+    }
+    recent_dishes_by_meal: Dict[str, List[str]] = {
+        meal_type: [] for meal_type in _week_plan_meal_types
+    }
+    day_signatures: set[str] = set()
+
+    for meal_type in _week_plan_meal_types:
+        allowed = meal_scenarios.get(meal_type) or list(_week_plan_scenarios)
+        variety_capacity = sum(
+            len(_week_plan_meal_library.get(scenario, {}).get(meal_type) or [])
+            for scenario in allowed
+        )
+        if variety_capacity < payload.days:
+            zh_label = {
+                "breakfast": "早餐",
+                "lunch": "午餐",
+                "dinner": "晚餐",
+                "snack": "點心",
+            }.get(meal_type, meal_type)
+            en_label = {
+                "breakfast": "Breakfast",
+                "lunch": "Lunch",
+                "dinner": "Dinner",
+                "snack": "Snack",
+            }.get(meal_type, meal_type)
+            if lang == "zh-TW":
+                warnings.append(
+                    f"{zh_label} 可用餐點僅 {variety_capacity} 種，7 天規劃可能出現重複"
+                )
+            else:
+                warnings.append(
+                    f"{en_label} has only {variety_capacity} dish templates; 7-day plan may repeat dishes"
+                )
 
     for day_index in range(payload.days):
         current_date = start_date + timedelta(days=day_index)
@@ -809,12 +910,30 @@ def _build_stub_week_plan(
                     allowed = list(_week_plan_scenarios)
                 if not allowed:
                     continue
-                scenario = _pick_scenario_from_allowed(day_index, meal_index, allowed)
+                scenario = _pick_scenario_with_variety(
+                    day_index=day_index,
+                    meal_index=meal_index,
+                    meal_type=meal_type,
+                    allowed=allowed,
+                    recent_scenario=recent_scenario_by_meal.get(meal_type),
+                    usage_counter=scenario_usage_by_meal.get(meal_type, {}),
+                    seed=seed_base,
+                )
             options = _week_plan_meal_library.get(scenario, {}).get(meal_type) or []
             if not options:
                 raise HTTPException(status_code=500, detail="plan_template_missing")
-            selected = options[(day_index + meal_index) % len(options)]
-            dish_name = selected["zh"] if lang == "zh-TW" else selected["en"]
+            selected = _pick_meal_with_variety(
+                options=options,
+                day_index=day_index,
+                meal_index=meal_index,
+                meal_type=meal_type,
+                scenario=scenario,
+                recent_dishes=recent_dishes_by_meal.get(meal_type, []),
+                usage_counter=meal_usage_by_meal.get(meal_type, {}),
+                lang=lang,
+                seed=seed_base,
+            )
+            dish_name = _dish_name_from_option(selected, lang)
             meal = WeekPlanMealItem(
                 meal_type=meal_type,
                 dish_name=dish_name,
@@ -832,6 +951,30 @@ def _build_stub_week_plan(
             totals["protein_g"] += meal.protein_g
             totals["carb_g"] += meal.carb_g
             totals["fat_g"] += meal.fat_g
+            scenario_usage = scenario_usage_by_meal.get(meal_type, {})
+            scenario_usage[scenario] = int(scenario_usage.get(scenario, 0)) + 1
+            option_usage = meal_usage_by_meal.get(meal_type, {})
+            option_key = _meal_option_key(selected)
+            option_usage[option_key] = int(option_usage.get(option_key, 0)) + 1
+            recent_scenario_by_meal[meal_type] = scenario
+            recent_dishes = recent_dishes_by_meal.get(meal_type, [])
+            if dish_name:
+                recent_dishes.append(dish_name)
+                if len(recent_dishes) > 2:
+                    del recent_dishes[0]
+
+        day_signature = "|".join(f"{meal.meal_type}:{meal.dish_name}" for meal in meals)
+        if day_signature in day_signatures:
+            if lang == "zh-TW":
+                warnings.append(
+                    f"{current_date.isoformat()} 餐次組合與前幾日相近，建議調整餐別來源或增加固定餐"
+                )
+            else:
+                warnings.append(
+                    f"{current_date.isoformat()} has a similar meal combination to previous days"
+                )
+        else:
+            day_signatures.add(day_signature)
 
         if fixed_day_kcal > target_kcal:
             if lang == "zh-TW":
