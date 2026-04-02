@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Query, Form, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Any, Dict, Optional, List
+from typing import Any, Callable, Dict, Optional, List
 from dotenv import load_dotenv, dotenv_values
 from pathlib import Path
 from openai import OpenAI
@@ -533,6 +533,9 @@ _week_plan_scenarios = ("home_cook", "eat_out", "convenience_store")
 _week_plan_meal_types = ("breakfast", "lunch", "dinner", "snack")
 _week_plan_warning_tag_ai = "[AI]"
 _week_plan_warning_tag_fallback = "[FALLBACK]"
+_week_plan_daily_kcal_tolerance = (0.90, 1.10)
+_week_plan_daily_kcal_warning_bounds = (0.85, 1.15)
+_week_plan_weekly_avg_tolerance = (0.95, 1.05)
 _week_plan_default_market_by_lang: Dict[str, str] = {
     "zh-TW": "TW",
     "zh-CN": "CN",
@@ -1188,6 +1191,224 @@ def _week_plan_meal_kcal_bounds(meal_type: str, target_kcal: int) -> tuple[int, 
     return (min_kcal, max_kcal)
 
 
+def _week_plan_daily_kcal_bounds(target_kcal: int) -> tuple[int, int]:
+    low_ratio, high_ratio = _week_plan_daily_kcal_tolerance
+    low = max(0, int(round(target_kcal * low_ratio)))
+    high = max(low, int(round(target_kcal * high_ratio)))
+    return (low, high)
+
+
+def _week_plan_daily_kcal_warn_limits(target_kcal: int) -> tuple[int, int]:
+    low_ratio, high_ratio = _week_plan_daily_kcal_warning_bounds
+    low = max(0, int(round(target_kcal * low_ratio)))
+    high = max(low, int(round(target_kcal * high_ratio)))
+    return (low, high)
+
+
+def _week_plan_weekly_avg_bounds(target_kcal: int) -> tuple[int, int]:
+    low_ratio, high_ratio = _week_plan_weekly_avg_tolerance
+    low = max(0, int(round(target_kcal * low_ratio)))
+    high = max(low, int(round(target_kcal * high_ratio)))
+    return (low, high)
+
+
+def _clone_week_plan_meal_with_kcal(meal: WeekPlanMealItem, kcal: int) -> WeekPlanMealItem:
+    next_kcal = max(0, int(round(kcal)))
+    old_kcal = max(0, int(round(meal.kcal)))
+    if old_kcal > 0:
+        ratio = next_kcal / float(old_kcal)
+        protein = round(max(0.0, float(meal.protein_g) * ratio), 1)
+        carb = round(max(0.0, float(meal.carb_g) * ratio), 1)
+        fat = round(max(0.0, float(meal.fat_g) * ratio), 1)
+    else:
+        protein = round(max(0.0, float(meal.protein_g)), 1)
+        carb = round(max(0.0, float(meal.carb_g)), 1)
+        fat = round(max(0.0, float(meal.fat_g)), 1)
+    return WeekPlanMealItem(
+        meal_type=meal.meal_type,
+        dish_name=meal.dish_name,
+        scenario=meal.scenario,
+        source=meal.source,
+        kcal=next_kcal,
+        protein_g=protein,
+        carb_g=carb,
+        fat_g=fat,
+        locked=meal.locked,
+        eaten=meal.eaten,
+    )
+
+
+def _week_plan_deficit_weight_map(active_types: set[str]) -> Dict[str, int]:
+    if not active_types:
+        return {}
+    weights: Dict[str, int] = {}
+    has_lunch = "lunch" in active_types
+    has_dinner = "dinner" in active_types
+    has_snack = "snack" in active_types
+    has_breakfast = "breakfast" in active_types
+
+    if has_lunch and has_dinner:
+        weights["lunch"] = 45
+        weights["dinner"] = 45
+        if has_snack:
+            weights["snack"] = 10
+        return weights
+
+    if has_lunch or has_dinner:
+        main_type = "lunch" if has_lunch else "dinner"
+        weights[main_type] = 90 if has_snack else 100
+        if has_snack:
+            weights["snack"] = 10
+        return weights
+
+    if has_breakfast and has_snack:
+        return {"breakfast": 80, "snack": 20}
+    if has_breakfast:
+        return {"breakfast": 100}
+    if has_snack:
+        return {"snack": 100}
+
+    for meal_type in sorted(active_types):
+        weights[meal_type] = 1
+    return weights
+
+
+def _rebalance_week_plan_day_kcal(
+    *,
+    day_date: str,
+    meals: List[WeekPlanMealItem],
+    target_kcal: int,
+    add_warning: Callable[[str], None],
+) -> List[WeekPlanMealItem]:
+    adjusted = list(meals)
+    if not adjusted:
+        return adjusted
+
+    lower, upper = _week_plan_daily_kcal_bounds(target_kcal)
+    warn_low, warn_high = _week_plan_daily_kcal_warn_limits(target_kcal)
+    current_total = sum(max(0, int(meal.kcal)) for meal in adjusted)
+    if lower <= current_total <= upper:
+        return adjusted
+
+    type_to_indexes: Dict[str, List[int]] = {}
+    for idx, meal in enumerate(adjusted):
+        if meal.locked:
+            continue
+        type_to_indexes.setdefault(meal.meal_type, []).append(idx)
+
+    if not type_to_indexes:
+        add_warning(
+            _week_plan_ai_warning(
+                f"{day_date} daily kcal {current_total} out of target zone {lower}-{upper}; no adjustable meals"
+            )
+        )
+        return adjusted
+
+    primary_index_by_type: Dict[str, int] = {}
+    for meal_type, indexes in type_to_indexes.items():
+        primary_index_by_type[meal_type] = max(indexes, key=lambda idx: int(adjusted[idx].kcal))
+
+    if current_total < lower:
+        deficit = lower - current_total
+        type_weights = _week_plan_deficit_weight_map(set(primary_index_by_type.keys()))
+        if not type_weights:
+            add_warning(
+                _week_plan_ai_warning(
+                    f"{day_date} daily kcal {current_total} below target zone {lower}-{upper}; no compensation path"
+                )
+            )
+            return adjusted
+
+        type_order = [meal_type for meal_type in type_weights if meal_type in primary_index_by_type]
+        if not type_order:
+            return adjusted
+
+        remaining = deficit
+        total_weight = max(1, sum(type_weights.get(meal_type, 0) for meal_type in type_order))
+        for index, meal_type in enumerate(type_order):
+            idx = primary_index_by_type[meal_type]
+            meal = adjusted[idx]
+            _, max_kcal = _week_plan_meal_kcal_bounds(meal.meal_type, target_kcal)
+            headroom = max(0, max_kcal - int(meal.kcal))
+            if headroom <= 0:
+                continue
+            planned = (
+                remaining
+                if index == len(type_order) - 1
+                else int(round(deficit * (type_weights.get(meal_type, 0) / float(total_weight))))
+            )
+            gain = min(headroom, max(0, planned))
+            if gain <= 0:
+                continue
+            adjusted[idx] = _clone_week_plan_meal_with_kcal(meal, int(meal.kcal) + gain)
+            remaining -= gain
+
+        if remaining > 0:
+            progressed = True
+            while remaining > 0 and progressed:
+                progressed = False
+                for meal_type in type_order:
+                    idx = primary_index_by_type[meal_type]
+                    meal = adjusted[idx]
+                    _, max_kcal = _week_plan_meal_kcal_bounds(meal.meal_type, target_kcal)
+                    headroom = max(0, max_kcal - int(meal.kcal))
+                    if headroom <= 0:
+                        continue
+                    gain = min(headroom, remaining)
+                    if gain <= 0:
+                        continue
+                    adjusted[idx] = _clone_week_plan_meal_with_kcal(meal, int(meal.kcal) + gain)
+                    remaining -= gain
+                    progressed = True
+                    if remaining <= 0:
+                        break
+
+        if remaining > 0:
+            add_warning(
+                _week_plan_ai_warning(
+                    f"{day_date} kcal remained low by {remaining} after compensation due to meal limits"
+                )
+            )
+
+    elif current_total > upper:
+        surplus = current_total - upper
+        reduction_order = ["snack", "dinner", "lunch", "breakfast"]
+        extra_types = [meal_type for meal_type in primary_index_by_type if meal_type not in reduction_order]
+        reduction_order.extend(sorted(extra_types))
+
+        remaining = surplus
+        for meal_type in reduction_order:
+            idx = primary_index_by_type.get(meal_type)
+            if idx is None or remaining <= 0:
+                continue
+            meal = adjusted[idx]
+            min_kcal, _ = _week_plan_meal_kcal_bounds(meal.meal_type, target_kcal)
+            reducible = max(0, int(meal.kcal) - min_kcal)
+            if reducible <= 0:
+                continue
+            cut = min(reducible, remaining)
+            adjusted[idx] = _clone_week_plan_meal_with_kcal(meal, int(meal.kcal) - cut)
+            remaining -= cut
+            if remaining <= 0:
+                break
+
+        if remaining > 0:
+            add_warning(
+                _week_plan_ai_warning(
+                    f"{day_date} kcal remained high by {remaining} after trim due to meal minimums"
+                )
+            )
+
+    final_total = sum(max(0, int(meal.kcal)) for meal in adjusted)
+    if final_total < warn_low or final_total > warn_high:
+        add_warning(
+            _week_plan_ai_warning(
+                f"{day_date} daily kcal {final_total} outside warning range {warn_low}-{warn_high}"
+            )
+        )
+    return adjusted
+
+
 def _week_plan_is_beverage_only_name(name: str) -> bool:
     norm = _normalize_food_query(str(name or "")).lower()
     if not norm:
@@ -1354,7 +1575,7 @@ def _build_week_plan_ai_prompt(
         "- Breakfast/lunch/dinner must be solid meals, not drink-only items.\n"
         "- Never use tea/coffee/milkshake/smoothie/juice/protein shake as the only dish for breakfast/lunch/dinner.\n"
         "- kcal bounds per meal: breakfast 250-700, lunch 350-900, dinner 350-900, snack 80-350.\n"
-        "- Keep daily kcal near daily_target.kcal (about +/-15%).\n"
+        "- Keep daily kcal near daily_target.kcal (target zone 90%-110%; warning if outside 85%-115%).\n"
         "- Minimize repeated dish names across the week for the same meal_type.\n"
         "- Macros must be non-negative and realistic.\n"
         f"Planning context JSON:\n{json.dumps(context, ensure_ascii=True)}"
@@ -1861,6 +2082,13 @@ def _apply_ai_week_plan_on_stub(
             if chosen_name:
                 seen.add(chosen_name)
 
+        updated_meals = _rebalance_week_plan_day_kcal(
+            day_date=day.date,
+            meals=updated_meals,
+            target_kcal=target_kcal,
+            add_warning=add_warning,
+        )
+
         totals = {
             "kcal": 0,
             "protein_g": 0.0,
@@ -1890,6 +2118,16 @@ def _apply_ai_week_plan_on_stub(
         add_warning(
             _week_plan_ai_warning("AI output date coverage was partial; template structure was preserved")
         )
+
+    if updated_days:
+        weekly_avg_kcal = sum(int(day.totals.kcal) for day in updated_days) / float(len(updated_days))
+        weekly_low, weekly_high = _week_plan_weekly_avg_bounds(target_kcal)
+        if weekly_avg_kcal < weekly_low or weekly_avg_kcal > weekly_high:
+            add_warning(
+                _week_plan_ai_warning(
+                    f"weekly average kcal {int(round(weekly_avg_kcal))} outside target range {weekly_low}-{weekly_high}"
+                )
+            )
 
     return WeekPlanGenerateResponse(
         plan_id=base_plan.plan_id,
