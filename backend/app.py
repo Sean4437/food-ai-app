@@ -206,6 +206,8 @@ class WeekPlanGenerateRequest(BaseModel):
     days: int = 7
     lang: Optional[str] = None
     timezone: Optional[str] = None
+    market_code: Optional[str] = None
+    retailer_codes: List[str] = Field(default_factory=list)
     goal_mode: str = "profile_default"
     goal_override: Optional[str] = None
     profile_goal: Optional[str] = None
@@ -253,6 +255,8 @@ class WeekPlanGenerateResponse(BaseModel):
     start_date: str
     end_date: str
     goal_effective: str
+    market_code_effective: str = "GLOBAL"
+    retailer_codes_effective: List[str] = Field(default_factory=list)
     meal_scenarios_effective: WeekPlanMealScenarios
     fixed_meals_effective: List[WeekPlanFixedMeal] = Field(default_factory=list)
     mix_ratio_effective: Optional[WeekPlanMixRatio] = None
@@ -463,6 +467,8 @@ _last_ai_error: Optional[str] = None
 _jwks_client: Optional[PyJWKClient] = None
 _supabase_http_client: Optional[httpx.Client] = None
 _catalog_lang_active_filter_supported: Optional[bool] = None
+_catalog_market_code_filter_supported: Optional[bool] = None
+_catalog_retailer_code_filter_supported: Optional[bool] = None
 _profile_plan_columns_supported: Optional[bool] = None
 _chat_rate_state: dict[str, list[float]] = {}
 _chat_rate_limit = int(os.getenv("CHAT_RATE_LIMIT_PER_MIN", "5"))
@@ -527,6 +533,23 @@ _week_plan_scenarios = ("home_cook", "eat_out", "convenience_store")
 _week_plan_meal_types = ("breakfast", "lunch", "dinner", "snack")
 _week_plan_warning_tag_ai = "[AI]"
 _week_plan_warning_tag_fallback = "[FALLBACK]"
+_week_plan_default_market_by_lang: Dict[str, str] = {
+    "zh-TW": "TW",
+    "zh-CN": "CN",
+    "ja": "JP",
+    "ko": "KR",
+    "en": "US",
+}
+_week_plan_retailer_source_aliases: Dict[str, List[str]] = {
+    "7_11": ["7-11", "7 eleven", "seven eleven", "711", "統一超", "小七"],
+    "familymart": ["familymart", "family", "全家"],
+    "hilife": ["hilife", "hi life", "萊爾富"],
+    "okmart": ["okmart", "ok mart", "ok超商", "ok便利店"],
+    "lawson": ["lawson", "ローソン"],
+    "ministop": ["ministop", "ミニストップ"],
+    "circle_k": ["circle k"],
+    "wawa": ["wawa"],
+}
 _week_plan_store: Dict[str, Dict[str, Any]] = {}
 _week_plan_goal_targets: Dict[str, Dict[str, float]] = {
     "lose_fat": {"kcal": 1650, "protein_g": 120.0, "carb_g": 150.0, "fat_g": 55.0},
@@ -819,6 +842,8 @@ def _build_stub_week_plan(
         meal_scenarios = _normalize_meal_scenarios(None)
     fixed_meals = _normalize_fixed_meals(payload.fixed_meals or [])
     goal = _effective_week_goal(payload)
+    market_code = _normalize_week_plan_market_code(payload.market_code, lang=lang)
+    retailer_codes = _normalize_week_plan_retailer_codes(payload.retailer_codes)
     target = _week_plan_goal_targets.get(goal, _week_plan_goal_targets["lose_fat"])
     target_kcal = int(target["kcal"])
     day_plans: List[WeekPlanDayPlan] = []
@@ -1016,6 +1041,8 @@ def _build_stub_week_plan(
         "created_at": datetime.now(timezone.utc).isoformat(),
         "version": 1,
         "goal": goal,
+        "market_code_effective": market_code,
+        "retailer_codes_effective": retailer_codes,
         "daily_target_kcal": int(target["kcal"]),
         "day_dates": day_dates,
         "fixed_meals_effective": fixed_meals,
@@ -1026,6 +1053,8 @@ def _build_stub_week_plan(
         start_date=start_date.isoformat(),
         end_date=(start_date + timedelta(days=payload.days - 1)).isoformat(),
         goal_effective=goal,
+        market_code_effective=market_code,
+        retailer_codes_effective=retailer_codes,
         meal_scenarios_effective=WeekPlanMealScenarios(**meal_scenarios),
         fixed_meals_effective=[WeekPlanFixedMeal(**item) for item in fixed_meals],
         mix_ratio_effective=WeekPlanMixRatio(**legacy_ratio) if legacy_ratio else None,
@@ -1079,6 +1108,44 @@ def _normalize_week_plan_scenario(value: Any) -> Optional[str]:
         "fixed_custom": "fixed_custom",
     }
     return aliases.get(raw)
+
+
+def _normalize_week_plan_market_code(value: Any, *, lang: str = "en") -> str:
+    raw = str(value or "").strip().upper()
+    if raw in {"", "AUTO"}:
+        lower_lang = str(lang or "").strip().lower()
+        for prefix, market in _week_plan_default_market_by_lang.items():
+            if lower_lang.startswith(prefix.lower()):
+                return market
+        return "GLOBAL"
+    normalized = re.sub(r"[^A-Z0-9_-]", "", raw)
+    if len(normalized) < 2:
+        return "GLOBAL"
+    return normalized[:12]
+
+
+def _normalize_week_plan_retailer_code(value: Any) -> str:
+    raw = str(value or "").strip().lower()
+    normalized = re.sub(r"[^a-z0-9_-]", "", raw)
+    if not normalized:
+        return ""
+    return normalized[:24]
+
+
+def _normalize_week_plan_retailer_codes(values: Any) -> List[str]:
+    if not isinstance(values, list):
+        return []
+    normalized: List[str] = []
+    seen: set[str] = set()
+    for item in values:
+        code = _normalize_week_plan_retailer_code(item)
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        normalized.append(code)
+        if len(normalized) >= 12:
+            break
+    return normalized
 
 
 def _safe_positive_int(value: Any, default: int) -> int:
@@ -1199,6 +1266,8 @@ def _build_week_plan_ai_prompt(
     lang: str,
     payload: WeekPlanGenerateRequest,
     goal: str,
+    market_code: str,
+    retailer_codes: List[str],
     daily_target: WeekPlanMacroTarget,
     day_dates: List[str],
     meal_scenarios: Dict[str, List[str]],
@@ -1235,6 +1304,8 @@ def _build_week_plan_ai_prompt(
         "days": payload.days,
         "day_dates": day_dates,
         "goal_effective": goal,
+        "market_code": market_code,
+        "retailer_codes": retailer_codes,
         "daily_target": {
             "kcal": int(daily_target.kcal),
             "protein_g": float(daily_target.protein_g),
@@ -1277,6 +1348,8 @@ def _build_week_plan_ai_prompt(
         "- If a meal_type has empty meal_scenarios, do not generate that meal.\n"
         "- scenario must be one of the allowed scenarios for that meal_type.\n"
         "- Respect fixed_meals: keep the same dish_name and macros for listed weekdays.\n"
+        "- For scenario=convenience_store, choose realistic items sold in market_code.\n"
+        "- If retailer_codes is not empty, prioritize those retailers and avoid other brands.\n"
         "- For scenario=convenience_store, prefer dish names from convenience_store_candidates when possible.\n"
         "- Breakfast/lunch/dinner must be solid meals, not drink-only items.\n"
         "- Never use tea/coffee/milkshake/smoothie/juice/protein shake as the only dish for breakfast/lunch/dinner.\n"
@@ -1309,7 +1382,7 @@ def _week_plan_fallback_warning_text(reason: str) -> str:
     )
 
 
-def _week_plan_catalog_convenience_candidates(
+def _week_plan_catalog_convenience_candidates_legacy(
     *,
     lang: str,
     limit: int = 24,
@@ -1420,6 +1493,184 @@ def _week_plan_catalog_convenience_candidates(
     return candidates
 
 
+def _week_plan_catalog_convenience_candidates(
+    *,
+    lang: str,
+    market_code: str,
+    retailer_codes: List[str],
+    limit: int = 24,
+) -> List[str]:
+    max_items = max(6, min(60, int(limit)))
+    normalized_retailers = _normalize_week_plan_retailer_codes(retailer_codes)
+    retailer_set = set(normalized_retailers)
+    rows: List[dict] = []
+    supports_lang_active = _supports_catalog_lang_active_filters()
+    supports_market_code = _supports_catalog_market_code_filter()
+    supports_retailer_code = _supports_catalog_retailer_code_filter()
+
+    select_cols_parts = [
+        "id",
+        "food_name",
+        "canonical_name",
+        "source",
+        "lang",
+        "is_active",
+        "is_beverage",
+        "updated_at",
+    ]
+    if supports_market_code:
+        select_cols_parts.append("market_code")
+    if supports_retailer_code:
+        select_cols_parts.append("retailer_code")
+    select_cols = ",".join(select_cols_parts)
+    keywords = ["7-11", "family", "convenience", "mart", "store"]
+
+    def row_matches_retailer(row: dict) -> bool:
+        if not retailer_set:
+            return True
+        if supports_retailer_code:
+            row_code = _normalize_week_plan_retailer_code(row.get("retailer_code"))
+            return bool(row_code and row_code in retailer_set)
+
+        haystack = " ".join(
+            [
+                str(row.get("source") or "").strip().lower(),
+                str(row.get("food_name") or "").strip().lower(),
+                str(row.get("canonical_name") or "").strip().lower(),
+            ]
+        )
+        for retailer_code in retailer_set:
+            aliases = _week_plan_retailer_source_aliases.get(retailer_code)
+            if not aliases:
+                aliases = [retailer_code.replace("_", " "), retailer_code]
+            for alias in aliases:
+                alias_norm = str(alias or "").strip().lower()
+                if alias_norm and alias_norm in haystack:
+                    return True
+        return False
+
+    seen_row_keys: set[str] = set()
+
+    def append_rows(query_params: List[tuple[str, str]]) -> None:
+        if len(rows) >= max_items:
+            return
+
+        request_params: List[tuple[str, str]] = [("select", select_cols)]
+        if supports_lang_active:
+            request_params.append(("lang", f"eq.{lang}"))
+            request_params.append(("is_active", "eq.true"))
+        if supports_market_code and market_code and market_code != "GLOBAL":
+            request_params.append(("market_code", f"eq.{market_code}"))
+        request_params.extend(query_params)
+
+        try:
+            fetched = _supabase_rest_list("food_catalog", request_params)
+        except Exception:
+            fetched = []
+
+        for row in fetched:
+            if not isinstance(row, dict):
+                continue
+            if row.get("is_active") is False:
+                continue
+            if not row_matches_retailer(row):
+                continue
+
+            row_key = str(row.get("id") or "")
+            if not row_key:
+                row_key = "|".join(
+                    [
+                        str(row.get("food_name") or "").strip(),
+                        str(row.get("canonical_name") or "").strip(),
+                        str(row.get("source") or "").strip(),
+                        str(row.get("retailer_code") or "").strip(),
+                    ]
+                )
+            if not row_key or row_key in seen_row_keys:
+                continue
+            seen_row_keys.add(row_key)
+            rows.append(row)
+            if len(rows) >= max_items:
+                return
+
+    if normalized_retailers and supports_retailer_code:
+        for retailer_code in normalized_retailers:
+            append_rows(
+                [
+                    ("retailer_code", f"eq.{retailer_code}"),
+                    ("order", "updated_at.desc"),
+                    ("limit", str(max_items)),
+                ]
+            )
+            if len(rows) >= max_items:
+                break
+
+    for keyword in keywords:
+        append_rows(
+            [
+                ("source", f"ilike.*{keyword}*"),
+                ("order", "updated_at.desc"),
+                ("limit", str(max_items)),
+            ]
+        )
+        if len(rows) >= max_items:
+            break
+
+    if not rows:
+        append_rows(
+            [
+                ("order", "updated_at.desc"),
+                ("limit", str(max_items * 3)),
+            ]
+        )
+
+    candidates: List[str] = []
+    seen_names: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if row.get("is_active") is False:
+            continue
+        if row.get("is_beverage") is True:
+            continue
+        food_name = str(row.get("food_name") or row.get("canonical_name") or "").strip()
+        source = str(row.get("source") or "").strip()
+        if not food_name:
+            continue
+        if _week_plan_is_beverage_only_name(food_name):
+            continue
+        key = _normalize_food_query(food_name)
+        if not key or key in seen_names:
+            continue
+        seen_names.add(key)
+        retailer_code = _normalize_week_plan_retailer_code(row.get("retailer_code"))
+        if source:
+            candidates.append(f"{food_name} ({source})")
+        elif retailer_code:
+            candidates.append(f"{food_name} ({retailer_code})")
+        else:
+            candidates.append(food_name)
+        if len(candidates) >= max_items:
+            break
+
+    if not candidates:
+        for meal_type in _week_plan_meal_types:
+            for item in _week_plan_meal_library.get("convenience_store", {}).get(meal_type, []):
+                name = str(item.get("zh") if lang == "zh-TW" else item.get("en") or "").strip()
+                if not name:
+                    continue
+                if _week_plan_is_beverage_only_name(name):
+                    continue
+                key = _normalize_food_query(name)
+                if key in seen_names:
+                    continue
+                seen_names.add(key)
+                candidates.append(name)
+                if len(candidates) >= max_items:
+                    return candidates
+    return candidates
+
+
 def _clone_week_plan_with_warning(
     base_plan: WeekPlanGenerateResponse,
     warning: str,
@@ -1435,6 +1686,8 @@ def _clone_week_plan_with_warning(
         start_date=base_plan.start_date,
         end_date=base_plan.end_date,
         goal_effective=base_plan.goal_effective,
+        market_code_effective=base_plan.market_code_effective,
+        retailer_codes_effective=list(base_plan.retailer_codes_effective or []),
         meal_scenarios_effective=base_plan.meal_scenarios_effective,
         fixed_meals_effective=base_plan.fixed_meals_effective,
         mix_ratio_effective=base_plan.mix_ratio_effective,
@@ -1644,6 +1897,8 @@ def _apply_ai_week_plan_on_stub(
         start_date=base_plan.start_date,
         end_date=base_plan.end_date,
         goal_effective=base_plan.goal_effective,
+        market_code_effective=base_plan.market_code_effective,
+        retailer_codes_effective=list(base_plan.retailer_codes_effective or []),
         meal_scenarios_effective=base_plan.meal_scenarios_effective,
         fixed_meals_effective=base_plan.fixed_meals_effective,
         mix_ratio_effective=base_plan.mix_ratio_effective,
@@ -3815,6 +4070,52 @@ def _supports_catalog_lang_active_filters() -> bool:
     except Exception:
         _catalog_lang_active_filter_supported = False
     return bool(_catalog_lang_active_filter_supported)
+
+
+def _supports_catalog_market_code_filter() -> bool:
+    global _catalog_market_code_filter_supported
+    if _catalog_market_code_filter_supported is not None:
+        return _catalog_market_code_filter_supported
+    try:
+        headers = _supabase_headers()
+    except HTTPException:
+        _catalog_market_code_filter_supported = False
+        return False
+    url = f"{SUPABASE_URL}/rest/v1/food_catalog"
+    try:
+        client = _get_supabase_http_client()
+        resp = client.get(
+            url,
+            headers=headers,
+            params=[("select", "id,market_code"), ("limit", "1")],
+        )
+        _catalog_market_code_filter_supported = resp.status_code < 400
+    except Exception:
+        _catalog_market_code_filter_supported = False
+    return bool(_catalog_market_code_filter_supported)
+
+
+def _supports_catalog_retailer_code_filter() -> bool:
+    global _catalog_retailer_code_filter_supported
+    if _catalog_retailer_code_filter_supported is not None:
+        return _catalog_retailer_code_filter_supported
+    try:
+        headers = _supabase_headers()
+    except HTTPException:
+        _catalog_retailer_code_filter_supported = False
+        return False
+    url = f"{SUPABASE_URL}/rest/v1/food_catalog"
+    try:
+        client = _get_supabase_http_client()
+        resp = client.get(
+            url,
+            headers=headers,
+            params=[("select", "id,retailer_code"), ("limit", "1")],
+        )
+        _catalog_retailer_code_filter_supported = resp.status_code < 400
+    except Exception:
+        _catalog_retailer_code_filter_supported = False
+    return bool(_catalog_retailer_code_filter_supported)
 
 
 def _food_match_score(query_norm: str, alias_row: dict, catalog_row: dict, lang: str) -> float:
@@ -6585,14 +6886,25 @@ async def generate_week_plan(
         }
         day_dates = [day.date for day in base_plan.day_plans]
         fixed_meals = list(base_plan.fixed_meals_effective or [])
+        market_code = _normalize_week_plan_market_code(
+            payload.market_code or base_plan.market_code_effective,
+            lang=use_lang,
+        )
+        retailer_codes = _normalize_week_plan_retailer_codes(
+            payload.retailer_codes or base_plan.retailer_codes_effective
+        )
         convenience_candidates = _week_plan_catalog_convenience_candidates(
             lang=use_lang,
+            market_code=market_code,
+            retailer_codes=retailer_codes,
             limit=24,
         )
         prompt = _build_week_plan_ai_prompt(
             lang=use_lang,
             payload=payload,
             goal=base_plan.goal_effective,
+            market_code=market_code,
+            retailer_codes=retailer_codes,
             daily_target=base_plan.daily_target,
             day_dates=day_dates,
             meal_scenarios=meal_scenarios,

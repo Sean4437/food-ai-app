@@ -391,6 +391,8 @@ class WeekPlanData {
     required this.startDate,
     required this.endDate,
     required this.goalEffective,
+    required this.marketCodeEffective,
+    required this.retailerCodesEffective,
     required this.mealScenariosEffective,
     required this.fixedMealsEffective,
     required this.dailyTarget,
@@ -404,6 +406,8 @@ class WeekPlanData {
   final String startDate;
   final String endDate;
   final String goalEffective;
+  final String marketCodeEffective;
+  final List<String> retailerCodesEffective;
   final WeekPlanMealScenarios mealScenariosEffective;
   final List<WeekPlanFixedMeal> fixedMealsEffective;
   final WeekPlanMixRatio? mixRatioEffective;
@@ -417,6 +421,8 @@ class WeekPlanData {
         'start_date': startDate,
         'end_date': endDate,
         'goal_effective': goalEffective,
+        'market_code_effective': marketCodeEffective,
+        'retailer_codes_effective': retailerCodesEffective,
         'meal_scenarios_effective': mealScenariosEffective.toJson(),
         'fixed_meals_effective':
             fixedMealsEffective.map((item) => item.toJson()).toList(),
@@ -494,12 +500,26 @@ class WeekPlanData {
             ? rawValidation.map((k, v) => MapEntry(k.toString(), v))
             : const <String, dynamic>{};
 
+    final rawRetailers = json['retailer_codes_effective'];
+    final retailerCodes = <String>[];
+    if (rawRetailers is List) {
+      for (final item in rawRetailers) {
+        final value = item.toString().trim();
+        if (value.isNotEmpty && !retailerCodes.contains(value)) {
+          retailerCodes.add(value);
+        }
+      }
+    }
+
     return WeekPlanData(
       planId: (json['plan_id'] ?? '').toString(),
       version: parseInt(json['version']),
       startDate: (json['start_date'] ?? '').toString(),
       endDate: (json['end_date'] ?? '').toString(),
       goalEffective: (json['goal_effective'] ?? '').toString(),
+      marketCodeEffective:
+          (json['market_code_effective'] ?? 'GLOBAL').toString(),
+      retailerCodesEffective: retailerCodes,
       mealScenariosEffective: mealScenarios,
       fixedMealsEffective: fixedMeals,
       mixRatioEffective: mixRatio,

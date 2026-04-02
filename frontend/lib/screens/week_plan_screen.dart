@@ -43,10 +43,25 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   static const String _noneScenario = '__none__';
   static const String _warningTagAi = '[AI]';
   static const String _warningTagFallback = '[FALLBACK]';
+  static const List<String> _marketOptions = <String>[
+    'TW',
+    'JP',
+    'US',
+    'GLOBAL',
+  ];
+  static const Map<String, List<String>> _retailerOptionsByMarket =
+      <String, List<String>>{
+    'TW': <String>['7_11', 'familymart', 'hilife', 'okmart'],
+    'JP': <String>['seven_eleven_jp', 'familymart_jp', 'lawson', 'ministop'],
+    'US': <String>['seven_eleven_us', 'circle_k', 'wawa', 'am_pm'],
+    'GLOBAL': <String>[],
+  };
 
   DateTime _startDate = DateTime.now();
   String _goalMode = 'profile_default';
   String _goalOverride = 'lose_fat';
+  String _marketCode = 'TW';
+  Set<String> _retailerCodes = <String>{};
   Map<String, List<String>> _mealScenarioSelections = {
     for (final mealType in _mealTypes)
       mealType: List<String>.from(_scenarioTypes),
@@ -87,6 +102,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       }
       _goalMode = 'week_override';
       _goalOverride = cachedPlan.goalEffective;
+      _marketCode = _normalizeMarketCode(cachedPlan.marketCodeEffective);
+      _retailerCodes =
+          _normalizeRetailerCodeSet(cachedPlan.retailerCodesEffective);
+      _trimRetailersForCurrentMarket();
       _setMealScenarioSelectionFromData(cachedPlan.mealScenariosEffective);
       _fixedMeals =
           List<WeekPlanFixedMeal>.from(cachedPlan.fixedMealsEffective);
@@ -119,6 +138,32 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       dinner: normalize('dinner'),
       snack: normalize('snack'),
     );
+  }
+
+  String _normalizeMarketCode(String value) {
+    final normalized = value.trim().toUpperCase();
+    if (_marketOptions.contains(normalized)) return normalized;
+    return 'GLOBAL';
+  }
+
+  Set<String> _normalizeRetailerCodeSet(List<String> values) {
+    final result = <String>{};
+    for (final raw in values) {
+      final code = raw.trim().toLowerCase();
+      if (code.isEmpty) continue;
+      result.add(code);
+    }
+    return result;
+  }
+
+  List<String> _availableRetailersForMarket(String marketCode) {
+    return List<String>.from(_retailerOptionsByMarket[marketCode] ?? const []);
+  }
+
+  void _trimRetailersForCurrentMarket() {
+    final allowed = _availableRetailersForMarket(_marketCode).toSet();
+    _retailerCodes =
+        _retailerCodes.where((code) => allowed.contains(code)).toSet();
   }
 
   void _toggleMealScenario(String mealType, String scenario, bool selected) {
@@ -195,6 +240,51 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         return _isZh ? '固定自訂' : 'Fixed custom';
       default:
         return scenario;
+    }
+  }
+
+  String _marketLabel(String marketCode) {
+    switch (marketCode) {
+      case 'TW':
+        return _isZh ? '台灣' : 'Taiwan';
+      case 'JP':
+        return _isZh ? '日本' : 'Japan';
+      case 'US':
+        return _isZh ? '美國' : 'United States';
+      case 'GLOBAL':
+      default:
+        return _isZh ? '全球/未指定' : 'Global/Unspecified';
+    }
+  }
+
+  String _retailerLabel(String retailerCode) {
+    switch (retailerCode) {
+      case '7_11':
+        return _isZh ? '7-ELEVEN（台灣）' : '7-ELEVEN (TW)';
+      case 'familymart':
+        return _isZh ? '全家（台灣）' : 'FamilyMart (TW)';
+      case 'hilife':
+        return _isZh ? '萊爾富（台灣）' : 'Hi-Life (TW)';
+      case 'okmart':
+        return _isZh ? 'OKmart（台灣）' : 'OKmart (TW)';
+      case 'seven_eleven_jp':
+        return _isZh ? '7-ELEVEN（日本）' : '7-ELEVEN (JP)';
+      case 'familymart_jp':
+        return _isZh ? 'FamilyMart（日本）' : 'FamilyMart (JP)';
+      case 'lawson':
+        return 'Lawson';
+      case 'ministop':
+        return 'MINISTOP';
+      case 'seven_eleven_us':
+        return _isZh ? '7-ELEVEN（美國）' : '7-ELEVEN (US)';
+      case 'circle_k':
+        return 'Circle K';
+      case 'wawa':
+        return 'Wawa';
+      case 'am_pm':
+        return 'ampm';
+      default:
+        return retailerCode;
     }
   }
 
@@ -807,6 +897,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         'days': 7,
         'lang': localeTag,
         'timezone': DateTime.now().timeZoneName,
+        'market_code': _marketCode,
+        'retailer_codes': _retailerCodes.toList()..sort(),
         'goal_mode': _goalMode,
         'goal_override': _goalMode == 'week_override' ? _goalOverride : null,
         'profile_goal': app.profile.goal,
@@ -827,6 +919,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         _plan = plan;
         _lastReplan = null;
         _fixedMeals = List<WeekPlanFixedMeal>.from(plan.fixedMealsEffective);
+        _marketCode = _normalizeMarketCode(plan.marketCodeEffective);
+        _retailerCodes =
+            _normalizeRetailerCodeSet(plan.retailerCodesEffective);
+        _trimRetailersForCurrentMarket();
         _selectedPlanDate = null;
         _seedExpandedDaysFromPlan(plan);
       });
@@ -1699,6 +1795,78 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                   if (value == null) return;
                                   setState(() => _goalOverride = value);
                                 },
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              initialValue: _marketCode,
+                              decoration: InputDecoration(
+                                labelText: _isZh ? '市場地區' : 'Market',
+                                border: const OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              items: _marketOptions
+                                  .map(
+                                    (market) => DropdownMenuItem<String>(
+                                      value: market,
+                                      child: Text(_marketLabel(market)),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                setState(() {
+                                  _marketCode = _normalizeMarketCode(value);
+                                  _trimRetailersForCurrentMarket();
+                                });
+                              },
+                            ),
+                            if (_availableRetailersForMarket(_marketCode)
+                                .isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              Text(
+                                _isZh ? '便利商品牌（可不選）' : 'Retailers (optional)',
+                                style: AppTextStyles.caption(context).copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF111827),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  FilterChip(
+                                    label:
+                                        Text(_isZh ? '全部品牌' : 'All retailers'),
+                                    selected: _retailerCodes.isEmpty,
+                                    onSelected: (value) {
+                                      if (!value) return;
+                                      setState(() {
+                                        _retailerCodes = <String>{};
+                                      });
+                                    },
+                                  ),
+                                  ..._availableRetailersForMarket(_marketCode)
+                                      .map((code) {
+                                    return FilterChip(
+                                      label: Text(_retailerLabel(code)),
+                                      selected: _retailerCodes.contains(code),
+                                      onSelected: (selected) {
+                                        setState(() {
+                                          final next =
+                                              Set<String>.from(_retailerCodes);
+                                          if (selected) {
+                                            next.add(code);
+                                          } else {
+                                            next.remove(code);
+                                          }
+                                          _retailerCodes = next;
+                                        });
+                                      },
+                                    );
+                                  }),
+                                ],
                               ),
                             ],
                             const SizedBox(height: 12),
