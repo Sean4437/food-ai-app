@@ -1990,8 +1990,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                               ),
                               child: Text(
                                 _isZh
-                                    ? '固定餐會優先於 AI 產生的餐次內容。'
-                                    : 'Fixed meals override generated meals.',
+                                    ? 'AI 內容優先，固定餐僅在 AI 缺漏時補位。'
+                                    : 'AI plan has priority; fixed meals fill only missing slots.',
                                 style: AppTextStyles.caption(context).copyWith(
                                   color: const Color(0xFF166534),
                                   fontWeight: FontWeight.w600,

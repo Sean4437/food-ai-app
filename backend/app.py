@@ -921,7 +921,7 @@ def _build_stub_week_plan(
                         protein_g=float(fixed["protein_g"]),
                         carb_g=float(fixed["carb_g"]),
                         fat_g=float(fixed["fat_g"]),
-                        locked=True,
+                        locked=False,
                         eaten=False,
                     )
                     meals.append(meal)
@@ -1568,7 +1568,8 @@ def _build_week_plan_ai_prompt(
         "- For each meal_type with non-empty meal_scenarios, provide exactly one meal per day.\n"
         "- If a meal_type has empty meal_scenarios, do not generate that meal.\n"
         "- scenario must be one of the allowed scenarios for that meal_type.\n"
-        "- Respect fixed_meals: keep the same dish_name and macros for listed weekdays.\n"
+        "- Treat fixed_meals as preference anchors. AI output can override them when it improves plan quality.\n"
+        "- If AI omits a slot, fallback may use fixed_meals for that meal_type/day.\n"
         "- For scenario=convenience_store, choose realistic items sold in market_code.\n"
         "- If retailer_codes is not empty, prioritize those retailers and avoid other brands.\n"
         "- For scenario=convenience_store, prefer dish names from convenience_store_candidates when possible.\n"
