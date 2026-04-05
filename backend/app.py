@@ -1599,9 +1599,11 @@ def _build_week_plan_ai_prompt(
         "- If AI omits a slot, fallback may use fixed_meals for that meal_type/day.\n"
         "- For scenario=convenience_store, choose realistic items sold in market_code.\n"
         "- If retailer_codes is not empty, prioritize those retailers and avoid other brands.\n"
-        "- For scenario=convenience_store, prefer dish names from convenience_store_candidates when possible.\n"
+        "- For scenario=convenience_store, dish_name must come from convenience_store_candidates.\n"
+        "- If a candidate contains source suffix like '(7-11)', you may output either full label or food name only.\n"
         "- Breakfast/lunch/dinner must be solid meals, not drink-only items.\n"
         "- Never use tea/coffee/milkshake/smoothie/juice/protein shake as the only dish for breakfast/lunch/dinner.\n"
+        "- Lunch and dinner on the same day must not be the same dish, reordered combo, or near-duplicate.\n"
         "- kcal bounds per meal: breakfast 250-700, lunch 350-900, dinner 350-900, snack 80-350.\n"
         "- Keep daily kcal near daily_target.kcal (target zone 90%-110%; warning if outside 85%-115%).\n"
         "- Minimize repeated dish names across the week for the same meal_type.\n"
@@ -1952,6 +1954,7 @@ def _apply_ai_week_plan_on_stub(
     ai_data: Dict[str, Any],
     meal_scenarios: Dict[str, List[str]],
     lang: str,
+    convenience_candidates: Optional[List[str]] = None,
 ) -> WeekPlanGenerateResponse:
     raw_days = ai_data.get("day_plans")
     if not isinstance(raw_days, list):
@@ -1980,9 +1983,107 @@ def _apply_ai_week_plan_on_stub(
     for ai_warning in _to_string_list(ai_data.get("warnings")):
         add_warning(_week_plan_ai_warning(ai_warning))
 
-    used_dishes_by_meal: Dict[str, set[str]] = {
-        meal_type: set() for meal_type in _week_plan_meal_types
+    def _strip_candidate_source_suffix(value: str) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return ""
+        return re.sub(r"\s*\([^()]*\)\s*$", "", text).strip()
+
+    def _dish_key(value: str) -> str:
+        return _normalize_food_query(_strip_candidate_source_suffix(value))
+
+    def _dish_tokens(value: str) -> set[str]:
+        normalized = _dish_key(value)
+        if not normalized:
+            return set()
+        parts = re.split(r"[+＋,，、/｜|&()（）\s]+", normalized)
+        return {part for part in parts if part}
+
+    def _is_same_or_swapped_combo(left: str, right: str) -> bool:
+        left_key = _dish_key(left)
+        right_key = _dish_key(right)
+        if not left_key or not right_key:
+            return False
+        if left_key == right_key:
+            return True
+        left_tokens = _dish_tokens(left)
+        right_tokens = _dish_tokens(right)
+        if len(left_tokens) >= 2 and left_tokens == right_tokens:
+            return True
+        return False
+
+    convenience_name_by_key: Dict[str, str] = {}
+    convenience_pool: List[str] = []
+    for raw_candidate in list(convenience_candidates or []):
+        display_name = _strip_candidate_source_suffix(str(raw_candidate or ""))
+        if not display_name:
+            continue
+        key = _dish_key(display_name)
+        if not key or key in convenience_name_by_key:
+            continue
+        convenience_name_by_key[key] = display_name
+        convenience_pool.append(display_name)
+
+    dish_count_by_meal: Dict[str, Dict[str, int]] = {
+        meal_type: {} for meal_type in _week_plan_meal_types
     }
+    max_repeat_per_meal_type = 2
+
+    def _track_dish(meal_type: str, dish_name: str) -> None:
+        key = _dish_key(dish_name)
+        if not key:
+            return
+        counts = dish_count_by_meal.setdefault(meal_type, {})
+        counts[key] = int(counts.get(key, 0)) + 1
+
+    def _pick_convenience_replacement(
+        *,
+        meal_type: str,
+        avoid_keys: Optional[set[str]] = None,
+    ) -> Optional[str]:
+        if not convenience_pool:
+            return None
+        avoid = {key for key in (avoid_keys or set()) if key}
+        scored: List[tuple[int, int, int, str]] = []
+
+        for index, candidate_name in enumerate(convenience_pool):
+            candidate_key = _dish_key(candidate_name)
+            if not candidate_key or candidate_key in avoid:
+                continue
+            if meal_type in {"breakfast", "lunch", "dinner"} and _week_plan_is_beverage_only_name(
+                candidate_name
+            ):
+                continue
+            meal_count = int(dish_count_by_meal.get(meal_type, {}).get(candidate_key, 0))
+            if meal_count >= max_repeat_per_meal_type:
+                continue
+            global_count = sum(
+                int(dish_count_by_meal.get(kind, {}).get(candidate_key, 0))
+                for kind in _week_plan_meal_types
+            )
+            scored.append((meal_count, global_count, index, candidate_name))
+
+        if not scored:
+            for index, candidate_name in enumerate(convenience_pool):
+                candidate_key = _dish_key(candidate_name)
+                if not candidate_key or candidate_key in avoid:
+                    continue
+                if meal_type in {"breakfast", "lunch", "dinner"} and _week_plan_is_beverage_only_name(
+                    candidate_name
+                ):
+                    continue
+                meal_count = int(dish_count_by_meal.get(meal_type, {}).get(candidate_key, 0))
+                global_count = sum(
+                    int(dish_count_by_meal.get(kind, {}).get(candidate_key, 0))
+                    for kind in _week_plan_meal_types
+                )
+                scored.append((meal_count, global_count, index, candidate_name))
+
+        if not scored:
+            return None
+        scored.sort(key=lambda item: (item[0], item[1], item[2]))
+        return scored[0][3]
+
     beverage_reject_counts: Dict[str, int] = {}
     updated_days: List[WeekPlanDayPlan] = []
     target_kcal = int(base_plan.daily_target.kcal)
@@ -2006,9 +2107,7 @@ def _apply_ai_week_plan_on_stub(
         for meal in day.meals:
             if meal.locked:
                 updated_meals.append(meal)
-                dish = meal.dish_name.strip()
-                if dish:
-                    used_dishes_by_meal.setdefault(meal.meal_type, set()).add(dish)
+                _track_dish(meal.meal_type, meal.dish_name)
                 continue
 
             candidates = by_type.get(meal.meal_type, [])
@@ -2020,9 +2119,7 @@ def _apply_ai_week_plan_on_stub(
                     )
                 )
                 updated_meals.append(meal)
-                dish = meal.dish_name.strip()
-                if dish:
-                    used_dishes_by_meal.setdefault(meal.meal_type, set()).add(dish)
+                _track_dish(meal.meal_type, meal.dish_name)
                 continue
 
             dish_name = str(
@@ -2038,9 +2135,7 @@ def _apply_ai_week_plan_on_stub(
                     )
                 )
                 updated_meals.append(meal)
-                dish = meal.dish_name.strip()
-                if dish:
-                    used_dishes_by_meal.setdefault(meal.meal_type, set()).add(dish)
+                _track_dish(meal.meal_type, meal.dish_name)
                 continue
 
             allowed = list(meal_scenarios.get(meal.meal_type) or list(_week_plan_scenarios))
@@ -2062,9 +2157,7 @@ def _apply_ai_week_plan_on_stub(
                         int(beverage_reject_counts.get(meal.meal_type, 0)) + 1
                     )
                 updated_meals.append(meal)
-                dish = meal.dish_name.strip()
-                if dish:
-                    used_dishes_by_meal.setdefault(meal.meal_type, set()).add(dish)
+                _track_dish(meal.meal_type, meal.dish_name)
                 continue
 
             default_kcal = meal.kcal if meal.kcal > 0 else _week_plan_default_kcal(
@@ -2079,36 +2172,141 @@ def _apply_ai_week_plan_on_stub(
                     )
                 )
                 updated_meals.append(meal)
-                dish = meal.dish_name.strip()
-                if dish:
-                    used_dishes_by_meal.setdefault(meal.meal_type, set()).add(dish)
+                _track_dish(meal.meal_type, meal.dish_name)
                 continue
 
-            seen = used_dishes_by_meal.setdefault(meal.meal_type, set())
-            if dish_name in seen and meal.dish_name.strip() and meal.dish_name.strip() not in seen:
-                add_warning(
-                    _week_plan_ai_warning(
-                        f"{day.date} {meal.meal_type} AI dish repeated; kept template dish for variety"
+            normalized_dish_key = _dish_key(dish_name)
+
+            if scenario == "convenience_store" and convenience_name_by_key:
+                if normalized_dish_key not in convenience_name_by_key:
+                    replacement = _pick_convenience_replacement(
+                        meal_type=meal.meal_type,
+                        avoid_keys={normalized_dish_key},
                     )
-                )
-                chosen = meal
-            else:
-                chosen = WeekPlanMealItem(
-                    meal_type=meal.meal_type,
-                    dish_name=dish_name,
-                    scenario=scenario,
-                    source="ai_plan",
-                    kcal=candidate_kcal,
-                    protein_g=_safe_positive_macro(candidate.get("protein_g"), meal.protein_g),
-                    carb_g=_safe_positive_macro(candidate.get("carb_g"), meal.carb_g),
-                    fat_g=_safe_positive_macro(candidate.get("fat_g"), meal.fat_g),
-                    locked=False,
-                    eaten=False,
-                )
+                    if replacement:
+                        if lang == "zh-TW":
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} {meal.meal_type} 便利店品名不在候選清單，已自動替換"
+                                )
+                            )
+                        else:
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} {meal.meal_type} convenience dish not in candidates; auto-replaced"
+                                )
+                            )
+                        dish_name = replacement
+                        normalized_dish_key = _dish_key(dish_name)
+                    else:
+                        if lang == "zh-TW":
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} {meal.meal_type} 便利店品名不在候選清單，保留模板餐次"
+                                )
+                            )
+                        else:
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} {meal.meal_type} convenience dish not in candidates; kept template meal"
+                                )
+                            )
+                        updated_meals.append(meal)
+                        _track_dish(meal.meal_type, meal.dish_name)
+                        continue
+
+            meal_counts = dish_count_by_meal.setdefault(meal.meal_type, {})
+            current_repeat = int(meal_counts.get(normalized_dish_key, 0))
+            if normalized_dish_key and current_repeat >= max_repeat_per_meal_type:
+                replacement = None
+                if scenario == "convenience_store":
+                    replacement = _pick_convenience_replacement(
+                        meal_type=meal.meal_type,
+                        avoid_keys={normalized_dish_key},
+                    )
+                if replacement:
+                    if lang == "zh-TW":
+                        add_warning(
+                            _week_plan_ai_warning(
+                                f"{day.date} {meal.meal_type} 重複次數過高，已替換為其他候選"
+                            )
+                        )
+                    else:
+                        add_warning(
+                            _week_plan_ai_warning(
+                                f"{day.date} {meal.meal_type} repeated too often; replaced for variety"
+                            )
+                        )
+                    dish_name = replacement
+                    normalized_dish_key = _dish_key(dish_name)
+                elif meal.dish_name.strip() and _dish_key(meal.dish_name) != normalized_dish_key:
+                    add_warning(
+                        _week_plan_ai_warning(
+                            f"{day.date} {meal.meal_type} AI dish repeated; kept template dish for variety"
+                        )
+                    )
+                    updated_meals.append(meal)
+                    _track_dish(meal.meal_type, meal.dish_name)
+                    continue
+
+            if meal.meal_type == "dinner":
+                lunch_meal = next((item for item in updated_meals if item.meal_type == "lunch"), None)
+                lunch_name = lunch_meal.dish_name if lunch_meal else ""
+                if lunch_name and _is_same_or_swapped_combo(lunch_name, dish_name):
+                    replacement = None
+                    if scenario == "convenience_store":
+                        replacement = _pick_convenience_replacement(
+                            meal_type="dinner",
+                            avoid_keys={_dish_key(lunch_name), normalized_dish_key},
+                        )
+                    if replacement:
+                        if lang == "zh-TW":
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} 午晚餐過於相似，晚餐已替換為不同品項"
+                                )
+                            )
+                        else:
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} lunch and dinner were near-duplicate; dinner auto-replaced"
+                                )
+                            )
+                        dish_name = replacement
+                        normalized_dish_key = _dish_key(dish_name)
+                    elif meal.dish_name.strip() and not _is_same_or_swapped_combo(
+                        lunch_name, meal.dish_name
+                    ):
+                        if lang == "zh-TW":
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} 午晚餐過於相似，晚餐改回模板餐次"
+                                )
+                            )
+                        else:
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} lunch and dinner were near-duplicate; dinner fell back to template"
+                                )
+                            )
+                        updated_meals.append(meal)
+                        _track_dish(meal.meal_type, meal.dish_name)
+                        continue
+
+            chosen = WeekPlanMealItem(
+                meal_type=meal.meal_type,
+                dish_name=dish_name,
+                scenario=scenario,
+                source="ai_plan",
+                kcal=candidate_kcal,
+                protein_g=_safe_positive_macro(candidate.get("protein_g"), meal.protein_g),
+                carb_g=_safe_positive_macro(candidate.get("carb_g"), meal.carb_g),
+                fat_g=_safe_positive_macro(candidate.get("fat_g"), meal.fat_g),
+                locked=False,
+                eaten=False,
+            )
             updated_meals.append(chosen)
-            chosen_name = chosen.dish_name.strip()
-            if chosen_name:
-                seen.add(chosen_name)
+            _track_dish(chosen.meal_type, chosen.dish_name)
 
         updated_meals = _rebalance_week_plan_day_kcal(
             day_date=day.date,
@@ -2155,7 +2353,7 @@ def _apply_ai_week_plan_on_stub(
         if lang == "zh-TW":
             add_warning(
                 _week_plan_ai_warning(
-                    f"{_week_plan_meal_type_label(meal_type, lang)}共 {count} 天出現飲品型餐點，已改用備援餐"
+                    f"{_week_plan_meal_type_label(meal_type, lang)} 有 {count} 筆飲品型主餐被排除，已改用替代餐次"
                 )
             )
         else:
@@ -2171,7 +2369,7 @@ def _apply_ai_week_plan_on_stub(
         if weekly_avg_kcal < weekly_low or weekly_avg_kcal > weekly_high:
             if lang == "zh-TW":
                 message = (
-                    f"本週平均熱量 {int(round(weekly_avg_kcal))} kcal 未落在目標區間 {weekly_low}-{weekly_high} kcal"
+                    f"週平均熱量 {int(round(weekly_avg_kcal))} kcal 超出目標區間 {weekly_low}-{weekly_high} kcal"
                 )
             else:
                 message = (
@@ -7242,6 +7440,7 @@ async def generate_week_plan(
             ai_data=ai_data,
             meal_scenarios=meal_scenarios,
             lang=use_lang,
+            convenience_candidates=convenience_candidates,
         )
     except HTTPException:
         logging.warning(
