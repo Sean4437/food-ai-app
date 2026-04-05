@@ -535,7 +535,7 @@ _week_plan_warning_tag_ai = "[AI]"
 _week_plan_warning_tag_fallback = "[FALLBACK]"
 _week_plan_daily_kcal_tolerance = (0.90, 1.10)
 _week_plan_daily_kcal_warning_bounds = (0.85, 1.15)
-_week_plan_weekly_avg_tolerance = (0.95, 1.05)
+_week_plan_weekly_avg_tolerance = (0.90, 1.10)
 _week_plan_default_market_by_lang: Dict[str, str] = {
     "zh-TW": "TW",
     "zh-CN": "CN",
@@ -1092,6 +1092,24 @@ def _normalize_week_plan_meal_type(value: Any) -> Optional[str]:
     return aliases.get(raw)
 
 
+def _week_plan_meal_type_label(meal_type: str, lang: str) -> str:
+    if lang == "zh-TW":
+        labels = {
+            "breakfast": "早餐",
+            "lunch": "午餐",
+            "dinner": "晚餐",
+            "snack": "點心",
+        }
+    else:
+        labels = {
+            "breakfast": "breakfast",
+            "lunch": "lunch",
+            "dinner": "dinner",
+            "snack": "snack",
+        }
+    return labels.get(meal_type, meal_type)
+
+
 def _normalize_week_plan_scenario(value: Any) -> Optional[str]:
     raw = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
     if not raw:
@@ -1278,6 +1296,7 @@ def _rebalance_week_plan_day_kcal(
     day_date: str,
     meals: List[WeekPlanMealItem],
     target_kcal: int,
+    lang: str,
     add_warning: Callable[[str], None],
 ) -> List[WeekPlanMealItem]:
     adjusted = list(meals)
@@ -1297,11 +1316,13 @@ def _rebalance_week_plan_day_kcal(
         type_to_indexes.setdefault(meal.meal_type, []).append(idx)
 
     if not type_to_indexes:
-        add_warning(
-            _week_plan_ai_warning(
+        if lang == "zh-TW":
+            message = f"{day_date} 當日熱量 {current_total} 超出目標區間 {lower}-{upper}，且無可調整餐次"
+        else:
+            message = (
                 f"{day_date} daily kcal {current_total} out of target zone {lower}-{upper}; no adjustable meals"
             )
-        )
+        add_warning(_week_plan_ai_warning(message))
         return adjusted
 
     primary_index_by_type: Dict[str, int] = {}
@@ -1312,11 +1333,13 @@ def _rebalance_week_plan_day_kcal(
         deficit = lower - current_total
         type_weights = _week_plan_deficit_weight_map(set(primary_index_by_type.keys()))
         if not type_weights:
-            add_warning(
-                _week_plan_ai_warning(
+            if lang == "zh-TW":
+                message = f"{day_date} 當日熱量 {current_total} 低於目標區間 {lower}-{upper}，且無補償路徑"
+            else:
+                message = (
                     f"{day_date} daily kcal {current_total} below target zone {lower}-{upper}; no compensation path"
                 )
-            )
+            add_warning(_week_plan_ai_warning(message))
             return adjusted
 
         type_order = [meal_type for meal_type in type_weights if meal_type in primary_index_by_type]
@@ -1364,11 +1387,13 @@ def _rebalance_week_plan_day_kcal(
                         break
 
         if remaining > 0:
-            add_warning(
-                _week_plan_ai_warning(
+            if lang == "zh-TW":
+                message = f"{day_date} 受單餐上限限制，補償後仍低於目標 {remaining} kcal"
+            else:
+                message = (
                     f"{day_date} kcal remained low by {remaining} after compensation due to meal limits"
                 )
-            )
+            add_warning(_week_plan_ai_warning(message))
 
     elif current_total > upper:
         surplus = current_total - upper
@@ -1393,19 +1418,21 @@ def _rebalance_week_plan_day_kcal(
                 break
 
         if remaining > 0:
-            add_warning(
-                _week_plan_ai_warning(
+            if lang == "zh-TW":
+                message = f"{day_date} 受單餐下限限制，調整後仍高於目標 {remaining} kcal"
+            else:
+                message = (
                     f"{day_date} kcal remained high by {remaining} after trim due to meal minimums"
                 )
-            )
+            add_warning(_week_plan_ai_warning(message))
 
     final_total = sum(max(0, int(meal.kcal)) for meal in adjusted)
     if final_total < warn_low or final_total > warn_high:
-        add_warning(
-            _week_plan_ai_warning(
-                f"{day_date} daily kcal {final_total} outside warning range {warn_low}-{warn_high}"
-            )
-        )
+        if lang == "zh-TW":
+            message = f"{day_date} 當日熱量 {final_total} 超出警示區間 {warn_low}-{warn_high}"
+        else:
+            message = f"{day_date} daily kcal {final_total} outside warning range {warn_low}-{warn_high}"
+        add_warning(_week_plan_ai_warning(message))
     return adjusted
 
 
@@ -1956,6 +1983,7 @@ def _apply_ai_week_plan_on_stub(
     used_dishes_by_meal: Dict[str, set[str]] = {
         meal_type: set() for meal_type in _week_plan_meal_types
     }
+    beverage_reject_counts: Dict[str, int] = {}
     updated_days: List[WeekPlanDayPlan] = []
     target_kcal = int(base_plan.daily_target.kcal)
 
@@ -2029,11 +2057,10 @@ def _apply_ai_week_plan_on_stub(
             if meal.meal_type in {"breakfast", "lunch", "dinner"} and _week_plan_is_beverage_only_name(
                 dish_name
             ):
-                add_warning(
-                    _week_plan_ai_warning(
-                        f"{day.date} {meal.meal_type} beverage-like dish rejected; kept template meal"
+                if meal.source != "custom_fixed":
+                    beverage_reject_counts[meal.meal_type] = (
+                        int(beverage_reject_counts.get(meal.meal_type, 0)) + 1
                     )
-                )
                 updated_meals.append(meal)
                 dish = meal.dish_name.strip()
                 if dish:
@@ -2087,6 +2114,7 @@ def _apply_ai_week_plan_on_stub(
             day_date=day.date,
             meals=updated_meals,
             target_kcal=target_kcal,
+            lang=lang,
             add_warning=add_warning,
         )
 
@@ -2120,15 +2148,36 @@ def _apply_ai_week_plan_on_stub(
             _week_plan_ai_warning("AI output date coverage was partial; template structure was preserved")
         )
 
+    for meal_type in _week_plan_meal_types:
+        count = int(beverage_reject_counts.get(meal_type, 0))
+        if count <= 0:
+            continue
+        if lang == "zh-TW":
+            add_warning(
+                _week_plan_ai_warning(
+                    f"{_week_plan_meal_type_label(meal_type, lang)}共 {count} 天出現飲品型餐點，已改用備援餐"
+                )
+            )
+        else:
+            add_warning(
+                _week_plan_ai_warning(
+                    f"{meal_type} beverage-like dish rejected on {count} day(s); fallback meals applied"
+                )
+            )
+
     if updated_days:
         weekly_avg_kcal = sum(int(day.totals.kcal) for day in updated_days) / float(len(updated_days))
         weekly_low, weekly_high = _week_plan_weekly_avg_bounds(target_kcal)
         if weekly_avg_kcal < weekly_low or weekly_avg_kcal > weekly_high:
-            add_warning(
-                _week_plan_ai_warning(
+            if lang == "zh-TW":
+                message = (
+                    f"本週平均熱量 {int(round(weekly_avg_kcal))} kcal 未落在目標區間 {weekly_low}-{weekly_high} kcal"
+                )
+            else:
+                message = (
                     f"weekly average kcal {int(round(weekly_avg_kcal))} outside target range {weekly_low}-{weekly_high}"
                 )
-            )
+            add_warning(_week_plan_ai_warning(message))
 
     return WeekPlanGenerateResponse(
         plan_id=base_plan.plan_id,
