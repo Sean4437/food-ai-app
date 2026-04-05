@@ -1633,6 +1633,101 @@ def _week_plan_fallback_warning_text(reason: str) -> str:
     )
 
 
+def _summarize_week_plan_warnings(warnings: List[str], lang: str) -> List[str]:
+    if not warnings:
+        return []
+
+    replaced_by_meal: Dict[str, int] = {meal_type: 0 for meal_type in _week_plan_meal_types}
+    kept_template_by_meal: Dict[str, int] = {meal_type: 0 for meal_type in _week_plan_meal_types}
+    passthrough: List[str] = []
+
+    zh_replaced = re.compile(
+        r"^\[AI\]\s+\d{4}-\d{2}-\d{2}\s+([a-z_]+)\s+便利店品名不在候選清單，已自動替換$",
+        re.IGNORECASE,
+    )
+    zh_kept = re.compile(
+        r"^\[AI\]\s+\d{4}-\d{2}-\d{2}\s+([a-z_]+)\s+便利店品名不在候選清單，保留模板餐次$",
+        re.IGNORECASE,
+    )
+    en_replaced = re.compile(
+        r"^\[AI\]\s+\d{4}-\d{2}-\d{2}\s+([a-z_]+)\s+convenience dish not in candidates; auto-replaced$",
+        re.IGNORECASE,
+    )
+    en_kept = re.compile(
+        r"^\[AI\]\s+\d{4}-\d{2}-\d{2}\s+([a-z_]+)\s+convenience dish not in candidates; kept template meal$",
+        re.IGNORECASE,
+    )
+
+    for raw_warning in warnings:
+        text = str(raw_warning or "").strip()
+        if not text:
+            continue
+
+        replaced_match = zh_replaced.match(text) or en_replaced.match(text)
+        if replaced_match:
+            meal_type = _normalize_week_plan_meal_type(replaced_match.group(1))
+            if meal_type:
+                replaced_by_meal[meal_type] = int(replaced_by_meal.get(meal_type, 0)) + 1
+                continue
+
+        kept_match = zh_kept.match(text) or en_kept.match(text)
+        if kept_match:
+            meal_type = _normalize_week_plan_meal_type(kept_match.group(1))
+            if meal_type:
+                kept_template_by_meal[meal_type] = int(kept_template_by_meal.get(meal_type, 0)) + 1
+                continue
+
+        passthrough.append(text)
+
+    summarized: List[str] = []
+    total_replaced = sum(int(value) for value in replaced_by_meal.values())
+    if total_replaced > 0:
+        detail = "、".join(
+            [
+                f"{_week_plan_meal_type_label(meal_type, lang)} {count} 筆"
+                for meal_type, count in replaced_by_meal.items()
+                if int(count) > 0
+            ]
+        )
+        if lang == "zh-TW":
+            summarized.append(
+                _week_plan_ai_warning(f"便利店品名自動替換共 {total_replaced} 筆（{detail}）")
+            )
+        else:
+            summarized.append(
+                _week_plan_ai_warning(
+                    f"convenience dish auto-replaced {total_replaced} time(s) ({detail})"
+                )
+            )
+
+    total_kept = sum(int(value) for value in kept_template_by_meal.values())
+    if total_kept > 0:
+        detail = "、".join(
+            [
+                f"{_week_plan_meal_type_label(meal_type, lang)} {count} 筆"
+                for meal_type, count in kept_template_by_meal.items()
+                if int(count) > 0
+            ]
+        )
+        if lang == "zh-TW":
+            summarized.append(
+                _week_plan_ai_warning(f"便利店品名無法匹配候選共 {total_kept} 筆，已保留模板（{detail}）")
+            )
+        else:
+            summarized.append(
+                _week_plan_ai_warning(
+                    f"convenience dish kept template {total_kept} time(s) ({detail})"
+                )
+            )
+
+    merged: List[str] = []
+    for item in summarized + passthrough:
+        text = str(item or "").strip()
+        if text and text not in merged:
+            merged.append(text)
+    return merged
+
+
 def _week_plan_catalog_convenience_candidates_legacy(
     *,
     lang: str,
@@ -2024,6 +2119,61 @@ def _apply_ai_week_plan_on_stub(
         convenience_name_by_key[key] = display_name
         convenience_pool.append(display_name)
 
+    def _compact_dish_key(value: str) -> str:
+        return re.sub(r"[^0-9a-z\u4e00-\u9fff]+", "", _dish_key(value))
+
+    def _resolve_convenience_candidate_name(value: str) -> Optional[str]:
+        key = _dish_key(value)
+        if not key:
+            return None
+
+        exact = convenience_name_by_key.get(key)
+        if exact:
+            return exact
+
+        query_compact = _compact_dish_key(value)
+        query_tokens = _dish_tokens(value)
+        best_name: Optional[str] = None
+        best_score = 0.0
+
+        for candidate_name in convenience_pool:
+            candidate_key = _dish_key(candidate_name)
+            if not candidate_key:
+                continue
+            score = 0.0
+
+            if key in candidate_key or candidate_key in key:
+                score = max(
+                    score,
+                    min(len(key), len(candidate_key)) / float(max(1, len(key), len(candidate_key))),
+                )
+
+            candidate_compact = _compact_dish_key(candidate_name)
+            if query_compact and candidate_compact and (
+                query_compact in candidate_compact or candidate_compact in query_compact
+            ):
+                score = max(
+                    score,
+                    min(len(query_compact), len(candidate_compact))
+                    / float(max(1, len(query_compact), len(candidate_compact))),
+                )
+
+            candidate_tokens = _dish_tokens(candidate_name)
+            if query_tokens and candidate_tokens:
+                overlap = len(query_tokens & candidate_tokens) / float(
+                    max(1, min(len(query_tokens), len(candidate_tokens)))
+                )
+                if overlap >= 0.67:
+                    score = max(score, 0.70 + 0.25 * overlap)
+
+            if score > best_score:
+                best_score = score
+                best_name = candidate_name
+
+        if best_score >= 0.82:
+            return best_name
+        return None
+
     dish_count_by_meal: Dict[str, Dict[str, int]] = {
         meal_type: {} for meal_type in _week_plan_meal_types
     }
@@ -2166,10 +2316,18 @@ def _apply_ai_week_plan_on_stub(
             candidate_kcal = _safe_positive_int(candidate.get("kcal"), default_kcal)
             min_kcal, max_kcal = _week_plan_meal_kcal_bounds(meal.meal_type, target_kcal)
             if candidate_kcal < min_kcal or candidate_kcal > max_kcal:
-                add_warning(
-                    _week_plan_ai_warning(
-                        f"{day.date} {meal.meal_type} kcal {candidate_kcal} out of range {min_kcal}-{max_kcal}; kept template meal"
+                if lang == "zh-TW":
+                    message = (
+                        f"{day.date} {meal.meal_type} 熱量 {candidate_kcal} 超出範圍 "
+                        f"{min_kcal}-{max_kcal}，保留模板餐次"
                     )
+                else:
+                    message = (
+                        f"{day.date} {meal.meal_type} kcal {candidate_kcal} "
+                        f"out of range {min_kcal}-{max_kcal}; kept template meal"
+                    )
+                add_warning(
+                    _week_plan_ai_warning(message)
                 )
                 updated_meals.append(meal)
                 _track_dish(meal.meal_type, meal.dish_name)
@@ -2178,7 +2336,11 @@ def _apply_ai_week_plan_on_stub(
             normalized_dish_key = _dish_key(dish_name)
 
             if scenario == "convenience_store" and convenience_name_by_key:
-                if normalized_dish_key not in convenience_name_by_key:
+                resolved_convenience_name = _resolve_convenience_candidate_name(dish_name)
+                if resolved_convenience_name:
+                    dish_name = resolved_convenience_name
+                    normalized_dish_key = _dish_key(dish_name)
+                else:
                     replacement = _pick_convenience_replacement(
                         meal_type=meal.meal_type,
                         avoid_keys={normalized_dish_key},
@@ -2376,6 +2538,8 @@ def _apply_ai_week_plan_on_stub(
                     f"weekly average kcal {int(round(weekly_avg_kcal))} outside target range {weekly_low}-{weekly_high}"
                 )
             add_warning(_week_plan_ai_warning(message))
+
+    warnings = _summarize_week_plan_warnings(warnings, lang)
 
     return WeekPlanGenerateResponse(
         plan_id=base_plan.plan_id,
