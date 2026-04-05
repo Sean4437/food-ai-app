@@ -9,6 +9,7 @@ import logging
 import asyncio
 import base64
 import json
+import html
 import os
 import re
 import uuid
@@ -554,6 +555,104 @@ _week_plan_retailer_source_aliases: Dict[str, List[str]] = {
     "wawa": ["wawa"],
 }
 _week_plan_store: Dict[str, Dict[str, Any]] = {}
+WEEK_PLAN_WEB_LOOKUP_ENABLED = os.getenv(
+    "WEEK_PLAN_WEB_LOOKUP_ENABLED", "true"
+).lower() == "true"
+WEEK_PLAN_WEB_LOOKUP_TIMEOUT_SEC = max(
+    3,
+    min(20, int(os.getenv("WEEK_PLAN_WEB_LOOKUP_TIMEOUT_SEC", "8"))),
+)
+WEEK_PLAN_WEB_LOOKUP_MAX_ITEMS = max(
+    6,
+    min(60, int(os.getenv("WEEK_PLAN_WEB_LOOKUP_MAX_ITEMS", "20"))),
+)
+WEEK_PLAN_WEB_LOOKUP_MAX_QUERIES = max(
+    1,
+    min(10, int(os.getenv("WEEK_PLAN_WEB_LOOKUP_MAX_QUERIES", "4"))),
+)
+WEEK_PLAN_WEB_LOOKUP_CACHE_SEC = max(
+    60,
+    int(os.getenv("WEEK_PLAN_WEB_LOOKUP_CACHE_SEC", "21600")),
+)
+_week_plan_web_lookup_cache: Dict[str, Dict[str, Any]] = {}
+_week_plan_market_default_retailers: Dict[str, List[str]] = {
+    "TW": ["7_11", "familymart", "hilife", "okmart"],
+    "JP": ["lawson", "ministop"],
+    "US": ["circle_k", "wawa"],
+}
+_week_plan_retailer_domains: Dict[str, List[str]] = {
+    "7_11": ["www.7-11.com.tw"],
+    "familymart": ["www.family.com.tw"],
+    "hilife": ["www.hilife.com.tw"],
+    "okmart": ["www.okmart.com.tw"],
+    "lawson": ["www.lawson.co.jp"],
+    "ministop": ["www.ministop.co.jp"],
+    "circle_k": ["www.circlek.com"],
+    "wawa": ["www.wawa.com"],
+}
+_week_plan_market_search_phrases: Dict[str, List[str]] = {
+    "TW": ["新品 便當", "御飯糰 三明治 沙拉"],
+    "JP": ["新商品 弁当", "おにぎり サンドイッチ サラダ"],
+    "US": ["new ready meal", "sandwich salad wrap"],
+}
+_week_plan_duckduckgo_region: Dict[str, str] = {
+    "TW": "tw-tzh",
+    "JP": "jp-jp",
+    "US": "us-en",
+}
+_week_plan_web_title_pattern = re.compile(
+    r'<a[^>]+class="[^"]*result__a[^"]*"[^>]*>(.*?)</a>',
+    re.IGNORECASE | re.DOTALL,
+)
+_week_plan_web_tag_pattern = re.compile(r"<[^>]+>")
+_week_plan_web_noise_tokens = (
+    "優惠",
+    "活動",
+    "門市",
+    "會員",
+    "集點",
+    "點數",
+    "折扣",
+    "coupon",
+    "promo",
+    "promotion",
+    "campaign",
+    "store locator",
+    "privacy",
+    "terms",
+)
+_week_plan_web_food_tokens = (
+    "飯",
+    "麵",
+    "堡",
+    "吐司",
+    "三明治",
+    "沙拉",
+    "便當",
+    "雞",
+    "牛",
+    "豬",
+    "魚",
+    "蛋",
+    "豆腐",
+    "鍋",
+    "湯",
+    "粥",
+    "飯糰",
+    "bento",
+    "rice",
+    "noodle",
+    "sandwich",
+    "salad",
+    "wrap",
+    "chicken",
+    "beef",
+    "pork",
+    "fish",
+    "egg",
+    "tofu",
+    "soup",
+)
 _week_plan_goal_targets: Dict[str, Dict[str, float]] = {
     "lose_fat": {"kcal": 1650, "protein_g": 120.0, "carb_g": 150.0, "fat_g": 55.0},
     "maintain": {"kcal": 1900, "protein_g": 120.0, "carb_g": 200.0, "fat_g": 65.0},
@@ -1728,6 +1827,253 @@ def _summarize_week_plan_warnings(warnings: List[str], lang: str) -> List[str]:
     return merged
 
 
+def _week_plan_strip_candidate_source_suffix(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    return re.sub(r"\s*\([^()]*\)\s*$", "", text).strip()
+
+
+def _week_plan_retailer_display_label(code: str) -> str:
+    normalized = _normalize_week_plan_retailer_code(code)
+    if not normalized:
+        return "web"
+    if normalized == "7_11":
+        return "7-11"
+    aliases = _week_plan_retailer_source_aliases.get(normalized) or []
+    for alias in aliases:
+        text = str(alias or "").strip()
+        if not text:
+            continue
+        if re.search(r"[A-Za-z0-9]", text):
+            return text
+    return normalized.replace("_", " ")
+
+
+def _week_plan_web_retailer_codes(
+    *,
+    market_code: str,
+    retailer_codes: List[str],
+) -> List[str]:
+    normalized = _normalize_week_plan_retailer_codes(retailer_codes)
+    if normalized:
+        return normalized
+    defaults = _week_plan_market_default_retailers.get(
+        str(market_code or "").strip().upper(),
+        [],
+    )
+    return _normalize_week_plan_retailer_codes(defaults)
+
+
+def _week_plan_build_web_queries(
+    *,
+    lang: str,
+    market_code: str,
+    retailer_codes: List[str],
+) -> List[tuple[str, str]]:
+    market = str(market_code or "").strip().upper()
+    phrases = _week_plan_market_search_phrases.get(market, [])
+    if not phrases:
+        phrases = (
+            ["新品 便當", "御飯糰 三明治 沙拉"]
+            if lang == "zh-TW"
+            else ["new ready meal", "sandwich salad wrap"]
+        )
+
+    queries: List[tuple[str, str]] = []
+    seen: set[str] = set()
+    for retailer_code in retailer_codes:
+        domains = _week_plan_retailer_domains.get(retailer_code, [])
+        label = _week_plan_retailer_display_label(retailer_code)
+        base_terms = [label, retailer_code.replace("_", " ")]
+        for phrase in phrases:
+            for domain in domains:
+                query = f"site:{domain} {phrase}".strip()
+                key = _normalize_food_query(query)
+                if key and key not in seen:
+                    seen.add(key)
+                    queries.append((query, retailer_code))
+            for term in base_terms:
+                query = f"{term} {phrase}".strip()
+                key = _normalize_food_query(query)
+                if key and key not in seen:
+                    seen.add(key)
+                    queries.append((query, retailer_code))
+
+    if not queries:
+        fallback_query = (
+            "台灣 便利商店 新品 便當 飯糰 三明治"
+            if market == "TW" or lang == "zh-TW"
+            else "convenience store new ready meal sandwich salad"
+        )
+        queries.append((fallback_query, ""))
+
+    return queries[:WEEK_PLAN_WEB_LOOKUP_MAX_QUERIES]
+
+
+def _week_plan_pick_food_name_from_web_title(raw_title: str) -> str:
+    cleaned = html.unescape(_week_plan_web_tag_pattern.sub(" ", str(raw_title or "")))
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" \t\r\n-|｜–—")
+    if not cleaned:
+        return ""
+
+    candidates = re.split(r"\s*[|｜]\s*|\s+[-–—]\s+", cleaned)
+    if cleaned not in candidates:
+        candidates.append(cleaned)
+
+    for candidate in candidates:
+        text = str(candidate or "").strip(" \t\r\n-")
+        if not text:
+            continue
+        text = re.sub(r"^\d{4}[./-]\d{1,2}[./-]\d{1,2}\s*", "", text).strip()
+        text = re.sub(r"^(新品|新商品|NEW|New)\s*[:：-]?\s*", "", text)
+        if len(text) < 2 or len(text) > 42:
+            continue
+        lower = text.lower()
+        if any(token in lower for token in _week_plan_web_noise_tokens):
+            continue
+        if not re.search(r"[A-Za-z\u4e00-\u9fff\u3040-\u30ff]", text):
+            continue
+        if any(token in lower for token in _week_plan_web_food_tokens) or re.search(
+            r"[\u4e00-\u9fff]",
+            text,
+        ):
+            return text
+    return ""
+
+
+def _week_plan_fetch_web_titles(
+    *,
+    query: str,
+    market_code: str,
+    limit: int,
+) -> List[str]:
+    params: Dict[str, str] = {"q": query}
+    region = _week_plan_duckduckgo_region.get(str(market_code or "").strip().upper())
+    if region:
+        params["kl"] = region
+
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (compatible; FoodAIWeekPlan/1.0; +https://github.com/Sean4437/food-ai-app)"
+        )
+    }
+    try:
+        with httpx.Client(
+            timeout=WEEK_PLAN_WEB_LOOKUP_TIMEOUT_SEC,
+            follow_redirects=True,
+        ) as client:
+            resp = client.get("https://duckduckgo.com/html/", params=params, headers=headers)
+    except Exception as exc:
+        logging.info("Week plan web lookup failed for query `%s`: %s", query, exc)
+        return []
+    if resp.status_code >= 400:
+        logging.info(
+            "Week plan web lookup HTTP %s for query `%s`",
+            resp.status_code,
+            query,
+        )
+        return []
+
+    titles: List[str] = []
+    seen: set[str] = set()
+    html_body = resp.text or ""
+    for match in _week_plan_web_title_pattern.finditer(html_body):
+        item_name = _week_plan_pick_food_name_from_web_title(match.group(1))
+        if not item_name:
+            continue
+        key = _normalize_food_query(item_name)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        titles.append(item_name)
+        if len(titles) >= limit:
+            break
+    return titles
+
+
+def _week_plan_fetch_online_convenience_candidates(
+    *,
+    lang: str,
+    market_code: str,
+    retailer_codes: List[str],
+    limit: int,
+) -> List[str]:
+    if not WEEK_PLAN_WEB_LOOKUP_ENABLED:
+        return []
+
+    max_items = max(4, min(WEEK_PLAN_WEB_LOOKUP_MAX_ITEMS, int(limit)))
+    normalized_market = str(market_code or "").strip().upper() or "GLOBAL"
+    normalized_retailers = _week_plan_web_retailer_codes(
+        market_code=normalized_market,
+        retailer_codes=retailer_codes,
+    )
+    cache_key = json.dumps(
+        {
+            "lang": str(lang or "").strip(),
+            "market_code": normalized_market,
+            "retailers": normalized_retailers,
+            "limit": max_items,
+        },
+        ensure_ascii=True,
+        sort_keys=True,
+    )
+    now_ts = time.time()
+    cached = _week_plan_web_lookup_cache.get(cache_key)
+    if isinstance(cached, dict):
+        expires_at = float(cached.get("expires_at") or 0)
+        if expires_at > now_ts:
+            cached_items = cached.get("items")
+            if isinstance(cached_items, list):
+                return [str(item or "").strip() for item in cached_items if str(item or "").strip()]
+
+    query_pairs = _week_plan_build_web_queries(
+        lang=lang,
+        market_code=normalized_market,
+        retailer_codes=normalized_retailers,
+    )
+    candidates: List[str] = []
+    seen: set[str] = set()
+    for query, retailer_code in query_pairs:
+        query_limit = max(6, min(16, max_items))
+        titles = _week_plan_fetch_web_titles(
+            query=query,
+            market_code=normalized_market,
+            limit=query_limit,
+        )
+        source_label = _week_plan_retailer_display_label(retailer_code)
+        for title in titles:
+            item_name = _week_plan_strip_candidate_source_suffix(title)
+            if not item_name:
+                continue
+            if _week_plan_is_beverage_only_name(item_name):
+                continue
+            key = _normalize_food_query(item_name)
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            candidates.append(f"{item_name} ({source_label})")
+            if len(candidates) >= max_items:
+                break
+        if len(candidates) >= max_items:
+            break
+
+    _week_plan_web_lookup_cache[cache_key] = {
+        "expires_at": now_ts + WEEK_PLAN_WEB_LOOKUP_CACHE_SEC,
+        "items": list(candidates),
+    }
+    if len(_week_plan_web_lookup_cache) > 120:
+        for key in list(_week_plan_web_lookup_cache.keys()):
+            entry = _week_plan_web_lookup_cache.get(key)
+            expires_at = float(entry.get("expires_at") or 0) if isinstance(entry, dict) else 0
+            if expires_at <= now_ts:
+                _week_plan_web_lookup_cache.pop(key, None)
+        while len(_week_plan_web_lookup_cache) > 120:
+            stale_key = next(iter(_week_plan_web_lookup_cache))
+            _week_plan_web_lookup_cache.pop(stale_key, None)
+    return candidates
+
+
 def _week_plan_catalog_convenience_candidates_legacy(
     *,
     lang: str,
@@ -1998,6 +2344,50 @@ def _week_plan_catalog_convenience_candidates(
             candidates.append(food_name)
         if len(candidates) >= max_items:
             break
+
+    catalog_candidates = list(candidates)
+    web_candidates = _week_plan_fetch_online_convenience_candidates(
+        lang=lang,
+        market_code=market_code,
+        retailer_codes=normalized_retailers,
+        limit=max_items,
+    )
+    if web_candidates:
+        reserve_slots = min(len(web_candidates), max(3, max_items // 3))
+        keep_catalog_count = max(0, max_items - reserve_slots)
+        blended: List[str] = catalog_candidates[:keep_catalog_count]
+        blended_seen: set[str] = set()
+        for item in blended:
+            key = _normalize_food_query(_week_plan_strip_candidate_source_suffix(item))
+            if key:
+                blended_seen.add(key)
+
+        for item in web_candidates:
+            item_name = _week_plan_strip_candidate_source_suffix(item)
+            if not item_name:
+                continue
+            if _week_plan_is_beverage_only_name(item_name):
+                continue
+            key = _normalize_food_query(item_name)
+            if not key or key in blended_seen:
+                continue
+            blended_seen.add(key)
+            blended.append(item)
+            if len(blended) >= max_items:
+                break
+
+        if len(blended) < max_items:
+            for item in catalog_candidates[keep_catalog_count:]:
+                key = _normalize_food_query(_week_plan_strip_candidate_source_suffix(item))
+                if not key or key in blended_seen:
+                    continue
+                blended_seen.add(key)
+                blended.append(item)
+                if len(blended) >= max_items:
+                    break
+
+        candidates = blended
+        seen_names = blended_seen
 
     if not candidates:
         for meal_type in _week_plan_meal_types:
