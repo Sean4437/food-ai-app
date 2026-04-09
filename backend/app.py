@@ -2254,7 +2254,7 @@ def _week_plan_normalize_web_candidate_name(raw_title: str) -> str:
         cleaned = str(candidate or "").strip()
         if not cleaned:
             continue
-        cleaned = _week_plan_retailer_prefix_pattern.sub("", cleaned).strip()
+        cleaned = _week_plan_web_retailer_prefix_pattern.sub("", cleaned).strip()
         cleaned = re.sub(r"^\d{4}[./-]\d{1,2}[./-]\d{1,2}\s*", "", cleaned).strip()
         cleaned = re.sub(r"^(?:new|NEW|\u65b0\u54c1|\u65b0\u5546\u54c1)\s*[:：-]?\s*", "", cleaned).strip()
         cleaned = re.sub(r"\s{2,}", " ", cleaned)
