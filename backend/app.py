@@ -653,6 +653,45 @@ _week_plan_web_food_tokens = (
     "tofu",
     "soup",
 )
+_week_plan_web_title_forbidden_tokens = (
+    "\u958b\u8ce3",
+    "\u56de\u6b78",
+    "\u63a8\u85a6",
+    "\u958b\u5e55",
+    "\u512a\u60e0",
+    "\u6d3b\u52d5",
+    "\u9650\u6642",
+    "\u6298\u6263",
+    "\u4e0a\u5e02",
+    "\u8cb7\u4e00\u9001\u4e00",
+    "\u8cb71\u90011",
+    "\u7db2\u55e8",
+    "\u91cd\u78c5",
+    "\u71b1\u9580",
+    "\u4eba\u6c23",
+    "\u4e0d\u80fd\u932f\u904e",
+    "\u5916\u9001",
+    "\u9580\u5e02",
+    "news",
+    "coupon",
+    "promo",
+    "promotion",
+    "campaign",
+)
+_week_plan_web_retailer_prefix_pattern = re.compile(
+    r"^(?:"
+    r"7[\s\-]*11|7[\s\-]*eleven|seven[\s\-]*eleven|familymart|okmart|hilife|lawson|ministop|circle\s*k|wawa|"
+    r"\u5168\u5bb6|\u840a\u723e\u5bcc|ok\u4fbf\u5229\u5546\u5e97|\u7d71\u4e00\u8d85\u5546"
+    r")\s*[:\-\u2013\u2014]?\s*",
+    re.IGNORECASE,
+)
+_week_plan_web_quoted_pattern = re.compile(
+    r"[\"\u300c\u300e\u201c\u2018]([^\"\u300d\u300f\u201d\u2019]{2,24})[\"\u300d\u300f\u201d\u2019]"
+)
+_week_plan_web_price_or_year_pattern = re.compile(
+    r"(?:20\d{2}|\d{2,4}\s*(?:ntd|twd|kcal|\u5143|\u584a))",
+    re.IGNORECASE,
+)
 _week_plan_goal_targets: Dict[str, Dict[str, float]] = {
     "lose_fat": {"kcal": 1650, "protein_g": 120.0, "carb_g": 150.0, "fat_g": 55.0},
     "maintain": {"kcal": 1900, "protein_g": 120.0, "carb_g": 200.0, "fat_g": 65.0},
@@ -1700,6 +1739,8 @@ def _build_week_plan_ai_prompt(
         "- If retailer_codes is not empty, prioritize those retailers and avoid other brands.\n"
         "- For scenario=convenience_store, dish_name must come from convenience_store_candidates.\n"
         "- If a candidate contains source suffix like '(7-11)', you may output either full label or food name only.\n"
+        "- dish_name must be a concise food item name only (no ad/news headline text).\n"
+        "- Never include promotional wording, dates, prices, or punctuation-heavy marketing copy in dish_name.\n"
         "- Breakfast/lunch/dinner must be solid meals, not drink-only items.\n"
         "- Never use tea/coffee/milkshake/smoothie/juice/protein shake as the only dish for breakfast/lunch/dinner.\n"
         "- Lunch and dinner on the same day must not be the same dish, reordered combo, or near-duplicate.\n"
@@ -1942,6 +1983,47 @@ def _week_plan_pick_food_name_from_web_title(raw_title: str) -> str:
     return ""
 
 
+def _week_plan_is_plausible_web_food_name(name: str) -> bool:
+    text = str(name or "").strip()
+    if len(text) < 2 or len(text) > 24:
+        return False
+    if any(ch in text for ch in ("!", "！", "?", "？", "。", "，", ",", "；", ";")):
+        return False
+    lower = text.lower()
+    if any(token in lower for token in _week_plan_web_title_forbidden_tokens):
+        return False
+    if _week_plan_web_price_or_year_pattern.search(lower):
+        return False
+    if not any(token in lower for token in _week_plan_web_food_tokens):
+        return False
+    return True
+
+
+def _week_plan_normalize_web_candidate_name(raw_title: str) -> str:
+    text = html.unescape(str(raw_title or ""))
+    text = _week_plan_web_tag_pattern.sub(" ", text)
+    text = re.sub(r"\s+", " ", text).strip(" \t\r\n-|｜–—")
+    if not text:
+        return ""
+
+    quoted_names = [m.group(1).strip() for m in _week_plan_web_quoted_pattern.finditer(text)]
+    candidates = quoted_names + re.split(r"\s*[|｜]\s*|\s+[-–—]\s+", text)
+
+    for candidate in candidates:
+        cleaned = str(candidate or "").strip()
+        if not cleaned:
+            continue
+        cleaned = _week_plan_retailer_prefix_pattern.sub("", cleaned).strip()
+        cleaned = re.sub(r"^\d{4}[./-]\d{1,2}[./-]\d{1,2}\s*", "", cleaned).strip()
+        cleaned = re.sub(r"^(?:new|NEW|\u65b0\u54c1|\u65b0\u5546\u54c1)\s*[:：-]?\s*", "", cleaned).strip()
+        cleaned = re.sub(r"\s{2,}", " ", cleaned)
+        cleaned = re.sub(r"\s*[\(\[\u3010].*$", "", cleaned).strip()
+        if _week_plan_is_plausible_web_food_name(cleaned):
+            return cleaned
+
+    return ""
+
+
 def _week_plan_fetch_web_titles(
     *,
     query: str,
@@ -1979,7 +2061,7 @@ def _week_plan_fetch_web_titles(
     seen: set[str] = set()
     html_body = resp.text or ""
     for match in _week_plan_web_title_pattern.finditer(html_body):
-        item_name = _week_plan_pick_food_name_from_web_title(match.group(1))
+        item_name = _week_plan_normalize_web_candidate_name(match.group(1))
         if not item_name:
             continue
         key = _normalize_food_query(item_name)
