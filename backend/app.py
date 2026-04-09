@@ -568,7 +568,7 @@ WEEK_PLAN_WEB_LOOKUP_MAX_ITEMS = max(
 )
 WEEK_PLAN_WEB_LOOKUP_MAX_QUERIES = max(
     1,
-    min(10, int(os.getenv("WEEK_PLAN_WEB_LOOKUP_MAX_QUERIES", "4"))),
+    min(10, int(os.getenv("WEEK_PLAN_WEB_LOOKUP_MAX_QUERIES", "6"))),
 )
 WEEK_PLAN_WEB_LOOKUP_CACHE_SEC = max(
     60,
@@ -1744,6 +1744,8 @@ def _build_week_plan_ai_prompt(
         "- Breakfast/lunch/dinner must be solid meals, not drink-only items.\n"
         "- Never use tea/coffee/milkshake/smoothie/juice/protein shake as the only dish for breakfast/lunch/dinner.\n"
         "- Lunch and dinner on the same day must not be the same dish, reordered combo, or near-duplicate.\n"
+        "- For breakfast/lunch/dinner, avoid using the same dish on adjacent days.\n"
+        "- For each of breakfast/lunch/dinner, target at least 5 distinct dish names across 7 days when possible.\n"
         "- kcal bounds per meal: breakfast 250-700, lunch 350-900, dinner 350-900, snack 80-350.\n"
         "- Keep daily kcal near daily_target.kcal (target zone 90%-110%; warning if outside 85%-115%).\n"
         "- Minimize repeated dish names across the week for the same meal_type.\n"
@@ -2435,7 +2437,7 @@ def _week_plan_catalog_convenience_candidates(
         limit=max_items,
     )
     if web_candidates:
-        reserve_slots = min(len(web_candidates), max(3, max_items // 3))
+        reserve_slots = min(len(web_candidates), max(6, max_items // 2))
         keep_catalog_count = max(0, max_items - reserve_slots)
         blended: List[str] = catalog_candidates[:keep_catalog_count]
         blended_seen: set[str] = set()
@@ -2649,7 +2651,18 @@ def _apply_ai_week_plan_on_stub(
     dish_count_by_meal: Dict[str, Dict[str, int]] = {
         meal_type: {} for meal_type in _week_plan_meal_types
     }
-    max_repeat_per_meal_type = 2
+    max_repeat_per_meal_type: Dict[str, int] = {
+        "breakfast": 1,
+        "lunch": 1,
+        "dinner": 1,
+        "snack": 2,
+    }
+    prev_day_dish_key_by_meal: Dict[str, str] = {
+        meal_type: "" for meal_type in _week_plan_meal_types
+    }
+
+    def _repeat_limit_for(meal_type: str) -> int:
+        return int(max_repeat_per_meal_type.get(meal_type, 2))
 
     def _track_dish(meal_type: str, dish_name: str) -> None:
         key = _dish_key(dish_name)
@@ -2677,7 +2690,7 @@ def _apply_ai_week_plan_on_stub(
             ):
                 continue
             meal_count = int(dish_count_by_meal.get(meal_type, {}).get(candidate_key, 0))
-            if meal_count >= max_repeat_per_meal_type:
+            if meal_count >= _repeat_limit_for(meal_type):
                 continue
             global_count = sum(
                 int(dish_count_by_meal.get(kind, {}).get(candidate_key, 0))
@@ -2851,7 +2864,7 @@ def _apply_ai_week_plan_on_stub(
 
             meal_counts = dish_count_by_meal.setdefault(meal.meal_type, {})
             current_repeat = int(meal_counts.get(normalized_dish_key, 0))
-            if normalized_dish_key and current_repeat >= max_repeat_per_meal_type:
+            if normalized_dish_key and current_repeat >= _repeat_limit_for(meal.meal_type):
                 replacement = None
                 if scenario == "convenience_store":
                     replacement = _pick_convenience_replacement(
@@ -2879,6 +2892,54 @@ def _apply_ai_week_plan_on_stub(
                             f"{day.date} {meal.meal_type} AI dish repeated; kept template dish for variety"
                         )
                     )
+                    updated_meals.append(meal)
+                    _track_dish(meal.meal_type, meal.dish_name)
+                    continue
+
+            previous_day_key = prev_day_dish_key_by_meal.get(meal.meal_type, "")
+            if (
+                normalized_dish_key
+                and previous_day_key
+                and normalized_dish_key == previous_day_key
+            ):
+                replacement = None
+                if scenario == "convenience_store":
+                    replacement = _pick_convenience_replacement(
+                        meal_type=meal.meal_type,
+                        avoid_keys={normalized_dish_key, previous_day_key},
+                    )
+                if replacement:
+                    if lang == "zh-TW":
+                        add_warning(
+                            _week_plan_ai_warning(
+                                f"{day.date} {meal.meal_type} 與前一天重複，已替換為不同品項"
+                            )
+                        )
+                    else:
+                        add_warning(
+                            _week_plan_ai_warning(
+                                f"{day.date} {meal.meal_type} repeated from previous day; replaced"
+                            )
+                        )
+                    dish_name = replacement
+                    normalized_dish_key = _dish_key(dish_name)
+                elif (
+                    meal.dish_name.strip()
+                    and _dish_key(meal.dish_name) != normalized_dish_key
+                    and _dish_key(meal.dish_name) != previous_day_key
+                ):
+                    if lang == "zh-TW":
+                        add_warning(
+                            _week_plan_ai_warning(
+                                f"{day.date} {meal.meal_type} 與前一天重複，已保留模板避免連續重複"
+                            )
+                        )
+                    else:
+                        add_warning(
+                            _week_plan_ai_warning(
+                                f"{day.date} {meal.meal_type} repeated from previous day; kept template"
+                            )
+                        )
                     updated_meals.append(meal)
                     _track_dish(meal.meal_type, meal.dish_name)
                     continue
@@ -2961,6 +3022,9 @@ def _apply_ai_week_plan_on_stub(
             totals["protein_g"] += float(meal.protein_g)
             totals["carb_g"] += float(meal.carb_g)
             totals["fat_g"] += float(meal.fat_g)
+            key = _dish_key(meal.dish_name)
+            if key:
+                prev_day_dish_key_by_meal[meal.meal_type] = key
 
         updated_days.append(
             WeekPlanDayPlan(

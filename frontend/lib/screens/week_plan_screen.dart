@@ -85,6 +85,15 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       .toLowerCase()
       .startsWith('zh');
 
+  DateTime _dateOnly(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
+
+  bool _isPlanExpired(WeekPlanData plan) {
+    final parsedEnd = DateTime.tryParse(plan.endDate);
+    if (parsedEnd == null) return false;
+    return _dateOnly(parsedEnd).isBefore(_dateOnly(DateTime.now()));
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -93,8 +102,6 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     final cachedPlan = app.cachedWeekPlan;
     final cachedReplan = app.cachedWeekPlanReplan;
     if (cachedPlan != null) {
-      _plan = cachedPlan;
-      _lastReplan = cachedReplan;
       final parsedStart = DateTime.tryParse(cachedPlan.startDate);
       if (parsedStart != null) {
         _startDate =
@@ -110,7 +117,16 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       _fixedMeals =
           List<WeekPlanFixedMeal>.from(cachedPlan.fixedMealsEffective);
       _selectedPlanDate = null;
-      _seedExpandedDaysFromPlan(cachedPlan);
+      if (_isPlanExpired(cachedPlan)) {
+        _plan = null;
+        _lastReplan = null;
+        _expandedPlanDays.clear();
+        _startDate = _dateOnly(DateTime.now());
+      } else {
+        _plan = cachedPlan;
+        _lastReplan = cachedReplan;
+        _seedExpandedDaysFromPlan(cachedPlan);
+      }
     }
     _hydratedFromCache = true;
   }
@@ -857,6 +873,15 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       return;
     }
 
+    final currentPlan = _plan;
+    if (currentPlan != null && _isPlanExpired(currentPlan)) {
+      _plan = null;
+      _lastReplan = null;
+      _expandedPlanDays.clear();
+      _selectedPlanDate = null;
+      _startDate = _dateOnly(DateTime.now());
+    }
+
     final scenarioPayload = _mealScenarioPayload();
     final fixedResult = _normalizeFixedMeals(app);
     final hasAnyScenario = scenarioPayload.breakfast.isNotEmpty ||
@@ -920,8 +945,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
         _lastReplan = null;
         _fixedMeals = List<WeekPlanFixedMeal>.from(plan.fixedMealsEffective);
         _marketCode = _normalizeMarketCode(plan.marketCodeEffective);
-        _retailerCodes =
-            _normalizeRetailerCodeSet(plan.retailerCodesEffective);
+        _retailerCodes = _normalizeRetailerCodeSet(plan.retailerCodesEffective);
         _trimRetailersForCurrentMarket();
         _selectedPlanDate = null;
         _seedExpandedDaysFromPlan(plan);
