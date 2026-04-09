@@ -558,6 +558,23 @@ _week_plan_store: Dict[str, Dict[str, Any]] = {}
 WEEK_PLAN_WEB_LOOKUP_ENABLED = os.getenv(
     "WEEK_PLAN_WEB_LOOKUP_ENABLED", "true"
 ).lower() == "true"
+WEEK_PLAN_OPENAI_WEB_LOOKUP_ENABLED = os.getenv(
+    "WEEK_PLAN_OPENAI_WEB_LOOKUP_ENABLED", "true"
+).lower() == "true"
+WEEK_PLAN_OPENAI_WEB_LOOKUP_MODEL = (
+    os.getenv("WEEK_PLAN_OPENAI_WEB_LOOKUP_MODEL", "gpt-4o-search-preview").strip()
+    or "gpt-4o-search-preview"
+)
+WEEK_PLAN_OPENAI_WEB_LOOKUP_FALLBACK_MODELS = _parse_csv_values(
+    os.getenv(
+        "WEEK_PLAN_OPENAI_WEB_LOOKUP_FALLBACK_MODELS",
+        "gpt-4.1-mini,gpt-4o-mini",
+    )
+)
+WEEK_PLAN_OPENAI_WEB_LOOKUP_TIMEOUT_SEC = max(
+    5,
+    min(30, int(os.getenv("WEEK_PLAN_OPENAI_WEB_LOOKUP_TIMEOUT_SEC", "15"))),
+)
 WEEK_PLAN_WEB_LOOKUP_TIMEOUT_SEC = max(
     3,
     min(20, int(os.getenv("WEEK_PLAN_WEB_LOOKUP_TIMEOUT_SEC", "8"))),
@@ -2315,6 +2332,203 @@ def _week_plan_fetch_web_titles(
     return titles
 
 
+def _week_plan_openai_web_lookup_models() -> List[str]:
+    models: List[str] = []
+    seen: set[str] = set()
+    for raw in [
+        WEEK_PLAN_OPENAI_WEB_LOOKUP_MODEL,
+        OPENAI_MODEL,
+        *OPENAI_FALLBACK_MODELS,
+        *WEEK_PLAN_OPENAI_WEB_LOOKUP_FALLBACK_MODELS,
+    ]:
+        name = str(raw or "").strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        models.append(name)
+    return models
+
+
+def _week_plan_extract_responses_output_text(payload: Dict[str, Any]) -> str:
+    output_text = str(payload.get("output_text") or "").strip()
+    if output_text:
+        return output_text
+
+    parts: List[str] = []
+    for output_item in payload.get("output") or []:
+        if not isinstance(output_item, dict):
+            continue
+        for content_item in output_item.get("content") or []:
+            if not isinstance(content_item, dict):
+                continue
+            content_type = str(content_item.get("type") or "").strip().lower()
+            if content_type not in {"output_text", "text"}:
+                continue
+            text = str(content_item.get("text") or "").strip()
+            if text:
+                parts.append(text)
+    return "\n".join(parts).strip()
+
+
+def _week_plan_parse_openai_web_candidates(
+    *,
+    text: str,
+    retailer_codes: List[str],
+    limit: int,
+) -> List[str]:
+    result: List[str] = []
+    seen: set[str] = set()
+    max_items = max(4, int(limit))
+    parsed = _parse_json(text)
+    raw_items: List[Any] = []
+
+    if isinstance(parsed, dict):
+        for key in ("items", "products", "candidates", "data"):
+            value = parsed.get(key)
+            if isinstance(value, list):
+                raw_items = value
+                break
+    elif isinstance(parsed, list):
+        raw_items = parsed
+
+    if not raw_items:
+        for line in str(text or "").splitlines():
+            line_text = str(line or "").strip(" \t\r\n-*0123456789.")
+            if line_text:
+                raw_items.append({"name": line_text})
+
+    for raw_item in raw_items:
+        retailer_hint = ""
+        if isinstance(raw_item, dict):
+            dish_name = str(
+                raw_item.get("name")
+                or raw_item.get("dish_name")
+                or raw_item.get("food_name")
+                or raw_item.get("product_name")
+                or ""
+            ).strip()
+            retailer_hint = str(
+                raw_item.get("retailer")
+                or raw_item.get("brand")
+                or raw_item.get("store")
+                or raw_item.get("source")
+                or ""
+            ).strip()
+        else:
+            dish_name = str(raw_item or "").strip()
+
+        if not dish_name:
+            continue
+        if _week_plan_is_beverage_only_name(dish_name):
+            continue
+        if _week_plan_convenience_name_quality(dish_name) <= 0:
+            continue
+
+        retailer_code = _normalize_week_plan_retailer_code(retailer_hint)
+        if not retailer_code:
+            retailer_code = _normalize_week_plan_retailer_code(dish_name)
+        if not retailer_code and retailer_codes:
+            retailer_code = str(retailer_codes[0] or "").strip()
+        source_label = _week_plan_retailer_display_label(retailer_code)
+
+        key = _normalize_food_query(dish_name)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        result.append(f"{dish_name} ({source_label})")
+        if len(result) >= max_items:
+            break
+
+    return result
+
+
+def _week_plan_fetch_openai_online_convenience_candidates(
+    *,
+    lang: str,
+    market_code: str,
+    retailer_codes: List[str],
+    limit: int,
+) -> List[str]:
+    if not WEEK_PLAN_OPENAI_WEB_LOOKUP_ENABLED:
+        return []
+    api_key = str(API_KEY or "").strip()
+    if not api_key:
+        return []
+
+    max_items = max(4, int(limit))
+    retailer_labels = [
+        _week_plan_retailer_display_label(code)
+        for code in retailer_codes
+        if str(code or "").strip()
+    ]
+    retailer_desc = ", ".join(retailer_labels) if retailer_labels else "major local convenience stores"
+    lang_label = "Traditional Chinese" if lang == "zh-TW" else "English"
+    market = str(market_code or "").strip().upper() or "GLOBAL"
+    prompt = (
+        "Find currently sold convenience-store food products.\n"
+        f"Market: {market}\n"
+        f"Retailers: {retailer_desc}\n"
+        f"Language: {lang_label}\n"
+        f"Return JSON only with schema: {{\"items\":[{{\"name\":\"string\",\"retailer\":\"string\"}}]}}.\n"
+        f"Provide up to {max_items * 2} items.\n"
+        "Rules:\n"
+        "- name must be concise shelf product name only.\n"
+        "- no ads/news/promotions/prices/dates/campaign wording.\n"
+        "- no generic labels like bento/sandwich/salad/rice ball alone.\n"
+        "- prioritize ready-to-eat solid meals for breakfast/lunch/dinner.\n"
+    )
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    models = _week_plan_openai_web_lookup_models()
+    for model_name in models:
+        payload = {
+            "model": model_name,
+            "input": prompt,
+            "tools": [{"type": "web_search_preview"}],
+        }
+        try:
+            with httpx.Client(timeout=WEEK_PLAN_OPENAI_WEB_LOOKUP_TIMEOUT_SEC) as client:
+                resp = client.post("https://api.openai.com/v1/responses", headers=headers, json=payload)
+        except Exception as exc:
+            logging.info("Week plan OpenAI web lookup failed (model=%s): %s", model_name, exc)
+            continue
+
+        if resp.status_code >= 400:
+            body = resp.text[:500]
+            logging.info(
+                "Week plan OpenAI web lookup HTTP %s (model=%s): %s",
+                resp.status_code,
+                model_name,
+                body,
+            )
+            continue
+
+        try:
+            data = resp.json()
+        except Exception:
+            data = {}
+        text = _week_plan_extract_responses_output_text(data if isinstance(data, dict) else {})
+        if not text:
+            continue
+        candidates = _week_plan_parse_openai_web_candidates(
+            text=text,
+            retailer_codes=retailer_codes,
+            limit=max_items,
+        )
+        if candidates:
+            logging.info(
+                "Week plan OpenAI web lookup success (model=%s, items=%s)",
+                model_name,
+                len(candidates),
+            )
+            return candidates
+
+    return []
+
+
 def _week_plan_fetch_online_convenience_candidates(
     *,
     lang: str,
@@ -2337,6 +2551,9 @@ def _week_plan_fetch_online_convenience_candidates(
             "market_code": normalized_market,
             "retailers": normalized_retailers,
             "limit": max_items,
+            "lookup_strategy": "openai_then_ddg_v1",
+            "openai_lookup": bool(WEEK_PLAN_OPENAI_WEB_LOOKUP_ENABLED),
+            "openai_model": WEEK_PLAN_OPENAI_WEB_LOOKUP_MODEL,
         },
         ensure_ascii=True,
         sort_keys=True,
@@ -2357,7 +2574,31 @@ def _week_plan_fetch_online_convenience_candidates(
     )
     candidates: List[str] = []
     seen: set[str] = set()
+    openai_candidates = _week_plan_fetch_openai_online_convenience_candidates(
+        lang=lang,
+        market_code=normalized_market,
+        retailer_codes=normalized_retailers,
+        limit=max_items,
+    )
+    for item in openai_candidates:
+        item_name = _week_plan_strip_candidate_source_suffix(item)
+        if not item_name:
+            continue
+        if _week_plan_is_beverage_only_name(item_name):
+            continue
+        if _week_plan_convenience_name_quality(item_name) <= 0:
+            continue
+        key = _normalize_food_query(item_name)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        candidates.append(item)
+        if len(candidates) >= max_items:
+            break
+
     for query, retailer_code in query_pairs:
+        if len(candidates) >= max_items:
+            break
         query_limit = max(6, min(16, max_items))
         titles = _week_plan_fetch_web_titles(
             query=query,
