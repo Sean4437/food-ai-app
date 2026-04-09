@@ -1972,9 +1972,9 @@ def _build_week_plan_ai_prompt(
         "- If AI omits a slot, fallback may use fixed_meals for that meal_type/day.\n"
         "- For scenario=convenience_store, choose realistic items sold in market_code.\n"
         "- If retailer_codes is not empty, prioritize those retailers and avoid other brands.\n"
-        "- For scenario=convenience_store, pick from convenience_store_candidate_objects.\n"
-        "- For scenario=convenience_store, candidate_id is required and must match a provided candidate.\n"
-        "- For scenario=convenience_store, dish_name must exactly match the chosen candidate's dish_name.\n"
+        "- For scenario=convenience_store, prioritize convenience_store_candidate_objects as the first source.\n"
+        "- For scenario=convenience_store, candidate_id is preferred when choosing from provided candidates.\n"
+        "- For scenario=convenience_store, if you propose a new dish outside candidates, it must be a concise shelf product name (not a category label).\n"
         "- Do not output generic category names like 'chicken bento', 'sandwich', 'salad', 'rice ball'.\n"
         "- Use concrete shelf product names with flavor/specification details.\n"
         "- If a candidate contains source suffix like '(7-11)', you may output either full label or food name only.\n"
@@ -2478,6 +2478,8 @@ def _week_plan_catalog_convenience_candidates_legacy(
             continue
         if _week_plan_is_beverage_only_name(food_name):
             continue
+        if _week_plan_convenience_name_quality(food_name) <= 0:
+            continue
         key = _normalize_food_query(food_name)
         if not key or key in seen_names:
             continue
@@ -2654,6 +2656,8 @@ def _week_plan_catalog_convenience_candidates(
             continue
         if _week_plan_is_beverage_only_name(food_name):
             continue
+        if _week_plan_convenience_name_quality(food_name) <= 0:
+            continue
         key = _normalize_food_query(food_name)
         if not key or key in seen_names:
             continue
@@ -2676,7 +2680,22 @@ def _week_plan_catalog_convenience_candidates(
         limit=max_items,
     )
     if web_candidates:
-        reserve_slots = min(len(web_candidates), max(6, max_items // 2))
+        web_specific_candidates: List[str] = []
+        web_fallback_candidates: List[str] = []
+        for item in web_candidates:
+            item_name = _week_plan_strip_candidate_source_suffix(item)
+            if not item_name:
+                continue
+            if _week_plan_is_beverage_only_name(item_name):
+                continue
+            quality = _week_plan_convenience_name_quality(item_name)
+            if quality >= 2:
+                web_specific_candidates.append(item)
+            elif quality == 1:
+                web_fallback_candidates.append(item)
+
+        web_pool = web_specific_candidates + web_fallback_candidates
+        reserve_slots = min(len(web_pool), max(8, int(max_items * 0.7)))
         keep_catalog_count = max(0, max_items - reserve_slots)
         blended: List[str] = catalog_candidates[:keep_catalog_count]
         blended_seen: set[str] = set()
@@ -2685,7 +2704,7 @@ def _week_plan_catalog_convenience_candidates(
             if key:
                 blended_seen.add(key)
 
-        for item in web_candidates:
+        for item in web_pool:
             item_name = _week_plan_strip_candidate_source_suffix(item)
             if not item_name:
                 continue
@@ -3170,41 +3189,55 @@ def _apply_ai_week_plan_on_stub(
                     dish_name = resolved_convenience_name
                     normalized_dish_key = _dish_key(dish_name)
                 else:
-                    replacement = _pick_convenience_replacement(
-                        meal_type=meal.meal_type,
-                        avoid_keys={normalized_dish_key},
-                    )
-                    if replacement:
+                    if _week_plan_convenience_name_quality(dish_name) >= 2:
                         if lang == "zh-TW":
                             add_warning(
                                 _week_plan_ai_warning(
-                                    f"{day.date} {meal.meal_type} 便利店品名不在候選清單，已自動替換"
+                                    f"{day.date} {meal.meal_type} 便利店品名不在候選清單，但已保留 AI 具體品名"
                                 )
                             )
                         else:
                             add_warning(
                                 _week_plan_ai_warning(
-                                    f"{day.date} {meal.meal_type} convenience dish not in candidates; auto-replaced"
+                                    f"{day.date} {meal.meal_type} convenience dish not in candidates; kept AI specific name"
                                 )
                             )
-                        dish_name = replacement
-                        normalized_dish_key = _dish_key(dish_name)
                     else:
-                        if lang == "zh-TW":
-                            add_warning(
-                                _week_plan_ai_warning(
-                                    f"{day.date} {meal.meal_type} 便利店品名不在候選清單，保留模板餐次"
+                        replacement = _pick_convenience_replacement(
+                            meal_type=meal.meal_type,
+                            avoid_keys={normalized_dish_key},
+                        )
+                        if replacement:
+                            if lang == "zh-TW":
+                                add_warning(
+                                    _week_plan_ai_warning(
+                                        f"{day.date} {meal.meal_type} 便利店品名不在候選清單，已自動替換"
+                                    )
                                 )
-                            )
+                            else:
+                                add_warning(
+                                    _week_plan_ai_warning(
+                                        f"{day.date} {meal.meal_type} convenience dish not in candidates; auto-replaced"
+                                    )
+                                )
+                            dish_name = replacement
+                            normalized_dish_key = _dish_key(dish_name)
                         else:
-                            add_warning(
-                                _week_plan_ai_warning(
-                                    f"{day.date} {meal.meal_type} convenience dish not in candidates; kept template meal"
+                            if lang == "zh-TW":
+                                add_warning(
+                                    _week_plan_ai_warning(
+                                        f"{day.date} {meal.meal_type} 便利店品名不在候選清單，保留模板餐次"
+                                    )
                                 )
-                            )
-                        updated_meals.append(meal)
-                        _track_dish(meal.meal_type, meal.dish_name)
-                        continue
+                            else:
+                                add_warning(
+                                    _week_plan_ai_warning(
+                                        f"{day.date} {meal.meal_type} convenience dish not in candidates; kept template meal"
+                                    )
+                                )
+                            updated_meals.append(meal)
+                            _track_dish(meal.meal_type, meal.dish_name)
+                            continue
 
             if scenario == "convenience_store" and normalized_dish_key:
                 used_unique_keys = unique_dish_keys_by_meal.setdefault(
@@ -8461,6 +8494,13 @@ async def generate_week_plan(
             retailer_codes=retailer_codes,
             limit=24,
         )
+        if len(convenience_candidates) >= 8:
+            # Rotate candidate ordering per run to avoid repeatedly anchoring on the same top items.
+            rotate_by = int(time.time() * 1000) % len(convenience_candidates)
+            if rotate_by > 0:
+                convenience_candidates = (
+                    convenience_candidates[rotate_by:] + convenience_candidates[:rotate_by]
+                )
         prompt = _build_week_plan_ai_prompt(
             lang=use_lang,
             payload=payload,
