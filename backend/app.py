@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Query, Form, Request, Depends, HTTPException
+﻿from fastapi import FastAPI, UploadFile, File, Query, Form, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Any, Callable, Dict, Optional, List
@@ -1647,6 +1647,154 @@ def _week_plan_is_beverage_only_name(name: str) -> bool:
     return not has_solid
 
 
+_week_plan_convenience_detail_tokens = (
+    "舒肥",
+    "椒麻",
+    "黑胡椒",
+    "照燒",
+    "壽喜",
+    "青醬",
+    "紅醬",
+    "咖哩",
+    "泡菜",
+    "蔥鹽",
+    "蒜香",
+    "味噌",
+    "宮保",
+    "打拋",
+    "鮪魚玉米",
+    "紐奧良",
+    "燻雞",
+    "起司",
+    "麻油",
+    "雞胸",
+    "雞腿",
+    "牛五花",
+    "豬里肌",
+    "御飯糰",
+    "握便當",
+    "pesto",
+    "teriyaki",
+    "curry",
+    "spicy",
+    "pepper",
+    "garlic",
+    "basil",
+    "grilled",
+)
+_week_plan_convenience_category_tokens = (
+    "便當",
+    "飯糰",
+    "御飯糰",
+    "三明治",
+    "沙拉",
+    "義大利麵",
+    "涼麵",
+    "炒麵",
+    "飯卷",
+    "飯捲",
+    "丼飯",
+    "粥",
+    "麵",
+    "套餐",
+    "bento",
+    "sandwich",
+    "salad",
+    "pasta",
+    "rice",
+    "noodle",
+    "meal",
+    "set",
+)
+_week_plan_convenience_generic_name_pattern = re.compile(
+    r"^(?:"
+    r"雞肉|雞腿|雞胸|牛肉|豬肉|魚排|鮪魚|鮭魚|火腿|蔬菜|青菜|蛋|豆腐|"
+    r"chicken|beef|pork|tuna|salmon|ham|veggie|egg|tofu"
+    r")?"
+    r"(?:便當|飯糰|御飯糰|三明治|沙拉|義大利麵|涼麵|炒麵|麵|套餐|bento|sandwich|salad|pasta|meal|set)$",
+    re.IGNORECASE,
+)
+
+
+def _week_plan_convenience_specificity_score(name: str) -> int:
+    text = _week_plan_normalize_candidate_name(name)
+    if not text:
+        return 0
+    compact = re.sub(r"\s+", "", text).lower()
+    score = max(0, min(35, len(compact)))
+    if any(token.lower() in compact for token in _week_plan_convenience_detail_tokens):
+        score += 35
+    if any(token.lower() in compact for token in _week_plan_convenience_category_tokens):
+        score += 10
+    if re.search(r"[0-9]", compact):
+        score += 5
+    if _week_plan_convenience_generic_name_pattern.match(compact):
+        score -= 45
+    if any(ch in text for ch in ("!", "！", "?", "？")):
+        score -= 20
+    return max(0, score)
+
+
+def _week_plan_is_generic_convenience_name(name: str) -> bool:
+    return _week_plan_convenience_specificity_score(name) < 38
+
+
+_week_plan_convenience_marketing_tokens = (
+    "\u63a8\u85a6",
+    "\u958b\u8ce3",
+    "\u4e0a\u5e02",
+    "\u65b0\u54c1",
+    "\u65b0\u4e0a\u67b6",
+    "\u512a\u60e0",
+    "\u6298\u6263",
+    "\u6d3b\u52d5",
+    "\u9650\u6642",
+    "\u958b\u5e55",
+    "\u56de\u6b78",
+    "\u7db2\u55e8",
+    "\u8cb7\u4e00\u9001\u4e00",
+    "\u8cb71\u90011",
+    "\u71b1\u9580",
+    "\u4eba\u6c23",
+    "\u4e0d\u80fd\u932f\u904e",
+    "\u9580\u5e02",
+    "\u5916\u9001",
+    "news",
+    "promo",
+    "promotion",
+    "campaign",
+    "coupon",
+)
+
+
+def _week_plan_has_marketing_convenience_text(name: str) -> bool:
+    text = _week_plan_normalize_candidate_name(name)
+    if not text:
+        return True
+    compact = re.sub(r"\s+", "", text)
+    lower = compact.lower()
+    if len(compact) > 28:
+        return True
+    if _week_plan_web_price_or_year_pattern.search(lower):
+        return True
+    if any(token in lower for token in _week_plan_convenience_marketing_tokens):
+        return True
+    if re.search(r"[!?:;]|[\uFF01\uFF1F\uFF1A\uFF1B]", text):
+        return True
+    return False
+
+
+def _week_plan_convenience_name_quality(name: str) -> int:
+    text = _week_plan_normalize_candidate_name(name)
+    if not text:
+        return 0
+    if _week_plan_has_marketing_convenience_text(text):
+        return 0
+    if _week_plan_is_generic_convenience_name(text):
+        return 1
+    return 2
+
+
 def _week_plan_normalize_candidate_name(value: str) -> str:
     text = str(value or "").strip()
     if not text:
@@ -1657,7 +1805,7 @@ def _week_plan_normalize_candidate_name(value: str) -> str:
 def _week_plan_build_convenience_candidate_objects(
     candidates: List[str],
 ) -> List[Dict[str, str]]:
-    items: List[Dict[str, str]] = []
+    items: List[Dict[str, Any]] = []
     seen: set[str] = set()
     for raw in candidates:
         label = str(raw or "").strip()
@@ -1666,14 +1814,67 @@ def _week_plan_build_convenience_candidate_objects(
         if not key or key in seen:
             continue
         seen.add(key)
+        quality = _week_plan_convenience_name_quality(name)
         items.append(
             {
-                "candidate_id": f"cv_{len(items) + 1:03d}",
                 "dish_name": name,
                 "label": label or name,
+                "specificity_score": _week_plan_convenience_specificity_score(name),
+                "quality": quality,
             }
         )
-    return items
+    if not items:
+        return []
+
+    clean_items: List[Dict[str, Any]] = []
+    generic_items: List[Dict[str, Any]] = []
+    for item in items:
+        quality = int(item.get("quality") or 0)
+        if quality >= 2:
+            clean_items.append(item)
+        elif quality == 1:
+            generic_items.append(item)
+
+    clean_items.sort(
+        key=lambda item: (
+            -int(item.get("specificity_score") or 0),
+            str(item.get("dish_name") or ""),
+        )
+    )
+    generic_items.sort(
+        key=lambda item: (
+            -int(item.get("specificity_score") or 0),
+            str(item.get("dish_name") or ""),
+        )
+    )
+
+    merged: List[Dict[str, Any]] = []
+    if len(clean_items) >= 8:
+        merged.extend(clean_items)
+    else:
+        merged.extend(clean_items)
+        merged.extend(generic_items)
+    if not merged:
+        merged = sorted(
+            items,
+            key=lambda item: (
+                -int(item.get("quality") or 0),
+                -int(item.get("specificity_score") or 0),
+                str(item.get("dish_name") or ""),
+            ),
+        )
+
+    output: List[Dict[str, str]] = []
+    for index, item in enumerate(merged):
+        output.append(
+            {
+                "candidate_id": f"cv_{index + 1:03d}",
+                "dish_name": str(item.get("dish_name") or "").strip(),
+                "label": str(item.get("label") or "").strip(),
+                "specificity_score": str(int(item.get("specificity_score") or 0)),
+            }
+        )
+    return output
 
 
 def _build_week_plan_ai_prompt(
@@ -1774,6 +1975,8 @@ def _build_week_plan_ai_prompt(
         "- For scenario=convenience_store, pick from convenience_store_candidate_objects.\n"
         "- For scenario=convenience_store, candidate_id is required and must match a provided candidate.\n"
         "- For scenario=convenience_store, dish_name must exactly match the chosen candidate's dish_name.\n"
+        "- Do not output generic category names like 'chicken bento', 'sandwich', 'salad', 'rice ball'.\n"
+        "- Use concrete shelf product names with flavor/specification details.\n"
         "- If a candidate contains source suffix like '(7-11)', you may output either full label or food name only.\n"
         "- dish_name must be a concise food item name only (no ad/news headline text).\n"
         "- Never include promotional wording, dates, prices, or punctuation-heavy marketing copy in dish_name.\n"
@@ -2619,6 +2822,7 @@ def _apply_ai_week_plan_on_stub(
 
     convenience_name_by_key: Dict[str, str] = {}
     convenience_name_by_id: Dict[str, str] = {}
+    convenience_specificity_by_key: Dict[str, int] = {}
     convenience_pool: List[str] = []
     candidate_objects = _week_plan_build_convenience_candidate_objects(
         list(convenience_candidates or [])
@@ -2626,12 +2830,17 @@ def _apply_ai_week_plan_on_stub(
     for item in candidate_objects:
         candidate_id = str(item.get("candidate_id") or "").strip().lower()
         display_name = _strip_candidate_source_suffix(str(item.get("dish_name") or ""))
+        specificity = _safe_positive_int(
+            item.get("specificity_score"),
+            _week_plan_convenience_specificity_score(display_name),
+        )
         if not display_name:
             continue
         key = _dish_key(display_name)
         if not key or key in convenience_name_by_key:
             continue
         convenience_name_by_key[key] = display_name
+        convenience_specificity_by_key[key] = int(specificity)
         if candidate_id:
             convenience_name_by_id[candidate_id] = display_name
         convenience_pool.append(display_name)
@@ -2648,6 +2857,12 @@ def _apply_ai_week_plan_on_stub(
         if not raw:
             return ""
         return re.sub(r"[^a-z0-9_-]", "", raw)
+
+    def _specificity_score(value: str) -> int:
+        key = _dish_key(value)
+        if key and key in convenience_specificity_by_key:
+            return int(convenience_specificity_by_key.get(key, 0))
+        return _week_plan_convenience_specificity_score(value)
 
     def _compact_dish_key(value: str) -> str:
         return re.sub(r"[^0-9a-z\u4e00-\u9fff]+", "", _dish_key(value))
@@ -2742,15 +2957,29 @@ def _apply_ai_week_plan_on_stub(
         if not convenience_pool:
             return None
         avoid = {key for key in (avoid_keys or set()) if key}
-        scored: List[tuple[int, int, int, str]] = []
+        scored: List[tuple[int, int, int, int, str]] = []
+        prefer_specific = False
+        for candidate_name in convenience_pool:
+            candidate_key = _dish_key(candidate_name)
+            if not candidate_key or candidate_key in avoid:
+                continue
+            if _week_plan_convenience_name_quality(candidate_name) >= 2:
+                prefer_specific = True
+                break
 
         for index, candidate_name in enumerate(convenience_pool):
             candidate_key = _dish_key(candidate_name)
             if not candidate_key or candidate_key in avoid:
                 continue
+            quality = _week_plan_convenience_name_quality(candidate_name)
+            if quality <= 0:
+                continue
             if meal_type in {"breakfast", "lunch", "dinner"} and _week_plan_is_beverage_only_name(
                 candidate_name
             ):
+                continue
+            specificity = _specificity_score(candidate_name)
+            if prefer_specific and quality < 2:
                 continue
             meal_count = int(dish_count_by_meal.get(meal_type, {}).get(candidate_key, 0))
             if meal_count >= _repeat_limit_for(meal_type):
@@ -2759,28 +2988,32 @@ def _apply_ai_week_plan_on_stub(
                 int(dish_count_by_meal.get(kind, {}).get(candidate_key, 0))
                 for kind in _week_plan_meal_types
             )
-            scored.append((meal_count, global_count, index, candidate_name))
+            scored.append((meal_count, global_count, -specificity, index, candidate_name))
 
         if not scored:
             for index, candidate_name in enumerate(convenience_pool):
                 candidate_key = _dish_key(candidate_name)
                 if not candidate_key or candidate_key in avoid:
                     continue
+                quality = _week_plan_convenience_name_quality(candidate_name)
+                if quality <= 0:
+                    continue
                 if meal_type in {"breakfast", "lunch", "dinner"} and _week_plan_is_beverage_only_name(
                     candidate_name
                 ):
                     continue
+                specificity = _specificity_score(candidate_name)
                 meal_count = int(dish_count_by_meal.get(meal_type, {}).get(candidate_key, 0))
                 global_count = sum(
                     int(dish_count_by_meal.get(kind, {}).get(candidate_key, 0))
                     for kind in _week_plan_meal_types
                 )
-                scored.append((meal_count, global_count, index, candidate_name))
+                scored.append((meal_count, global_count, -specificity, index, candidate_name))
 
         if not scored:
             return None
-        scored.sort(key=lambda item: (item[0], item[1], item[2]))
-        return scored[0][3]
+        scored.sort(key=lambda item: (item[0], item[1], item[2], item[3]))
+        return scored[0][4]
 
     beverage_reject_counts: Dict[str, int] = {}
     updated_days: List[WeekPlanDayPlan] = []
@@ -2895,6 +3128,43 @@ def _apply_ai_week_plan_on_stub(
             normalized_dish_key = _dish_key(dish_name)
 
             if scenario == "convenience_store" and convenience_name_by_key:
+                if _week_plan_convenience_name_quality(dish_name) <= 1:
+                    replacement = _pick_convenience_replacement(
+                        meal_type=meal.meal_type,
+                        avoid_keys={normalized_dish_key},
+                    )
+                    if replacement:
+                        if lang == "zh-TW":
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} {meal.meal_type} 便利店品名過於泛化，已改為候選具體品名"
+                                )
+                            )
+                        else:
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} {meal.meal_type} convenience dish too generic; replaced with specific candidate"
+                                )
+                            )
+                        dish_name = replacement
+                        normalized_dish_key = _dish_key(dish_name)
+                    else:
+                        if lang == "zh-TW":
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} {meal.meal_type} 便利店品名過於泛化，已改用替代餐次"
+                                )
+                            )
+                        else:
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} {meal.meal_type} convenience dish too generic; kept template meal"
+                                )
+                            )
+                        updated_meals.append(meal)
+                        _track_dish(meal.meal_type, meal.dish_name)
+                        continue
+
                 resolved_convenience_name = _resolve_convenience_candidate_name(dish_name)
                 if resolved_convenience_name:
                     dish_name = resolved_convenience_name
@@ -8694,3 +8964,4 @@ def usage_summary(_admin: None = Depends(_require_admin)):
         "total_input_tokens": total_input,
         "total_output_tokens": total_output,
     }
+
