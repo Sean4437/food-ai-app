@@ -1647,6 +1647,35 @@ def _week_plan_is_beverage_only_name(name: str) -> bool:
     return not has_solid
 
 
+def _week_plan_normalize_candidate_name(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    return re.sub(r"\s*\([^()]*\)\s*$", "", text).strip()
+
+
+def _week_plan_build_convenience_candidate_objects(
+    candidates: List[str],
+) -> List[Dict[str, str]]:
+    items: List[Dict[str, str]] = []
+    seen: set[str] = set()
+    for raw in candidates:
+        label = str(raw or "").strip()
+        name = _week_plan_normalize_candidate_name(label)
+        key = _normalize_food_query(name)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        items.append(
+            {
+                "candidate_id": f"cv_{len(items) + 1:03d}",
+                "dish_name": name,
+                "label": label or name,
+            }
+        )
+    return items
+
+
 def _build_week_plan_ai_prompt(
     *,
     lang: str,
@@ -1685,6 +1714,9 @@ def _build_week_plan_ai_prompt(
         }
         for item in fixed_meals
     ]
+    convenience_candidate_objects = _week_plan_build_convenience_candidate_objects(
+        convenience_candidates
+    )
     context = {
         "start_date": payload.start_date,
         "days": payload.days,
@@ -1701,6 +1733,7 @@ def _build_week_plan_ai_prompt(
         "meal_scenarios": meal_scenarios,
         "fixed_meals": fixed_payload,
         "convenience_store_candidates": convenience_candidates,
+        "convenience_store_candidate_objects": convenience_candidate_objects,
         "constraints": constraints,
     }
     return (
@@ -1716,6 +1749,7 @@ def _build_week_plan_ai_prompt(
         '      "meals": [\n'
         "        {\n"
         '          "meal_type": "breakfast|lunch|dinner|snack",\n'
+        '          "candidate_id": "cv_001",\n'
         '          "dish_name": "string",\n'
         '          "scenario": "home_cook|eat_out|convenience_store",\n'
         '          "kcal": 500,\n'
@@ -1737,7 +1771,9 @@ def _build_week_plan_ai_prompt(
         "- If AI omits a slot, fallback may use fixed_meals for that meal_type/day.\n"
         "- For scenario=convenience_store, choose realistic items sold in market_code.\n"
         "- If retailer_codes is not empty, prioritize those retailers and avoid other brands.\n"
-        "- For scenario=convenience_store, dish_name must come from convenience_store_candidates.\n"
+        "- For scenario=convenience_store, pick from convenience_store_candidate_objects.\n"
+        "- For scenario=convenience_store, candidate_id is required and must match a provided candidate.\n"
+        "- For scenario=convenience_store, dish_name must exactly match the chosen candidate's dish_name.\n"
         "- If a candidate contains source suffix like '(7-11)', you may output either full label or food name only.\n"
         "- dish_name must be a concise food item name only (no ad/news headline text).\n"
         "- Never include promotional wording, dates, prices, or punctuation-heavy marketing copy in dish_name.\n"
@@ -2582,16 +2618,36 @@ def _apply_ai_week_plan_on_stub(
         return False
 
     convenience_name_by_key: Dict[str, str] = {}
+    convenience_name_by_id: Dict[str, str] = {}
     convenience_pool: List[str] = []
-    for raw_candidate in list(convenience_candidates or []):
-        display_name = _strip_candidate_source_suffix(str(raw_candidate or ""))
+    candidate_objects = _week_plan_build_convenience_candidate_objects(
+        list(convenience_candidates or [])
+    )
+    for item in candidate_objects:
+        candidate_id = str(item.get("candidate_id") or "").strip().lower()
+        display_name = _strip_candidate_source_suffix(str(item.get("dish_name") or ""))
         if not display_name:
             continue
         key = _dish_key(display_name)
         if not key or key in convenience_name_by_key:
             continue
         convenience_name_by_key[key] = display_name
+        if candidate_id:
+            convenience_name_by_id[candidate_id] = display_name
         convenience_pool.append(display_name)
+
+    convenience_target_unique_by_meal: Dict[str, int] = {}
+    for meal_type in _week_plan_meal_types:
+        if meal_type == "snack":
+            convenience_target_unique_by_meal[meal_type] = min(4, len(convenience_pool))
+        else:
+            convenience_target_unique_by_meal[meal_type] = min(5, len(convenience_pool))
+
+    def _normalize_candidate_id(value: Any) -> str:
+        raw = str(value or "").strip().lower()
+        if not raw:
+            return ""
+        return re.sub(r"[^a-z0-9_-]", "", raw)
 
     def _compact_dish_key(value: str) -> str:
         return re.sub(r"[^0-9a-z\u4e00-\u9fff]+", "", _dish_key(value))
@@ -2651,6 +2707,9 @@ def _apply_ai_week_plan_on_stub(
     dish_count_by_meal: Dict[str, Dict[str, int]] = {
         meal_type: {} for meal_type in _week_plan_meal_types
     }
+    unique_dish_keys_by_meal: Dict[str, set[str]] = {
+        meal_type: set() for meal_type in _week_plan_meal_types
+    }
     max_repeat_per_meal_type: Dict[str, int] = {
         "breakfast": 1,
         "lunch": 1,
@@ -2658,6 +2717,9 @@ def _apply_ai_week_plan_on_stub(
         "snack": 2,
     }
     prev_day_dish_key_by_meal: Dict[str, str] = {
+        meal_type: "" for meal_type in _week_plan_meal_types
+    }
+    prev_day_dish_name_by_meal: Dict[str, str] = {
         meal_type: "" for meal_type in _week_plan_meal_types
     }
 
@@ -2670,6 +2732,7 @@ def _apply_ai_week_plan_on_stub(
             return
         counts = dish_count_by_meal.setdefault(meal_type, {})
         counts[key] = int(counts.get(key, 0)) + 1
+        unique_dish_keys_by_meal.setdefault(meal_type, set()).add(key)
 
     def _pick_convenience_replacement(
         *,
@@ -2763,15 +2826,11 @@ def _apply_ai_week_plan_on_stub(
                 or candidate.get("food_name")
                 or ""
             ).strip()
-            if not dish_name:
-                add_warning(
-                    _week_plan_ai_warning(
-                        f"{day.date} {meal.meal_type} empty AI dish name; kept template meal"
-                    )
-                )
-                updated_meals.append(meal)
-                _track_dish(meal.meal_type, meal.dish_name)
-                continue
+            candidate_id = _normalize_candidate_id(
+                candidate.get("candidate_id") or candidate.get("convenience_candidate_id")
+            )
+            if not dish_name and candidate_id:
+                dish_name = str(convenience_name_by_id.get(candidate_id) or "").strip()
 
             allowed = list(meal_scenarios.get(meal.meal_type) or list(_week_plan_scenarios))
             scenario_raw = _normalize_week_plan_scenario(candidate.get("scenario"))
@@ -2783,6 +2842,21 @@ def _apply_ai_week_plan_on_stub(
                 scenario = allowed[0]
             else:
                 scenario = meal.scenario
+
+            if scenario == "convenience_store" and candidate_id:
+                mapped_name = convenience_name_by_id.get(candidate_id)
+                if mapped_name:
+                    dish_name = mapped_name
+
+            if not dish_name:
+                add_warning(
+                    _week_plan_ai_warning(
+                        f"{day.date} {meal.meal_type} empty AI dish name; kept template meal"
+                    )
+                )
+                updated_meals.append(meal)
+                _track_dish(meal.meal_type, meal.dish_name)
+                continue
 
             if meal.meal_type in {"breakfast", "lunch", "dinner"} and _week_plan_is_beverage_only_name(
                 dish_name
@@ -2862,6 +2936,38 @@ def _apply_ai_week_plan_on_stub(
                         _track_dish(meal.meal_type, meal.dish_name)
                         continue
 
+            if scenario == "convenience_store" and normalized_dish_key:
+                used_unique_keys = unique_dish_keys_by_meal.setdefault(
+                    meal.meal_type, set()
+                )
+                target_unique = int(
+                    convenience_target_unique_by_meal.get(meal.meal_type, 0)
+                )
+                if (
+                    target_unique > 0
+                    and len(used_unique_keys) < target_unique
+                    and normalized_dish_key in used_unique_keys
+                ):
+                    replacement = _pick_convenience_replacement(
+                        meal_type=meal.meal_type,
+                        avoid_keys=set(used_unique_keys) | {normalized_dish_key},
+                    )
+                    if replacement:
+                        if lang == "zh-TW":
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} {meal.meal_type} 為提升多樣性，已替換為不同便利店品項"
+                                )
+                            )
+                        else:
+                            add_warning(
+                                _week_plan_ai_warning(
+                                    f"{day.date} {meal.meal_type} replaced to improve variety"
+                                )
+                            )
+                        dish_name = replacement
+                        normalized_dish_key = _dish_key(dish_name)
+
             meal_counts = dish_count_by_meal.setdefault(meal.meal_type, {})
             current_repeat = int(meal_counts.get(normalized_dish_key, 0))
             if normalized_dish_key and current_repeat >= _repeat_limit_for(meal.meal_type):
@@ -2897,10 +3003,9 @@ def _apply_ai_week_plan_on_stub(
                     continue
 
             previous_day_key = prev_day_dish_key_by_meal.get(meal.meal_type, "")
-            if (
-                normalized_dish_key
-                and previous_day_key
-                and normalized_dish_key == previous_day_key
+            previous_day_name = prev_day_dish_name_by_meal.get(meal.meal_type, "")
+            if previous_day_name and _is_same_or_swapped_combo(
+                previous_day_name, dish_name
             ):
                 replacement = None
                 if scenario == "convenience_store":
@@ -2926,7 +3031,7 @@ def _apply_ai_week_plan_on_stub(
                 elif (
                     meal.dish_name.strip()
                     and _dish_key(meal.dish_name) != normalized_dish_key
-                    and _dish_key(meal.dish_name) != previous_day_key
+                    and not _is_same_or_swapped_combo(previous_day_name, meal.dish_name)
                 ):
                     if lang == "zh-TW":
                         add_warning(
@@ -3025,6 +3130,7 @@ def _apply_ai_week_plan_on_stub(
             key = _dish_key(meal.dish_name)
             if key:
                 prev_day_dish_key_by_meal[meal.meal_type] = key
+                prev_day_dish_name_by_meal[meal.meal_type] = meal.dish_name
 
         updated_days.append(
             WeekPlanDayPlan(
