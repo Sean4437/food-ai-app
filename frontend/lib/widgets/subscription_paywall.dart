@@ -4,8 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../config/feature_flags.dart';
+import '../config/legal_links.dart';
 import '../state/app_state.dart';
 
 Future<void> showSubscriptionPaywall(
@@ -66,6 +68,15 @@ Future<void> _showMockPaywall(
   AppState app,
   AppLocalizations t,
 ) async {
+  final isZh = Localizations.localeOf(context)
+      .languageCode
+      .toLowerCase()
+      .startsWith('zh');
+  final privacyLabel = isZh ? '隱私政策' : 'Privacy Policy';
+  final termsLabel = isZh ? '服務條款' : 'Terms of Service';
+  final legalLinkError = isZh
+      ? '尚未設定隱私政策或服務條款連結'
+      : 'Privacy policy or terms link is not configured.';
   final currentPlan = app.mockSubscriptionPlanId;
   final currentPlanLabel = currentPlan == kIapMonthlyId
       ? t.webPaywallCurrentPlanMonthly
@@ -115,6 +126,19 @@ Future<void> _showMockPaywall(
       processing: false,
       footerText: t.webPaywallTestNote,
       restoreLabel: t.cancel,
+      showLegalLinks: true,
+      privacyLabel: privacyLabel,
+      termsLabel: termsLabel,
+      onOpenPrivacyPolicy: (sheetContext) => _openLegalLink(
+        sheetContext,
+        kPrivacyPolicyUri,
+        legalLinkError,
+      ),
+      onOpenTermsOfService: (sheetContext) => _openLegalLink(
+        sheetContext,
+        kTermsOfServiceUri,
+        legalLinkError,
+      ),
       onPlanTap: (planId) async => Navigator.of(context).pop(planId),
       onRestore: () async => Navigator.of(context).pop('cancel'),
     ),
@@ -136,6 +160,15 @@ Future<void> _showIapPaywall(
   AppState app,
   AppLocalizations t,
 ) async {
+  final isZh = Localizations.localeOf(context)
+      .languageCode
+      .toLowerCase()
+      .startsWith('zh');
+  final privacyLabel = isZh ? '隱私政策' : 'Privacy Policy';
+  final termsLabel = isZh ? '服務條款' : 'Terms of Service';
+  final legalLinkError = isZh
+      ? '尚未設定隱私政策或服務條款連結'
+      : 'Privacy policy or terms link is not configured.';
   if (!app.iapAvailable) {
     await app.initIap();
   }
@@ -193,6 +226,19 @@ Future<void> _showIapPaywall(
           processing: app.iapProcessing,
           footerText: t.paywallDisclaimer,
           restoreLabel: t.paywallRestore,
+          showLegalLinks: true,
+          privacyLabel: privacyLabel,
+          termsLabel: termsLabel,
+          onOpenPrivacyPolicy: (sheetContext) => _openLegalLink(
+            sheetContext,
+            kPrivacyPolicyUri,
+            legalLinkError,
+          ),
+          onOpenTermsOfService: (sheetContext) => _openLegalLink(
+            sheetContext,
+            kTermsOfServiceUri,
+            legalLinkError,
+          ),
           errorText:
               (app.iapLastError ?? '').trim().isEmpty ? null : app.iapLastError,
           onPlanTap: (planId) => app.buySubscription(planId),
@@ -235,6 +281,32 @@ Future<void> _showIapUnavailable(BuildContext context, AppLocalizations t) {
   );
 }
 
+Future<void> _openLegalLink(
+  BuildContext context,
+  Uri? uri,
+  String fallbackMessage,
+) async {
+  if (uri == null) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(fallbackMessage)));
+    }
+    return;
+  }
+  try {
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(fallbackMessage)));
+    }
+  } catch (_) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(fallbackMessage)));
+    }
+  }
+}
+
 class _SubscriptionSheet extends StatefulWidget {
   const _SubscriptionSheet({
     required this.title,
@@ -247,6 +319,11 @@ class _SubscriptionSheet extends StatefulWidget {
     this.statusLine,
     this.footerText,
     this.errorText,
+    this.showLegalLinks = false,
+    this.privacyLabel,
+    this.termsLabel,
+    this.onOpenPrivacyPolicy,
+    this.onOpenTermsOfService,
   });
 
   final String title;
@@ -257,6 +334,11 @@ class _SubscriptionSheet extends StatefulWidget {
   final String restoreLabel;
   final String? footerText;
   final String? errorText;
+  final bool showLegalLinks;
+  final String? privacyLabel;
+  final String? termsLabel;
+  final Future<void> Function(BuildContext context)? onOpenPrivacyPolicy;
+  final Future<void> Function(BuildContext context)? onOpenTermsOfService;
   final Future<void> Function(String planId) onPlanTap;
   final Future<void> Function()? onRestore;
 
@@ -584,6 +666,74 @@ class _SubscriptionSheetState extends State<_SubscriptionSheet> {
                               fontWeight: FontWeight.w500,
                               height: 1.35,
                             ),
+                          ),
+                        ],
+                        if (widget.showLegalLinks &&
+                            (widget.privacyLabel != null ||
+                                widget.termsLabel != null)) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 6,
+                            runSpacing: 2,
+                            children: [
+                              if (widget.privacyLabel != null)
+                                TextButton(
+                                  onPressed: widget.onOpenPrivacyPolicy == null
+                                      ? null
+                                      : () => widget.onOpenPrivacyPolicy!(
+                                            context,
+                                          ),
+                                  style: TextButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                    foregroundColor:
+                                        Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                  child: Text(
+                                    widget.privacyLabel!,
+                                    style: GoogleFonts.notoSansTc(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor:
+                                          Colors.white.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ),
+                              if (widget.privacyLabel != null &&
+                                  widget.termsLabel != null)
+                                Text(
+                                  '·',
+                                  style: GoogleFonts.dmSans(
+                                    color: Colors.white.withValues(alpha: 0.6),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              if (widget.termsLabel != null)
+                                TextButton(
+                                  onPressed: widget.onOpenTermsOfService ==
+                                          null
+                                      ? null
+                                      : () => widget.onOpenTermsOfService!(
+                                            context,
+                                          ),
+                                  style: TextButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                    foregroundColor:
+                                        Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                  child: Text(
+                                    widget.termsLabel!,
+                                    style: GoogleFonts.notoSansTc(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor:
+                                          Colors.white.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ],
                       ],

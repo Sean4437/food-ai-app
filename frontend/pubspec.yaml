@@ -27,6 +27,7 @@ dependencies:
   sembast_web: ^2.4.1
   supabase_flutter: ^2.5.6
   in_app_purchase: ^3.2.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
