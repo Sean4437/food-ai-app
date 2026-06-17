@@ -294,5 +294,5 @@
 - `python -m py_compile backend/app.py`（通過）
 - `flutter analyze`（通過，僅剩既有 warning / info，無新增 error）
 - `flutter build web --release --base-href /food-ai-app/`（通過）
-- commit：pending
+- commit：`697437f`
 - date：2026-06-17
