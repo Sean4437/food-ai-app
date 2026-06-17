@@ -1800,6 +1800,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: Text(t.glowToggleLabel),
                     secondary: const Icon(Icons.blur_on),
                   ),
+                  if (app.supportsSystemGallerySync) ...[
+                    const SizedBox(height: 8),
+                    _sectionTitle(
+                        context, isZh ? '拍照與照片' : 'Camera & Photos'),
+                    SwitchListTile(
+                      value: profile.saveCameraPhotosToGallery,
+                      onChanged: (value) => app.updateField(
+                          (p) => p.saveCameraPhotosToGallery = value),
+                      title: Text(isZh
+                          ? '拍照後同步存到系統相簿'
+                          : 'Save captured photos to system gallery'),
+                      subtitle: Text(isZh
+                          ? '關閉時只保留在 Food AI 內；開啟後會另外保存到手機相簿。'
+                          : 'When off, photos stay only inside Food AI. When on, a copy is also saved to your device gallery.'),
+                      secondary: const Icon(Icons.photo_library_outlined),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   _sectionTitle(context, t.plateSection),
                   _row(

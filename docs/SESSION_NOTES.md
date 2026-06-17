@@ -263,3 +263,36 @@
 - 建立 `priority2_batch2` 草稿，且確認與 `priority2_batch1` 無重複。
 - 新增 `catalog_control.ps1`，可一步控制 validate / dry-run / deploy / status。
 - iOS 訂閱流程切換為「後端收據驗證 -> server access 判斷」。
+
+### 22) 相機拍照新增「同步存到系統相簿」設定
+- 問題：目前拍照後只保留 App 內部照片，無法依使用者偏好決定是否再同步一份到手機系統相簿。
+- 根因：
+- 現有拍照流程只有 `image_picker` 取回檔案並存入 App record，沒有第二條「寫回系統相簿」流程。
+- 設定頁也沒有獨立控制開關，無法區分「只存 App」與「App + 系統相簿」。
+- 修正：
+- `frontend/lib/state/app_state.dart`
+  - `UserProfile` 新增 `saveCameraPhotosToGallery`
+  - 新增 `supportsSystemGallerySync` 與 `syncCameraCaptureToSystemGallery(...)`
+- `frontend/lib/screens/settings_screen.dart`
+  - 新增 `拍照與照片` 區塊與 `拍照後同步存到系統相簿` 開關
+  - 僅在 iOS / Android 顯示
+- `frontend/lib/screens/suggestions_screen.dart`
+  - 僅在來源為 `ImageSource.camera` 且成功儲存後，額外觸發系統相簿同步
+  - 若失敗，只提示權限 / 寫入失敗，不影響 App 內保存
+- `frontend/lib/widgets/record_sheet.dart`
+  - 記錄頁用相機新增餐點後同步套用相同邏輯
+- `frontend/lib/services/gallery_save_service*.dart`
+  - 新增相簿同步 service，使用 `photo_manager`
+  - Web stub 直接回傳 `notSupported`
+- `frontend/ios/Runner/Info.plist`
+  - 補 `NSPhotoLibraryAddUsageDescription` 等文案
+- `frontend/android/app/src/main/AndroidManifest.xml`
+  - 補媒體權限
+- `frontend/pubspec.yaml` / `frontend/pubspec.lock`
+  - 新增 `photo_manager`
+- 驗證：
+- `python -m py_compile backend/app.py`（通過）
+- `flutter analyze`（通過，僅剩既有 warning / info，無新增 error）
+- `flutter build web --release --base-href /food-ai-app/`（通過）
+- commit：pending
+- date：2026-06-17

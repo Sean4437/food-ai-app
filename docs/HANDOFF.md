@@ -1,4 +1,4 @@
-﻿# Food AI App - Handoff
+# Food AI App - Handoff
 
 最後更新：2026-02-25
 
@@ -98,3 +98,23 @@ flutter build web --release --base-href /food-ai-app/
 2. 若流程或架構有變，`HANDOFF` 是否同步更新。
 3. 文字檔是否 UTF-8。
 4. 是否只提交任務相關檔案（避免夾帶無關 `docs/*`、`tools/*`）。
+## 14. 2026-06 相機照片儲存策略
+- 目前拍照流程維持使用系統原生相機 / `image_picker`。
+- App 內仍會保存分析用照片；新增的是「是否另外同步一份到系統相簿」。
+- 設定位置：`設定 > 拍照與照片 > 拍照後同步存到系統相簿`
+- 預設：關閉。
+- 僅套用在「相機拍照」流程：
+  - `即拍建議` 拍照後儲存
+  - `記錄` 頁用相機新增餐點
+- 不套用在「從相簿選圖」流程，避免重複寫回。
+- 平台策略：
+  - Web：不顯示此設定，也不做系統相簿同步。
+  - iOS / Android：使用 `photo_manager` 寫入系統相簿。
+- 權限策略：
+  - iOS 使用 `NSPhotoLibraryAddUsageDescription`，走 add-only 權限。
+  - Android 補 `READ_MEDIA_IMAGES` / `READ_MEDIA_VIDEO` 權限以支援媒體存取流程。
+- 失敗策略：
+  - 若系統相簿寫入失敗或未授權，Food AI 內部保存仍視為成功。
+  - UI 只提示「已存到 Food AI，但未能寫入系統相簿 / 未取得權限」。
+- 注意：
+  - 目前 `frontend/lib/l10n/*.arb` 仍有歷史編碼問題，這次新設定文案先在畫面內用中英雙語字串處理，未新增 ARB key。

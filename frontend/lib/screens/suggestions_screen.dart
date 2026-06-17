@@ -1,9 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:math' as math;
 import '../state/app_state.dart';
 import '../models/analysis_result.dart';
@@ -15,6 +14,7 @@ import '../widgets/app_background.dart';
 import '../widgets/subscription_paywall.dart';
 import '../design/text_styles.dart';
 import '../services/api_service.dart';
+import '../services/gallery_save_types.dart';
 
 class SuggestionsScreen extends StatefulWidget {
   const SuggestionsScreen({super.key});
@@ -42,6 +42,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       TextEditingController();
   String? _overrideCalorieRange;
   String? _displayCalorieRange;
+  ImageSource? _captureSource;
   late final AnimationController _scanController;
   double _progressValue = 0;
   int _statusIndex = 0;
@@ -108,15 +109,18 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       _referenceLengthController.text = '';
       _overrideCalorieRange = null;
       _displayCalorieRange = null;
+      _captureSource = null;
     });
     final file = await _picker.pickImage(source: source);
     if (!mounted) return;
     if (file == null) return;
     final preview = await file.readAsBytes();
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
       _previewBytes = preview;
+      _captureSource = source;
     });
     _startSmartProgress();
     final locale = Localizations.localeOf(context).toLanguageTag();
@@ -191,6 +195,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       _previewBytes = null;
       _showSaveActions = false;
       _savedEntry = null;
+      _captureSource = null;
     });
     _startSmartProgress();
     try {
@@ -455,18 +460,26 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         case 'subscription_required':
           return isZh ? '此功能需訂閱後才能使用。' : 'This feature requires subscription.';
         case 'analyze_rate_limited':
-          return isZh ? '分析太頻繁了，請稍後再試。' : 'Too many analysis requests. Please try again later.';
+          return isZh
+              ? '分析太頻繁了，請稍後再試。'
+              : 'Too many analysis requests. Please try again later.';
         case 'ai_model_unavailable':
           return isZh
               ? 'AI 模型目前暫時不可用，系統會自動切換，請稍後再試。'
               : 'AI model is temporarily unavailable. The system will auto-fallback. Please try again.';
         case 'ai_connection_error':
-          return isZh ? 'AI 連線暫時異常，請稍後再試。' : 'Temporary AI connection issue. Please try again.';
+          return isZh
+              ? 'AI 連線暫時異常，請稍後再試。'
+              : 'Temporary AI connection issue. Please try again.';
         case 'ai_auth_error':
-          return isZh ? 'AI 金鑰設定異常，請聯絡管理員。' : 'AI key configuration issue. Please contact support.';
+          return isZh
+              ? 'AI 金鑰設定異常，請聯絡管理員。'
+              : 'AI key configuration issue. Please contact support.';
         case 'ai_invalid_response':
         case 'ai_failed':
-          return isZh ? 'AI 分析暫時失敗，請稍後再試。' : 'AI analysis failed temporarily. Please try again.';
+          return isZh
+              ? 'AI 分析暫時失敗，請稍後再試。'
+              : 'AI analysis failed temporarily. Please try again.';
       }
     }
     final raw = err.toString();
@@ -493,16 +506,51 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       _showSaveActions = false;
       _savedEntry = saved;
     });
+    final galleryMessage = await _syncCameraPhotoIfNeeded(app, t);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(t.logSuccess)),
+      SnackBar(content: Text(galleryMessage ?? t.logSuccess)),
     );
   }
+
+  Future<String?> _syncCameraPhotoIfNeeded(
+    AppState app,
+    AppLocalizations t,
+  ) async {
+    if (_captureSource != ImageSource.camera || _analysis == null) {
+      return null;
+    }
+    final filename =
+        _analysis!.file.name.isNotEmpty ? _analysis!.file.name : 'capture.jpg';
+    final result = await app.syncCameraCaptureToSystemGallery(
+      _analysis!.originalBytes,
+      filename: filename,
+      creationDate: _savedEntry?.time ?? _analysis!.time,
+    );
+    switch (result.status) {
+      case GallerySaveStatus.permissionDenied:
+        return _isZh()
+            ? '已存到 Food AI，但未取得系統相簿權限。'
+            : 'Saved in Food AI, but gallery permission was not granted.';
+      case GallerySaveStatus.failed:
+        return _isZh()
+            ? '已存到 Food AI，但未能寫入系統相簿。'
+            : 'Saved in Food AI, but the image could not be written to the system gallery.';
+      case GallerySaveStatus.saved:
+      case GallerySaveStatus.disabled:
+      case GallerySaveStatus.notSupported:
+        return null;
+    }
+  }
+
+  bool _isZh() => Localizations.localeOf(context).languageCode.startsWith('zh');
 
   Future<void> _editFoodName() async {
     if (_analysis == null) return;
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     if (!await _ensureFeatureAccess(app, AppFeature.analyze)) return;
+    if (!mounted) return;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final isZh = Localizations.localeOf(context)
         .languageCode
@@ -1520,7 +1568,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                   inactiveTrackColor:
                       theme.colorScheme.primary.withValues(alpha: 0.2),
                   thumbColor: theme.colorScheme.primary,
-                  overlayColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                  overlayColor:
+                      theme.colorScheme.primary.withValues(alpha: 0.12),
                 ),
                 child: Slider(
                   value: _portionPercent.toDouble(),
@@ -1937,7 +1986,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                         height: barHeight,
                         width: rangeWidth,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.35),
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
@@ -2349,7 +2399,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                 IgnorePointer(
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.22),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.22),
                                       borderRadius: BorderRadius.circular(28),
                                     ),
                                   ),
@@ -2360,7 +2411,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                     width: innerWidth,
                                     height: innerHeight,
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.4),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.4),
                                       borderRadius: BorderRadius.circular(26),
                                     ),
                                     child: Padding(
@@ -2416,8 +2468,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                                         boxShadow: [
                                                           BoxShadow(
                                                             color: Colors.black
-                                                                .withValues(alpha: 
-                                                                    0.12),
+                                                                .withValues(
+                                                                    alpha:
+                                                                        0.12),
                                                             blurRadius: 26,
                                                             offset:
                                                                 const Offset(
@@ -2510,14 +2563,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                                                 alpha: 0.94),
                                                     foregroundColor: canAnalyze
                                                         ? Colors.white
-                                                        : theme
-                                                            .colorScheme.primary,
+                                                        : theme.colorScheme
+                                                            .primary,
                                                     side: BorderSide(
                                                       color: canAnalyze
                                                           ? theme.colorScheme
                                                               .primary
-                                                          : theme
-                                                              .colorScheme.primary
+                                                          : theme.colorScheme
+                                                              .primary
                                                               .withValues(
                                                                   alpha: 0.45),
                                                     ),
@@ -2529,10 +2582,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                             const SizedBox(height: 8),
                                             Text(
                                               _error!,
-                                              style: AppTextStyles.caption(
-                                                      context)
-                                                  .copyWith(
-                                                      color: Colors.redAccent),
+                                              style:
+                                                  AppTextStyles.caption(context)
+                                                      .copyWith(
+                                                          color:
+                                                              Colors.redAccent),
                                               textAlign: TextAlign.center,
                                             ),
                                           ],
@@ -2542,10 +2596,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                               isZh
                                                   ? '你仍可使用「輸入名稱」與「自訂義」功能'
                                                   : 'You can still use name input and custom foods.',
-                                              style: AppTextStyles.caption(
-                                                      context)
-                                                  .copyWith(
-                                                      color: Colors.black54),
+                                              style:
+                                                  AppTextStyles.caption(context)
+                                                      .copyWith(
+                                                          color:
+                                                              Colors.black54),
                                               textAlign: TextAlign.center,
                                             ),
                                           ],

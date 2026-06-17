@@ -36,11 +36,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>需要使用相機來拍攝食物照片進行分析。</string>
+	<string>需要使用相機來拍攝餐點照片，供 Food AI 進行分析與記錄。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>需要存取相簿來選擇食物照片進行分析。</string>
+	<string>需要讀取你的照片，以便從相簿選擇餐點圖片或營養標示圖片。</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>需要存取相簿來儲存或管理食物照片。</string>
+	<string>若你開啟同步保存功能，Food AI 會將拍攝的照片另外保存到系統相簿。</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

@@ -17,6 +17,8 @@ import '../models/label_result.dart';
 import '../models/custom_food.dart';
 import '../models/week_plan.dart';
 import '../services/api_service.dart';
+import '../services/gallery_save_service.dart';
+import '../services/gallery_save_types.dart';
 import '../services/name_lookup_service.dart';
 import '../services/supabase_service.dart';
 import '../config/supabase_config.dart';
@@ -752,6 +754,11 @@ class AppState extends ChangeNotifier {
   DateTime? get trialEndAt => _trialEnd;
   bool get chatAvailable => canUseFeature(AppFeature.chat);
   bool get chatSending => _chatSending;
+  bool get supportsSystemGallerySync =>
+      supportsSystemGallerySave &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.android);
+  bool get saveCameraPhotosToGallery => profile.saveCameraPhotosToGallery;
   String? get chatError => _chatError;
   List<ChatMessage> get chatMessages => List.unmodifiable(_chatMessages);
   Uint8List? get chatAvatarBytes => _chatAvatarBytes;
@@ -1624,6 +1631,24 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     await _store.upsert(entry);
     return entry;
+  }
+
+  Future<GallerySaveResult> syncCameraCaptureToSystemGallery(
+    List<int> bytes, {
+    required String filename,
+    DateTime? creationDate,
+  }) async {
+    if (!saveCameraPhotosToGallery) {
+      return const GallerySaveResult(GallerySaveStatus.disabled);
+    }
+    if (!supportsSystemGallerySync) {
+      return const GallerySaveResult(GallerySaveStatus.notSupported);
+    }
+    return saveImageToSystemGallery(
+      Uint8List.fromList(bytes),
+      filename: filename,
+      creationDate: creationDate,
+    );
   }
 
   Future<void> init() async {
@@ -11028,6 +11053,7 @@ class AppState extends ChangeNotifier {
       'nutrition_chart': profile.nutritionChartStyle,
       'nutrition_value_mode': profile.nutritionValueMode,
       'glow_enabled': profile.glowEnabled,
+      'save_camera_photos_to_gallery': profile.saveCameraPhotosToGallery,
       'exercise_suggestion_type': profile.exerciseSuggestionType,
       'calorie_history_days': profile.calorieHistoryDays,
     };
@@ -11106,6 +11132,9 @@ class AppState extends ChangeNotifier {
       ..nutritionValueMode = (data['nutrition_value_mode'] as String?) ??
           profile.nutritionValueMode
       ..glowEnabled = (data['glow_enabled'] as bool?) ?? profile.glowEnabled
+      ..saveCameraPhotosToGallery =
+          (data['save_camera_photos_to_gallery'] as bool?) ??
+              profile.saveCameraPhotosToGallery
       ..exerciseSuggestionType =
           (data['exercise_suggestion_type'] as String?) ??
               profile.exerciseSuggestionType
@@ -11369,6 +11398,7 @@ class UserProfile {
     required this.nutritionChartStyle,
     required this.nutritionValueMode,
     required this.glowEnabled,
+    required this.saveCameraPhotosToGallery,
     required this.exerciseSuggestionType,
     required this.calorieHistoryDays,
   });
@@ -11418,6 +11448,7 @@ class UserProfile {
   String nutritionChartStyle;
   String nutritionValueMode;
   bool glowEnabled;
+  bool saveCameraPhotosToGallery;
   String exerciseSuggestionType;
   int calorieHistoryDays;
 
@@ -11468,6 +11499,7 @@ class UserProfile {
       nutritionChartStyle: 'bars',
       nutritionValueMode: 'amount',
       glowEnabled: true,
+      saveCameraPhotosToGallery: false,
       exerciseSuggestionType: 'walking',
       calorieHistoryDays: 7,
     );

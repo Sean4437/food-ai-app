@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
+import '../services/gallery_save_types.dart';
 import '../state/app_state.dart';
 import '../models/meal_entry.dart';
 import 'subscription_paywall.dart';
@@ -50,8 +51,7 @@ String _replaceCupSizeToken(String text, String nextSizeToken) {
   var value = text.trim();
   if (value.isEmpty) return nextSizeToken;
   value = value.replaceAll(
-    RegExp(
-        r'(特大杯|大杯|中杯|小杯|x-large|xlarge|large|medium|small|xl|lg|md|sm)\s*',
+    RegExp(r'(特大杯|大杯|中杯|小杯|x-large|xlarge|large|medium|small|xl|lg|md|sm)\s*',
         caseSensitive: false),
     '',
   );
@@ -363,6 +363,27 @@ String _nameLookupErrorMessage(BuildContext context, String code) {
   }
 }
 
+String? _gallerySaveErrorMessage(
+  AppLocalizations t,
+  GallerySaveStatus status,
+) {
+  final isZh = t.localeName.toLowerCase().startsWith('zh');
+  switch (status) {
+    case GallerySaveStatus.permissionDenied:
+      return isZh
+          ? '已存到 Food AI，但未取得系統相簿權限。'
+          : 'Saved in Food AI, but gallery permission was not granted.';
+    case GallerySaveStatus.failed:
+      return isZh
+          ? '已存到 Food AI，但未能寫入系統相簿。'
+          : 'Saved in Food AI, but the image could not be written to the system gallery.';
+    case GallerySaveStatus.saved:
+    case GallerySaveStatus.disabled:
+    case GallerySaveStatus.notSupported:
+      return null;
+  }
+}
+
 Future<RecordResult?> showRecordSheet(
   BuildContext context,
   AppState app, {
@@ -396,18 +417,21 @@ Future<RecordResult?> showRecordSheet(
                   ListTile(
                     leading: const Icon(Icons.photo_camera_outlined),
                     title: Text(t.pickFromCamera),
-                    onTap: () => Navigator.of(context).pop(_RecordInputMode.camera),
+                    onTap: () =>
+                        Navigator.of(context).pop(_RecordInputMode.camera),
                   ),
                   ListTile(
                     leading: const Icon(Icons.photo_library_outlined),
                     title: Text(t.pickFromGallery),
-                    onTap: () => Navigator.of(context).pop(_RecordInputMode.gallery),
+                    onTap: () =>
+                        Navigator.of(context).pop(_RecordInputMode.gallery),
                   ),
                   ListTile(
                     leading: const Icon(Icons.edit_note),
                     title: Text(t.suggestInstantNameSubmit),
                     subtitle: Text(t.suggestInstantNameHint),
-                    onTap: () => Navigator.of(context).pop(_RecordInputMode.name),
+                    onTap: () =>
+                        Navigator.of(context).pop(_RecordInputMode.name),
                   ),
                   ListTile(
                     leading: const Icon(Icons.close),
@@ -521,6 +545,23 @@ Future<RecordResult?> showRecordSheet(
     overrideTime: overrideTime,
   );
   if (entry == null) return null;
+  final originalBytes = await xfile.readAsBytes();
+  if (!context.mounted) return null;
+  final galleryMessage = _gallerySaveErrorMessage(
+    t,
+    (await app.syncCameraCaptureToSystemGallery(
+      originalBytes,
+      filename: xfile.name.isNotEmpty ? xfile.name : 'capture.jpg',
+      creationDate: entry.time,
+    ))
+        .status,
+  );
+  if (!context.mounted) return null;
+  if (galleryMessage != null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(galleryMessage)),
+    );
+  }
   final mealId = entry.mealId ?? entry.id;
   final date = DateTime(entry.time.year, entry.time.month, entry.time.day);
   final count = app.entriesForMealId(mealId).length;
