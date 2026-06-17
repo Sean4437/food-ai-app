@@ -1,4 +1,6 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'dart:ui' show lerpDouble;
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
@@ -30,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final Map<DateTime, int> _dateSelectedMeal = {};
   String? _lastPlateAsset;
   static const double _statusCardHeight = 210;
+  static const int _maxHomeDates = 14;
+  static const int _maxPageDots = 5;
 
   Widget _skeletonBar(double width, {double height = 12}) {
     return Container(
@@ -383,7 +387,8 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         color: appTheme.card,
         borderRadius: BorderRadius.circular(appTheme.radiusCard),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
+        border:
+            Border.all(color: Colors.black.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -415,6 +420,111 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  List<DateTime> _recentDisplayDates(List<MealEntry> entries) {
+    final dates = entries
+        .map((e) => DateTime(e.time.year, e.time.month, e.time.day))
+        .toSet()
+        .toList()
+      ..sort((a, b) => b.compareTo(a));
+    if (dates.length <= _maxHomeDates) return dates;
+    return dates.take(_maxHomeDates).toList();
+  }
+
+  List<int> _visiblePageDotIndices(int totalCount, int activeIndex) {
+    if (totalCount <= _maxPageDots) {
+      return List<int>.generate(totalCount, (index) => index);
+    }
+    final halfWindow = _maxPageDots ~/ 2;
+    var start = activeIndex - halfWindow;
+    if (start < 0) start = 0;
+    final maxStart = totalCount - _maxPageDots;
+    if (start > maxStart) start = maxStart;
+    return List<int>.generate(_maxPageDots, (index) => start + index);
+  }
+
+  Widget _pageDots(int totalCount, ThemeData theme) {
+    final visibleIndices = _visiblePageDotIndices(totalCount, _pageIndex);
+    return Column(
+      children: [
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.04, 0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          child: Row(
+            key: ValueKey<String>(visibleIndices.join('-')),
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (final actualIndex in visibleIndices)
+                TweenAnimationBuilder<double>(
+                  key: ValueKey<int>(actualIndex),
+                  tween: Tween<double>(
+                    begin: 0,
+                    end: _pageIndex == actualIndex ? 1 : 0,
+                  ),
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutBack,
+                  builder: (context, value, child) {
+                    final isActive = _pageIndex == actualIndex;
+                    final width = lerpDouble(8, 24, value) ?? 8;
+                    final height = lerpDouble(8, 10, value) ?? 8;
+                    final scale = lerpDouble(1, 1.08, value) ?? 1;
+                    final color = Color.lerp(
+                          Colors.black26,
+                          theme.colorScheme.primary,
+                          value,
+                        ) ??
+                        Colors.black26;
+                    return Transform.scale(
+                      scale: scale,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: width,
+                        height: height,
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: isActive
+                              ? [
+                                  BoxShadow(
+                                    color: theme.colorScheme.primary
+                                        .withValues(alpha: 0.22),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '${_pageIndex + 1} / $totalCount',
+          style: AppTextStyles.caption(context)
+              .copyWith(color: Colors.black45, fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+
   Widget _dailySummaryCard(
     AppState app,
     AppLocalizations t,
@@ -440,8 +550,8 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           if (!app.isDailySummaryReady(date))
             const Center(
-              child: Icon(Icons.hourglass_empty,
-                  size: 24, color: Colors.black45),
+              child:
+                  Icon(Icons.hourglass_empty, size: 24, color: Colors.black45),
             ),
           const SizedBox(height: 6),
           Expanded(
@@ -481,8 +591,8 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           if (!app.isDailySummaryReady(date))
             const Center(
-              child: Icon(Icons.hourglass_empty,
-                  size: 24, color: Colors.black45),
+              child:
+                  Icon(Icons.hourglass_empty, size: 24, color: Colors.black45),
             ),
           const SizedBox(height: 6),
           Expanded(
@@ -522,15 +632,16 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           if (!app.isWeeklySummaryReady(date))
             const Center(
-              child: Icon(Icons.hourglass_empty,
-                  size: 24, color: Colors.black45),
+              child:
+                  Icon(Icons.hourglass_empty, size: 24, color: Colors.black45),
             ),
           const SizedBox(height: 4),
           Text(
             app.weekSummaryText(date, t),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+            style:
+                AppTextStyles.caption(context).copyWith(color: Colors.black54),
           ),
           const SizedBox(height: 10),
           Row(
@@ -550,7 +661,8 @@ class _HomeScreenState extends State<HomeScreen> {
               app.nextWeekAdviceText(date, t),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.caption(context).copyWith(color: Colors.black54),
+              style: AppTextStyles.caption(context)
+                  .copyWith(color: Colors.black54),
             ),
           ),
         ],
@@ -572,8 +684,10 @@ class _HomeScreenState extends State<HomeScreen> {
       t: t,
       appTheme: appTheme,
       theme: theme,
-      onSelectActivityLevel: () => _selectActivityLevel(context, app, activeDate, t),
-      onSelectExerciseType: () => _selectExerciseType(context, app, activeDate, t),
+      onSelectActivityLevel: () =>
+          _selectActivityLevel(context, app, activeDate, t),
+      onSelectExerciseType: () =>
+          _selectExerciseType(context, app, activeDate, t),
       onSelectExerciseMinutes: () =>
           _selectExerciseMinutes(context, app, activeDate, t),
     );
@@ -622,12 +736,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
-    final dates = entries
-        .map((e) => DateTime(e.time.year, e.time.month, e.time.day))
-        .toSet()
-        .toList();
-    dates.sort((a, b) => b.compareTo(a));
-    final displayDates = dates.isEmpty ? [DateTime.now()] : dates;
+    final recentDates = _recentDisplayDates(entries);
+    final hasLoggedDates = recentDates.isNotEmpty;
+    final displayDates = hasLoggedDates ? recentDates : [DateTime.now()];
     if (_pageIndex >= displayDates.length) {
       _pageIndex = 0;
     }
@@ -719,7 +830,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              if (displayDates.isEmpty)
+              if (!hasLoggedDates)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
@@ -759,23 +870,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        displayDates.length,
-                        (index) => Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: _pageIndex == index ? 8 : 6,
-                          height: _pageIndex == index ? 8 : 6,
-                          decoration: BoxDecoration(
-                            color: _pageIndex == index
-                                ? theme.colorScheme.primary
-                                : Colors.black26,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ),
+                    _pageDots(displayDates.length, theme),
                     const SizedBox(height: 14),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),

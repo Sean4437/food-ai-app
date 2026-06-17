@@ -296,3 +296,21 @@
 - `flutter build web --release --base-href /food-ai-app/`（通過）
 - commit：`697437f`
 - date：2026-06-17
+
+### 23) 首頁歷史點位改為最近 14 天與 5 點視窗
+- 問題：首頁底部頁面點位會隨歷史紀錄持續增加，導致畫面越來越擁擠，也不利於快速辨識目前所在頁。
+- 根因：
+- `home_screen.dart` 直接把所有有紀錄的日期都當成可滑頁面，點位列也對每一天生成一個圓點，沒有視窗上限。
+- 空狀態判斷依賴 `displayDates.isEmpty`，但 `displayDates` 在無資料時仍會落到 `[DateTime.now()]`，分支實際不會成立。
+- 修正：
+- `frontend/lib/screens/home_screen.dart`
+  - 首頁只保留最近 14 天有紀錄的日期作為可滑頁面。
+  - 底部點位改成最多顯示 5 顆的滑動視窗，依目前頁面自動平移。
+  - 目前頁改成膠囊型高亮，加入縮放 / 淡入動畫，並補 `x / total` 文字。
+  - 空資料分支改用 `hasLoggedDates` 判斷，避免邏輯失效。
+- 驗證：
+- `python -m py_compile backend/app.py`（通過）
+- `flutter analyze lib/screens/home_screen.dart`（通過；僅既有 `prefer_const_declarations` info）
+- `flutter build web --release --base-href /food-ai-app/`（通過）
+- commit：pending
+- date：2026-06-17
