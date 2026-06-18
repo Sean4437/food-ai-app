@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../design/text_styles.dart';
@@ -135,6 +135,13 @@ class _LoginScreenState extends State<LoginScreen> {
     if (RegExp(r'[\x00-\x1F\x7F]').hasMatch(nickname)) return false;
     if (RegExp(r'[\u200B-\u200F\uFEFF]').hasMatch(nickname)) return false;
     return true;
+  }
+
+  bool _isZh() {
+    return Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
   }
 
   bool _isNetworkError(String text) {
@@ -421,6 +428,48 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _sendMagicLink() async {
+    if (_loading) return;
+    final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    _clearBanner();
+    _clearInlineErrors();
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      _setInlineEmailError(t.authEmailRequired);
+      return;
+    }
+    if (!_isValidEmail(email)) {
+      _setInlineEmailError(t.authEmailInvalid);
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await app.sendMagicLink(email);
+      if (!mounted) return;
+      _refreshRememberedEmails(app);
+      _showBanner(
+        _isZh()
+            ? '\u767b\u5165\u9023\u7d50\u5df2\u5bc4\u51fa\uff0c\u8acb\u5230\u4fe1\u7bb1\u958b\u555f'
+            : 'Sign-in link sent. Check your email.',
+      );
+    } catch (err) {
+      if (!mounted) return;
+      if (_isNetworkError(err.toString())) {
+        _showBanner(t.authNetworkError, isError: true);
+      } else {
+        _showBanner(
+          _isZh()
+              ? '\u5bc4\u9001\u767b\u5165\u9023\u7d50\u5931\u6557\uff0c\u8acb\u78ba\u8a8d Email \u662f\u5426\u5df2\u8a3b\u518a'
+              : 'Failed to send sign-in link. Please confirm the email is registered.',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final app = AppStateScope.of(context);
@@ -660,6 +709,27 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
+                    if (!_isSignUp) ...[
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: _loading ? null : _sendMagicLink,
+                        icon: const Icon(Icons.mark_email_read_outlined),
+                        label: Text(
+                          _isZh()
+                              ? '\u5bc4\u9001\u767b\u5165\u9023\u7d50'
+                              : 'Email sign-in link',
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _isZh()
+                            ? '\u4e0d\u7528\u5bc6\u78bc\uff0c\u5f9e\u4fe1\u7bb1\u9ede\u4e00\u4e0b\u5c31\u80fd\u767b\u5165'
+                            : 'No password needed. Open the email link to sign in.',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.caption(context)
+                            .copyWith(color: Colors.black54),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     OutlinedButton(
                       onPressed: _loading
@@ -730,4 +800,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

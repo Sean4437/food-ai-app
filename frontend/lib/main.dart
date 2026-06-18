@@ -133,9 +133,9 @@ class _AuthGateState extends State<AuthGate> {
     } catch (_) {}
   }
 
-  bool _looksLikeRecovery(Uri uri) {
-    bool hasRecovery(Map<String, String> params) {
-      if (params['type'] == 'recovery') return true;
+  bool _looksLikeAuthLink(Uri uri) {
+    bool hasAuthPayload(Map<String, String> params) {
+      if (params.containsKey('type')) return true;
       if (params.containsKey('access_token')) return true;
       if (params.containsKey('refresh_token')) return true;
       if (params.containsKey('code')) return true;
@@ -145,7 +145,7 @@ class _AuthGateState extends State<AuthGate> {
       return false;
     }
 
-    if (hasRecovery(uri.queryParameters)) return true;
+    if (hasAuthPayload(uri.queryParameters)) return true;
 
     final fragment = uri.fragment;
     if (fragment.isEmpty) return false;
@@ -153,33 +153,36 @@ class _AuthGateState extends State<AuthGate> {
     final queryPart = cleaned.contains('?') ? cleaned.split('?').last : cleaned;
     if (!queryPart.contains('=')) return false;
     final fragParams = Uri.splitQueryString(queryPart);
-    return hasRecovery(fragParams);
+    return hasAuthPayload(fragParams);
+  }
+
+  String? _extractAuthParam(Uri target, String key) {
+    final direct = target.queryParameters[key];
+    if (direct != null && direct.isNotEmpty) return direct;
+    final fragment = target.fragment;
+    if (fragment.isEmpty) return null;
+    final cleaned = fragment.startsWith('/') ? fragment.substring(1) : fragment;
+    final queryPart = cleaned.contains('?') ? cleaned.split('?').last : cleaned;
+    if (!queryPart.contains('=')) return null;
+    final fragParams = Uri.splitQueryString(queryPart);
+    final value = fragParams[key];
+    return (value != null && value.isNotEmpty) ? value : null;
+  }
+
+  String? _extractAuthCode(Uri target) {
+    return _extractAuthParam(target, 'code');
   }
 
   Future<void> _handleAuthLink(Uri uri) async {
-    if (!_looksLikeRecovery(uri)) return;
+    if (!_looksLikeAuthLink(uri)) return;
     if (_handlingRecoveryLink) return;
     _handlingRecoveryLink = true;
+    final authType = _extractAuthParam(uri, 'type');
+    final isRecovery = authType == 'recovery';
     try {
-      String? extractParam(Uri target, String key) {
-        final direct = target.queryParameters[key];
-        if (direct != null && direct.isNotEmpty) return direct;
-        final fragment = target.fragment;
-        if (fragment.isEmpty) return null;
-        final cleaned =
-            fragment.startsWith('/') ? fragment.substring(1) : fragment;
-        final queryPart =
-            cleaned.contains('?') ? cleaned.split('?').last : cleaned;
-        if (!queryPart.contains('=')) return null;
-        final fragParams = Uri.splitQueryString(queryPart);
-        final value = fragParams[key];
-        return (value != null && value.isNotEmpty) ? value : null;
-      }
-
-      final tokenHash =
-          extractParam(uri, 'token') ?? extractParam(uri, 'token_hash');
-      final type = extractParam(uri, 'type');
-      if (tokenHash != null && (type == null || type == 'recovery')) {
+      final tokenHash = _extractAuthParam(uri, 'token') ??
+          _extractAuthParam(uri, 'token_hash');
+      if (tokenHash != null && isRecovery) {
         await Supabase.instance.client.auth.verifyOTP(
           tokenHash: tokenHash,
           type: OtpType.recovery,
@@ -188,33 +191,20 @@ class _AuthGateState extends State<AuthGate> {
         return;
       }
 
-      String? extractCode(Uri target) {
-        final code = target.queryParameters['code'];
-        if (code != null && code.isNotEmpty) return code;
-        final fragment = target.fragment;
-        if (fragment.isEmpty) return null;
-        final cleaned =
-            fragment.startsWith('/') ? fragment.substring(1) : fragment;
-        final queryPart =
-            cleaned.contains('?') ? cleaned.split('?').last : cleaned;
-        if (!queryPart.contains('=')) return null;
-        final fragParams = Uri.splitQueryString(queryPart);
-        final fragCode = fragParams['code'];
-        return fragCode != null && fragCode.isNotEmpty ? fragCode : null;
-      }
-
-      final code = extractCode(uri);
+      final code = _extractAuthCode(uri);
       if (code != null) {
         await Supabase.instance.client.auth.exchangeCodeForSession(code);
-        if (mounted) setState(() => _showResetPassword = true);
+        if (mounted && isRecovery) {
+          setState(() => _showResetPassword = true);
+        }
       } else {
         await Supabase.instance.client.auth.getSessionFromUrl(uri);
-        if (mounted) {
+        if (mounted && isRecovery) {
           setState(() => _showResetPassword = true);
         }
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && isRecovery) {
         setState(() => _showResetPassword = true);
       }
     } finally {

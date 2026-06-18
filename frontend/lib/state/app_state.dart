@@ -9425,6 +9425,19 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> sendMagicLink(String email) async {
+    final trimmedEmail = email.trim();
+    if (trimmedEmail.isEmpty) return;
+    await _supabase.client.auth.signInWithOtp(
+      email: trimmedEmail,
+      emailRedirectTo: _supabaseRedirectUrl(),
+      shouldCreateUser: false,
+    );
+    rememberAuthEmail(trimmedEmail);
+    updateField((p) => p.email = trimmedEmail);
+    notifyListeners();
+  }
+
   Future<void> resendVerificationEmail(String email) async {
     final trimmedEmail = email.trim();
     if (trimmedEmail.isEmpty) return;
