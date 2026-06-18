@@ -327,11 +327,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   void _triggerAutoFlows() {
     final app = _app;
     if (app == null) return;
-    final t = AppLocalizations.of(context)!;
-    final locale = Localizations.localeOf(context).toLanguageTag();
     scheduleMicrotask(() async {
       await app.runAutoFinalizeFlow();
-      await app.runAutoMealChatReminder(t, locale);
     });
   }
 

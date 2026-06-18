@@ -56,7 +56,6 @@ const String _kChatSummaryKey = 'chat_summary';
 const String _kRecentAuthEmailsKey = 'recent_auth_emails';
 const String _kWeekPlanCacheKey = 'week_plan_cache';
 const String _kWeekPlanReplanCacheKey = 'week_plan_replan_cache';
-const String _kMealReminderKeyPrefix = 'last_meal_reminder';
 const int _kAccessGraceHoursDefault = 24;
 const int _kRecentAuthEmailsMaxCount = 5;
 const String _kEntitlementAnalyze = 'ai_analyze';
@@ -1774,124 +1773,10 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> runAutoMealChatReminder(
-    AppLocalizations t,
-    String locale,
-  ) async {
-    if (!chatAvailable) return;
-    if (_chatSending) return;
-    final now = DateTime.now();
-    final reminder = _buildMealReminder(now);
-    if (reminder == null) return;
-    await _sendHiddenMealReminder(reminder, t, locale);
-  }
-
-  MealReminder? _buildMealReminder(DateTime now) {
-    final reminderType = _currentReminderMealType(now);
-    if (reminderType == null) return null;
-    if (!_isMealReminderEnabled(reminderType)) return null;
-    final date = _dateOnly(now);
-    if (_hasNonBeverageMealForDate(date, reminderType)) return null;
-    final dayKey = _dayKey(date);
-    final key = _lastMealReminderKey(reminderType);
-    if (_meta[key] == dayKey) return null;
-    _meta[key] = dayKey;
-    // ignore: unawaited_futures
-    _saveOverrides();
-    return MealReminder(type: reminderType, date: date);
-  }
-
-  Future<void> _sendHiddenMealReminder(
-    MealReminder reminder,
-    AppLocalizations t,
-    String locale,
-  ) async {
-    if (_chatSending) return;
-    _chatSending = true;
-    // Do not surface chat errors for auto reminders.
-    try {
-      final now = DateTime.now();
-      final mealLabel = _mealTypeLabel(reminder.type, t);
-      final prompt = _buildHiddenMealPrompt(mealLabel, t);
-      final payload = {
-        'lang': locale,
-        'profile': _chatProfileSnapshot(_dateOnly(now)),
-        'days': _recentDaysForChat(t),
-        'today_meals': _todayMealsForChat(t),
-        'context': {
-          'now': now.toIso8601String(),
-          'last_meal_time': _lastMealTimeForChat(now),
-          'fasting_hours': _fastingHoursForChat(now),
-        },
-        if (_chatSummary.trim().isNotEmpty) 'summary': _chatSummary.trim(),
-        'messages': [
-          ..._chatMessagesForApi(),
-          {'role': 'user', 'content': prompt},
-        ],
-      };
-      final response = await _api.chat(payload, _accessToken());
-      final reply = (response['reply'] as String?)?.trim() ?? '';
-      final summary = (response['summary'] as String?)?.trim() ?? '';
-      if (reply.isNotEmpty) {
-        _chatMessages.add(ChatMessage.assistant(reply));
-      }
-      if (summary.isNotEmpty) {
-        _chatSummary = summary;
-      }
-      _trimChatHistory();
-      await _persistChat();
-    } catch (_) {
-      // Silent failure for auto reminders.
-    } finally {
-      _chatSending = false;
-      notifyListeners();
-    }
-  }
-
-  String _buildHiddenMealPrompt(String mealLabel, AppLocalizations t) {
-    if (t.localeName.startsWith('en')) {
-      return 'It is $mealLabel time. Based on my logged meals today, remaining calories, and time since last meal, give 2-4 short suggestions. If I am already over, clearly advise me to stop eating. Do not ask questions or request photos. Follow my persona and tone, and occasionally add a meow/nya.';
-    }
-    return '現在是$mealLabel時間。請根據我今天已記錄的飲食、剩餘熱量與距離上次進食時間，給我 2-4 個簡短建議；若我已超標請明確叫我先停止進食。不要反問，也不要要求拍照。請維持我的角色語氣，並可偶爾加喵。';
-  }
-
-  MealType? _currentReminderMealType(DateTime time) {
-    final current = TimeOfDay.fromDateTime(time);
-    if (_inRange(profile.breakfastStart, profile.breakfastEnd, current)) {
-      return MealType.breakfast;
-    }
-    if (_inRange(profile.lunchStart, profile.lunchEnd, current)) {
-      return MealType.lunch;
-    }
-    if (_inRange(profile.dinnerStart, profile.dinnerEnd, current)) {
-      return MealType.dinner;
-    }
-    return null;
-  }
-
-  bool _isMealReminderEnabled(MealType type) {
-    switch (type) {
-      case MealType.breakfast:
-        return profile.breakfastReminderEnabled;
-      case MealType.lunch:
-        return profile.lunchReminderEnabled;
-      case MealType.dinner:
-        return profile.dinnerReminderEnabled;
-      default:
-        return false;
-    }
-  }
-
-  bool _hasNonBeverageMealForDate(DateTime date, MealType type) {
-    final groups = mealGroupsForDate(date, type);
-    for (final group in groups) {
-      if (!_isBeverageGroup(group)) return true;
-    }
-    return false;
-  }
-
-  String _lastMealReminderKey(MealType type) {
-    return '$_kMealReminderKeyPrefix:${_mealTypeKey(type)}';
+  Future<void> runAutoMealChatReminder() async {
+    // Chat should stay user-driven.
+    // The previous flow injected hidden meal-reminder prompts into chat
+    // history, which polluted later AI context and caused confusing advice.
   }
 
   Future<void> precachePlateAsset() async {
@@ -11301,16 +11186,6 @@ class MealAdvice {
       other: t.nextOtherHint,
     );
   }
-}
-
-class MealReminder {
-  MealReminder({
-    required this.type,
-    required this.date,
-  });
-
-  final MealType type;
-  final DateTime date;
 }
 
 class WaterHydrationEntry {

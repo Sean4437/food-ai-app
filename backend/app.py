@@ -7521,6 +7521,42 @@ def _build_chat_prompt(
         except Exception:
             today_meals_block = str(today_meals)
 
+    today_focus_text = ""
+    latest_day = (days or [])[-1] if days else None
+    if isinstance(latest_day, dict):
+        latest_date = str(latest_day.get("date") or "").strip()
+        latest_meal_count = latest_day.get("meal_count")
+        latest_consumed = latest_day.get("consumed_kcal")
+        latest_remaining = latest_day.get("remaining_kcal")
+        focus_parts = []
+        if latest_date:
+            focus_parts.append(
+                f"日期 {latest_date}" if lang == "zh-TW" else f"date {latest_date}"
+            )
+        if latest_meal_count is not None:
+            focus_parts.append(
+                f"餐數 {latest_meal_count}" if lang == "zh-TW" else f"meals {latest_meal_count}"
+            )
+        if latest_consumed is not None:
+            focus_parts.append(
+                f"已吃 {latest_consumed} kcal"
+                if lang == "zh-TW"
+                else f"consumed {latest_consumed} kcal"
+            )
+        if latest_remaining is not None:
+            focus_parts.append(
+                f"剩餘 {latest_remaining} kcal"
+                if lang == "zh-TW"
+                else f"remaining {latest_remaining} kcal"
+            )
+        if focus_parts:
+            joined = "，".join(focus_parts) if lang == "zh-TW" else ", ".join(focus_parts)
+            today_focus_text = (
+                f"今天優先判斷：{joined}\n"
+                if lang == "zh-TW"
+                else f"Today priority context: {joined}\n"
+            )
+
     now_text = ""
     if context:
         now_raw = str(context.get("now") or "").strip()
@@ -7553,13 +7589,21 @@ def _build_chat_prompt(
             "- reply：回答使用者問題（1-4 句），避免醫療/診斷語氣\n"
             "- summary：濃縮對話記憶（120 字內），保留使用者偏好/目標/禁忌\n"
             "- 若資料不足，先追問 1-2 個必要問題\n"
-            "- 若今天剩餘熱量 <= 0，且使用者想吃/要建議，必須勸戒不要再吃\n"
+            "- 先以『今天』資料回答，最近 7 天只作次要參考，不要被過去幾天平均狀態帶偏\n"
+            "- 若使用者在問『現在/下一餐/今天可以吃什麼』：\n"
+            "  * 今日剩餘熱量 > 250：提供 1-3 個具體可行方向或餐點類型，不要直接叫他不要吃\n"
+            "  * 今日剩餘熱量 1-250：可建議小份量或清淡加餐，不要直接禁止\n"
+            "  * 今日剩餘熱量 <= 0：才明確勸戒停止進食\n"
+            "- 若空腹時間已久或距上餐已久，且今日仍有剩餘熱量，不要直接回『不要吃』\n"
+            "- 『多喝水』只能當附帶提醒，不可作為主要回答，除非使用者明確在問喝水/飲料，或今天以飲料為主\n"
+            "- 不要空泛說教；先直接回答問題，再補一句原因或下一步\n"
             "- 口癖：可用「喵～」或「喵嗚」點綴，但每次回覆最多出現 1 次，且隨機低頻（約 3-5 次回覆出現 1 次）\n"
             "- 若問題與飲食/健康無關，請簡短婉拒並引導回飲食主題\n"
             "JSON 範例：\n"
             "{\n  \"reply\": \"今天晚餐建議清淡些…\",\n  \"summary\": \"使用者偏好清淡、避免油炸…\"\n}\n"
             f"最近 7 天紀錄：\n{days_block}\n"
             f"今日餐點明細（JSON）：{today_meals_block or '無'}\n"
+            f"{today_focus_text}"
             f"{now_text}"
             f"對話摘要：{summary_block or '無'}\n"
         ) + profile_text
@@ -7570,12 +7614,20 @@ def _build_chat_prompt(
         "- reply: answer in 1-4 sentences, avoid medical/diagnosis language\n"
         "- summary: compact memory (<= 120 words), keep user preferences/goals\n"
         "- Ask 1-2 clarifying questions if data is insufficient\n"
-        "- If today's remaining_kcal <= 0 and user asks for food suggestions, discourage further eating\n"
+        "- Base the answer on today's data first; use the last 7 days only as secondary context\n"
+        "- If the user asks what they can eat now/next/today:\n"
+        "  * remaining_kcal > 250: give 1-3 concrete meal directions or food types, do not tell them to skip eating\n"
+        "  * remaining_kcal between 1 and 250: allow only a light/small option, do not flatly forbid eating\n"
+        "  * remaining_kcal <= 0: clearly discourage further eating\n"
+        "- If fasting duration is already long and calories remain, do not default to 'don't eat'\n"
+        "- 'Drink more water' may only be a side note, not the main answer, unless the user is asking about hydration/beverages or today's intake is beverage-heavy\n"
+        "- Avoid generic scolding; answer directly first, then add one short reason or next step\n"
         "- If the question is unrelated to food/health, politely decline and redirect to diet topics\n"
         "JSON example:\n"
         "{\n  \"reply\": \"Keep dinner light...\",\n  \"summary\": \"User prefers light meals...\"\n}\n"
         f"Last 7 days:\n{days_block}\n"
         f"Today's meals (JSON): {today_meals_block or 'none'}\n"
+        f"{today_focus_text}"
         f"{now_text}"
         f"Conversation summary: {summary_block or 'none'}\n"
     ) + profile_text
@@ -8935,7 +8987,7 @@ async def chat(
             messages.append({"role": role, "content": msg.content})
         response, used_model = _create_chat_completion(
             messages=messages,
-            temperature=0.4,
+            temperature=0.25,
         )
         text = response.choices[0].message.content or ""
         data = _parse_json(text)

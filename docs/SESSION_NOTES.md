@@ -314,3 +314,28 @@
 - `flutter build web --release --base-href /food-ai-app/`（通過）
 - commit：pending
 - date：2026-06-17
+
+### 24) 聊天內容改為今日優先，停用自動提醒注入
+- 問題：
+- 聊天頁會出現與使用者當下提問無關、過度保守的內容，例如今天熱量未超標卻直接勸不要吃，或把「多喝水」當成主要回答。
+- 根因：
+- App 啟動時會自動把「餐次提醒」以隱藏 prompt 送進聊天流程，污染聊天歷史與後續對話摘要。
+- 後端 `/chat` prompt 對「今日還能不能吃」的判斷規則不夠明確，模型容易被近 7 天資料或泛化健康語句帶偏。
+- 修正：
+- `frontend/lib/main.dart`
+  - 停止在啟動自動流程中呼叫 `runAutoMealChatReminder(...)`。
+- `frontend/lib/state/app_state.dart`
+  - 移除舊的自動聊天提醒注入流程與相關 `MealReminder` 私有實作。
+  - 保留 `runAutoMealChatReminder()` 空殼，明確註記聊天改為 user-driven，等待之後做獨立提醒介面。
+- `backend/app.py`
+  - `/chat` prompt 新增「今天資料優先」規則。
+  - 明確區分 `remaining_kcal > 250`、`1-250`、`<= 0` 三種回答方式，避免無端叫使用者不要吃。
+  - 限制「多喝水」只能當附帶提醒，不可成為主要回答，除非問題本身與喝水/飲料相關。
+  - 額外加入今日重點摘要（餐數 / 已吃 / 剩餘）到 system prompt。
+  - 將 chat temperature 從 `0.4` 降到 `0.25`，降低泛化與發散回答。
+- 驗證：
+- `python -m py_compile backend/app.py`（通過）
+- `flutter analyze --no-fatal-infos --no-fatal-warnings lib/main.dart lib/state/app_state.dart`（通過）
+- `flutter build web --release --base-href /food-ai-app/`（通過）
+- commit：pending
+- date：2026-06-18
