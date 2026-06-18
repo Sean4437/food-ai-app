@@ -144,20 +144,237 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openOverflow(String action, AppState app, AppLocalizations t) {
-    final tabState = TabScope.of(context);
-    final isZh = Localizations.localeOf(context)
+  bool _isZh(BuildContext context) {
+    return Localizations.localeOf(context)
         .languageCode
         .toLowerCase()
         .startsWith('zh');
+  }
+
+  Future<void> _focusStatusCard(int index) async {
+    if (_statusCardIndex != index) {
+      setState(() => _statusCardIndex = index);
+    }
+    if (!_statusCardController.hasClients) return;
+    await _statusCardController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  Widget _insightSheetSection({
+    required String title,
+    required String body,
+    required IconData icon,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: Colors.black54),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            body.trim().isEmpty ? '-' : body,
+            style:
+                AppTextStyles.caption(context).copyWith(color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showDailyInsightSheet(
+    AppState app,
+    AppLocalizations t,
+    DateTime date,
+  ) async {
+    final theme = Theme.of(context);
+    final appTheme = theme.extension<AppTheme>()!;
+    final dateLabel = DateFormat(
+      'yyyy/MM/dd E',
+      Localizations.localeOf(context).toLanguageTag(),
+    ).format(date);
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: _homeInfoCard(
+            appTheme: appTheme,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(t.summaryTitle, style: AppTextStyles.title2(context)),
+                const SizedBox(height: 4),
+                Text(
+                  dateLabel,
+                  style: AppTextStyles.caption(context)
+                      .copyWith(color: Colors.black45),
+                ),
+                const SizedBox(height: 14),
+                _insightSheetSection(
+                  title: t.dayCardSummaryLabel,
+                  body: app.daySummaryText(date, t),
+                  icon: Icons.summarize_outlined,
+                ),
+                const SizedBox(height: 10),
+                _insightSheetSection(
+                  title: t.dayCardTomorrowLabel,
+                  body: app.dayTomorrowAdvice(date, t),
+                  icon: Icons.lightbulb_outline,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showWeeklyInsightSheet(
+    AppState app,
+    AppLocalizations t,
+    DateTime date,
+  ) async {
+    final theme = Theme.of(context);
+    final appTheme = theme.extension<AppTheme>()!;
+    final dateLabel = DateFormat(
+      'yyyy/MM/dd E',
+      Localizations.localeOf(context).toLanguageTag(),
+    ).format(date);
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: _homeInfoCard(
+            appTheme: appTheme,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(t.weekSummaryTitle, style: AppTextStyles.title2(context)),
+                const SizedBox(height: 4),
+                Text(
+                  dateLabel,
+                  style: AppTextStyles.caption(context)
+                      .copyWith(color: Colors.black45),
+                ),
+                const SizedBox(height: 14),
+                _insightSheetSection(
+                  title: t.weekSummaryTitle,
+                  body: app.weekSummaryText(date, t),
+                  icon: Icons.calendar_view_week_outlined,
+                ),
+                const SizedBox(height: 10),
+                _insightSheetSection(
+                  title: t.nextWeekAdviceTitle,
+                  body: app.nextWeekAdviceText(date, t),
+                  icon: Icons.next_week_outlined,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleFinalizeDay(
+    AppState app,
+    AppLocalizations t,
+    DateTime activeDate,
+  ) async {
+    final success = await app.finalizeDay(
+      activeDate,
+      Localizations.localeOf(context).toLanguageTag(),
+      t,
+    );
+    if (!mounted || !success) return;
+    await _focusStatusCard(2);
+    if (!mounted) return;
+    await _showDailyInsightSheet(app, t, activeDate);
+  }
+
+  Future<void> _openOverflow(
+    String action,
+    AppState app,
+    AppLocalizations t,
+    DateTime activeDate,
+  ) async {
+    final tabState = TabScope.of(context);
+    final isZh = _isZh(context);
     if (action == 'settings') {
       tabState.setIndex(6); // Settings tab
+    } else if (action == 'week_plan') {
+      tabState.setIndex(4); // Week plan tab
     } else if (action == 'custom') {
       tabState.setIndex(5); // Custom tab
+    } else if (action == 'today_summary') {
+      await _focusStatusCard(2);
+      if (!mounted) return;
+      await _showDailyInsightSheet(app, t, activeDate);
+    } else if (action == 'tomorrow_advice') {
+      await _focusStatusCard(3);
+      if (!mounted) return;
+      await _showDailyInsightSheet(app, t, activeDate);
+    } else if (action == 'weekly_summary') {
+      await _focusStatusCard(4);
+      if (!mounted) return;
+      await _showWeeklyInsightSheet(app, t, activeDate);
     } else if (action == 'reset_mock') {
       app.setMockSubscriptionActive(false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(isZh ? '已清除測試訂閱' : 'Test subscription cleared')),
+        SnackBar(
+          content: Text(isZh
+              ? '\u5df2\u6e05\u9664\u6e2c\u8a66\u8a02\u95b1'
+              : 'Test subscription cleared'),
+        ),
       );
     }
   }
@@ -211,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('取消'),
+                      child: Text(_isZh(context) ? '?謘?' : 'Cancel'),
                     ),
                     Expanded(
                       child: Text(
@@ -223,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(selected),
-                      child: const Text('完成'),
+                      child: Text(_isZh(context) ? '?堆?' : 'Done'),
                     ),
                   ],
                 ),
@@ -434,7 +651,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (totalCount <= _maxPageDots) {
       return List<int>.generate(totalCount, (index) => index);
     }
-    final halfWindow = _maxPageDots ~/ 2;
+    const halfWindow = _maxPageDots ~/ 2;
     var start = activeIndex - halfWindow;
     if (start < 0) start = 0;
     final maxStart = totalCount - _maxPageDots;
@@ -774,21 +991,42 @@ class _HomeScreenState extends State<HomeScreen> {
                   _statusPill(t.aiSuggest, theme.colorScheme.primary),
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_horiz),
-                    onSelected: (value) => _openOverflow(value, app, t),
+                    onSelected: (value) {
+                      _openOverflow(value, app, t, activeDate);
+                    },
                     itemBuilder: (context) => [
                       PopupMenuItem(
-                          value: 'settings', child: Text(t.settingsTitle)),
+                        value: 'today_summary',
+                        child: Text(t.dayCardSummaryLabel),
+                      ),
                       PopupMenuItem(
-                          value: 'custom', child: Text(t.customTabTitle)),
+                        value: 'tomorrow_advice',
+                        child: Text(t.dayCardTomorrowLabel),
+                      ),
+                      PopupMenuItem(
+                        value: 'weekly_summary',
+                        child: Text(t.weekSummaryTitle),
+                      ),
+                      PopupMenuItem(
+                        value: 'week_plan',
+                        child: Text(_isZh(context)
+                            ? '\u0037\u5929\u898f\u5283'
+                            : '7-day plan'),
+                      ),
+                      PopupMenuItem(
+                        value: 'custom',
+                        child: Text(t.customTabTitle),
+                      ),
+                      PopupMenuItem(
+                        value: 'settings',
+                        child: Text(t.settingsTitle),
+                      ),
                       if (kIsWeb && app.mockSubscriptionActive)
                         PopupMenuItem(
                           value: 'reset_mock',
                           child: Text(
-                            Localizations.localeOf(context)
-                                    .languageCode
-                                    .toLowerCase()
-                                    .startsWith('zh')
-                                ? '清除測試訂閱'
+                            _isZh(context)
+                                ? '\u5df2\u6e05\u9664\u6e2c\u8a66\u8a02\u95b1'
                                 : 'Reset test subscription',
                           ),
                         ),
@@ -816,14 +1054,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           TabScope.of(context).setIndex(4);
                         },
                         icon: const Icon(Icons.calendar_view_week_rounded),
-                        label: Text(
-                          Localizations.localeOf(context)
-                                  .languageCode
-                                  .toLowerCase()
-                                  .startsWith('zh')
-                              ? '7天規劃'
-                              : '7-day plan',
-                        ),
+                        label: Text(_isZh(context)
+                            ? '\u0037\u5929\u898f\u5283'
+                            : '7-day plan'),
                       ),
                     ),
                   ],
@@ -896,11 +1129,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             }),
                             const Spacer(),
                             TextButton(
-                              onPressed: () => app.finalizeDay(
-                                  activeDate,
-                                  Localizations.localeOf(context)
-                                      .toLanguageTag(),
-                                  t),
+                              onPressed: () {
+                                _handleFinalizeDay(app, t, activeDate);
+                              },
                               child: Text(t.finalizeDay),
                             ),
                           ],
