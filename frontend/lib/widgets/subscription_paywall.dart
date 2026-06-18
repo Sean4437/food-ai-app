@@ -9,12 +9,14 @@ import 'package:url_launcher/url_launcher.dart';
 import '../config/feature_flags.dart';
 import '../config/legal_links.dart';
 import '../state/app_state.dart';
+import 'backup_password_prompt.dart';
 
 Future<void> showSubscriptionPaywall(
   BuildContext context,
   AppState app,
   AppLocalizations t,
 ) async {
+  final hadPaidAccess = app.hasPaidAccess;
   if (kIsWeb) {
     if (!kEnableWebMockSubscription) {
       if (context.mounted) {
@@ -24,10 +26,16 @@ Future<void> showSubscriptionPaywall(
       return;
     }
     await _showMockPaywall(context, app, t);
+    if (context.mounted && !hadPaidAccess && app.hasPaidAccess) {
+      await showBackupPasswordPrompt(context, app);
+    }
     return;
   }
   if (defaultTargetPlatform == TargetPlatform.iOS) {
     await _showIapPaywall(context, app, t);
+    if (context.mounted && !hadPaidAccess && app.hasPaidAccess) {
+      await showBackupPasswordPrompt(context, app);
+    }
   }
 }
 
@@ -54,7 +62,9 @@ String? _paywallStatusLine(BuildContext context, AppState app) {
     if (remainingDays <= 0) {
       return isZh ? '免費試用最後一天' : 'Trial: last day';
     }
-    return isZh ? '免費試用剩餘 $remainingDays 天' : '$remainingDays-day trial remaining';
+    return isZh
+        ? '免費試用剩餘 $remainingDays 天'
+        : '$remainingDays-day trial remaining';
   }
 
   if (app.trialChecked && app.trialExpired) {
@@ -711,8 +721,7 @@ class _SubscriptionSheetState extends State<_SubscriptionSheet> {
                                 ),
                               if (widget.termsLabel != null)
                                 TextButton(
-                                  onPressed: widget.onOpenTermsOfService ==
-                                          null
+                                  onPressed: widget.onOpenTermsOfService == null
                                       ? null
                                       : () => widget.onOpenTermsOfService!(
                                             context,

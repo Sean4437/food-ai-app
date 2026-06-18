@@ -9486,6 +9486,15 @@ class AppState extends ChangeNotifier {
     } catch (_) {}
   }
 
+  Future<void> updateSupabasePassword(String password) async {
+    if (!isSupabaseSignedIn) {
+      throw StateError('not_signed_in');
+    }
+    await _supabase.client.auth.updateUser(
+      UserAttributes(password: password),
+    );
+  }
+
   void _applySupabaseNickname(User? user) {
     if (user == null) return;
     final data = user.userMetadata ?? const <String, dynamic>{};

@@ -9,6 +9,7 @@ import '../utils/data_exporter.dart';
 import '../design/theme_controller.dart';
 import '../state/app_state.dart';
 import '../widgets/app_background.dart';
+import '../widgets/backup_password_prompt.dart';
 import '../design/text_styles.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -1046,6 +1047,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ],
                           ),
                         ],
+                        if (isSupabaseSignedIn) ...[
+                          const SizedBox(height: 8),
+                          _row(
+                            context,
+                            isZh
+                                ? '\u5099\u63f4\u5bc6\u78bc'
+                                : 'Backup password',
+                            isZh
+                                ? '\u53ef\u5728\u767b\u5165\u5931\u6548\u6642\u6539\u7528 Email + \u5bc6\u78bc\u767b\u5165'
+                                : 'Use Email + password if your sign-in link session expires.',
+                            icon: Icons.lock_outline,
+                            onTap: () => showBackupPasswordSetupDialog(
+                              context,
+                              app,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -1802,8 +1820,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   if (app.supportsSystemGallerySync) ...[
                     const SizedBox(height: 8),
-                    _sectionTitle(
-                        context, isZh ? '拍照與照片' : 'Camera & Photos'),
+                    _sectionTitle(context, isZh ? '拍照與照片' : 'Camera & Photos'),
                     SwitchListTile(
                       value: profile.saveCameraPhotosToGallery,
                       onChanged: (value) => app.updateField(
