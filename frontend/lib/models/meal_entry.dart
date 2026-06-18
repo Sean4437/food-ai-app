@@ -186,7 +186,7 @@ class MealEntry {
       id: json['id'] as String,
       imageBytes: Uint8List.fromList(bytes),
       filename: (json['filename'] as String?) ?? 'photo.jpg',
-      time: DateTime.parse(json['time'] as String),
+      time: DateTime.parse(json['time'] as String).toLocal(),
       type: _mealTypeFromString((json['type'] as String?) ?? 'other'),
       portionPercent: (json['portion_percent'] as num?)?.toInt() ?? 100,
       overrideCalorieRange: json['override_calorie_range'] as String?,

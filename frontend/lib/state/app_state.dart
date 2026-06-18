@@ -8495,11 +8495,16 @@ class AppState extends ChangeNotifier {
   }
 
   static DateTime _dateOnly(DateTime time) {
-    return DateTime(time.year, time.month, time.day);
+    final local = time.toLocal();
+    return DateTime(local.year, local.month, local.day);
   }
 
   bool _isSameDate(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
+    final localA = a.toLocal();
+    final localB = b.toLocal();
+    return localA.year == localB.year &&
+        localA.month == localB.month &&
+        localA.day == localB.day;
   }
 
   List<int>? _parseCalorieRange(String? value) {
@@ -10387,7 +10392,7 @@ class AppState extends ChangeNotifier {
       id: row['id'] as String,
       imageBytes: imageBytes,
       filename: (row['filename'] as String?) ?? 'photo.jpg',
-      time: DateTime.parse(row['time'] as String),
+      time: DateTime.parse(row['time'] as String).toLocal(),
       type: _mealTypeFromKey((row['type'] as String?) ?? 'other'),
       portionPercent: (row['portion_percent'] as num?)?.toInt() ?? 100,
       overrideCalorieRange: row['override_calorie_range'] as String?,

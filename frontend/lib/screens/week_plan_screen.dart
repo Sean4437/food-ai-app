@@ -85,6 +85,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
       .toLowerCase()
       .startsWith('zh');
 
+  String _text(String zh, String en) => _isZh ? zh : en;
+
   DateTime _dateOnly(DateTime value) =>
       DateTime(value.year, value.month, value.day);
 
@@ -217,11 +219,11 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   String _goalLabel(String goal) {
     switch (goal) {
       case 'lose_fat':
-        return _isZh ? '減脂' : 'Lose fat';
+        return _text('減脂', 'Lose fat');
       case 'maintain':
-        return _isZh ? '維持' : 'Maintain';
+        return _text('維持', 'Maintain');
       case 'gain_muscle':
-        return _isZh ? '增肌' : 'Gain muscle';
+        return _text('增肌', 'Gain muscle');
       default:
         return goal;
     }
@@ -230,13 +232,13 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   String _mealTypeLabel(String mealType) {
     switch (mealType) {
       case 'breakfast':
-        return _isZh ? '早餐' : 'Breakfast';
+        return _text('早餐', 'Breakfast');
       case 'lunch':
-        return _isZh ? '午餐' : 'Lunch';
+        return _text('午餐', 'Lunch');
       case 'dinner':
-        return _isZh ? '晚餐' : 'Dinner';
+        return _text('晚餐', 'Dinner');
       case 'snack':
-        return _isZh ? '點心' : 'Snack';
+        return _text('點心', 'Snack');
       default:
         return mealType;
     }
@@ -245,15 +247,15 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   String _scenarioLabel(String scenario) {
     switch (scenario) {
       case _noneScenario:
-        return _isZh ? '無' : 'None';
+        return _text('無', 'None');
       case 'home_cook':
-        return _isZh ? '自煮' : 'Home';
+        return _text('自煮', 'Home');
       case 'eat_out':
-        return _isZh ? '外食' : 'Eat-out';
+        return _text('外食', 'Eat-out');
       case 'convenience_store':
-        return _isZh ? '便利店' : 'Convenience';
+        return _text('便利店', 'Convenience');
       case 'fixed_custom':
-        return _isZh ? '固定自訂' : 'Fixed custom';
+        return _text('固定自訂', 'Fixed custom');
       default:
         return scenario;
     }
@@ -262,43 +264,43 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
   String _marketLabel(String marketCode) {
     switch (marketCode) {
       case 'TW':
-        return _isZh ? '台灣' : 'Taiwan';
+        return _text('台灣', 'Taiwan');
       case 'JP':
-        return _isZh ? '日本' : 'Japan';
+        return _text('日本', 'Japan');
       case 'US':
-        return _isZh ? '美國' : 'United States';
+        return _text('美國', 'United States');
       case 'GLOBAL':
       default:
-        return _isZh ? '全球/未指定' : 'Global/Unspecified';
+        return _text('全球/未指定', 'Global/Unspecified');
     }
   }
 
   String _retailerLabel(String retailerCode) {
     switch (retailerCode) {
       case '7_11':
-        return _isZh ? '7-ELEVEN（台灣）' : '7-ELEVEN (TW)';
+        return _text('7-ELEVEN（台灣）', '7-ELEVEN (TW)');
       case 'familymart':
-        return _isZh ? '全家（台灣）' : 'FamilyMart (TW)';
+        return _text('全家（台灣）', 'FamilyMart (TW)');
       case 'hilife':
-        return _isZh ? '萊爾富（台灣）' : 'Hi-Life (TW)';
+        return _text('萊爾富（台灣）', 'Hi-Life (TW)');
       case 'okmart':
-        return _isZh ? 'OKmart（台灣）' : 'OKmart (TW)';
+        return _text('OKmart（台灣）', 'OKmart (TW)');
       case 'seven_eleven_jp':
-        return _isZh ? '7-ELEVEN（日本）' : '7-ELEVEN (JP)';
+        return _text('7-ELEVEN（日本）', '7-ELEVEN (JP)');
       case 'familymart_jp':
-        return _isZh ? 'FamilyMart（日本）' : 'FamilyMart (JP)';
+        return _text('FamilyMart（日本）', 'FamilyMart (JP)');
       case 'lawson':
-        return 'Lawson';
+        return _text('Lawson（日本）', 'Lawson');
       case 'ministop':
-        return 'MINISTOP';
+        return _text('MINISTOP（日本）', 'MINISTOP');
       case 'seven_eleven_us':
-        return _isZh ? '7-ELEVEN（美國）' : '7-ELEVEN (US)';
+        return _text('7-ELEVEN（美國）', '7-ELEVEN (US)');
       case 'circle_k':
-        return 'Circle K';
+        return _text('Circle K（美國）', 'Circle K');
       case 'wawa':
-        return 'Wawa';
+        return _text('Wawa（美國）', 'Wawa');
       case 'am_pm':
-        return 'ampm';
+        return _text('ampm（美國）', 'ampm');
       default:
         return retailerCode;
     }
@@ -1376,10 +1378,11 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
     final weekGoalLabel = _goalMode == 'week_override'
         ? _goalLabel(_goalOverride)
-        : (_isZh ? '沿用個人設定' : 'Use profile goal');
-    final settingsSummary = _isZh
-        ? '已套用 $activeScenarioMeals/${_mealTypes.length} 餐來源・固定餐 ${_fixedMeals.length} 項'
-        : '$activeScenarioMeals/${_mealTypes.length} meal sources ・ ${_fixedMeals.length} fixed rules';
+        : _text('沿用個人設定', 'Use profile goal');
+    final settingsSummary = _text(
+      '已套用 $activeScenarioMeals/${_mealTypes.length} 餐來源・固定餐 ${_fixedMeals.length} 項',
+      '$activeScenarioMeals/${_mealTypes.length} meal sources ・ ${_fixedMeals.length} fixed rules',
+    );
 
     final visibleWarnings = (plan?.validation.warnings ?? const <String>[])
         .where(_isVisiblePlanWarning)
@@ -1478,12 +1481,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                       ),
                       Expanded(
                         child: Text(
-                          _isZh ? '7 天飲食規劃' : '7-Day Meal Plan',
+                          _text('7 天飲食規劃', '7-Day Meal Plan'),
                           style: AppTextStyles.title2(context),
                         ),
                       ),
                       IconButton(
-                        tooltip: _isZh ? '規劃設定' : 'Plan settings',
+                        tooltip: _text('規劃設定', 'Plan settings'),
                         onPressed: () {
                           setState(() {
                             _planningSettingsExpanded =
@@ -1508,7 +1511,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _isZh ? '本週目標' : 'Weekly Focus',
+                            _text('本週目標', 'Weekly Focus'),
                             style: AppTextStyles.body(context).copyWith(
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF111827),
@@ -1527,10 +1530,11 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                           const SizedBox(height: 4),
                           Text(
                             plan != null
-                                ? '${_isZh ? '每日目標' : 'Daily target'} ${plan.dailyTarget.kcal} kcal'
-                                : (_isZh
-                                    ? '產生計畫後會顯示每日熱量目標'
-                                    : 'Daily kcal target will appear after generation'),
+                                ? '${_text('每日目標', 'Daily target')} ${plan.dailyTarget.kcal} kcal'
+                                : _text(
+                                    '產生計畫後會顯示每日熱量目標',
+                                    'Daily kcal target will appear after generation',
+                                  ),
                             style: AppTextStyles.caption(context).copyWith(
                               color: const Color(0xFF6B7280),
                             ),
@@ -1538,16 +1542,19 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                           const SizedBox(height: 10),
                           Text(
                             plan == null
-                                ? (_isZh
-                                    ? '產生計畫後即可直接查看下方餐單。'
-                                    : 'Generate a plan to view today meals below.')
+                                ? _text(
+                                    '產生計畫後即可直接查看下方餐單。',
+                                    'Generate a plan to view today meals below.',
+                                  )
                                 : (selectedDay == null
-                                    ? (_isZh
-                                        ? '先在本週行程選一天，再查看餐單。'
-                                        : 'Pick a day from week strip to view meals.')
-                                    : (_isZh
-                                        ? '今天餐單已準備好，往下直接執行。'
-                                        : 'Today meals are ready. Scroll down to execute.')),
+                                    ? _text(
+                                        '先在本週行程選一天，再查看餐單。',
+                                        'Pick a day from week strip to view meals.',
+                                      )
+                                    : _text(
+                                        '今天餐單已準備好，往下直接執行。',
+                                        'Today meals are ready. Scroll down to execute.',
+                                      )),
                             style: AppTextStyles.caption(context).copyWith(
                               color: const Color(0xFF6B7280),
                             ),
@@ -1728,9 +1735,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                   ] else if (plan == null) ...[
                     const SizedBox(height: 12),
                     Text(
-                      _isZh
-                          ? '先產生 7 天計畫，這裡會顯示餐次安排。'
-                          : 'Generate a 7-day plan to see meal details.',
+                      _text(
+                        '先產生 7 天計畫，這裡會顯示餐次安排。',
+                        'Generate a 7-day plan to see meal details.',
+                      ),
                       style: AppTextStyles.caption(context).copyWith(
                         color: const Color(0xFF6B7280),
                       ),
@@ -1738,7 +1746,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                   ],
                   const SizedBox(height: 12),
                   _buildSectionHeader(
-                    title: _isZh ? '規劃設定' : 'Planning settings',
+                    title: _text('規劃設定', 'Planning settings'),
                     subtitle: settingsSummary,
                     expanded: _planningSettingsExpanded,
                     onTap: () {
@@ -1763,7 +1771,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                 onPressed: _pickStartDate,
                                 icon: const Icon(Icons.event),
                                 label: Text(
-                                  '${_isZh ? '開始日' : 'Start'}: ${_formatDate(_startDate)}',
+                                  '${_text('開始日', 'Start')}: ${_formatDate(_startDate)}',
                                 ),
                               ),
                             ),
@@ -1771,7 +1779,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             DropdownButtonFormField<String>(
                               initialValue: _goalMode,
                               decoration: InputDecoration(
-                                labelText: _isZh ? '目標來源' : 'Goal source',
+                                labelText: _text('目標來源', 'Goal source'),
                                 border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
@@ -1779,13 +1787,13 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                 DropdownMenuItem(
                                   value: 'profile_default',
                                   child: Text(
-                                    _isZh ? '使用個人目標' : 'Use profile goal',
+                                    _text('使用個人目標', 'Use profile goal'),
                                   ),
                                 ),
                                 DropdownMenuItem(
                                   value: 'week_override',
                                   child: Text(
-                                    _isZh ? '本週覆寫目標' : 'Override this week',
+                                    _text('本週覆寫目標', 'Override this week'),
                                   ),
                                 ),
                               ],
@@ -1799,7 +1807,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                               DropdownButtonFormField<String>(
                                 initialValue: _goalOverride,
                                 decoration: InputDecoration(
-                                  labelText: _isZh ? '本週目標' : 'Weekly goal',
+                                  labelText: _text('本週目標', 'Weekly goal'),
                                   border: const OutlineInputBorder(),
                                   isDense: true,
                                 ),
@@ -1825,7 +1833,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             DropdownButtonFormField<String>(
                               initialValue: _marketCode,
                               decoration: InputDecoration(
-                                labelText: _isZh ? '市場地區' : 'Market',
+                                labelText: _text('市場地區', 'Market'),
                                 border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
@@ -1849,7 +1857,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                 .isNotEmpty) ...[
                               const SizedBox(height: 10),
                               Text(
-                                _isZh ? '便利商品牌（可不選）' : 'Retailers (optional)',
+                                _text('便利商品牌（可不選）', 'Retailers (optional)'),
                                 style: AppTextStyles.caption(context).copyWith(
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF111827),
@@ -1861,8 +1869,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                 runSpacing: 8,
                                 children: [
                                   FilterChip(
-                                    label:
-                                        Text(_isZh ? '全部品牌' : 'All retailers'),
+                                    label: Text(_text('全部品牌', 'All retailers')),
                                     selected: _retailerCodes.isEmpty,
                                     onSelected: (value) {
                                       if (!value) return;
@@ -1895,7 +1902,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             ],
                             const SizedBox(height: 12),
                             Text(
-                              _isZh ? '餐別來源' : 'Meal sources',
+                              _text('餐別來源', 'Meal sources'),
                               style: AppTextStyles.caption(context).copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF111827),
@@ -1980,12 +1987,14 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             }),
                             const Divider(height: 22),
                             _buildSectionHeader(
-                              title: _isZh
-                                  ? '固定自訂餐（可多筆）'
-                                  : 'Fixed custom meals (multi)',
-                              subtitle: _isZh
-                                  ? '目前 ${_fixedMeals.length} 項'
-                                  : '${_fixedMeals.length} rules',
+                              title: _text(
+                                '固定自訂餐（可多筆）',
+                                'Fixed custom meals (multi)',
+                              ),
+                              subtitle: _text(
+                                '目前 ${_fixedMeals.length} 項',
+                                '${_fixedMeals.length} rules',
+                              ),
                               expanded: _fixedSectionExpanded,
                               onTap: () {
                                 setState(() {
@@ -2013,9 +2022,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                 ),
                               ),
                               child: Text(
-                                _isZh
-                                    ? 'AI 內容優先，固定餐僅在 AI 缺漏時補位。'
-                                    : 'AI plan has priority; fixed meals fill only missing slots.',
+                                _text(
+                                  'AI 內容優先，固定餐僅在 AI 缺漏時補位。',
+                                  'AI plan has priority; fixed meals fill only missing slots.',
+                                ),
                                 style: AppTextStyles.caption(context).copyWith(
                                   color: const Color(0xFF166534),
                                   fontWeight: FontWeight.w600,
@@ -2044,9 +2054,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Text(
-                          _isZh
-                              ? '最近重排：v${_lastReplan!.oldVersion} -> v${_lastReplan!.newVersion}，變更 ${_lastReplan!.changedDays.length} 天'
-                              : 'Last replan: v${_lastReplan!.oldVersion} -> v${_lastReplan!.newVersion}, ${_lastReplan!.changedDays.length} day(s) changed',
+                          _text(
+                            '最近重排：v${_lastReplan!.oldVersion} -> v${_lastReplan!.newVersion}，變更 ${_lastReplan!.changedDays.length} 天',
+                            'Last replan: v${_lastReplan!.oldVersion} -> v${_lastReplan!.newVersion}, ${_lastReplan!.changedDays.length} day(s) changed',
+                          ),
                           style: AppTextStyles.caption(context).copyWith(
                             color: const Color(0xFF6B7280),
                             fontWeight: FontWeight.w600,
@@ -2066,7 +2077,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _isZh ? '提醒' : 'Warnings',
+                              _text('提醒', 'Warnings'),
                               style: AppTextStyles.caption(context).copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF111827),
@@ -2093,10 +2104,11 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                   if (plan != null) ...[
                     const SizedBox(height: 10),
                     _buildSectionHeader(
-                      title: _isZh ? '整週明細' : 'Full week details',
-                      subtitle: _isZh
-                          ? '${plan.dayPlans.length} 天，點開看全部餐次'
-                          : '${plan.dayPlans.length} days',
+                      title: _text('整週明細', 'Full week details'),
+                      subtitle: _text(
+                        '${plan.dayPlans.length} 天，點開看全部餐次',
+                        '${plan.dayPlans.length} days',
+                      ),
                       expanded: _showAllDayDetails,
                       onTap: () {
                         setState(() {
@@ -2110,11 +2122,11 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                         children: [
                           TextButton(
                             onPressed: _expandAllPlanDays,
-                            child: Text(_isZh ? '全部展開' : 'Expand all'),
+                            child: Text(_text('全部展開', 'Expand all')),
                           ),
                           TextButton(
                             onPressed: _collapseAllPlanDays,
-                            child: Text(_isZh ? '全部收合' : 'Collapse all'),
+                            child: Text(_text('全部收合', 'Collapse all')),
                           ),
                         ],
                       ),
