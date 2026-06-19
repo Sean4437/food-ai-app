@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
 class TabState extends ChangeNotifier {
-  int index = 2;
+  int index = 1;
 
   void setIndex(int value) {
     if (index == value) return;
@@ -22,4 +22,3 @@ class TabScope extends InheritedNotifier<TabState> {
     return scope!.notifier!;
   }
 }
-

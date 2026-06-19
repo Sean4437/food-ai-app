@@ -256,7 +256,6 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   AppState? _app;
   bool _didRunInitialAutoFlow = false;
-  bool _didEnsureInitialTab = false;
   late final PageController _dockController;
   double _dockPage = 1;
   int _lastDockTarget = 1;
@@ -326,18 +325,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final tabState = TabScope.of(context);
-    if (!_didEnsureInitialTab) {
-      _didEnsureInitialTab = true;
-      if (tabState.index != 1) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          final currentTabState = TabScope.of(context);
-          if (currentTabState.index != 1) {
-            currentTabState.setIndex(1);
-          }
-        });
-      }
-    }
 
     const screens = [
       HomeScreen(),
