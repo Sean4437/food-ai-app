@@ -5,6 +5,8 @@ import '../design/text_styles.dart';
 import '../widgets/app_background.dart';
 import '../state/app_state.dart';
 
+enum _LoginMode { magicLink, password, signUp }
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -18,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   final _nicknameController = TextEditingController();
-  bool _isSignUp = false;
+  _LoginMode _mode = _LoginMode.magicLink;
   bool _loading = false;
   bool _showPassword = false;
   bool _showConfirm = false;
@@ -32,6 +34,13 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _bannerMessage;
   bool _bannerIsError = false;
   List<String> _rememberedEmails = const [];
+  String? _magicLinkSentEmail;
+
+  bool get _isSignUpMode => _mode == _LoginMode.signUp;
+  bool get _isPasswordMode => _mode == _LoginMode.password;
+  bool get _isMagicLinkMode => _mode == _LoginMode.magicLink;
+  bool get _isMagicLinkSuccessState =>
+      _isMagicLinkMode && _magicLinkSentEmail != null;
 
   @override
   void initState() {
@@ -153,6 +162,59 @@ class _LoginScreenState extends State<LoginScreen> {
         lower.contains('network');
   }
 
+  String _screenTitle(AppLocalizations t) {
+    switch (_mode) {
+      case _LoginMode.magicLink:
+        return _isZh() ? '\u6b61\u8fce\u56de\u4f86' : 'Welcome back';
+      case _LoginMode.password:
+        return _isZh() ? '\u5bc6\u78bc\u767b\u5165' : 'Sign in with password';
+      case _LoginMode.signUp:
+        return _isZh() ? '\u5efa\u7acb\u5e33\u865f' : 'Create account';
+    }
+  }
+
+  String _screenSubtitle(AppLocalizations t) {
+    switch (_mode) {
+      case _LoginMode.magicLink:
+        return _isZh()
+            ? '\u8f38\u5165 Email\uff0c\u6211\u5011\u5bc4\u767b\u5165\u9023\u7d50\u7d66\u4f60'
+            : 'Enter your email and we will send you a sign-in link.';
+      case _LoginMode.password:
+        return _isZh()
+            ? '\u8f38\u5165\u5bc6\u78bc\u767b\u5165\u4f60\u7684 Food AI \u5e33\u865f'
+            : 'Use your password to sign in to Food AI.';
+      case _LoginMode.signUp:
+        return _isZh()
+            ? '\u5148\u5efa\u7acb\u5e33\u865f\uff0c\u4e4b\u5f8c\u53ef\u4ee5\u7528\u9023\u7d50\u6216\u5bc6\u78bc\u767b\u5165'
+            : 'Create your account first, then sign in with a link or password.';
+    }
+  }
+
+  void _switchMode(_LoginMode mode) {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _mode = mode;
+      _showPassword = false;
+      _showConfirm = false;
+      _bannerMessage = null;
+      _bannerIsError = false;
+      _inlineEmailError = null;
+      _inlinePasswordError = null;
+      _inlineNicknameError = null;
+      if (mode != _LoginMode.magicLink) {
+        _magicLinkSentEmail = null;
+      }
+    });
+  }
+
+  void _resetMagicLinkSentState() {
+    setState(() => _magicLinkSentEmail = null);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _emailFocusNode.requestFocus();
+    });
+  }
+
   String _classifyResetErrorCode(Object err) {
     final lower = err.toString().toLowerCase();
     if (_isNetworkError(lower)) return 'network';
@@ -168,6 +230,50 @@ class _LoginScreenState extends State<LoginScreen> {
       return 'email_not_found';
     }
     return 'unknown';
+  }
+
+  String _classifyMagicLinkErrorCode(Object err) {
+    final lower = err.toString().toLowerCase();
+    if (_isNetworkError(lower)) return 'network';
+    if (lower.contains('rate limit') || lower.contains('too many')) {
+      return 'rate_limited';
+    }
+    if (lower.contains('email not confirmed') ||
+        lower.contains('confirm your email') ||
+        lower.contains('email not verified') ||
+        lower.contains('verification')) {
+      return 'email_not_verified';
+    }
+    if (lower.contains('user not found') ||
+        lower.contains('not found') ||
+        lower.contains('not registered') ||
+        lower.contains('signup disabled') ||
+        lower.contains('no user')) {
+      return 'email_not_found';
+    }
+    return 'unknown';
+  }
+
+  String _formatMagicLinkError(Object err, AppLocalizations t) {
+    final code = _classifyMagicLinkErrorCode(err);
+    switch (code) {
+      case 'network':
+        return t.authNetworkError;
+      case 'email_not_verified':
+        return t.authEmailNotVerified;
+      case 'email_not_found':
+        return _isZh()
+            ? '\u9019\u500b Email \u5c1a\u672a\u8a3b\u518a\uff0c\u8acb\u5148\u8a3b\u518a\u5e33\u865f\u5f8c\u518d\u4f7f\u7528\u767b\u5165\u9023\u7d50'
+            : 'This email is not registered yet. Please sign up first, then use a sign-in link.';
+      case 'rate_limited':
+        return _isZh()
+            ? '\u5bc4\u9001\u592a\u983b\u7e41\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66'
+            : 'Too many requests. Please try again later.';
+      default:
+        return _isZh()
+            ? '\u5bc4\u9001\u767b\u5165\u9023\u7d50\u5931\u6557\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66\uff0c\u6216\u6539\u7528\u5bc6\u78bc\u767b\u5165'
+            : 'Failed to send sign-in link. Please try again later, or sign in with your password.';
+    }
   }
 
   String _formatAuthError(Object err, AppLocalizations t,
@@ -287,35 +393,35 @@ class _LoginScreenState extends State<LoginScreen> {
       _setInlinePasswordError(t.authPasswordRequired);
       return;
     }
-    if (_isSignUp && !_isValidPassword(password)) {
+    if (_isSignUpMode && !_isValidPassword(password)) {
       _setInlinePasswordError(t.authPasswordInvalid);
       return;
     }
-    if (_isSignUp && password != confirm) {
+    if (_isSignUpMode && password != confirm) {
       _setInlinePasswordError(t.authPasswordMismatch);
       return;
     }
-    if (_isSignUp && nickname.isEmpty) {
+    if (_isSignUpMode && nickname.isEmpty) {
       _setInlineNicknameError(t.authNicknameRequired);
       return;
     }
-    if (_isSignUp && !_isValidNickname(nickname)) {
+    if (_isSignUpMode && !_isValidNickname(nickname)) {
       _setInlineNicknameError(t.authNicknameInvalid);
       return;
     }
     setState(() => _loading = true);
     try {
-      if (_isSignUp) {
+      if (_isSignUpMode) {
         await app.signUpSupabase(email, password, nickname: nickname);
       } else {
         await app.signInSupabase(email, password);
       }
       if (mounted) {
         _refreshRememberedEmails(app);
-        final message = _isSignUp ? t.authSignUpVerify : t.authSignInSuccess;
+        final message = _isSignUpMode ? t.authSignUpVerify : t.authSignInSuccess;
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(message)));
-        if (_isSignUp) {
+        if (_isSignUpMode) {
           setState(() {
             _showVerifyPanel = true;
             _resendCooldown = 30;
@@ -325,16 +431,16 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (err) {
       if (mounted) {
-        final message = _formatAuthError(err, t, isSignUp: _isSignUp);
-        if (!_isSignUp && message == t.authLoginInvalid) {
+        final message = _formatAuthError(err, t, isSignUp: _isSignUpMode);
+        if (!_isSignUpMode && message == t.authLoginInvalid) {
           _setInlinePasswordError(message);
-        } else if (_isSignUp && message == t.authEmailInvalid) {
+        } else if (_isSignUpMode && message == t.authEmailInvalid) {
           _setInlineEmailError(message);
         } else {
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(message)));
         }
-        if (!_isSignUp && message == t.authEmailNotVerified) {
+        if (!_isSignUpMode && message == t.authEmailNotVerified) {
           setState(() {
             _showVerifyPanel = true;
             _resendCooldown = 0;
@@ -443,31 +549,311 @@ class _LoginScreenState extends State<LoginScreen> {
       _setInlineEmailError(t.authEmailInvalid);
       return;
     }
+    app.rememberAuthEmail(email);
+    _refreshRememberedEmails(app);
     setState(() => _loading = true);
     try {
       await app.sendMagicLink(email);
       if (!mounted) return;
       _refreshRememberedEmails(app);
-      _showBanner(
-        _isZh()
-            ? '\u767b\u5165\u9023\u7d50\u5df2\u5bc4\u51fa\uff0c\u8acb\u5230\u4fe1\u7bb1\u958b\u555f'
-            : 'Sign-in link sent. Check your email.',
-      );
+      _emailFocusNode.unfocus();
+      setState(() {
+        _magicLinkSentEmail = email;
+        _bannerMessage = null;
+        _bannerIsError = false;
+      });
     } catch (err) {
       if (!mounted) return;
-      if (_isNetworkError(err.toString())) {
-        _showBanner(t.authNetworkError, isError: true);
-      } else {
-        _showBanner(
-          _isZh()
-              ? '\u5bc4\u9001\u767b\u5165\u9023\u7d50\u5931\u6557\uff0c\u8acb\u78ba\u8a8d Email \u662f\u5426\u5df2\u8a3b\u518a'
-              : 'Failed to send sign-in link. Please confirm the email is registered.',
-          isError: true,
-        );
+      final message = _formatMagicLinkError(err, t);
+      _showBanner(message, isError: true);
+      if (message == t.authEmailNotVerified) {
+        setState(() {
+          _showVerifyPanel = true;
+          _resendCooldown = 0;
+        });
       }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Widget _buildBanner(BuildContext context) {
+    if (_bannerMessage == null) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: _bannerIsError
+            ? const Color(0xFFFFE7E5)
+            : const Color(0xFFE6F6EF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _bannerIsError
+              ? const Color(0xFFF3B3AC)
+              : const Color(0xFFBDE4D1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _bannerMessage ?? '',
+              style: AppTextStyles.caption(context).copyWith(
+                color: _bannerIsError
+                    ? const Color(0xFFB42318)
+                    : const Color(0xFF1E7A53),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 18),
+            onPressed: _clearBanner,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailField(
+    BuildContext context,
+    AppLocalizations t,
+  ) {
+    return TextField(
+      controller: _emailController,
+      focusNode: _emailFocusNode,
+      keyboardType: TextInputType.emailAddress,
+      enabled: !_loading,
+      onChanged: (_) {
+        if (_inlineEmailError != null) {
+          _setInlineEmailError(null);
+        } else {
+          setState(() {});
+        }
+      },
+      decoration: InputDecoration(
+        labelText: t.authEmailLabel,
+        hintText: _isZh()
+            ? '\u4f8b\u5982\uff1asean@example.com'
+            : 'For example: sean@example.com',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        errorText: _inlineEmailError,
+      ),
+    );
+  }
+
+  Widget _buildEmailSuggestions(
+    BuildContext context,
+    AppState app,
+    List<String> emailSuggestions,
+  ) {
+    return TextFieldTapRegion(
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 160),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black12),
+        ),
+        child: ListView.separated(
+          shrinkWrap: true,
+          itemCount: emailSuggestions.length,
+          separatorBuilder: (_, __) =>
+              const Divider(height: 1, thickness: 1),
+          itemBuilder: (context, index) {
+            final email = emailSuggestions[index];
+            return ListTile(
+              dense: true,
+              leading: const Icon(
+                Icons.history,
+                size: 18,
+                color: Colors.black45,
+              ),
+              title: Text(
+                email,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: IconButton(
+                icon: const Icon(
+                  Icons.close,
+                  size: 18,
+                  color: Colors.black45,
+                ),
+                onPressed: () => _removeRememberedEmail(app, email),
+              ),
+              onTap: () {
+                _fillEmail(email);
+                _emailFocusNode.unfocus();
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordField(AppLocalizations t, {required bool showRule}) {
+    return TextField(
+      controller: _passwordController,
+      obscureText: !_showPassword,
+      enabled: !_loading,
+      onChanged: (_) {
+        if (_inlinePasswordError != null) {
+          _setInlinePasswordError(null);
+        }
+      },
+      decoration: InputDecoration(
+        labelText: t.authPasswordLabel,
+        helperText: showRule ? t.authPasswordRule : null,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        errorText: _inlinePasswordError,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _showPassword ? Icons.visibility_off_outlined : Icons.visibility,
+          ),
+          onPressed:
+              _loading ? null : () => setState(() => _showPassword = !_showPassword),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConfirmPasswordField(AppLocalizations t) {
+    return TextField(
+      controller: _confirmController,
+      obscureText: !_showConfirm,
+      enabled: !_loading,
+      onChanged: (_) {
+        if (_inlinePasswordError != null) {
+          _setInlinePasswordError(null);
+        }
+      },
+      decoration: InputDecoration(
+        labelText: t.authConfirmPasswordLabel,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _showConfirm ? Icons.visibility_off_outlined : Icons.visibility,
+          ),
+          onPressed:
+              _loading ? null : () => setState(() => _showConfirm = !_showConfirm),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMagicLinkSuccessCard(BuildContext context) {
+    final email = _magicLinkSentEmail ?? _emailController.text.trim();
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6FBF8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFD8EDE1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Icon(
+            Icons.mark_email_read_outlined,
+            size: 30,
+            color: Color(0xFF1E7A53),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _isZh()
+                ? '\u767b\u5165\u9023\u7d50\u5df2\u5bc4\u51fa'
+                : 'Sign-in link sent',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.body(context)
+                .copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            email,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption(context).copyWith(
+              color: const Color(0xFF1F2937),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _isZh()
+                ? '\u8acb\u5230\u4fe1\u7bb1\u958b\u555f\u9023\u7d50\uff0c\u5982\u679c\u6c92\u770b\u5230\uff0c\u8acb\u9806\u4fbf\u6aa2\u67e5\u5783\u573e\u90f5\u4ef6'
+                : 'Open the link in your inbox. If you do not see it, check spam as well.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption(context)
+                .copyWith(color: Colors.black54, height: 1.4),
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: _loading ? null : _sendMagicLink,
+            icon: const Icon(Icons.refresh),
+            label: Text(
+              _isZh()
+                  ? '\u91cd\u65b0\u5bc4\u9001\u767b\u5165\u9023\u7d50'
+                  : 'Resend sign-in link',
+            ),
+          ),
+          TextButton(
+            onPressed: _loading ? null : _resetMagicLinkSentState,
+            child: Text(
+              _isZh() ? '\u66f4\u63db Email' : 'Use another email',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerifyPanel(BuildContext context, AppLocalizations t) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            t.authVerifyTitle,
+            style:
+                AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            t.authVerifyBody(_emailController.text.trim()),
+            style: AppTextStyles.caption(context)
+                .copyWith(color: Colors.black54, height: 1.4),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _loading || _resendCooldown > 0
+                      ? null
+                      : _resendVerification,
+                  child: Text(
+                    _resendCooldown > 0
+                        ? t.authResendCooldown(_resendCooldown)
+                        : t.authResend,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -478,8 +864,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final media = MediaQuery.of(context);
     final cardWidth = (media.size.width - 32).clamp(280.0, 420.0);
     final emailSuggestions = _filteredRememberedEmails();
-    final showEmailSuggestions =
-        _emailFocusNode.hasFocus && !_loading && emailSuggestions.isNotEmpty;
+    final showEmailSuggestions = !_isMagicLinkSuccessState &&
+        _emailFocusNode.hasFocus &&
+        !_loading &&
+        emailSuggestions.isNotEmpty;
     return AppBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -505,176 +893,38 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      t.authTitle,
+                      _screenTitle(t),
                       style: AppTextStyles.title1(context),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      t.authSubtitle,
+                      _screenSubtitle(t),
                       style: AppTextStyles.caption(context)
                           .copyWith(color: Colors.black54),
                       textAlign: TextAlign.center,
                     ),
                     if (_bannerMessage != null) ...[
                       const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: _bannerIsError
-                              ? const Color(0xFFFFE7E5)
-                              : const Color(0xFFE6F6EF),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _bannerIsError
-                                ? const Color(0xFFF3B3AC)
-                                : const Color(0xFFBDE4D1),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _bannerMessage ?? '',
-                                style: AppTextStyles.caption(context).copyWith(
-                                  color: _bannerIsError
-                                      ? const Color(0xFFB42318)
-                                      : const Color(0xFF1E7A53),
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close, size: 18),
-                              onPressed: _clearBanner,
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildBanner(context),
                     ],
                     const SizedBox(height: 16),
-                    TextField(
-                      controller: _emailController,
-                      focusNode: _emailFocusNode,
-                      keyboardType: TextInputType.emailAddress,
-                      enabled: !_loading,
-                      onChanged: (_) {
-                        if (_inlineEmailError != null) {
-                          _setInlineEmailError(null);
-                        } else {
-                          setState(() {});
-                        }
-                      },
-                      decoration: InputDecoration(
-                        labelText: t.authEmailLabel,
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        errorText: _inlineEmailError,
-                      ),
-                    ),
-                    if (showEmailSuggestions) ...[
-                      const SizedBox(height: 6),
-                      TextFieldTapRegion(
-                        child: Container(
-                          constraints: const BoxConstraints(maxHeight: 160),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.black12),
-                          ),
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            itemCount: emailSuggestions.length,
-                            separatorBuilder: (_, __) =>
-                                const Divider(height: 1, thickness: 1),
-                            itemBuilder: (context, index) {
-                              final email = emailSuggestions[index];
-                              return ListTile(
-                                dense: true,
-                                leading: const Icon(
-                                  Icons.history,
-                                  size: 18,
-                                  color: Colors.black45,
-                                ),
-                                title: Text(
-                                  email,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                trailing: IconButton(
-                                  icon: const Icon(
-                                    Icons.close,
-                                    size: 18,
-                                    color: Colors.black45,
-                                  ),
-                                  onPressed: () =>
-                                      _removeRememberedEmail(app, email),
-                                ),
-                                onTap: () {
-                                  _fillEmail(email);
-                                  _emailFocusNode.unfocus();
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                      ),
+                    if (_isMagicLinkSuccessState) ...[
+                      _buildMagicLinkSuccessCard(context),
+                    ] else ...[
+                      _buildEmailField(context, t),
+                      if (showEmailSuggestions) ...[
+                        const SizedBox(height: 6),
+                        _buildEmailSuggestions(context, app, emailSuggestions),
+                      ],
                     ],
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: !_showPassword,
-                      enabled: !_loading,
-                      onChanged: (_) {
-                        if (_inlinePasswordError != null) {
-                          _setInlinePasswordError(null);
-                        }
-                      },
-                      decoration: InputDecoration(
-                        labelText: t.authPasswordLabel,
-                        helperText: _isSignUp ? t.authPasswordRule : null,
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        errorText: _inlinePasswordError,
-                        suffixIcon: IconButton(
-                          icon: Text(_showPassword ? '🙈' : '👁️'),
-                          onPressed: _loading
-                              ? null
-                              : () => setState(
-                                  () => _showPassword = !_showPassword),
-                        ),
-                      ),
-                    ),
-                    if (_isSignUp) ...[
+                    if (_isPasswordMode || _isSignUpMode) ...[
                       const SizedBox(height: 10),
-                      TextField(
-                        controller: _confirmController,
-                        obscureText: !_showConfirm,
-                        enabled: !_loading,
-                        onChanged: (_) {
-                          if (_inlinePasswordError != null) {
-                            _setInlinePasswordError(null);
-                          }
-                        },
-                        decoration: InputDecoration(
-                          labelText: t.authConfirmPasswordLabel,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          suffixIcon: IconButton(
-                            icon: Text(_showConfirm ? '🙈' : '👁️'),
-                            onPressed: _loading
-                                ? null
-                                : () => setState(
-                                    () => _showConfirm = !_showConfirm),
-                          ),
-                        ),
-                      ),
+                      _buildPasswordField(t, showRule: _isSignUpMode),
+                    ],
+                    if (_isSignUpMode) ...[
+                      const SizedBox(height: 10),
+                      _buildConfirmPasswordField(t),
                       const SizedBox(height: 10),
                       TextField(
                         controller: _nicknameController,
@@ -687,40 +937,40 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: InputDecoration(
                           labelText: t.nicknameLabel,
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           errorText: _inlineNicknameError,
                         ),
                       ),
                     ],
                     const SizedBox(height: 14),
                     ElevatedButton(
-                      onPressed: _loading ? null : _submit,
+                      onPressed: _loading
+                          ? null
+                          : (_isMagicLinkMode ? _sendMagicLink : _submit),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: Text(
-                        _isSignUp ? t.authSignUp : t.authSignIn,
+                        _isMagicLinkMode
+                            ? (_isZh()
+                                ? '\u5bc4\u9001\u767b\u5165\u9023\u7d50'
+                                : 'Send sign-in link')
+                            : (_isSignUpMode ? t.authSignUp : t.authSignIn),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
-                    if (!_isSignUp) ...[
+                    if (_isMagicLinkMode && !_isMagicLinkSuccessState) ...[
                       const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: _loading ? null : _sendMagicLink,
-                        icon: const Icon(Icons.mark_email_read_outlined),
-                        label: Text(
-                          _isZh()
-                              ? '\u5bc4\u9001\u767b\u5165\u9023\u7d50'
-                              : 'Email sign-in link',
-                        ),
-                      ),
-                      const SizedBox(height: 6),
                       Text(
                         _isZh()
                             ? '\u4e0d\u7528\u5bc6\u78bc\uff0c\u5f9e\u4fe1\u7bb1\u9ede\u4e00\u4e0b\u5c31\u80fd\u767b\u5165'
@@ -729,66 +979,114 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: AppTextStyles.caption(context)
                             .copyWith(color: Colors.black54),
                       ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 4,
+                        children: [
+                          TextButton(
+                            onPressed: _loading
+                                ? null
+                                : () => _switchMode(_LoginMode.password),
+                            child: Text(
+                              _isZh()
+                                  ? '\u7528\u5bc6\u78bc\u767b\u5165'
+                                  : 'Use password instead',
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _loading
+                                ? null
+                                : () => _switchMode(_LoginMode.signUp),
+                            child: Text(
+                              _isZh()
+                                  ? '\u6c92\u6709\u5e33\u865f\uff1f\u7acb\u5373\u8a3b\u518a'
+                                  : 'Create an account',
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      onPressed: _loading
-                          ? null
-                          : () {
-                              setState(() => _isSignUp = !_isSignUp);
-                            },
-                      child: Text(_isSignUp
-                          ? t.authToggleToSignIn
-                          : t.authToggleToSignUp),
-                    ),
-                    TextButton(
-                      onPressed: _loading ? null : _resetPassword,
-                      child: Text(t.authForgotPassword),
-                    ),
+                    if (_isMagicLinkSuccessState) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 4,
+                        children: [
+                          TextButton(
+                            onPressed: _loading
+                                ? null
+                                : () => _switchMode(_LoginMode.password),
+                            child: Text(
+                              _isZh()
+                                  ? '\u6539\u7528\u5bc6\u78bc\u767b\u5165'
+                                  : 'Sign in with password',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (_isPasswordMode) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 4,
+                        children: [
+                          TextButton(
+                            onPressed: _loading
+                                ? null
+                                : () => _switchMode(_LoginMode.magicLink),
+                            child: Text(
+                              _isZh()
+                                  ? '\u6539\u7528\u767b\u5165\u9023\u7d50'
+                                  : 'Use sign-in link instead',
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _loading ? null : _resetPassword,
+                            child: Text(t.authForgotPassword),
+                          ),
+                          TextButton(
+                            onPressed: _loading
+                                ? null
+                                : () => _switchMode(_LoginMode.signUp),
+                            child: Text(
+                              _isZh()
+                                  ? '\u6c92\u6709\u5e33\u865f\uff1f\u7acb\u5373\u8a3b\u518a'
+                                  : 'Create an account',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (_isSignUpMode) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 4,
+                        children: [
+                          TextButton(
+                            onPressed: _loading
+                                ? null
+                                : () => _switchMode(_LoginMode.magicLink),
+                            child: Text(
+                              _isZh()
+                                  ? '\u5148\u7528\u767b\u5165\u9023\u7d50'
+                                  : 'Use sign-in link instead',
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _loading
+                                ? null
+                                : () => _switchMode(_LoginMode.password),
+                            child: Text(t.authToggleToSignIn),
+                          ),
+                        ],
+                      ),
+                    ],
                     if (_showVerifyPanel) ...[
                       const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.black12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              t.authVerifyTitle,
-                              style: AppTextStyles.body(context)
-                                  .copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              t.authVerifyBody(_emailController.text.trim()),
-                              style: AppTextStyles.caption(context)
-                                  .copyWith(color: Colors.black54, height: 1.4),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: _loading || _resendCooldown > 0
-                                        ? null
-                                        : _resendVerification,
-                                    child: Text(
-                                      _resendCooldown > 0
-                                          ? t.authResendCooldown(
-                                              _resendCooldown)
-                                          : t.authResend,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      _buildVerifyPanel(context, t),
                     ],
                   ],
                 ),
