@@ -373,78 +373,211 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     _isShowingNicknamePrompt = true;
     _nicknamePromptedUserId = userId;
 
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setState) => AlertDialog(
-          title: Text(isZh ? '\u5148\u8a2d\u5b9a\u4f60\u7684\u66b1\u7a31' : 'Set your nickname'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isZh
-                    ? '\u7b2c\u4e00\u6b21\u4f7f\u7528\u5148\u88dc\u4e00\u500b\u66b1\u7a31\uff0c\u4e4b\u5f8c\u9996\u9801\u3001\u804a\u5929\u8207\u7d00\u9304\u90fd\u6703\u7528\u5230\u3002'
-                    : 'Add a nickname first. It will be used across home, chat, and logs.',
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        builder: (sheetContext) => StatefulBuilder(
+          builder: (sheetContext, setState) {
+            final scheme = Theme.of(sheetContext).colorScheme;
+            return AnimatedPadding(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                enabled: !saving,
-                autofocus: true,
-                decoration: InputDecoration(
-                  labelText: t.nicknameLabel,
-                  errorText: errorText,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: scheme.surface,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(28),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.12),
+                      blurRadius: 28,
+                      offset: const Offset(0, -8),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 42,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Container(
+                        width: 56,
+                        height: 56,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: scheme.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.badge_outlined,
+                          color: scheme.primary,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        isZh
+                            ? '\u5148\u8a2d\u5b9a\u4f60\u7684\u66b1\u7a31'
+                            : 'Set your nickname',
+                        style: Theme.of(sheetContext)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        isZh
+                            ? '\u7b2c\u4e00\u6b21\u4f7f\u7528\u5148\u88dc\u4e00\u500b\u66b1\u7a31\uff0c\u4e4b\u5f8c\u9996\u9801\u3001\u804a\u5929\u8207\u7d00\u9304\u90fd\u6703\u7528\u5230\u3002'
+                            : 'Add a nickname first. It will be used across home, chat, and logs.',
+                        style: Theme.of(sheetContext)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.black54, height: 1.45),
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: controller,
+                        enabled: !saving,
+                        autofocus: true,
+                        decoration: InputDecoration(
+                          labelText: t.nicknameLabel,
+                          hintText: isZh
+                              ? '\u4f8b\u5982\uff1aSean'
+                              : 'For example: Sean',
+                          errorText: errorText,
+                          filled: true,
+                          fillColor: scheme.surfaceContainerHighest
+                              .withValues(alpha: 0.45),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: scheme.primary.withValues(alpha: 0.6),
+                              width: 1.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        isZh
+                            ? '\u4e4b\u5f8c\u4e5f\u53ef\u4ee5\u5230\u8a2d\u5b9a\u9801\u4fee\u6539\u3002'
+                            : 'You can change this later in Settings.',
+                        style: Theme.of(sheetContext)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: Colors.black45),
+                      ),
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: saving
+                                  ? null
+                                  : () => Navigator.of(sheetContext).pop(),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size.fromHeight(52),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: Text(
+                                isZh
+                                    ? '\u7a0d\u5f8c\u518d\u8aaa'
+                                    : 'Later',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: saving
+                                  ? null
+                                  : () async {
+                                      final nickname = controller.text.trim();
+                                      if (!_isValidNickname(nickname)) {
+                                        setState(() {
+                                          errorText = t.authNicknameInvalid;
+                                        });
+                                        return;
+                                      }
+                                      setState(() {
+                                        saving = true;
+                                        errorText = null;
+                                      });
+                                      try {
+                                        await app.updateNickname(nickname);
+                                        if (!sheetContext.mounted) return;
+                                        Navigator.of(sheetContext).pop();
+                                      } catch (_) {
+                                        if (!sheetContext.mounted) return;
+                                        setState(() {
+                                          saving = false;
+                                          errorText = isZh
+                                              ? '\u66b1\u7a31\u66f4\u65b0\u5931\u6557\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66'
+                                              : 'Failed to update nickname. Please try again later.';
+                                        });
+                                      }
+                                    },
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size.fromHeight(52),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: saving
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      isZh
+                                          ? '\u5132\u5b58'
+                                          : 'Save',
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: saving
-                  ? null
-                  : () => Navigator.of(dialogContext).pop(),
-              child: Text(isZh ? '\u7a0d\u5f8c\u518d\u8aaa' : 'Later'),
-            ),
-            FilledButton(
-              onPressed: saving
-                  ? null
-                  : () async {
-                      final nickname = controller.text.trim();
-                      if (!_isValidNickname(nickname)) {
-                        setState(() {
-                          errorText = t.authNicknameInvalid;
-                        });
-                        return;
-                      }
-                      setState(() {
-                        saving = true;
-                        errorText = null;
-                      });
-                      try {
-                        await app.updateNickname(nickname);
-                        if (!dialogContext.mounted) return;
-                        Navigator.of(dialogContext).pop();
-                      } catch (_) {
-                        if (!dialogContext.mounted) return;
-                        setState(() {
-                          saving = false;
-                          errorText = isZh
-                              ? '\u66b1\u7a31\u66f4\u65b0\u5931\u6557\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66'
-                              : 'Failed to update nickname. Please try again later.';
-                        });
-                      }
-                    },
-              child: Text(isZh ? '\u5132\u5b58' : 'Save'),
-            ),
-          ],
+            );
+          },
         ),
-      ),
-    );
-
-    controller.dispose();
-    _isShowingNicknamePrompt = false;
+      );
+    } finally {
+      controller.dispose();
+      _isShowingNicknamePrompt = false;
+    }
   }
 
   @override
