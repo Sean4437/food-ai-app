@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../state/app_state.dart';
 
@@ -9,7 +9,7 @@ bool _isZh(BuildContext context) {
       .startsWith('zh');
 }
 
-bool _isValidBackupPassword(String value) {
+bool _isValidSignInPassword(String value) {
   if (value.length < 8) return false;
   if (value.contains(RegExp(r'\s'))) return false;
   if (value.contains(RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]'))) {
@@ -28,26 +28,24 @@ Future<void> showBackupPasswordPrompt(
   final action = await showDialog<String>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: Text(
-        isZh ? '保護付費帳號' : 'Protect your paid account',
-      ),
+      title: Text(isZh ? '建議設定登入密碼' : 'Set a sign-in password'),
       content: Text(
         email.isEmpty
             ? (isZh
-                ? '建議設定備援密碼。之後若換裝置或登入失效，可以直接用密碼登入。'
-                : 'Set a backup password so you can sign in directly later if you change devices or lose your session.')
+                ? '除了信箱登入連結外，你也可以先設定一組登入密碼。之後如果換裝置、連結過期，或臨時收不到信，仍可直接登入。'
+                : 'Besides email sign-in links, you can also set a password now. If you switch devices, your link expires, or you cannot access email temporarily, you can still sign in directly.')
             : (isZh
-                ? '你的訂閱已綁定到 $email。\n\n建議設定備援密碼，之後若換裝置或登入失效，可以直接用密碼登入。'
-                : 'Your subscription is linked to $email.\n\nSet a backup password so you can sign in directly later if you change devices or lose your session.'),
+                ? '你的帳號目前綁定在 $email。\n\n除了信箱登入連結外，你也可以先設定一組登入密碼。之後如果換裝置、連結過期，或臨時收不到信，仍可直接登入。'
+                : 'Your account is linked to $email.\n\nBesides email sign-in links, you can also set a password now. If you switch devices, your link expires, or you cannot access email temporarily, you can still sign in directly.'),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(dialogContext).pop('later'),
-          child: Text(isZh ? '之後再說' : 'Maybe later'),
+          child: Text(isZh ? '稍後再說' : 'Maybe later'),
         ),
         FilledButton(
           onPressed: () => Navigator.of(dialogContext).pop('set'),
-          child: Text(isZh ? '立即設定' : 'Set now'),
+          child: Text(isZh ? '現在設定' : 'Set now'),
         ),
       ],
     ),
@@ -68,20 +66,21 @@ Future<void> showBackupPasswordSetupDialog(
   bool obscurePassword = true;
   bool obscureConfirm = true;
   bool saving = false;
+
   await showDialog<void>(
     context: context,
     barrierDismissible: !saving,
     builder: (dialogContext) => StatefulBuilder(
       builder: (dialogContext, setState) => AlertDialog(
-        title: Text(isZh ? '設定備援密碼' : 'Set backup password'),
+        title: Text(isZh ? '設定登入密碼' : 'Set sign-in password'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               isZh
-                  ? '之後除了信箱登入連結，也能直接用 Email + 密碼登入。'
-                  : 'You will be able to sign in with Email + password in addition to email sign-in links.',
+                  ? '設定完成後，你可以改用 Email + 密碼登入，不必每次都等信箱連結。'
+                  : 'After setting this, you can sign in with Email + password instead of waiting for an email link every time.',
             ),
             const SizedBox(height: 12),
             TextField(
@@ -121,8 +120,8 @@ Future<void> showBackupPasswordSetupDialog(
             const SizedBox(height: 8),
             Text(
               isZh
-                  ? '密碼至少 8 碼，且不可含空白或中文。'
-                  : 'Password must be at least 8 characters with no spaces or Chinese characters.',
+                  ? '密碼至少 8 碼，且不能包含空白或中文。'
+                  : 'Password must be at least 8 characters and cannot contain spaces or Chinese characters.',
               style: Theme.of(dialogContext)
                   .textTheme
                   .bodySmall
@@ -153,23 +152,25 @@ Future<void> showBackupPasswordSetupDialog(
                     final confirm = confirmController.text;
                     if (password.isEmpty || confirm.isEmpty) {
                       setState(() {
-                        errorText =
-                            isZh ? '請完整輸入密碼' : 'Enter both password fields.';
+                        errorText = isZh
+                            ? '請完整輸入兩個密碼欄位'
+                            : 'Please fill in both password fields.';
                       });
                       return;
                     }
-                    if (!_isValidBackupPassword(password)) {
+                    if (!_isValidSignInPassword(password)) {
                       setState(() {
                         errorText = isZh
-                            ? '密碼至少 8 碼，且不可含空白或中文。'
-                            : 'Password must be at least 8 characters with no spaces or Chinese characters.';
+                            ? '密碼至少 8 碼，且不能包含空白或中文。'
+                            : 'Password must be at least 8 characters and cannot contain spaces or Chinese characters.';
                       });
                       return;
                     }
                     if (password != confirm) {
                       setState(() {
-                        errorText =
-                            isZh ? '兩次密碼不一致' : 'Passwords do not match.';
+                        errorText = isZh
+                            ? '兩次輸入的密碼不一致'
+                            : 'Passwords do not match.';
                       });
                       return;
                     }
@@ -186,16 +187,16 @@ Future<void> showBackupPasswordSetupDialog(
                         SnackBar(
                           content: Text(
                             isZh
-                                ? '備援密碼已設定'
-                                : 'Backup password set successfully.',
+                                ? '登入密碼已更新'
+                                : 'Sign-in password updated.',
                           ),
                         ),
                       );
-                    } catch (err) {
+                    } catch (_) {
                       setState(() {
                         saving = false;
                         errorText = isZh
-                            ? '設定失敗，請稍後再試。'
+                            ? '設定密碼失敗，請稍後再試'
                             : 'Failed to set password. Please try again later.';
                       });
                     }
@@ -206,6 +207,7 @@ Future<void> showBackupPasswordSetupDialog(
       ),
     ),
   );
+
   passwordController.dispose();
   confirmController.dispose();
 }

@@ -1052,11 +1052,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           _row(
                             context,
                             isZh
-                                ? '\u5099\u63f4\u5bc6\u78bc'
-                                : 'Backup password',
+                                ? '\u767b\u5165\u5bc6\u78bc'
+                                : 'Sign-in password',
                             isZh
-                                ? '\u53ef\u5728\u767b\u5165\u5931\u6548\u6642\u6539\u7528 Email + \u5bc6\u78bc\u767b\u5165'
-                                : 'Use Email + password if your sign-in link session expires.',
+                                ? '\u8a2d\u5b9a\u6216\u66f4\u65b0 Email + \u5bc6\u78bc\u767b\u5165\uff0c\u4f5c\u70ba\u4fe1\u7bb1\u9023\u7d50\u4e4b\u5916\u7684\u5099\u7528\u65b9\u5f0f'
+                                : 'Set or update Email + password sign-in as a backup option alongside email links.',
                             icon: Icons.lock_outline,
                             onTap: () => showBackupPasswordSetupDialog(
                               context,

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -257,6 +257,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   AppState? _app;
   bool _didRunInitialAutoFlow = false;
   bool _suppressDockPageChange = false;
+  bool _isShowingNicknamePrompt = false;
+  String? _nicknamePromptedUserId;
   late final PageController _dockController;
   double _dockPage = 1;
   int _lastDockTarget = 1;
@@ -335,7 +337,114 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (app == null) return;
     scheduleMicrotask(() async {
       await app.runAutoFinalizeFlow();
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _maybePromptForNickname();
+      });
     });
+  }
+
+  bool _isValidNickname(String value) {
+    final nickname = value.trim();
+    if (nickname.length < 2 || nickname.length > 24) return false;
+    if (RegExp(r'[\x00-\x1F\x7F]').hasMatch(nickname)) return false;
+    if (RegExp(r'[\u200B-\u200F\uFEFF]').hasMatch(nickname)) return false;
+    return true;
+  }
+
+  Future<void> _maybePromptForNickname() async {
+    if (!mounted || _isShowingNicknamePrompt) return;
+    final app = _app;
+    if (app == null || !app.isSupabaseSignedIn) return;
+    if (app.profile.name.trim().isNotEmpty) return;
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) return;
+    if (_nicknamePromptedUserId == userId) return;
+
+    final t = AppLocalizations.of(context)!;
+    final isZh = Localizations.localeOf(context)
+        .languageCode
+        .toLowerCase()
+        .startsWith('zh');
+    final controller = TextEditingController(text: app.profile.name.trim());
+    String? errorText;
+    bool saving = false;
+
+    _isShowingNicknamePrompt = true;
+    _nicknamePromptedUserId = userId;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setState) => AlertDialog(
+          title: Text(isZh ? '\u5148\u8a2d\u5b9a\u4f60\u7684\u66b1\u7a31' : 'Set your nickname'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isZh
+                    ? '\u7b2c\u4e00\u6b21\u4f7f\u7528\u5148\u88dc\u4e00\u500b\u66b1\u7a31\uff0c\u4e4b\u5f8c\u9996\u9801\u3001\u804a\u5929\u8207\u7d00\u9304\u90fd\u6703\u7528\u5230\u3002'
+                    : 'Add a nickname first. It will be used across home, chat, and logs.',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                enabled: !saving,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: t.nicknameLabel,
+                  errorText: errorText,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: saving
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(),
+              child: Text(isZh ? '\u7a0d\u5f8c\u518d\u8aaa' : 'Later'),
+            ),
+            FilledButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final nickname = controller.text.trim();
+                      if (!_isValidNickname(nickname)) {
+                        setState(() {
+                          errorText = t.authNicknameInvalid;
+                        });
+                        return;
+                      }
+                      setState(() {
+                        saving = true;
+                        errorText = null;
+                      });
+                      try {
+                        await app.updateNickname(nickname);
+                        if (!dialogContext.mounted) return;
+                        Navigator.of(dialogContext).pop();
+                      } catch (_) {
+                        if (!dialogContext.mounted) return;
+                        setState(() {
+                          saving = false;
+                          errorText = isZh
+                              ? '\u66b1\u7a31\u66f4\u65b0\u5931\u6557\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66'
+                              : 'Failed to update nickname. Please try again later.';
+                        });
+                      }
+                    },
+              child: Text(isZh ? '\u5132\u5b58' : 'Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    controller.dispose();
+    _isShowingNicknamePrompt = false;
   }
 
   @override
@@ -364,7 +473,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       _DockItem(label: t.tabLog, icon: Icons.receipt_long_rounded),
       _DockItem(label: t.tabChat, icon: Icons.chat_bubble_rounded),
       _DockItem(
-        label: isZh ? '7天規劃' : '7-day plan',
+        label: isZh ? '\u0037\u5929\u898f\u5283' : '7-day plan',
         icon: Icons.calendar_view_week_rounded,
       ),
       _DockItem(label: t.tabCustom, icon: Icons.restaurant_menu_rounded),
