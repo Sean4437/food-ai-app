@@ -251,16 +251,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nextMealSectionTitle => '下一餐建議怎麼吃';
 
   @override
-  String get noLateSnackSelfCook => '不建議消夜；若想吃，清湯蔬菜小份';
+  String get noLateSnackSelfCook => '如果今晚還想吃，先選清湯蔬菜小份';
 
   @override
-  String get noLateSnackConvenience => '不建議消夜；若想吃，無糖豆漿或小份沙拉';
+  String get noLateSnackConvenience => '如果今晚還想吃，先選無糖豆漿或小份沙拉';
 
   @override
-  String get noLateSnackBento => '不建議消夜；若想吃，半份蔬菜便當';
+  String get noLateSnackBento => '如果今晚還想吃，先選半份蔬菜便當';
 
   @override
-  String get noLateSnackOther => '不建議消夜；若想吃，少量水果即可';
+  String get noLateSnackOther => '如果今晚還想吃，先少量水果就好';
 
   @override
   String get nextMealHint => '選一個最方便的方式就好';
@@ -350,25 +350,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get optionLightDesc => '清湯、蒸煮、少醬料';
 
   @override
-  String get summaryTitle => '今日總結';
+  String get summaryTitle => '今天的重点';
 
   @override
-  String get summaryEmpty => '今天還沒記錄餐點喔';
+  String get summaryEmpty => '今天还没有餐点记录';
 
   @override
-  String get summaryOilyCarb => '今天偏油、碳水也偏多';
+  String get summaryOilyCarb => '今天油脂和淀粉都偏多';
 
   @override
-  String get summaryOily => '今天偏油';
+  String get summaryOily => '今天油脂稍微偏多';
 
   @override
-  String get summaryCarb => '今天碳水偏多';
+  String get summaryCarb => '今天淀粉稍微偏多';
 
   @override
-  String get summaryProteinOk => '蛋白質 OK，記得補點蔬菜';
+  String get summaryProteinOk => '今天蛋白质有跟上，记得补点蔬菜';
 
   @override
-  String get summaryNeutral => '今天狀態不錯，繼續保持';
+  String get summaryNeutral => '今天整体稳稳的，照这个节奏就好';
 
   @override
   String get summaryBeverageOnly => '今天只記錄了飲料';
@@ -422,25 +422,25 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String greetingTitle(String name) {
-    return '嗨 $name，今天也加油';
+    return '嗨 $name，来看看今天吃得怎么样';
   }
 
   @override
   String streakLabel(int count) {
-    return '已連續紀錄 $count 天';
+    return '连续记录 $count 天';
   }
 
   @override
-  String get aiSuggest => 'AI 飲食建議';
+  String get aiSuggest => 'MiraMeal 小提醒';
 
   @override
-  String get latestMealTitle => '剛剛吃的餐點';
+  String get latestMealTitle => '今天最近一餐';
 
   @override
-  String get latestMealEmpty => '今天還沒記錄餐點喔';
+  String get latestMealEmpty => '今天还没有餐点记录';
 
   @override
-  String get homeNextMealHint => '點進建議頁，挑一個最順手的方案';
+  String get homeNextMealHint => '想知道下一餐怎么接，点进建议页就好';
 
   @override
   String get logTitle => '紀錄';
@@ -463,13 +463,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dailyCalorieRange => '今日熱量攝取';
 
   @override
-  String get dayCardTitle => '每日摘要';
+  String get dayCardTitle => '今天的状态';
 
   @override
   String get dayMealsTitle => '返回本日餐次';
 
   @override
-  String get tomorrowAdviceTitle => '明天建議';
+  String get tomorrowAdviceTitle => '接下来怎么吃';
 
   @override
   String get dayCardDateLabel => '日期：';
@@ -564,23 +564,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dayCardMealsLabel => '分析餐數：';
 
   @override
-  String get dayCardSummaryLabel => '今日總結';
+  String get dayCardSummaryLabel => '今天重点';
 
   @override
-  String get dayCardTomorrowLabel => '明日建議';
+  String get dayCardTomorrowLabel => '接下来建议';
 
   @override
   String summaryPendingAt(Object time) {
-    return '將於 $time 產生總結';
+    return '今天重点会在 $time 准备好';
   }
 
   @override
   String weekSummaryPendingAt(Object day, Object time) {
-    return '將於 $day $time 產生總結';
+    return '这周回顾会在 $day $time 准备好';
   }
 
   @override
-  String get finalizeDay => '生成今日總結';
+  String get finalizeDay => '整理今天重点';
 
   @override
   String get dishSummaryLabel => '本餐摘要';
@@ -667,34 +667,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get suggestInstantAdviceTitle => '这份食物怎么吃比较好';
 
   @override
-  String get suggestInstantCanEat => '搭配';
+  String get suggestInstantCanEat => '一起搭';
 
   @override
   String get suggestInstantCanDrink => '可以喝';
 
   @override
-  String get suggestInstantAvoid => '不建议';
+  String get suggestInstantAvoid => '先少一点';
 
   @override
-  String get suggestInstantAvoidDrink => '不建议喝';
+  String get suggestInstantAvoidDrink => '先少喝一点';
 
   @override
-  String get suggestInstantLimit => '建议份量';
+  String get suggestInstantLimit => '这样吃刚好';
 
   @override
-  String get suggestInstantDrinkLimit => '建议份量';
+  String get suggestInstantDrinkLimit => '这样喝刚好';
 
   @override
   String get suggestInstantDrinkAdviceTitle => '这杯饮料怎么喝比较好';
 
   @override
-  String get suggestInstantCanEatInline => '可以怎么吃';
+  String get suggestInstantCanEatInline => '可以怎么搭';
 
   @override
-  String get suggestInstantRiskInline => '可能会有的问题';
+  String get suggestInstantRiskInline => '先留意';
 
   @override
-  String get suggestInstantLimitInline => '建议份量';
+  String get suggestInstantLimitInline => '刚好的份量';
 
   @override
   String get suggestInstantEnergyOk => '可接受';
@@ -927,22 +927,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get personaSystem => '精簡系統';
 
   @override
-  String get summarySettingsSection => '總結設定';
+  String get summarySettingsSection => '自动整理';
 
   @override
-  String get summaryTimeLabel => '每日總結';
+  String get summaryTimeLabel => '每日总览';
 
   @override
-  String get weeklySummaryDayLabel => '每周總結';
+  String get weeklySummaryDayLabel => '每周回顾';
 
   @override
   String get weekTopMealTitle => '本週熱量最高一餐';
 
   @override
-  String get recentGuidanceTitle => '近期方針（近 7 天）';
+  String get recentGuidanceTitle => '最近 7 天提醒';
 
   @override
-  String get weekSummaryTitle => '本週總結';
+  String get weekSummaryTitle => '这周回顾';
 
   @override
   String get nextWeekAdviceTitle => '下週建議';
@@ -1823,21 +1823,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatAssistantDefaultName => '咚咚';
 
   @override
-  String get chatEmptyHint => '嗨～我是咚咚，问我饮食或目标吧！';
+  String get chatEmptyHint => '嗨，我是咚咚。你可以问我今天吃得怎么样，或下一餐怎么安排。';
 
   @override
   String chatEmptyHintWithName(Object name) {
-    return '嗨～我是$name，问我饮食或目标吧！';
+    return '嗨，我是$name。你可以问我今天吃得怎么样，或下一餐怎么安排。';
   }
 
   @override
-  String get chatInputHint => '问问咚咚...';
+  String get chatInputHint => '问我今天怎么吃...';
 
   @override
-  String get chatLockedTitle => '订阅即可开启聊天';
+  String get chatLockedTitle => '订阅后可开启聊天陪伴';
 
   @override
-  String get chatLockedBody => '订阅后可获得个性化饮食建议与解答。';
+  String get chatLockedBody => '开启后可以直接问今天吃得如何、下一餐怎么接，或请我帮你整理重点。';
 
   @override
   String get chatLockedAction => '查看订阅';
@@ -1846,7 +1846,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatClearTitle => '清除聊天记录？';
 
   @override
-  String get chatClearBody => '这会移除本机上的对话内容。';
+  String get chatClearBody => '这会移除这台装置上的对话内容。';
 
   @override
   String get chatClearConfirm => '清除';
@@ -1861,13 +1861,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chatErrorQuota => '今日聊天额度已用完，请稍后再试';
 
   @override
-  String get chatErrorServer => '喵嗚～我有点忙，稍后再试';
+  String get chatErrorServer => '我这边刚刚有点忙，稍后再试';
 
   @override
   String get chatErrorNetwork => '网路不稳定，请稍后再试';
 
   @override
-  String get chatErrorReplyBase => '喵嗚～我刚刚有点累，稍后再问我一次好吗？';
+  String get chatErrorReplyBase => '我刚刚没整理好这次回答，稍后再问我一次好吗？';
 
   @override
   String get chatErrorReasonPrefix => '原因：';
@@ -2174,16 +2174,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get nextMealSectionTitle => '下一餐建議怎麼吃';
 
   @override
-  String get noLateSnackSelfCook => '不建議消夜；若想吃，清湯蔬菜小份';
+  String get noLateSnackSelfCook => '如果今晚還想吃，先選清湯蔬菜小份';
 
   @override
-  String get noLateSnackConvenience => '不建議消夜；若想吃，無糖豆漿或小份沙拉';
+  String get noLateSnackConvenience => '如果今晚還想吃，先選無糖豆漿或小份沙拉';
 
   @override
-  String get noLateSnackBento => '不建議消夜；若想吃，半份蔬菜便當';
+  String get noLateSnackBento => '如果今晚還想吃，先選半份蔬菜便當';
 
   @override
-  String get noLateSnackOther => '不建議消夜；若想吃，少量水果即可';
+  String get noLateSnackOther => '如果今晚還想吃，先少量水果就好';
 
   @override
   String get nextMealHint => '選一個最方便的方式就好';
@@ -2273,25 +2273,25 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get optionLightDesc => '清湯、蒸煮、少醬料';
 
   @override
-  String get summaryTitle => '今日總結';
+  String get summaryTitle => '今天的重點';
 
   @override
-  String get summaryEmpty => '今天還沒記錄餐點喔';
+  String get summaryEmpty => '今天還沒有餐點紀錄';
 
   @override
-  String get summaryOilyCarb => '今天偏油、碳水也偏多';
+  String get summaryOilyCarb => '今天油脂和澱粉都偏多';
 
   @override
-  String get summaryOily => '今天偏油';
+  String get summaryOily => '今天油脂稍微偏多';
 
   @override
-  String get summaryCarb => '今天碳水偏多';
+  String get summaryCarb => '今天澱粉稍微偏多';
 
   @override
-  String get summaryProteinOk => '蛋白質 OK，記得補點蔬菜';
+  String get summaryProteinOk => '今天蛋白質有跟上，記得補點蔬菜';
 
   @override
-  String get summaryNeutral => '今天狀態不錯，繼續保持';
+  String get summaryNeutral => '今天整體穩穩的，照這個節奏就好';
 
   @override
   String get summaryBeverageOnly => '今天只記錄了飲料';
@@ -2345,25 +2345,25 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String greetingTitle(String name) {
-    return '嗨 $name，今天也加油';
+    return '嗨 $name，來看看今天吃得怎麼樣';
   }
 
   @override
   String streakLabel(int count) {
-    return '已連續紀錄 $count 天';
+    return '連續記錄 $count 天';
   }
 
   @override
-  String get aiSuggest => 'AI 飲食建議';
+  String get aiSuggest => 'MiraMeal 小提醒';
 
   @override
-  String get latestMealTitle => '剛剛吃的餐點';
+  String get latestMealTitle => '今天最近一餐';
 
   @override
-  String get latestMealEmpty => '今天還沒記錄餐點喔';
+  String get latestMealEmpty => '今天還沒有餐點紀錄';
 
   @override
-  String get homeNextMealHint => '點進建議頁，挑一個最順手的方案';
+  String get homeNextMealHint => '想知道下一餐怎麼接，點進建議頁就好';
 
   @override
   String get logTitle => '紀錄';
@@ -2386,13 +2386,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dailyCalorieRange => '今日熱量攝取';
 
   @override
-  String get dayCardTitle => '每日摘要';
+  String get dayCardTitle => '今天的狀態';
 
   @override
   String get dayMealsTitle => '返回本日餐次';
 
   @override
-  String get tomorrowAdviceTitle => '明天建議';
+  String get tomorrowAdviceTitle => '接下來怎麼吃';
 
   @override
   String get dayCardDateLabel => '日期：';
@@ -2487,23 +2487,23 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dayCardMealsLabel => '分析餐數：';
 
   @override
-  String get dayCardSummaryLabel => '今日總結';
+  String get dayCardSummaryLabel => '今天重點';
 
   @override
-  String get dayCardTomorrowLabel => '明日建議';
+  String get dayCardTomorrowLabel => '接下來建議';
 
   @override
   String summaryPendingAt(Object time) {
-    return '將於 $time 產生總結';
+    return '今天重點會在 $time 準備好';
   }
 
   @override
   String weekSummaryPendingAt(Object day, Object time) {
-    return '將於 $day $time 產生總結';
+    return '這週回顧會在 $day $time 準備好';
   }
 
   @override
-  String get finalizeDay => '生成今日總結';
+  String get finalizeDay => '整理今天重點';
 
   @override
   String get dishSummaryLabel => '本餐摘要';
@@ -2590,34 +2590,34 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get suggestInstantAdviceTitle => '這份食物怎麼吃比較好';
 
   @override
-  String get suggestInstantCanEat => '搭配';
+  String get suggestInstantCanEat => '一起搭';
 
   @override
   String get suggestInstantCanDrink => '可以喝';
 
   @override
-  String get suggestInstantAvoid => '不建議';
+  String get suggestInstantAvoid => '先少一點';
 
   @override
-  String get suggestInstantAvoidDrink => '不建議喝';
+  String get suggestInstantAvoidDrink => '先少喝一點';
 
   @override
-  String get suggestInstantLimit => '建議份量';
+  String get suggestInstantLimit => '這樣吃剛好';
 
   @override
-  String get suggestInstantDrinkLimit => '建議份量';
+  String get suggestInstantDrinkLimit => '這樣喝剛好';
 
   @override
   String get suggestInstantDrinkAdviceTitle => '這杯飲料怎麼喝比較好';
 
   @override
-  String get suggestInstantCanEatInline => '可以怎麼吃';
+  String get suggestInstantCanEatInline => '可以怎麼搭';
 
   @override
-  String get suggestInstantRiskInline => '可能會有的問題';
+  String get suggestInstantRiskInline => '先留意';
 
   @override
-  String get suggestInstantLimitInline => '建議份量';
+  String get suggestInstantLimitInline => '剛好的份量';
 
   @override
   String get suggestInstantEnergyOk => '可接受';
@@ -2850,22 +2850,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get personaSystem => '精簡系統';
 
   @override
-  String get summarySettingsSection => '總結設定';
+  String get summarySettingsSection => '自動整理';
 
   @override
   String get summaryTimeLabel => '每日總結';
 
   @override
-  String get weeklySummaryDayLabel => '每周總結';
+  String get weeklySummaryDayLabel => '每週回顧';
 
   @override
   String get weekTopMealTitle => '本週熱量最高一餐';
 
   @override
-  String get recentGuidanceTitle => '近期方針（近 7 天）';
+  String get recentGuidanceTitle => '最近 7 天提醒';
 
   @override
-  String get weekSummaryTitle => '本週總結';
+  String get weekSummaryTitle => '這週回顧';
 
   @override
   String get nextWeekAdviceTitle => '下週建議';
@@ -3746,21 +3746,21 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get chatAssistantDefaultName => '咚咚';
 
   @override
-  String get chatEmptyHint => '嗨～我是咚咚，問我飲食或目標吧！';
+  String get chatEmptyHint => '嗨，我是咚咚。你可以問我今天吃得怎麼樣，或下一餐怎麼安排。';
 
   @override
   String chatEmptyHintWithName(Object name) {
-    return '嗨～我是$name，問我飲食或目標吧！';
+    return '嗨，我是$name。你可以問我今天吃得怎麼樣，或下一餐怎麼安排。';
   }
 
   @override
-  String get chatInputHint => '問問咚咚...';
+  String get chatInputHint => '問我今天怎麼吃...';
 
   @override
-  String get chatLockedTitle => '訂閱即可開啟聊天';
+  String get chatLockedTitle => '訂閱後可開啟聊天陪伴';
 
   @override
-  String get chatLockedBody => '訂閱後可獲得個人化飲食建議與解答。';
+  String get chatLockedBody => '開啟後可以直接問今天吃得如何、下一餐怎麼接，或請我幫你整理重點。';
 
   @override
   String get chatLockedAction => '查看訂閱';
@@ -3769,7 +3769,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get chatClearTitle => '清除聊天紀錄？';
 
   @override
-  String get chatClearBody => '這會移除本機上的對話內容。';
+  String get chatClearBody => '這會移除這台裝置上的對話內容。';
 
   @override
   String get chatClearConfirm => '清除';
@@ -3784,13 +3784,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get chatErrorQuota => '今日聊天額度已用完，請稍後再試';
 
   @override
-  String get chatErrorServer => '喵嗚～我有點忙，稍後再試';
+  String get chatErrorServer => '我這邊剛剛有點忙，稍後再試';
 
   @override
   String get chatErrorNetwork => '網路不穩定，請稍後再試';
 
   @override
-  String get chatErrorReplyBase => '喵嗚～我剛剛有點累，稍後再問我一次好嗎？';
+  String get chatErrorReplyBase => '我剛剛沒整理好這次回答，稍後再問我一次好嗎？';
 
   @override
   String get chatErrorReasonPrefix => '原因：';

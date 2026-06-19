@@ -255,19 +255,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noLateSnackSelfCook =>
-      'No late snack; if needed, small clear soup + veggies';
+      'If you\'re still hungry tonight, try a small clear soup with veggies';
 
   @override
   String get noLateSnackConvenience =>
-      'No late snack; if needed, unsweetened soy milk or a small salad';
+      'If you\'re still hungry tonight, try unsweetened soy milk or a small salad';
 
   @override
   String get noLateSnackBento =>
-      'No late snack; if needed, half-portion veggie bento';
+      'If you\'re still hungry tonight, try a half-portion veggie bento';
 
   @override
   String get noLateSnackOther =>
-      'No late snack; if needed, a small portion of fruit';
+      'If you\'re still hungry tonight, a small portion of fruit is enough';
 
   @override
   String get nextMealHint => 'Pick the easiest option for you';
@@ -359,25 +359,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get optionLightDesc => 'Soup, steamed foods, less sauce.';
 
   @override
-  String get summaryTitle => 'Today’s summary';
+  String get summaryTitle => 'Today’s highlights';
 
   @override
-  String get summaryEmpty => 'No meals recorded today yet';
+  String get summaryEmpty => 'No meals recorded for today yet';
 
   @override
-  String get summaryOilyCarb => 'A bit oily and carb-heavy today';
+  String get summaryOilyCarb => 'Today looks a bit high in both fat and carbs';
 
   @override
-  String get summaryOily => 'A bit oily today';
+  String get summaryOily => 'Fat looks a little high today';
 
   @override
-  String get summaryCarb => 'Carb-heavy today';
+  String get summaryCarb => 'Carbs look a little high today';
 
   @override
-  String get summaryProteinOk => 'Protein looks OK — add some veggies';
+  String get summaryProteinOk =>
+      'Protein looks on track today — add some veggies if you can';
 
   @override
-  String get summaryNeutral => 'You’re doing well today, keep it up';
+  String get summaryNeutral => 'Today looks steady — this pace works well';
 
   @override
   String get summaryBeverageOnly => 'Only beverages recorded today';
@@ -431,25 +432,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String greetingTitle(String name) {
-    return 'Hi $name, you’ve got this';
+    return 'Hi $name, let’s see how today is going';
   }
 
   @override
   String streakLabel(int count) {
-    return '$count-day streak';
+    return '$count days in a row';
   }
 
   @override
-  String get aiSuggest => 'AI food advice';
+  String get aiSuggest => 'MiraMeal notes';
 
   @override
-  String get latestMealTitle => 'Latest meal';
+  String get latestMealTitle => 'Most recent meal today';
 
   @override
-  String get latestMealEmpty => 'You haven\'t logged any meals today';
+  String get latestMealEmpty => 'No meals recorded for today yet';
 
   @override
-  String get homeNextMealHint => 'Open Suggestions and pick the easiest option';
+  String get homeNextMealHint =>
+      'If you want help with the next meal, open Suggestions';
 
   @override
   String get logTitle => 'Log';
@@ -472,13 +474,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dailyCalorieRange => 'Today calorie range';
 
   @override
-  String get dayCardTitle => 'Daily summary';
+  String get dayCardTitle => 'Today’s status';
 
   @override
   String get dayMealsTitle => 'Back to meals';
 
   @override
-  String get tomorrowAdviceTitle => 'Tomorrow advice';
+  String get tomorrowAdviceTitle => 'What to do next';
 
   @override
   String get dayCardDateLabel => 'Date:';
@@ -573,23 +575,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dayCardMealsLabel => 'Meals analyzed:';
 
   @override
-  String get dayCardSummaryLabel => 'Today\'s summary';
+  String get dayCardSummaryLabel => 'Today’s highlights';
 
   @override
-  String get dayCardTomorrowLabel => 'Tomorrow\'s advice';
+  String get dayCardTomorrowLabel => 'Next-step guidance';
 
   @override
   String summaryPendingAt(Object time) {
-    return 'Summary will be ready at $time';
+    return 'Today’s highlights will be ready at $time';
   }
 
   @override
   String weekSummaryPendingAt(Object day, Object time) {
-    return 'Weekly summary will be ready on $day at $time';
+    return 'This week’s recap will be ready on $day at $time';
   }
 
   @override
-  String get finalizeDay => 'Generate today\'s summary';
+  String get finalizeDay => 'Wrap up today';
 
   @override
   String get dishSummaryLabel => 'Meal summary';
@@ -676,34 +678,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestInstantAdviceTitle => 'How to eat this dish better';
 
   @override
-  String get suggestInstantCanEat => 'Good choices';
+  String get suggestInstantCanEat => 'Pair with';
 
   @override
   String get suggestInstantCanDrink => 'Can drink';
 
   @override
-  String get suggestInstantAvoid => 'Avoid';
+  String get suggestInstantAvoid => 'Go lighter on';
 
   @override
-  String get suggestInstantAvoidDrink => 'Avoid drinking';
+  String get suggestInstantAvoidDrink => 'Go lighter on';
 
   @override
-  String get suggestInstantLimit => 'Suggested portion';
+  String get suggestInstantLimit => 'A good portion';
 
   @override
-  String get suggestInstantDrinkLimit => 'Suggested amount';
+  String get suggestInstantDrinkLimit => 'A good amount';
 
   @override
   String get suggestInstantDrinkAdviceTitle => 'How to drink this beverage';
 
   @override
-  String get suggestInstantCanEatInline => 'How to eat';
+  String get suggestInstantCanEatInline => 'What to pair';
 
   @override
-  String get suggestInstantRiskInline => 'Possible concerns';
+  String get suggestInstantRiskInline => 'Watch for';
 
   @override
-  String get suggestInstantLimitInline => 'Suggested portion';
+  String get suggestInstantLimitInline => 'A good portion';
 
   @override
   String get suggestInstantEnergyOk => 'Acceptable';
@@ -940,22 +942,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personaSystem => 'Concise system';
 
   @override
-  String get summarySettingsSection => 'Summary settings';
+  String get summarySettingsSection => 'Auto summaries';
 
   @override
   String get summaryTimeLabel => 'Daily summary';
 
   @override
-  String get weeklySummaryDayLabel => 'Weekly summary';
+  String get weeklySummaryDayLabel => 'Weekly recap';
 
   @override
   String get weekTopMealTitle => 'Highest-calorie meal this week';
 
   @override
-  String get recentGuidanceTitle => 'Recent guidance (last 7 days)';
+  String get recentGuidanceTitle => 'Reminders from the last 7 days';
 
   @override
-  String get weekSummaryTitle => 'Weekly summary';
+  String get weekSummaryTitle => 'This week’s recap';
 
   @override
   String get nextWeekAdviceTitle => 'Next week advice';
@@ -1849,22 +1851,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatEmptyHint =>
-      'Hi! I\'m Dongdong. Ask me about your meals or goals.';
+      'Hi, I\'m Dongdong. Ask me how today’s eating looks or what to do for your next meal.';
 
   @override
   String chatEmptyHintWithName(Object name) {
-    return 'Hi! I\'m $name. Ask me about your meals or goals.';
+    return 'Hi, I’m $name. Ask me how today’s eating looks or what to do for your next meal.';
   }
 
   @override
-  String get chatInputHint => 'Ask Dongdong...';
+  String get chatInputHint => 'Ask me about today’s meals...';
 
   @override
-  String get chatLockedTitle => 'Chat unlocked with subscription';
+  String get chatLockedTitle => 'Chat opens with subscription';
 
   @override
   String get chatLockedBody =>
-      'Subscribe to get personalized meal guidance and answers.';
+      'You can ask how today is going, what to eat next, or have me summarize the key points.';
 
   @override
   String get chatLockedAction => 'View subscription';
@@ -1874,7 +1876,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatClearBody =>
-      'This will remove the conversation on this device.';
+      'This removes the conversation stored on this device.';
 
   @override
   String get chatClearConfirm => 'Clear';
@@ -1889,7 +1891,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatErrorQuota => 'Daily chat quota reached. Please try later.';
 
   @override
-  String get chatErrorServer => 'Meow~ I\'m busy. Please try again soon.';
+  String get chatErrorServer =>
+      'I’m a little busy right now. Please try again soon.';
 
   @override
   String get chatErrorNetwork => 'Network issue. Please try again.';

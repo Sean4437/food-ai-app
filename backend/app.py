@@ -515,8 +515,8 @@ _chat_blocklist = {
 
 def _chat_ai_fallback_reply(lang: str) -> str:
     if lang == "zh-TW":
-        return "喵嗚～我剛剛有點累，稍後再問我一次好嗎？"
-    return "Meow~ I’m a bit tired right now. Please try again soon."
+        return "我剛剛沒整理好這次回答，稍後再問我一次好嗎？"
+    return "I couldn’t put that answer together just now. Please try again soon."
 
 _usage_dir = _base_dir / "data"
 _usage_dir.mkdir(exist_ok=True)
@@ -3998,21 +3998,21 @@ def _build_prompt(
             meal_text += f"This meal has {meal_photo_count} photos; summarize at the whole-meal level.\n"
     if lang == "zh-TW":
         suggestion_rule = (
-            "- suggestion: 針對下一餐的建議，輸出三行格式：搭配 / 不建議 / 建議份量\n"
+            "- suggestion: 針對下一餐的建議，輸出三行格式：一起搭 / 先少一點 / 這樣吃剛好\n"
             "- 需包含具體食物類型與份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
-            "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「搭配/避免/份量」開頭\n"
+            "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「一起搭/少一點/份量」開頭\n"
         )
         suggestion_example = (
-            "  \"suggestion\": \"搭配：蔬菜多一點、清淡蛋白質\\n不建議：油炸或高糖飲品\\n建議份量：主食半碗、蛋白質一掌\",\n"
+            "  \"suggestion\": \"一起搭：蔬菜多一點、清淡蛋白質\\n先少一點：油炸或高糖飲品\\n這樣吃剛好：主食半碗、蛋白質一掌\",\n"
         )
         if advice_mode == "current_meal":
             suggestion_rule = (
-                "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：搭配 / 不建議 / 建議份量\n"
+                "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：一起搭 / 先少一點 / 這樣吃剛好\n"
                 "- 若 recent context 有上一餐資訊，請簡短提到；若沒有可省略\n"
-                "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「搭配/避免/份量」開頭\n"
+                "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「一起搭/少一點/份量」開頭\n"
             )
             suggestion_example = (
-                "  \"suggestion\": \"搭配：蔬菜多一點，肉量減少\\n不建議：湯底與加工配料\\n建議份量：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
+                "  \"suggestion\": \"一起搭：蔬菜多一點，肉量減少\\n先少一點：湯底與加工配料\\n這樣吃剛好：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
             )
         return (
             "你是營養分析助理。請根據照片判斷餐點內容，回傳 JSON。\n"
@@ -4201,21 +4201,21 @@ def _build_name_prompt(
                 meal_text += "If this is dinner or a late-night snack, suggest avoiding additional late-night eating.\n"
     if lang == "zh-TW":
         suggestion_rule = (
-            "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：搭配 / 不建議 / 建議份量\n"
+            "- suggestion: 針對這一餐怎麼吃比較好，輸出三行格式：一起搭 / 先少一點 / 這樣吃剛好\n"
             "- 若 recent context 有上一餐資訊，請簡短提到；若沒有可省略\n"
-            "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「搭配/避免/份量」開頭\n"
+            "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「一起搭/少一點/份量」開頭\n"
         )
         suggestion_example = (
-            "  \"suggestion\": \"搭配：蔬菜多一點，肉量減少\\n不建議：湯底與加工配料\\n建議份量：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
+            "  \"suggestion\": \"一起搭：蔬菜多一點，肉量減少\\n先少一點：湯底與加工配料\\n這樣吃剛好：主食半碗、蛋白質一掌（上一餐偏油，所以這餐清淡一點）\",\n"
         )
         if advice_mode != "current_meal":
             suggestion_rule = (
-                "- suggestion: 針對下一餐的建議，輸出三行格式：搭配 / 不建議 / 建議份量\n"
+                "- suggestion: 針對下一餐的建議，輸出三行格式：一起搭 / 先少一點 / 這樣吃剛好\n"
                 "- 需包含具體食物類型與份量描述（例：主食半碗、蛋白質一掌、蔬菜一碗）\n"
-                "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「搭配/避免/份量」開頭\n"
+                "- 每行冒號後請直接給自然短句或片語，避免重複「可以/建議/避免/份量」字眼，避免以「一起搭/少一點/份量」開頭\n"
             )
             suggestion_example = (
-                "  \"suggestion\": \"搭配：蔬菜多一點、清淡蛋白質\\n不建議：油炸或高糖飲品\\n建議份量：主食半碗、蛋白質一掌\",\n"
+                "  \"suggestion\": \"一起搭：蔬菜多一點、清淡蛋白質\\n先少一點：油炸或高糖飲品\\n這樣吃剛好：主食半碗、蛋白質一掌\",\n"
             )
         return (
             "你是營養分析助理。請根據食物名稱估算內容，回傳 JSON。\n"
@@ -7073,7 +7073,7 @@ def _build_meal_advice_prompt(lang: str, profile: dict | None, meal: MealAdviceR
             "- 避免醫療或診斷字眼；避免精準數值或克數\n"
             "- 需提到上一餐摘要的影響（例如偏油、偏鹹）\n"
             "- 需考量今日累計與已吃內容，避免重複負擔\n"
-            "- 若為晚餐或消夜，建議更清淡、避免夜間加餐或高糖高油\n- 節奏規則：\n  * 早餐：若空腹很久→溫和好消化；若前一餐很晚→更清淡\n  * 午餐：依早餐量調整；早餐偏多→午餐清淡；早餐偏少→午餐補足\n  * 下午茶：若距晚餐 <= 2 小時→提醒不一定需要或少量；若吃了→提醒晚餐減量或取消\n  * 晚餐：依早/午/下午茶調整；吃多→減量清淡；吃少→正常補足\n  * 消夜：若早/中/晚都有吃→勸戒不建議；若缺餐→可輕量\n- 若今日剩餘熱量 <= 0：必須勸戒停止進食，不提供進食方案\n"
+            "- 若為晚餐或消夜，建議更清淡、盡量避免夜間加餐或高糖高油\n- 節奏規則：\n  * 早餐：若空腹很久→溫和好消化；若前一餐很晚→更清淡\n  * 午餐：依早餐量調整；早餐偏多→午餐清淡；早餐偏少→午餐補足\n  * 下午茶：若距晚餐 <= 2 小時→提醒不一定需要或少量；若吃了→提醒晚餐減量或取消\n  * 晚餐：依早/午/下午茶調整；吃多→減量清淡；吃少→正常補足\n  * 消夜：若早/中/晚都有吃→優先提醒不一定需要；若缺餐→可輕量\n- 若今日剩餘熱量 <= 0：需明確提醒今天先收尾，以補水或休息為主，不提供進食方案\n"
             "- 若有飲食偏好/禁忌，必須遵守並避免推薦衝突食物\n"
             "JSON 範例：\n"
             "{\n"
@@ -7551,14 +7551,14 @@ def _chat_is_blocked(text: str) -> bool:
 
 def _chat_blocked_reply(lang: str) -> str:
     if lang == "zh-TW":
-        return "喵～我只聊飲食與健康相關問題喔！可以問我今天要吃什麼或怎麼搭配～"
+        return "我主要陪你聊飲食與健康相關問題。你可以問我今天吃得怎麼樣，或下一餐怎麼安排。"
     return "Meow~ I can only help with food and health topics. Ask me about meals or nutrition!"
 
 
 def _chat_rate_reply(lang: str) -> str:
     if lang == "zh-TW":
-        return "喵嗚～先慢一點點，我剛剛回覆太頻繁了，稍後再問我喔！"
-    return "Meow~ a little too fast. Please wait a moment and try again!"
+        return "先慢一點，我剛剛回覆得太密了，稍後再問我一次。"
+    return "A little too fast just now. Please wait a moment and try again."
 
 
 def _is_model_unavailable_error(exc: Exception) -> bool:
@@ -7823,7 +7823,7 @@ def _build_chat_prompt(
 
     if lang == "zh-TW":
         return (
-            f"你是{assistant_name}，風格可愛親切但專業。請根據使用者最近 7 天紀錄與對話摘要回答問題。\n"
+            f"你是{assistant_name}，風格溫和、日常、專業。請根據使用者最近 7 天紀錄與對話摘要回答問題。\n"
             "要求：\n"
             "- 僅回傳 JSON（不要多餘文字）\n"
             "- reply：回答使用者問題（1-4 句），避免醫療/診斷語氣\n"
@@ -7843,7 +7843,7 @@ def _build_chat_prompt(
             "- 若空腹時間已久或距上餐已久，且今日仍有剩餘熱量，不要直接回『不要吃』\n"
             "- 『多喝水』只能當附帶提醒，不可作為主要回答，除非使用者明確在問喝水/飲料，或今天以飲料為主\n"
             "- 不要空泛說教；先直接回答問題，再補一句原因或下一步\n"
-            "- 口癖：可用「喵～」或「喵嗚」點綴，但每次回覆最多出現 1 次，且隨機低頻（約 3-5 次回覆出現 1 次）\n"
+            "- 語氣要像每天陪伴使用者整理飲食，不要刻意賣萌，也不要使用過度可愛的口頭禪\n"
             "- 若問題與飲食/健康無關，請簡短婉拒並引導回飲食主題\n"
             "JSON 範例：\n"
             "{\n  \"reply\": \"今天晚餐建議清淡些…\",\n  \"summary\": \"使用者偏好清淡、避免油炸…\"\n}\n"

@@ -32,7 +32,9 @@ class _ChatScreenState extends State<ChatScreen> {
         '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     if (_quickPrompts.isNotEmpty &&
         _quickLocale == t.localeName &&
-        _quickDate == dateKey) return;
+        _quickDate == dateKey) {
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() {
@@ -48,55 +50,55 @@ class _ChatScreenState extends State<ChatScreen> {
     final isEnglish = t.localeName.toLowerCase().startsWith('en');
     final today = isEnglish
         ? <String>[
-            "Give me a quick summary of today's meals.",
-            'How did I do today? Just the key points.',
-            "One-sentence recap of today's eating.",
-            'Did I go over today? Quick check.',
+            "Summarize only today's recorded meals for me.",
+            'How is today going so far? Just the key points.',
+            "Give me a one-line recap of today's eating so far.",
+            'What should I pay attention to from today so far?',
           ]
         : <String>[
-            '幫我快速總結今天的飲食重點。',
-            '今天我吃得如何？只要重點就好。',
-            '用一句話回顧我今天的飲食。',
-            '我今天有沒有超標？幫我快速檢查。',
+            '幫我整理今天已記錄的飲食重點。',
+            '只看今天，到目前為止我吃得如何？',
+            '用一句話回顧我今天目前的飲食。',
+            '看今天已記錄內容，我現在最該注意什麼？',
           ];
     final tomorrow = isEnglish
         ? <String>[
-            'How should I eat tomorrow to stay on track?',
-            'Give me a simple plan for tomorrow.',
-            "Give me 3 quick tips for tomorrow's meals.",
-            'Keep it light tomorrow. Any suggestions?',
+            'If I follow today’s pace, how should I eat tomorrow?',
+            'Give me a simple direction for tomorrow’s meals.',
+            "Give me 3 practical tips for tomorrow's meals.",
+            'I want tomorrow to feel lighter. Any suggestions?',
           ]
         : <String>[
-            '明天我要怎麼吃比較能維持目標？',
-            '幫我安排一個簡單的明日飲食方向。',
-            '給我 3 個明天飲食的快速建議。',
-            '明天想吃清爽一點，給我建議。',
+            '如果照今天這個節奏，明天怎麼吃會比較穩？',
+            '幫我安排一個簡單的明天飲食方向。',
+            '給我 3 個明天飲食的實用提醒。',
+            '明天想吃清爽一點，幫我抓方向。',
           ];
     final week = isEnglish
         ? <String>[
-            'How was my eating this week? Key takeaways.',
-            'Give me a short weekly summary.',
-            'What did I do well and what should I fix this week?',
-            'Any imbalance or overages this week?',
+            'How has this week gone overall? Give me the key takeaways.',
+            'Give me a short recap of this week’s eating.',
+            'What went well this week, and what should I adjust?',
+            'Was there any imbalance this week?',
           ]
         : <String>[
-            '我這週的飲食整體如何？重點整理給我。',
-            '幫我做一個簡短的週總結。',
-            '我這週做得好的和要改善的是什麼？',
-            '這週有沒有失衡或超標的地方？',
+            '我這週整體吃得如何？幫我抓重點。',
+            '幫我做一個簡短的這週回顧。',
+            '我這週做得好的地方和要調整的是什麼？',
+            '這週有沒有哪裡比較失衡？',
           ];
     final nextWeek = isEnglish
         ? <String>[
             'What should I focus on next week?',
             "Give me 3 reminders for next week's meals.",
-            'I want to eat cleaner next week. Any guidance?',
-            'Give me one sentence for next week direction.',
+            'I want next week to feel steadier. Any guidance?',
+            'Give me one sentence for next week’s direction.',
           ]
         : <String>[
             '下週我應該優先注意什麼？',
             '給我 3 個下週飲食提醒。',
-            '下週想吃得更乾淨，請給我方向。',
-            '請用一句話告訴我下週策略。',
+            '下週想吃得更穩一點，請給我方向。',
+            '請用一句話告訴我下週的方向。',
           ];
     final activity = isEnglish
         ? <String>[
@@ -331,7 +333,7 @@ class _ChatScreenState extends State<ChatScreen> {
         isUser ? theme.colorScheme.primary.withValues(alpha: 0.9) : Colors.white;
     final textColor = isUser ? Colors.white : Colors.black87;
     final timeLabel = _formatMessageTime(msg.createdAt, locale);
-    final radius = Radius.circular(16);
+    const radius = Radius.circular(16);
     final bubble = Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(

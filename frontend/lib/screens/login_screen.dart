@@ -177,16 +177,16 @@ class _LoginScreenState extends State<LoginScreen> {
     switch (_mode) {
       case _LoginMode.magicLink:
         return _isZh()
-            ? '\u8f38\u5165 Email\uff0c\u6211\u5011\u6703\u5bc4\u767b\u5165\u9023\u7d50\u7d66\u4f60\uff0c\u7b2c\u4e00\u6b21\u4f7f\u7528\u6703\u81ea\u52d5\u5efa\u7acb\u5e33\u865f'
-            : 'Enter your email and we will send you a sign-in link. First-time use will create your account automatically.';
+            ? '\u8f38\u5165 Email\uff0c\u6211\u5011\u6703\u628a\u767b\u5165\u9023\u7d50\u5bc4\u7d66\u4f60\uff0c\u7b2c\u4e00\u6b21\u4f7f\u7528\u4e5f\u53ef\u4ee5\u76f4\u63a5\u958b\u59cb'
+            : 'Enter your email and we will send you a sign-in link. First-time use can start right away.';
       case _LoginMode.password:
         return _isZh()
-            ? '\u8f38\u5165\u5bc6\u78bc\u767b\u5165\u4f60\u7684 MiraMeal \u5e33\u865f'
-            : 'Use your password to sign in to MiraMeal.';
+            ? '\u8f38\u5165\u5bc6\u78bc\uff0c\u56de\u5230\u4f60\u7684 MiraMeal \u7d00\u9304'
+            : 'Use your password to get back to your MiraMeal records.';
       case _LoginMode.signUp:
         return _isZh()
-            ? '\u5148\u5efa\u7acb\u5e33\u865f\uff0c\u4e4b\u5f8c\u53ef\u4ee5\u7528\u9023\u7d50\u6216\u5bc6\u78bc\u767b\u5165'
-            : 'Create your account first, then sign in with a link or password.';
+            ? '\u5148\u5efa\u7acb\u5e33\u865f\uff0c\u4e4b\u5f8c\u53ef\u4ee5\u7528\u767b\u5165\u9023\u7d50\u6216\u5bc6\u78bc\u56de\u4f86'
+            : 'Create your account first, then come back with a sign-in link or password.';
     }
   }
 
@@ -973,8 +973,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 8),
                       Text(
                         _isZh()
-                            ? '\u4e0d\u7528\u5bc6\u78bc\uff0c\u5f9e\u4fe1\u7bb1\u9ede\u4e00\u4e0b\u5c31\u80fd\u767b\u5165\uff0c\u7b2c\u4e00\u6b21\u4f7f\u7528\u4e5f\u53ef\u4ee5\u76f4\u63a5\u958b\u59cb'
-                            : 'No password needed. Open the email link to sign in, even on your first visit.',
+                            ? '\u4e0d\u7528\u8a18\u5bc6\u78bc\uff0c\u5f9e\u4fe1\u7bb1\u9ede\u4e00\u4e0b\u5c31\u80fd\u767b\u5165\uff0c\u7b2c\u4e00\u6b21\u4f7f\u7528\u4e5f\u53ef\u4ee5\u76f4\u63a5\u958b\u59cb'
+                            : 'No password to remember. Open the email link to sign in, even on your first visit.',
                         textAlign: TextAlign.center,
                         style: AppTextStyles.caption(context)
                             .copyWith(color: Colors.black54),

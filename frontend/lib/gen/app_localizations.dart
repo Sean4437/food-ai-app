@@ -582,25 +582,25 @@ abstract class AppLocalizations {
   /// No description provided for @noLateSnackSelfCook.
   ///
   /// In zh_TW, this message translates to:
-  /// **'不建議消夜；若想吃，清湯蔬菜小份'**
+  /// **'如果今晚還想吃，先選清湯蔬菜小份'**
   String get noLateSnackSelfCook;
 
   /// No description provided for @noLateSnackConvenience.
   ///
   /// In zh_TW, this message translates to:
-  /// **'不建議消夜；若想吃，無糖豆漿或小份沙拉'**
+  /// **'如果今晚還想吃，先選無糖豆漿或小份沙拉'**
   String get noLateSnackConvenience;
 
   /// No description provided for @noLateSnackBento.
   ///
   /// In zh_TW, this message translates to:
-  /// **'不建議消夜；若想吃，半份蔬菜便當'**
+  /// **'如果今晚還想吃，先選半份蔬菜便當'**
   String get noLateSnackBento;
 
   /// No description provided for @noLateSnackOther.
   ///
   /// In zh_TW, this message translates to:
-  /// **'不建議消夜；若想吃，少量水果即可'**
+  /// **'如果今晚還想吃，先少量水果就好'**
   String get noLateSnackOther;
 
   /// No description provided for @nextMealHint.
@@ -780,43 +780,43 @@ abstract class AppLocalizations {
   /// No description provided for @summaryTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今日總結'**
+  /// **'今天的重點'**
   String get summaryTitle;
 
   /// No description provided for @summaryEmpty.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天還沒記錄餐點喔'**
+  /// **'今天還沒有餐點紀錄'**
   String get summaryEmpty;
 
   /// No description provided for @summaryOilyCarb.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天偏油、碳水也偏多'**
+  /// **'今天油脂和澱粉都偏多'**
   String get summaryOilyCarb;
 
   /// No description provided for @summaryOily.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天偏油'**
+  /// **'今天油脂稍微偏多'**
   String get summaryOily;
 
   /// No description provided for @summaryCarb.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天碳水偏多'**
+  /// **'今天澱粉稍微偏多'**
   String get summaryCarb;
 
   /// No description provided for @summaryProteinOk.
   ///
   /// In zh_TW, this message translates to:
-  /// **'蛋白質 OK，記得補點蔬菜'**
+  /// **'今天蛋白質有跟上，記得補點蔬菜'**
   String get summaryProteinOk;
 
   /// No description provided for @summaryNeutral.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天狀態不錯，繼續保持'**
+  /// **'今天整體穩穩的，照這個節奏就好'**
   String get summaryNeutral;
 
   /// No description provided for @summaryBeverageOnly.
@@ -918,37 +918,37 @@ abstract class AppLocalizations {
   /// No description provided for @greetingTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'嗨 {name}，今天也加油'**
+  /// **'嗨 {name}，來看看今天吃得怎麼樣'**
   String greetingTitle(String name);
 
   /// No description provided for @streakLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'已連續紀錄 {count} 天'**
+  /// **'連續記錄 {count} 天'**
   String streakLabel(int count);
 
   /// No description provided for @aiSuggest.
   ///
   /// In zh_TW, this message translates to:
-  /// **'AI 飲食建議'**
+  /// **'MiraMeal 小提醒'**
   String get aiSuggest;
 
   /// No description provided for @latestMealTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'剛剛吃的餐點'**
+  /// **'今天最近一餐'**
   String get latestMealTitle;
 
   /// No description provided for @latestMealEmpty.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今天還沒記錄餐點喔'**
+  /// **'今天還沒有餐點紀錄'**
   String get latestMealEmpty;
 
   /// No description provided for @homeNextMealHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'點進建議頁，挑一個最順手的方案'**
+  /// **'想知道下一餐怎麼接，點進建議頁就好'**
   String get homeNextMealHint;
 
   /// No description provided for @logTitle.
@@ -990,7 +990,7 @@ abstract class AppLocalizations {
   /// No description provided for @dayCardTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'每日摘要'**
+  /// **'今天的狀態'**
   String get dayCardTitle;
 
   /// No description provided for @dayMealsTitle.
@@ -1002,7 +1002,7 @@ abstract class AppLocalizations {
   /// No description provided for @tomorrowAdviceTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'明天建議'**
+  /// **'接下來怎麼吃'**
   String get tomorrowAdviceTitle;
 
   /// No description provided for @dayCardDateLabel.
@@ -1152,31 +1152,31 @@ abstract class AppLocalizations {
   /// No description provided for @dayCardSummaryLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'今日總結'**
+  /// **'今天重點'**
   String get dayCardSummaryLabel;
 
   /// No description provided for @dayCardTomorrowLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'明日建議'**
+  /// **'接下來建議'**
   String get dayCardTomorrowLabel;
 
   /// No description provided for @summaryPendingAt.
   ///
   /// In zh_TW, this message translates to:
-  /// **'將於 {time} 產生總結'**
+  /// **'今天重點會在 {time} 準備好'**
   String summaryPendingAt(Object time);
 
   /// No description provided for @weekSummaryPendingAt.
   ///
   /// In zh_TW, this message translates to:
-  /// **'將於 {day} {time} 產生總結'**
+  /// **'這週回顧會在 {day} {time} 準備好'**
   String weekSummaryPendingAt(Object day, Object time);
 
   /// No description provided for @finalizeDay.
   ///
   /// In zh_TW, this message translates to:
-  /// **'生成今日總結'**
+  /// **'整理今天重點'**
   String get finalizeDay;
 
   /// No description provided for @dishSummaryLabel.
@@ -1350,7 +1350,7 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantCanEat.
   ///
   /// In zh_TW, this message translates to:
-  /// **'搭配'**
+  /// **'一起搭'**
   String get suggestInstantCanEat;
 
   /// No description provided for @suggestInstantCanDrink.
@@ -1362,25 +1362,25 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantAvoid.
   ///
   /// In zh_TW, this message translates to:
-  /// **'不建議'**
+  /// **'先少一點'**
   String get suggestInstantAvoid;
 
   /// No description provided for @suggestInstantAvoidDrink.
   ///
   /// In zh_TW, this message translates to:
-  /// **'不建議喝'**
+  /// **'先少喝一點'**
   String get suggestInstantAvoidDrink;
 
   /// No description provided for @suggestInstantLimit.
   ///
   /// In zh_TW, this message translates to:
-  /// **'建議份量'**
+  /// **'這樣吃剛好'**
   String get suggestInstantLimit;
 
   /// No description provided for @suggestInstantDrinkLimit.
   ///
   /// In zh_TW, this message translates to:
-  /// **'建議份量'**
+  /// **'這樣喝剛好'**
   String get suggestInstantDrinkLimit;
 
   /// No description provided for @suggestInstantDrinkAdviceTitle.
@@ -1392,19 +1392,19 @@ abstract class AppLocalizations {
   /// No description provided for @suggestInstantCanEatInline.
   ///
   /// In zh_TW, this message translates to:
-  /// **'可以怎麼吃'**
+  /// **'可以怎麼搭'**
   String get suggestInstantCanEatInline;
 
   /// No description provided for @suggestInstantRiskInline.
   ///
   /// In zh_TW, this message translates to:
-  /// **'可能會有的問題'**
+  /// **'先留意'**
   String get suggestInstantRiskInline;
 
   /// No description provided for @suggestInstantLimitInline.
   ///
   /// In zh_TW, this message translates to:
-  /// **'建議份量'**
+  /// **'剛好的份量'**
   String get suggestInstantLimitInline;
 
   /// No description provided for @suggestInstantEnergyOk.
@@ -1866,7 +1866,7 @@ abstract class AppLocalizations {
   /// No description provided for @summarySettingsSection.
   ///
   /// In zh_TW, this message translates to:
-  /// **'總結設定'**
+  /// **'自動整理'**
   String get summarySettingsSection;
 
   /// No description provided for @summaryTimeLabel.
@@ -1878,7 +1878,7 @@ abstract class AppLocalizations {
   /// No description provided for @weeklySummaryDayLabel.
   ///
   /// In zh_TW, this message translates to:
-  /// **'每周總結'**
+  /// **'每週回顧'**
   String get weeklySummaryDayLabel;
 
   /// No description provided for @weekTopMealTitle.
@@ -1890,13 +1890,13 @@ abstract class AppLocalizations {
   /// No description provided for @recentGuidanceTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'近期方針（近 7 天）'**
+  /// **'最近 7 天提醒'**
   String get recentGuidanceTitle;
 
   /// No description provided for @weekSummaryTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'本週總結'**
+  /// **'這週回顧'**
   String get weekSummaryTitle;
 
   /// No description provided for @nextWeekAdviceTitle.
@@ -3558,31 +3558,31 @@ abstract class AppLocalizations {
   /// No description provided for @chatEmptyHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'嗨～我是咚咚，問我飲食或目標吧！'**
+  /// **'嗨，我是咚咚。你可以問我今天吃得怎麼樣，或下一餐怎麼安排。'**
   String get chatEmptyHint;
 
   /// No description provided for @chatEmptyHintWithName.
   ///
   /// In zh_TW, this message translates to:
-  /// **'嗨～我是{name}，問我飲食或目標吧！'**
+  /// **'嗨，我是{name}。你可以問我今天吃得怎麼樣，或下一餐怎麼安排。'**
   String chatEmptyHintWithName(Object name);
 
   /// No description provided for @chatInputHint.
   ///
   /// In zh_TW, this message translates to:
-  /// **'問問咚咚...'**
+  /// **'問我今天怎麼吃...'**
   String get chatInputHint;
 
   /// No description provided for @chatLockedTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'訂閱即可開啟聊天'**
+  /// **'訂閱後可開啟聊天陪伴'**
   String get chatLockedTitle;
 
   /// No description provided for @chatLockedBody.
   ///
   /// In zh_TW, this message translates to:
-  /// **'訂閱後可獲得個人化飲食建議與解答。'**
+  /// **'開啟後可以直接問今天吃得如何、下一餐怎麼接，或請我幫你整理重點。'**
   String get chatLockedBody;
 
   /// No description provided for @chatLockedAction.
@@ -3600,7 +3600,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatClearBody.
   ///
   /// In zh_TW, this message translates to:
-  /// **'這會移除本機上的對話內容。'**
+  /// **'這會移除這台裝置上的對話內容。'**
   String get chatClearBody;
 
   /// No description provided for @chatClearConfirm.
@@ -3630,7 +3630,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatErrorServer.
   ///
   /// In zh_TW, this message translates to:
-  /// **'喵嗚～我有點忙，稍後再試'**
+  /// **'我這邊剛剛有點忙，稍後再試'**
   String get chatErrorServer;
 
   /// No description provided for @chatErrorNetwork.
@@ -3642,7 +3642,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatErrorReplyBase.
   ///
   /// In zh_TW, this message translates to:
-  /// **'喵嗚～我剛剛有點累，稍後再問我一次好嗎？'**
+  /// **'我剛剛沒整理好這次回答，稍後再問我一次好嗎？'**
   String get chatErrorReplyBase;
 
   /// No description provided for @chatErrorReasonPrefix.

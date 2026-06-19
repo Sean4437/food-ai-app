@@ -1023,11 +1023,11 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(_isZh ? '重新生成本週計畫？' : 'Regenerate this week plan?'),
+        title: Text(_isZh ? '重新安排這週餐單？' : 'Regenerate this week plan?'),
         content: Text(
           _isZh
-              ? '會以目前設定重新產生 7 天餐次，原本內容可能被覆蓋。'
-              : 'This will regenerate the 7-day plan and may replace current items.',
+              ? '會依照目前設定重排 7 天內容，原本安排可能會被更新。'
+              : 'This will regenerate the 7-day plan and may update the current meals.',
         ),
         actions: [
           TextButton(
@@ -1036,7 +1036,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(_isZh ? '重新生成' : 'Regenerate'),
+            child: Text(_isZh ? '重新安排' : 'Regenerate'),
           ),
         ],
       ),
@@ -1378,10 +1378,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
 
     final weekGoalLabel = _goalMode == 'week_override'
         ? _goalLabel(_goalOverride)
-        : _text('沿用個人設定', 'Use profile goal');
+        : _text('沿用目前目標', 'Use current goal');
     final settingsSummary = _text(
-      '已套用 $activeScenarioMeals/${_mealTypes.length} 餐來源・固定餐 ${_fixedMeals.length} 項',
-      '$activeScenarioMeals/${_mealTypes.length} meal sources ・ ${_fixedMeals.length} fixed rules',
+      '已套用 $activeScenarioMeals/${_mealTypes.length} 餐方式・固定餐 ${_fixedMeals.length} 項',
+      '$activeScenarioMeals/${_mealTypes.length} meal styles ・ ${_fixedMeals.length} fixed meals',
     );
 
     final visibleWarnings = (plan?.validation.warnings ?? const <String>[])
@@ -1486,7 +1486,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                         ),
                       ),
                       IconButton(
-                        tooltip: _text('規劃設定', 'Plan settings'),
+                        tooltip: _text('調整規劃', 'Adjust plan settings'),
                         onPressed: () {
                           setState(() {
                             _planningSettingsExpanded =
@@ -1511,7 +1511,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _text('本週目標', 'Weekly Focus'),
+                            _text('這週方向', 'This week focus'),
                             style: AppTextStyles.body(context).copyWith(
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF111827),
@@ -1530,10 +1530,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                           const SizedBox(height: 4),
                           Text(
                             plan != null
-                                ? '${_text('每日目標', 'Daily target')} ${plan.dailyTarget.kcal} kcal'
+                                ? '${_text('每天大約', 'Around')} ${plan.dailyTarget.kcal} kcal'
                                 : _text(
-                                    '產生計畫後會顯示每日熱量目標',
-                                    'Daily kcal target will appear after generation',
+                                    '排出計畫後，這裡會顯示每天的大致熱量',
+                                    'Daily calorie guidance will appear after generation',
                                   ),
                             style: AppTextStyles.caption(context).copyWith(
                               color: const Color(0xFF6B7280),
@@ -1543,17 +1543,17 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                           Text(
                             plan == null
                                 ? _text(
-                                    '產生計畫後即可直接查看下方餐單。',
-                                    'Generate a plan to view today meals below.',
+                                    '先排出這週餐單，下面就會開始出現每天安排。',
+                                    'Generate a weekly plan to start seeing each day below.',
                                   )
                                 : (selectedDay == null
                                     ? _text(
-                                        '先在本週行程選一天，再查看餐單。',
-                                        'Pick a day from week strip to view meals.',
+                                        '先從上面的日期挑一天，再看當天餐單。',
+                                        'Pick a day above to view that day’s meals.',
                                       )
                                     : _text(
-                                        '今天餐單已準備好，往下直接執行。',
-                                        'Today meals are ready. Scroll down to execute.',
+                                        '今天這份餐單已排好，往下看就能直接照著吃。',
+                                        'Today’s meals are ready. Scroll down and follow along.',
                                       )),
                             style: AppTextStyles.caption(context).copyWith(
                               color: const Color(0xFF6B7280),
@@ -1578,10 +1578,10 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                               label: Text(
                                 plan == null
                                     ? (_isZh
-                                        ? '產生 7 天計畫'
+                                        ? '排 7 天餐單'
                                         : 'Generate 7-day plan')
                                     : (_isZh
-                                        ? '重新生成 7 天計畫'
+                                        ? '重排這週餐單'
                                         : 'Regenerate 7-day plan'),
                               ),
                             ),
@@ -1606,7 +1606,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                         size: 16,
                                       ),
                                 label: Text(
-                                  _isZh ? '重排剩餘天數' : 'Replan remaining days',
+                                  _isZh ? '只重排後面幾天' : 'Replan remaining days',
                                 ),
                               ),
                             ),
@@ -1625,7 +1625,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _isZh ? '本週行程' : 'This Week',
+                            _isZh ? '這週安排' : 'This week',
                             style: AppTextStyles.caption(context).copyWith(
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF374151),
@@ -1736,8 +1736,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                     const SizedBox(height: 12),
                     Text(
                       _text(
-                        '先產生 7 天計畫，這裡會顯示餐次安排。',
-                        'Generate a 7-day plan to see meal details.',
+                        '先排出這週餐單，這裡就會顯示每天安排。',
+                        'Generate a weekly plan to see each day’s meals here.',
                       ),
                       style: AppTextStyles.caption(context).copyWith(
                         color: const Color(0xFF6B7280),
@@ -1746,7 +1746,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                   ],
                   const SizedBox(height: 12),
                   _buildSectionHeader(
-                    title: _text('規劃設定', 'Planning settings'),
+                    title: _text('這週怎麼規劃', 'How this week is planned'),
                     subtitle: settingsSummary,
                     expanded: _planningSettingsExpanded,
                     onTap: () {
@@ -1779,7 +1779,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             DropdownButtonFormField<String>(
                               initialValue: _goalMode,
                               decoration: InputDecoration(
-                                labelText: _text('目標來源', 'Goal source'),
+                                labelText: _text('本週目標依據', 'Goal basis'),
                                 border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
@@ -1787,13 +1787,13 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                 DropdownMenuItem(
                                   value: 'profile_default',
                                   child: Text(
-                                    _text('使用個人目標', 'Use profile goal'),
+                                    _text('使用目前目標', 'Use current goal'),
                                   ),
                                 ),
                                 DropdownMenuItem(
                                   value: 'week_override',
                                   child: Text(
-                                    _text('本週覆寫目標', 'Override this week'),
+                                    _text('只調整這週', 'Adjust this week only'),
                                   ),
                                 ),
                               ],
@@ -1807,7 +1807,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                               DropdownButtonFormField<String>(
                                 initialValue: _goalOverride,
                                 decoration: InputDecoration(
-                                  labelText: _text('本週目標', 'Weekly goal'),
+                                  labelText: _text('這週想專注', "This week's focus"),
                                   border: const OutlineInputBorder(),
                                   isDense: true,
                                 ),
@@ -1833,7 +1833,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             DropdownButtonFormField<String>(
                               initialValue: _marketCode,
                               decoration: InputDecoration(
-                                labelText: _text('市場地區', 'Market'),
+                                labelText: _text('便利店地區', 'Convenience market'),
                                 border: const OutlineInputBorder(),
                                 isDense: true,
                               ),
@@ -1857,7 +1857,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                 .isNotEmpty) ...[
                               const SizedBox(height: 10),
                               Text(
-                                _text('便利商品牌（可不選）', 'Retailers (optional)'),
+                                _text('想參考的品牌（可不選）', 'Preferred retailers (optional)'),
                                 style: AppTextStyles.caption(context).copyWith(
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF111827),
@@ -1869,7 +1869,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                                 runSpacing: 8,
                                 children: [
                                   FilterChip(
-                                    label: Text(_text('全部品牌', 'All retailers')),
+                                    label: Text(_text('不限品牌', 'Any retailer')),
                                     selected: _retailerCodes.isEmpty,
                                     onSelected: (value) {
                                       if (!value) return;
@@ -1902,7 +1902,7 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             ],
                             const SizedBox(height: 12),
                             Text(
-                              _text('餐別來源', 'Meal sources'),
+                              _text('每餐怎麼安排', 'Meal style by meal'),
                               style: AppTextStyles.caption(context).copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF111827),
@@ -1988,12 +1988,12 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                             const Divider(height: 22),
                             _buildSectionHeader(
                               title: _text(
-                                '固定自訂餐（可多筆）',
-                                'Fixed custom meals (multi)',
+                                '固定餐習慣（可多筆）',
+                                'Fixed meal routines',
                               ),
                               subtitle: _text(
-                                '目前 ${_fixedMeals.length} 項',
-                                '${_fixedMeals.length} rules',
+                                '已設定 ${_fixedMeals.length} 項',
+                                '${_fixedMeals.length} routines',
                               ),
                               expanded: _fixedSectionExpanded,
                               onTap: () {
@@ -2023,8 +2023,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                               ),
                               child: Text(
                                 _text(
-                                  'AI 內容優先，固定餐僅在 AI 缺漏時補位。',
-                                  'AI plan has priority; fixed meals fill only missing slots.',
+                                  'AI 會先排這週主體內容，固定餐只在空缺時補上。',
+                                  'AI builds the main weekly plan first; fixed meals only fill open slots.',
                                 ),
                                 style: AppTextStyles.caption(context).copyWith(
                                   color: const Color(0xFF166534),
@@ -2103,8 +2103,8 @@ class _WeekPlanScreenState extends State<WeekPlanScreen> {
                   ],
                   if (plan != null) ...[
                     const SizedBox(height: 10),
-                    _buildSectionHeader(
-                      title: _text('整週明細', 'Full week details'),
+                  _buildSectionHeader(
+                      title: _text('看整週餐單', 'Full week meal list'),
                       subtitle: _text(
                         '${plan.dayPlans.length} 天，點開看全部餐次',
                         '${plan.dayPlans.length} days',

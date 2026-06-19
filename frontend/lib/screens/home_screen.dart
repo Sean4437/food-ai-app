@@ -1136,7 +1136,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         onPressed: () =>
                             _openRecordSheet(app, preferNameInput: true),
                         icon: const Icon(Icons.edit_note),
-                        label: Text(t.suggestInstantNameSubmit),
+                        label: Text(
+                          _isZh(context) ? '輸入餐點' : 'Log by name',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1146,9 +1148,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           TabScope.of(context).setIndex(4);
                         },
                         icon: const Icon(Icons.calendar_view_week_rounded),
-                        label: Text(_isZh(context)
-                            ? '\u0037\u5929\u898f\u5283'
-                            : '7-day plan'),
+                        label: Text(
+                          _isZh(context) ? '\u770b\u0037\u5929\u9910\u55ae' : 'View 7-day plan',
+                        ),
                       ),
                     ),
                   ],

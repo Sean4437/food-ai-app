@@ -949,11 +949,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       final lower = normalized.toLowerCase();
       if (_startsWithAny(normalized, [
             '搭配',
+            '一起搭',
             '可以吃',
             '建議吃',
             '適合吃',
             '可吃',
             '可以怎麼吃',
+            '可以怎麼搭',
+            '配一點',
+            '加一點',
             '可以喝',
             '建議喝',
             '適合喝',
@@ -966,15 +970,29 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
             _cleanAdviceValue(_splitAdviceValue(normalized), 'can');
         continue;
       }
-      if (_startsWithAny(normalized,
-              ['不建議', '不建議吃', '避免', '不推薦', '不建議喝', '少吃', '少喝', '避免吃', '避免喝']) ||
+      if (_startsWithAny(normalized, [
+            '不建議',
+            '不建議吃',
+            '避免',
+            '不推薦',
+            '不建議喝',
+            '少吃',
+            '少喝',
+            '避免吃',
+            '避免喝',
+            '先少一點',
+            '先少喝一點',
+            '先避開',
+            '先跳過',
+            '先減少'
+          ]) ||
           lower.startsWith('avoid')) {
         sections['avoid'] =
             _cleanAdviceValue(_splitAdviceValue(normalized), 'avoid');
         continue;
       }
       if (_startsWithAny(
-              normalized, ['建議份量', '建議份量上限', '份量上限', '上限', '份量建議']) ||
+              normalized, ['建議份量', '建議份量上限', '份量上限', '上限', '份量建議', '這樣吃剛好', '這樣喝剛好', '份量抓這樣']) ||
           lower.startsWith('portion') ||
           lower.startsWith('limit')) {
         sections['limit'] =
@@ -1042,11 +1060,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     var result = _normalizeAdviceLine(text);
     const prefixes = [
       '搭配',
+      '一起搭',
       '可以吃',
       '建議吃',
       '適合吃',
       '可吃',
       '可以怎麼吃',
+      '可以怎麼搭',
+      '配一點',
+      '加一點',
       '可以喝',
       '建議喝',
       '適合喝',
@@ -1061,11 +1083,19 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       '少喝',
       '避免吃',
       '避免喝',
+      '先少一點',
+      '先少喝一點',
+      '先避開',
+      '先跳過',
+      '先減少',
       '建議份量',
       '建議份量上限',
       '份量上限',
       '上限',
       '份量建議',
+      '這樣吃剛好',
+      '這樣喝剛好',
+      '份量抓這樣',
       'can eat',
       'good choices',
       'can drink',
@@ -1091,16 +1121,16 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     cleaned = cleaned.replaceFirst(RegExp(r'^[、，,;；]+'), '').trim();
     if (key == 'can') {
       cleaned = cleaned.replaceFirst(
-        RegExp(r'^(可以|建議|適合)?\s*(搭配|配|加點|加入|多搭配|多加)\s*'),
+        RegExp(r'^(可以|建議|適合)?\s*(搭配|一起搭|配|配一點|加點|加一點|加入|多搭配|多加)\s*'),
         '',
       );
     }
     if (key == 'avoid') {
       cleaned =
-          cleaned.replaceFirst(RegExp(r'^(避免|不建議|不推薦|少|盡量少|盡量避免)\s*'), '');
+          cleaned.replaceFirst(RegExp(r'^(避免|不建議|不推薦|少|盡量少|盡量避免|先少一點|先少喝一點|先避開|先跳過|先減少)\s*'), '');
     }
     if (key == 'limit') {
-      cleaned = cleaned.replaceFirst(RegExp(r'^(份量|份量上限|建議份量|上限|控制在)\s*'), '');
+      cleaned = cleaned.replaceFirst(RegExp(r'^(份量|份量上限|建議份量|上限|控制在|這樣吃剛好|這樣喝剛好|份量抓這樣)\s*'), '');
     }
     return cleaned.trim();
   }
