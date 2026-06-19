@@ -6,7 +6,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'gallery_save_types.dart';
 
 const bool supportsSystemGallerySave = !kIsWeb;
-const String _androidRelativePath = 'Pictures/Food AI';
+const String _androidRelativePath = 'Pictures/MiraMeal';
 const PermissionRequestOption _galleryPermission = PermissionRequestOption(
   iosAccessLevel: IosAccessLevel.addOnly,
   androidPermission: AndroidPermission(
@@ -58,3 +58,4 @@ String _normalizeFilename(String filename) {
   }
   return '$trimmed.jpg';
 }
+

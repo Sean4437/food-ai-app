@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
@@ -53,7 +53,7 @@ class FoodAiApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Food AI MVP',
+      title: 'MiraMeal',
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -789,3 +789,4 @@ class _LinearRevolverDock extends StatelessWidget {
     );
   }
 }
+

@@ -165,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String _screenTitle(AppLocalizations t) {
     switch (_mode) {
       case _LoginMode.magicLink:
-        return _isZh() ? '\u767b\u5165 Food AI' : 'Sign in to Food AI';
+        return _isZh() ? '\u767b\u5165 MiraMeal' : 'Sign in to MiraMeal';
       case _LoginMode.password:
         return _isZh() ? '\u5bc6\u78bc\u767b\u5165' : 'Sign in with password';
       case _LoginMode.signUp:
@@ -181,8 +181,8 @@ class _LoginScreenState extends State<LoginScreen> {
             : 'Enter your email and we will send you a sign-in link. First-time use will create your account automatically.';
       case _LoginMode.password:
         return _isZh()
-            ? '\u8f38\u5165\u5bc6\u78bc\u767b\u5165\u4f60\u7684 Food AI \u5e33\u865f'
-            : 'Use your password to sign in to Food AI.';
+            ? '\u8f38\u5165\u5bc6\u78bc\u767b\u5165\u4f60\u7684 MiraMeal \u5e33\u865f'
+            : 'Use your password to sign in to MiraMeal.';
       case _LoginMode.signUp:
         return _isZh()
             ? '\u5148\u5efa\u7acb\u5e33\u865f\uff0c\u4e4b\u5f8c\u53ef\u4ee5\u7528\u9023\u7d50\u6216\u5bc6\u78bc\u767b\u5165'
@@ -1078,3 +1078,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

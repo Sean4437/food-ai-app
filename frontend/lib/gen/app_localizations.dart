@@ -102,7 +102,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'飲食 AI MVP'**
+  /// **'MiraMeal'**
   String get appTitle;
 
   /// No description provided for @takePhoto.
@@ -2772,7 +2772,7 @@ abstract class AppLocalizations {
   /// No description provided for @authTitle.
   ///
   /// In zh_TW, this message translates to:
-  /// **'歡迎使用 Food AI'**
+  /// **'歡迎使用 MiraMeal'**
   String get authTitle;
 
   /// No description provided for @authSubtitle.

@@ -371,12 +371,12 @@ String? _gallerySaveErrorMessage(
   switch (status) {
     case GallerySaveStatus.permissionDenied:
       return isZh
-          ? '已存到 Food AI，但未取得系統相簿權限。'
-          : 'Saved in Food AI, but gallery permission was not granted.';
+          ? '已存到 MiraMeal，但未取得系統相簿權限。'
+          : 'Saved in MiraMeal, but gallery permission was not granted.';
     case GallerySaveStatus.failed:
       return isZh
-          ? '已存到 Food AI，但未能寫入系統相簿。'
-          : 'Saved in Food AI, but the image could not be written to the system gallery.';
+          ? '已存到 MiraMeal，但未能寫入系統相簿。'
+          : 'Saved in MiraMeal, but the image could not be written to the system gallery.';
     case GallerySaveStatus.saved:
     case GallerySaveStatus.disabled:
     case GallerySaveStatus.notSupported:
@@ -574,3 +574,4 @@ Future<RecordResult?> showRecordSheet(
     isMulti: isMulti,
   );
 }
+

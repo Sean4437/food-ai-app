@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Food AI MVP",
+  "appTitle": "MiraMeal",
   "takePhoto": "Take Photo",
   "uploadPhoto": "Upload Photo",
   "quickAdd": "Quick Add (Auto)",
@@ -539,7 +539,7 @@
   "syncRequireLogin": "Please sign in to sync",
   "syncAuthTitleSignIn": "Sign in",
   "syncAuthTitleSignUp": "Create account",
-  "authTitle": "Welcome to Food AI",
+  "authTitle": "Welcome to MiraMeal",
   "authSubtitle": "Sign in to unlock all features",
   "authEmailLabel": "Email",
   "authEmailRequired": "Please enter your email",

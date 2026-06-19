@@ -1,6 +1,6 @@
 {
   "@@locale": "zh_TW",
-  "appTitle": "飲食 AI MVP",
+  "appTitle": "MiraMeal",
   "takePhoto": "拍照紀錄",
   "uploadPhoto": "上傳照片",
   "quickAdd": "快速新增（自動分餐）",
@@ -539,7 +539,7 @@
   "exportDone": "已匯出",
   "clearDone": "已清除",
   "close": "關閉",
-  "authTitle": "歡迎使用 Food AI",
+  "authTitle": "歡迎使用 MiraMeal",
   "authSubtitle": "登入後即可使用完整功能",
   "authEmailLabel": "Email",
   "authEmailRequired": "請輸入 Email",

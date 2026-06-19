@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Food AI MVP';
+  String get appTitle => 'MiraMeal';
 
   @override
   String get takePhoto => 'Take Photo';
@@ -1413,7 +1413,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get close => 'Close';
 
   @override
-  String get authTitle => 'Welcome to Food AI';
+  String get authTitle => 'Welcome to MiraMeal';
 
   @override
   String get authSubtitle => 'Sign in to unlock all features';

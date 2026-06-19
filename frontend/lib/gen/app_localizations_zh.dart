@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => '飲食 AI MVP';
+  String get appTitle => 'MiraMeal';
 
   @override
   String get takePhoto => '拍照紀錄';
@@ -1396,7 +1396,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get close => '關閉';
 
   @override
-  String get authTitle => '歡迎使用 Food AI';
+  String get authTitle => '歡迎使用 MiraMeal';
 
   @override
   String get authSubtitle => '登入後即可使用完整功能';
@@ -1932,7 +1932,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
 
   @override
-  String get appTitle => '飲食 AI MVP';
+  String get appTitle => 'MiraMeal';
 
   @override
   String get takePhoto => '拍照紀錄';
@@ -3319,7 +3319,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get close => '關閉';
 
   @override
-  String get authTitle => '歡迎使用 Food AI';
+  String get authTitle => '歡迎使用 MiraMeal';
 
   @override
   String get authSubtitle => '登入後即可使用完整功能';

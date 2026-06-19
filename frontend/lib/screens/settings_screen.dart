@@ -1829,8 +1829,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ? '拍照後同步存到系統相簿'
                           : 'Save captured photos to system gallery'),
                       subtitle: Text(isZh
-                          ? '關閉時只保留在 Food AI 內；開啟後會另外保存到手機相簿。'
-                          : 'When off, photos stay only inside Food AI. When on, a copy is also saved to your device gallery.'),
+                          ? '關閉時只保留在 MiraMeal 內；開啟後會另外保存到手機相簿。'
+                          : 'When off, photos stay only inside MiraMeal. When on, a copy is also saved to your device gallery.'),
                       secondary: const Icon(Icons.photo_library_outlined),
                     ),
                   ],
@@ -1947,3 +1947,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+
