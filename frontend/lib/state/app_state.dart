@@ -9443,7 +9443,7 @@ class AppState extends ChangeNotifier {
     await _supabase.client.auth.signInWithOtp(
       email: trimmedEmail,
       emailRedirectTo: _supabaseRedirectUrl(),
-      shouldCreateUser: false,
+      shouldCreateUser: true,
     );
     rememberAuthEmail(trimmedEmail);
     updateField((p) => p.email = trimmedEmail);

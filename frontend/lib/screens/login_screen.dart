@@ -165,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String _screenTitle(AppLocalizations t) {
     switch (_mode) {
       case _LoginMode.magicLink:
-        return _isZh() ? '\u6b61\u8fce\u56de\u4f86' : 'Welcome back';
+        return _isZh() ? '\u767b\u5165 Food AI' : 'Sign in to Food AI';
       case _LoginMode.password:
         return _isZh() ? '\u5bc6\u78bc\u767b\u5165' : 'Sign in with password';
       case _LoginMode.signUp:
@@ -177,8 +177,8 @@ class _LoginScreenState extends State<LoginScreen> {
     switch (_mode) {
       case _LoginMode.magicLink:
         return _isZh()
-            ? '\u8f38\u5165 Email\uff0c\u6211\u5011\u5bc4\u767b\u5165\u9023\u7d50\u7d66\u4f60'
-            : 'Enter your email and we will send you a sign-in link.';
+            ? '\u8f38\u5165 Email\uff0c\u6211\u5011\u6703\u5bc4\u767b\u5165\u9023\u7d50\u7d66\u4f60\uff0c\u7b2c\u4e00\u6b21\u4f7f\u7528\u6703\u81ea\u52d5\u5efa\u7acb\u5e33\u865f'
+            : 'Enter your email and we will send you a sign-in link. First-time use will create your account automatically.';
       case _LoginMode.password:
         return _isZh()
             ? '\u8f38\u5165\u5bc6\u78bc\u767b\u5165\u4f60\u7684 Food AI \u5e33\u865f'
@@ -263,8 +263,8 @@ class _LoginScreenState extends State<LoginScreen> {
         return t.authEmailNotVerified;
       case 'email_not_found':
         return _isZh()
-            ? '\u9019\u500b Email \u5c1a\u672a\u8a3b\u518a\uff0c\u8acb\u5148\u8a3b\u518a\u5e33\u865f\u5f8c\u518d\u4f7f\u7528\u767b\u5165\u9023\u7d50'
-            : 'This email is not registered yet. Please sign up first, then use a sign-in link.';
+            ? '\u9019\u500b Email \u76ee\u524d\u7121\u6cd5\u4f7f\u7528\u767b\u5165\u9023\u7d50\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66\u6216\u6539\u7528\u5bc6\u78bc\u767b\u5165'
+            : 'This email cannot use a sign-in link right now. Please try again later or sign in with your password.';
       case 'rate_limited':
         return _isZh()
             ? '\u5bc4\u9001\u592a\u983b\u7e41\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66'
@@ -785,8 +785,8 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 8),
           Text(
             _isZh()
-                ? '\u8acb\u5230\u4fe1\u7bb1\u958b\u555f\u9023\u7d50\uff0c\u5982\u679c\u6c92\u770b\u5230\uff0c\u8acb\u9806\u4fbf\u6aa2\u67e5\u5783\u573e\u90f5\u4ef6'
-                : 'Open the link in your inbox. If you do not see it, check spam as well.',
+                ? '\u8acb\u5230\u4fe1\u7bb1\u958b\u555f\u9023\u7d50\u3002\u5982\u679c\u9019\u662f\u7b2c\u4e00\u6b21\u4f7f\u7528\uff0c\u9ede\u64ca\u5f8c\u6703\u81ea\u52d5\u5efa\u7acb\u5e33\u865f\uff1b\u5982\u679c\u6c92\u770b\u5230\uff0c\u8acb\u9806\u4fbf\u6aa2\u67e5\u5783\u573e\u90f5\u4ef6'
+                : 'Open the link in your inbox. If this is your first time, clicking it will create your account automatically. If you do not see it, check spam as well.',
             textAlign: TextAlign.center,
             style: AppTextStyles.caption(context)
                 .copyWith(color: Colors.black54, height: 1.4),
@@ -973,8 +973,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 8),
                       Text(
                         _isZh()
-                            ? '\u4e0d\u7528\u5bc6\u78bc\uff0c\u5f9e\u4fe1\u7bb1\u9ede\u4e00\u4e0b\u5c31\u80fd\u767b\u5165'
-                            : 'No password needed. Open the email link to sign in.',
+                            ? '\u4e0d\u7528\u5bc6\u78bc\uff0c\u5f9e\u4fe1\u7bb1\u9ede\u4e00\u4e0b\u5c31\u80fd\u767b\u5165\uff0c\u7b2c\u4e00\u6b21\u4f7f\u7528\u4e5f\u53ef\u4ee5\u76f4\u63a5\u958b\u59cb'
+                            : 'No password needed. Open the email link to sign in, even on your first visit.',
                         textAlign: TextAlign.center,
                         style: AppTextStyles.caption(context)
                             .copyWith(color: Colors.black54),
@@ -992,16 +992,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               _isZh()
                                   ? '\u7528\u5bc6\u78bc\u767b\u5165'
                                   : 'Use password instead',
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: _loading
-                                ? null
-                                : () => _switchMode(_LoginMode.signUp),
-                            child: Text(
-                              _isZh()
-                                  ? '\u6c92\u6709\u5e33\u865f\uff1f\u7acb\u5373\u8a3b\u518a'
-                                  : 'Create an account',
                             ),
                           ),
                         ],
@@ -1045,16 +1035,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextButton(
                             onPressed: _loading ? null : _resetPassword,
                             child: Text(t.authForgotPassword),
-                          ),
-                          TextButton(
-                            onPressed: _loading
-                                ? null
-                                : () => _switchMode(_LoginMode.signUp),
-                            child: Text(
-                              _isZh()
-                                  ? '\u6c92\u6709\u5e33\u865f\uff1f\u7acb\u5373\u8a3b\u518a'
-                                  : 'Create an account',
-                            ),
                           ),
                         ],
                       ),
