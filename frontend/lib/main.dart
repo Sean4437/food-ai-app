@@ -256,6 +256,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   AppState? _app;
   bool _didRunInitialAutoFlow = false;
+  bool _suppressDockPageChange = false;
   late final PageController _dockController;
   double _dockPage = 1;
   int _lastDockTarget = 1;
@@ -294,16 +295,32 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     setState(() => _dockPage = page);
   }
 
-  void _animateDockTo(int index) {
+  Future<void> _animateDockTo(int index, {bool immediate = false}) async {
     if (!_dockController.hasClients) return;
     final current =
         _dockController.page ?? _dockController.initialPage.toDouble();
     if ((current - index).abs() < 0.02) return;
-    _dockController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 240),
-      curve: Curves.easeOutCubic,
-    );
+    _suppressDockPageChange = true;
+    try {
+      if (immediate || (current - index).abs() > 1.1) {
+        _dockController.jumpToPage(index);
+      } else {
+        await _dockController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    } finally {
+      _suppressDockPageChange = false;
+    }
+  }
+
+  void _handleDockPageChanged(int index) {
+    if (_suppressDockPageChange) return;
+    final tabState = TabScope.of(context);
+    _lastDockTarget = index;
+    tabState.setIndex(index);
   }
 
   @override
@@ -359,7 +376,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       _lastDockTarget = clampedIndex;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _animateDockTo(clampedIndex);
+        _animateDockTo(clampedIndex, immediate: true);
       });
     }
 
@@ -372,6 +389,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         page: _dockPage,
         activeColor: theme.colorScheme.primary,
         inactiveColor: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+        onPageChanged: _handleDockPageChanged,
         onSelect: (index) {
           _lastDockTarget = index;
           tabState.setIndex(index);
@@ -399,6 +417,7 @@ class _LinearRevolverDock extends StatelessWidget {
     required this.page,
     required this.activeColor,
     required this.inactiveColor,
+    required this.onPageChanged,
     required this.onSelect,
   });
 
@@ -407,6 +426,7 @@ class _LinearRevolverDock extends StatelessWidget {
   final double page;
   final Color activeColor;
   final Color inactiveColor;
+  final ValueChanged<int> onPageChanged;
   final ValueChanged<int> onSelect;
 
   double _lerp(double a, double b, double t) => a + (b - a) * t;
@@ -456,7 +476,7 @@ class _LinearRevolverDock extends StatelessWidget {
             itemCount: items.length,
             padEnds: true,
             physics: const BouncingScrollPhysics(),
-            onPageChanged: onSelect,
+            onPageChanged: onPageChanged,
             itemBuilder: (context, index) {
               final distance = (page - index).abs().clamp(0.0, 1.8);
               final focus = (1 - (distance / 1.8)).clamp(0.0, 1.0);
