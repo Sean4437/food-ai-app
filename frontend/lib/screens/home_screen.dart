@@ -263,6 +263,98 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _showSingleInsightSheet({
+    required String title,
+    required String dateLabel,
+    required AppTheme appTheme,
+    required String body,
+    required IconData icon,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: _homeInfoCard(
+            appTheme: appTheme,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(title, style: AppTextStyles.title2(context)),
+                const SizedBox(height: 4),
+                Text(
+                  dateLabel,
+                  style: AppTextStyles.caption(context)
+                      .copyWith(color: Colors.black45),
+                ),
+                const SizedBox(height: 14),
+                _insightSheetSection(
+                  title: title,
+                  body: body,
+                  icon: icon,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showTodaySummarySheet(
+    AppState app,
+    AppLocalizations t,
+    DateTime date,
+  ) async {
+    final theme = Theme.of(context);
+    final appTheme = theme.extension<AppTheme>()!;
+    final dateLabel = DateFormat(
+      'yyyy/MM/dd E',
+      Localizations.localeOf(context).toLanguageTag(),
+    ).format(date);
+    await _showSingleInsightSheet(
+      title: t.dayCardSummaryLabel,
+      dateLabel: dateLabel,
+      appTheme: appTheme,
+      body: app.daySummaryText(date, t),
+      icon: Icons.summarize_outlined,
+    );
+  }
+
+  Future<void> _showTomorrowAdviceSheet(
+    AppState app,
+    AppLocalizations t,
+    DateTime date,
+  ) async {
+    final theme = Theme.of(context);
+    final appTheme = theme.extension<AppTheme>()!;
+    final dateLabel = DateFormat(
+      'yyyy/MM/dd E',
+      Localizations.localeOf(context).toLanguageTag(),
+    ).format(date);
+    await _showSingleInsightSheet(
+      title: t.dayCardTomorrowLabel,
+      dateLabel: dateLabel,
+      appTheme: appTheme,
+      body: app.dayTomorrowAdvice(date, t),
+      icon: Icons.lightbulb_outline,
+    );
+  }
+
   Future<void> _showWeeklyInsightSheet(
     AppState app,
     AppLocalizations t,
@@ -358,11 +450,11 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (action == 'today_summary') {
       await _focusStatusCard(2);
       if (!mounted) return;
-      await _showDailyInsightSheet(app, t, activeDate);
+      await _showTodaySummarySheet(app, t, activeDate);
     } else if (action == 'tomorrow_advice') {
       await _focusStatusCard(3);
       if (!mounted) return;
-      await _showDailyInsightSheet(app, t, activeDate);
+      await _showTomorrowAdviceSheet(app, t, activeDate);
     } else if (action == 'weekly_summary') {
       await _focusStatusCard(4);
       if (!mounted) return;
