@@ -9071,6 +9071,7 @@ class AppState extends ChangeNotifier {
       final date = today.subtract(Duration(days: i));
       final entriesForDay = entriesForDate(date);
       final groups = mealGroupsForDateAll(date);
+      final meals = _mealGroupsForChat(date, t);
       final summary = buildDaySummary(date, t);
       final consumed =
           entriesForDay.isEmpty ? null : dailyConsumedCalorieMid(date).round();
@@ -9089,6 +9090,7 @@ class AppState extends ChangeNotifier {
         'consumed_kcal': consumed,
         'remaining_kcal': remaining,
         'target_range': targetCalorieRangeValue(date),
+        'meals': meals,
         'macros': summary?.macros.isNotEmpty == true
             ? _roundMacros(summary!.macros)
             : null,
@@ -9097,9 +9099,9 @@ class AppState extends ChangeNotifier {
     return days;
   }
 
-  List<Map<String, dynamic>> _todayMealsForChat(AppLocalizations t) {
-    final today = _dateOnly(DateTime.now());
-    final groups = mealGroupsForDateAll(today);
+  List<Map<String, dynamic>> _mealGroupsForChat(
+      DateTime date, AppLocalizations t) {
+    final groups = mealGroupsForDateAll(date);
     if (groups.isEmpty) return const [];
     final meals = <Map<String, dynamic>>[];
     for (final group in groups) {
@@ -9155,6 +9157,11 @@ class AppState extends ChangeNotifier {
       });
     }
     return meals;
+  }
+
+  List<Map<String, dynamic>> _todayMealsForChat(AppLocalizations t) {
+    final today = _dateOnly(DateTime.now());
+    return _mealGroupsForChat(today, t);
   }
 
   String? _lastMealTimeForChat(DateTime now) {

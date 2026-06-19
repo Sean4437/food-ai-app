@@ -7379,6 +7379,35 @@ def _chat_is_today_scoped(text: str) -> bool:
     )
 
 
+def _chat_query_day_scope(text: str) -> str:
+    if not text:
+        return "general"
+    lower = text.lower()
+    zh_yesterday_keywords = (
+        "昨天",
+        "昨日",
+        "昨晚",
+        "昨天吃什麼",
+        "昨天吃得如何",
+        "幫我總結昨天",
+        "總結昨天",
+        "昨天飲食",
+    )
+    en_yesterday_keywords = (
+        "yesterday",
+        "last night",
+        "summary of yesterday",
+        "summarize yesterday",
+    )
+    if any(keyword in text for keyword in zh_yesterday_keywords) or any(
+        keyword in lower for keyword in en_yesterday_keywords
+    ):
+        return "yesterday"
+    if _chat_is_today_scoped(text):
+        return "today"
+    return "general"
+
+
 def _chat_today_meals_guardrail_text(
     lang: str,
     today_meals: Optional[List[dict]],
@@ -7454,6 +7483,63 @@ def _chat_today_meals_guardrail_text(
         "Only meal slots present in 'Today's meals (JSON)' may be treated as already eaten today. "
         "If a meal slot is missing there, describe it as not yet recorded or not yet eaten today."
     )
+
+
+def _chat_recent_days_detail_text(
+    lang: str,
+    days: Optional[List[dict]],
+) -> str:
+    lines: List[str] = []
+    for day in days or []:
+        date = str(day.get("date") or "").strip()
+        meals = day.get("meals") or []
+        if not isinstance(meals, list) or not meals:
+            line = f"- {date}: 無餐點明細" if lang == "zh-TW" else f"- {date}: no meal details"
+            lines.append(line)
+            continue
+        meal_parts: List[str] = []
+        for meal in meals:
+            if not isinstance(meal, dict):
+                continue
+            meal_label = str(
+                meal.get("meal_label")
+                or meal.get("meal_type")
+                or ""
+            ).strip()
+            dish_summaries = meal.get("dish_summaries") or []
+            dish_text = ""
+            if isinstance(dish_summaries, list):
+                cleaned = [
+                    str(item).strip()
+                    for item in dish_summaries
+                    if str(item).strip()
+                ]
+                if cleaned:
+                    dish_text = " / ".join(cleaned[:3])
+            calorie_range = str(meal.get("calorie_range") or "").strip()
+            if lang == "zh-TW":
+                piece = meal_label or "未知餐別"
+                if dish_text:
+                    piece += f"={dish_text}"
+                if calorie_range:
+                    piece += f"（{calorie_range}）"
+            else:
+                piece = meal_label or "unknown meal"
+                if dish_text:
+                    piece += f"={dish_text}"
+                if calorie_range:
+                    piece += f" ({calorie_range})"
+            meal_parts.append(piece)
+        if not meal_parts:
+            line = f"- {date}: 無餐點明細" if lang == "zh-TW" else f"- {date}: no meal details"
+        elif lang == "zh-TW":
+            line = f"- {date}：{'；'.join(meal_parts)}"
+        else:
+            line = f"- {date}: {'; '.join(meal_parts)}"
+        lines.append(line)
+    if lines:
+        return "\n".join(lines)
+    return "無" if lang == "zh-TW" else "none"
 
 
 def _chat_is_blocked(text: str) -> bool:
@@ -7627,8 +7713,10 @@ def _build_chat_prompt(
             summary_block = f"; summary: {summary_text}" if summary_text else ""
             day_lines.append(f"- {date}: meals {meal_count}, {label_text}{range_text}{extra_text}{summary_block}")
     days_block = "\n".join(day_lines) if day_lines else ("- 無紀錄" if lang == "zh-TW" else "- no records")
-    today_scoped = _chat_is_today_scoped(latest_user_message)
-    summary_block = summary.strip() if summary and not today_scoped else ""
+    query_scope = _chat_query_day_scope(latest_user_message)
+    today_scoped = query_scope == "today"
+    yesterday_scoped = query_scope == "yesterday"
+    summary_block = summary.strip() if summary and query_scope == "general" else ""
     today_meals_block = ""
     if today_meals:
         try:
@@ -7636,14 +7724,15 @@ def _build_chat_prompt(
         except Exception:
             today_meals_block = str(today_meals)
     today_meals_guardrail = _chat_today_meals_guardrail_text(lang, today_meals)
+    recent_meals_detail_block = _chat_recent_days_detail_text(lang, days)
 
-    today_focus_text = ""
-    latest_day = (days or [])[-1] if days else None
-    if isinstance(latest_day, dict):
-        latest_date = str(latest_day.get("date") or "").strip()
-        latest_meal_count = latest_day.get("meal_count")
-        latest_consumed = latest_day.get("consumed_kcal")
-        latest_remaining = latest_day.get("remaining_kcal")
+    day_focus_text = ""
+
+    def _focus_text_for_day(day: dict, label_zh: str, label_en: str) -> str:
+        latest_date = str(day.get("date") or "").strip()
+        latest_meal_count = day.get("meal_count")
+        latest_consumed = day.get("consumed_kcal")
+        latest_remaining = day.get("remaining_kcal")
         focus_parts = []
         if latest_date:
             focus_parts.append(
@@ -7667,11 +7756,46 @@ def _build_chat_prompt(
             )
         if focus_parts:
             joined = "，".join(focus_parts) if lang == "zh-TW" else ", ".join(focus_parts)
-            today_focus_text = (
-                f"今天優先判斷：{joined}\n"
+            return (
+                f"{label_zh}：{joined}\n"
                 if lang == "zh-TW"
-                else f"Today priority context: {joined}\n"
+                else f"{label_en}: {joined}\n"
             )
+        return ""
+
+    latest_day = (days or [])[-1] if days else None
+    yesterday_day = (days or [])[-2] if days and len(days) >= 2 else None
+    if today_scoped and isinstance(latest_day, dict):
+        day_focus_text = _focus_text_for_day(
+            latest_day,
+            "今天優先判斷",
+            "Today priority context",
+        )
+    elif yesterday_scoped and isinstance(yesterday_day, dict):
+        day_focus_text = _focus_text_for_day(
+            yesterday_day,
+            "昨天優先判斷",
+            "Yesterday priority context",
+        )
+
+    query_scope_text = ""
+    if yesterday_scoped and isinstance(yesterday_day, dict):
+        yesterday_date = str(yesterday_day.get("date") or "").strip()
+        query_scope_text = (
+            f"這一題是在問昨天；昨天對應日期是 {yesterday_date or '未知'}。"
+            "回答時只能使用該日期的紀錄；若昨天沒有紀錄，就直接說昨天沒有紀錄。\n"
+            if lang == "zh-TW"
+            else (
+                f"This question is about yesterday; yesterday maps to {yesterday_date or 'unknown'}. "
+                "Use only that day's records. If there are no records for yesterday, say so directly.\n"
+            )
+        )
+    elif today_scoped:
+        query_scope_text = (
+            "這一題是在問今天；回答時只能把今天的紀錄當成今天已吃內容。\n"
+            if lang == "zh-TW"
+            else "This question is about today; only today's records may be treated as already eaten today.\n"
+        )
 
     now_text = ""
     if context:
@@ -7707,6 +7831,8 @@ def _build_chat_prompt(
             "- 若資料不足，先追問 1-2 個必要問題\n"
             "- 先以『今天』資料回答，最近 7 天只作次要參考，不要被過去幾天平均狀態帶偏\n"
             "- 「今日餐點明細（JSON）」是今天唯一有效的已吃紀錄來源\n"
+            "- 若使用者明確在問『昨天／昨日』，必須優先改用「最近 7 天餐點明細」中對應昨天日期的資料回答，不能拿今天資料代答昨天\n"
+            "- 若使用者明確在問某一天吃了什麼或吃得如何，必須只回答那一天有紀錄的餐點；沒有紀錄就直接說該日無紀錄\n"
             "- 最近 7 天紀錄與對話摘要只能用來看趨勢、偏好、禁忌，不能拿來推定今天哪一餐已經吃過\n"
             "- 若今天沒有記錄到某餐，不能把那餐說成今天已吃；要明確說尚未記錄或尚未吃\n"
             "- 若使用者要求『總結今天飲食』，只能總結今天已記錄的餐點；不要補寫尚未記錄的晚餐或其他餐次\n"
@@ -7722,9 +7848,11 @@ def _build_chat_prompt(
             "JSON 範例：\n"
             "{\n  \"reply\": \"今天晚餐建議清淡些…\",\n  \"summary\": \"使用者偏好清淡、避免油炸…\"\n}\n"
             f"最近 7 天紀錄：\n{days_block}\n"
+            f"最近 7 天餐點明細：\n{recent_meals_detail_block}\n"
             f"今日餐點明細（JSON）：{today_meals_block or '無'}\n"
             f"{today_meals_guardrail}\n"
-            f"{today_focus_text}"
+            f"{query_scope_text}"
+            f"{day_focus_text}"
             f"{now_text}"
             f"對話摘要：{summary_block or '無'}\n"
         ) + profile_text
@@ -7737,6 +7865,8 @@ def _build_chat_prompt(
         "- Ask 1-2 clarifying questions if data is insufficient\n"
         "- Base the answer on today's data first; use the last 7 days only as secondary context\n"
         "- 'Today's meals (JSON)' is the only valid source for what has already been eaten today\n"
+        "- If the user explicitly asks about yesterday, switch to the matching day in 'Recent day meal details' and do not answer with today's data\n"
+        "- If the user explicitly asks about a specific past day, answer only from that day's recorded meals; if there are no records, say so directly\n"
         "- The last 7 days and conversation summary may only be used for trends, preferences, and restrictions; do not use them to claim a meal was already eaten today\n"
         "- If a meal is missing from today's meals, explicitly treat it as not yet recorded or not yet eaten today\n"
         "- If the user asks for today's summary, summarize only the meals recorded today; never invent dinner or other unrecorded meals\n"
@@ -7751,9 +7881,11 @@ def _build_chat_prompt(
         "JSON example:\n"
         "{\n  \"reply\": \"Keep dinner light...\",\n  \"summary\": \"User prefers light meals...\"\n}\n"
         f"Last 7 days:\n{days_block}\n"
+        f"Recent day meal details:\n{recent_meals_detail_block}\n"
         f"Today's meals (JSON): {today_meals_block or 'none'}\n"
         f"{today_meals_guardrail}\n"
-        f"{today_focus_text}"
+        f"{query_scope_text}"
+        f"{day_focus_text}"
         f"{now_text}"
         f"Conversation summary: {summary_block or 'none'}\n"
     ) + profile_text
@@ -9104,11 +9236,13 @@ async def chat(
             for meal in (payload.today_meals or [])
             if isinstance(meal, dict) and str(meal.get("meal_type") or "").strip()
         ]
-        today_scoped = _chat_is_today_scoped(latest_user)
-        summary_used = bool((payload.summary or "").strip()) and not today_scoped
+        query_scope = _chat_query_day_scope(latest_user)
+        today_scoped = query_scope == "today"
+        summary_used = bool((payload.summary or "").strip()) and query_scope == "general"
         logging.info(
-            "Chat payload debug: user=%s today_scoped=%s days=%s today_meals=%s meal_types=%s summary_used=%s latest_user=%s",
+            "Chat payload debug: user=%s query_scope=%s today_scoped=%s days=%s today_meals=%s meal_types=%s summary_used=%s latest_user=%s",
             user_id or "-",
+            query_scope,
             today_scoped,
             len(payload.days or []),
             len(payload.today_meals or []),
