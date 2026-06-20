@@ -5,7 +5,7 @@ import '../design/text_styles.dart';
 import '../widgets/app_background.dart';
 import '../state/app_state.dart';
 
-enum _LoginMode { magicLink, password, signUp }
+enum _LoginMode { magicLink, password }
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,25 +18,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _emailFocusNode = FocusNode();
   final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
-  final _nicknameController = TextEditingController();
   _LoginMode _mode = _LoginMode.magicLink;
   bool _loading = false;
   bool _showPassword = false;
-  bool _showConfirm = false;
   bool _showVerifyPanel = false;
   int _resendCooldown = 0;
   DateTime? _lastAuthAttempt;
   Timer? _resendTimer;
   String? _inlineEmailError;
   String? _inlinePasswordError;
-  String? _inlineNicknameError;
   String? _bannerMessage;
   bool _bannerIsError = false;
   List<String> _rememberedEmails = const [];
   String? _magicLinkSentEmail;
 
-  bool get _isSignUpMode => _mode == _LoginMode.signUp;
   bool get _isPasswordMode => _mode == _LoginMode.password;
   bool get _isMagicLinkMode => _mode == _LoginMode.magicLink;
   bool get _isMagicLinkSuccessState =>
@@ -129,23 +124,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return true;
   }
 
-  bool _isValidPassword(String value) {
-    if (value.length < 8) return false;
-    if (value.contains(RegExp(r'\s'))) return false;
-    if (value.contains(RegExp(r'[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]'))) {
-      return false;
-    }
-    return true;
-  }
-
-  bool _isValidNickname(String value) {
-    final nickname = value.trim();
-    if (nickname.length < 2 || nickname.length > 24) return false;
-    if (RegExp(r'[\x00-\x1F\x7F]').hasMatch(nickname)) return false;
-    if (RegExp(r'[\u200B-\u200F\uFEFF]').hasMatch(nickname)) return false;
-    return true;
-  }
-
   bool _isZh() {
     return Localizations.localeOf(context)
         .languageCode
@@ -165,11 +143,13 @@ class _LoginScreenState extends State<LoginScreen> {
   String _screenTitle(AppLocalizations t) {
     switch (_mode) {
       case _LoginMode.magicLink:
-        return _isZh() ? '\u767b\u5165 MiraMeal' : 'Sign in to MiraMeal';
+        return _isZh()
+            ? '\u7528 Email \u9023\u7d50\u767b\u5165'
+            : 'Sign in with an email link';
       case _LoginMode.password:
-        return _isZh() ? '\u5bc6\u78bc\u767b\u5165' : 'Sign in with password';
-      case _LoginMode.signUp:
-        return _isZh() ? '\u5efa\u7acb\u5e33\u865f' : 'Create account';
+        return _isZh()
+            ? '\u820a\u5e33\u865f\u5bc6\u78bc\u767b\u5165'
+            : 'Password sign-in for legacy accounts';
     }
   }
 
@@ -177,16 +157,12 @@ class _LoginScreenState extends State<LoginScreen> {
     switch (_mode) {
       case _LoginMode.magicLink:
         return _isZh()
-            ? '\u8f38\u5165 Email\uff0c\u6211\u5011\u6703\u628a\u767b\u5165\u9023\u7d50\u5bc4\u7d66\u4f60\uff0c\u7b2c\u4e00\u6b21\u4f7f\u7528\u4e5f\u53ef\u4ee5\u76f4\u63a5\u958b\u59cb'
-            : 'Enter your email and we will send you a sign-in link. First-time use can start right away.';
+            ? '\u8f38\u5165 Email\uff0c\u6211\u5011\u6703\u5bc4\u767b\u5165\u9023\u7d50\u7d66\u4f60\uff0c\u7b2c\u4e00\u6b21\u4f7f\u7528\u4e5f\u6703\u76f4\u63a5\u5efa\u7acb\u5e33\u865f'
+            : 'Enter your email and we will send you a sign-in link. First-time use will create your account automatically.';
       case _LoginMode.password:
         return _isZh()
-            ? '\u8f38\u5165\u5bc6\u78bc\uff0c\u56de\u5230\u4f60\u7684 MiraMeal \u7d00\u9304'
-            : 'Use your password to get back to your MiraMeal records.';
-      case _LoginMode.signUp:
-        return _isZh()
-            ? '\u5148\u5efa\u7acb\u5e33\u865f\uff0c\u4e4b\u5f8c\u53ef\u4ee5\u7528\u767b\u5165\u9023\u7d50\u6216\u5bc6\u78bc\u56de\u4f86'
-            : 'Create your account first, then come back with a sign-in link or password.';
+            ? '\u53ea\u6709\u4ee5\u524d\u5c31\u662f Email + \u5bc6\u78bc\u7684\u5e33\u865f\u9700\u8981\u9019\u4e00\u6b65'
+            : 'Use this only if your account already signs in with email and password.';
     }
   }
 
@@ -195,12 +171,10 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _mode = mode;
       _showPassword = false;
-      _showConfirm = false;
       _bannerMessage = null;
       _bannerIsError = false;
       _inlineEmailError = null;
       _inlinePasswordError = null;
-      _inlineNicknameError = null;
       if (mode != _LoginMode.magicLink) {
         _magicLinkSentEmail = null;
       }
@@ -263,44 +237,26 @@ class _LoginScreenState extends State<LoginScreen> {
         return t.authEmailNotVerified;
       case 'email_not_found':
         return _isZh()
-            ? '\u9019\u500b Email \u76ee\u524d\u7121\u6cd5\u4f7f\u7528\u767b\u5165\u9023\u7d50\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66\u6216\u6539\u7528\u5bc6\u78bc\u767b\u5165'
-            : 'This email cannot use a sign-in link right now. Please try again later or sign in with your password.';
+            ? '\u76ee\u524d\u7121\u6cd5\u5bc4\u51fa\u9023\u7d50\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66'
+            : 'Unable to send the sign-in link right now. Please try again later.';
       case 'rate_limited':
         return _isZh()
             ? '\u5bc4\u9001\u592a\u983b\u7e41\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66'
             : 'Too many requests. Please try again later.';
       default:
         return _isZh()
-            ? '\u5bc4\u9001\u767b\u5165\u9023\u7d50\u5931\u6557\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66\uff0c\u6216\u6539\u7528\u5bc6\u78bc\u767b\u5165'
-            : 'Failed to send sign-in link. Please try again later, or sign in with your password.';
+            ? '\u5bc4\u9001\u767b\u5165\u9023\u7d50\u5931\u6557\uff0c\u8acb\u7a0d\u5f8c\u518d\u8a66'
+            : 'Failed to send the sign-in link. Please try again later.';
     }
   }
 
-  String _formatAuthError(Object err, AppLocalizations t,
-      {required bool isSignUp}) {
+  String _formatAuthError(Object err, AppLocalizations t) {
     final text = err.toString();
     final lower = text.toLowerCase();
     if (_isNetworkError(text)) return t.authNetworkError;
     if (lower.contains('email not confirmed') ||
         lower.contains('confirm your email')) {
       return t.authEmailNotVerified;
-    }
-    if (isSignUp) {
-      if (lower.contains('invalid email') ||
-          lower.contains('not a valid email') ||
-          lower.contains('validate email') ||
-          lower.contains('email is invalid')) {
-        return t.authEmailInvalid;
-      }
-      if (lower.contains('password') && lower.contains('least')) {
-        return t.authPasswordInvalid;
-      }
-      if (lower.contains('already registered') ||
-          lower.contains('already exists') ||
-          lower.contains('user exists')) {
-        return t.authEmailExists;
-      }
-      return t.authSignUpFailed;
     }
     if (lower.contains('invalid login') ||
         lower.contains('invalid credentials') ||
@@ -315,8 +271,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _emailFocusNode.dispose();
     _passwordController.dispose();
-    _confirmController.dispose();
-    _nicknameController.dispose();
     _resendTimer?.cancel();
     super.dispose();
   }
@@ -344,20 +298,13 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _inlinePasswordError = message);
   }
 
-  void _setInlineNicknameError(String? message) {
-    setState(() => _inlineNicknameError = message);
-  }
-
   void _clearInlineErrors() {
-    if (_inlineEmailError == null &&
-        _inlinePasswordError == null &&
-        _inlineNicknameError == null) {
+    if (_inlineEmailError == null && _inlinePasswordError == null) {
       return;
     }
     setState(() {
       _inlineEmailError = null;
       _inlinePasswordError = null;
-      _inlineNicknameError = null;
     });
   }
 
@@ -377,8 +324,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _lastAuthAttempt = DateTime.now();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    final confirm = _confirmController.text;
-    final nickname = _nicknameController.text.trim();
     if (email.isEmpty) {
       _setInlineEmailError(t.authEmailRequired);
       return;
@@ -393,54 +338,24 @@ class _LoginScreenState extends State<LoginScreen> {
       _setInlinePasswordError(t.authPasswordRequired);
       return;
     }
-    if (_isSignUpMode && !_isValidPassword(password)) {
-      _setInlinePasswordError(t.authPasswordInvalid);
-      return;
-    }
-    if (_isSignUpMode && password != confirm) {
-      _setInlinePasswordError(t.authPasswordMismatch);
-      return;
-    }
-    if (_isSignUpMode && nickname.isEmpty) {
-      _setInlineNicknameError(t.authNicknameRequired);
-      return;
-    }
-    if (_isSignUpMode && !_isValidNickname(nickname)) {
-      _setInlineNicknameError(t.authNicknameInvalid);
-      return;
-    }
     setState(() => _loading = true);
     try {
-      if (_isSignUpMode) {
-        await app.signUpSupabase(email, password, nickname: nickname);
-      } else {
-        await app.signInSupabase(email, password);
-      }
+      await app.signInSupabase(email, password);
       if (mounted) {
         _refreshRememberedEmails(app);
-        final message = _isSignUpMode ? t.authSignUpVerify : t.authSignInSuccess;
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message)));
-        if (_isSignUpMode) {
-          setState(() {
-            _showVerifyPanel = true;
-            _resendCooldown = 30;
-          });
-          _startResendCooldown();
-        }
+            .showSnackBar(SnackBar(content: Text(t.authSignInSuccess)));
       }
     } catch (err) {
       if (mounted) {
-        final message = _formatAuthError(err, t, isSignUp: _isSignUpMode);
-        if (!_isSignUpMode && message == t.authLoginInvalid) {
+        final message = _formatAuthError(err, t);
+        if (message == t.authLoginInvalid) {
           _setInlinePasswordError(message);
-        } else if (_isSignUpMode && message == t.authEmailInvalid) {
-          _setInlineEmailError(message);
         } else {
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(message)));
         }
-        if (!_isSignUpMode && message == t.authEmailNotVerified) {
+        if (message == t.authEmailNotVerified) {
           setState(() {
             _showVerifyPanel = true;
             _resendCooldown = 0;
@@ -561,6 +476,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _magicLinkSentEmail = email;
         _bannerMessage = null;
         _bannerIsError = false;
+        _showVerifyPanel = false;
       });
     } catch (err) {
       if (!mounted) return;
@@ -582,9 +498,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: _bannerIsError
-            ? const Color(0xFFFFE7E5)
-            : const Color(0xFFE6F6EF),
+        color:
+            _bannerIsError ? const Color(0xFFFFE7E5) : const Color(0xFFE6F6EF),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _bannerIsError
@@ -658,8 +573,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: ListView.separated(
           shrinkWrap: true,
           itemCount: emailSuggestions.length,
-          separatorBuilder: (_, __) =>
-              const Divider(height: 1, thickness: 1),
+          separatorBuilder: (_, __) => const Divider(height: 1, thickness: 1),
           itemBuilder: (context, index) {
             final email = emailSuggestions[index];
             return ListTile(
@@ -693,7 +607,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildPasswordField(AppLocalizations t, {required bool showRule}) {
+  Widget _buildPasswordField(AppLocalizations t) {
     return TextField(
       controller: _passwordController,
       obscureText: !_showPassword,
@@ -705,7 +619,6 @@ class _LoginScreenState extends State<LoginScreen> {
       },
       decoration: InputDecoration(
         labelText: t.authPasswordLabel,
-        helperText: showRule ? t.authPasswordRule : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -714,34 +627,9 @@ class _LoginScreenState extends State<LoginScreen> {
           icon: Icon(
             _showPassword ? Icons.visibility_off_outlined : Icons.visibility,
           ),
-          onPressed:
-              _loading ? null : () => setState(() => _showPassword = !_showPassword),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildConfirmPasswordField(AppLocalizations t) {
-    return TextField(
-      controller: _confirmController,
-      obscureText: !_showConfirm,
-      enabled: !_loading,
-      onChanged: (_) {
-        if (_inlinePasswordError != null) {
-          _setInlinePasswordError(null);
-        }
-      },
-      decoration: InputDecoration(
-        labelText: t.authConfirmPasswordLabel,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _showConfirm ? Icons.visibility_off_outlined : Icons.visibility,
-          ),
-          onPressed:
-              _loading ? null : () => setState(() => _showConfirm = !_showConfirm),
+          onPressed: _loading
+              ? null
+              : () => setState(() => _showPassword = !_showPassword),
         ),
       ),
     );
@@ -812,6 +700,42 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  Widget _buildPasswordModeHint(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAF8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDCE7E2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(
+              Icons.lock_outline,
+              size: 18,
+              color: Color(0xFF5B6B63),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _isZh()
+                  ? '\u9019\u88e1\u53ea\u7d66\u4ee5\u524d\u5c31\u662f Email + \u5bc6\u78bc\u7684\u5e33\u865f\u4f7f\u7528\u3002\u5982\u679c\u4f60\u662f\u7b2c\u4e00\u6b21\u4f7f\u7528 MiraMeal\uff0c\u56de\u4e0a\u4e00\u6b65\u5bc4\u767b\u5165\u9023\u7d50\u5c31\u53ef\u4ee5\u4e86'
+                  : 'Use this only for older accounts that already sign in with email and password. If you are new to MiraMeal, go back and use the email link instead.',
+              style: AppTextStyles.caption(context).copyWith(
+                color: const Color(0xFF5B6B63),
+                height: 1.45,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildVerifyPanel(BuildContext context, AppLocalizations t) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -825,8 +749,8 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Text(
             t.authVerifyTitle,
-            style:
-                AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+            style: AppTextStyles.body(context)
+                .copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Text(
@@ -918,34 +842,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         _buildEmailSuggestions(context, app, emailSuggestions),
                       ],
                     ],
-                    if (_isPasswordMode || _isSignUpMode) ...[
+                    if (_isPasswordMode) ...[
                       const SizedBox(height: 10),
-                      _buildPasswordField(t, showRule: _isSignUpMode),
-                    ],
-                    if (_isSignUpMode) ...[
+                      _buildPasswordModeHint(context),
                       const SizedBox(height: 10),
-                      _buildConfirmPasswordField(t),
-                      const SizedBox(height: 10),
-                      TextField(
-                        controller: _nicknameController,
-                        enabled: !_loading,
-                        onChanged: (_) {
-                          if (_inlineNicknameError != null) {
-                            _setInlineNicknameError(null);
-                          }
-                        },
-                        decoration: InputDecoration(
-                          labelText: t.nicknameLabel,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          errorText: _inlineNicknameError,
-                        ),
-                      ),
+                      _buildPasswordField(t),
                     ],
                     const SizedBox(height: 14),
                     ElevatedButton(
@@ -963,9 +864,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         _isMagicLinkMode
                             ? (_isZh()
-                                ? '\u5bc4\u9001\u767b\u5165\u9023\u7d50'
-                                : 'Send sign-in link')
-                            : (_isSignUpMode ? t.authSignUp : t.authSignIn),
+                                ? '\u5bc4\u9001\u767b\u5165\uff0f\u8a3b\u518a\u9023\u7d50'
+                                : 'Send sign-in / sign-up link')
+                            : (_isZh()
+                                ? '\u7528\u5bc6\u78bc\u767b\u5165'
+                                : 'Sign in with password'),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
@@ -973,8 +876,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 8),
                       Text(
                         _isZh()
-                            ? '\u4e0d\u7528\u8a18\u5bc6\u78bc\uff0c\u5f9e\u4fe1\u7bb1\u9ede\u4e00\u4e0b\u5c31\u80fd\u767b\u5165\uff0c\u7b2c\u4e00\u6b21\u4f7f\u7528\u4e5f\u53ef\u4ee5\u76f4\u63a5\u958b\u59cb'
-                            : 'No password to remember. Open the email link to sign in, even on your first visit.',
+                            ? '\u4e0d\u7528\u8a18\u5bc6\u78bc\uff0c\u4fe1\u7bb1\u9ede\u4e00\u4e0b\u5c31\u80fd\u767b\u5165\uff0c\u7b2c\u4e00\u6b21\u4f7f\u7528\u4e5f\u6703\u76f4\u63a5\u5efa\u7acb\u5e33\u865f'
+                            : 'No password to remember. Open the email link to sign in, and first-time use will create your account.',
                         textAlign: TextAlign.center,
                         style: AppTextStyles.caption(context)
                             .copyWith(color: Colors.black54),
@@ -990,8 +893,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 : () => _switchMode(_LoginMode.password),
                             child: Text(
                               _isZh()
-                                  ? '\u7528\u5bc6\u78bc\u767b\u5165'
-                                  : 'Use password instead',
+                                  ? '\u6211\u662f\u820a\u5e33\u865f\uff0c\u6539\u7528\u5bc6\u78bc'
+                                  : 'I have an older password account',
                             ),
                           ),
                         ],
@@ -1009,8 +912,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 : () => _switchMode(_LoginMode.password),
                             child: Text(
                               _isZh()
-                                  ? '\u6539\u7528\u5bc6\u78bc\u767b\u5165'
-                                  : 'Sign in with password',
+                                  ? '\u820a\u5e33\u865f\u6539\u7528\u5bc6\u78bc'
+                                  : 'Use password for an older account',
                             ),
                           ),
                         ],
@@ -1028,38 +931,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 : () => _switchMode(_LoginMode.magicLink),
                             child: Text(
                               _isZh()
-                                  ? '\u6539\u7528\u767b\u5165\u9023\u7d50'
-                                  : 'Use sign-in link instead',
+                                  ? '\u56de\u5230 Email \u9023\u7d50\u767b\u5165'
+                                  : 'Back to email link sign-in',
                             ),
                           ),
                           TextButton(
                             onPressed: _loading ? null : _resetPassword,
                             child: Text(t.authForgotPassword),
-                          ),
-                        ],
-                      ),
-                    ],
-                    if (_isSignUpMode) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 4,
-                        children: [
-                          TextButton(
-                            onPressed: _loading
-                                ? null
-                                : () => _switchMode(_LoginMode.magicLink),
-                            child: Text(
-                              _isZh()
-                                  ? '\u5148\u7528\u767b\u5165\u9023\u7d50'
-                                  : 'Use sign-in link instead',
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: _loading
-                                ? null
-                                : () => _switchMode(_LoginMode.password),
-                            child: Text(t.authToggleToSignIn),
                           ),
                         ],
                       ),
@@ -1078,4 +956,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
