@@ -1495,29 +1495,322 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
 
   Widget _buildSavedStatusRow() {
     if (_savedEntry == null) return const SizedBox.shrink();
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
-        Expanded(
-          child: Text(
-            _isZh() ? '已自動存到紀錄' : 'Saved to your log',
-            style: AppTextStyles.caption(context).copyWith(
-              color: const Color(0xFF2F8F5B),
-              fontWeight: FontWeight.w700,
-            ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAF7EF),
+            borderRadius: BorderRadius.circular(999),
           ),
-        ),
-        TextButton.icon(
-          onPressed: _deleteSavedEntry,
-          icon: const Icon(Icons.delete_outline, size: 18),
-          label: Text(_isZh() ? '刪除' : 'Delete'),
-          style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFFB94A48),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            minimumSize: const Size(0, 40),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check_circle_rounded,
+                size: 16,
+                color: Color(0xFF2F8F5B),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _isZh() ? '已自動存到紀錄' : 'Saved to your log',
+                style: AppTextStyles.caption(context).copyWith(
+                  color: const Color(0xFF2F8F5B),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  String _analysisSummaryLine(AppState app, AnalysisResult analysis) {
+    if (analysis.isBeverage == true) {
+      return _isZh()
+          ? '這杯飲品的熱量會受容量、甜度與配料影響。'
+          : 'Drink calories depend on size, sugar, and add-ons.';
+    }
+    final current =
+        _calorieMidValue(_overrideCalorieRange ?? analysis.calorieRange);
+    final avg = _recentMealAverage(
+      app,
+      mealType: _analysisMealType(app),
+      excludeMealId: _analysisMealId(),
+    );
+    if (current == null || avg == null || avg <= 0) {
+      return _isZh()
+          ? '先確認餐名與份量，不準時可再調整這餐。'
+          : 'Check the meal name and portion first, then adjust if needed.';
+    }
+    final ratio = current / avg;
+    if (ratio >= 1.18) {
+      return _isZh()
+          ? '這餐比你最近同類餐點偏高一些。'
+          : 'This meal is a bit heavier than your recent similar meals.';
+    }
+    if (ratio <= 0.82) {
+      return _isZh()
+          ? '這餐比你最近同類餐點偏輕一些。'
+          : 'This meal is a bit lighter than your recent similar meals.';
+    }
+    return _isZh()
+        ? '這餐熱量接近你最近同類餐點的常見範圍。'
+        : 'This meal is close to your recent usual range.';
+  }
+
+  Widget _buildSummaryInfoChip({
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F7F6),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.black54),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              style: AppTextStyles.caption(context).copyWith(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactAdvicePanel(AppLocalizations t, AnalysisResult analysis) {
+    final title = analysis.isBeverage == true
+        ? t.suggestInstantDrinkAdviceTitle
+        : t.suggestInstantAdviceTitle;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FBF8),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE0ECE5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.auto_awesome_rounded,
+                size: 18,
+                color: Color(0xFF2F8F5B),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: AppTextStyles.body(context)
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildAdviceCard(t),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showAdjustAnalysisSheet() async {
+    if (_analysis == null || !mounted) return;
+    final t = AppLocalizations.of(context)!;
+    final app = AppStateScope.of(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, sheetSetState) {
+            final currentAnalysis = _analysis?.result;
+            if (currentAnalysis == null) {
+              return const SizedBox.shrink();
+            }
+            final staleAdviceMessage =
+                _adviceNeedsReestimate ? _staleAdviceMessage() : null;
+            final adjustedRange = _displayCalorieRange ??
+                _scaledCalorieRangeText(
+                  _overrideCalorieRange ?? currentAnalysis.calorieRange,
+                  _portionPercent,
+                  containerType: _containerType,
+                  containerSize: _containerSize,
+                );
+            final proteinRange = app.proteinTargetRangeGrams();
+            final baseProteinConsumed =
+                app.dailyProteinConsumedGrams((_analysis?.time ?? DateTime.now()));
+            final adjustedMacros = _scaledMacros(currentAnalysis.macros);
+            final currentProtein =
+                _savedEntry == null ? (adjustedMacros['protein'] ?? 0) : 0;
+            final proteinConsumed = (baseProteinConsumed + currentProtein).round();
+
+            Future<void> runAndRefresh(Future<void> Function() action) async {
+              await action();
+              if (sheetContext.mounted) {
+                sheetSetState(() {});
+              }
+            }
+
+            void refreshSheet() {
+              if (sheetContext.mounted) {
+                sheetSetState(() {});
+              }
+            }
+
+            return SafeArea(
+              top: false,
+              child: FractionallySizedBox(
+                heightFactor: 0.84,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(28)),
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      Container(
+                        width: 46,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.black12,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _isZh() ? '調整這餐' : 'Adjust this meal',
+                                style: AppTextStyles.title2(context)
+                                    .copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.of(sheetContext).pop(),
+                              icon: const Icon(Icons.close_rounded),
+                              tooltip: t.cancel,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                currentAnalysis.foodName,
+                                style: AppTextStyles.body(context)
+                                    .copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '$adjustedRange ${t.estimated}',
+                                style: AppTextStyles.title2(context).copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildPortionContainerSection(
+                                t,
+                                onInteractionComplete: refreshSheet,
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: _loading
+                                    ? null
+                                    : () async {
+                                        await _editCalorieRange();
+                                        refreshSheet();
+                                      },
+                                icon: const Icon(Icons.edit_outlined),
+                                label: Text(_isZh()
+                                    ? '手動校正熱量'
+                                    : 'Adjust calorie estimate'),
+                              ),
+                              if (proteinRange != null) ...[
+                                const SizedBox(height: 12),
+                                _buildProteinRangeBar(
+                                  t,
+                                  proteinConsumed.toDouble(),
+                                  proteinRange,
+                                ),
+                              ],
+                              const SizedBox(height: 12),
+                              _buildMacroSection(t, currentAnalysis),
+                              if (staleAdviceMessage != null) ...[
+                                const SizedBox(height: 14),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF6E8),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFF4D29A),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    staleAdviceMessage,
+                                    style: AppTextStyles.caption(context).copyWith(
+                                      color: const Color(0xFF8A5A00),
+                                      height: 1.35,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _loading
+                                      ? null
+                                      : () async {
+                                          await runAndRefresh(
+                                              _reanalyzeWithAdjustments);
+                                        },
+                                  icon: const Icon(Icons.auto_fix_high_rounded),
+                                  label: Text(_isZh()
+                                      ? '重新估算建議'
+                                      : 'Reestimate advice'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1798,7 +2091,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return const Text('🔹', style: TextStyle(fontSize: 18, height: 1));
   }
 
-  Widget _buildPortionContainerSection(AppLocalizations t) {
+  Widget _buildPortionContainerSection(
+    AppLocalizations t, {
+    VoidCallback? onInteractionComplete,
+  }) {
     final theme = Theme.of(context);
     final normalized =
         _normalizeContainerSelection(_containerType, _containerSize);
@@ -1809,7 +2105,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         Localizations.localeOf(context).languageCode.toLowerCase() == 'zh';
     final typeOptions = <_IconChipOption>[
       _IconChipOption(
-          emoji: '🍜',
+          emoji: '🥣',
           value: 'bowl',
           label: t.containerTypeBowl,
           showLabel: false),
@@ -1834,9 +2130,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
           label: t.containerTypeUnknown,
           showLabel: false),
     ];
+
     String sizeWithMl(String baseLabel, int ml) {
       if (!isDrink) return baseLabel;
-      return isZh ? '$baseLabel（約 $ml ml）' : '$baseLabel (~$ml ml)';
+      return isZh ? '$baseLabel 約 $ml ml' : '$baseLabel (~$ml ml)';
     }
 
     final sizeOptions = <MapEntry<String, String>>[
@@ -1860,7 +2157,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         const SizedBox(height: 6),
         Row(
           children: [
-            Text('${_portionPercent}%',
+            Text('$_portionPercent%',
                 style: AppTextStyles.body(context)
                     .copyWith(fontWeight: FontWeight.w600)),
             const SizedBox(width: 10),
@@ -1880,8 +2177,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                   min: 10,
                   max: 200,
                   divisions: 19,
-                  label: '${_portionPercent}%',
-                  onChanged: (value) => _updatePortionPercent(value.round()),
+                  label: '$_portionPercent%',
+                  onChanged: (value) {
+                    _updatePortionPercent(value.round());
+                    onInteractionComplete?.call();
+                  },
                 ),
               ),
             ),
@@ -1893,38 +2193,51 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                 .copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         _buildIconChipGroup(
-            options: typeOptions,
-            value: currentType,
-            onSelected: _updateContainerType),
+          options: typeOptions,
+          value: currentType,
+          onSelected: (value) {
+            _updateContainerType(value);
+            onInteractionComplete?.call();
+          },
+        ),
         const SizedBox(height: 12),
         Text(t.containerSizeLabel,
             style: AppTextStyles.body(context)
                 .copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
         _buildChipGroup(
-            options: sizeOptions,
-            value: currentSize,
-            onSelected: _updateContainerSize),
+          options: sizeOptions,
+          value: currentSize,
+          onSelected: (value) {
+            _updateContainerSize(value);
+            onInteractionComplete?.call();
+          },
+        ),
         if (isDrink) ...[
           const SizedBox(height: 6),
           Text(
             isZh
-                ? '容量為估算值，實際容量會依品牌杯型有差異。'
+                ? '杯量為估算值，實際容量會因品牌與容器而有差異。'
                 : 'Cup volume is estimated and may vary by brand.',
             style:
                 AppTextStyles.caption(context).copyWith(color: Colors.black54),
           ),
         ],
         const SizedBox(height: 12),
-        _buildReferenceAdjustSection(t, referenceOptions),
+        _buildReferenceAdjustSection(
+          t,
+          referenceOptions,
+          onInteractionComplete: onInteractionComplete,
+        ),
       ],
     );
   }
 
   Widget _buildReferenceAdjustSection(
     AppLocalizations t,
-    List<MapEntry<String, String>> referenceOptions,
-  ) {
+    List<MapEntry<String, String>> referenceOptions, {
+    VoidCallback? onInteractionComplete,
+  }) {
     return ExpansionTile(
       tilePadding: EdgeInsets.zero,
       childrenPadding: const EdgeInsets.only(top: 6),
@@ -1941,9 +2254,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         Align(
           alignment: Alignment.centerLeft,
           child: _buildChipGroup(
-              options: referenceOptions,
-              value: _referenceObject,
-              onSelected: _updateReferenceObject),
+            options: referenceOptions,
+            value: _referenceObject,
+            onSelected: (value) async {
+              await _updateReferenceObject(value);
+              onInteractionComplete?.call();
+            },
+          ),
         ),
         if (_referenceObject == 'manual') ...[
           const SizedBox(height: 10),
@@ -1963,7 +2280,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
               ),
               const SizedBox(width: 8),
               ElevatedButton(
-                onPressed: _loading ? null : _updateReferenceLength,
+                onPressed: _loading
+                    ? null
+                    : () async {
+                        await _updateReferenceLength();
+                        onInteractionComplete?.call();
+                      },
                 child: Text(t.referenceLengthApply),
               ),
             ],
@@ -2493,28 +2815,51 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSavedStatusRow(),
-          if (_savedEntry != null) const SizedBox(height: 8),
+          Row(
+            children: [
+              if (_savedEntry != null) Expanded(child: _buildSavedStatusRow()),
+              if (_savedEntry == null) const Spacer(),
+              IconButton(
+                onPressed: () => setState(() => _hideFloatingCard = true),
+                icon: const Icon(Icons.close_rounded),
+                tooltip: t.cancel,
+              ),
+            ],
+          ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('🥹', style: TextStyle(fontSize: 20)),
-              const SizedBox(width: 6),
+              const Icon(Icons.no_food_rounded, size: 22, color: Colors.black54),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   t.suggestInstantNonFood,
                   style: AppTextStyles.body(context)
-                      .copyWith(fontWeight: FontWeight.w600),
+                      .copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
           ),
           if ((analysis.nonFoodReason ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               analysis.nonFoodReason!.trim(),
               style: AppTextStyles.caption(context)
-                  .copyWith(color: Colors.black54),
+                  .copyWith(color: Colors.black54, height: 1.4),
+            ),
+          ],
+          if (_savedEntry != null) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _deleteSavedEntry,
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: Text(_isZh() ? '刪除這筆紀錄' : 'Delete this entry'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFB94A48),
+                ),
+              ),
             ),
           ],
         ],
@@ -2540,65 +2885,71 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         referenceUsed.isEmpty ? t.referenceObjectNone : referenceUsed;
     final staleAdviceMessage =
         _adviceNeedsReestimate ? _staleAdviceMessage() : null;
+    final summaryLine = _analysisSummaryLine(app, analysis);
+    final proteinValue = (adjustedMacros['protein'] ?? 0).round();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSavedStatusRow(),
-        if (_savedEntry != null) const SizedBox(height: 8),
         Row(
           children: [
+            if (_savedEntry != null) Expanded(child: _buildSavedStatusRow()),
+            if (_savedEntry == null) const Spacer(),
             IconButton(
-              onPressed: _editFoodName,
-              icon: const Text('✏️', style: TextStyle(fontSize: 16)),
-              tooltip: t.editFoodName,
-              padding: const EdgeInsets.all(8),
-              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                analysis.foodName,
-                style: AppTextStyles.body(context)
-                    .copyWith(fontWeight: FontWeight.w600),
-              ),
+              onPressed: () => setState(() => _hideFloatingCard = true),
+              icon: const Icon(Icons.close_rounded),
+              tooltip: t.cancel,
             ),
           ],
         ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                '${adjustedRange} ${t.estimated}',
-                style: AppTextStyles.title2(context).copyWith(
-                    fontWeight: FontWeight.w700, color: Colors.black87),
+        Text(
+          analysis.foodName,
+          style: AppTextStyles.title2(context)
+              .copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: Column(
+            children: [
+              Text(
+                adjustedRange,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.title1(context).copyWith(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                t.estimated,
+                style: AppTextStyles.caption(context).copyWith(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F9F5),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Text(
+            summaryLine,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.body(context).copyWith(
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF235A3D),
+              height: 1.35,
             ),
-            const SizedBox.shrink(),
-          ],
-        ),
-        const SizedBox(height: 8),
-        _buildEnergyBar(app, t, analysis),
-        const SizedBox(height: 6),
-        Text(
-          '${t.referenceObjectLabel}：$referenceLabel',
-          style: AppTextStyles.caption(context)
-              .copyWith(color: Colors.black54, fontWeight: FontWeight.w600),
-        ),
-        if (proteinRange != null) ...[
-          const SizedBox(height: 12),
-          _buildProteinRangeBar(t, proteinConsumed.toDouble(), proteinRange),
-        ],
-        const SizedBox(height: 12),
-        Text(
-          analysis.isBeverage == true
-              ? t.suggestInstantDrinkAdviceTitle
-              : t.suggestInstantAdviceTitle,
-          style:
-              AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
+          ),
         ),
         if (staleAdviceMessage != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -2617,24 +2968,68 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
             ),
           ),
         ],
-        const SizedBox(height: 8),
-        _buildAdviceCard(t),
         const SizedBox(height: 14),
-        _buildPortionContainerSection(t),
-        const SizedBox(height: 12),
-        _buildMacroSection(t, analysis),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: _loading ? null : _reanalyzeWithAdjustments,
-            child: Text(t.suggestInstantReestimate),
-          ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildSummaryInfoChip(
+              icon: Icons.straighten_rounded,
+              label: _isZh()
+                  ? '參考：$referenceLabel'
+                  : 'Reference: $referenceLabel',
+            ),
+            _buildSummaryInfoChip(
+              icon: Icons.egg_alt_outlined,
+              label:
+                  _isZh() ? '蛋白質 $proteinValue g' : 'Protein $proteinValue g',
+            ),
+            if (proteinRange != null)
+              _buildSummaryInfoChip(
+                icon: Icons.flag_outlined,
+                label: _isZh()
+                    ? '今日累積 $proteinConsumed g'
+                    : 'Today $proteinConsumed g',
+              ),
+          ],
         ),
-        const SizedBox(height: 12),
-        Text(t.suggestInstantRecentHint,
-            style:
-                AppTextStyles.caption(context).copyWith(color: Colors.black45)),
+        const SizedBox(height: 14),
+        _buildEnergyBar(app, t, analysis),
+        _buildCompactAdvicePanel(t, analysis),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _editFoodName,
+                icon: const Icon(Icons.edit_outlined),
+                label: Text(_isZh() ? '改名稱' : 'Rename'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _showAdjustAnalysisSheet,
+                icon: const Icon(Icons.tune_rounded),
+                label: Text(_isZh() ? '調整這餐' : 'Adjust meal'),
+              ),
+            ),
+          ],
+        ),
+        if (_savedEntry != null) ...[
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _deleteSavedEntry,
+              icon: const Icon(Icons.delete_outline_rounded),
+              label: Text(_isZh() ? '刪除這筆紀錄' : 'Delete this entry'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFB94A48),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -3032,60 +3427,33 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                 ),
               ),
               if (showFloatingCard)
-                DraggableScrollableSheet(
-                  initialChildSize: 0.45,
-                  minChildSize: 0.3,
-                  maxChildSize: 0.88,
-                  builder: (context, controller) => Container(
-                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(22),
-                          bottom: Radius.circular(22)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 22,
-                          offset: const Offset(0, -4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 10),
-                        Container(
-                          width: 44,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.black12,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Spacer(),
-                            IconButton(
-                              onPressed: () =>
-                                  setState(() => _hideFloatingCard = true),
-                              icon: const Text('✖️',
-                                  style: TextStyle(fontSize: 16)),
-                              tooltip: t.cancel,
-                              padding: const EdgeInsets.all(6),
-                              constraints: const BoxConstraints(
-                                  minWidth: 32, minHeight: 32),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SafeArea(
+                    top: false,
+                    minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: 420,
+                        maxHeight: media.size.height * 0.72,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 28,
+                              offset: const Offset(0, -6),
                             ),
                           ],
                         ),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            controller: controller,
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            child: _buildAnalysisCardContent(t, app, analysis!),
-                          ),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+                          child: _buildAnalysisCardContent(t, app, analysis),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
