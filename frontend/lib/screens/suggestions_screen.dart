@@ -1120,7 +1120,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
 
   Future<MealType?> _showMealTypePicker(
       AppState app, AppLocalizations t, MealType current) async {
-    final options = MealType.values;
+    const options = MealType.values;
     return showModalBottomSheet<MealType>(
       context: context,
       backgroundColor: Colors.white,
@@ -1587,6 +1587,40 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return _isZh() ? 'AI估算' : 'AI estimate';
   }
 
+  String _analysisCategoryLabel(AnalysisResult analysis, int proteinValue) {
+    if (analysis.isBeverage == true) {
+      return _isZh() ? '飲料' : 'Drink';
+    }
+    final source = '${analysis.foodName} ${analysis.foodItems.join(' ')}'
+        .trim()
+        .toLowerCase();
+    if (source.contains('糖') ||
+        source.contains('餅') ||
+        source.contains('蛋糕') ||
+        source.contains('甜') ||
+        source.contains('cookie') ||
+        source.contains('cake') ||
+        source.contains('candy') ||
+        source.contains('dessert') ||
+        source.contains('chocolate')) {
+      return _isZh() ? '點心' : 'Snack';
+    }
+    if (source.contains('水果') ||
+        source.contains('fruit') ||
+        source.contains('banana') ||
+        source.contains('apple') ||
+        source.contains('莓')) {
+      return _isZh() ? '水果' : 'Fruit';
+    }
+    if (analysis.foodItems.length >= 3) {
+      return _isZh() ? '組合餐' : 'Combo meal';
+    }
+    if (proteinValue >= 18) {
+      return _isZh() ? '高蛋白餐' : 'High-protein meal';
+    }
+    return _isZh() ? '主餐' : 'Meal';
+  }
+
   List<Widget> _buildResultInfoChips(
     AppLocalizations t,
     AnalysisResult analysis,
@@ -1598,50 +1632,48 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     if (analysis.isBeverage == true) {
       chips.add(_buildSummaryInfoChip(
         icon: Icons.local_drink_rounded,
-        label: _isZh() ? '液體熱量' : 'Liquid calories',
-      ));
-      chips.add(_buildSummaryInfoChip(
-        icon: Icons.straighten_rounded,
-        label: _isZh() ? '容量影響大' : 'Size matters',
-      ));
-      chips.add(_buildSummaryInfoChip(
-        icon: Icons.auto_awesome_rounded,
-        label: _analysisSourceLabel(analysis),
+        label: _isZh() ? '容量與甜度影響大' : 'Size and sugar matter',
       ));
       if (confidenceLabel != null) {
         chips.add(_buildSummaryInfoChip(
           icon: Icons.verified_outlined,
           label: confidenceLabel,
         ));
+      } else {
+        chips.add(_buildSummaryInfoChip(
+          icon: Icons.auto_awesome_rounded,
+          label: _analysisSourceLabel(analysis),
+        ));
       }
-      return chips.take(3).toList();
+      return chips.take(2).toList();
     }
 
-    if (proteinValue > 0) {
-      chips.add(_buildSummaryInfoChip(
-        icon: Icons.egg_alt_outlined,
-        label: _isZh() ? '蛋白質 $proteinValue g' : 'Protein $proteinValue g',
-      ));
-    }
     if (referenceLabel != t.referenceObjectNone) {
       chips.add(_buildSummaryInfoChip(
         icon: Icons.straighten_rounded,
         label:
             _isZh() ? '參考：$referenceLabel' : 'Reference: $referenceLabel',
       ));
-    }
-    if (confidenceLabel != null) {
+    } else {
       chips.add(_buildSummaryInfoChip(
-        icon: Icons.verified_outlined,
-        label: confidenceLabel,
+        icon: Icons.restaurant_rounded,
+        label: _analysisCategoryLabel(analysis, proteinValue),
+      ));
+    }
+    if (proteinValue >= 5 && analysis.isBeverage != true) {
+      chips.add(_buildSummaryInfoChip(
+        icon: Icons.egg_alt_outlined,
+        label: _isZh() ? '蛋白質 $proteinValue g' : 'Protein $proteinValue g',
       ));
     } else {
       chips.add(_buildSummaryInfoChip(
-        icon: Icons.auto_awesome_rounded,
-        label: _analysisSourceLabel(analysis),
+        icon: confidenceLabel != null
+            ? Icons.verified_outlined
+            : Icons.auto_awesome_rounded,
+        label: confidenceLabel ?? _analysisSourceLabel(analysis),
       ));
     }
-    return chips;
+    return chips.take(2).toList();
   }
 
   Widget _buildSummaryInfoChip({
@@ -1880,31 +1912,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                       : 'Reestimate advice'),
                                 ),
                               ),
-                              if (_savedEntry != null) ...[
-                                const SizedBox(height: 20),
-                                const Divider(height: 1),
-                                const SizedBox(height: 12),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: TextButton.icon(
-                                    onPressed: () async {
-                                      Navigator.of(sheetContext).pop();
-                                      await Future<void>.delayed(Duration.zero);
-                                      if (!mounted) return;
-                                      await _deleteSavedEntry();
-                                    },
-                                    icon: const Icon(Icons.delete_outline_rounded),
-                                    label: Text(_isZh()
-                                        ? '刪除這筆紀錄'
-                                        : 'Delete this entry'),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: const Color(0xFFB94A48),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ],
                           ),
                         ),
@@ -2440,16 +2447,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return raw;
   }
 
-  String _macroDisplayValue(String key, double value, int portionPercent) {
-    final percent = portionPercent.clamp(10, 200) / 100.0;
-    final sizeFactor = _containerSizeFactor();
-    final scaled = value * percent * sizeFactor * _containerTypeFactor();
-    if (key == 'sodium') {
-      return '${scaled.round()}mg';
-    }
-    return '${scaled.round()}g';
-  }
-
   double _containerSizeFactor() {
     final size = (_containerSize ?? '').toLowerCase();
     switch (size) {
@@ -2597,20 +2594,82 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       icon = Icons.check_circle_outline_rounded;
       color = const Color(0xFF4B8A6A);
     }
-    return Padding(
-      padding: const EdgeInsets.only(top: 2, bottom: 4),
-      child: Row(
+    final markerRatio = ((ratio.clamp(0.65, 1.35) - 0.65) / 0.7)
+        .clamp(0.0, 1.0)
+        .toDouble();
+    return Container(
+      margin: const EdgeInsets.only(top: 2, bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAF8),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              message,
-              style: AppTextStyles.caption(context).copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  message,
+                  style: AppTextStyles.caption(context).copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-            ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final markerLeft =
+                  (constraints.maxWidth - 18) * markerRatio.clamp(0.0, 1.0);
+              return SizedBox(
+                height: 18,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      height: 10,
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF72D49A),
+                            Color(0xFFC7D98A),
+                            Color(0xFFF0B36A),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: markerLeft,
+                      top: 0,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: color, width: 2),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x22000000),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -2980,26 +3039,22 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
           ),
         ),
         const SizedBox(height: 14),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(
-              Icons.auto_awesome_rounded,
-              size: 18,
-              color: Color(0xFF2F8F5B),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F9F5),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Text(
+            summaryLine,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.body(context).copyWith(
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF235A3D),
+              height: 1.35,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                summaryLine,
-                style: AppTextStyles.body(context).copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF235A3D),
-                  height: 1.35,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
         if (staleAdviceMessage != null) ...[
           const SizedBox(height: 12),
@@ -3060,6 +3115,19 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
             ),
           ],
         ),
+        if (_savedEntry != null) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: TextButton.icon(
+              onPressed: _deleteSavedEntry,
+              icon: const Icon(Icons.delete_outline_rounded),
+              label: Text(_isZh() ? '刪除這筆紀錄' : 'Delete this entry'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFB94A48),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -3567,14 +3635,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
 
 class _IconChipOption {
   const _IconChipOption({
-    this.icon,
     this.emoji,
     required this.value,
     required this.label,
     this.showLabel = true,
   });
 
-  final IconData? icon;
   final String? emoji;
   final String value;
   final String label;
@@ -3628,7 +3694,7 @@ class _ProgressArcPainter extends CustomPainter {
       progressPaint,
     );
 
-    final spinnerSweep = math.pi * 0.6;
+    const spinnerSweep = math.pi * 0.6;
     final spinnerStart = rotation * math.pi * 2 - math.pi / 2;
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius + 6),
