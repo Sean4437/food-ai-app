@@ -1476,25 +1476,68 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final secondaryText = isDrink
         ? (limitText.isNotEmpty ? limitText : avoidText)
         : (avoidText.isNotEmpty ? avoidText : limitText);
-    final secondaryLabel = isDrink
-        ? (_isZh() ? '提醒' : 'Watch')
-        : (_isZh() ? '提醒' : 'Watch');
+    final primaryTitle = _isZh()
+        ? (isDrink ? '這樣喝更剛好' : '這樣搭更剛好')
+        : (isDrink ? 'Better this way' : 'Better paired like this');
+    final hintTitle = _isZh() ? '先留意' : 'Heads-up';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _adviceRow(
-          _isZh() ? '建議' : 'Tip',
-          canText.isEmpty ? (isDrink ? '-' : '-') : '$canLabel $canText',
+          primaryTitle,
+          canText.isEmpty
+              ? '-'
+              : _polishAdviceText(
+                  '$canLabel $canText',
+                  isDrink: isDrink,
+                  isSecondary: false,
+                ),
         ),
         if (secondaryText.isNotEmpty) ...[
           const SizedBox(height: 8),
           _adviceRow(
-            secondaryLabel,
-            '${secondaryText == avoidText ? avoidLabel : limitLabel} $secondaryText',
+            hintTitle,
+            _polishAdviceText(
+              '${secondaryText == avoidText ? avoidLabel : limitLabel} $secondaryText',
+              isDrink: isDrink,
+              isSecondary: true,
+            ),
           ),
         ],
       ],
     );
+  }
+
+  String _polishAdviceText(
+    String raw, {
+    required bool isDrink,
+    required bool isSecondary,
+  }) {
+    final text = raw.trim();
+    if (text.isEmpty) return '-';
+    if (!_isZh()) return text;
+    if (!isSecondary) {
+      if (text.startsWith('可以吃 ')) {
+        return '${text.substring(4)}一起搭配會更平衡';
+      }
+      if (text.startsWith('可以喝 ')) {
+        return '${text.substring(4)}會更順口也更剛好';
+      }
+      if (text.startsWith('一起搭 ')) {
+        return '搭配${text.substring(4)}會更剛好';
+      }
+    } else {
+      if (text.startsWith('先少喝一點 ')) {
+        return '先少喝一點，${text.substring(6)}';
+      }
+      if (text.startsWith('少吃一點 ')) {
+        return '先少吃一點，${text.substring(5)}';
+      }
+      if (text.startsWith('避免 ')) {
+        return '這次先避開${text.substring(3)}';
+      }
+    }
+    return text;
   }
 
   String _labelWithColon(String title) {
@@ -1681,21 +1724,22 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     required String label,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F7F6),
-        borderRadius: BorderRadius.circular(14),
+        color: const Color(0xFFF9FBFA),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE4ECE7)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.black54),
-          const SizedBox(width: 6),
+          Icon(icon, size: 14, color: const Color(0xFF7E8A84)),
+          const SizedBox(width: 5),
           Flexible(
             child: Text(
               label,
               style: AppTextStyles.caption(context).copyWith(
-                color: Colors.black87,
+                color: const Color(0xFF4E5A54),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -2597,13 +2641,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final markerRatio = ((ratio.clamp(0.65, 1.35) - 0.65) / 0.7)
         .clamp(0.0, 1.0)
         .toDouble();
-    return Container(
-      margin: const EdgeInsets.only(top: 2, bottom: 10),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7FAF8),
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 2, bottom: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2622,7 +2661,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           LayoutBuilder(
             builder: (context, constraints) {
               final markerLeft =
