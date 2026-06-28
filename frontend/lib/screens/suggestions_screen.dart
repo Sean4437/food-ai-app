@@ -1473,14 +1473,26 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         isDrink ? t.suggestInstantAvoidDrink : t.suggestInstantAvoid;
     final limitLabel =
         isDrink ? t.suggestInstantDrinkLimit : t.suggestInstantLimit;
+    final secondaryText = isDrink
+        ? (limitText.isNotEmpty ? limitText : avoidText)
+        : (avoidText.isNotEmpty ? avoidText : limitText);
+    final secondaryLabel = isDrink
+        ? (_isZh() ? '提醒' : 'Watch')
+        : (_isZh() ? '提醒' : 'Watch');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _adviceRow(canLabel, canText.isEmpty ? '-' : canText),
-        const SizedBox(height: 8),
-        _adviceRow(avoidLabel, avoidText.isEmpty ? '-' : avoidText),
-        const SizedBox(height: 8),
-        _adviceRow(limitLabel, limitText.isEmpty ? '-' : limitText),
+        _adviceRow(
+          _isZh() ? '建議' : 'Tip',
+          canText.isEmpty ? (isDrink ? '-' : '-') : '$canLabel $canText',
+        ),
+        if (secondaryText.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _adviceRow(
+            secondaryLabel,
+            '${secondaryText == avoidText ? avoidLabel : limitLabel} $secondaryText',
+          ),
+        ],
       ],
     );
   }
@@ -1529,37 +1541,107 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
   }
 
   String _analysisSummaryLine(AppState app, AnalysisResult analysis) {
+    final proteinValue = (_scaledMacros(analysis.macros)['protein'] ?? 0).round();
     if (analysis.isBeverage == true) {
       return _isZh()
-          ? '這杯飲品的熱量會受容量、甜度與配料影響。'
+          ? '這杯飲料的熱量主要會被容量、甜度與配料拉高。'
           : 'Drink calories depend on size, sugar, and add-ons.';
     }
-    final current =
-        _calorieMidValue(_overrideCalorieRange ?? analysis.calorieRange);
-    final avg = _recentMealAverage(
-      app,
-      mealType: _analysisMealType(app),
-      excludeMealId: _analysisMealId(),
-    );
-    if (current == null || avg == null || avg <= 0) {
+    if (proteinValue >= 20) {
       return _isZh()
-          ? '先確認餐名與份量，不準時可再調整這餐。'
-          : 'Check the meal name and portion first, then adjust if needed.';
+          ? '這餐蛋白質不錯，熱量重點多半來自主食與醬料。'
+          : 'Protein looks solid here; most calories likely come from starch and sauce.';
     }
-    final ratio = current / avg;
-    if (ratio >= 1.18) {
+    if (analysis.foodItems.length >= 3) {
       return _isZh()
-          ? '這餐比你最近同類餐點偏高一些。'
-          : 'This meal is a bit heavier than your recent similar meals.';
-    }
-    if (ratio <= 0.82) {
-      return _isZh()
-          ? '這餐比你最近同類餐點偏輕一些。'
-          : 'This meal is a bit lighter than your recent similar meals.';
+          ? '先看份量與醬料，這兩個通常最容易把熱量往上拉。'
+          : 'Check portion and sauce first. Those usually drive the calories up.';
     }
     return _isZh()
-        ? '這餐熱量接近你最近同類餐點的常見範圍。'
-        : 'This meal is close to your recent usual range.';
+        ? '先確認名稱與份量，必要時再調整這餐。'
+        : 'Check the meal name and portion first, then adjust if needed.';
+  }
+
+  String? _confidenceLabel(double? confidence) {
+    if (confidence == null) return null;
+    if (confidence >= 0.8) {
+      return _isZh() ? '判讀信心高' : 'High confidence';
+    }
+    if (confidence >= 0.55) {
+      return _isZh() ? '判讀信心中' : 'Medium confidence';
+    }
+    return _isZh() ? '判讀信心低' : 'Low confidence';
+  }
+
+  String _analysisSourceLabel(AnalysisResult analysis) {
+    final source = analysis.source.trim().toLowerCase();
+    if (source == 'custom') {
+      return _isZh() ? '自訂資料' : 'Custom data';
+    }
+    if (source == 'label') {
+      return _isZh() ? '營養標示' : 'Nutrition label';
+    }
+    if (source == 'catalog' || source == 'beverage_formula') {
+      return _isZh() ? '資料庫估算' : 'Database estimate';
+    }
+    return _isZh() ? 'AI估算' : 'AI estimate';
+  }
+
+  List<Widget> _buildResultInfoChips(
+    AppLocalizations t,
+    AnalysisResult analysis,
+    String referenceLabel,
+    int proteinValue,
+  ) {
+    final chips = <Widget>[];
+    final confidenceLabel = _confidenceLabel(analysis.confidence);
+    if (analysis.isBeverage == true) {
+      chips.add(_buildSummaryInfoChip(
+        icon: Icons.local_drink_rounded,
+        label: _isZh() ? '液體熱量' : 'Liquid calories',
+      ));
+      chips.add(_buildSummaryInfoChip(
+        icon: Icons.straighten_rounded,
+        label: _isZh() ? '容量影響大' : 'Size matters',
+      ));
+      chips.add(_buildSummaryInfoChip(
+        icon: Icons.auto_awesome_rounded,
+        label: _analysisSourceLabel(analysis),
+      ));
+      if (confidenceLabel != null) {
+        chips.add(_buildSummaryInfoChip(
+          icon: Icons.verified_outlined,
+          label: confidenceLabel,
+        ));
+      }
+      return chips.take(3).toList();
+    }
+
+    if (proteinValue > 0) {
+      chips.add(_buildSummaryInfoChip(
+        icon: Icons.egg_alt_outlined,
+        label: _isZh() ? '蛋白質 $proteinValue g' : 'Protein $proteinValue g',
+      ));
+    }
+    if (referenceLabel != t.referenceObjectNone) {
+      chips.add(_buildSummaryInfoChip(
+        icon: Icons.straighten_rounded,
+        label:
+            _isZh() ? '參考：$referenceLabel' : 'Reference: $referenceLabel',
+      ));
+    }
+    if (confidenceLabel != null) {
+      chips.add(_buildSummaryInfoChip(
+        icon: Icons.verified_outlined,
+        label: confidenceLabel,
+      ));
+    } else {
+      chips.add(_buildSummaryInfoChip(
+        icon: Icons.auto_awesome_rounded,
+        label: _analysisSourceLabel(analysis),
+      ));
+    }
+    return chips;
   }
 
   Widget _buildSummaryInfoChip({
@@ -1597,11 +1679,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         : t.suggestInstantAdviceTitle;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FBF8),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE0ECE5)),
+        color: const Color(0xFFF8FBF9),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1621,7 +1702,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _buildAdviceCard(t),
         ],
       ),
@@ -1799,6 +1880,31 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                       : 'Reestimate advice'),
                                 ),
                               ),
+                              if (_savedEntry != null) ...[
+                                const SizedBox(height: 20),
+                                const Divider(height: 1),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: TextButton.icon(
+                                    onPressed: () async {
+                                      Navigator.of(sheetContext).pop();
+                                      await Future<void>.delayed(Duration.zero);
+                                      if (!mounted) return;
+                                      await _deleteSavedEntry();
+                                    },
+                                    icon: const Icon(Icons.delete_outline_rounded),
+                                    label: Text(_isZh()
+                                        ? '刪除這筆紀錄'
+                                        : 'Delete this entry'),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFFB94A48),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -2474,91 +2580,40 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         ) ??
         _recentMealAverage(app, excludeMealId: excludeMealId);
     if (avg == null || avg <= 0) return const SizedBox.shrink();
-    final max = math.max(avg * 1.6, avg + 200);
-    final currentRatio = (current / max).clamp(0.0, 1.0);
-    const okColor = Color(0xFF7FCF9A);
-    const highColor = Color(0xFFF4B183);
-    const barHeight = 24.0;
-    const indicatorSize = 14.0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final width = constraints.maxWidth;
-            final indicatorLeft =
-                (width * currentRatio).clamp(0.0, width - indicatorSize);
-            return SizedBox(
-              height: barHeight,
-              child: Stack(
-                children: [
-                  Container(
-                    height: barHeight,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [okColor, highColor],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Row(
-                        children: [
-                          Text(
-                            t.suggestInstantEnergyOk,
-                            style: AppTextStyles.caption(context).copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              shadows: const [
-                                Shadow(
-                                    color: Colors.black26,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 1)),
-                              ],
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            t.suggestInstantEnergyHigh,
-                            style: AppTextStyles.caption(context).copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              shadows: const [
-                                Shadow(
-                                    color: Colors.black26,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 1)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: indicatorLeft,
-                    top: (barHeight - indicatorSize) / 2,
-                    child: Container(
-                      width: indicatorSize,
-                      height: indicatorSize,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.black12),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
+    final ratio = current / avg;
+    String message;
+    IconData icon;
+    Color color;
+    if (ratio >= 1.18) {
+      message = _isZh() ? '比你最近同類餐點偏高一些' : 'A bit higher than your recent similar meals';
+      icon = Icons.trending_up_rounded;
+      color = const Color(0xFFC97A2B);
+    } else if (ratio <= 0.82) {
+      message = _isZh() ? '比你最近同類餐點偏輕一些' : 'A bit lighter than your recent similar meals';
+      icon = Icons.trending_down_rounded;
+      color = const Color(0xFF2F8F5B);
+    } else {
+      message = _isZh() ? '接近你最近同類餐點的常見範圍' : 'Close to your recent usual range';
+      icon = Icons.check_circle_outline_rounded;
+      color = const Color(0xFF4B8A6A);
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 2, bottom: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              message,
+              style: AppTextStyles.caption(context).copyWith(
+                color: color,
+                fontWeight: FontWeight.w600,
               ),
-            );
-          },
-        ),
-        const SizedBox(height: 2),
-      ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2873,13 +2928,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
           containerType: _containerType,
           containerSize: _containerSize,
         );
-    final proteinRange = app.proteinTargetRangeGrams();
-    final baseProteinConsumed =
-        app.dailyProteinConsumedGrams((_analysis?.time ?? DateTime.now()));
     final adjustedMacros = _scaledMacros(analysis.macros);
-    final currentProtein =
-        _savedEntry == null ? (adjustedMacros['protein'] ?? 0) : 0;
-    final proteinConsumed = (baseProteinConsumed + currentProtein).round();
     final referenceUsed = (analysis.referenceUsed ?? '').trim();
     final referenceLabel =
         referenceUsed.isEmpty ? t.referenceObjectNone : referenceUsed;
@@ -2931,22 +2980,26 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
           ),
         ),
         const SizedBox(height: 14),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F9F5),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Text(
-            summaryLine,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.body(context).copyWith(
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF235A3D),
-              height: 1.35,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.auto_awesome_rounded,
+              size: 18,
+              color: Color(0xFF2F8F5B),
             ),
-          ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                summaryLine,
+                style: AppTextStyles.body(context).copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF235A3D),
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
         ),
         if (staleAdviceMessage != null) ...[
           const SizedBox(height: 12),
@@ -2972,28 +3025,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: [
-            _buildSummaryInfoChip(
-              icon: Icons.straighten_rounded,
-              label: _isZh()
-                  ? '參考：$referenceLabel'
-                  : 'Reference: $referenceLabel',
-            ),
-            _buildSummaryInfoChip(
-              icon: Icons.egg_alt_outlined,
-              label:
-                  _isZh() ? '蛋白質 $proteinValue g' : 'Protein $proteinValue g',
-            ),
-            if (proteinRange != null)
-              _buildSummaryInfoChip(
-                icon: Icons.flag_outlined,
-                label: _isZh()
-                    ? '今日累積 $proteinConsumed g'
-                    : 'Today $proteinConsumed g',
-              ),
-          ],
+          children:
+              _buildResultInfoChips(t, analysis, referenceLabel, proteinValue),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         _buildEnergyBar(app, t, analysis),
         _buildCompactAdvicePanel(t, analysis),
         const SizedBox(height: 16),
@@ -3012,24 +3047,19 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                 onPressed: _showAdjustAnalysisSheet,
                 icon: const Icon(Icons.tune_rounded),
                 label: Text(_isZh() ? '調整這餐' : 'Adjust meal'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
               ),
             ),
           ],
         ),
-        if (_savedEntry != null) ...[
-          const SizedBox(height: 6),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: _deleteSavedEntry,
-              icon: const Icon(Icons.delete_outline_rounded),
-              label: Text(_isZh() ? '刪除這筆紀錄' : 'Delete this entry'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFB94A48),
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }
