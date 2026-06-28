@@ -13,6 +13,7 @@ import '../widgets/plate_photo.dart';
 import '../widgets/nutrition_chart.dart';
 import '../widgets/app_background.dart';
 import '../widgets/subscription_paywall.dart';
+import '../design/app_theme.dart';
 import '../design/text_styles.dart';
 import '../services/api_service.dart';
 import '../services/gallery_save_types.dart';
@@ -1548,8 +1549,17 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return '$trimmed：';
   }
 
+  AppTheme get _appThemeTokens => Theme.of(context).extension<AppTheme>()!;
+
+  Color _toneText(Color base, {double amount = 0.42}) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return Color.lerp(base, onSurface, amount) ?? onSurface;
+  }
+
   Widget _buildSavedStatusRow() {
     if (_savedEntry == null) return const SizedBox.shrink();
+    final appTheme = _appThemeTokens;
+    final tone = _toneText(appTheme.success, amount: 0.32);
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -1557,22 +1567,23 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF7EF),
+            color: appTheme.success.withValues(alpha: 0.16),
             borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: appTheme.success.withValues(alpha: 0.34)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.check_circle_rounded,
                 size: 16,
-                color: Color(0xFF2F8F5B),
+                color: tone,
               ),
               const SizedBox(width: 6),
               Text(
                 _isZh() ? '已自動存到紀錄' : 'Saved to your log',
                 style: AppTextStyles.caption(context).copyWith(
-                  color: const Color(0xFF2F8F5B),
+                  color: tone,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -1723,23 +1734,25 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     required IconData icon,
     required String label,
   }) {
+    final theme = Theme.of(context);
+    final appTheme = _appThemeTokens;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FBFA),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE4ECE7)),
+        border: Border.all(color: appTheme.mutedText.withValues(alpha: 0.18)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: const Color(0xFF7E8A84)),
+          Icon(icon, size: 14, color: appTheme.mutedText),
           const SizedBox(width: 5),
           Flexible(
             child: Text(
               label,
               style: AppTextStyles.caption(context).copyWith(
-                color: const Color(0xFF4E5A54),
+                color: appTheme.mutedText,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1753,11 +1766,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final title = analysis.isBeverage == true
         ? t.suggestInstantDrinkAdviceTitle
         : t.suggestInstantAdviceTitle;
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBF9),
+        color: primary.withValues(alpha: 0.065),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -1765,16 +1780,19 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.auto_awesome_rounded,
                 size: 18,
-                color: Color(0xFF2F8F5B),
+                color: primary,
               ),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: AppTextStyles.body(context)
-                    .copyWith(fontWeight: FontWeight.w700),
+                    .copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: _toneText(primary, amount: 0.38),
+                    ),
               ),
             ],
           ),
@@ -2609,6 +2627,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
 
   Widget _buildEnergyBar(
       AppState app, AppLocalizations t, AnalysisResult analysis) {
+    final theme = Theme.of(context);
+    final appTheme = _appThemeTokens;
     final current =
         _calorieMidValue(_overrideCalorieRange ?? analysis.calorieRange);
     if (current == null || current <= 0) return const SizedBox.shrink();
@@ -2628,15 +2648,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     if (ratio >= 1.18) {
       message = _isZh() ? '比你最近同類餐點偏高一些' : 'A bit higher than your recent similar meals';
       icon = Icons.trending_up_rounded;
-      color = const Color(0xFFC97A2B);
+      color = _toneText(appTheme.warning, amount: 0.22);
     } else if (ratio <= 0.82) {
       message = _isZh() ? '比你最近同類餐點偏輕一些' : 'A bit lighter than your recent similar meals';
       icon = Icons.trending_down_rounded;
-      color = const Color(0xFF2F8F5B);
+      color = _toneText(appTheme.success, amount: 0.25);
     } else {
       message = _isZh() ? '接近你最近同類餐點的常見範圍' : 'Close to your recent usual range';
       icon = Icons.check_circle_outline_rounded;
-      color = const Color(0xFF4B8A6A);
+      color = _toneText(theme.colorScheme.primary, amount: 0.36);
     }
     final markerRatio = ((ratio.clamp(0.65, 1.35) - 0.65) / 0.7)
         .clamp(0.0, 1.0)
@@ -2676,11 +2696,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                       margin: const EdgeInsets.only(top: 4),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(999),
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           colors: [
-                            Color(0xFF72D49A),
-                            Color(0xFFC7D98A),
-                            Color(0xFFF0B36A),
+                            appTheme.success,
+                            theme.colorScheme.primary,
+                            appTheme.warning,
                           ],
                         ),
                       ),
@@ -2692,7 +2712,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                         width: 18,
                         height: 18,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: theme.colorScheme.surface,
                           shape: BoxShape.circle,
                           border: Border.all(color: color, width: 2),
                           boxShadow: const [
@@ -2964,6 +2984,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
 
   Widget _buildAnalysisCardContent(
       AppLocalizations t, AppState app, AnalysisResult analysis) {
+    final theme = Theme.of(context);
+    final appTheme = _appThemeTokens;
     if (analysis.isFood == false) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3010,7 +3032,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                 icon: const Icon(Icons.delete_outline_rounded),
                 label: Text(_isZh() ? '刪除這筆紀錄' : 'Delete this entry'),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFB94A48),
+                  foregroundColor: _toneText(appTheme.danger, amount: 0.16),
                 ),
               ),
             ),
@@ -3082,7 +3104,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF3F9F5),
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(18),
           ),
           child: Text(
@@ -3090,7 +3112,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
             textAlign: TextAlign.center,
             style: AppTextStyles.body(context).copyWith(
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF235A3D),
+              color: _toneText(theme.colorScheme.primary, amount: 0.38),
               height: 1.35,
             ),
           ),
@@ -3101,14 +3123,14 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF6E8),
+              color: appTheme.warning.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFF4D29A)),
+              border: Border.all(color: appTheme.warning.withValues(alpha: 0.3)),
             ),
             child: Text(
               staleAdviceMessage,
               style: AppTextStyles.caption(context).copyWith(
-                color: const Color(0xFF8A5A00),
+                color: _toneText(appTheme.warning, amount: 0.24),
                 height: 1.35,
                 fontWeight: FontWeight.w600,
               ),
@@ -3142,7 +3164,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                 icon: const Icon(Icons.tune_rounded),
                 label: Text(_isZh() ? '調整這餐' : 'Adjust meal'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  backgroundColor: theme.colorScheme.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -3162,7 +3184,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
               icon: const Icon(Icons.delete_outline_rounded),
               label: Text(_isZh() ? '刪除這筆紀錄' : 'Delete this entry'),
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFB94A48),
+                foregroundColor: _toneText(appTheme.danger, amount: 0.16),
               ),
             ),
           ),
