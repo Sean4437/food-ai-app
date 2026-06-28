@@ -73,28 +73,120 @@ class _SettingsScreenState extends State<SettingsScreen> {
     VoidCallback? onTap,
     bool showChevron = true,
   }) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.08)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            child: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: 18,
+                    color: scheme.onSurface.withValues(alpha: 0.65),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(
+                    title,
+                    style: AppTextStyles.body(context).copyWith(
+                      color: scheme.onSurface,
+                    ),
+                  ),
+                ),
+                if (value.isNotEmpty) ...[
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      value,
+                      textAlign: TextAlign.right,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption(context).copyWith(
+                        color: scheme.onSurface.withValues(alpha: 0.65),
+                      ),
+                    ),
+                  ),
+                ],
+                if (showChevron) ...[
+                  const SizedBox(width: 6),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: scheme.onSurface.withValues(alpha: 0.38),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _switchRow(
+    BuildContext context, {
+    required String title,
+    String? subtitle,
+    IconData? icon,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.08)),
       ),
-      child: InkWell(
-        onTap: onTap,
-        child: Row(
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 18, color: Colors.black54),
-              const SizedBox(width: 8),
-            ],
-            Expanded(child: Text(title)),
-            Text(value,
-                style: AppTextStyles.caption(context)
-                    .copyWith(color: Colors.black54)),
-            if (showChevron)
-              const Icon(Icons.chevron_right, size: 18, color: Colors.black38),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(
+              icon,
+              size: 18,
+              color: scheme.onSurface.withValues(alpha: 0.65),
+            ),
+            const SizedBox(width: 10),
           ],
-        ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.body(context).copyWith(
+                    color: scheme.onSurface,
+                  ),
+                ),
+                if (subtitle != null && subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.caption(context).copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.65),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Switch(value: value, onChanged: onChanged),
+        ],
       ),
     );
   }
@@ -133,27 +225,326 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required AppState app,
   }) {
     final selected = currentAsset == asset;
-    final color = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final color = scheme.primary;
+    final previewColors = switch (asset) {
+      'assets/themes/theme_clean.json' => [
+          const Color(0xFFDFF6E8),
+          const Color(0xFF88D7A7),
+          const Color(0xFFF5F8F6),
+        ],
+      'assets/themes/theme_warm.json' => [
+          const Color(0xFFFCE8D2),
+          const Color(0xFFE7B56A),
+          const Color(0xFFF7F1E8),
+        ],
+      'assets/themes/theme_green.json' => [
+          const Color(0xFFD8F4E4),
+          const Color(0xFF57C08A),
+          const Color(0xFFEAF8F0),
+        ],
+      'assets/themes/theme_pink.json' => [
+          const Color(0xFFF9DCE7),
+          const Color(0xFFE78DB0),
+          const Color(0xFFFFF2F7),
+        ],
+      _ => [
+          scheme.primary.withValues(alpha: 0.20),
+          scheme.primary,
+          scheme.surface,
+        ],
+    };
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         backgroundColor:
-            selected ? color.withValues(alpha: 0.12) : Colors.white,
-        side: BorderSide(color: selected ? color : Colors.black12),
+            selected ? color.withValues(alpha: 0.10) : scheme.surface,
+        side: BorderSide(
+          color: selected
+              ? color
+              : scheme.outline.withValues(alpha: 0.16),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       onPressed: () {
         themeController.loadFromAsset(asset);
         app.updateField((p) => p.themeAsset = asset);
       },
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (selected) ...[
-            Icon(Icons.check, size: 16, color: color),
-            const SizedBox(width: 6),
-          ],
-          Text(label),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTextStyles.body(context).copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: scheme.onSurface,
+                  ),
+                ),
+              ),
+              if (selected)
+                Icon(Icons.check_circle, size: 18, color: color),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (final previewColor in previewColors) ...[
+                Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: previewColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.black.withValues(alpha: 0.06),
+                    ),
+                  ),
+                ),
+                if (previewColor != previewColors.last) const SizedBox(width: 6),
+              ],
+            ],
+          ),
         ],
       ),
+    );
+  }
+
+  String _mealTimeSummary(BuildContext context, UserProfile profile) {
+    return '${profile.breakfastStart.format(context)} - ${profile.lateSnackEnd.format(context)}';
+  }
+
+  Future<void> _showMealTimeSheet(
+    BuildContext context,
+    AppLocalizations t,
+    AppState app,
+  ) async {
+    final isZh = app.profile.language == 'zh-TW';
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final theme = Theme.of(sheetContext);
+        final scheme = theme.colorScheme;
+        return AnimatedBuilder(
+          animation: app,
+          builder: (context, _) {
+            final profile = app.profile;
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 12,
+                  right: 12,
+                  top: 12,
+                  bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 12,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    t.mealTimeSection,
+                                    style: AppTextStyles.title2(sheetContext),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    isZh
+                                        ? '調整每個餐期的開始與結束時間。'
+                                        : 'Adjust the start and end time for each meal window.',
+                                    style: AppTextStyles.caption(sheetContext)
+                                        .copyWith(
+                                      color: scheme.onSurface
+                                          .withValues(alpha: 0.65),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.of(sheetContext).pop(),
+                              icon: const Icon(Icons.close),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _grid2([
+                          _row(
+                            sheetContext,
+                            t.breakfastStartLabel,
+                            profile.breakfastStart.format(sheetContext),
+                            icon: Icons.wb_sunny_outlined,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.breakfastStart,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.breakfastStart = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.breakfastEndLabel,
+                            profile.breakfastEnd.format(sheetContext),
+                            icon: Icons.wb_sunny_outlined,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.breakfastEnd,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.breakfastEnd = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.brunchStartLabel,
+                            profile.brunchStart.format(sheetContext),
+                            icon: Icons.coffee_outlined,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.brunchStart,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.brunchStart = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.brunchEndLabel,
+                            profile.brunchEnd.format(sheetContext),
+                            icon: Icons.coffee_outlined,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.brunchEnd,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.brunchEnd = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.lunchStartLabel,
+                            profile.lunchStart.format(sheetContext),
+                            icon: Icons.lunch_dining,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.lunchStart,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.lunchStart = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.lunchEndLabel,
+                            profile.lunchEnd.format(sheetContext),
+                            icon: Icons.lunch_dining,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.lunchEnd,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.lunchEnd = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.afternoonTeaStartLabel,
+                            profile.afternoonTeaStart.format(sheetContext),
+                            icon: Icons.local_cafe_outlined,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.afternoonTeaStart,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.afternoonTeaStart = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.afternoonTeaEndLabel,
+                            profile.afternoonTeaEnd.format(sheetContext),
+                            icon: Icons.local_cafe_outlined,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.afternoonTeaEnd,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.afternoonTeaEnd = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.dinnerStartLabel,
+                            profile.dinnerStart.format(sheetContext),
+                            icon: Icons.dinner_dining,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.dinnerStart,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.dinnerStart = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.dinnerEndLabel,
+                            profile.dinnerEnd.format(sheetContext),
+                            icon: Icons.dinner_dining,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.dinnerEnd,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.dinnerEnd = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.lateSnackStartLabel,
+                            profile.lateSnackStart.format(sheetContext),
+                            icon: Icons.nightlight_outlined,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.lateSnackStart,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.lateSnackStart = time),
+                            ),
+                          ),
+                          _row(
+                            sheetContext,
+                            t.lateSnackEndLabel,
+                            profile.lateSnackEnd.format(sheetContext),
+                            icon: Icons.nightlight_outlined,
+                            onTap: () => _pickTime(
+                              sheetContext,
+                              initial: profile.lateSnackEnd,
+                              onSave: (time) => app.updateMealTimeField(
+                                  (p) => p.lateSnackEnd = time),
+                            ),
+                          ),
+                        ]),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -732,7 +1123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     late final String subscriptionStatus;
     late final Color subscriptionColor;
     if (isSubscribed) {
-      subscriptionStatus = isZh ? '已訂閱（iOS）' : 'Subscribed (iOS)';
+      subscriptionStatus = isZh ? '已透過 iOS 訂閱' : 'Subscribed (iOS)';
       subscriptionColor = Colors.green;
     } else if (isMockSubscription) {
       subscriptionStatus = isZh ? '測試訂閱' : 'Test subscription';
@@ -741,29 +1132,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
       subscriptionStatus = isZh ? '白名單' : 'Whitelisted';
       subscriptionColor = Colors.indigo;
     } else if (isBackendPaidPlan) {
-      subscriptionStatus = 'Subscribed (server)';
+      subscriptionStatus = isZh ? '已啟用伺服器方案' : 'Subscribed (server)';
       subscriptionColor = Colors.green;
     } else if (!isTrialExpired) {
       final dateText = _formatDateShort(trialEndAt);
       subscriptionStatus = dateText == '--'
           ? (isZh ? '試用中' : 'Trial active')
-          : (isZh ? '試用中（到 $dateText）' : 'Trial until $dateText');
+          : (isZh ? '試用到 $dateText' : 'Trial until $dateText');
       subscriptionColor = Colors.orange;
     } else {
-      subscriptionStatus = isZh ? '已過期' : 'Expired';
+      subscriptionStatus = isZh ? '已到期' : 'Expired';
       subscriptionColor = Colors.red;
     }
     final subscriptionLabelColor = subscriptionColor.withValues(alpha: 0.9);
     final subscriptionPlanLabel = isSubscribed
-        ? (isZh ? 'App Store（正式）' : 'App Store')
+        ? (isZh ? 'App Store 方案' : 'App Store')
         : isMockSubscription
             ? (app.mockSubscriptionPlanId == kIapYearlyId
                 ? t.webTestPlanYearly
                 : t.webTestPlanMonthly)
             : isWhitelisted
-                ? 'Whitelisted'
+                ? (isZh ? '白名單' : 'Whitelisted')
                 : isBackendPaidPlan
-                    ? 'Paid plan'
+                    ? (isZh ? '付費方案' : 'Paid plan')
                     : t.webTestPlanNone;
     final genderOptions = <String, String>{
       t.genderUnspecified: 'unspecified',
@@ -943,6 +1334,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(t.settingsTitle, style: AppTextStyles.title1(context)),
+                  const SizedBox(height: 4),
+                  Text(
+                    isZh
+                        ? '帳號、同步、提醒與外觀都集中整理在這裡。'
+                        : 'Account, sync, reminders, and appearance are managed here.',
+                    style: AppTextStyles.caption(context).copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   _sectionTitle(context, t.syncSection),
                   Container(
@@ -1435,205 +1835,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ]),
                   const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Theme(
-                      data: theme.copyWith(dividerColor: Colors.transparent),
-                      child: ListTileTheme(
-                        dense: false,
-                        minVerticalPadding: 0,
-                        contentPadding: EdgeInsets.zero,
-                        child: ExpansionTile(
-                          title: Text(
-                            t.mealTimeSection,
-                            style: AppTextStyles.body(context)
-                                .copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          tilePadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          childrenPadding:
-                              const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                          initiallyExpanded: false,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
-                          collapsedShape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
-                          children: [
-                            _grid2([
-                              _row(
-                                context,
-                                t.breakfastStartLabel,
-                                profile.breakfastStart.format(context),
-                                icon: Icons.wb_sunny,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.breakfastStart,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.breakfastStart = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.breakfastEndLabel,
-                                profile.breakfastEnd.format(context),
-                                icon: Icons.wb_sunny,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.breakfastEnd,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.breakfastEnd = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.brunchStartLabel,
-                                profile.brunchStart.format(context),
-                                icon: Icons.coffee,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.brunchStart,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.brunchStart = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.brunchEndLabel,
-                                profile.brunchEnd.format(context),
-                                icon: Icons.coffee,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.brunchEnd,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.brunchEnd = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.lunchStartLabel,
-                                profile.lunchStart.format(context),
-                                icon: Icons.lunch_dining,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.lunchStart,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.lunchStart = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.lunchEndLabel,
-                                profile.lunchEnd.format(context),
-                                icon: Icons.lunch_dining,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.lunchEnd,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.lunchEnd = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.afternoonTeaStartLabel,
-                                profile.afternoonTeaStart.format(context),
-                                icon: Icons.local_cafe,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.afternoonTeaStart,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.afternoonTeaStart = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.afternoonTeaEndLabel,
-                                profile.afternoonTeaEnd.format(context),
-                                icon: Icons.local_cafe,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.afternoonTeaEnd,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.afternoonTeaEnd = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.dinnerStartLabel,
-                                profile.dinnerStart.format(context),
-                                icon: Icons.dinner_dining,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.dinnerStart,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.dinnerStart = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.dinnerEndLabel,
-                                profile.dinnerEnd.format(context),
-                                icon: Icons.dinner_dining,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.dinnerEnd,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.dinnerEnd = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.lateSnackStartLabel,
-                                profile.lateSnackStart.format(context),
-                                icon: Icons.nightlight,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.lateSnackStart,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.lateSnackStart = time),
-                                ),
-                              ),
-                              _row(
-                                context,
-                                t.lateSnackEndLabel,
-                                profile.lateSnackEnd.format(context),
-                                icon: Icons.nightlight,
-                                onTap: () => _pickTime(
-                                  context,
-                                  initial: profile.lateSnackEnd,
-                                  onSave: (time) => app.updateMealTimeField(
-                                      (p) => p.lateSnackEnd = time),
-                                ),
-                              ),
-                            ]),
-                          ],
-                        ),
-                      ),
-                    ),
+                  _row(
+                    context,
+                    t.mealTimeSection,
+                    _mealTimeSummary(context, profile),
+                    icon: Icons.schedule_outlined,
+                    onTap: () => _showMealTimeSheet(context, t, app),
                   ),
                   _sectionTitle(context, t.reminderSection),
-                  SwitchListTile(
+                  _switchRow(
+                    context,
+                    title: t.reminderBreakfast,
+                    icon: Icons.free_breakfast_outlined,
                     value: profile.breakfastReminderEnabled,
                     onChanged: (value) => app
                         .updateField((p) => p.breakfastReminderEnabled = value),
-                    title: Text(t.reminderBreakfast),
-                    secondary: const Icon(Icons.free_breakfast_outlined),
                   ),
-                  SwitchListTile(
+                  const SizedBox(height: 8),
+                  _switchRow(
+                    context,
+                    title: t.reminderLunch,
+                    icon: Icons.lunch_dining,
                     value: profile.lunchReminderEnabled,
                     onChanged: (value) =>
                         app.updateField((p) => p.lunchReminderEnabled = value),
-                    title: Text(t.reminderLunch),
-                    secondary: const Icon(Icons.lunch_dining),
                   ),
-                  SwitchListTile(
+                  const SizedBox(height: 8),
+                  _switchRow(
+                    context,
+                    title: t.reminderDinner,
+                    icon: Icons.nightlight_round,
                     value: profile.dinnerReminderEnabled,
                     onChanged: (value) =>
                         app.updateField((p) => p.dinnerReminderEnabled = value),
-                    title: Text(t.reminderDinner),
-                    secondary: const Icon(Icons.nightlight_round),
                   ),
                   _sectionTitle(context, t.subscriptionSection),
                   Container(
@@ -1712,13 +1946,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 app.setMockSubscriptionActive(false);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                      content: Text(isZh
-                                          ? '已清除測試訂閱'
-                                          : 'Test subscription cleared')),
+                                    content: Text(isZh
+                                        ? '測試訂閱已清除'
+                                        : 'Test subscription cleared'),
+                                  ),
                                 );
                               },
                               child: Text(
-                                  isZh ? '清除測試訂閱' : 'Reset test subscription'),
+                                isZh ? '重設測試訂閱' : 'Reset test subscription',
+                              ),
                             ),
                           ),
                         ],
@@ -1811,31 +2047,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  SwitchListTile(
+                  _switchRow(
+                    context,
+                    title: t.glowToggleLabel,
+                    icon: Icons.blur_on,
                     value: profile.glowEnabled,
                     onChanged: (value) =>
                         app.updateField((p) => p.glowEnabled = value),
-                    title: Text(t.glowToggleLabel),
-                    secondary: const Icon(Icons.blur_on),
                   ),
                   if (app.supportsSystemGallerySync) ...[
                     const SizedBox(height: 8),
                     _sectionTitle(context, isZh ? '拍照與照片' : 'Camera & Photos'),
-                    SwitchListTile(
+                    _switchRow(
+                      context,
+                      title: isZh
+                          ? '拍照時同步存到系統相簿'
+                          : 'Save captured photos to system gallery',
+                      subtitle: isZh
+                          ? '關閉後，照片只留在 MiraMeal 內；開啟後，會再多存一份到手機相簿。'
+                          : 'When off, photos stay only inside MiraMeal. When on, a copy is also saved to your device gallery.',
+                      icon: Icons.photo_library_outlined,
                       value: profile.saveCameraPhotosToGallery,
                       onChanged: (value) => app.updateField(
                           (p) => p.saveCameraPhotosToGallery = value),
-                      title: Text(isZh
-                          ? '拍照後同步存到系統相簿'
-                          : 'Save captured photos to system gallery'),
-                      subtitle: Text(isZh
-                          ? '關閉時只保留在 MiraMeal 內；開啟後會另外保存到手機相簿。'
-                          : 'When off, photos stay only inside MiraMeal. When on, a copy is also saved to your device gallery.'),
-                      secondary: const Icon(Icons.photo_library_outlined),
                     ),
                   ],
-                  const SizedBox(height: 8),
-                  _sectionTitle(context, t.plateSection),
                   _row(
                     context,
                     t.plateStyleLabel,
