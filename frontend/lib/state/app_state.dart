@@ -15,6 +15,7 @@ import '../models/chat_message.dart';
 import '../models/meal_entry.dart';
 import '../models/label_result.dart';
 import '../models/custom_food.dart';
+import '../models/food_name_suggestion.dart';
 import '../models/week_plan.dart';
 import '../services/api_service.dart';
 import '../services/gallery_save_service.dart';
@@ -1904,17 +1905,7 @@ class AppState extends ChangeNotifier {
       mealId: mealId,
       imageHash: _hashBytes(food.imageBytes),
     );
-    entry.result = AnalysisResult(
-      foodName: food.name,
-      calorieRange: food.calorieRange,
-      macros: Map<String, double>.from(food.macros),
-      judgementTags: const ['custom'],
-      dishSummary: food.summary,
-      suggestion: food.suggestion,
-      tier: 'custom',
-      source: 'custom',
-      nutritionSource: 'custom',
-    );
+    entry.result = buildCustomAnalysisResult(food);
     entry.lastAnalyzedAt = DateTime.now().toIso8601String();
     entry.lastAnalyzeReason = 'custom_use';
     entries.insert(0, entry);
@@ -1926,12 +1917,27 @@ class AppState extends ChangeNotifier {
     return entry;
   }
 
+  AnalysisResult buildCustomAnalysisResult(CustomFood food) {
+    return AnalysisResult(
+      foodName: food.name,
+      calorieRange: food.calorieRange,
+      macros: Map<String, double>.from(food.macros),
+      judgementTags: const ['custom'],
+      dishSummary: food.summary,
+      suggestion: food.suggestion,
+      tier: 'custom',
+      source: 'custom',
+      nutritionSource: 'custom',
+    );
+  }
+
   Future<MealEntry> analyzeNameAndSave(
     String foodName,
     String locale, {
     String? historyContext,
     DateTime? overrideTime,
     MealType? fixedType,
+    FoodNameSuggestion? explicitSuggestion,
   }) async {
     final trimmed = foodName.trim();
     if (trimmed.isEmpty) {
@@ -1941,17 +1947,16 @@ class AppState extends ChangeNotifier {
     final now = overrideTime ?? DateTime.now();
     final mealType = fixedType ?? resolveMealType(now);
     final mealId = _assignMealId(now, mealType);
-    final normalizedInput = _normalizeFoodLookupText(trimmed);
-
-    CustomFood? matched;
-    for (final item in customFoods) {
-      if (_normalizeFoodLookupText(item.name) == normalizedInput) {
-        matched = item;
-        break;
+    if (explicitSuggestion?.isCustom == true) {
+      final customId = (explicitSuggestion!.customFoodId ?? '').trim();
+      if (customId.isNotEmpty) {
+        for (final item in customFoods) {
+          if (item.id == customId) {
+            return saveCustomFoodUsage(item, now, mealType);
+          }
+        }
       }
-    }
-    if (matched != null) {
-      return saveCustomFoodUsage(matched, now, mealType);
+      throw NameLookupException('custom_not_found');
     }
 
     List<Map<String, dynamic>> catalogItems = const [];
@@ -2076,7 +2081,7 @@ class AppState extends ChangeNotifier {
     throw NameLookupException('catalog_not_found');
   }
 
-  Future<List<String>> suggestFoodNames(
+  Future<List<FoodNameSuggestion>> suggestFoodNameOptions(
     String query,
     String locale, {
     int limit = 8,
@@ -2087,16 +2092,17 @@ class AppState extends ChangeNotifier {
     final maxCount = limit.clamp(1, 40);
     final normalizedQuery = _normalizeFoodLookupText(trimmed);
     final compactQuery = normalizedQuery.replaceAll(' ', '');
-    final suggestions = <String>[];
+    final suggestions = <FoodNameSuggestion>[];
     final seen = <String>{};
 
-    void addSuggestion(String value) {
-      final text = value.trim();
+    void addSuggestion(FoodNameSuggestion suggestion) {
+      final text = suggestion.name.trim();
       if (text.isEmpty) return;
-      final key = _normalizeFoodLookupText(text);
+      final key =
+          '${suggestion.source.name}:${_normalizeFoodLookupText(text)}:${suggestion.customFoodId ?? suggestion.catalogFoodId ?? ''}';
       if (key.isEmpty || seen.contains(key)) return;
       seen.add(key);
-      suggestions.add(text);
+      suggestions.add(suggestion);
     }
 
     final customMatches = customFoods.where((food) {
@@ -2109,7 +2115,11 @@ class AppState extends ChangeNotifier {
           .compareTo(_nameSuggestionScore(a.name, normalizedQuery)));
 
     for (final food in customMatches) {
-      addSuggestion(food.name);
+      addSuggestion(FoodNameSuggestion(
+        name: food.name,
+        source: FoodNameSuggestionSource.custom,
+        customFoodId: food.id,
+      ));
       if (suggestions.length >= maxCount) {
         return suggestions.take(maxCount).toList();
       }
@@ -2122,7 +2132,10 @@ class AppState extends ChangeNotifier {
       limit: maxCount,
     );
     for (final name in beverageSuggestions) {
-      addSuggestion(name);
+      addSuggestion(FoodNameSuggestion(
+        name: name,
+        source: FoodNameSuggestionSource.beverage,
+      ));
       if (suggestions.length >= maxCount) {
         return suggestions.take(maxCount).toList();
       }
@@ -2224,17 +2237,38 @@ class AppState extends ChangeNotifier {
     for (final item in catalogItems) {
       final foodName = (item['food_name'] ?? '').toString().trim();
       if (foodName.isNotEmpty) {
-        addSuggestion(foodName);
+        addSuggestion(FoodNameSuggestion(
+          name: foodName,
+          source: FoodNameSuggestionSource.catalog,
+          catalogFoodId: (item['food_id'] ?? item['id'] ?? '').toString(),
+        ));
       }
       if (suggestions.length >= maxCount) break;
       final alias = (item['alias'] ?? '').toString().trim();
       if (alias.isNotEmpty) {
-        addSuggestion(alias);
+        addSuggestion(FoodNameSuggestion(
+          name: alias,
+          source: FoodNameSuggestionSource.catalog,
+          catalogFoodId: (item['food_id'] ?? item['id'] ?? '').toString(),
+        ));
       }
       if (suggestions.length >= maxCount) break;
     }
 
     return suggestions.take(maxCount).toList();
+  }
+
+  Future<List<String>> suggestFoodNames(
+    String query,
+    String locale, {
+    int limit = 8,
+  }) async {
+    final options = await suggestFoodNameOptions(
+      query,
+      locale,
+      limit: limit,
+    );
+    return options.map((item) => item.name).toList();
   }
 
   Future<List<Map<String, dynamic>>> _searchFoodCatalogFromSupabase(

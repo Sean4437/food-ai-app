@@ -7,6 +7,7 @@ import 'dart:math' as math;
 import '../state/app_state.dart';
 import '../models/analysis_result.dart';
 import '../models/custom_food.dart';
+import '../models/food_name_suggestion.dart';
 import '../models/meal_entry.dart';
 import '../widgets/plate_photo.dart';
 import '../widgets/nutrition_chart.dart';
@@ -31,18 +32,23 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
   Uint8List? _previewBytes;
   bool _loading = false;
   String? _error;
-  bool _showSaveActions = false;
   bool _hideFloatingCard = false;
   MealEntry? _savedEntry;
   int _portionPercent = 100;
   String? _containerType;
   String? _containerSize;
+  int _lastAnalyzedPortionPercent = 100;
+  String? _lastAnalyzedContainerType;
+  String? _lastAnalyzedContainerSize;
+  String? _lastAnalyzedCalorieOverride;
+  bool _adviceNeedsReestimate = false;
   String _referenceObject = 'none';
   final TextEditingController _referenceLengthController =
       TextEditingController();
   String? _overrideCalorieRange;
   String? _displayCalorieRange;
   ImageSource? _captureSource;
+  bool _cameraPhotoSyncHandled = false;
   late final AnimationController _scanController;
   double _progressValue = 0;
   int _statusIndex = 0;
@@ -100,7 +106,6 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       _analysis = null;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = false;
       _savedEntry = null;
       _portionPercent = 100;
       _containerType = null;
@@ -109,7 +114,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       _referenceLengthController.text = '';
       _overrideCalorieRange = null;
       _displayCalorieRange = null;
+      _lastAnalyzedPortionPercent = 100;
+      _lastAnalyzedContainerType = null;
+      _lastAnalyzedContainerSize = null;
+      _lastAnalyzedCalorieOverride = null;
+      _adviceNeedsReestimate = false;
       _captureSource = null;
+      _cameraPhotoSyncHandled = false;
     });
     final file = await _picker.pickImage(source: source);
     if (!mounted) return;
@@ -147,12 +158,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         return;
       }
       _analysis = analysis;
-      _savedEntry = null;
       _applyAnalysisDefaults(analysis.result);
       _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = analysis.result.isFood != false;
+      await _persistCurrentAnalysis(announceSaved: true, syncToGallery: true);
+      if (!mounted) return;
       _completeSmartProgress(() {
         if (!mounted) return;
         setState(() {
@@ -183,9 +194,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final inputName = await _promptNameInput(t, app, locale);
+    final input = await _promptNameInput(t, app, locale);
     if (!mounted) return;
-    if (inputName == null || inputName.trim().isEmpty) return;
+    final inputName = input?.name.trim() ?? '';
+    if (inputName.isEmpty) return;
     final normalizedInput = _normalizeLookupName(inputName);
     setState(() {
       _loading = true;
@@ -193,26 +205,30 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       _analysis = null;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = false;
       _savedEntry = null;
       _captureSource = null;
     });
     _startSmartProgress();
     try {
-      final candidates = await app.suggestFoodNames(
-        inputName.trim(),
+      final candidates = await app.suggestFoodNameOptions(
+        inputName,
         locale,
         limit: 24,
       );
+      final selectedSuggestion = input?.selectedSuggestion;
+      final hasExplicitSelection = selectedSuggestion != null;
       final hasExactCandidate = candidates.any(
-        (name) => _normalizeLookupName(name) == normalizedInput,
+        (item) =>
+            item.source != FoodNameSuggestionSource.custom &&
+            _normalizeLookupName(item.name) == normalizedInput,
       );
-      if (!hasExactCandidate) {
+      if (!hasExplicitSelection && !hasExactCandidate) {
         throw NameLookupException('catalog_not_found');
       }
       await app.analyzeNameAndSave(
-        inputName.trim(),
+        inputName,
         locale,
+        explicitSuggestion: selectedSuggestion,
       );
       if (!mounted) return;
       _instantAdvice = null;
@@ -253,7 +269,30 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
   }
 
-  Future<String?> _promptNameInput(
+  String _suggestionSourceLabel(FoodNameSuggestionSource source) {
+    final isZh = _isZh();
+    switch (source) {
+      case FoodNameSuggestionSource.custom:
+        return isZh ? '自訂' : 'Custom';
+      case FoodNameSuggestionSource.catalog:
+        return isZh ? '資料庫' : 'Catalog';
+      case FoodNameSuggestionSource.beverage:
+        return isZh ? '飲料' : 'Drink';
+    }
+  }
+
+  IconData _suggestionSourceIcon(FoodNameSuggestionSource source) {
+    switch (source) {
+      case FoodNameSuggestionSource.custom:
+        return Icons.bookmark_outline;
+      case FoodNameSuggestionSource.catalog:
+        return Icons.restaurant_menu_outlined;
+      case FoodNameSuggestionSource.beverage:
+        return Icons.local_drink_outlined;
+    }
+  }
+
+  Future<FoodNameInputResult?> _promptNameInput(
     AppLocalizations t,
     AppState app,
     String locale,
@@ -265,7 +304,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final controller = TextEditingController();
     Timer? debounce;
     var requestToken = 0;
-    var suggestions = <String>[];
+    var suggestions = <FoodNameSuggestion>[];
     var isSearching = false;
 
     Future<void> refreshSuggestions(
@@ -290,7 +329,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       }
 
       try {
-        final result = await app.suggestFoodNames(query, locale, limit: 24);
+        final result =
+            await app.suggestFoodNameOptions(query, locale, limit: 24);
         if (!dialogContext.mounted || token != requestToken) return;
         setDialogState(() {
           suggestions = result;
@@ -305,7 +345,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       }
     }
 
-    final result = await showDialog<String>(
+    final result = await showDialog<FoodNameInputResult>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) {
@@ -336,8 +376,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                         );
                       });
                     },
-                    onSubmitted: (value) =>
-                        Navigator.of(dialogContext).pop(value.trim()),
+                    onSubmitted: (value) => Navigator.of(dialogContext).pop(
+                      FoodNameInputResult(name: value.trim()),
+                    ),
                   ),
                   if (isSearching) ...[
                     const SizedBox(height: 8),
@@ -372,10 +413,47 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                 final suggestion = suggestions[index];
                                 return ListTile(
                                   dense: true,
-                                  leading: const Icon(Icons.search, size: 18),
-                                  title: Text(suggestion),
-                                  onTap: () => Navigator.of(dialogContext)
-                                      .pop(suggestion),
+                                  leading: Icon(
+                                    _suggestionSourceIcon(suggestion.source),
+                                    size: 18,
+                                  ),
+                                  title: Text(suggestion.name),
+                                  trailing: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: suggestion.isCustom
+                                          ? const Color(0xFFEAF7EF)
+                                          : suggestion.source ==
+                                                  FoodNameSuggestionSource
+                                                      .catalog
+                                              ? const Color(0xFFF2F5F9)
+                                              : const Color(0xFFFFF4E5),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      _suggestionSourceLabel(suggestion.source),
+                                      style: Theme.of(dialogContext)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: suggestion.isCustom
+                                                ? const Color(0xFF2F8F5B)
+                                                : suggestion.source ==
+                                                        FoodNameSuggestionSource
+                                                            .catalog
+                                                    ? const Color(0xFF5B6B7A)
+                                                    : const Color(0xFF9A6500),
+                                          ),
+                                    ),
+                                  ),
+                                  onTap: () => Navigator.of(dialogContext).pop(
+                                    FoodNameInputResult(
+                                      name: suggestion.name,
+                                      selectedSuggestion: suggestion,
+                                    ),
+                                  ),
                                 );
                               },
                             ),
@@ -390,8 +468,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                 child: Text(t.cancel),
               ),
               ElevatedButton(
-                onPressed: () =>
-                    Navigator.of(dialogContext).pop(controller.text.trim()),
+                onPressed: () => Navigator.of(dialogContext).pop(
+                  FoodNameInputResult(name: controller.text.trim()),
+                ),
                 child: Text(t.suggestInstantNameSubmit),
               ),
             ],
@@ -401,9 +480,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     );
     debounce?.cancel();
     controller.dispose();
-    final trimmed = (result ?? '').trim();
+    final trimmed = result?.name.trim() ?? '';
     if (trimmed.isEmpty) return null;
-    return trimmed;
+    return FoodNameInputResult(
+      name: trimmed,
+      selectedSuggestion: result?.selectedSuggestion,
+    );
   }
 
   String _nameLookupMessage(String code) {
@@ -412,6 +494,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         .toLowerCase()
         .startsWith('zh');
     switch (code) {
+      case 'custom_not_found':
+        return isZh
+            ? '這筆自訂餐目前不存在，請重新選擇。'
+            : 'This custom meal is no longer available. Please choose again.';
       case 'catalog_not_found':
         return isZh
             ? '目前資料庫尚未收錄這個食物，已幫你記錄，後續會更新。'
@@ -455,6 +541,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         .languageCode
         .toLowerCase()
         .startsWith('zh');
+    if (err is NameLookupException && err.code == 'custom_not_found') {
+      return isZh
+          ? '這筆自訂餐目前不存在，請重新選擇。'
+          : 'This custom meal is no longer available. Please choose again.';
+    }
     if (err is ApiException) {
       switch (err.code) {
         case 'subscription_required':
@@ -489,13 +580,23 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return isZh ? '分析失敗，請稍後再試。' : 'Analysis failed. Please try again.';
   }
 
-  Future<void> _saveIfNeeded() async {
+  String _autoSavedMessage() {
+    return _isZh() ? '已自動存到紀錄。' : 'Saved to your log automatically.';
+  }
+
+  String _deleteSavedMessage() {
+    return _isZh() ? '已刪除此筆紀錄。' : 'This saved item was deleted.';
+  }
+
+  Future<void> _persistCurrentAnalysis({
+    bool announceSaved = false,
+    bool syncToGallery = false,
+  }) async {
     if (_analysis == null) return;
-    if (_analysis!.result.isFood == false) return;
-    final t = AppLocalizations.of(context)!;
     final app = AppStateScope.of(context);
     final saved = await app.saveQuickCapture(
       _analysis!,
+      existing: _savedEntry,
       portionPercent: _portionPercent,
       containerType: _containerType,
       containerSize: _containerSize,
@@ -503,23 +604,29 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     );
     if (!mounted) return;
     setState(() {
-      _showSaveActions = false;
       _savedEntry = saved;
     });
-    final galleryMessage = await _syncCameraPhotoIfNeeded(app, t);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(galleryMessage ?? t.logSuccess)),
-    );
+    if (!announceSaved) return;
+    String message = _autoSavedMessage();
+    if (syncToGallery) {
+      final galleryMessage = await _syncCameraPhotoIfNeeded(app);
+      if (!mounted) return;
+      if (galleryMessage != null && galleryMessage.trim().isNotEmpty) {
+        message = galleryMessage;
+      }
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<String?> _syncCameraPhotoIfNeeded(
-    AppState app,
-    AppLocalizations t,
-  ) async {
-    if (_captureSource != ImageSource.camera || _analysis == null) {
+  Future<String?> _syncCameraPhotoIfNeeded(AppState app) async {
+    if (_cameraPhotoSyncHandled ||
+        _captureSource != ImageSource.camera ||
+        _analysis == null) {
       return null;
     }
+    _cameraPhotoSyncHandled = true;
     final filename =
         _analysis!.file.name.isNotEmpty ? _analysis!.file.name : 'capture.jpg';
     final result = await app.syncCameraCaptureToSystemGallery(
@@ -543,6 +650,48 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     }
   }
 
+  Future<void> _deleteSavedEntry() async {
+    final entry = _savedEntry;
+    if (entry == null || !mounted) return;
+    final shouldDelete = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(_isZh() ? '刪除這筆紀錄？' : 'Delete this saved item?'),
+            content: Text(
+              _isZh()
+                  ? '這會從 MiraMeal 紀錄中移除這張照片與分析結果。'
+                  : 'This removes the photo and analysis from your MiraMeal log.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(_isZh() ? '取消' : 'Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(_isZh() ? '刪除' : 'Delete'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!shouldDelete || !mounted) return;
+    final app = AppStateScope.of(context);
+    app.removeEntry(entry);
+    setState(() {
+      _analysis = null;
+      _instantAdvice = null;
+      _previewBytes = null;
+      _savedEntry = null;
+      _hideFloatingCard = true;
+      _error = null;
+      _captureSource = null;
+    });
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(_deleteSavedMessage())));
+  }
+
   bool _isZh() => Localizations.localeOf(context).languageCode.startsWith('zh');
 
   Future<void> _editFoodName() async {
@@ -559,7 +708,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final controller = TextEditingController(text: _analysis!.result.foodName);
     Timer? debounce;
     var requestToken = 0;
-    var suggestions = <String>[];
+    var suggestions = <FoodNameSuggestion>[];
     var isSearching = false;
 
     Future<void> refreshSuggestions(
@@ -583,7 +732,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         setDialogState(() => isSearching = true);
       }
 
-      final result = await app.suggestFoodNames(query, locale, limit: 24);
+      final result = await app.suggestFoodNameOptions(query, locale, limit: 24);
       if (!dialogContext.mounted || token != requestToken) return;
 
       setDialogState(() {
@@ -592,7 +741,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       });
     }
 
-    final result = await showDialog<String>(
+    final result = await showDialog<FoodNameInputResult>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) {
@@ -623,8 +772,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                         );
                       });
                     },
-                    onSubmitted: (value) =>
-                        Navigator.of(dialogContext).pop(value.trim()),
+                    onSubmitted: (value) => Navigator.of(dialogContext).pop(
+                      FoodNameInputResult(name: value.trim()),
+                    ),
                   ),
                   if (isSearching) ...[
                     const SizedBox(height: 8),
@@ -659,10 +809,47 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                                 final suggestion = suggestions[index];
                                 return ListTile(
                                   dense: true,
-                                  leading: const Icon(Icons.search, size: 18),
-                                  title: Text(suggestion),
-                                  onTap: () => Navigator.of(dialogContext)
-                                      .pop(suggestion),
+                                  leading: Icon(
+                                    _suggestionSourceIcon(suggestion.source),
+                                    size: 18,
+                                  ),
+                                  title: Text(suggestion.name),
+                                  trailing: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: suggestion.isCustom
+                                          ? const Color(0xFFEAF7EF)
+                                          : suggestion.source ==
+                                                  FoodNameSuggestionSource
+                                                      .catalog
+                                              ? const Color(0xFFF2F5F9)
+                                              : const Color(0xFFFFF4E5),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      _suggestionSourceLabel(suggestion.source),
+                                      style: Theme.of(dialogContext)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: suggestion.isCustom
+                                                ? const Color(0xFF2F8F5B)
+                                                : suggestion.source ==
+                                                        FoodNameSuggestionSource
+                                                            .catalog
+                                                    ? const Color(0xFF5B6B7A)
+                                                    : const Color(0xFF9A6500),
+                                          ),
+                                    ),
+                                  ),
+                                  onTap: () => Navigator.of(dialogContext).pop(
+                                    FoodNameInputResult(
+                                      name: suggestion.name,
+                                      selectedSuggestion: suggestion,
+                                    ),
+                                  ),
                                 );
                               },
                             ),
@@ -677,8 +864,9 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                 child: Text(t.cancel),
               ),
               ElevatedButton(
-                onPressed: () =>
-                    Navigator.of(dialogContext).pop(controller.text.trim()),
+                onPressed: () => Navigator.of(dialogContext).pop(
+                  FoodNameInputResult(name: controller.text.trim()),
+                ),
                 child: Text(t.save),
               ),
             ],
@@ -688,7 +876,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     );
     debounce?.cancel();
     controller.dispose();
-    if (result == null || result.trim().isEmpty) return;
+    final nextName = result?.name.trim() ?? '';
+    if (nextName.isEmpty) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -697,28 +886,46 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     _startSmartProgress();
     final historyContext = app.buildAiContext();
     try {
-      final updated = await app.reanalyzeQuickCapture(
-        _analysis!,
-        locale,
-        historyContext: historyContext.isEmpty ? null : historyContext,
-        foodName: result.trim(),
-        containerType: _containerType,
-        containerSize: _containerSize,
-        referenceObject:
-            _referenceObject == 'none' || _referenceObject == 'manual'
-                ? null
-                : _referenceObject,
-        referenceLengthCm:
-            _referenceObject == 'manual' ? _parsedReferenceLength() : null,
-      );
+      final explicitSuggestion = result?.selectedSuggestion;
+      late final QuickCaptureAnalysis updated;
+      if (explicitSuggestion?.isCustom == true) {
+        final customId = explicitSuggestion!.customFoodId;
+        final customFood = app.customFoods.where((food) => food.id == customId);
+        if (customFood.isEmpty) {
+          throw NameLookupException('custom_not_found');
+        }
+        updated = QuickCaptureAnalysis(
+          file: _analysis!.file,
+          originalBytes: _analysis!.originalBytes,
+          imageBytes: _analysis!.imageBytes,
+          time: _analysis!.time,
+          mealType: _analysis!.mealType,
+          result: app.buildCustomAnalysisResult(customFood.first),
+        );
+      } else {
+        updated = await app.reanalyzeQuickCapture(
+          _analysis!,
+          locale,
+          historyContext: historyContext.isEmpty ? null : historyContext,
+          foodName: nextName,
+          containerType: _containerType,
+          containerSize: _containerSize,
+          referenceObject:
+              _referenceObject == 'none' || _referenceObject == 'manual'
+                  ? null
+                  : _referenceObject,
+          referenceLengthCm:
+              _referenceObject == 'manual' ? _parsedReferenceLength() : null,
+        );
+      }
       if (!mounted) return;
       _analysis = updated;
-      _savedEntry = null;
       _applyAnalysisDefaults(updated.result, keepUserSelections: true);
       _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = updated.result.isFood != false;
+      await _persistCurrentAnalysis();
+      if (!mounted) return;
       _completeSmartProgress(() {
         if (!mounted) return;
         setState(() {
@@ -991,8 +1198,16 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
             _cleanAdviceValue(_splitAdviceValue(normalized), 'avoid');
         continue;
       }
-      if (_startsWithAny(
-              normalized, ['建議份量', '建議份量上限', '份量上限', '上限', '份量建議', '這樣吃剛好', '這樣喝剛好', '份量抓這樣']) ||
+      if (_startsWithAny(normalized, [
+            '建議份量',
+            '建議份量上限',
+            '份量上限',
+            '上限',
+            '份量建議',
+            '這樣吃剛好',
+            '這樣喝剛好',
+            '份量抓這樣'
+          ]) ||
           lower.startsWith('portion') ||
           lower.startsWith('limit')) {
         sections['limit'] =
@@ -1126,11 +1341,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       );
     }
     if (key == 'avoid') {
-      cleaned =
-          cleaned.replaceFirst(RegExp(r'^(避免|不建議|不推薦|少|盡量少|盡量避免|先少一點|先少喝一點|先避開|先跳過|先減少)\s*'), '');
+      cleaned = cleaned.replaceFirst(
+          RegExp(r'^(避免|不建議|不推薦|少|盡量少|盡量避免|先少一點|先少喝一點|先避開|先跳過|先減少)\s*'), '');
     }
     if (key == 'limit') {
-      cleaned = cleaned.replaceFirst(RegExp(r'^(份量|份量上限|建議份量|上限|控制在|這樣吃剛好|這樣喝剛好|份量抓這樣)\s*'), '');
+      cleaned = cleaned.replaceFirst(
+          RegExp(r'^(份量|份量上限|建議份量|上限|控制在|這樣吃剛好|這樣喝剛好|份量抓這樣)\s*'), '');
     }
     return cleaned.trim();
   }
@@ -1277,6 +1493,34 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return '$trimmed：';
   }
 
+  Widget _buildSavedStatusRow() {
+    if (_savedEntry == null) return const SizedBox.shrink();
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            _isZh() ? '已自動存到紀錄' : 'Saved to your log',
+            style: AppTextStyles.caption(context).copyWith(
+              color: const Color(0xFF2F8F5B),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: _deleteSavedEntry,
+          icon: const Icon(Icons.delete_outline, size: 18),
+          label: Text(_isZh() ? '刪除' : 'Delete'),
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFFB94A48),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            minimumSize: const Size(0, 40),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _adviceRow(String title, String? value) {
     final displayTitle = _labelWithColon(title);
     return Row(
@@ -1308,6 +1552,27 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return [nextType, nextSize];
   }
 
+  void _syncAdviceRefreshState() {
+    _adviceNeedsReestimate = _portionPercent != _lastAnalyzedPortionPercent ||
+        _containerType != _lastAnalyzedContainerType ||
+        _containerSize != _lastAnalyzedContainerSize ||
+        _overrideCalorieRange != _lastAnalyzedCalorieOverride;
+  }
+
+  MealType _analysisMealType(AppState app) {
+    if (_savedEntry != null) return _savedEntry!.type;
+    if (_analysis != null) return _analysis!.mealType;
+    return app.resolveMealType(DateTime.now());
+  }
+
+  String? _analysisMealId() => _savedEntry?.mealId ?? _savedEntry?.id;
+
+  String _staleAdviceMessage() {
+    return _isZh()
+        ? '目前卡片數值已依調整更新，建議內容仍以原始分析為主；如需同步更新，請點「重新估算」。'
+        : 'Card values already reflect your adjustments. Advice still uses the original analysis until you tap Reestimate.';
+  }
+
   void _applyAnalysisDefaults(AnalysisResult result,
       {bool keepUserSelections = false}) {
     final normalized = _normalizeContainerSelection(
@@ -1328,6 +1593,11 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       containerType: _containerType,
       containerSize: _containerSize,
     );
+    _lastAnalyzedPortionPercent = _portionPercent;
+    _lastAnalyzedContainerType = _containerType;
+    _lastAnalyzedContainerSize = _containerSize;
+    _lastAnalyzedCalorieOverride = _overrideCalorieRange;
+    _syncAdviceRefreshState();
   }
 
   void _updatePortionPercent(int value) {
@@ -1340,6 +1610,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         containerType: _containerType,
         containerSize: _containerSize,
       );
+      _syncAdviceRefreshState();
     });
     if (_savedEntry != null) {
       final app = AppStateScope.of(context);
@@ -1358,6 +1629,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         containerType: _containerType,
         containerSize: _containerSize,
       );
+      _syncAdviceRefreshState();
     });
     if (_savedEntry != null) {
       final app = AppStateScope.of(context);
@@ -1376,6 +1648,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         containerType: _containerType,
         containerSize: _containerSize,
       );
+      _syncAdviceRefreshState();
     });
     if (_savedEntry != null) {
       final app = AppStateScope.of(context);
@@ -1449,6 +1722,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         containerType: _containerType,
         containerSize: _containerSize,
       );
+      _syncAdviceRefreshState();
     });
     if (_savedEntry != null) {
       final app = AppStateScope.of(context);
@@ -1828,13 +2102,15 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return null;
   }
 
-  double? _recentMealAverage(AppState app, {MealType? mealType}) {
+  double? _recentMealAverage(AppState app,
+      {MealType? mealType, String? excludeMealId}) {
     final cutoff = DateTime.now().subtract(const Duration(days: 7));
     final groups = <String, List<MealEntry>>{};
     for (final entry in app.entries) {
       if (entry.time.isBefore(cutoff)) continue;
       if (mealType != null && entry.type != mealType) continue;
       final key = entry.mealId ?? entry.id;
+      if (excludeMealId != null && key == excludeMealId) continue;
       groups.putIfAbsent(key, () => []).add(entry);
     }
     if (groups.isEmpty) return null;
@@ -1867,12 +2143,16 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final current =
         _calorieMidValue(_overrideCalorieRange ?? analysis.calorieRange);
     if (current == null || current <= 0) return const SizedBox.shrink();
-    final mealType = app.resolveMealType(DateTime.now());
-    final avg =
-        _recentMealAverage(app, mealType: mealType) ?? _recentMealAverage(app);
+    final mealType = _analysisMealType(app);
+    final excludeMealId = _analysisMealId();
+    final avg = _recentMealAverage(
+          app,
+          mealType: mealType,
+          excludeMealId: excludeMealId,
+        ) ??
+        _recentMealAverage(app, excludeMealId: excludeMealId);
     if (avg == null || avg <= 0) return const SizedBox.shrink();
     final max = math.max(avg * 1.6, avg + 200);
-    final acceptRatio = (avg / max).clamp(0.05, 0.95);
     final currentRatio = (current / max).clamp(0.0, 1.0);
     const okColor = Color(0xFF7FCF9A);
     const highColor = Color(0xFFF4B183);
@@ -2154,12 +2434,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       );
       if (!mounted) return;
       _analysis = updated;
-      _savedEntry = null;
       _applyAnalysisDefaults(updated.result, keepUserSelections: true);
       _hideFloatingCard = false;
       _instantAdvice = null;
       _previewBytes = null;
-      _showSaveActions = true;
+      await _persistCurrentAnalysis();
+      if (!mounted) return;
       _completeSmartProgress(() {
         if (!mounted) return;
         setState(() {
@@ -2213,6 +2493,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildSavedStatusRow(),
+          if (_savedEntry != null) const SizedBox(height: 8),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -2256,9 +2538,13 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final referenceUsed = (analysis.referenceUsed ?? '').trim();
     final referenceLabel =
         referenceUsed.isEmpty ? t.referenceObjectNone : referenceUsed;
+    final staleAdviceMessage =
+        _adviceNeedsReestimate ? _staleAdviceMessage() : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildSavedStatusRow(),
+        if (_savedEntry != null) const SizedBox(height: 8),
         Row(
           children: [
             IconButton(
@@ -2311,34 +2597,28 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
           style:
               AppTextStyles.body(context).copyWith(fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 8),
-        _buildAdviceCard(t),
-        if (_showSaveActions) ...[
-          const SizedBox(height: 14),
-          Text(t.suggestInstantSavePrompt,
-              style: AppTextStyles.body(context)
-                  .copyWith(fontWeight: FontWeight.w600)),
+        if (staleAdviceMessage != null) ...[
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    setState(() => _showSaveActions = false);
-                  },
-                  child: Text(t.suggestInstantSkipSave),
-                ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF6E8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFF4D29A)),
+            ),
+            child: Text(
+              staleAdviceMessage,
+              style: AppTextStyles.caption(context).copyWith(
+                color: const Color(0xFF8A5A00),
+                height: 1.35,
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _saveIfNeeded,
-                  child: Text(t.suggestInstantSave),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
+        const SizedBox(height: 8),
+        _buildAdviceCard(t),
         const SizedBox(height: 14),
         _buildPortionContainerSection(t),
         const SizedBox(height: 12),
@@ -2968,4 +3248,3 @@ class _ProgressArcPainter extends CustomPainter {
         oldDelegate.color != color;
   }
 }
-

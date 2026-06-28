@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../services/gallery_save_types.dart';
 import '../state/app_state.dart';
+import '../models/food_name_suggestion.dart';
 import '../models/meal_entry.dart';
 import 'subscription_paywall.dart';
 
@@ -12,6 +13,31 @@ enum _RecordInputMode {
   camera,
   gallery,
   name,
+}
+
+String _suggestionSourceLabel(
+  FoodNameSuggestionSource source,
+  bool isEn,
+) {
+  switch (source) {
+    case FoodNameSuggestionSource.custom:
+      return isEn ? 'Custom' : '自訂';
+    case FoodNameSuggestionSource.catalog:
+      return isEn ? 'Catalog' : '資料庫';
+    case FoodNameSuggestionSource.beverage:
+      return isEn ? 'Drink' : '飲料';
+  }
+}
+
+IconData _suggestionSourceIcon(FoodNameSuggestionSource source) {
+  switch (source) {
+    case FoodNameSuggestionSource.custom:
+      return Icons.bookmark_outline;
+    case FoodNameSuggestionSource.catalog:
+      return Icons.restaurant_menu_outlined;
+    case FoodNameSuggestionSource.beverage:
+      return Icons.local_drink_outlined;
+  }
 }
 
 bool _looksLikeBeverageName(String text) {
@@ -78,7 +104,7 @@ class RecordResult {
   final bool isMulti;
 }
 
-Future<String?> _promptFoodName(
+Future<FoodNameInputResult?> _promptFoodName(
   BuildContext context,
   AppState app,
   AppLocalizations t,
@@ -90,7 +116,7 @@ Future<String?> _promptFoodName(
 
   Timer? debounce;
   var requestToken = 0;
-  var suggestions = <String>[];
+  var suggestions = <FoodNameSuggestion>[];
   var isSearching = false;
   String? selectedCupSize;
 
@@ -115,7 +141,7 @@ Future<String?> _promptFoodName(
       setDialogState(() => isSearching = true);
     }
 
-    final result = await app.suggestFoodNames(query, locale, limit: 40);
+    final result = await app.suggestFoodNameOptions(query, locale, limit: 40);
     if (!dialogContext.mounted || token != requestToken) return;
 
     setDialogState(() {
@@ -124,7 +150,7 @@ Future<String?> _promptFoodName(
     });
   }
 
-  final value = await showDialog<String>(
+  final value = await showDialog<FoodNameInputResult>(
     context: context,
     builder: (dialogContext) {
       return StatefulBuilder(
@@ -157,8 +183,9 @@ Future<String?> _promptFoodName(
                         );
                       });
                     },
-                    onSubmitted: (v) =>
-                        Navigator.of(dialogContext).pop(v.trim()),
+                    onSubmitted: (v) => Navigator.of(dialogContext).pop(
+                      FoodNameInputResult(name: v.trim()),
+                    ),
                   ),
                   if (hasInput && _looksLikeBeverageName(controller.text)) ...[
                     const SizedBox(height: 10),
@@ -273,13 +300,50 @@ Future<String?> _promptFoodName(
                                 final suggestion = suggestions[index];
                                 return ListTile(
                                   dense: true,
-                                  leading: const Icon(
-                                    Icons.search,
+                                  leading: Icon(
+                                    _suggestionSourceIcon(suggestion.source),
                                     size: 18,
                                   ),
-                                  title: Text(suggestion),
-                                  onTap: () => Navigator.of(dialogContext)
-                                      .pop(suggestion),
+                                  title: Text(suggestion.name),
+                                  trailing: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: suggestion.isCustom
+                                          ? const Color(0xFFEAF7EF)
+                                          : suggestion.source ==
+                                                  FoodNameSuggestionSource
+                                                      .catalog
+                                              ? const Color(0xFFF2F5F9)
+                                              : const Color(0xFFFFF4E5),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      _suggestionSourceLabel(
+                                        suggestion.source,
+                                        isEn,
+                                      ),
+                                      style: Theme.of(dialogContext)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: suggestion.isCustom
+                                                ? const Color(0xFF2F8F5B)
+                                                : suggestion.source ==
+                                                        FoodNameSuggestionSource
+                                                            .catalog
+                                                    ? const Color(0xFF5B6B7A)
+                                                    : const Color(0xFF9A6500),
+                                          ),
+                                    ),
+                                  ),
+                                  onTap: () => Navigator.of(dialogContext).pop(
+                                    FoodNameInputResult(
+                                      name: suggestion.name,
+                                      selectedSuggestion: suggestion,
+                                    ),
+                                  ),
                                 );
                               },
                             ),
@@ -294,8 +358,9 @@ Future<String?> _promptFoodName(
                 child: Text(t.cancel),
               ),
               ElevatedButton(
-                onPressed: () =>
-                    Navigator.of(dialogContext).pop(controller.text.trim()),
+                onPressed: () => Navigator.of(dialogContext).pop(
+                  FoodNameInputResult(name: controller.text.trim()),
+                ),
                 child: Text(t.suggestInstantNameSubmit),
               ),
             ],
@@ -308,9 +373,12 @@ Future<String?> _promptFoodName(
   debounce?.cancel();
   controller.dispose();
 
-  final trimmed = value?.trim() ?? '';
+  final trimmed = value?.name.trim() ?? '';
   if (trimmed.isEmpty) return null;
-  return trimmed;
+  return FoodNameInputResult(
+    name: trimmed,
+    selectedSuggestion: value?.selectedSuggestion,
+  );
 }
 
 String _catalogFallbackMessage(BuildContext context) {
@@ -325,6 +393,10 @@ String _nameLookupErrorMessage(BuildContext context, String code) {
   final isEn =
       Localizations.localeOf(context).languageCode.toLowerCase() == 'en';
   switch (code) {
+    case 'custom_not_found':
+      return isEn
+          ? 'This custom meal is no longer available. Please choose again.'
+          : '這筆自訂餐目前不存在，請重新選擇。';
     case 'catalog_not_found':
       return isEn
           ? 'Not in catalog yet. We recorded this query and will add it in a future update.'
@@ -451,9 +523,10 @@ Future<RecordResult?> showRecordSheet(
   var isMulti = false;
 
   if (mode == _RecordInputMode.name) {
-    final foodName = await _promptFoodName(context, app, t);
+    final input = await _promptFoodName(context, app, t);
     if (!context.mounted) return null;
-    if (foodName == null || foodName.trim().isEmpty) {
+    final foodName = input?.name.trim() ?? '';
+    if (foodName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(t.nameAnalyzeEmpty)),
       );
@@ -462,11 +535,27 @@ Future<RecordResult?> showRecordSheet(
     final locale = Localizations.localeOf(context).toLanguageTag();
     MealEntry entry;
     try {
+      final normalizedInput =
+          foodName.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+      if (input?.selectedSuggestion == null) {
+        final options =
+            await app.suggestFoodNameOptions(foodName, locale, limit: 40);
+        final hasExactCandidate = options.any(
+          (item) =>
+              item.source != FoodNameSuggestionSource.custom &&
+              item.name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ') ==
+                  normalizedInput,
+        );
+        if (!hasExactCandidate) {
+          throw NameLookupException('catalog_not_found');
+        }
+      }
       entry = await app.analyzeNameAndSave(
-        foodName.trim(),
+        foodName,
         locale,
         overrideTime: overrideTime,
         fixedType: fixedType,
+        explicitSuggestion: input?.selectedSuggestion,
       );
     } on NameLookupException catch (err) {
       if (!context.mounted) return null;
@@ -574,4 +663,3 @@ Future<RecordResult?> showRecordSheet(
     isMulti: isMulti,
   );
 }
-
