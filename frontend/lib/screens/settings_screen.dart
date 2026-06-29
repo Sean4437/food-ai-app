@@ -58,10 +58,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _sectionTitle(BuildContext context, String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Text(text,
-          style: AppTextStyles.caption(context)
-              .copyWith(fontWeight: FontWeight.w600)),
+      padding: const EdgeInsets.only(top: 12, bottom: 10),
+      child: Text(
+        text,
+        style: AppTextStyles.title2(context).copyWith(
+          fontWeight: FontWeight.w800,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _spacedChildren(List<Widget> children, {double gap = 8}) {
+    final result = <Widget>[];
+    for (var i = 0; i < children.length; i++) {
+      result.add(children[i]);
+      if (i != children.length - 1) {
+        result.add(SizedBox(height: gap));
+      }
+    }
+    return result;
+  }
+
+  Widget _sectionCard(
+    BuildContext context, {
+    required List<Widget> children,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(12),
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _rowsCard(
+    BuildContext context, {
+    required List<Widget> rows,
+    double gap = 8,
+  }) {
+    return _sectionCard(
+      context,
+      children: _spacedChildren(rows, gap: gap),
     );
   }
 
@@ -146,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: scheme.surface,
         borderRadius: BorderRadius.circular(14),
@@ -259,10 +305,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         backgroundColor:
-            selected ? color.withValues(alpha: 0.10) : scheme.surface,
+            selected ? color.withValues(alpha: 0.07) : scheme.surface,
         side: BorderSide(
           color: selected
-              ? color
+              ? color.withValues(alpha: 0.78)
               : scheme.outline.withValues(alpha: 0.16),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -280,7 +326,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Text(
                   label,
                   style: AppTextStyles.body(context).copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                     color: scheme.onSurface,
                   ),
                 ),
@@ -1345,24 +1391,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 12),
                   _sectionTitle(context, t.syncSection),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  _sectionCard(
+                    context,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: Text(
                                 isSupabaseSignedIn
                                     ? '${t.syncSignedInAs} $supabaseEmail'
                                     : t.syncNotSignedIn,
-                                style: AppTextStyles.caption(context)
-                                    .copyWith(color: Colors.black54),
+                                style: AppTextStyles.body(context).copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.78),
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                             if (isSupabaseSignedIn)
@@ -1376,532 +1430,524 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                           ],
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      _row(
+                        context,
+                        t.nicknameLabel,
+                        profile.name.isEmpty ? '--' : profile.name,
+                        icon: Icons.badge_outlined,
+                        onTap: () => _editText(
+                          context,
+                          title: t.nicknameLabel,
+                          initial: profile.name,
+                          onSave: (value) => app.updateNickname(value),
+                        ),
+                      ),
+                      if (isSupabaseSignedIn) ...[
                         const SizedBox(height: 8),
-                        if (isSupabaseSignedIn)
-                          _row(
+                        _row(
+                          context,
+                          isZh ? '登入與安全' : 'Sign-in & security',
+                          isZh
+                              ? '設定或更新 Email + 密碼登入，作為信箱連結以外的備用方式'
+                              : 'Manage email-link sign-in and your backup password.',
+                          icon: Icons.lock_outline,
+                          onTap: () => showBackupPasswordSetupDialog(
                             context,
-                            t.nicknameLabel,
-                            profile.name.isEmpty ? '--' : profile.name,
-                            icon: Icons.badge_outlined,
-                            onTap: () => _editText(
-                              context,
-                              title: t.nicknameLabel,
-                              initial: profile.name,
-                              onSave: (value) => app.updateNickname(value),
-                            ),
-                          )
-                        else ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _row(
-                                  context,
-                                  t.nicknameLabel,
-                                  profile.name.isEmpty ? '--' : profile.name,
-                                  icon: Icons.badge_outlined,
-                                  onTap: () => _editText(
-                                    context,
-                                    title: t.nicknameLabel,
-                                    initial: profile.name,
-                                    onSave: (value) =>
-                                        app.updateNickname(value),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: isSyncing
-                                      ? null
-                                      : () => _showSupabaseAuthDialog(
-                                          context, app,
-                                          isSignUp: false),
-                                  child: Text(t.syncSignIn),
-                                ),
-                              ),
-                            ],
+                            app,
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: isSyncing
-                                      ? null
-                                      : () => _showSupabaseAuthDialog(
-                                          context, app,
-                                          isSignUp: true),
-                                  child: Text(t.syncSignUp),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: isSyncing
-                                      ? null
-                                      : () => _showResetPasswordDialog(
-                                          context, app),
-                                  child: Text(t.syncForgotPassword),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                        if (isSupabaseSignedIn) ...[
-                          const SizedBox(height: 8),
-                          _row(
-                            context,
-                            isZh
-                                ? '\u767b\u5165\u5bc6\u78bc'
-                                : 'Sign-in password',
-                            isZh
-                                ? '\u8a2d\u5b9a\u6216\u66f4\u65b0 Email + \u5bc6\u78bc\u767b\u5165\uff0c\u4f5c\u70ba\u4fe1\u7bb1\u9023\u7d50\u4e4b\u5916\u7684\u5099\u7528\u65b9\u5f0f'
-                                : 'Set or update Email + password sign-in as a backup option alongside email links.',
-                            icon: Icons.lock_outline,
-                            onTap: () => showBackupPasswordSetupDialog(
-                              context,
-                              app,
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: isSyncing
+                                ? null
+                                : () => _runSupabaseSync(context, app),
+                            icon: isSyncing
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.sync_rounded),
+                            label: Text(
+                              isSyncing ? t.syncInProgress : t.syncNow,
                             ),
                           ),
-                        ],
+                        ),
+                      ] else ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.tonal(
+                            onPressed: isSyncing
+                                ? null
+                                : () => _showSupabaseAuthDialog(
+                                      context,
+                                      app,
+                                      isSignUp: false,
+                                    ),
+                            child: Text(t.syncSignIn),
+                          ),
+                        ),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: isSupabaseSignedIn && !isSyncing
-                                    ? () => _runSupabaseSync(context, app)
-                                    : null,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    if (isSyncing) ...[
-                                      const SizedBox(
-                                        width: 14,
-                                        height: 14,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2),
-                                      ),
-                                      const SizedBox(width: 8),
-                                    ],
-                                    Text(isSyncing
-                                        ? t.syncInProgress
-                                        : t.syncNow),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: isSyncing
+                                ? null
+                                : () => _showSupabaseAuthDialog(
+                                      context,
+                                      app,
+                                      isSignUp: true,
+                                    ),
+                            child: Text(t.syncSignUp),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: isSyncing
+                                ? null
+                                : () => _showResetPasswordDialog(context, app),
+                            child: Text(t.syncForgotPassword),
+                          ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   _sectionTitle(context, t.chatSettingsSection),
-                  _row(
+                  _rowsCard(
                     context,
-                    t.chatAssistantNameLabel,
-                    assistantDisplayName,
-                    icon: Icons.smart_toy_outlined,
-                    onTap: () => _editText(
-                      context,
-                      title: t.chatAssistantNameLabel,
-                      initial: profile.chatAssistantName,
-                      onSave: (value) => app.updateField(
-                          (p) => p.chatAssistantName = value.trim()),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _row(
-                    context,
-                    t.chatAvatarLabel,
-                    chatAvatarStatus,
-                    icon: Icons.account_circle_outlined,
-                    onTap: () => _showChatAvatarSheet(context, app, t),
+                    rows: [
+                      _row(
+                        context,
+                        t.chatAssistantNameLabel,
+                        assistantDisplayName,
+                        icon: Icons.smart_toy_outlined,
+                        onTap: () => _editText(
+                          context,
+                          title: t.chatAssistantNameLabel,
+                          initial: profile.chatAssistantName,
+                          onSave: (value) => app.updateField(
+                            (p) => p.chatAssistantName = value.trim(),
+                          ),
+                        ),
+                      ),
+                      _row(
+                        context,
+                        t.chatAvatarLabel,
+                        chatAvatarStatus,
+                        icon: Icons.account_circle_outlined,
+                        onTap: () => _showChatAvatarSheet(context, app, t),
+                      ),
+                    ],
                   ),
                   _sectionTitle(context, t.planSection),
-                  _grid2([
-                    _row(
-                      context,
-                      t.heightLabel,
-                      '${profile.heightCm} cm',
-                      icon: Icons.straighten,
-                      onTap: () => _editText(
-                        context,
-                        title: t.heightLabel,
-                        initial: profile.heightCm.toString(),
-                        keyboardType: TextInputType.number,
-                        onSave: (value) => app.updateField((p) =>
-                            p.heightCm = int.tryParse(value) ?? p.heightCm),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.weightLabel,
-                      '${profile.weightKg} kg',
-                      icon: Icons.monitor_weight,
-                      onTap: () => _editText(
-                        context,
-                        title: t.weightLabel,
-                        initial: profile.weightKg.toString(),
-                        keyboardType: TextInputType.number,
-                        onSave: (value) => app.updateField((p) =>
-                            p.weightKg = int.tryParse(value) ?? p.weightKg),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.ageLabel,
-                      '${profile.age}',
-                      icon: Icons.cake,
-                      onTap: () => _editText(
-                        context,
-                        title: t.ageLabel,
-                        initial: profile.age.toString(),
-                        keyboardType: TextInputType.number,
-                        onSave: (value) => app.updateField(
-                            (p) => p.age = int.tryParse(value) ?? p.age),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.genderLabel,
-                      currentGenderLabel,
-                      icon: Icons.wc,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.genderLabel,
-                        current: currentGenderLabel,
-                        options: genderOptions.keys.toList(),
-                        onSave: (value) => app.updateField((p) =>
-                            p.gender = genderOptions[value] ?? 'unspecified'),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.bmiLabel,
-                      _bmiText(profile, t),
-                      icon: Icons.analytics,
-                      showChevron: false,
-                    ),
-                    _row(
-                      context,
-                      t.goalLabel,
-                      currentGoalLabel,
-                      icon: Icons.flag,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.goalLabel,
-                        current: currentGoalLabel,
-                        options: goalOptions.keys.toList(),
-                        onSave: (value) => app.updateField((p) =>
-                            p.goal = goalOptions[value] ?? kGoalValueLoseFat),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.planSpeedLabel,
-                      currentPlanSpeedLabel,
-                      icon: Icons.speed,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.planSpeedLabel,
-                        current: currentPlanSpeedLabel,
-                        options: planSpeedOptions.keys.toList(),
-                        onSave: (value) => app.updateField((p) => p.planSpeed =
-                            planSpeedOptions[value] ?? kPlanSpeedValueStable),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.activityLevelLabel,
-                      currentActivityLabel,
-                      icon: Icons.directions_walk,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.activityLevelLabel,
-                        current: currentActivityLabel,
-                        options: activityOptions.keys.toList(),
-                        onSave: (value) => app.updateField((p) => p
-                            .activityLevel = activityOptions[value] ?? 'light'),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.commonExerciseLabel,
-                      currentExerciseLabel,
-                      icon: Icons.fitness_center,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.commonExerciseLabel,
-                        current: currentExerciseLabel,
-                        options: exerciseOptions.keys.toList(),
-                        onSave: (value) => app.updateField((p) =>
-                            p.exerciseSuggestionType =
-                                exerciseOptions[value] ?? 'walking'),
-                      ),
-                    ),
-                  ]),
+                  _sectionCard(
+                    context,
+                    children: [
+                      _grid2([
+                        _row(
+                          context,
+                          t.heightLabel,
+                          '${profile.heightCm} cm',
+                          icon: Icons.straighten,
+                          onTap: () => _editText(
+                            context,
+                            title: t.heightLabel,
+                            initial: profile.heightCm.toString(),
+                            keyboardType: TextInputType.number,
+                            onSave: (value) => app.updateField((p) =>
+                                p.heightCm = int.tryParse(value) ?? p.heightCm),
+                          ),
+                        ),
+                        _row(
+                          context,
+                          t.weightLabel,
+                          '${profile.weightKg} kg',
+                          icon: Icons.monitor_weight,
+                          onTap: () => _editText(
+                            context,
+                            title: t.weightLabel,
+                            initial: profile.weightKg.toString(),
+                            keyboardType: TextInputType.number,
+                            onSave: (value) => app.updateField((p) =>
+                                p.weightKg = int.tryParse(value) ?? p.weightKg),
+                          ),
+                        ),
+                        _row(
+                          context,
+                          t.ageLabel,
+                          '${profile.age}',
+                          icon: Icons.cake,
+                          onTap: () => _editText(
+                            context,
+                            title: t.ageLabel,
+                            initial: profile.age.toString(),
+                            keyboardType: TextInputType.number,
+                            onSave: (value) => app.updateField(
+                              (p) => p.age = int.tryParse(value) ?? p.age,
+                            ),
+                          ),
+                        ),
+                        _row(
+                          context,
+                          t.genderLabel,
+                          currentGenderLabel,
+                          icon: Icons.wc,
+                          onTap: () => _selectOption(
+                            context,
+                            title: t.genderLabel,
+                            current: currentGenderLabel,
+                            options: genderOptions.keys.toList(),
+                            onSave: (value) => app.updateField((p) =>
+                                p.gender = genderOptions[value] ?? 'unspecified'),
+                          ),
+                        ),
+                      ]),
+                      const SizedBox(height: 10),
+                      ..._spacedChildren([
+                        _row(
+                          context,
+                          t.bmiLabel,
+                          _bmiText(profile, t),
+                          icon: Icons.analytics,
+                          showChevron: false,
+                        ),
+                        _row(
+                          context,
+                          t.goalLabel,
+                          currentGoalLabel,
+                          icon: Icons.flag,
+                          onTap: () => _selectOption(
+                            context,
+                            title: t.goalLabel,
+                            current: currentGoalLabel,
+                            options: goalOptions.keys.toList(),
+                            onSave: (value) => app.updateField((p) =>
+                                p.goal = goalOptions[value] ?? kGoalValueLoseFat),
+                          ),
+                        ),
+                        _row(
+                          context,
+                          t.planSpeedLabel,
+                          currentPlanSpeedLabel,
+                          icon: Icons.speed,
+                          onTap: () => _selectOption(
+                            context,
+                            title: t.planSpeedLabel,
+                            current: currentPlanSpeedLabel,
+                            options: planSpeedOptions.keys.toList(),
+                            onSave: (value) => app.updateField((p) =>
+                                p.planSpeed =
+                                    planSpeedOptions[value] ?? kPlanSpeedValueStable),
+                          ),
+                        ),
+                        _row(
+                          context,
+                          t.activityLevelLabel,
+                          currentActivityLabel,
+                          icon: Icons.directions_walk,
+                          onTap: () => _selectOption(
+                            context,
+                            title: t.activityLevelLabel,
+                            current: currentActivityLabel,
+                            options: activityOptions.keys.toList(),
+                            onSave: (value) => app.updateField((p) =>
+                                p.activityLevel = activityOptions[value] ?? 'light'),
+                          ),
+                        ),
+                        _row(
+                          context,
+                          t.commonExerciseLabel,
+                          currentExerciseLabel,
+                          icon: Icons.fitness_center,
+                          onTap: () => _selectOption(
+                            context,
+                            title: t.commonExerciseLabel,
+                            current: currentExerciseLabel,
+                            options: exerciseOptions.keys.toList(),
+                            onSave: (value) => app.updateField((p) =>
+                                p.exerciseSuggestionType =
+                                    exerciseOptions[value] ?? 'walking'),
+                          ),
+                        ),
+                      ]),
+                    ],
+                  ),
                   _sectionTitle(context, t.containerSection),
-                  _grid2([
-                    _row(
-                      context,
-                      t.containerTypeLabel,
-                      currentContainerTypeLabel,
-                      icon: Icons.lunch_dining,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.containerTypeLabel,
-                        current: currentContainerTypeLabel,
-                        options: containerTypeOptions.keys.toList(),
-                        onSave: (value) => app.updateField(
-                          (p) => p.containerType =
-                              containerTypeOptions[value] ?? 'unknown',
+                  _sectionCard(
+                    context,
+                    children: [
+                      ..._spacedChildren([
+                        _row(
+                          context,
+                          t.containerTypeLabel,
+                          currentContainerTypeLabel,
+                          icon: Icons.lunch_dining,
+                          onTap: () => _selectOption(
+                            context,
+                            title: t.containerTypeLabel,
+                            current: currentContainerTypeLabel,
+                            options: containerTypeOptions.keys.toList(),
+                            onSave: (value) => app.updateField(
+                              (p) => p.containerType =
+                                  containerTypeOptions[value] ?? 'unknown',
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.containerSizeLabel,
-                      currentContainerSizeLabel,
-                      icon: Icons.straighten,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.containerSizeLabel,
-                        current: currentContainerSizeLabel,
-                        options: containerSizeOptions.keys.toList(),
-                        onSave: (value) => app.updateField(
-                          (p) => p.containerSize =
-                              containerSizeOptions[value] ?? 'medium',
+                        _row(
+                          context,
+                          t.containerSizeLabel,
+                          currentContainerSizeLabel,
+                          icon: Icons.straighten,
+                          onTap: () => _selectOption(
+                            context,
+                            title: t.containerSizeLabel,
+                            current: currentContainerSizeLabel,
+                            options: containerSizeOptions.keys.toList(),
+                            onSave: (value) => app.updateField(
+                              (p) => p.containerSize =
+                                  containerSizeOptions[value] ?? 'medium',
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ]),
-                  if (profile.containerType == 'bowl')
-                    _grid2([
+                        if (profile.containerType == 'bowl')
+                          _row(
+                            context,
+                            t.containerDepthLabel,
+                            currentContainerDepthLabel,
+                            icon: Icons.vertical_align_bottom,
+                            onTap: () => _selectOption(
+                              context,
+                              title: t.containerDepthLabel,
+                              current: currentContainerDepthLabel,
+                              options: containerDepthOptions.keys.toList(),
+                              onSave: (value) => app.updateField(
+                                (p) => p.containerDepth =
+                                    containerDepthOptions[value] ?? 'medium',
+                              ),
+                            ),
+                          ),
+                        if (profile.containerType == 'bowl')
+                          _row(
+                            context,
+                            t.containerCapacityLabel,
+                            profile.containerCapacityMl > 0
+                                ? '${profile.containerCapacityMl} ml'
+                                : '--',
+                            icon: Icons.opacity,
+                            onTap: () => _editText(
+                              context,
+                              title: t.containerCapacityLabel,
+                              initial: profile.containerCapacityMl > 0
+                                  ? profile.containerCapacityMl.toString()
+                                  : '',
+                              keyboardType: TextInputType.number,
+                              onSave: (value) => app.updateField(
+                                (p) => p.containerCapacityMl =
+                                    int.tryParse(value) ?? 0,
+                              ),
+                            ),
+                          ),
+                        if (profile.containerSize == 'custom' &&
+                            (profile.containerType == 'bowl' ||
+                                profile.containerType == 'plate' ||
+                                profile.containerType == 'box'))
+                          _row(
+                            context,
+                            t.containerDiameterLabel,
+                            profile.containerDiameterCm > 0
+                                ? '${profile.containerDiameterCm} cm'
+                                : '--',
+                            icon: Icons.radio_button_unchecked,
+                            onTap: () => _editText(
+                              context,
+                              title: t.containerDiameterLabel,
+                              initial: profile.containerDiameterCm > 0
+                                  ? profile.containerDiameterCm.toString()
+                                  : '',
+                              keyboardType: TextInputType.number,
+                              onSave: (value) => app.updateField(
+                                (p) => p.containerDiameterCm =
+                                    int.tryParse(value) ?? p.containerDiameterCm,
+                              ),
+                            ),
+                          ),
+                      ]),
+                    ],
+                  ),
+                  _sectionTitle(context, t.dietPreferenceSection),
+                  _rowsCard(
+                    context,
+                    rows: [
                       _row(
                         context,
-                        t.containerDepthLabel,
-                        currentContainerDepthLabel,
-                        icon: Icons.vertical_align_bottom,
+                        t.dietTypeLabel,
+                        currentDietTypeLabel,
+                        icon: Icons.restaurant_menu,
                         onTap: () => _selectOption(
                           context,
-                          title: t.containerDepthLabel,
-                          current: currentContainerDepthLabel,
-                          options: containerDepthOptions.keys.toList(),
+                          title: t.dietTypeLabel,
+                          current: currentDietTypeLabel,
+                          options: dietTypeOptions.keys.toList(),
+                          onSave: (value) => app.updateField((p) =>
+                              p.dietType = dietTypeOptions[value] ?? 'none'),
+                        ),
+                      ),
+                      _row(
+                        context,
+                        t.dietNoteLabel,
+                        profile.dietNote.isEmpty ? '--' : profile.dietNote,
+                        icon: Icons.sticky_note_2,
+                        onTap: () => _editText(
+                          context,
+                          title: t.dietNoteLabel,
+                          initial: profile.dietNote,
+                          onSave: (value) =>
+                              app.updateField((p) => p.dietNote = value.trim()),
+                        ),
+                      ),
+                    ],
+                  ),
+                  _sectionTitle(context, t.adviceStyleSection),
+                  _rowsCard(
+                    context,
+                    rows: [
+                      _row(
+                        context,
+                        t.toneLabel,
+                        currentToneLabel,
+                        icon: Icons.record_voice_over,
+                        onTap: () => _selectOption(
+                          context,
+                          title: t.toneLabel,
+                          current: currentToneLabel,
+                          options: toneOptions.keys.toList(),
                           onSave: (value) => app.updateField(
-                            (p) => p.containerDepth =
-                                containerDepthOptions[value] ?? 'medium',
+                            (p) => p.tone = toneOptions[value] ?? 'gentle',
                           ),
                         ),
                       ),
                       _row(
                         context,
-                        t.containerCapacityLabel,
-                        profile.containerCapacityMl > 0
-                            ? '${profile.containerCapacityMl} ml'
-                            : '--',
-                        icon: Icons.opacity,
-                        onTap: () => _editText(
+                        t.personaLabel,
+                        currentPersonaLabel,
+                        icon: Icons.face,
+                        onTap: () => _selectOption(
                           context,
-                          title: t.containerCapacityLabel,
-                          initial: profile.containerCapacityMl > 0
-                              ? profile.containerCapacityMl.toString()
-                              : '',
-                          keyboardType: TextInputType.number,
-                          onSave: (value) => app.updateField(
-                            (p) => p.containerCapacityMl =
-                                int.tryParse(value) ?? 0,
-                          ),
+                          title: t.personaLabel,
+                          current: currentPersonaLabel,
+                          options: personaOptions.keys.toList(),
+                          onSave: (value) => app.updateField((p) =>
+                              p.persona = personaOptions[value] ?? 'nutritionist'),
                         ),
                       ),
-                    ]),
-                  if (profile.containerSize == 'custom' &&
-                      (profile.containerType == 'bowl' ||
-                          profile.containerType == 'plate' ||
-                          profile.containerType == 'box'))
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: _row(
-                        context,
-                        t.containerDiameterLabel,
-                        profile.containerDiameterCm > 0
-                            ? '${profile.containerDiameterCm} cm'
-                            : '--',
-                        icon: Icons.radio_button_unchecked,
-                        onTap: () => _editText(
-                          context,
-                          title: t.containerDiameterLabel,
-                          initial: profile.containerDiameterCm > 0
-                              ? profile.containerDiameterCm.toString()
-                              : '',
-                          keyboardType: TextInputType.number,
-                          onSave: (value) => app.updateField(
-                            (p) => p.containerDiameterCm =
-                                int.tryParse(value) ?? p.containerDiameterCm,
-                          ),
-                        ),
-                      ),
-                    ),
-                  _sectionTitle(context, t.dietPreferenceSection),
-                  _grid2([
-                    _row(
-                      context,
-                      t.dietTypeLabel,
-                      currentDietTypeLabel,
-                      icon: Icons.restaurant_menu,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.dietTypeLabel,
-                        current: currentDietTypeLabel,
-                        options: dietTypeOptions.keys.toList(),
-                        onSave: (value) => app.updateField((p) =>
-                            p.dietType = dietTypeOptions[value] ?? 'none'),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.dietNoteLabel,
-                      profile.dietNote.isEmpty ? '--' : profile.dietNote,
-                      icon: Icons.sticky_note_2,
-                      onTap: () => _editText(
-                        context,
-                        title: t.dietNoteLabel,
-                        initial: profile.dietNote,
-                        onSave: (value) =>
-                            app.updateField((p) => p.dietNote = value.trim()),
-                      ),
-                    ),
-                  ]),
-                  _sectionTitle(context, t.adviceStyleSection),
-                  _grid2([
-                    _row(
-                      context,
-                      t.toneLabel,
-                      currentToneLabel,
-                      icon: Icons.record_voice_over,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.toneLabel,
-                        current: currentToneLabel,
-                        options: toneOptions.keys.toList(),
-                        onSave: (value) => app.updateField(
-                            (p) => p.tone = toneOptions[value] ?? 'gentle'),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.personaLabel,
-                      currentPersonaLabel,
-                      icon: Icons.face,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.personaLabel,
-                        current: currentPersonaLabel,
-                        options: personaOptions.keys.toList(),
-                        onSave: (value) => app.updateField((p) => p.persona =
-                            personaOptions[value] ?? 'nutritionist'),
-                      ),
-                    ),
-                  ]),
+                    ],
+                  ),
                   _sectionTitle(context, t.summarySettingsSection),
-                  _grid2([
-                    _row(
-                      context,
-                      t.summaryTimeLabel,
-                      profile.dailySummaryTime.format(context),
-                      icon: Icons.schedule,
-                      onTap: () => _pickTime(
-                        context,
-                        initial: profile.dailySummaryTime,
-                        onSave: (time) =>
-                            app.updateField((p) => p.dailySummaryTime = time),
-                      ),
-                    ),
-                    _row(
-                      context,
-                      t.weeklySummaryDayLabel,
-                      currentWeekdayLabel,
-                      icon: Icons.date_range,
-                      onTap: () => _selectOption(
-                        context,
-                        title: t.weeklySummaryDayLabel,
-                        current: currentWeekdayLabel,
-                        options: weekdayOptions.keys.toList(),
-                        onSave: (value) => app.updateField((p) =>
-                            p.weeklySummaryWeekday =
-                                weekdayOptions[value] ?? DateTime.sunday),
-                      ),
-                    ),
-                  ]),
-                  const SizedBox(height: 8),
-                  _row(
+                  _rowsCard(
                     context,
-                    t.mealTimeSection,
-                    _mealTimeSummary(context, profile),
-                    icon: Icons.schedule_outlined,
-                    onTap: () => _showMealTimeSheet(context, t, app),
+                    rows: [
+                      _row(
+                        context,
+                        t.summaryTimeLabel,
+                        profile.dailySummaryTime.format(context),
+                        icon: Icons.schedule,
+                        onTap: () => _pickTime(
+                          context,
+                          initial: profile.dailySummaryTime,
+                          onSave: (time) =>
+                              app.updateField((p) => p.dailySummaryTime = time),
+                        ),
+                      ),
+                      _row(
+                        context,
+                        t.weeklySummaryDayLabel,
+                        currentWeekdayLabel,
+                        icon: Icons.date_range,
+                        onTap: () => _selectOption(
+                          context,
+                          title: t.weeklySummaryDayLabel,
+                          current: currentWeekdayLabel,
+                          options: weekdayOptions.keys.toList(),
+                          onSave: (value) => app.updateField((p) =>
+                              p.weeklySummaryWeekday =
+                                  weekdayOptions[value] ?? DateTime.sunday),
+                        ),
+                      ),
+                      _row(
+                        context,
+                        t.mealTimeSection,
+                        _mealTimeSummary(context, profile),
+                        icon: Icons.schedule_outlined,
+                        onTap: () => _showMealTimeSheet(context, t, app),
+                      ),
+                    ],
                   ),
                   _sectionTitle(context, t.reminderSection),
-                  _switchRow(
+                  _rowsCard(
                     context,
-                    title: t.reminderBreakfast,
-                    icon: Icons.free_breakfast_outlined,
-                    value: profile.breakfastReminderEnabled,
-                    onChanged: (value) => app
-                        .updateField((p) => p.breakfastReminderEnabled = value),
-                  ),
-                  const SizedBox(height: 8),
-                  _switchRow(
-                    context,
-                    title: t.reminderLunch,
-                    icon: Icons.lunch_dining,
-                    value: profile.lunchReminderEnabled,
-                    onChanged: (value) =>
-                        app.updateField((p) => p.lunchReminderEnabled = value),
-                  ),
-                  const SizedBox(height: 8),
-                  _switchRow(
-                    context,
-                    title: t.reminderDinner,
-                    icon: Icons.nightlight_round,
-                    value: profile.dinnerReminderEnabled,
-                    onChanged: (value) =>
-                        app.updateField((p) => p.dinnerReminderEnabled = value),
+                    rows: [
+                      _switchRow(
+                        context,
+                        title: t.reminderBreakfast,
+                        icon: Icons.free_breakfast_outlined,
+                        value: profile.breakfastReminderEnabled,
+                        onChanged: (value) => app.updateField(
+                          (p) => p.breakfastReminderEnabled = value,
+                        ),
+                      ),
+                      _switchRow(
+                        context,
+                        title: t.reminderLunch,
+                        icon: Icons.lunch_dining,
+                        value: profile.lunchReminderEnabled,
+                        onChanged: (value) =>
+                            app.updateField((p) => p.lunchReminderEnabled = value),
+                      ),
+                      _switchRow(
+                        context,
+                        title: t.reminderDinner,
+                        icon: Icons.nightlight_round,
+                        value: profile.dinnerReminderEnabled,
+                        onChanged: (value) =>
+                            app.updateField((p) => p.dinnerReminderEnabled = value),
+                      ),
+                    ],
                   ),
                   _sectionTitle(context, t.subscriptionSection),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.workspace_premium,
-                                size: 18, color: Colors.black54),
-                            const SizedBox(width: 8),
-                            Text(
+                  _sectionCard(
+                    context,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
                               t.subscriptionSection,
-                              style: AppTextStyles.body(context)
-                                  .copyWith(fontWeight: FontWeight.w600),
+                              style: AppTextStyles.body(context).copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                            const Spacer(),
-                            Chip(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 6),
-                              label: Text(subscriptionStatus),
-                              labelStyle:
-                                  TextStyle(color: subscriptionLabelColor),
-                              backgroundColor:
-                                  subscriptionColor.withValues(alpha: 0.12),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
+                          ),
+                          Chip(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            label: Text(subscriptionStatus),
+                            labelStyle: TextStyle(color: subscriptionLabelColor),
+                            backgroundColor:
+                                subscriptionColor.withValues(alpha: 0.12),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ..._spacedChildren([
                         _row(
                           context,
                           t.subscriptionPlan,
@@ -1909,7 +1955,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           icon: Icons.star_border,
                           showChevron: false,
                         ),
-                        const SizedBox(height: 8),
                         _row(
                           context,
                           isZh ? '試用到期' : 'Trial ends',
@@ -1917,7 +1962,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           icon: Icons.timer_outlined,
                           showChevron: false,
                         ),
-                        const SizedBox(height: 8),
                         _row(
                           context,
                           isZh ? '白名單' : 'Whitelist',
@@ -1927,201 +1971,235 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           icon: Icons.verified_user_outlined,
                           showChevron: false,
                         ),
-                        if (isMockSubscription) ...[
-                          const SizedBox(height: 8),
-                          _row(
-                            context,
-                            isZh ? '測試方案' : 'Test plan',
-                            app.mockSubscriptionPlanId == kIapYearlyId
-                                ? t.webTestPlanYearly
-                                : t.webTestPlanMonthly,
-                            icon: Icons.science_outlined,
-                            showChevron: false,
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.tonal(
-                              onPressed: () {
-                                app.setMockSubscriptionActive(false);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(isZh
+                      ]),
+                    ],
+                  ),
+                  if (isMockSubscription) ...[
+                    const SizedBox(height: 10),
+                    _sectionTitle(context, isZh ? '測試工具' : 'Testing tools'),
+                    _sectionCard(
+                      context,
+                      children: [
+                        _row(
+                          context,
+                          isZh ? '測試方案' : 'Test plan',
+                          app.mockSubscriptionPlanId == kIapYearlyId
+                              ? t.webTestPlanYearly
+                              : t.webTestPlanMonthly,
+                          icon: Icons.science_outlined,
+                          showChevron: false,
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.tonal(
+                            onPressed: () {
+                              app.setMockSubscriptionActive(false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isZh
                                         ? '測試訂閱已清除'
-                                        : 'Test subscription cleared'),
+                                        : 'Test subscription cleared',
                                   ),
-                                );
-                              },
-                              child: Text(
-                                isZh ? '重設測試訂閱' : 'Reset test subscription',
-                              ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              isZh ? '重設測試訂閱' : 'Reset test subscription',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  _sectionTitle(context, t.languageLabel),
+                  _rowsCard(
+                    context,
+                    rows: [
+                      _row(
+                        context,
+                        t.languageLabel,
+                        profile.language == 'zh-TW' ? t.langZh : t.langEn,
+                        icon: Icons.language,
+                        onTap: () => _selectOption(
+                          context,
+                          title: t.languageLabel,
+                          current:
+                              profile.language == 'zh-TW' ? t.langZh : t.langEn,
+                          options: [t.langZh, t.langEn],
+                          onSave: (value) => app.updateField((p) =>
+                              p.language = value == t.langZh ? 'zh-TW' : 'en'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  _sectionTitle(context, t.layoutThemeLabel),
+                  _sectionCard(
+                    context,
+                    children: [
+                      _row(
+                        context,
+                        t.textSizeLabel,
+                        currentTextSizeLabel,
+                        icon: Icons.text_fields,
+                        onTap: () => _selectOption(
+                          context,
+                          title: t.textSizeLabel,
+                          current: currentTextSizeLabel,
+                          options: textSizeOptions.keys.toList(),
+                          onSave: (value) => app.updateField(
+                            (p) => p.textScale = textSizeOptions[value] ?? 1.0,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        isZh ? '配色主題' : 'Color themes',
+                        style: AppTextStyles.caption(context).copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _themeButton(
+                              context,
+                              label: t.themeClean,
+                              asset: 'assets/themes/theme_clean.json',
+                              currentAsset: currentThemeAsset,
+                              themeController: themeController,
+                              app: app,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _themeButton(
+                              context,
+                              label: t.themeWarm,
+                              asset: 'assets/themes/theme_warm.json',
+                              currentAsset: currentThemeAsset,
+                              themeController: themeController,
+                              app: app,
                             ),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _sectionTitle(context, t.languageLabel),
-                  _row(
-                    context,
-                    t.languageLabel,
-                    profile.language == 'zh-TW' ? t.langZh : t.langEn,
-                    icon: Icons.language,
-                    onTap: () => _selectOption(
-                      context,
-                      title: t.languageLabel,
-                      current:
-                          profile.language == 'zh-TW' ? t.langZh : t.langEn,
-                      options: [t.langZh, t.langEn],
-                      onSave: (value) => app.updateField((p) =>
-                          p.language = value == t.langZh ? 'zh-TW' : 'en'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _sectionTitle(context, t.layoutThemeLabel),
-                  _row(
-                    context,
-                    t.textSizeLabel,
-                    currentTextSizeLabel,
-                    icon: Icons.text_fields,
-                    onTap: () => _selectOption(
-                      context,
-                      title: t.textSizeLabel,
-                      current: currentTextSizeLabel,
-                      options: textSizeOptions.keys.toList(),
-                      onSave: (value) => app.updateField(
-                          (p) => p.textScale = textSizeOptions[value] ?? 1.0),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _themeButton(
-                          context,
-                          label: t.themeClean,
-                          asset: 'assets/themes/theme_clean.json',
-                          currentAsset: currentThemeAsset,
-                          themeController: themeController,
-                          app: app,
-                        ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _themeButton(
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _themeButton(
+                              context,
+                              label: t.themeGreen,
+                              asset: 'assets/themes/theme_green.json',
+                              currentAsset: currentThemeAsset,
+                              themeController: themeController,
+                              app: app,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _themeButton(
+                              context,
+                              label: t.themePink,
+                              asset: 'assets/themes/theme_pink.json',
+                              currentAsset: currentThemeAsset,
+                              themeController: themeController,
+                              app: app,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      _switchRow(
+                        context,
+                        title: t.glowToggleLabel,
+                        icon: Icons.blur_on,
+                        value: profile.glowEnabled,
+                        onChanged: (value) =>
+                            app.updateField((p) => p.glowEnabled = value),
+                      ),
+                      const SizedBox(height: 8),
+                      _row(
+                        context,
+                        t.plateStyleLabel,
+                        currentPlateLabel,
+                        icon: Icons.restaurant,
+                        onTap: () => _selectOption(
                           context,
-                          label: t.themeWarm,
-                          asset: 'assets/themes/theme_warm.json',
-                          currentAsset: currentThemeAsset,
-                          themeController: themeController,
-                          app: app,
+                          title: t.plateStyleLabel,
+                          current: currentPlateLabel,
+                          options: plateOptions.keys.toList(),
+                          onSave: (value) {
+                            app.updateField((p) => p.plateAsset =
+                                plateOptions[value] ?? kDefaultPlateAsset);
+                            app.precachePlateAsset();
+                          },
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _themeButton(
-                          context,
-                          label: t.themeGreen,
-                          asset: 'assets/themes/theme_green.json',
-                          currentAsset: currentThemeAsset,
-                          themeController: themeController,
-                          app: app,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _themeButton(
-                          context,
-                          label: t.themePink,
-                          asset: 'assets/themes/theme_pink.json',
-                          currentAsset: currentThemeAsset,
-                          themeController: themeController,
-                          app: app,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  _switchRow(
-                    context,
-                    title: t.glowToggleLabel,
-                    icon: Icons.blur_on,
-                    value: profile.glowEnabled,
-                    onChanged: (value) =>
-                        app.updateField((p) => p.glowEnabled = value),
                   ),
                   if (app.supportsSystemGallerySync) ...[
-                    const SizedBox(height: 8),
                     _sectionTitle(context, isZh ? '拍照與照片' : 'Camera & Photos'),
-                    _switchRow(
+                    _rowsCard(
                       context,
-                      title: isZh
-                          ? '拍照時同步存到系統相簿'
-                          : 'Save captured photos to system gallery',
-                      subtitle: isZh
-                          ? '關閉後，照片只留在 MiraMeal 內；開啟後，會再多存一份到手機相簿。'
-                          : 'When off, photos stay only inside MiraMeal. When on, a copy is also saved to your device gallery.',
-                      icon: Icons.photo_library_outlined,
-                      value: profile.saveCameraPhotosToGallery,
-                      onChanged: (value) => app.updateField(
-                          (p) => p.saveCameraPhotosToGallery = value),
+                      rows: [
+                        _switchRow(
+                          context,
+                          title: isZh
+                              ? '拍照時同步存到系統相簿'
+                              : 'Save captured photos to system gallery',
+                          subtitle: isZh
+                              ? '關閉後，照片只留在 MiraMeal 內；開啟後，會再多存一份到手機相簿。'
+                              : 'When off, photos stay only inside MiraMeal. When on, a copy is also saved to your device gallery.',
+                          icon: Icons.photo_library_outlined,
+                          value: profile.saveCameraPhotosToGallery,
+                          onChanged: (value) => app.updateField(
+                            (p) => p.saveCameraPhotosToGallery = value,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                  _row(
-                    context,
-                    t.plateStyleLabel,
-                    currentPlateLabel,
-                    icon: Icons.restaurant,
-                    onTap: () => _selectOption(
-                      context,
-                      title: t.plateStyleLabel,
-                      current: currentPlateLabel,
-                      options: plateOptions.keys.toList(),
-                      onSave: (value) {
-                        app.updateField((p) => p.plateAsset =
-                            plateOptions[value] ?? kDefaultPlateAsset);
-                        // Warm cache for the newly selected plate.
-                        app.precachePlateAsset();
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 8),
                   _sectionTitle(context, t.nutritionChartLabel),
-                  _row(
+                  _rowsCard(
                     context,
-                    t.nutritionChartLabel,
-                    currentChartLabel,
-                    icon: Icons.pie_chart,
-                    onTap: () => _selectOption(
-                      context,
-                      title: t.nutritionChartLabel,
-                      current: currentChartLabel,
-                      options: chartOptions.keys.toList(),
-                      onSave: (value) => app.updateField((p) =>
-                          p.nutritionChartStyle =
-                              chartOptions[value] ?? 'radar'),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _row(
-                    context,
-                    t.nutritionValueLabel,
-                    currentNutritionValueLabel,
-                    icon: Icons.format_list_numbered,
-                    onTap: () => _selectOption(
-                      context,
-                      title: t.nutritionValueLabel,
-                      current: currentNutritionValueLabel,
-                      options: nutritionValueOptions.keys.toList(),
-                      onSave: (value) => app.updateField((p) =>
-                          p.nutritionValueMode =
-                              nutritionValueOptions[value] ?? 'percent'),
-                    ),
+                    rows: [
+                      _row(
+                        context,
+                        t.nutritionChartLabel,
+                        currentChartLabel,
+                        icon: Icons.pie_chart,
+                        onTap: () => _selectOption(
+                          context,
+                          title: t.nutritionChartLabel,
+                          current: currentChartLabel,
+                          options: chartOptions.keys.toList(),
+                          onSave: (value) => app.updateField((p) =>
+                              p.nutritionChartStyle =
+                                  chartOptions[value] ?? 'radar'),
+                        ),
+                      ),
+                      _row(
+                        context,
+                        t.nutritionValueLabel,
+                        currentNutritionValueLabel,
+                        icon: Icons.format_list_numbered,
+                        onTap: () => _selectOption(
+                          context,
+                          title: t.nutritionValueLabel,
+                          current: currentNutritionValueLabel,
+                          options: nutritionValueOptions.keys.toList(),
+                          onSave: (value) => app.updateField((p) =>
+                              p.nutritionValueMode =
+                                  nutritionValueOptions[value] ?? 'percent'),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   _sectionTitle(context, t.versionSection),
@@ -2129,51 +2207,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     future: _loadVersionInfo(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return _row(context, t.versionBuild, t.usageLoading,
-                            icon: Icons.info_outline, showChevron: false);
+                        return _rowsCard(
+                          context,
+                          rows: [
+                            _row(
+                              context,
+                              t.versionBuild,
+                              t.usageLoading,
+                              icon: Icons.info_outline,
+                              showChevron: false,
+                            ),
+                          ],
+                        );
                       }
                       final info = snapshot.data;
                       if (info == null) {
-                        return _row(
-                            context, t.versionBuild, t.versionUnavailable,
-                            icon: Icons.info_outline, showChevron: false);
+                        return _rowsCard(
+                          context,
+                          rows: [
+                            _row(
+                              context,
+                              t.versionBuild,
+                              t.versionUnavailable,
+                              icon: Icons.info_outline,
+                              showChevron: false,
+                            ),
+                          ],
+                        );
                       }
                       final commit = info['commit'] ?? '';
                       final shortCommit =
                           commit.length > 7 ? commit.substring(0, 7) : commit;
-                      return Column(
-                        children: [
-                          _row(context, t.versionBuild,
-                              info['build_time'] ?? '--',
-                              icon: Icons.info_outline, showChevron: false),
-                          const SizedBox(height: 6),
-                          _row(context, t.versionCommit,
-                              shortCommit.isEmpty ? '--' : shortCommit,
-                              icon: Icons.code, showChevron: false),
+                      return _rowsCard(
+                        context,
+                        rows: [
+                          _row(
+                            context,
+                            t.versionBuild,
+                            info['build_time'] ?? '--',
+                            icon: Icons.info_outline,
+                            showChevron: false,
+                          ),
+                          _row(
+                            context,
+                            t.versionCommit,
+                            shortCommit.isEmpty ? '--' : shortCommit,
+                            icon: Icons.code,
+                            showChevron: false,
+                          ),
                         ],
+                        gap: 6,
                       );
                     },
                   ),
                   const SizedBox(height: 8),
                   _sectionTitle(context, t.dataSection),
-                  _grid2([
-                    _row(
-                      context,
-                      t.exportData,
-                      '',
-                      icon: Icons.file_download,
-                      showChevron: false,
-                      onTap: () => _exportData(context, app),
-                    ),
-                    _row(
-                      context,
-                      t.clearData,
-                      '',
-                      icon: Icons.delete_outline,
-                      showChevron: false,
-                      onTap: () => _clearData(context, app),
-                    ),
-                  ]),
+                  _rowsCard(
+                    context,
+                    rows: [
+                      _row(
+                        context,
+                        t.exportData,
+                        '',
+                        icon: Icons.file_download,
+                        showChevron: false,
+                        onTap: () => _exportData(context, app),
+                      ),
+                      _row(
+                        context,
+                        t.clearData,
+                        '',
+                        icon: Icons.delete_outline,
+                        showChevron: false,
+                        onTap: () => _clearData(context, app),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
