@@ -230,24 +230,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final color = scheme.primary;
     final previewColors = switch (asset) {
       'assets/themes/theme_clean.json' => [
-          const Color(0xFFDFF6E8),
-          const Color(0xFF88D7A7),
-          const Color(0xFFF5F8F6),
+          const Color(0xFFE6F1FF),
+          const Color(0xFF5B7CFA),
+          const Color(0xFFF4C95D),
         ],
       'assets/themes/theme_warm.json' => [
-          const Color(0xFFFCE8D2),
-          const Color(0xFFE7B56A),
-          const Color(0xFFF7F1E8),
+          const Color(0xFFFFE8D8),
+          const Color(0xFFE8916A),
+          const Color(0xFFF1B86A),
         ],
       'assets/themes/theme_green.json' => [
-          const Color(0xFFD8F4E4),
-          const Color(0xFF57C08A),
-          const Color(0xFFEAF8F0),
+          const Color(0xFFDDF6E5),
+          const Color(0xFF5FBF8A),
+          const Color(0xFFF4C95D),
         ],
       'assets/themes/theme_pink.json' => [
-          const Color(0xFFF9DCE7),
-          const Color(0xFFE78DB0),
-          const Color(0xFFFFF2F7),
+          const Color(0xFFFDE3F0),
+          const Color(0xFFE953A3),
+          const Color(0xFFF4C95D),
         ],
       _ => [
           scheme.primary.withValues(alpha: 0.20),

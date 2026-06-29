@@ -1556,6 +1556,19 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     return Color.lerp(base, onSurface, amount) ?? onSurface;
   }
 
+  Color _softThemeFill(Color seed, {double blendToSurface = 0.88}) {
+    final surface = Theme.of(context).colorScheme.surface;
+    return Color.lerp(seed, surface, blendToSurface) ?? surface;
+  }
+
+  List<Color> _energyBarGradient(Color primary, AppTheme appTheme) {
+    return [
+      _softThemeFill(primary, blendToSurface: 0.38),
+      primary,
+      Color.lerp(primary, appTheme.accent, 0.6) ?? appTheme.accent,
+    ];
+  }
+
   Widget _buildSavedStatusRow() {
     if (_savedEntry == null) return const SizedBox.shrink();
     final appTheme = _appThemeTokens;
@@ -1767,13 +1780,18 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
         ? t.suggestInstantDrinkAdviceTitle
         : t.suggestInstantAdviceTitle;
     final theme = Theme.of(context);
+    final appTheme = _appThemeTokens;
     final primary = theme.colorScheme.primary;
+    final titleColor = _toneText(primary, amount: 0.3);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.065),
+        color: _softThemeFill(primary, blendToSurface: 0.9),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: appTheme.glow.withValues(alpha: 0.42),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1791,7 +1809,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                 style: AppTextStyles.body(context)
                     .copyWith(
                       fontWeight: FontWeight.w700,
-                      color: _toneText(primary, amount: 0.38),
+                      color: titleColor,
                     ),
               ),
             ],
@@ -2644,19 +2662,16 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
     final ratio = current / avg;
     String message;
     IconData icon;
-    Color color;
+    final color = _toneText(theme.colorScheme.primary, amount: 0.3);
     if (ratio >= 1.18) {
       message = _isZh() ? '比你最近同類餐點偏高一些' : 'A bit higher than your recent similar meals';
       icon = Icons.trending_up_rounded;
-      color = _toneText(appTheme.warning, amount: 0.22);
     } else if (ratio <= 0.82) {
       message = _isZh() ? '比你最近同類餐點偏輕一些' : 'A bit lighter than your recent similar meals';
       icon = Icons.trending_down_rounded;
-      color = _toneText(appTheme.success, amount: 0.25);
     } else {
       message = _isZh() ? '接近你最近同類餐點的常見範圍' : 'Close to your recent usual range';
       icon = Icons.check_circle_outline_rounded;
-      color = _toneText(theme.colorScheme.primary, amount: 0.36);
     }
     final markerRatio = ((ratio.clamp(0.65, 1.35) - 0.65) / 0.7)
         .clamp(0.0, 1.0)
@@ -2697,11 +2712,10 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(999),
                         gradient: LinearGradient(
-                          colors: [
-                            appTheme.success,
+                          colors: _energyBarGradient(
                             theme.colorScheme.primary,
-                            appTheme.warning,
-                          ],
+                            appTheme,
+                          ),
                         ),
                       ),
                     ),
@@ -3104,15 +3118,18 @@ class _SuggestionsScreenState extends State<SuggestionsScreen>
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            color: _softThemeFill(theme.colorScheme.primary, blendToSurface: 0.9),
             borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: appTheme.glow.withValues(alpha: 0.38),
+            ),
           ),
           child: Text(
             summaryLine,
             textAlign: TextAlign.center,
             style: AppTextStyles.body(context).copyWith(
               fontWeight: FontWeight.w700,
-              color: _toneText(theme.colorScheme.primary, amount: 0.38),
+              color: _toneText(theme.colorScheme.primary, amount: 0.3),
               height: 1.35,
             ),
           ),
