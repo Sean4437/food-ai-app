@@ -10,6 +10,7 @@ import '../design/theme_controller.dart';
 import '../state/app_state.dart';
 import '../widgets/app_background.dart';
 import '../widgets/backup_password_prompt.dart';
+import '../widgets/subscription_paywall.dart';
 import '../design/text_styles.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -165,6 +166,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Expanded(
                   child: Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.body(context).copyWith(
                       color: scheme.onSurface,
                     ),
@@ -251,6 +254,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(width: 12),
           Switch(value: value, onChanged: onChanged),
         ],
+      ),
+    );
+  }
+
+  Widget _actionRowButton(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required VoidCallback? onPressed,
+    bool destructive = false,
+    bool filled = false,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final foreground = destructive ? scheme.error : scheme.primary;
+    final background = destructive
+        ? scheme.error.withValues(alpha: 0.08)
+        : scheme.primary.withValues(alpha: 0.08);
+
+    if (filled) {
+      return SizedBox(
+        width: double.infinity,
+        child: FilledButton.tonalIcon(
+          onPressed: onPressed,
+          style: FilledButton.styleFrom(
+            foregroundColor: foreground,
+            backgroundColor: background,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          icon: Icon(icon, size: 18),
+          label: Text(title),
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: foreground,
+          side: BorderSide(color: foreground.withValues(alpha: 0.45)),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        icon: Icon(icon, size: 18),
+        label: Text(title),
       ),
     );
   }
@@ -1423,6 +1477,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final resetTestSubscriptionDone =
         isZh ? '已清除測試訂閱' : 'Test subscription cleared';
     final notEnabledText = isZh ? '未啟用' : 'Not enabled';
+    final syncActionTitle = isZh ? '立即同步' : 'Sync now';
+    final syncBusyTitle = isZh ? '同步中' : 'Syncing';
+    final subscriptionActionTitle = (isSubscribed ||
+            isBackendPaidPlan ||
+            isWhitelisted ||
+            isMockSubscription)
+        ? (isZh ? '查看方案' : 'View plan')
+        : (isZh ? '查看訂閱方案' : 'View plans');
+    final developerSectionTitle = isZh ? '開發與測試' : 'Developer & testing';
+    final dataSectionHint = isZh
+        ? '匯出備份或清除目前裝置上的本機資料。'
+        : 'Export a backup or clear the data stored on this device.';
+    final canOpenSubscriptionPaywall =
+        kIsWeb || defaultTargetPlatform == TargetPlatform.iOS;
+    final showDeveloperTools = isMockSubscription;
     return AppBackground(
       child: SafeArea(
         child: SingleChildScrollView(
@@ -1500,7 +1569,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 12),
                       if (isSupabaseSignedIn) ...[
-                        _grid2([
+                        ..._spacedChildren([
                           _row(
                             context,
                             t.nicknameLabel,
@@ -1527,12 +1596,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ]),
                         const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
+                        Align(
+                          alignment: Alignment.centerRight,
                           child: OutlinedButton.icon(
                             onPressed: isSyncing
                                 ? null
                                 : () => _runSupabaseSync(context, app),
+                            style: OutlinedButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                            ),
                             icon: isSyncing
                                 ? const SizedBox(
                                     width: 14,
@@ -1541,10 +1617,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(Icons.sync_rounded),
+                                : const Icon(Icons.sync_rounded, size: 18),
                             label: Text(
-                              isSyncing ? t.syncInProgress : t.syncNow,
-                            ),
+                                isSyncing ? syncBusyTitle : syncActionTitle),
                           ),
                         ),
                       ] else ...[
@@ -2049,59 +2124,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           showChevron: false,
                           dense: true,
                         ),
-                      ]),
-                      if (isMockSubscription) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest
-                                .withValues(alpha: 0.28),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                testingToolsTitle,
-                                style: AppTextStyles.caption(context).copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.62),
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              _row(
-                                context,
-                                testPlanTitle,
-                                app.mockSubscriptionPlanId == kIapYearlyId
-                                    ? t.webTestPlanYearly
-                                    : t.webTestPlanMonthly,
-                                icon: Icons.science_outlined,
-                                showChevron: false,
-                                dense: true,
-                              ),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton(
-                                  onPressed: () {
-                                    app.setMockSubscriptionActive(false);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content:
-                                            Text(resetTestSubscriptionDone),
-                                      ),
-                                    );
-                                  },
-                                  child: Text(resetTestSubscriptionTitle),
-                                ),
-                              ),
-                            ],
-                          ),
+                        _actionRowButton(
+                          context,
+                          title: subscriptionActionTitle,
+                          icon: Icons.workspace_premium_outlined,
+                          filled: true,
+                          onPressed: canOpenSubscriptionPaywall
+                              ? () => showSubscriptionPaywall(context, app, t)
+                              : null,
                         ),
-                      ],
+                      ]),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -2360,29 +2392,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 8),
                   _sectionTitle(context, t.dataSection),
-                  _rowsCard(
+                  _sectionCard(
                     context,
-                    rows: [
-                      _row(
-                        context,
-                        t.exportData,
-                        '',
-                        icon: Icons.file_download,
-                        showChevron: false,
-                        dense: true,
-                        onTap: () => _exportData(context, app),
-                      ),
-                      _row(
-                        context,
-                        t.clearData,
-                        '',
-                        icon: Icons.delete_outline,
-                        showChevron: false,
-                        dense: true,
-                        onTap: () => _clearData(context, app),
-                      ),
+                    children: [
+                      _sectionHint(context, dataSectionHint),
+                      ..._spacedChildren([
+                        _actionRowButton(
+                          context,
+                          title: t.exportData,
+                          icon: Icons.file_download_outlined,
+                          onPressed: () => _exportData(context, app),
+                        ),
+                        _actionRowButton(
+                          context,
+                          title: t.clearData,
+                          icon: Icons.delete_outline,
+                          destructive: true,
+                          onPressed: () => _clearData(context, app),
+                        ),
+                      ]),
                     ],
                   ),
+                  if (showDeveloperTools) ...[
+                    const SizedBox(height: 8),
+                    _sectionTitle(context, developerSectionTitle),
+                    _sectionCard(
+                      context,
+                      children: [
+                        _sectionHint(context, testingToolsTitle),
+                        ..._spacedChildren([
+                          _row(
+                            context,
+                            testPlanTitle,
+                            app.mockSubscriptionPlanId == kIapYearlyId
+                                ? t.webTestPlanYearly
+                                : t.webTestPlanMonthly,
+                            icon: Icons.science_outlined,
+                            showChevron: false,
+                            dense: true,
+                          ),
+                          _actionRowButton(
+                            context,
+                            title: resetTestSubscriptionTitle,
+                            icon: Icons.restart_alt,
+                            onPressed: () {
+                              app.setMockSubscriptionActive(false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(resetTestSubscriptionDone),
+                                ),
+                              );
+                            },
+                          ),
+                        ]),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
