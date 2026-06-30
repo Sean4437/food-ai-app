@@ -1249,6 +1249,139 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _showSecuritySheet(BuildContext context, AppState app) async {
+    final theme = Theme.of(context);
+    final isZh = Localizations.localeOf(context).languageCode.startsWith('zh');
+    final email = app.supabaseUserEmail ?? '--';
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 28,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  isZh ? '登入與安全' : 'Sign-in & security',
+                  style: AppTextStyles.title2(context),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  isZh
+                      ? '管理登入方式、登出與帳號刪除。'
+                      : 'Manage sign-in method, sign out, and account deletion.',
+                  style: AppTextStyles.caption(context).copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.66),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isZh ? '目前登入帳號' : 'Signed-in email',
+                        style: AppTextStyles.caption(context).copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.62,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        email,
+                        style: AppTextStyles.body(context).copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _row(
+                  sheetContext,
+                  isZh ? '登入密碼' : 'Sign-in password',
+                  isZh ? '設定或更新' : 'Set or update',
+                  icon: Icons.lock_outline,
+                  onTap: () async {
+                    Navigator.of(sheetContext).pop();
+                    await showBackupPasswordSetupDialog(context, app);
+                  },
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      Navigator.of(sheetContext).pop();
+                      await app.signOutSupabase();
+                    },
+                    icon: const Icon(Icons.logout_rounded),
+                    label: Text(isZh ? '登出' : 'Sign out'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      Navigator.of(sheetContext).pop();
+                      await _showDeleteAccountDialog(context, app);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: theme.colorScheme.error,
+                      side: BorderSide(
+                        color: theme.colorScheme.error.withValues(alpha: 0.36),
+                      ),
+                    ),
+                    icon: const Icon(Icons.delete_forever_outlined),
+                    label: Text(isZh ? '刪除帳號' : 'Delete account'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   String _bmiText(UserProfile profile, AppLocalizations t) {
     if (profile.heightCm <= 0) return '--';
     final heightM = profile.heightCm / 100.0;
@@ -1637,15 +1770,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ),
                                   ),
                                 ),
-                                if (isSupabaseSignedIn)
-                                  TextButton(
-                                    onPressed: isSyncing
-                                        ? null
-                                        : () async {
-                                            await app.signOutSupabase();
-                                          },
-                                    child: Text(t.syncSignOut),
-                                  ),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -1681,10 +1805,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             securityValue,
                             icon: Icons.lock_outline,
                             dense: true,
-                            onTap: () => showBackupPasswordSetupDialog(
-                              context,
-                              app,
-                            ),
+                            onTap: () => _showSecuritySheet(context, app),
                           ),
                         ]),
                         const SizedBox(height: 12),
@@ -1712,27 +1833,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 : const Icon(Icons.sync_rounded, size: 18),
                             label: Text(
                                 isSyncing ? syncBusyTitle : syncActionTitle),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: isSyncing
-                                ? null
-                                : () => _showDeleteAccountDialog(context, app),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: theme.colorScheme.error,
-                              side: BorderSide(
-                                color: theme.colorScheme.error.withValues(
-                                  alpha: 0.35,
-                                ),
-                              ),
-                            ),
-                            icon: const Icon(Icons.delete_forever_outlined),
-                            label: Text(
-                              isZh ? '刪除帳號' : 'Delete account',
-                            ),
                           ),
                         ),
                       ] else ...[
