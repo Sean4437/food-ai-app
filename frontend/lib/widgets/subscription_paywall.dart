@@ -19,9 +19,20 @@ Future<void> showSubscriptionPaywall(
   final hadPaidAccess = app.hasPaidAccess;
   if (kIsWeb) {
     if (!kEnableWebMockSubscription) {
+      final isZh = Localizations.localeOf(context)
+          .languageCode
+          .toLowerCase()
+          .startsWith('zh');
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(t.webPaywallTestNote)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isZh
+                  ? 'Web 版目前不提供訂閱購買，請改用 iPhone App 內升級。'
+                  : 'Subscriptions are not available on the web version. Please upgrade in the iPhone app.',
+            ),
+          ),
+        );
       }
       return;
     }
