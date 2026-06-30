@@ -19,6 +19,7 @@ from datetime import datetime, timezone, timedelta
 import jwt
 from jwt import PyJWKClient
 import httpx
+from urllib.parse import quote
 
 _base_dir = Path(__file__).resolve().parent
 _env_path = _base_dir / ".env.runtime"
@@ -4340,6 +4341,165 @@ def _get_supabase_http_client() -> httpx.Client:
     if _supabase_http_client is None:
         _supabase_http_client = httpx.Client(timeout=10)
     return _supabase_http_client
+
+
+def _supabase_rest_list_rows(
+    table: str,
+    *,
+    select: str,
+    match_field: str,
+    match_value: str,
+    page_size: int = 500,
+) -> list[dict[str, Any]]:
+    headers = _supabase_headers()
+    client = _get_supabase_http_client()
+    rows: list[dict[str, Any]] = []
+    offset = 0
+    while True:
+        resp = client.get(
+            f"{SUPABASE_URL}/rest/v1/{table}",
+            headers=headers,
+            params={
+                "select": select,
+                match_field: f"eq.{match_value}",
+                "limit": str(page_size),
+                "offset": str(offset),
+            },
+        )
+        if resp.status_code >= 400:
+            logging.warning(
+                "Supabase %s list failed (%s): %s",
+                table,
+                resp.status_code,
+                resp.text[:180],
+            )
+            raise HTTPException(status_code=502, detail=f"account_delete_{table}_list_failed")
+        parsed = _parse_json_response_utf8(resp)
+        if not isinstance(parsed, list):
+            raise HTTPException(status_code=502, detail=f"account_delete_{table}_list_invalid")
+        batch = [row for row in parsed if isinstance(row, dict)]
+        rows.extend(batch)
+        if len(batch) < page_size:
+            break
+        offset += page_size
+    return rows
+
+
+def _supabase_rest_delete_rows(
+    table: str,
+    *,
+    match_field: str,
+    match_value: str,
+) -> None:
+    headers = _supabase_headers()
+    headers["Prefer"] = "return=minimal"
+    client = _get_supabase_http_client()
+    resp = client.delete(
+        f"{SUPABASE_URL}/rest/v1/{table}",
+        headers=headers,
+        params={match_field: f"eq.{match_value}"},
+    )
+    if resp.status_code >= 400:
+        logging.warning(
+            "Supabase %s delete failed (%s): %s",
+            table,
+            resp.status_code,
+            resp.text[:180],
+        )
+        raise HTTPException(status_code=502, detail=f"account_delete_{table}_delete_failed")
+
+
+def _supabase_storage_delete_object(bucket: str, path: str) -> None:
+    normalized = (path or "").strip().lstrip("/")
+    if not normalized:
+        return
+    headers = _supabase_headers()
+    client = _get_supabase_http_client()
+    encoded_path = quote(normalized, safe="/")
+    resp = client.delete(
+        f"{SUPABASE_URL}/storage/v1/object/{bucket}/{encoded_path}",
+        headers=headers,
+    )
+    if resp.status_code in (200, 204, 404):
+        return
+    logging.warning(
+        "Supabase storage delete failed (%s/%s) (%s): %s",
+        bucket,
+        normalized,
+        resp.status_code,
+        resp.text[:180],
+    )
+    raise HTTPException(status_code=502, detail="account_delete_storage_failed")
+
+
+def _collect_account_storage_paths(user_id: str) -> dict[str, set[str]]:
+    buckets: dict[str, set[str]] = {
+        "meal-images": set(),
+        "label-images": set(),
+    }
+    meal_rows = _supabase_rest_list_rows(
+        "meals",
+        select="image_path,label_image_path",
+        match_field="user_id",
+        match_value=user_id,
+    )
+    for row in meal_rows:
+        image_path = str(row.get("image_path") or "").strip()
+        label_path = str(row.get("label_image_path") or "").strip()
+        if image_path:
+            buckets["meal-images"].add(image_path)
+        if label_path:
+            buckets["label-images"].add(label_path)
+
+    custom_rows = _supabase_rest_list_rows(
+        "custom_foods",
+        select="image_path",
+        match_field="user_id",
+        match_value=user_id,
+    )
+    for row in custom_rows:
+        image_path = str(row.get("image_path") or "").strip()
+        if image_path:
+            buckets["meal-images"].add(image_path)
+
+    return buckets
+
+
+def _delete_account_remote_data(user_id: str) -> None:
+    storage_paths = _collect_account_storage_paths(user_id)
+    for bucket, paths in storage_paths.items():
+        for path in sorted(paths):
+            _supabase_storage_delete_object(bucket, path)
+
+    for table in ("meals", "custom_foods", "user_settings", "sync_meta"):
+        _supabase_rest_delete_rows(
+            table,
+            match_field="user_id",
+            match_value=user_id,
+        )
+
+    _supabase_rest_delete_rows(
+        "profiles",
+        match_field="id",
+        match_value=user_id,
+    )
+
+
+def _delete_supabase_auth_user(user_id: str) -> None:
+    headers = _supabase_headers()
+    client = _get_supabase_http_client()
+    resp = client.delete(
+        f"{SUPABASE_URL}/auth/v1/admin/users/{user_id}",
+        headers=headers,
+    )
+    if resp.status_code in (200, 204, 404):
+        return
+    logging.warning(
+        "Supabase auth delete failed (%s): %s",
+        resp.status_code,
+        resp.text[:180],
+    )
+    raise HTTPException(status_code=502, detail="account_delete_auth_failed")
 
 
 def _normalize_food_query(value: str) -> str:
@@ -9410,6 +9570,19 @@ def verify_ios_subscription(
 @app.get("/access_status")
 def access_status(_auth: dict = Depends(_require_auth)):
     return _build_access_status(_auth)
+
+
+@app.delete("/account")
+def delete_account(_auth: dict = Depends(_require_auth)):
+    user_id = str(_auth.get("user_id") or "").strip()
+    if not user_id:
+        raise HTTPException(status_code=401, detail="auth_required")
+    _delete_account_remote_data(user_id)
+    _delete_supabase_auth_user(user_id)
+    return {
+        "ok": True,
+        "deleted_user_id": user_id,
+    }
 
 
 

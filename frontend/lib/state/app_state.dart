@@ -9500,6 +9500,25 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deleteSupabaseAccount() async {
+    if (!isSupabaseSignedIn) {
+      throw Exception('not_signed_in');
+    }
+    final token = _accessToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('missing_access_token');
+    }
+    final rememberedEmail = (supabaseUserEmail ?? profile.email).trim();
+    await _api.deleteAccount(accessToken: token);
+    if (rememberedEmail.isNotEmpty) {
+      removeRememberedAuthEmail(rememberedEmail);
+    }
+    await _supabase.client.auth.signOut(scope: SignOutScope.local);
+    await _clearLocalDataForAccountSwitch();
+    await refreshAccessStatus();
+    notifyListeners();
+  }
+
   Future<void> switchAccount() async {
     await _supabase.client.auth.signOut();
     await _clearLocalDataForAccountSwitch();

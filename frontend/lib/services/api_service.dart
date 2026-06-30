@@ -510,6 +510,31 @@ class ApiService {
     return _decodeJson(response) as Map<String, dynamic>;
   }
 
+  Future<void> deleteAccount({
+    String? accessToken,
+  }) async {
+    final uri = Uri.parse('$baseUrl/account');
+    final response = await http
+        .delete(
+          uri,
+          headers: _authHeaders(accessToken),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) {
+      String code = 'unknown';
+      String message = _bodyText(response);
+      try {
+        final decoded = _decodeJson(response);
+        if (decoded is Map<String, dynamic>) {
+          code = (decoded['detail'] ?? decoded['code'] ?? code).toString();
+          message =
+              (decoded['message'] ?? decoded['detail'] ?? message).toString();
+        }
+      } catch (_) {}
+      throw ApiException(response.statusCode, code, message);
+    }
+  }
+
   Future<Map<String, dynamic>> verifyIosSubscription({
     required String productId,
     required String receiptData,

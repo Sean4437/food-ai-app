@@ -1157,6 +1157,98 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _showDeleteAccountDialog(
+    BuildContext context,
+    AppState app,
+  ) async {
+    final isZh = Localizations.localeOf(context).languageCode.startsWith('zh');
+    final controller = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        var canDelete = false;
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: Text(isZh ? '刪除帳號' : 'Delete account'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isZh
+                      ? '這會永久刪除你的帳號、雲端同步資料與相關紀錄，完成後無法復原。'
+                      : 'This permanently deletes your account, synced data, and related records. This action cannot be undone.',
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  app.supabaseUserEmail ?? '',
+                  style: AppTextStyles.caption(context).copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: controller,
+                  onChanged: (value) {
+                    final nextCanDelete = value.trim().toUpperCase() == 'DELETE';
+                    if (nextCanDelete != canDelete) {
+                      setState(() => canDelete = nextCanDelete);
+                    }
+                  },
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: InputDecoration(
+                    labelText:
+                        isZh ? '輸入 DELETE 以確認' : 'Type DELETE to confirm',
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: Text(isZh ? '取消' : 'Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: canDelete
+                    ? () => Navigator.of(dialogContext).pop(true)
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(dialogContext).colorScheme.error,
+                  foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+                ),
+                child: Text(isZh ? '永久刪除' : 'Delete forever'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (confirmed != true) return;
+    try {
+      await app.deleteSupabaseAccount();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isZh ? '帳號已刪除，這台裝置上的登入也已清除。' : 'Account deleted and local sign-in cleared.',
+          ),
+        ),
+      );
+    } catch (err) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isZh ? '刪除帳號失敗：$err' : 'Delete account failed: $err',
+          ),
+        ),
+      );
+    }
+  }
+
   String _bmiText(UserProfile profile, AppLocalizations t) {
     if (profile.heightCm <= 0) return '--';
     final heightM = profile.heightCm / 100.0;
@@ -1620,6 +1712,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 : const Icon(Icons.sync_rounded, size: 18),
                             label: Text(
                                 isSyncing ? syncBusyTitle : syncActionTitle),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: isSyncing
+                                ? null
+                                : () => _showDeleteAccountDialog(context, app),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.error,
+                              side: BorderSide(
+                                color: theme.colorScheme.error.withValues(
+                                  alpha: 0.35,
+                                ),
+                              ),
+                            ),
+                            icon: const Icon(Icons.delete_forever_outlined),
+                            label: Text(
+                              isZh ? '刪除帳號' : 'Delete account',
+                            ),
                           ),
                         ),
                       ] else ...[
