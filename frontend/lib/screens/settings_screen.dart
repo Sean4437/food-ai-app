@@ -111,6 +111,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _sectionHint(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: AppTextStyles.caption(context).copyWith(
+          color:
+              Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.62),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
   Widget _row(
     BuildContext context,
     String title,
@@ -118,6 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     IconData? icon,
     VoidCallback? onTap,
     bool showChevron = true,
+    bool dense = false,
   }) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -133,7 +148,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            padding: EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: dense ? 9 : 11,
+            ),
             child: Row(
               children: [
                 if (icon != null) ...[
@@ -262,6 +280,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return DateFormat('M/d').format(date.toLocal());
   }
 
+  String _formatBuildTime(String value) {
+    if (value.trim().isEmpty) return '--';
+    try {
+      final date = DateTime.parse(value).toLocal();
+      return DateFormat('yyyy/MM/dd HH:mm').format(date);
+    } catch (_) {
+      return value;
+    }
+  }
+
   Widget _themeButton(
     BuildContext context, {
     required String label,
@@ -331,8 +359,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ),
-              if (selected)
-                Icon(Icons.check_circle, size: 18, color: color),
+              if (selected) Icon(Icons.check_circle, size: 18, color: color),
             ],
           ),
           const SizedBox(height: 10),
@@ -350,7 +377,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ),
-                if (previewColor != previewColors.last) const SizedBox(width: 6),
+                if (previewColor != previewColors.last)
+                  const SizedBox(width: 6),
               ],
             ],
           ),
@@ -418,7 +446,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     isZh
-                                        ? '調整每個餐期的開始與結束時間。'
+                                        ? '調整每一餐的開始與結束時間，讓提醒與總結更貼近你的作息。'
                                         : 'Adjust the start and end time for each meal window.',
                                     style: AppTextStyles.caption(sheetContext)
                                         .copyWith(
@@ -976,13 +1004,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         parts.add('上傳餐點 ${report.pushedMeals}');
       }
       if (report.pushedMealDeletes > 0) {
-        parts.add('刪除餐點 ${report.pushedMealDeletes}');
+        parts.add('上傳刪除餐點 ${report.pushedMealDeletes}');
       }
       if (report.pushedCustomFoods > 0) {
         parts.add('上傳自訂食物 ${report.pushedCustomFoods}');
       }
       if (report.pushedCustomDeletes > 0) {
-        parts.add('刪除自訂食物 ${report.pushedCustomDeletes}');
+        parts.add('上傳刪除自訂 ${report.pushedCustomDeletes}');
       }
       if (report.pushedSettings > 0) {
         parts.add('上傳設定 ${report.pushedSettings}');
@@ -991,13 +1019,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         parts.add('下載餐點 ${report.pulledMeals}');
       }
       if (report.pulledMealDeletes > 0) {
-        parts.add('下載餐點刪除 ${report.pulledMealDeletes}');
+        parts.add('下載刪除餐點 ${report.pulledMealDeletes}');
       }
       if (report.pulledCustomFoods > 0) {
         parts.add('下載自訂食物 ${report.pulledCustomFoods}');
       }
       if (report.pulledCustomDeletes > 0) {
-        parts.add('下載自訂刪除 ${report.pulledCustomDeletes}');
+        parts.add('下載刪除自訂 ${report.pulledCustomDeletes}');
       }
       if (report.pulledSettings > 0) {
         parts.add('下載設定 ${report.pulledSettings}');
@@ -1184,7 +1212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final dateText = _formatDateShort(trialEndAt);
       subscriptionStatus = dateText == '--'
           ? (isZh ? '試用中' : 'Trial active')
-          : (isZh ? '試用到 $dateText' : 'Trial until $dateText');
+          : (isZh ? '試用至 $dateText' : 'Trial until $dateText');
       subscriptionColor = Colors.orange;
     } else {
       subscriptionStatus = isZh ? '已到期' : 'Expired';
@@ -1369,6 +1397,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isSyncing = app.syncInProgress;
     final supabaseEmail = app.supabaseUserEmail ?? '';
     final theme = Theme.of(context);
+    final syncHeadline = isSupabaseSignedIn
+        ? '${t.syncSignedInAs} $supabaseEmail'
+        : t.syncNotSignedIn;
+    final syncHint = isSupabaseSignedIn
+        ? (isZh ? '目前資料會同步到這個帳號。' : 'Your data syncs to this account.')
+        : (isZh
+            ? '尚未登入，資料只保留在目前裝置。'
+            : 'You are not signed in. Data stays on this device.');
+    final securityTitle = isZh ? '登入與安全' : 'Sign-in & security';
+    final securityValue = isZh ? '管理' : 'Manage';
+    final bodyProfileTitle = isZh ? '身體資料' : 'Body profile';
+    final goalsTitle = isZh ? '目標設定' : 'Goals';
+    final subscriptionHint = isZh
+        ? '查看目前方案、試用與白名單狀態。'
+        : 'Current plan, trial, and whitelist status.';
+    final trialEndsTitle = isZh ? '試用到期' : 'Trial ends';
+    final whitelistTitle = isZh ? '白名單' : 'Whitelist';
+    final yesText = isZh ? '是' : 'Yes';
+    final noText = isZh ? '否' : 'No';
+    final testingToolsTitle = isZh ? '測試工具' : 'Testing tools';
+    final testPlanTitle = isZh ? '測試方案' : 'Test plan';
+    final resetTestSubscriptionTitle =
+        isZh ? '重設測試訂閱' : 'Reset test subscription';
+    final resetTestSubscriptionDone =
+        isZh ? '已清除測試訂閱' : 'Test subscription cleared';
+    final notEnabledText = isZh ? '未啟用' : 'Not enabled';
     return AppBackground(
       child: SafeArea(
         child: SingleChildScrollView(
@@ -1386,7 +1440,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ? '帳號、同步、提醒與外觀都集中整理在這裡。'
                         : 'Account, sync, reminders, and appearance are managed here.',
                     style: AppTextStyles.caption(context).copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.65),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -1401,63 +1456,76 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Row(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                isSupabaseSignedIn
-                                    ? '${t.syncSignedInAs} $supabaseEmail'
-                                    : t.syncNotSignedIn,
-                                style: AppTextStyles.body(context).copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.78),
-                                  fontWeight: FontWeight.w600,
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    syncHeadline,
+                                    style: AppTextStyles.body(context).copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.78),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                 ),
+                                if (isSupabaseSignedIn)
+                                  TextButton(
+                                    onPressed: isSyncing
+                                        ? null
+                                        : () async {
+                                            await app.signOutSupabase();
+                                          },
+                                    child: Text(t.syncSignOut),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              syncHint,
+                              style: AppTextStyles.caption(context).copyWith(
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.62),
                               ),
                             ),
-                            if (isSupabaseSignedIn)
-                              TextButton(
-                                onPressed: isSyncing
-                                    ? null
-                                    : () async {
-                                        await app.signOutSupabase();
-                                      },
-                                child: Text(t.syncSignOut),
-                              ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _row(
-                        context,
-                        t.nicknameLabel,
-                        profile.name.isEmpty ? '--' : profile.name,
-                        icon: Icons.badge_outlined,
-                        onTap: () => _editText(
-                          context,
-                          title: t.nicknameLabel,
-                          initial: profile.name,
-                          onSave: (value) => app.updateNickname(value),
-                        ),
-                      ),
                       if (isSupabaseSignedIn) ...[
-                        const SizedBox(height: 8),
-                        _row(
-                          context,
-                          isZh ? '登入與安全' : 'Sign-in & security',
-                          isZh
-                              ? '設定或更新 Email + 密碼登入，作為信箱連結以外的備用方式'
-                              : 'Manage email-link sign-in and your backup password.',
-                          icon: Icons.lock_outline,
-                          onTap: () => showBackupPasswordSetupDialog(
+                        _grid2([
+                          _row(
                             context,
-                            app,
+                            t.nicknameLabel,
+                            profile.name.isEmpty ? '--' : profile.name,
+                            icon: Icons.badge_outlined,
+                            dense: true,
+                            onTap: () => _editText(
+                              context,
+                              title: t.nicknameLabel,
+                              initial: profile.name,
+                              onSave: (value) => app.updateNickname(value),
+                            ),
                           ),
-                        ),
+                          _row(
+                            context,
+                            securityTitle,
+                            securityValue,
+                            icon: Icons.lock_outline,
+                            dense: true,
+                            onTap: () => showBackupPasswordSetupDialog(
+                              context,
+                              app,
+                            ),
+                          ),
+                        ]),
                         const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
@@ -1480,6 +1548,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                       ] else ...[
+                        _row(
+                          context,
+                          t.nicknameLabel,
+                          profile.name.isEmpty ? '--' : profile.name,
+                          icon: Icons.badge_outlined,
+                          onTap: () => _editText(
+                            context,
+                            title: t.nicknameLabel,
+                            initial: profile.name,
+                            onSave: (value) => app.updateNickname(value),
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
@@ -1549,7 +1629,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  _sectionTitle(context, t.planSection),
+                  _sectionTitle(context, bodyProfileTitle),
                   _sectionCard(
                     context,
                     children: [
@@ -1607,79 +1687,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             title: t.genderLabel,
                             current: currentGenderLabel,
                             options: genderOptions.keys.toList(),
-                            onSave: (value) => app.updateField((p) =>
-                                p.gender = genderOptions[value] ?? 'unspecified'),
+                            onSave: (value) => app.updateField((p) => p.gender =
+                                genderOptions[value] ?? 'unspecified'),
                           ),
                         ),
                       ]),
                       const SizedBox(height: 10),
-                      ..._spacedChildren([
-                        _row(
+                      _row(
+                        context,
+                        t.bmiLabel,
+                        _bmiText(profile, t),
+                        icon: Icons.analytics,
+                        showChevron: false,
+                      ),
+                    ],
+                  ),
+                  _sectionTitle(context, goalsTitle),
+                  _rowsCard(
+                    context,
+                    rows: [
+                      _row(
+                        context,
+                        t.goalLabel,
+                        currentGoalLabel,
+                        icon: Icons.flag,
+                        onTap: () => _selectOption(
                           context,
-                          t.bmiLabel,
-                          _bmiText(profile, t),
-                          icon: Icons.analytics,
-                          showChevron: false,
+                          title: t.goalLabel,
+                          current: currentGoalLabel,
+                          options: goalOptions.keys.toList(),
+                          onSave: (value) => app.updateField((p) =>
+                              p.goal = goalOptions[value] ?? kGoalValueLoseFat),
                         ),
-                        _row(
+                      ),
+                      _row(
+                        context,
+                        t.planSpeedLabel,
+                        currentPlanSpeedLabel,
+                        icon: Icons.speed,
+                        onTap: () => _selectOption(
                           context,
-                          t.goalLabel,
-                          currentGoalLabel,
-                          icon: Icons.flag,
-                          onTap: () => _selectOption(
-                            context,
-                            title: t.goalLabel,
-                            current: currentGoalLabel,
-                            options: goalOptions.keys.toList(),
-                            onSave: (value) => app.updateField((p) =>
-                                p.goal = goalOptions[value] ?? kGoalValueLoseFat),
-                          ),
+                          title: t.planSpeedLabel,
+                          current: currentPlanSpeedLabel,
+                          options: planSpeedOptions.keys.toList(),
+                          onSave: (value) => app.updateField((p) => p
+                                  .planSpeed =
+                              planSpeedOptions[value] ?? kPlanSpeedValueStable),
                         ),
-                        _row(
+                      ),
+                      _row(
+                        context,
+                        t.activityLevelLabel,
+                        currentActivityLabel,
+                        icon: Icons.directions_walk,
+                        onTap: () => _selectOption(
                           context,
-                          t.planSpeedLabel,
-                          currentPlanSpeedLabel,
-                          icon: Icons.speed,
-                          onTap: () => _selectOption(
-                            context,
-                            title: t.planSpeedLabel,
-                            current: currentPlanSpeedLabel,
-                            options: planSpeedOptions.keys.toList(),
-                            onSave: (value) => app.updateField((p) =>
-                                p.planSpeed =
-                                    planSpeedOptions[value] ?? kPlanSpeedValueStable),
-                          ),
+                          title: t.activityLevelLabel,
+                          current: currentActivityLabel,
+                          options: activityOptions.keys.toList(),
+                          onSave: (value) => app.updateField((p) =>
+                              p.activityLevel =
+                                  activityOptions[value] ?? 'light'),
                         ),
-                        _row(
+                      ),
+                      _row(
+                        context,
+                        t.commonExerciseLabel,
+                        currentExerciseLabel,
+                        icon: Icons.fitness_center,
+                        onTap: () => _selectOption(
                           context,
-                          t.activityLevelLabel,
-                          currentActivityLabel,
-                          icon: Icons.directions_walk,
-                          onTap: () => _selectOption(
-                            context,
-                            title: t.activityLevelLabel,
-                            current: currentActivityLabel,
-                            options: activityOptions.keys.toList(),
-                            onSave: (value) => app.updateField((p) =>
-                                p.activityLevel = activityOptions[value] ?? 'light'),
-                          ),
+                          title: t.commonExerciseLabel,
+                          current: currentExerciseLabel,
+                          options: exerciseOptions.keys.toList(),
+                          onSave: (value) => app.updateField((p) =>
+                              p.exerciseSuggestionType =
+                                  exerciseOptions[value] ?? 'walking'),
                         ),
-                        _row(
-                          context,
-                          t.commonExerciseLabel,
-                          currentExerciseLabel,
-                          icon: Icons.fitness_center,
-                          onTap: () => _selectOption(
-                            context,
-                            title: t.commonExerciseLabel,
-                            current: currentExerciseLabel,
-                            options: exerciseOptions.keys.toList(),
-                            onSave: (value) => app.updateField((p) =>
-                                p.exerciseSuggestionType =
-                                    exerciseOptions[value] ?? 'walking'),
-                          ),
-                        ),
-                      ]),
+                      ),
                     ],
                   ),
                   _sectionTitle(context, t.containerSection),
@@ -1777,7 +1862,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               keyboardType: TextInputType.number,
                               onSave: (value) => app.updateField(
                                 (p) => p.containerDiameterCm =
-                                    int.tryParse(value) ?? p.containerDiameterCm,
+                                    int.tryParse(value) ??
+                                        p.containerDiameterCm,
                               ),
                             ),
                           ),
@@ -1846,8 +1932,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           title: t.personaLabel,
                           current: currentPersonaLabel,
                           options: personaOptions.keys.toList(),
-                          onSave: (value) => app.updateField((p) =>
-                              p.persona = personaOptions[value] ?? 'nutritionist'),
+                          onSave: (value) => app.updateField((p) => p.persona =
+                              personaOptions[value] ?? 'nutritionist'),
                         ),
                       ),
                     ],
@@ -1910,16 +1996,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: t.reminderLunch,
                         icon: Icons.lunch_dining,
                         value: profile.lunchReminderEnabled,
-                        onChanged: (value) =>
-                            app.updateField((p) => p.lunchReminderEnabled = value),
+                        onChanged: (value) => app
+                            .updateField((p) => p.lunchReminderEnabled = value),
                       ),
                       _switchRow(
                         context,
                         title: t.reminderDinner,
                         icon: Icons.nightlight_round,
                         value: profile.dinnerReminderEnabled,
-                        onChanged: (value) =>
-                            app.updateField((p) => p.dinnerReminderEnabled = value),
+                        onChanged: (value) => app.updateField(
+                            (p) => p.dinnerReminderEnabled = value),
                       ),
                     ],
                   ),
@@ -1927,26 +2013,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _sectionCard(
                     context,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              t.subscriptionSection,
-                              style: AppTextStyles.body(context).copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          Chip(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            label: Text(subscriptionStatus),
-                            labelStyle: TextStyle(color: subscriptionLabelColor),
-                            backgroundColor:
-                                subscriptionColor.withValues(alpha: 0.12),
-                          ),
-                        ],
+                      Chip(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        label: Text(subscriptionStatus),
+                        labelStyle: TextStyle(color: subscriptionLabelColor),
+                        backgroundColor:
+                            subscriptionColor.withValues(alpha: 0.12),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
+                      _sectionHint(context, subscriptionHint),
                       ..._spacedChildren([
                         _row(
                           context,
@@ -1954,65 +2029,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           subscriptionPlanLabel,
                           icon: Icons.star_border,
                           showChevron: false,
+                          dense: true,
                         ),
                         _row(
                           context,
-                          isZh ? '試用到期' : 'Trial ends',
-                          _formatDateShort(trialEndAt),
+                          trialEndsTitle,
+                          _formatDateShort(trialEndAt) == '--'
+                              ? notEnabledText
+                              : _formatDateShort(trialEndAt),
                           icon: Icons.timer_outlined,
                           showChevron: false,
+                          dense: true,
                         ),
                         _row(
                           context,
-                          isZh ? '白名單' : 'Whitelist',
-                          isWhitelisted
-                              ? (isZh ? '是' : 'Yes')
-                              : (isZh ? '否' : 'No'),
+                          whitelistTitle,
+                          isWhitelisted ? yesText : noText,
                           icon: Icons.verified_user_outlined,
                           showChevron: false,
+                          dense: true,
                         ),
                       ]),
-                    ],
-                  ),
-                  if (isMockSubscription) ...[
-                    const SizedBox(height: 10),
-                    _sectionTitle(context, isZh ? '測試工具' : 'Testing tools'),
-                    _sectionCard(
-                      context,
-                      children: [
-                        _row(
-                          context,
-                          isZh ? '測試方案' : 'Test plan',
-                          app.mockSubscriptionPlanId == kIapYearlyId
-                              ? t.webTestPlanYearly
-                              : t.webTestPlanMonthly,
-                          icon: Icons.science_outlined,
-                          showChevron: false,
-                        ),
+                      if (isMockSubscription) ...[
                         const SizedBox(height: 12),
-                        SizedBox(
+                        Container(
                           width: double.infinity,
-                          child: FilledButton.tonal(
-                            onPressed: () {
-                              app.setMockSubscriptionActive(false);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    isZh
-                                        ? '測試訂閱已清除'
-                                        : 'Test subscription cleared',
-                                  ),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.28),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                testingToolsTitle,
+                                style: AppTextStyles.caption(context).copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.62),
+                                  fontWeight: FontWeight.w700,
                                 ),
-                              );
-                            },
-                            child: Text(
-                              isZh ? '重設測試訂閱' : 'Reset test subscription',
-                            ),
+                              ),
+                              const SizedBox(height: 8),
+                              _row(
+                                context,
+                                testPlanTitle,
+                                app.mockSubscriptionPlanId == kIapYearlyId
+                                    ? t.webTestPlanYearly
+                                    : t.webTestPlanMonthly,
+                                icon: Icons.science_outlined,
+                                showChevron: false,
+                                dense: true,
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    app.setMockSubscriptionActive(false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content:
+                                            Text(resetTestSubscriptionDone),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(resetTestSubscriptionTitle),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
-                  ],
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   _sectionTitle(context, t.languageLabel),
                   _rowsCard(
@@ -2058,7 +2149,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Text(
                         isZh ? '配色主題' : 'Color themes',
                         style: AppTextStyles.caption(context).copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.68),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -2154,7 +2246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ? '拍照時同步存到系統相簿'
                               : 'Save captured photos to system gallery',
                           subtitle: isZh
-                              ? '關閉後，照片只留在 MiraMeal 內；開啟後，會再多存一份到手機相簿。'
+                              ? '關閉時照片只保留在 MiraMeal；開啟後會另外存一份到裝置相簿。'
                               : 'When off, photos stay only inside MiraMeal. When on, a copy is also saved to your device gallery.',
                           icon: Icons.photo_library_outlined,
                           value: profile.saveCameraPhotosToGallery,
@@ -2216,8 +2308,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               t.usageLoading,
                               icon: Icons.info_outline,
                               showChevron: false,
+                              dense: true,
                             ),
                           ],
+                          gap: 6,
                         );
                       }
                       final info = snapshot.data;
@@ -2231,8 +2325,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               t.versionUnavailable,
                               icon: Icons.info_outline,
                               showChevron: false,
+                              dense: true,
                             ),
                           ],
+                          gap: 6,
                         );
                       }
                       final commit = info['commit'] ?? '';
@@ -2244,9 +2340,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           _row(
                             context,
                             t.versionBuild,
-                            info['build_time'] ?? '--',
+                            _formatBuildTime(info['build_time'] ?? '--'),
                             icon: Icons.info_outline,
                             showChevron: false,
+                            dense: true,
                           ),
                           _row(
                             context,
@@ -2254,6 +2351,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             shortCommit.isEmpty ? '--' : shortCommit,
                             icon: Icons.code,
                             showChevron: false,
+                            dense: true,
                           ),
                         ],
                         gap: 6,
@@ -2271,6 +2369,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         '',
                         icon: Icons.file_download,
                         showChevron: false,
+                        dense: true,
                         onTap: () => _exportData(context, app),
                       ),
                       _row(
@@ -2279,6 +2378,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         '',
                         icon: Icons.delete_outline,
                         showChevron: false,
+                        dense: true,
                         onTap: () => _clearData(context, app),
                       ),
                     ],
@@ -2292,4 +2392,3 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
-
