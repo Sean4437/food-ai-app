@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -36,11 +36,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>需要使用相機來拍攝餐點照片，供 MiraMeal 進行分析與記錄。</string>
+	<string>MiraMeal 需要使用相機來拍攝餐點照片，供你記錄與 AI 分析。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>需要讀取你的照片，以便從相簿選擇餐點圖片或營養標示圖片。</string>
+	<string>MiraMeal 需要讀取你的照片，讓你可以從相簿選擇餐點圖片進行記錄與分析。</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>若你開啟同步保存功能，MiraMeal 會將拍攝的照片另外保存到系統相簿。</string>
+	<string>MiraMeal 需要儲存照片到相簿，讓你保留拍攝的餐點照片。</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
