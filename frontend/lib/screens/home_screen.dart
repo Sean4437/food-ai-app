@@ -2,7 +2,6 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:food_ai_app/gen/app_localizations.dart';
 import '../state/tab_state.dart';
@@ -440,7 +439,6 @@ class _HomeScreenState extends State<HomeScreen> {
     DateTime activeDate,
   ) async {
     final tabState = TabScope.of(context);
-    final isZh = _isZh(context);
     if (action == 'settings') {
       tabState.setIndex(6); // Settings tab
     } else if (action == 'week_plan') {
@@ -459,15 +457,6 @@ class _HomeScreenState extends State<HomeScreen> {
       await _focusStatusCard(4);
       if (!mounted) return;
       await _showWeeklyInsightSheet(app, t, activeDate);
-    } else if (action == 'reset_mock') {
-      app.setMockSubscriptionActive(false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isZh
-              ? '\u5df2\u6e05\u9664\u6e2c\u8a66\u8a02\u95b1'
-              : 'Test subscription cleared'),
-        ),
-      );
     }
   }
 
@@ -1113,15 +1102,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         value: 'settings',
                         child: Text(t.settingsTitle),
                       ),
-                      if (kIsWeb && app.mockSubscriptionActive)
-                        PopupMenuItem(
-                          value: 'reset_mock',
-                          child: Text(
-                            _isZh(context)
-                                ? '\u5df2\u6e05\u9664\u6e2c\u8a66\u8a02\u95b1'
-                                : 'Reset test subscription',
-                          ),
-                        ),
                     ],
                   ),
                 ],

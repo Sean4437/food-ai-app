@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../config/feature_flags.dart';
 import '../config/legal_links.dart';
 import '../utils/data_exporter.dart';
 import '../design/theme_controller.dart';
@@ -1479,6 +1480,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isSubscribed = app.iapSubscriptionActive &&
         (app.accessPlan == 'pro' || app.accessPlan == 'plus');
     final isMockSubscription = app.mockSubscriptionActive;
+    const showMockUi = kEnableWebMockSubscription && !kReleaseMode;
+    final activeMockSubscription = showMockUi && isMockSubscription;
     final isWhitelisted = app.isWhitelisted;
     final isBackendPaidPlan =
         app.accessPlan == 'pro' || app.accessPlan == 'plus';
@@ -1498,7 +1501,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (isSubscribed) {
       subscriptionStatus = isZh ? '已透過 iOS 訂閱' : 'Subscribed (iOS)';
       subscriptionColor = Colors.green;
-    } else if (isMockSubscription) {
+    } else if (activeMockSubscription) {
       subscriptionStatus = isZh ? '測試訂閱' : 'Test subscription';
       subscriptionColor = Colors.blue;
     } else if (isWhitelisted) {
@@ -1520,7 +1523,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final subscriptionLabelColor = subscriptionColor.withValues(alpha: 0.9);
     final subscriptionPlanLabel = isSubscribed
         ? (isZh ? 'App Store 方案' : 'App Store')
-        : isMockSubscription
+        : activeMockSubscription
             ? (app.mockSubscriptionPlanId == kIapYearlyId
                 ? t.webTestPlanYearly
                 : t.webTestPlanMonthly)
@@ -1726,8 +1729,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final syncBusyTitle = isZh ? '同步中' : 'Syncing';
     final subscriptionActionTitle = (isSubscribed ||
             isBackendPaidPlan ||
-            isWhitelisted ||
-            isMockSubscription)
+            isWhitelisted)
         ? (isZh ? '查看方案' : 'View plan')
         : (isZh ? '查看訂閱方案' : 'View plans');
     final developerSectionTitle = isZh ? '開發與測試' : 'Developer & testing';
@@ -1736,7 +1738,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         : 'Export a backup or clear the data stored on this device.';
     final canOpenSubscriptionPaywall =
         kIsWeb || defaultTargetPlatform == TargetPlatform.iOS;
-    final showDeveloperTools = isMockSubscription;
+    final showDeveloperTools = activeMockSubscription;
     final supportSectionTitle = isZh ? '支援與法律' : 'Support & legal';
     final supportSectionHint = isZh
         ? '打開支援中心、隱私權政策與服務條款。'
