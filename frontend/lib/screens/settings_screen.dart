@@ -1488,6 +1488,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         .languageCode
         .toLowerCase()
         .startsWith('zh');
+    final mealCueSectionTitle =
+        isZh ? '餐次提示偏好' : 'Meal cue preferences';
+    final mealCueSectionHint = isZh
+        ? '這些選項只會影響餐次提示與整理邏輯，目前不會發送系統通知。'
+        : 'These options only affect meal cues and organization. They do not send system notifications.';
     late final String subscriptionStatus;
     late final Color subscriptionColor;
     if (isSubscribed) {
@@ -2299,13 +2304,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  _sectionTitle(context, t.reminderSection),
+                  _sectionTitle(context, mealCueSectionTitle),
+                  _sectionHint(context, mealCueSectionHint),
                   _rowsCard(
                     context,
                     rows: [
                       _switchRow(
                         context,
-                        title: t.reminderBreakfast,
+                        title: isZh ? '早餐時段' : 'Breakfast window',
                         icon: Icons.free_breakfast_outlined,
                         value: profile.breakfastReminderEnabled,
                         onChanged: (value) => app.updateField(
@@ -2314,7 +2320,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       _switchRow(
                         context,
-                        title: t.reminderLunch,
+                        title: isZh ? '午餐時段' : 'Lunch window',
                         icon: Icons.lunch_dining,
                         value: profile.lunchReminderEnabled,
                         onChanged: (value) => app
@@ -2322,7 +2328,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       _switchRow(
                         context,
-                        title: t.reminderDinner,
+                        title: isZh ? '晚餐時段' : 'Dinner window',
                         icon: Icons.nightlight_round,
                         value: profile.dinnerReminderEnabled,
                         onChanged: (value) => app.updateField(
