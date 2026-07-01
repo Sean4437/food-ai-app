@@ -5,6 +5,8 @@ import 'package:food_ai_app/gen/app_localizations.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../config/legal_links.dart';
 import '../utils/data_exporter.dart';
 import '../design/theme_controller.dart';
 import '../state/app_state.dart';
@@ -760,6 +762,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(t.syncResetPasswordSent)));
       }
+    }
+  }
+
+  Future<void> _openExternalLink(
+    BuildContext context,
+    Uri uri, {
+    required String errorMessage,
+  }) async {
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMessage)));
     }
   }
 
@@ -1717,6 +1732,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final canOpenSubscriptionPaywall =
         kIsWeb || defaultTargetPlatform == TargetPlatform.iOS;
     final showDeveloperTools = isMockSubscription;
+    final supportSectionTitle = isZh ? '支援與法律' : 'Support & legal';
+    final supportSectionHint = isZh
+        ? '打開支援中心、隱私權政策與服務條款。'
+        : 'Open support, privacy policy, and terms of service.';
+    final supportCenterTitle = isZh ? '支援中心' : 'Support center';
+    final privacyPolicyTitle = isZh ? '隱私權政策' : 'Privacy policy';
+    final termsOfServiceTitle = isZh ? '服務條款' : 'Terms of service';
+    final openLinkError =
+        isZh ? '無法開啟連結，請稍後再試。' : 'Unable to open the link right now.';
+    final supportUri = supportCenterUriForLanguageCode(
+      Localizations.localeOf(context).languageCode,
+    );
+    final privacyUri = privacyPolicyUriForLanguageCode(
+      Localizations.localeOf(context).languageCode,
+    );
+    final termsUri = termsOfServiceUriForLanguageCode(
+      Localizations.localeOf(context).languageCode,
+    );
     return AppBackground(
       child: SafeArea(
         child: SingleChildScrollView(
@@ -2345,6 +2378,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           onPressed: canOpenSubscriptionPaywall
                               ? () => showSubscriptionPaywall(context, app, t)
                               : null,
+                        ),
+                      ]),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _sectionTitle(context, supportSectionTitle),
+                  _sectionCard(
+                    context,
+                    children: [
+                      _sectionHint(context, supportSectionHint),
+                      ..._spacedChildren([
+                        _row(
+                          context,
+                          supportCenterTitle,
+                          '',
+                          icon: Icons.support_agent_outlined,
+                          onTap: () => _openExternalLink(
+                            context,
+                            supportUri,
+                            errorMessage: openLinkError,
+                          ),
+                        ),
+                        _row(
+                          context,
+                          privacyPolicyTitle,
+                          '',
+                          icon: Icons.privacy_tip_outlined,
+                          onTap: () => _openExternalLink(
+                            context,
+                            privacyUri,
+                            errorMessage: openLinkError,
+                          ),
+                        ),
+                        _row(
+                          context,
+                          termsOfServiceTitle,
+                          '',
+                          icon: Icons.description_outlined,
+                          onTap: () => _openExternalLink(
+                            context,
+                            termsUri,
+                            errorMessage: openLinkError,
+                          ),
                         ),
                       ]),
                     ],

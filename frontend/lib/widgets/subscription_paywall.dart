@@ -152,12 +152,16 @@ Future<void> _showMockPaywall(
       termsLabel: termsLabel,
       onOpenPrivacyPolicy: (sheetContext) => _openLegalLink(
         sheetContext,
-        kPrivacyPolicyUri,
+        privacyPolicyUriForLanguageCode(
+          Localizations.localeOf(sheetContext).languageCode,
+        ),
         legalLinkError,
       ),
       onOpenTermsOfService: (sheetContext) => _openLegalLink(
         sheetContext,
-        kTermsOfServiceUri,
+        termsOfServiceUriForLanguageCode(
+          Localizations.localeOf(sheetContext).languageCode,
+        ),
         legalLinkError,
       ),
       onPlanTap: (planId) async => Navigator.of(context).pop(planId),
@@ -252,12 +256,16 @@ Future<void> _showIapPaywall(
           termsLabel: termsLabel,
           onOpenPrivacyPolicy: (sheetContext) => _openLegalLink(
             sheetContext,
-            kPrivacyPolicyUri,
+            privacyPolicyUriForLanguageCode(
+              Localizations.localeOf(sheetContext).languageCode,
+            ),
             legalLinkError,
           ),
           onOpenTermsOfService: (sheetContext) => _openLegalLink(
             sheetContext,
-            kTermsOfServiceUri,
+            termsOfServiceUriForLanguageCode(
+              Localizations.localeOf(sheetContext).languageCode,
+            ),
             legalLinkError,
           ),
           errorText:
